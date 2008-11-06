@@ -1,3 +1,15 @@
-Here's a first test of SVN with Google Code.
+Some notes:
 
-Andreaaaaaaa!
+	o Clutter for user interface (buttons, etc): 
+		* clutter-project.org
+		* http://www.openismus.com/documents/clutter_tutorial/0.8/docs/tutorial/html/index.html
+		* 2.5D rendering, intended to make rich graphical interfaces easy. Hardware accelerated where possible (OpenGL / OpenGL ES). Cairo rendering onto clutter textures possible (and in fact easy).
+
+	o Cairo for rendering of actual "whiteboard"
+	 	* http://www.cairographics.org/manual/
+		* Vector drawing library, can read and write SVG, PNG, can write to PDF. Potentially very useful.
+
+	o GStreamer / libwebcam for video streaming / webcam support?
+		* Search google for more info
+
+Test.cpp has a current program I'm using to just go through tutorials and learn the various APIs.
