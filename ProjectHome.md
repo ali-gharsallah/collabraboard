@@ -1,0 +1,1 @@
+This is a project that uses a Nintendo Wiimote ($50) and some cheap custom hardware to interact with computer setups that already include a projector. Users will be able to hold whiteboarding sessions with peers across the internet, both being able to modify the same whiteboard contents.
