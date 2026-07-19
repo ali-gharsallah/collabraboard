@@ -73,12 +73,10 @@ jobs:
         run: pnpm run lint && pnpm run typecheck
 
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
-      # continue-on-error : pas de config jest unitaire dans le dépôt (test:rules couvre
-      # la caractérisation des règles de façon autonome).
-      - name: "2 · Tests unitaires (advisory)"
-        working-directory: apps/api
-        continue-on-error: true
-        run: pnpm run test:unit
+      # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans
+      # le dépôt (`jest` sortirait en « No tests found »). La caractérisation des règles est
+      # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
+      # harnais jest unitaire est ajouté.
 
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (184 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 184/184)"
