@@ -21,7 +21,9 @@ DO $$ DECLARE t text; BEGIN
     'screening_runs', 'screening_qualifications',         -- R103 · R101/R102
     'document_versions',                                  -- R109/R111 (GED)
     'anchor_batches',                                     -- R113 (ancrage — jamais d'UPDATE)
-    'ia_prompt_versions'                                  -- R124 (le prompt est une règle : registre append-only)
+    'ia_prompt_versions',                                 -- R124 (le prompt est une règle : registre append-only)
+    'tenant_param_changes',                               -- R126 (un paramètre est une règle)
+    'risk_case_notes'                                     -- R134 (l'instruction append-only)
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -68,7 +70,10 @@ DO $$ DECLARE t text; BEGIN
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
     'onboardings',                                        -- R117→R120 (bloc 19, tenantée)
-    'ia_prerevues', 'ia_prompt_versions'                  -- R121→R124 (bloc 20, tenantées)
+    'ia_prerevues', 'ia_prompt_versions',                 -- R121→R124 (bloc 20, tenantées)
+    'tenant_param_changes',                               -- R125→R128 (bloc 21)
+    'mros_communications',                                -- R129→R132 (bloc 22)
+    'risk_cases', 'risk_case_notes'                       -- R133→R136 (bloc 23)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

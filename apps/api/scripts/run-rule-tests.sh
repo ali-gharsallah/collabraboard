@@ -21,6 +21,9 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/ged/ged-avance.service.ts src/modules/ged/ged-avance.wiring.spec.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
   src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
+  src/modules/parametres/parametres.service.ts src/modules/parametres/parametres.wiring.spec.ts \
+  src/modules/mros/mros.service.ts src/modules/mros/mros.wiring.spec.ts \
+  src/modules/riskcases/risk-case.service.ts src/modules/riskcases/risk-case.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -48,3 +51,6 @@ echo "── Câblage GED (GD-01..06, R109→R112) ──"; run ged.wiring.spec.
 echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-avance.wiring.spec.js
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
+echo "── Câblage paramètres R-Q (RQ-01..06, R125→R128) ──"; run parametres.wiring.spec.js
+echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
+echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js

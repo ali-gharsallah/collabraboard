@@ -461,3 +461,68 @@ model IaPromptVersion {
   @@unique([tenantId, numero])
   @@map("ia_prompt_versions")
 }
+
+model TenantParamChange {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  cle      String
+  avant    Json?
+  apres    Json
+  motif    String
+  par      String
+  at       DateTime
+  effetAt  DateTime @map("effet_at")
+  @@index([tenantId, cle])
+  @@map("tenant_param_changes")
+}
+
+model MrosCommunication {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  riskCaseId     String    @map("risk_case_id")
+  clientId       String    @map("client_id") @db.Uuid
+  decision       String
+  motif          String
+  decidePar      String    @map("decide_par")
+  decideAt       DateTime  @map("decide_at")
+  pieces         Json
+  dossierSha256  String    @map("dossier_sha256") @db.Char(64)
+  notification   String?
+  gelActif       Boolean   @default(false) @map("gel_actif")
+  gelEcheance    DateTime? @map("gel_echeance")
+  gelSignale     Boolean   @default(false) @map("gel_signale")
+  gelPosePar     String?   @map("gel_pose_par")
+  gelMotif       String?   @map("gel_motif")
+  gelLevePar     String?   @map("gel_leve_par")
+  gelLeveMotif   String?   @map("gel_leve_motif")
+  @@unique([tenantId, riskCaseId])
+  @@index([tenantId, clientId, gelActif])
+  @@map("mros_communications")
+}
+
+model RiskCase {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  statut        String   @default("NOUVELLE")
+  etatDepuis    DateTime @map("etat_depuis")
+  slaSignale    Boolean  @default(false) @map("sla_signale")
+  signalIds     Json     @map("signal_ids")
+  ouvertPar     String   @map("ouvert_par")
+  motifTerminal String?  @map("motif_terminal")
+  terminePar    String?  @map("termine_par")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@map("risk_cases")
+}
+
+model RiskCaseNote {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  caseId   String   @map("case_id") @db.Uuid
+  texte    String
+  par      String
+  at       DateTime
+  @@index([tenantId, caseId])
+  @@map("risk_case_notes")
+}
