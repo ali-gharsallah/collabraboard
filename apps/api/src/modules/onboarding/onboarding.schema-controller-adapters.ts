@@ -1,6 +1,10 @@
+// Fichier de RÉFÉRENCE (doc de câblage bloc 19) — non exécuté, non importé. Le delta
+// schema/prisma est DÉJÀ appliqué (schema.prisma, post-deploy-v2, onboarding.module.ts).
+// Bloc 1/3 commenté pour que le fichier reste du TypeScript valide (typecheck bloquant).
+//
 // ═══ 1/3 — DELTA schema.prisma (Onboarding, R117→R120) ═══════════════════════
 // À coller en fin de schema.prisma. `onboardings` rejoint la boucle RLS (tenantée).
-
+/*
 model Onboarding {
   id            String   @id @default(uuid()) @db.Uuid
   tenantId      String   @map("tenant_id") @db.Uuid
@@ -16,6 +20,7 @@ model Onboarding {
   @@index([tenantId, etape])
   @@map("onboardings")
 }
+*/
 
 // ═══ 2/3 — onboarding.controller-module.ts ═══════════════════════════════════
 /*

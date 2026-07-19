@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query, Req, BadRequestException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { ClientCreate } from "@olive/shared/src/contracts";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -26,7 +27,8 @@ export class ClientsController {
     const parsed = ClientCreate.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
     const { tenantId, userId } = req.ctx;
-    const c = await this.prisma.client.create({ data: { tenantId, ...parsed.data } });
+    const c = await this.prisma.client.create({
+      data: { tenantId, ...parsed.data } as Prisma.ClientUncheckedCreateInput });
     await this.audit.log(tenantId, userId, "CLIENT_CREATED", c.id);
     return c;
   }

@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException, ForbiddenException } from "@nestjs/common";
+import { Role } from "@prisma/client";
 import { PrismaService } from "../../common/prisma.service";
 
 export interface OidcClaims { iss: string; aud: string | string[]; exp: number; email: string; sub: string; groups?: string[]; }
@@ -36,12 +37,12 @@ export class OidcService {
     if (!user) {
       // Provisioning JIT : compte fédéré, sans mot de passe local.
       user = await this.prisma.user.create({
-        data: { tenantId, email: c.email, name: c.email, role, active: true, passwordHash: "" } });
+        data: { tenantId, email: c.email, name: c.email, role: role as Role, active: true, passwordHash: "" } });
       provisioned = true;
     } else {
       if (user.active === false) throw new UnauthorizedException("Compte désactivé");
       if (user.role !== role) {   // l'IdP est la source de vérité du rôle
-        user = await this.prisma.user.update({ where: { id: user.id }, data: { role } });
+        user = await this.prisma.user.update({ where: { id: user.id }, data: { role: role as Role } });
       }
     }
     return { userId: user.id, tenantId, role, provisioned };

@@ -19,7 +19,7 @@ export class VaultSecrets extends SecretsPort {
     const r = await fetch(`${this.baseUrl}/v1/secret/data/olive/${name}`,
       { headers: { "X-Vault-Token": this.token } });
     if (!r.ok) throw new Error(`Vault ${r.status} pour ${name}`);
-    const v = (await r.json()).data.data.value as string;
+    const v = ((await r.json()) as any).data.data.value as string;   // réponse Vault non typée (json() → unknown)
     this.cache.set(name, { v, exp: Date.now() + 60_000 });
     return v;
   }

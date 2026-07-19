@@ -45,9 +45,9 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
         // ── Livraison externe (webhook signé) ──
         const body = JSON.stringify({ event_id: `evt_${ev.id}`, type: ev.type,
           occurred_at: new Date().toISOString(), data: ev.payload });
-        const sig = createHmac("sha256", process.env.WEBHOOK_SECRET ?? "dev")
+        const _sig = createHmac("sha256", process.env.WEBHOOK_SECRET ?? "dev")
           .update(body).digest("hex");
-        // fetch(subscriberUrl, { headers: { "X-Olive-Signature": sig }, body }) — 2xx attendu < 10 s
+        // fetch(subscriberUrl, { headers: { "X-Olive-Signature": _sig }, body }) — 2xx attendu < 10 s (livraison Phase 2)
         await tx.$executeRaw`UPDATE domain_events SET published_at = NOW() WHERE id = ${ev.id}`;
       }
     });

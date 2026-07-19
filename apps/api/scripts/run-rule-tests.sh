@@ -22,7 +22,11 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
-  --noEmitOnError false --strict false --ignoreDeprecations 6.0 --baseUrl . --outDir "$OUT" 2>/dev/null || true
+  --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
+  # NB toolchain épinglée TS 5.9.3 : fichiers explicites ⇒ tsconfig.json ignoré silencieusement
+  # (pas de TS5112 sur 5.9.x) et l'émission se fait normalement. On a retiré deux flags devenus
+  # FATAUX sur cette version : « --ignoreDeprecations 6.0 » (TS5103, valeur invalide) et
+  # « --ignoreConfig » (TS5023, option inconnue avant TS 6.0) — tous deux avortaient la compile.
 export NODE_PATH=./node_modules
 run(){ node "$(find "$OUT" -name "$1" | head -1)"; }
 echo "── Domaine ──"; run rules.spec.js; run four-eyes.spec.js; run named-validator.spec.js

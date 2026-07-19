@@ -83,7 +83,8 @@ export class GedAvanceService {
     if (!v) throw new NotFoundException("Version introuvable");
     if (!v.anchorBatchId) return { valide: false, motif: "non ancrée" };
     const lot = await this.prisma.anchorBatch.findFirst({ where: { id: v.anchorBatchId, tenantId: ctx.tenantId } });
-    const valide = this.verifierChemin(v.sha256, v.merkleProof ?? [], lot.racineMerkle);
+    const valide = this.verifierChemin(v.sha256,
+      (v.merkleProof ?? []) as { hash: string; cote: "G" | "D" }[], lot.racineMerkle);   // champ Json → type du chemin Merkle
     return { valide, racine: lot.racineMerkle, chemin: v.merkleProof ?? [], tsaToken: lot.tsaToken, tsaAt: lot.tsaAt };
   }
 

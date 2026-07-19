@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { generateKeyPairSync, createPublicKey, randomUUID, sign as cryptoSign, verify as cryptoVerify } from "crypto";
+import { generateKeyPairSync, createPublicKey, randomUUID } from "crypto";
 
 interface StoredKey { kid: string; privatePem: string; publicPem: string; createdAt: number; }
 
