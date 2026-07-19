@@ -23,15 +23,22 @@ probante sinon), `MFA_ENC_KEY` (chiffrement mfa_secret). L'appli refuse de déma
 |---|---|---|
 | 1. Lint + types | `npm run lint && npm run typecheck` | 0 erreur — **bloquant en CI** (eslint.config.mjs racine + apps/api/tsconfig.json ajoutés au chantier B) |
 | 2. Unitaires | — | **Couverte par `test:rules`** — pas de suite jest unitaire dans le dépôt. Step retiré du CI (`jest` sans config/spec ⇒ « No tests found ») ; à réintroduire **bloquant** le jour où un harnais jest unitaire existe. |
-| 3. Règles + IAM + corpus session | `npm run test:rules` | **224 verts** (… + Onboarding R117→R120 + IA R121→R124 + Paramètres RQ R125→R128 + MROS MR R129→R132 + Risk cases RK R133→R136 ; cf. `docs/verify-run-2026-07-19.txt`) |
+| 3. Règles + IAM + corpus session | `npm run test:rules` | **231 verts** (… + Risk cases RK R133→R136 + Ingestion GED IG-01..06 R137→R139 depuis le bloc 24 ; cf. `docs/verify-run-2026-07-19.txt`) |
 | 4. e2e Postgres réel | `npm run test:e2e:setup && npm run test:e2e` | 6/6 — exige le patch `kyc.controller` (guard `validate` retiré, sinon 403≠409) |
 | 5. Moteurs Python | `python3 services/workflow-engine-py/run_tests.py` · `…/run_tests_sql.py` · `…/cpsi-server-py/run_tests.py` | 19/19 · SQL vert · **18/18** (⚠ faux-vert CPSI : ajouter `sys.exit(0 if total_ok==len(mods) else 1)` — la CI a une garde grep en attendant) |
 | 6. Démo | `npm run test:smoke` (73 écrans) + onglet Screening → « 🧪 Preuves moteur » → Tout rejouer | 73/73 · 16/16 verts — **hors CI** : exige Playwright + navigateurs (hors scope CI actuel). Step retiré du workflow, même doctrine que test:unit ; à réintroduire bloquant quand l'environnement navigateurs sera provisionné. |
 
 `verify:all` enchaîne 1→4. La CI (`.github/workflows/ci.yml`) rejoue le tout, `prisma:post`
 inclus — les triggers R48 sont enfin exercés en continu. **Tous les steps CI sont bloquants**
-(plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (224), e2e (6/6),
+(plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (231), e2e (6/6),
 recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo Playwright (étape 6).
+
+> **Écart connu (bloc 24, chantier de convergence dédié)** : le contrat GED capture/ingestion
+> (R137→R139, `ged-ingestion.service`) parle `statut` / `A_CLASSER` / `A_VALIDER` en français,
+> alors que le modèle `Document` **historique** (v0.2 : `status`, `A_VALIDER`, `s3Key`) n'a jamais
+> été aligné sur le contrat GED R109→R116. Le service est écrit contre le contrat cible ; un cast
+> type-only ponctuel (`where … as any` dans `listerArrivee`) évite d'aligner `Document` dans ce lot.
+> **À traiter dans un chantier dédié** (migration `Document` → contrat GED), pas en douce ici.
 
 ## 3. Déploiement — ordre impératif
 

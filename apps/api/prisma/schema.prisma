@@ -526,3 +526,15 @@ model RiskCaseNote {
   @@index([tenantId, caseId])
   @@map("risk_case_notes")
 }
+
+model GedIngestEntry {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  canal      String
+  source     String
+  operateur  String
+  at         DateTime
+  @@index([tenantId, documentId])
+  @@map("ged_ingest_entries")
+}

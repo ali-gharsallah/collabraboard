@@ -73,7 +73,8 @@ DO $$ DECLARE t text; BEGIN
     'ia_prerevues', 'ia_prompt_versions',                 -- R121→R124 (bloc 20, tenantées)
     'tenant_param_changes',                               -- R125→R128 (bloc 21)
     'mros_communications',                                -- R129→R132 (bloc 22)
-    'risk_cases', 'risk_case_notes'                       -- R133→R136 (bloc 23)
+    'risk_cases', 'risk_case_notes',                      -- R133→R136 (bloc 23)
+    'ged_ingest_entries'                                  -- R137→R139 (bloc 24, capture & ingestion)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
