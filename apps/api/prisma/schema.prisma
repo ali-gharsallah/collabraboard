@@ -1,5 +1,11 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 model Tenant {
   id        String   @id @default(uuid()) @db.Uuid
@@ -28,7 +34,17 @@ model User {
   @@map("users")
 }
 
-enum Role { RM ARM CO CO_SR MLRO CF BRM DIR ADMIN }
+enum Role {
+  RM
+  ARM
+  CO
+  CO_SR
+  MLRO
+  CF
+  BRM
+  DIR
+  ADMIN
+}
 
 model Client {
   id          String   @id @default(uuid()) @db.Uuid
@@ -79,7 +95,12 @@ model KycFile {
   @@map("kyc_files")
 }
 
-enum KycStatus { IN_PROGRESS UNDER_REVIEW VALIDATED REJECTED }
+enum KycStatus {
+  IN_PROGRESS
+  UNDER_REVIEW
+  VALIDATED
+  REJECTED
+}
 
 model KycSection {
   id         String        @id @default(uuid()) @db.Uuid
@@ -118,7 +139,12 @@ model KycAccessRule {
   @@map("kyc_access_rules")
 }
 
-enum AccessRight { HIDDEN VIEW EDIT REQUIRED }
+enum AccessRight {
+  HIDDEN
+  VIEW
+  EDIT
+  REQUIRED
+}
 
 model KycQuestionHistory {
   id            String      @id @default(uuid()) @db.Uuid
@@ -149,7 +175,10 @@ model KycVisa {
   @@map("kyc_visas")
 }
 
-enum VisaStatus { PENDING SIGNED }
+enum VisaStatus {
+  PENDING
+  SIGNED
+}
 
 model Document {
   id             String   @id @default(uuid()) @db.Uuid
