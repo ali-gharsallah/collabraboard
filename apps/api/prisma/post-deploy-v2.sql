@@ -41,6 +41,10 @@ BEGIN
   END IF;
   RETURN NEW;
 END; $$ LANGUAGE plpgsql;
+-- FIX 2026-07-19 : idempotence — sans ce DROP, un 2e passage de prisma:post échouait
+-- (« trigger domain_events_guard already exists »). CI = base neuve à chaque run donc masqué ;
+-- en local / bascule 2-temps sur base persistante, prisma:post doit rester re-jouable.
+DROP TRIGGER IF EXISTS domain_events_guard ON domain_events;
 CREATE TRIGGER domain_events_guard BEFORE UPDATE OR DELETE ON domain_events
   FOR EACH ROW EXECUTE FUNCTION outbox_guard();
 
