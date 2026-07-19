@@ -33,12 +33,13 @@ inclus — les triggers R48 sont enfin exercés en continu. **Tous les steps CI 
 (plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (231), e2e (6/6),
 recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo Playwright (étape 6).
 
-> **Écart connu (bloc 24, chantier de convergence dédié)** : le contrat GED capture/ingestion
-> (R137→R139, `ged-ingestion.service`) parle `statut` / `A_CLASSER` / `A_VALIDER` en français,
-> alors que le modèle `Document` **historique** (v0.2 : `status`, `A_VALIDER`, `s3Key`) n'a jamais
-> été aligné sur le contrat GED R109→R116. Le service est écrit contre le contrat cible ; un cast
-> type-only ponctuel (`where … as any` dans `listerArrivee`) évite d'aligner `Document` dans ce lot.
-> **À traiter dans un chantier dédié** (migration `Document` → contrat GED), pas en douce ici.
+> **RÉSOLU (chantier « alignement Document », 20.07.2026)** : le modèle `Document`/`DocumentVersion`
+> est désormais aligné sur le contrat GED R109→R116 + R137→R139 — champ Prisma = contrat
+> (`statut`, `nom`) avec `@map` conservant les colonnes v0.2 (migration douce), `clientId`/`retentionUntil`
+> nullable, ajout `ingereAt`/`inboxSignale`/`ocrDerives`, champs v0.2 hors contrat (`s3Key`,`code`,`lang`,
+> `sizeBytes`,`uploadedBy`) conservés en nullable. **Preuve de fin : le pont `as any` du bloc 24 est
+> retiré et le typecheck reste vert.** Migration des données `A_VALIDER → ACTIF` (mapping ratifié Ali,
+> idempotente : `prisma/data-migration-document-statut.sql`).
 
 ## 3. Déploiement — ordre impératif
 

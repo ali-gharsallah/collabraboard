@@ -89,10 +89,7 @@ export class GedIngestionService {
   }
   async listerArrivee(ctx: Ctx) {
     await this.habiliteInbox(this.prisma, ctx);
-    // ÉCART CONNU (chantier dédié, cf. amendement R137-R139 + RUNBOOK) : le contrat GED
-    // R137-R139 parle `statut/A_CLASSER` ; le modèle Document historique (v0.2) a `status/A_VALIDER`.
-    // On NE réaligne PAS Document dans ce lot — cast type-only le temps du chantier de convergence.
-    return this.prisma.document.findMany({ where: { tenantId: ctx.tenantId, statut: "A_CLASSER" } as any });
+    return this.prisma.document.findMany({ where: { tenantId: ctx.tenantId, statut: "A_CLASSER" } });
   }
   async classer(ctx: Ctx, documentId: string, dto: { typeCode: string; clientId: string }) {
     return this.prisma.$transaction(async (tx: any) => {
