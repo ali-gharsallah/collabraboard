@@ -183,17 +183,21 @@ enum VisaStatus {
 model Document {
   id             String   @id @default(uuid()) @db.Uuid
   tenantId       String   @map("tenant_id") @db.Uuid
-  clientId       String   @map("client_id") @db.Uuid
-  client         Client   @relation(fields: [clientId], references: [id])
-  name           String
-  code           String
-  lang           String   @db.Char(2)
-  s3Key          String   @map("s3_key")
-  sha256         String   @db.Char(64)
-  sizeBytes      Int      @map("size_bytes")
-  status         String   @default("A_VALIDER")
-  retentionUntil DateTime @map("retention_until")
-  uploadedBy     String   @map("uploaded_by") @db.Uuid
+  // Contrat GED : clientId nullable (quarantaine à l'ingestion R139, classé plus tard)
+  clientId       String?  @map("client_id") @db.Uuid
+  client         Client?  @relation(fields: [clientId], references: [id])
+  // Nom Prisma = contrat GED (statut/nom) ; @map conserve la COLONNE v0.2 (migration douce).
+  nom            String   @map("name")
+  statut         String   @default("A_VALIDER") @map("status")   // R109/R137 : A_CLASSER | ACTIF | ARCHIVE | DETRUIT (données v0.2 migrées, cf. commit)
+  // Champs hérités v0.2 HORS contrat GED — CONSERVÉS (données + futur adaptateur stockage),
+  // rendus nullable car les services ratifiés ne les alimentent pas.
+  code           String?
+  lang           String?  @db.Char(2)
+  s3Key          String?  @map("s3_key")
+  sha256         String?  @db.Char(64)
+  sizeBytes      Int?     @map("size_bytes")
+  uploadedBy     String?  @map("uploaded_by") @db.Uuid
+  retentionUntil DateTime? @map("retention_until")               // R115 : nullable (posé par l'adaptateur rétention)
   typeCode           String?   @map("type_code")
   personId           String?   @map("person_id") @db.Uuid
   kycFileId          String?   @map("kyc_file_id") @db.Uuid
@@ -207,6 +211,8 @@ model Document {
   destructionMotif   String?   @map("destruction_motif")
   destructionPar     String?   @map("destruction_par")
   destructionAt      DateTime? @map("destruction_at")
+  ingereAt           DateTime? @map("ingere_at")                 // R137 : horodatage d'ingestion (boîte d'arrivée)
+  inboxSignale       Boolean?  @map("inbox_signale")             // R139 : SLA d'arrivée signalé une fois (null = pas encore)
   versions           DocumentVersion[]
   createdAt      DateTime @default(now()) @map("created_at")
   @@index([tenantId, clientId])
@@ -404,6 +410,8 @@ model DocumentVersion {
   anchorBatchId String? @map("anchor_batch_id") @db.Uuid
   merkleProof   Json?   @map("merkle_proof")
   signature     Json?
+  ocrDerives    Json    @default("[]") @map("ocr_derives")       // R138 : dérivés OCR ajoutés (jamais de remplacement)
+  expirationSignalee Boolean? @map("expiration_signalee")        // R115 : signalement au niveau version (optionnel)
   @@unique([documentId, numero])
   @@index([tenantId, documentId])
   @@map("document_versions")
