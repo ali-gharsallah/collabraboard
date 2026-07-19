@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>O-Live — Moteur de workflow</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--o9:#3A4D22;--o7:#4A6B28;--o6:#5A7D3A;--leaf:#7BA042;--gold:#C9A227;
+--ink:#1A2410;--cream:#FAFBF7;--rouge:#B4443A;--ambre:#C98A27;--gris:#9AA38C}
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;background:var(--cream);color:var(--ink)}
+header{background:var(--o9);color:var(--cream);padding:14px 26px;display:flex;align-items:center;gap:16px}
+header h1{font-size:19px;font-weight:600;letter-spacing:.4px}
+header .tag{font-size:11px;opacity:.75}
+header .horloge{margin-left:auto;font-size:12px;background:#ffffff18;padding:4px 12px;border-radius:14px}
+nav{display:flex;gap:4px;background:var(--o7);padding:0 22px}
+nav button{background:none;border:none;color:#e8eddf;padding:11px 18px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{border-bottom-color:var(--gold);color:#fff;font-weight:600}
+main{max-width:1060px;margin:22px auto;padding:0 18px}
+.carte{background:#fff;border:1px solid #E4E8DB;border-radius:10px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px #3a4d2211}
+h2{font-size:15px;color:var(--o9);margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#6b7560;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:2px solid #E4E8DB}
+td{padding:8px;border-bottom:1px solid #EFF2E8}
+tr.clic:hover{background:#F3F6EC;cursor:pointer}
+.puce{display:inline-block;padding:2px 10px;border-radius:11px;font-size:11px;font-weight:600;color:#fff}
+.p-VISEE,.p-ACCORDE{background:var(--leaf)}.p-SOUMISE,.p-EN_ATTENTE,.p-EN_VALIDATION{background:var(--gold)}
+.p-EN_PREPARATION,.p-AUCUN{background:var(--gris)}.p-INVALIDE,.p-REFUSE,.p-ANNULE{background:var(--rouge)}
+.p-sla{background:var(--rouge)}
+.bandeau{border-radius:8px;padding:10px 14px;margin:10px 0;font-size:13px;display:none}
+.bandeau.err{display:block;background:#FBEBE9;border:1px solid #E6B7B2;color:#7c2d25}
+.bandeau.ok{display:block;background:#EFF6E6;border:1px solid #C4D8A8;color:var(--o9)}
+button.b{background:var(--o6);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer}
+button.b:hover{background:var(--o7)}
+button.b.rouge{background:var(--rouge)}button.b.ghost{background:#fff;color:var(--o7);border:1px solid var(--o6)}
+select,input,textarea{border:1px solid #CBD3BC;border-radius:6px;padding:7px 9px;font-size:13px;background:#fff}
+.ligne{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+/* branche d'olivier */
+.branche{display:flex;align-items:center;gap:0;margin:6px 0 14px}
+.rameau{height:3px;width:34px;background:var(--o7)}
+.feuille{width:26px;height:26px;border-radius:0 60% 0 60%;transform:rotate(45deg);border:2px solid #ffffffcc;box-shadow:0 1px 2px #0002}
+.olive{width:16px;height:20px;border-radius:50%;background:var(--o9);margin-left:6px}
+.legende{font-size:11px;color:#6b7560;margin-bottom:10px}
+/* modal visa */
+#voile{position:fixed;inset:0;background:#1a241088;display:none;align-items:center;justify-content:center;z-index:5}
+#modal{background:#fff;border-radius:12px;padding:22px 26px;width:520px;max-width:94vw;box-shadow:0 12px 40px #0005}
+#modal h3{color:var(--o9);font-size:16px;margin-bottom:4px}
+.popup14{background:#FDF6E3;border:1px solid #E3CE8B;border-radius:8px;padding:12px;margin:12px 0;font-size:13px}
+.popup14 label{display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+.mono{font-family:Consolas,monospace;font-size:12px}
+.evt{padding:6px 10px;border-left:3px solid var(--leaf);background:#fff;margin-bottom:5px;font-size:12.5px;border-radius:0 6px 6px 0}
+.evt .t{color:#6b7560;font-size:11px}
+.verdict{font-weight:700;color:var(--o7)}
+</style></head><body>
+<header><h1>🌿 O-Live</h1><span class="tag">Client Lifecycle Intelligence — moteur de workflow (démo pilote)</span>
+<span class="horloge" id="horloge"></span></header>
+<nav>
+<button class="on" data-v="corbeille">Corbeille de tâches</button>
+<button data-v="dossiers">Dossiers</button>
+<button data-v="audit">Audit FINMA — rejeu &amp; 4-yeux</button>
+</nav>
+<main>
+<div class="bandeau" id="bandeau"></div>
+
+<section id="v-corbeille">
+ <div class="carte"><h2>Corbeille par rôle</h2>
+  <div class="ligne">Rôle : <select id="role"><option>CO</option><option>RM</option></select>
+   <button class="b ghost" onclick="tick()">⏱ Avancer d'un jour (tick_global R54)</button></div>
+  <table id="t-taches"><thead><tr><th>Tâche</th><th>Type</th><th>Dossier</th><th>Titulaire</th><th>SLA</th></tr></thead><tbody></tbody></table>
+  <div id="charge" class="legende" style="margin-top:10px"></div>
+ </div>
+</section>
+
+<section id="v-dossiers" style="display:none">
+ <div class="carte"><h2>Dossiers</h2>
+  <div class="legende">La branche d'olivier : chaque feuille est une section — verte visée · dorée en cours · grise à venir · rouge en alerte · l'olive : validation finale.</div>
+  <div id="liste-dossiers"></div>
+ </div>
+ <div class="carte" id="detail" style="display:none"></div>
+</section>
+
+<section id="v-audit" style="display:none">
+ <div class="carte"><h2>X-02 — Rejeu à date (art. « montrez-moi ce dossier tel qu'il était le… »)</h2>
+  <div class="ligne">Dossier : <select id="rj-d"></select>
+   Date : <input type="date" id="rj-at" min="2026-06-01" max="2026-07-12" value="2026-06-10">
+   <button class="b" onclick="rejeu()">Rejouer à cette date</button></div>
+  <div id="rj-res" class="legende"></div><div id="rj-evts"></div>
+ </div>
+ <div class="carte"><h2>X-05 — Preuve du 4-yeux sur lot (extraction de l'audit trail)</h2>
+  <div class="ligne"><span id="pv-ids"></span><button class="b" onclick="preuve()">Extraire la preuve</button></div>
+  <table id="t-preuve"><thead><tr><th>Dossier</th><th>Section</th><th>Préparateurs</th><th>Validateur</th><th>4-yeux</th></tr></thead><tbody></tbody></table>
+ </div>
+</section>
+</main>
+
+<div id="voile"><div id="modal"></div></div>
+<script>
+const $=s=>document.querySelector(s); let ETAT=null;
+const F={VISEE:"var(--leaf)",ACCORDE:"var(--leaf)",SOUMISE:"var(--gold)",EN_VALIDATION:"var(--gold)",EN_ATTENTE:"var(--gold)",EN_PREPARATION:"var(--gris)",AUCUN:"var(--gris)",INVALIDE:"var(--rouge)",REFUSE:"var(--rouge)",ANNULE:"var(--rouge)"};
+async function GET(p){return (await fetch(p)).json()}
+async function POST(p,c){const r=await fetch(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)});return {code:r.status,corps:await r.json()}}
+function bandeau(type,txt){const b=$("#bandeau");b.className="bandeau "+type;b.textContent=txt;setTimeout(()=>b.className="bandeau",6000)}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));b.classList.add("on");["corbeille","dossiers","audit"].forEach(v=>$("#v-"+v).style.display=v===b.dataset.v?"":"none")});
+
+async function charger(){ETAT=await GET("/api/etat");$("#horloge").textContent="Horloge démo : "+ETAT.horloge.replace("T"," ");
+ $("#rj-d").innerHTML=ETAT.dossiers.map(d=>`<option>${d.id}</option>`).join("");
+ $("#pv-ids").innerHTML=ETAT.dossiers.map(d=>`<label style="margin-right:12px"><input type="checkbox" value="${d.id}" checked> ${d.id}</label>`).join("");
+ rendreDossiers();corbeille()}
+async function corbeille(){const r=await GET("/api/corbeille?role="+$("#role").value);
+ $("#t-taches tbody").innerHTML=r.taches.map(t=>`<tr class="clic" onclick="ouvrirDossier('${t.dossier}')"><td class="mono">${t.id}</td><td>${t.type}</td><td>${t.dossier}</td><td>${t.titulaire||"—"}</td><td>${t.sla_depasse?'<span class="puce p-sla">SLA dépassé (R39)</span>':'<span class="puce p-EN_PREPARATION">dans les temps</span>'}</td></tr>`).join("")||"<tr><td colspan=5>Aucune tâche.</td></tr>";
+ $("#charge").textContent="Vue de charge R40 : "+JSON.stringify(r.charge)}
+$("#role").onchange=corbeille;
+async function tick(){const r=await POST("/api/tick",{});bandeau("ok",`tick_global exécuté — ${r.corps.emis??0} événement(s) émis (bilan journalisé, R54)`);charger()}
+
+function branche(d){let h='<div class="branche"><div class="rameau"></div>';
+ d.sections.filter(s=>!s.finale).forEach(s=>{h+=`<div class="feuille" title="${s.nom} — ${s.etat}/${s.visa}" style="background:${F[s.visa==='AUCUN'?s.etat:s.visa]}"></div><div class="rameau"></div>`});
+ const f=d.sections.find(s=>s.finale);h+=`<div class="olive" title="Validation finale — ${f?f.visa:'AUCUN'}" style="background:${f&&f.visa!=='AUCUN'?F[f.visa]:'var(--o9)'}"></div></div>`;return h}
+function rendreDossiers(){$("#liste-dossiers").innerHTML=ETAT.dossiers.map(d=>`<div class="clic carte" style="margin:0 0 10px;padding:12px 16px" onclick="ouvrirDossier('${d.id}')">
+ <b>${d.id}</b> — ${d.titulaire} <span class="legende">(RM : ${d.rm} · version R53 : ${d.version})</span>${branche(d)}</div>`).join("")}
+async function ouvrirDossier(id){document.querySelector('[data-v=dossiers]').click();const d=await GET("/api/dossier?id="+id);
+ $("#detail").style.display="";$("#detail").innerHTML=`<h2>${d.id} — ${d.titulaire}</h2>${branche(d)}
+ <table><thead><tr><th>Section</th><th>État</th><th>Visa</th><th>Validateur</th><th>Préparateurs (R13)</th><th></th></tr></thead><tbody>
+ ${d.sections.map(s=>`<tr><td>${s.finale?"🫒 ":""}${s.nom}</td><td><span class="puce p-${s.etat}">${s.etat}</span></td>
+  <td><span class="puce p-${s.visa}">${s.visa}</span>${s.motivation_refus?`<div class="legende">motif : ${s.motivation_refus}</div>`:""}</td>
+  <td>${s.validateur||"—"}</td><td class="mono">${s.preparateurs.join(", ")||"—"}</td>
+  <td>${s.visa==="EN_ATTENTE"?`<button class="b" onclick="ecranVisa('${d.id}','${s.nom}',${s.finale},${d.version})">Écran de visa</button>`:""}</td></tr>`).join("")}
+ </tbody></table>`}
+
+function ecranVisa(did,sec,finale,version){$("#voile").style.display="flex";$("#modal").innerHTML=`
+ <h3>Visa — ${sec}</h3><div class="legende">${did} · version chargée : ${version} (R53)</div>
+ <div class="ligne">Signer en tant que : <select id="vs-act"><option>V1</option><option>V2</option><option>V3</option><option>VF</option><option>RM1</option><option>CO1</option></select></div>
+ ${finale?`<div class="popup14"><b>Engagement de responsabilité (R14)</b><label><input type="checkbox" id="vs-eng">
+  En apposant la validation finale, je confirme que les processus de la banque ont été respectés sur l'ensemble du dossier et j'engage ma responsabilité.</label></div>`:""}
+ <div class="ligne"><button class="b" onclick="accorder('${did}','${sec}',${finale},${version})">✔ Accorder le visa</button>
+ <button class="b rouge" onclick="refuserUi('${did}','${sec}',${version})">✖ Refuser</button>
+ <button class="b ghost" onclick="fermer()">Annuler</button></div>
+ <div class="ligne" id="vs-refus" style="display:none;width:100%"><textarea id="vs-motif" placeholder="Motivation du refus — obligatoire (R7)" style="width:100%" rows="2"></textarea>
+ <button class="b rouge" onclick="refuser('${did}','${sec}',${version})">Confirmer le refus motivé</button></div>
+ <div class="bandeau" id="vs-err"></div>`}
+function fermer(){$("#voile").style.display="none"}
+function errVisa(r){const b=$("#vs-err");b.className="bandeau err";b.textContent=(r.regle?r.regle+" — ":"")+r.msg}
+async function accorder(did,sec,finale,v){const eng=finale?($("#vs-eng")&&$("#vs-eng").checked):false;
+ const r=await POST("/api/commande",{action:"accorder",dossier:did,section:sec,acteur:$("#vs-act").value,engagement:eng,expected_version:v});
+ if(r.code===200){fermer();bandeau("ok","Visa accordé — tracé dans l'audit trail.");charger();ouvrirDossier(did)}else errVisa(r.corps)}
+function refuserUi(){$("#vs-refus").style.display="flex"}
+async function refuser(did,sec,v){const r=await POST("/api/commande",{action:"refuser",dossier:did,section:sec,acteur:$("#vs-act").value,motivation:$("#vs-motif").value,expected_version:v});
+ if(r.code===200){fermer();bandeau("ok","Refus motivé enregistré (R7) — la section repasse En préparation.");charger();ouvrirDossier(did)}else errVisa(r.corps)}
+
+async function rejeu(){const d=$("#rj-d").value,at=$("#rj-at").value+"T09:00:00";const r=await GET(`/api/rejeu?dossier=${d}&at=${at}`);
+ $("#rj-res").innerHTML=`<b>${r.n}</b> événement(s) connus au ${$("#rj-at").value} — versions du référentiel en vigueur ce jour-là : <span class="mono">${JSON.stringify(r.versions)}</span>`;
+ $("#rj-evts").innerHTML=r.evenements.map(e=>`<div class="evt"><span class="t">#${e.seq} · ${e.at.replace("T"," ")} · ${e.actor}</span><br><b>${e.type}</b> <span class="mono">${JSON.stringify(e.detail)}</span></div>`).join("")}
+async function preuve(){const ids=[...document.querySelectorAll('#pv-ids input:checked')].map(x=>x.value).join(",");
+ const r=await GET("/api/preuve?ids="+ids);const tb=$("#t-preuve tbody");tb.innerHTML="";
+ for(const[did,secs]of Object.entries(r.preuve))for(const[sec,v]of Object.entries(secs))
+  tb.innerHTML+=`<tr><td>${did}</td><td>${sec}</td><td class="mono">${v.preparateurs.join(", ")}</td><td class="mono">${v.validateur}</td>
+  <td class="verdict">${v.preparateurs.includes(v.validateur)?"✖ VIOLATION":"✔ conforme R13"}</td></tr>`}
+charger();
+</script></body></html>

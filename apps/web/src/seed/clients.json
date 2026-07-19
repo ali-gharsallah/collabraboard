@@ -1,0 +1,5 @@
+[
+  { "id": "c1", "name": "Suzuki Ltd", "structure": "SA", "country": "JP", "riskLevel": "HIGH" },
+  { "id": "c2", "name": "Fondation Helvetia Kids", "structure": "FOUNDATION", "country": "CH", "riskLevel": "LOW" },
+  { "id": "c3", "name": "Al-Maktoum SA", "structure": "HOLDING", "country": "AE", "riskLevel": "HIGH" }
+]

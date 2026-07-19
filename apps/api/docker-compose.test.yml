@@ -1,0 +1,22 @@
+# Postgres jetable pour les e2e en local — comble le trou constaté au pré-vol :
+# l'en-tête des e2e citait `test:e2e:setup` qui n'existait pas dans apps/api.
+#   docker compose -f docker-compose.test.yml up -d
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: olive
+      POSTGRES_PASSWORD: olive
+      POSTGRES_DB: olive_test
+    ports: ["5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olive -d olive_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+# ── À ajouter dans apps/api/package.json (scripts) ───────────────────────────
+#  "test:e2e:setup":    "docker compose -f docker-compose.test.yml up -d --wait && prisma db push && npm run prisma:post",
+#  "test:e2e:teardown": "docker compose -f docker-compose.test.yml down -v",
+#  "verify:all":        "npm run lint && npm run typecheck && npm run test:unit && npm run test:rules && npm run test:e2e"
+# Variables : DATABASE_URL=postgresql://olive:olive@localhost:5433/olive_test · AUDIT_HMAC_SECRET · MFA_ENC_KEY

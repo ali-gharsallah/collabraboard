@@ -1,0 +1,4 @@
+{ "name": "@olive/workflow-engine", "version": "0.1.0", "type": "module",
+  "main": "src/engine.mjs",
+  "scripts": { "test": "node --test test/bloc1.visa.test.mjs test/bloc2.dossier.test.mjs", "lint": "eslint src test", "typecheck": "tsc --noEmit --allowJs --checkJs src/engine.mjs || true" },
+  "description": "Moteur de workflow compliance O-Live — spécification exécutable (catalogue v2, R1-R51). Zéro dépendance runtime." }

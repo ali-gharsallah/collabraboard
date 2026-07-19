@@ -1,0 +1,38 @@
+── Domaine ──
+R84/R85/R86 — 17/17 tests verts
+R13/R52 — 6/6 tests verts
+R2/R4 — 6/6 tests verts
+── Service (câblage) ──
+Câblage KycService (R13/R2/R52/R86/R84/R85) — 22/22 tests verts
+── IAM (auth) ──
+IAM (auth) — 9/9 tests verts
+── IAM (TOTP + RBAC) ──
+TOTP/MFA — 4/4 tests verts
+RBAC (RolesGuard) — 4/4 tests verts
+── IAM (SSO/JWKS/MFA/Admin) ──
+SSO OIDC — 6/6 tests verts
+JWKS / rotation — 5/5 tests verts
+Provisioning MFA — 6/6 tests verts
+API admin users — 6/6 tests verts
+── IAM (middleware JWT/JWKS) ──
+TenantMiddleware (JWKS/rotation) — 7/7 tests verts
+── Corpus I-01..I-05 (R89→R92) ──
+Scénarios I-01..I-05 (R89→R92) — 5/5 tests verts
+── Corpus SC-01..SC-04 (R100→R103) ──
+Scénarios SC-01..SC-04 (R100→R103) — 4/4 tests verts
+── Corpus GR-01..GR-04 (R104 golden record) ──
+Corpus GR-01..GR-04 (R104 golden record) — 9/9 tests verts
+── Câblage screening persistant (R100→R103) ──
+Câblage screening (SC-01..04, R100→R103) — 10/10 tests verts
+── Vérif JWKS IdP (JV-01..07) ──
+Vérif JWKS IdP (JV-01..07) — 9/9 tests verts
+── Chiffrement mfa_secret (SB-01..06) ──
+SecretBox mfa_secret (SB-01..06 + intégration MFA) — 9/9 tests verts
+── Câblage personnes (P-01..08, R30→R36) ──
+Câblage personnes (P-01..08, R30→R36) — 13/13 tests verts
+── Câblage PMS (PF-01..06, R105→R108) ──
+Câblage PMS (PF-01..06, R105→R108) — 9/9 tests verts
+── Câblage GED (GD-01..06, R109→R112) ──
+Câblage GED (GD-01..06, R109→R112) — 9/9 tests verts
+── Câblage GED avancée (GD-07..14, R113→R116) ──
+Câblage GED avancée (GD-07..14, R113→R116) — 9/9 tests verts

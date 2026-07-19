@@ -1,0 +1,19 @@
+{
+  "name": "olive-mvp",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "test:demo": "bash tests/demo/run.sh",
+    "test:smoke": "node tests/demo/smoke-screens.spec.mjs",
+    "screening:data": "node services/screening/generate.mjs",
+    "screening:bench": "node services/screening/bench.mjs",
+    "screening:blocking": "node services/screening/bench-blocking.mjs",
+    "screening:portefeuille": "node services/screening/bench-portefeuille.mjs"
+  }
+}
