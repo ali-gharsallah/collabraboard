@@ -7,6 +7,7 @@ import { OidcService, OidcConfig } from "./oidc.service";
 import { KeyStore } from "./key-store";
 import { RolesGuard } from "./roles.guard";
 import { Roles } from "./roles.decorator";
+import { SecretBox } from "../../common/secret-box";
 
 @Controller("auth")
 class AuthController {
@@ -63,6 +64,9 @@ function oidcConfigFromEnv(): OidcConfig {
   controllers: [AuthController, JwksController, MfaController, UsersController],
   providers: [
     AuthService, UsersService, MfaService, PrismaService, RolesGuard,
+    // MfaService dépend de SecretBox (metadata décorateur → DI, la valeur par défaut du
+    // constructeur ne suffit pas). Câblage documenté dans mfa.service.ts.
+    { provide: SecretBox, useFactory: () => new SecretBox(process.env.MFA_ENC_KEY) },
     { provide: KeyStore, useValue: new KeyStore() },
     { provide: OidcService, useFactory: (p: PrismaService) => new OidcService(p, oidcConfigFromEnv()), inject: [PrismaService] },
   ],
