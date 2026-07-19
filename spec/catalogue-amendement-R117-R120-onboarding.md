@@ -49,9 +49,14 @@ l'affaire du cycle de vie KYC, pas de l'onboarding).
 > **Et** le KYC créé est lié à l'onboarding, événement `onboarding.kyc.cree`
 > **Et** une seconde entrée en collecte est refusée (un seul KYC actif)
 
-## R119 — L'ouverture n'existe qu'après KYC APPROVED
+## R119 — L'ouverture n'existe qu'après KYC VALIDATED
 
-La transition `DECISION → OUVERT` est **refusée** tant que le KYC lié n'est pas `APPROVED`
+> **Erratum (ratifié par Ali, 19.07.2026)** : le statut terminal requis est **`VALIDATED`** —
+> la valeur réelle de l'enum `KycStatus` (`IN_PROGRESS|UNDER_REVIEW|VALIDATED|REJECTED`).
+> « APPROVED » cité par MOD-01 (§3.1) est **historique** et ne correspond à aucun statut du
+> moteur KYC. Détail : `spec/erratum-R119-validated.md`.
+
+La transition `DECISION → OUVERT` est **refusée** tant que le KYC lié n'est pas `VALIDATED`
 (contrainte réglementaire bloquante, même statut que R13 — pas un SLA R39). L'ouverture émet
 `onboarding.ouvert` ; les effets aval (création de compte, tâches de bienvenue) sont des
 consommateurs de cet événement, jamais des effets de bord de la transition.
@@ -60,7 +65,7 @@ consommateurs de cet événement, jamais des effets de bord de la transition.
 > **Étant donné** un onboarding en DECISION dont le KYC lié est UNDER_REVIEW
 > **Quand** l'ouverture est demandée
 > **Alors** elle est refusée avec l'état du KYC dans le motif
-> **Quand** le KYC passe APPROVED puis l'ouverture est redemandée
+> **Quand** le KYC passe VALIDATED puis l'ouverture est redemandée
 > **Alors** l'état devient OUVERT et `onboarding.ouvert` est émis
 
 ## R120 — Le funnel se mesure, il ne coerce pas

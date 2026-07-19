@@ -105,15 +105,15 @@ const mk = (settings: any = {}) => {
     await rejects(s.transitionner(RM, ob.id, 'COLLECTE', { form: { clientName: 'X' } }), '4 infos');
   });
 
-  // ── OB-04 (R119) — pas d'ouverture sans KYC APPROVED ──
-  await it('OB-04 OUVERT refusé tant que KYC ≠ APPROVED ; APPROVED → OUVERT + événement', async () => {
+  // ── OB-04 (R119) — pas d'ouverture sans KYC VALIDATED (erratum : statut terminal réel de l'enum) ──
+  await it('OB-04 OUVERT refusé tant que KYC ≠ VALIDATED ; VALIDATED → OUVERT + événement', async () => {
     const { p, s } = mk();
     const ob: any = await s.creer(RM, { prospectNom: 'X' });
     await s.transitionner(RM, ob.id, 'COLLECTE', { form: F4 });
     await s.transitionner(RM, ob.id, 'KYC_EN_COURS', {});
     await s.transitionner(RM, ob.id, 'DECISION', {});
     await rejects(s.transitionner(RM, ob.id, 'OUVERT', {}), 'IN_PROGRESS');
-    p._db.kycs[0].status = 'APPROVED';                       // le cycle KYC a fait son œuvre
+    p._db.kycs[0].status = 'VALIDATED';                      // le cycle KYC a fait son œuvre (statut terminal réel)
     await s.transitionner(RM, ob.id, 'OUVERT', {});
     ok(p._db.onboardings[0].etape === 'OUVERT' && evts(p, 'onboarding.ouvert').length === 1, 'ouvert, tracé');
   });

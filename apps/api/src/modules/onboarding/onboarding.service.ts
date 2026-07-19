@@ -6,7 +6,7 @@ import { AuditService } from "../../common/audit.service";
  * Onboarding — l'entrée en relation. R117→R120 (OB-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
  * Invariants tenus : machine à états fermée, transitions tracées, terminaux motivés (R117/R7) ;
  * le KYC est créé PAR LE MOTEUR KYC injecté, un seul actif par onboarding (R118) ;
- * pas d'ouverture sans KYC APPROVED — blocage réglementaire type R13 (R119) ;
+ * pas d'ouverture sans KYC VALIDATED — blocage réglementaire type R13 (R119, erratum : VALIDATED = statut terminal réel de l'enum) ;
  * le SLA alerte une fois et n'abandonne jamais, le funnel se restitue des événements (R120, R39/R48).
  * Paramètre tenant (R-Q) : onboardingSlaJours { COLLECTE: 30, KYC_EN_COURS: 45, DECISION: 10 }.
  */
@@ -71,13 +71,15 @@ export class OnboardingService {
         await this.emit(tx, ctx.tenantId, "onboarding.kyc.cree", o.id, { kycFileId: kyc.id });
       }
 
-      // R119 — pas d'ouverture sans KYC APPROVED (blocage réglementaire, type R13)
+      // R119 — pas d'ouverture sans KYC VALIDATED (blocage réglementaire, type R13).
+      // Erratum (ratifié par Ali) : le statut terminal est VALIDATED — la valeur réelle de
+      // l'enum KycStatus ; « APPROVED » de MOD-01 était historique. Cf. spec/erratum-R119-validated.md.
       if (vers === "OUVERT") {
         const kyc = o.kycFileId
           ? await tx.kycFile.findFirst({ where: { id: o.kycFileId, tenantId: ctx.tenantId } }) : null;
-        if (!kyc || kyc.status !== "APPROVED")
+        if (!kyc || kyc.status !== "VALIDATED")
           throw new ForbiddenException(
-            `R119 : ouverture refusée — KYC lié ${kyc ? kyc.status : "absent"}, APPROVED requis`);
+            `R119 : ouverture refusée — KYC lié ${kyc ? kyc.status : "absent"}, VALIDATED requis`);
       }
 
       await tx.onboarding.update({ where: { id: o.id }, data: { etape: vers,
