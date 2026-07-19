@@ -45,6 +45,15 @@ CREATE TRIGGER domain_events_guard BEFORE UPDATE OR DELETE ON domain_events
   FOR EACH ROW EXECUTE FUNCTION outbox_guard();
 
 -- ── 2. RLS RÉELLE : FORCE + policies sur toutes les tables tenantées ────────
+-- FIX 2026-07-19 : la policy tenant_isolation est basée sur la colonne tenant_id.
+-- 6 tables enfant du dossier n'ont PAS de colonne tenant_id dans le schéma
+-- (kyc_sections, kyc_questions, kyc_access_rules, kyc_question_history, kyc_visas,
+--  kyc_lock_requests) : leur créer une policy `tenant_id = …` levait
+-- « column "tenant_id" does not exist » et faisait échouer TOUT le bloc → RLS inerte.
+-- On n'applique donc ENABLE/FORCE/policy qu'aux tables réellement tenantées
+-- (présence de la colonne). Les tables enfant restent isolées transitivement via
+-- leur parent tenanté (FK) + le filtrage applicatif — même traitement que
+-- kyc_lock_requests recevait déjà en v1. Écart schéma signalé, sémantique inchangée.
 DO $$ DECLARE t text; BEGIN
   FOREACH t IN ARRAY ARRAY[
     'clients', 'users', 'kyc_files', 'kyc_sections', 'kyc_questions',
@@ -54,7 +63,10 @@ DO $$ DECLARE t text; BEGIN
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches'
   ] LOOP
-    IF to_regclass(t) IS NOT NULL THEN
+    IF to_regclass(t) IS NOT NULL
+       AND EXISTS (SELECT 1 FROM information_schema.columns c
+                   WHERE c.table_schema = 'public' AND c.table_name = t
+                     AND c.column_name = 'tenant_id') THEN
       EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
       EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);   -- ← le FORCE qui manquait
       EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
