@@ -26,7 +26,7 @@ describe("KYC — règles moteur (e2e)", () => {
     http = app.getHttpServer();
     await seedTenantClient(prisma, TID, CLIENT);
     const res = await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
-      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "STANDARD", countryCode: "CH", rmId: RM });
+      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM });
     expect(res.status).toBeLessThan(300);
     code = res.body.code;
   });
@@ -53,7 +53,7 @@ describe("KYC — règles moteur (e2e)", () => {
 
   it("R2 — visa à validateur nommé : seul lui signe", async () => {
     const res = await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
-      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "STANDARD", countryCode: "CH", rmId: RM });
+      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM });
     const code2 = res.body.code;
     await prisma.$executeRaw`UPDATE kyc_visas SET validateur = ${CO_A}::uuid
       WHERE section_code = 'IDENTITY'
