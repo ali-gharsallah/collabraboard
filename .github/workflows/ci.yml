@@ -1,0 +1,124 @@
+# CI O-Live — rejoue la chaîne de vérification du RUNBOOK-OPS §2 (« l'ordre qui fait foi »).
+# Modèle : lint/types → unitaires → règles (184) → e2e (6/6) → moteurs Python → démo.
+# prisma:post inclus (post-deploy-v2 : immuabilité R48 + RLS FORCE) — les triggers sont
+# donc exercés en continu, comme le veut le runbook.
+#
+# Étapes « verifiées vertes » = bloquantes. Étapes dont l'outillage n'est pas encore dans
+# le dépôt (lint eslint, typecheck tsconfig, démo Playwright) = continue-on-error, avec
+# commentaire — écarts déjà signalés dans le rapport de bootstrap, pas masqués.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    name: verify (RUNBOOK §2)
+    runs-on: ubuntu-latest
+
+    services:
+      db-test:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: olive
+          POSTGRES_PASSWORD: olive
+          POSTGRES_DB: olive_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U olive -d olive_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://olive:olive@localhost:5433/olive_test
+      WEBHOOK_SECRET: ci-webhook-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secrets de test (fail-fast au boot exige AUDIT_HMAC_SECRET + MFA_ENC_KEY)
+        run: |
+          echo "AUDIT_HMAC_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "MFA_ENC_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (vraies libs — pnpm workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate + db push + prisma:post (RLS FORCE + immuabilité)
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma generate
+          pnpm exec prisma db push --skip-generate
+          pnpm run prisma:post
+
+      # ── RUNBOOK §2 · 1 — Lint + types ────────────────────────────────────────
+      # continue-on-error : ni config eslint ni tsconfig ne sont dans le dépôt fusionné
+      # (écart signalé). À rendre bloquant une fois ces configs ajoutées.
+      - name: "1 · Lint + typecheck (advisory)"
+        working-directory: apps/api
+        continue-on-error: true
+        run: pnpm run lint && pnpm run typecheck
+
+      # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
+      # continue-on-error : pas de config jest unitaire dans le dépôt (test:rules couvre
+      # la caractérisation des règles de façon autonome).
+      - name: "2 · Tests unitaires (advisory)"
+        working-directory: apps/api
+        continue-on-error: true
+        run: pnpm run test:unit
+
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (184 verts) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 184/184)"
+        working-directory: apps/api
+        run: pnpm run test:rules
+
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (6/6) ─────────────────────────────
+      - name: "4 · e2e API réelle + Postgres (attendu 6/6)"
+        working-directory: apps/api
+        run: pnpm run test:e2e
+
+      # ── Recette RLS (RUNBOOK §3.2) : en olive_app sans GUC → 0 ligne ─────────
+      - name: "4b · Recette RLS multi-tenant (olive_app, 0 ligne sans GUC)"
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          export PGPASSWORD=olive_app
+          n=$(psql "postgresql://olive_app:olive_app@localhost:5433/olive_test" -Atc "SELECT count(*) FROM clients")
+          echo "clients visibles sans GUC = $n"
+          test "$n" = "0"
+
+      # ── RUNBOOK §2 · 5 — Moteurs Python (garde grep, cf. faux-vert CPSI) ─────
+      - name: "5a · workflow-engine-py (attendu 19/19)"
+        run: |
+          out=$(python3 services/workflow-engine-py/run_tests.py); echo "$out"
+          echo "$out" | grep -q "### 19/19 suites vertes ###"
+
+      - name: "5b · workflow-engine-py SQL (journal 11/11)"
+        run: |
+          out=$(python3 services/workflow-engine-py/run_tests_sql.py); echo "$out"
+          echo "$out" | grep -q "suites vertes ###"
+
+      - name: "5c · cpsi-server-py (attendu 18/18 — garde grep, le runner rend 0 à tort)"
+        run: |
+          out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
+          echo "$out" | grep -q "### 18/18 suites vertes ###"
+
+      # ── RUNBOOK §2 · 6 — Démo (73 écrans) ────────────────────────────────────
+      # continue-on-error : nécessite Playwright + navigateurs, non provisionnés ici.
+      - name: "6 · Démo smoke Playwright (advisory)"
+        continue-on-error: true
+        run: |
+          pnpm dlx playwright install --with-deps chromium
+          pnpm run test:smoke

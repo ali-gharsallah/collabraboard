@@ -23,7 +23,7 @@ probante sinon), `MFA_ENC_KEY` (chiffrement mfa_secret). L'appli refuse de déma
 |---|---|---|
 | 1. Lint + types | `npm run lint && npm run typecheck` | 0 erreur (TS5101 bénin) |
 | 2. Unitaires | `npm run test:unit` | verts |
-| 3. Règles + IAM + corpus session | `npm run test:rules` | **103 + 50 = 153 verts** (GR/SC-wiring/JV/SB/P inclus depuis le 19.07) |
+| 3. Règles + IAM + corpus session | `npm run test:rules` | **184 verts** (GR/SC-wiring/JV/SB/P + câblages PMS/GED/GED-avancée inclus depuis le 19.07 ; cf. `docs/verify-run-2026-07-19.txt`) |
 | 4. e2e Postgres réel | `npm run test:e2e:setup && npm run test:e2e` | 6/6 — exige le patch `kyc.controller` (guard `validate` retiré, sinon 403≠409) |
 | 5. Moteurs Python | `python3 services/workflow-engine-py/run_tests.py` · `…/run_tests_sql.py` · `…/cpsi-server-py/run_tests.py` | 19/19 · SQL vert · **18/18** (⚠ faux-vert CPSI : ajouter `sys.exit(0 if total_ok==len(mods) else 1)` — la CI a une garde grep en attendant) |
 | 6. Démo | `npm run test:smoke` (73 écrans) + onglet Screening → « 🧪 Preuves moteur » → Tout rejouer | 73/73 · 16/16 verts |
