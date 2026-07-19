@@ -264,3 +264,141 @@ re-strippée (2 532 069 octets), les deux fichiers revalidés.
 
 **Chez Ali maintenant** : reporter v4.2 dans le Word ; premier `verify:all` réel (180 attendus) ;
 capture d'`olive-viewer-test.html` toujours attendue pour l'affaire du viewer.
+
+---
+
+## 12. Word normatif v4.2 coupé (19.07.2026, 18h45)
+
+Re-cut : `spec/OLive-Specifications-Moteur-Workflow-v4.2.docx` — 58 pages (+~20 vs v4.0).
+Découverte au passage : la v4.0 (14.07) n'avait JAMAIS reçu les ratifications du 15.07 —
+R89→R103 absentes du Word alors que ratifiées et exécutables. Le v4.2 rattrape tout d'un coup :
+bandeau de version en tête, puis 9 chapitres appendés depuis les sources ratifiées VERBATIM
+(patch v4.1 avec fold SC-04 et comptages, amendements R89-R99, R100-R103, R104, R105-108,
+R109-112, R113-116, patch v4.2). Conversion md→OOXML maison (titres Heading1/2, scénarios en
+italique indenté, vrais tableaux w:tbl), validate.py PASSED contre la v4.0, rendu PDF contrôlé
+visuellement (p.1 bandeau, p.52 PMS). La v4.0 reste dans spec/ (historique).
+
+
+---
+
+## 13. Retour du premier run RÉEL (Claude Code, branche GitHub) — et mes deux fautes
+
+Rapport `rapport-bootstrap-olive-2026-07-19.md` reçu : **184/184 (vraies libs) · e2e 6/6 ·
+recette RLS parfaite (0 ligne sans GUC)** sur `ali-gharsallah/collabraboard`, branche
+`claude/olive-mvp-bootstrap-m02v1x`, HEAD `ec91220`. **Cette branche est désormais le canon** ;
+les zips locaux sont réalignés dessus.
+
+Deux fautes à moi, confirmées et corrigées dans mes artefacts :
+1. **`zip -x "*.git*"` a exclu `.github/`** → le ci.yml annoncé n'a jamais été dans le zip.
+   Motif corrigé (`*/.git/*`), présence de `.github/workflows/ci.yml` VÉRIFIÉE dans le zip.
+2. **Boucle RLS sur 6 tables enfant sans `tenant_id`** (kyc_sections…) → policy en échec.
+   Boucle restreinte aux tables tenantées, isolation transitive commentée — aligné sur le fix
+   de la branche (`8bd071a`).
+
+Autres corrections de la branche, actées : schéma Prisma reformaté (ma fusion sans validateur —
+anticipé), câblages DI EventsModule/AuthModule (invisibles au harnais hors ligne qui compile les
+specs isolément — leçon : le harnais ne boote pas Nest), harnais jest-e2e ajouté, payload e2e
+aligné sur l'énum KycCreate (précédent MF-03 appliqué par Claude Code lui-même). RUNBOOK 153→184
+corrigé ici. ci.yml : +MFA_ENC_KEY dans l'env e2e (fail-fast MfaService), commentaire 103→184.
+Restent côté branche : ajouter ci.yml + RUNBOOK (prompt de suite fourni), puis PR vers master.
+
+---
+
+## 14. CI VIVANTE — run #1 déclenché (19.07, 19h17)
+
+Rapport v2 de Claude Code : ci.yml créé sur le modèle RUNBOOK §2 (124 lignes — PLUS complet que
+le gabarit fourni : il a vérifié puis câblé les suites Python moteur **19/19**, SQL **11/11**,
+CPSI **18/18** garde grep incluse — le pending « runner CPSI sys.exit » est DE FACTO clos),
+RUNBOOK 153→184 corrigé, poussé (`ac49136`), **run #1 in_progress** :
+https://github.com/ali-gharsallah/collabraboard/actions/runs/29696439527
+Hiérarchie validée : rules 184 + e2e + Python/SQL/CPSI **bloquants** ; lint/typecheck/démo
+Playwright **advisory** (outillage absent, commenté). Prochain jalon : run vert → PR vers
+`master` (titre et description prescrits dans prompt-claude-code-suite) → **merge = décision
+d'Ali seul**. Total exécutable certifié toutes couches : 184 backend + 19 + 11 + 18 = **232**.
+
+§14bis — Claude Code a détecté un 3e step advisory hors liste (test:unit : aucune suite jest
+unitaire dans le dépôt → « No tests found » permanent). Décision validée : RETRAIT plutôt
+qu'advisory perpétuellement rouge (un advisory qui échoue toujours apprend à ignorer les
+advisory). Alignement demandé et fait des deux côtés : ci.yml + RUNBOOK §2 (branche ET arbres
+locaux). Doctrine actée : tout changement de comportement CI se reflète dans le RUNBOOK, même
+commit.
+
+§15 — **CI VERTE SUR RUNNERS GITHUB (19.07, 19h20).** Runs #1 et #2 : ✅ success — toutes étapes
+bloquantes passées sur infra neutre (test:rules 184, e2e 6/6, prisma:post, Python 19/19 · SQL
+11/11 · CPSI 18/18, recette RLS). Run #4 (a8907fa = alignement RUNBOOK §2/test:unit) in_progress,
+verdict attendu. Chaîne de preuve complète désormais à trois étages : (1) sandbox hors ligne,
+(2) machine réelle + vraies libs, (3) runners GitHub reproductibles à chaque push. Prochain
+jalon : PR vers master — merge réservé à Ali.
+
+§16 — **BOUCLE FERMÉE (19.07, 19h25).** Run #4 (a8907fa) ✅ success — verdict par étape sur
+runners GitHub : prisma:post ✓ · test:rules 184/184 · e2e 6/6 · recette RLS (0 ligne sans GUC) ·
+Python 19/19 · SQL 11/11 · CPSI 18/18 ; lint/typecheck + démo Playwright advisory (vert
+neutralisé ≠ garantie — noté honnêtement par Claude Code). HEAD local = remote, working tree
+propre, doc/CI alignés, 8 commits. La branche claude/olive-mvp-bootstrap-m02v1x est LE canon,
+prête pour PR vers master. Décision de merge : Ali, exclusivement. Reste du jour : capture
+olive-viewer-test.html ; prochain chantier proposé : Onboarding MOD-69.
+
+§17 — **FIN DE JOURNÉE (19h30). PR #1 → master OUVERTE** :
+https://github.com/ali-gharsallah/collabraboard/pull/1 — 9 commits · 228 fichiers · CI verte sur
+le head (a8907fa) · corps = récap complet (vérifs, 9 écarts corrigés, matrice bloquant/advisory).
+Claude Code arrêté proprement (pas de surveillance auto — pas de relecteur tiers). **Seul geste
+restant : le merge, par Ali, quand il veut.** Dettes ouvertes pour la prochaine session :
+(1) capture olive-viewer-test.html ; (2) chantier Onboarding MOD-69 (catalogue d'abord, R117+) ;
+(3) adaptateurs Phase 2 des ports (TSA/QES/IA) ; (4) outillage eslint/tsconfig/Playwright si on
+veut promouvoir les steps advisory en bloquants.
+
+---
+
+## 18. Soirée — ONBOARDING R117→R120 (PROPOSÉ) + squelettes adaptateurs + outillage
+
+Bloc 19 livré dans la discipline : amendement AVANT code (famille OB vérifiée libre), corpus
+OB-01..06 **9/9 verts**, service avec MOTEUR KYC INJECTÉ (OB-03 vérifie l'appel au moteur, jamais
+une réimplémentation — « un KYC créé automatiquement à chaque onboarding », Spéc. Produit §3.1
+devenue règle testée ; R119 = dépendance MOD-01→MOD-09 devenue blocage prouvé). Machine à états
+fermée (R117), SLA R-Q { COLLECTE:30, KYC_EN_COURS:45, DECISION:10 } qui alerte sans abandonner
+(R120/R39), funnel rejoué des événements (R48). Harnais RÉEL relancé : **193/193 verts** (193
+attendus). RLS +onboardings, schéma repo +modèle. Démo : **101 règles** (bloc 19 PROPOSÉ) ·
+**12 domaines · 50 sections · 268 champs · 0 fallback**. Adaptateurs Phase 2 : squelettes honnêtes
+(tsa/qes/ia — compilent, refusent sans credentials, ne simulent JAMAIS ; prérequis non techniques
+listés : contrat TSA, compte AIS/Skribble mTLS, clé Anthropic serveur). À ratifier : R117-R120.
+
+---
+
+## 19. RATIFICATION R117→R120 + Word v4.3 (19.07, soirée — clôture)
+
+Ali ratifie le Bloc 19. Propagé : amendement (3 copies), démo (101 règles, **0 proposée** —
+vérifié mécaniquement), matrice, prompt Claude Code bloc19 (point 5 à jour),
+`catalogue-patch-v4.2-vers-v4.3.md`, **Word v4.3 coupé** (61 pages, bandeau v4.3 :
+« 181 IDs · 193 tests · aucune règle proposée : R1→R120 toutes ratifiées », validate PASSED
+contre v4.2, bandeau contrôlé au pdftotext). État de fin de journée : catalogue R1→R120
+intégralement ratifié, papier = exécutable dans les deux sens, 193 verts sur l'arbre réel,
+CI verte, PR #1 ouverte. Incident de soirée assumé : stubs node_modules déplacés avant zip →
+harnais muet → restaurés, zip avec exclusions VÉRIFIÉES (node_modules=0, ci.yml=1).
+
+---
+
+## 20. Rapport bloc 19 + chantier B — et l'écart R119 (le plus instructif de la journée)
+
+Branche : bloc 19 atterri (193/193 sur runners), **chantier B accompli : plus AUCUN advisory** —
+lint/typecheck bloquants (eslint.config.mjs + tsconfig, casts mécaniques justifiés un par un),
+démo Playwright retirée (doctrine test:unit), run #6 tout vert. prisma:post idempotent
+(DROP TRIGGER IF EXISTS — reflété dans mes arbres). PR #1 inclut tout (bloc 19 + chantier B).
+
+**Écart R119 attrapé par Claude Code** : rédaction `APPROVED` (vocabulaire doc MOD-01) vs enum
+réelle `VALIDATED`. Le corpus passait sur un faux répondant APPROVED — **test vert, runtime
+mort** (OUVERT bloqué à jamais). Option B préparée et PROUVÉE (OB 9/9 + harnais 193/193) :
+règle alignée sur l'enum, erratum `spec/erratum-R119-validated.md`, propagé service/spec/
+amendement/démo. **Réflexe ajouté** : les valeurs d'états d'un faux inter-domaines se COPIENT
+depuis l'enum du schéma, jamais de mémoire. Reste : mot d'Ali (B recommandé) → report branche
+via Claude Code → fold au prochain re-cut Word.
+
+§20bis — R119 tranché par Ali : **option B** (VALIDATED). Erratum passé de recommandation à
+décision. Fix déjà appliqué et prouvé dans les arbres locaux (193/193) ; reste le report branche
+via Claude Code (message fourni) puis fold au prochain re-cut Word.
+
+§20ter — Fix R119 sur branche : commit aa32b06, run #8 TOUT VERT (lint/typecheck bloquants ✓,
+193/193, e2e 6/6, RLS, Python). Claude Code signale honnêtement avoir RÉDIGÉ erratum + amendement
+faute de zip joint → remplacement par les textes canoniques demandé (doctrine v4.1 : reprise
+verbatim, deux rédactions d'un même texte = graine d'écart doc/doc). Après ce commit docs :
+la PR #1 est COMPLÈTE (bootstrap + bloc 19 + chantier B + fix R119 + textes canoniques) —
+il ne reste que le merge, à Ali.

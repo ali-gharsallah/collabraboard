@@ -1,6 +1,6 @@
 # Catalogue O-Live — Amendement PROPOSÉ (R117 → R120) · Bloc 19 « Onboarding — l'entrée en relation »
 
-**Statut : PROPOSÉ** — en attente de ratification (Ali Gharsallah). Rédigé le 19.07.2026.
+**Statut : RATIFIÉ le 19.07.2026 par Ali Gharsallah.**
 Numérotation continue après R116. Famille de scénarios : **OB** (vérifiée libre — spec md + Word).
 **Le catalogue précède le code.**
 
@@ -8,7 +8,7 @@ Numérotation continue après R116. Famille de scénarios : **OB** (vérifiée l
 
 L'Onboarding (MOD-69) est le premier maillon du menu Lifecycle et le seul sans règles au
 catalogue. Les Spécifications Produit posent pourtant deux principes forts : « un KYC est créé
-automatiquement à chaque onboarding » (§3.1) et « KYC APPROVED avant ouverture de compte »
+automatiquement à chaque onboarding » (§3.1) et « KYC VALIDATED avant ouverture de compte »
 (dépendance MOD-01 → MOD-09). Le mini-formulaire 4 infos (§3.2) existe côté KYC
 (`KycService.create` : 4 infos → risque → workflow → initiation) mais **rien ne gouverne le
 parcours** : états, transitions, refus, abandon, mesure du funnel. Quatre règles ferment le trou —
@@ -51,10 +51,11 @@ l'affaire du cycle de vie KYC, pas de l'onboarding).
 
 ## R119 — L'ouverture n'existe qu'après KYC VALIDATED
 
-> **Erratum (ratifié par Ali, 19.07.2026)** : le statut terminal requis est **`VALIDATED`** —
-> la valeur réelle de l'enum `KycStatus` (`IN_PROGRESS|UNDER_REVIEW|VALIDATED|REJECTED`).
-> « APPROVED » cité par MOD-01 (§3.1) est **historique** et ne correspond à aucun statut du
-> moteur KYC. Détail : `spec/erratum-R119-validated.md`.
+> **Erratum du 19.07.2026 (soir)** : la première rédaction disait `APPROVED` (vocabulaire du
+> document de modèle de données MOD-01). Le statut terminal favorable RÉEL de l'implémentation
+> canonique (enum Prisma v0.2, écrit par `kyc.service.validate`) est **`VALIDATED`** — écart
+> détecté par le premier run réel (le corpus passait sur un faux KYC). Décision : aligner la
+> règle sur l'enum implémentée ; le doc MOD-01 est historique sur ce point.
 
 La transition `DECISION → OUVERT` est **refusée** tant que le KYC lié n'est pas `VALIDATED`
 (contrainte réglementaire bloquante, même statut que R13 — pas un SLA R39). L'ouverture émet
@@ -103,4 +104,4 @@ horodatées permettent de restituer délais par étape et taux de passage à tou
 Tests : OB-01..06 (`onboarding.wiring.spec.ts`, faux Prisma + faux moteur KYC injecté) —
 écrits **avant** l'implémentation.
 
-`RATIFIÉ le __________ par __________________`
+`RATIFIÉ le 19.07.2026 par Ali Gharsallah`

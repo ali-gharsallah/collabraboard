@@ -1,38 +1,22 @@
-# Erratum R119 — statut terminal du KYC = `VALIDATED`
+# Erratum R119 — `APPROVED` → `VALIDATED` (19.07.2026, soir)
 
-- **Statut** : RATIFIÉ
-- **Auteur de la décision** : Ali (jeton — ratification du 19.07.2026)
-- **Portée** : R119 (bloc 19, Onboarding) · amendement `catalogue-amendement-R117-R120-onboarding.md`
+**Détecté par** : premier run réel du bloc 19 (Claude Code, branche) — signalé « À trancher par
+Ali », jamais résolu en silence. **DÉCISION : option B — tranchée par Ali Gharsallah le 19.07.2026.** La règle s'aligne
+sur l'enum réellement implémentée.
 
-## Écart constaté
+**Le fond.** R119 première rédaction : « ouverture ssi KYC `APPROVED` » — vocabulaire du document
+de modèle de données MOD-01 (`DRAFT…APPROVED`). Or l'implémentation canonique depuis la v0.2
+écrit **`VALIDATED`** (`kyc.service.validate`, enum Prisma `KycStatus`), testée e2e, RLS, outbox.
+Le corpus OB passait sur un **faux** KYC répondant `APPROVED` : test vert, runtime mort —
+`DECISION → OUVERT` aurait été bloquée à jamais.
 
-`onboarding.service.ts` (R119) refusait la transition `DECISION → OUVERT` tant que le KYC lié
-n'était pas `"APPROVED"`. Or `"APPROVED"` **n'existe pas** dans l'enum ratifié `KycStatus` du
-schéma :
+**Leçon de méthode (ajoutée aux réflexes)** : quand un test s'appuie sur un faux d'un AUTRE
+domaine, les **valeurs d'états du faux se copient depuis l'enum du schéma**, jamais depuis la
+mémoire du rédacteur. Un faux qui invente un statut fabrique un vert qui ment.
 
-```
-enum KycStatus { IN_PROGRESS  UNDER_REVIEW  VALIDATED  REJECTED }
-```
+**Rejeté (option A)** : renommer l'enum `VALIDATED → APPROVED` — migration + retouches e2e pour
+un pur nom, contre « seul le code qui tourne fait foi ».
 
-Le corpus OB-04 passait uniquement parce que son **faux** moteur KYC posait `status = "APPROVED"`.
-En exécution réelle, aucun KYC n'atteint `APPROVED` → l'ouverture serait restée **définitivement
-bloquée**. Écart faux-KYC / enum réelle (relevé à l'intégration du bloc 19).
-
-## Décision (option B)
-
-Le statut terminal requis par R119 est **`VALIDATED`**, valeur réelle de l'enum. La mention
-« KYC APPROVED avant ouverture de compte » de MOD-01 (Spécifications Produit §3.1) est
-**historique** sur ce point et ne fait pas foi contre l'enum du moteur.
-
-## Application
-
-- `apps/api/src/modules/onboarding/onboarding.service.ts` : comparaison `kyc.status !== "VALIDATED"`.
-- `onboarding.wiring.spec.ts` (OB-04) : le faux KYC répond `"VALIDATED"` ; l'assertion de refus
-  reste sur le statut réel (`IN_PROGRESS`) — le test est **renforcé**, pas affaibli.
-- `catalogue-amendement-R117-R120-onboarding.md` : R119 et scénario OB-04 alignés sur `VALIDATED`.
-
-Corpus `test:rules` : 193/193 conservés.
-
-> Note d'intégration : le zip « re-fourni » n'était pas joint à la demande de correction ; ce
-> fichier et la version corrigée de l'amendement ont donc été **rédigés d'après la ratification
-> d'Ali** (message du 19.07.2026), non copiés. À remplacer par la version canonique si elle diffère.
+**Propagé (préparé, prouvé 193/193)** : onboarding.service + OB-04 + amendement (note d'erratum)
++ démo (titre/expl/champ R119). Le doc MOD-01 est historique sur ce point. À reporter sur la
+branche après le mot d'Ali ; l'erratum se fold au prochain re-cut Word.
