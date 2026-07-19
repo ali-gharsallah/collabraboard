@@ -436,3 +436,28 @@ model Onboarding {
   @@index([tenantId, etape])
   @@map("onboardings")
 }
+
+model IaPrerevue {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  kycFileId      String   @map("kyc_file_id") @db.Uuid
+  snapshotSha256 String   @map("snapshot_sha256") @db.Char(64)
+  modele         String
+  promptVersion  Int      @map("prompt_version")
+  points         Json
+  latenceMs      Int      @map("latence_ms")
+  at             DateTime
+  @@index([tenantId, kycFileId])
+  @@map("ia_prerevues")
+}
+
+model IaPromptVersion {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  numero   Int
+  texte    String
+  par      String
+  at       DateTime
+  @@unique([tenantId, numero])
+  @@map("ia_prompt_versions")
+}

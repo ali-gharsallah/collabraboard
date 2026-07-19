@@ -14,7 +14,11 @@ type Ctx = { tenantId: string; userId: string; role: string };
 
 @Injectable()
 export class KycService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  // R123 : hook OPTIONNEL de pré-revue IA (bloc 20). Absent en tests unitaires (construction à
+  // 2 args) et si le tenant n'exige rien ; câblé en app via PreRevueModule (useFactory). Le
+  // service PreRevue CONSTATE, le moteur KYC BLOQUE (pattern R110).
+  constructor(private prisma: PrismaService, private audit: AuditService,
+              private prerevue?: { verifierTraitement(ctx: Ctx, kycFileId: string): Promise<{ bloquant: boolean; ouverts: any[] }> }) {}
 
   // ── Création : code atomique + scoring tracé + gabarit + visas ──
   async create(ctx: Ctx, dto: { clientId: string; legalStructure: string;
@@ -97,6 +101,13 @@ export class KycService {
       && v.requiredRole === ctx.role && v.status === "PENDING");
     if (!visa) throw new ForbiddenException(
       `Aucun visa ${sectionCode} en attente pour le rôle ${ctx.role}`);
+    // R123 : si le tenant l'exige, aucun visa tant qu'un point de pré-revue IA reste non traité.
+    if (this.prerevue) {
+      const g = await this.prerevue.verifierTraitement(ctx, kyc.id);
+      if (g.bloquant)
+        throw new ConflictException(
+          `[R123] Pré-revue IA : ${g.ouverts.length} point(s) non traité(s) — visa bloqué (le tenant exige le traitement)`);
+    }
     // R13 : four-eyes au niveau section — le signataire ne doit pas avoir contribué à CETTE section.
     const secContribs = await this.prisma.kycQuestionHistory.findMany({
       where: { question: { section: { kycFileId: kyc.id, code: sectionCode } } },

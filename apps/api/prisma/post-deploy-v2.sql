@@ -20,7 +20,8 @@ DO $$ DECLARE t text; BEGIN
     'kyc_question_history', 'audit_log', 'domain_events',
     'screening_runs', 'screening_qualifications',         -- R103 · R101/R102
     'document_versions',                                  -- R109/R111 (GED)
-    'anchor_batches'                                      -- R113 (ancrage — jamais d'UPDATE)
+    'anchor_batches',                                     -- R113 (ancrage — jamais d'UPDATE)
+    'ia_prompt_versions'                                  -- R124 (le prompt est une règle : registre append-only)
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -66,7 +67,8 @@ DO $$ DECLARE t text; BEGIN
     'screening_runs', 'screening_hits', 'screening_qualifications',
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
-    'onboardings'                                         -- R117→R120 (bloc 19, tenantée)
+    'onboardings',                                        -- R117→R120 (bloc 19, tenantée)
+    'ia_prerevues', 'ia_prompt_versions'                  -- R121→R124 (bloc 20, tenantées)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

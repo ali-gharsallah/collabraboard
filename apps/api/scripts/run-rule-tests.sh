@@ -20,6 +20,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/ged/ged.service.ts src/modules/ged/ged.wiring.spec.ts \
   src/modules/ged/ged-avance.service.ts src/modules/ged/ged-avance.wiring.spec.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
+  src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -46,3 +47,4 @@ echo "── Câblage PMS (PF-01..06, R105→R108) ──"; run pms.wiring.spec.
 echo "── Câblage GED (GD-01..06, R109→R112) ──"; run ged.wiring.spec.js
 echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-avance.wiring.spec.js
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
+echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
