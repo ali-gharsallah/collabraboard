@@ -8,6 +8,6 @@ import { QualifiedVisaService } from "./rules/qualified-visa.service"; // R86
 @Module({
   controllers: [KycController],
   providers: [KycService, PrismaService, AuditService, KycLockService, QualifiedVisaService],
-  exports: [KycLockService, QualifiedVisaService],
+  exports: [KycService, KycLockService, QualifiedVisaService],   // KycService exporté pour OnboardingModule (R118)
 })
 export class KycModule {}

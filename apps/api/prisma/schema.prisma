@@ -420,3 +420,19 @@ model AnchorBatch {
   @@index([tenantId])
   @@map("anchor_batches")
 }
+
+model Onboarding {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  prospectNom   String   @map("prospect_nom")
+  rmId          String?  @map("rm_id")
+  etape         String   @default("PROSPECT")
+  etapeDepuis   DateTime @map("etape_depuis")
+  slaSignale    Boolean  @default(false) @map("sla_signale")
+  kycFileId     String?  @map("kyc_file_id") @db.Uuid
+  motifTerminal String?  @map("motif_terminal")
+  terminePar    String?  @map("termine_par")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([tenantId, etape])
+  @@map("onboardings")
+}

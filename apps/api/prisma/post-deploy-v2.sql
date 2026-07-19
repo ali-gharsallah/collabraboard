@@ -65,7 +65,8 @@ DO $$ DECLARE t text; BEGIN
     'kyc_lock_requests', 'documents', 'domain_events', 'audit_log',
     'screening_runs', 'screening_hits', 'screening_qualifications',
     'persons', 'person_roles', 'person_relations',
-    'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches'
+    'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
+    'onboardings'                                         -- R117→R120 (bloc 19, tenantée)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

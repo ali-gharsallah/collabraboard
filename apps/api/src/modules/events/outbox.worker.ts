@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { GoldenRecordProjector } from "./golden-record.projector";
+import { OnboardingService } from "../onboarding/onboarding.service";
 
 // Poll transactionnel FOR UPDATE SKIP LOCKED : N workers en parallèle sans doublon.
 // Livraison webhook signée HMAC ; retry exponentiel via published_at nul.
@@ -13,9 +14,24 @@ import { GoldenRecordProjector } from "./golden-record.projector";
 @Injectable()
 export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
-  constructor(private prisma: PrismaService, private goldenRecord: GoldenRecordProjector) {}
-  onModuleInit() { this.timer = setInterval(() => this.tick().catch(() => {}), 2000); }
-  onModuleDestroy() { clearInterval(this.timer); }
+  private slaTimer?: NodeJS.Timeout;
+  constructor(private prisma: PrismaService, private goldenRecord: GoldenRecordProjector,
+              private onboarding: OnboardingService) {}
+  onModuleInit() {
+    this.timer = setInterval(() => this.tick().catch(() => {}), 2000);
+    // R120 : sweep SLA onboarding — alerte une fois, n'abandonne jamais. Cadence jour → 60 s suffit.
+    this.slaTimer = setInterval(() => this.slaSweep().catch(() => {}), 60000);
+  }
+  onModuleDestroy() { clearInterval(this.timer); clearInterval(this.slaTimer); }
+
+  // Le scheduler existant porte aussi le tick SLA (R120) : itère les tenants et délègue à
+  // OnboardingService.tickSla. Best-effort, hors de la transaction du drain outbox.
+  async slaSweep() {
+    const tenants: any[] = await this.prisma.tenant.findMany({ select: { id: true } });
+    for (const t of tenants)
+      await this.onboarding.tickSla({ tenantId: t.id, userId: "system", role: "SYSTEM" }, new Date())
+        .catch(() => {});
+  }
 
   async tick() {
     await this.prisma.$transaction(async (tx) => {

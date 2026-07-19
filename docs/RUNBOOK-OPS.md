@@ -23,14 +23,14 @@ probante sinon), `MFA_ENC_KEY` (chiffrement mfa_secret). L'appli refuse de déma
 |---|---|---|
 | 1. Lint + types | `npm run lint && npm run typecheck` | 0 erreur (TS5101 bénin) |
 | 2. Unitaires | — | **Couverte par `test:rules`** — pas de suite jest unitaire dans le dépôt. Step retiré du CI (`jest` sans config/spec ⇒ « No tests found ») ; à réintroduire **bloquant** le jour où un harnais jest unitaire existe. |
-| 3. Règles + IAM + corpus session | `npm run test:rules` | **184 verts** (GR/SC-wiring/JV/SB/P + câblages PMS/GED/GED-avancée inclus depuis le 19.07 ; cf. `docs/verify-run-2026-07-19.txt`) |
+| 3. Règles + IAM + corpus session | `npm run test:rules` | **193 verts** (GR/SC-wiring/JV/SB/P + PMS/GED/GED-avancée + Onboarding OB-01..06 R117→R120 depuis le bloc 19 ; cf. `docs/verify-run-2026-07-19.txt`) |
 | 4. e2e Postgres réel | `npm run test:e2e:setup && npm run test:e2e` | 6/6 — exige le patch `kyc.controller` (guard `validate` retiré, sinon 403≠409) |
 | 5. Moteurs Python | `python3 services/workflow-engine-py/run_tests.py` · `…/run_tests_sql.py` · `…/cpsi-server-py/run_tests.py` | 19/19 · SQL vert · **18/18** (⚠ faux-vert CPSI : ajouter `sys.exit(0 if total_ok==len(mods) else 1)` — la CI a une garde grep en attendant) |
 | 6. Démo | `npm run test:smoke` (73 écrans) + onglet Screening → « 🧪 Preuves moteur » → Tout rejouer | 73/73 · 16/16 verts |
 
 `verify:all` enchaîne 1→4. La CI (`.github/workflows/ci.yml`) rejoue le tout, `prisma:post`
 inclus — les triggers R48 sont enfin exercés en continu. **Bloquant** en CI : `prisma:post`,
-`test:rules` (184), e2e (6/6), recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18).
+`test:rules` (193), e2e (6/6), recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18).
 **Advisory** (outillage encore absent du dépôt) : étape 1 lint/typecheck et étape 6 démo Playwright.
 
 ## 3. Déploiement — ordre impératif

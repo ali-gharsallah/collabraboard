@@ -4,8 +4,9 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { ClientsModule } from "./modules/clients/clients.module";
 import { KycModule } from "./modules/kyc/kyc.module";
 import { EventsModule } from "./modules/events/events.module";
+import { OnboardingModule } from "./modules/onboarding/onboarding.module";
 
-@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule] })
+@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }
