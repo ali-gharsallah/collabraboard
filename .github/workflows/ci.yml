@@ -64,12 +64,11 @@ jobs:
           pnpm exec prisma db push --skip-generate
           pnpm run prisma:post
 
-      # ── RUNBOOK §2 · 1 — Lint + types ────────────────────────────────────────
-      # continue-on-error : ni config eslint ni tsconfig ne sont dans le dépôt fusionné
-      # (écart signalé). À rendre bloquant une fois ces configs ajoutées.
-      - name: "1 · Lint + typecheck (advisory)"
+      # ── RUNBOOK §2 · 1 — Lint + types (BLOQUANT) ─────────────────────────────
+      # Promu bloquant (chantier B) : eslint.config.mjs (racine) + apps/api/tsconfig.json
+      # ajoutés ; « vert » redevient une garantie ici aussi.
+      - name: "1 · Lint + typecheck"
         working-directory: apps/api
-        continue-on-error: true
         run: pnpm run lint && pnpm run typecheck
 
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
@@ -78,8 +77,8 @@ jobs:
       # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
       # harnais jest unitaire est ajouté.
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (184 verts) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 184/184)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (193 verts) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 193/193)"
         working-directory: apps/api
         run: pnpm run test:rules
 
@@ -114,9 +113,6 @@ jobs:
           echo "$out" | grep -q "### 18/18 suites vertes ###"
 
       # ── RUNBOOK §2 · 6 — Démo (73 écrans) ────────────────────────────────────
-      # continue-on-error : nécessite Playwright + navigateurs, non provisionnés ici.
-      - name: "6 · Démo smoke Playwright (advisory)"
-        continue-on-error: true
-        run: |
-          pnpm dlx playwright install --with-deps chromium
-          pnpm run test:smoke
+      # Step RETIRÉ (chantier B) : la démo exige Playwright + navigateurs, hors scope CI
+      # actuel. Même doctrine que test:unit : un step non exécutable ne traîne pas en
+      # advisory. À réintroduire — bloquant — quand l'environnement navigateurs sera provisionné.
