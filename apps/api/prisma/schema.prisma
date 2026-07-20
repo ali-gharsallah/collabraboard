@@ -546,3 +546,22 @@ model GedIngestEntry {
   @@index([tenantId, documentId])
   @@map("ged_ingest_entries")
 }
+
+model TxVerdict {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  clientId    String   @map("client_id") @db.Uuid
+  txRef       String   @map("tx_ref")
+  type        String
+  montantChf  Float    @map("montant_chf")
+  verdict     String
+  motif       String?
+  gardes      Json
+  at          DateTime
+  slaSignale  Boolean  @default(false) @map("sla_signale")
+  decidePar   String?  @map("decide_par")
+  revueMotif  String?  @map("revue_motif")
+  @@index([tenantId, clientId, type, at])
+  @@index([tenantId, verdict])
+  @@map("tx_verdicts")
+}
