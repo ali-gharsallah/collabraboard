@@ -597,3 +597,33 @@ model PersonneLien {
   @@index([tenantId, cibleType, cibleId])
   @@map("personne_liens")
 }
+
+model Annotation {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  versionId  String   @map("version_id") @db.Uuid
+  type       String                                       // SURLIGNAGE | NOTE | TAMPON
+  ancre      Json                                         // R156 — référence de position, jamais le contenu original
+  contenu    String
+  cercle     String                                       // R157 — PRIVEE | DOSSIER
+  auteur     String
+  at         DateTime
+  @@index([tenantId, documentId])
+  @@map("annotations")
+}
+
+model CaviardageDerive {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  versionId  String   @map("version_id") @db.Uuid
+  shaSource  String   @map("sha_source") @db.Char(64)     // R158 — chaînage prouvable à l'original
+  shaDerive  String   @map("sha_derive") @db.Char(64)
+  zones      Json                                         // [{zone, motif}] — pas de zone muette
+  statut     String                                       // CAVIARDE
+  par        String
+  at         DateTime
+  @@index([tenantId, documentId])
+  @@map("caviardage_derives")
+}
