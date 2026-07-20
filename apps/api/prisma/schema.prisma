@@ -413,7 +413,7 @@ model DocumentVersion {
   ocrDerives    Json    @default("[]") @map("ocr_derives")       // R138 : dérivés OCR ajoutés (jamais de remplacement)
   expirationSignalee Boolean? @map("expiration_signalee")        // R115 : signalement au niveau version (optionnel)
   storageKey         String?   @map("storage_key")           // R144 — clé de coffre, jamais le contenu
-  @@unique([documentId, numero])
+  @@unique([tenantId, documentId, numero])                 // canon : tenant STRUCTUREL partout (défense en profondeur + index tenant-scopé)
   @@index([tenantId, documentId])
   @@map("document_versions")
 }
