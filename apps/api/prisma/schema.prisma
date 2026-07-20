@@ -661,3 +661,29 @@ model GedVue {
   @@unique([tenantId, code])
   @@map("ged_vues")
 }
+
+model CoreSyncLot {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  source   String                                        // R168 — système + version déclarés
+  type     String
+  nbLignes Int      @map("nb_lignes")
+  shaLot   String   @map("sha_lot") @db.Char(64)         // R168 — le lot est signé, rejouable
+  at       DateTime
+  par      String
+  @@index([tenantId, type])
+  @@map("core_sync_lots")
+}
+
+model CoreQuarantaine {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  lotId     String    @map("lot_id") @db.Uuid
+  ligne     Json                                          // R169 — jamais de rattachement deviné
+  motif     String
+  statut    String                                        // EN_ATTENTE | RESOLUE
+  resoluPar String?   @map("resolu_par")
+  resoluAt  DateTime? @map("resolu_at")
+  @@index([tenantId, statut])
+  @@map("core_quarantaines")
+}

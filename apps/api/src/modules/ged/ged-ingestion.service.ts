@@ -101,10 +101,14 @@ export class GedIngestionService {
       if (!typ || !(typ.rolesAutorises ?? []).includes(ctx.role))
         throw new ForbiddenException(
           `R112 : classement vers ${dto.typeCode} refusé — le classeur doit être autorisé sur le type cible`);
+      // R170 — la rétention naît au classement : le type porte sa durée (retentionAnnees, R-Q).
+      // Sans durée : pas d'échéance — GD-11 ne proposera jamais. L'aval est inchangé.
+      const retentionUntil = typ.retentionAnnees
+        ? new Date(Date.now() + typ.retentionAnnees * 365.25 * 86400000).toISOString() : null;
       await tx.document.update({ where: { id: d.id },
-        data: { typeCode: dto.typeCode, clientId: dto.clientId, statut: "ACTIF" } });
+        data: { typeCode: dto.typeCode, clientId: dto.clientId, statut: "ACTIF", retentionUntil } });
       await this.emit(tx, ctx.tenantId, "ged.classement", d.id,
-        { typeCode: dto.typeCode, clientId: dto.clientId, par: ctx.userId });
+        { typeCode: dto.typeCode, clientId: dto.clientId, par: ctx.userId, retentionUntil });
       await this.audit.log(ctx.tenantId, ctx.userId, "GED_CLASSIFY", `${d.id}:${dto.typeCode}`);
     });
   }
