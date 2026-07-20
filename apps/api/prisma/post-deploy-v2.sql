@@ -110,7 +110,8 @@ DO $$ DECLARE t text; BEGIN
     'tx_verdicts',                                        -- R140→R143 (bloc 25, portail transactionnel)
     'search_entries',                                     -- R148→R151 (bloc 27, la recherche)
     'personne_liens',                                     -- R152→R155 (bloc 28, personnes liées)
-    'annotations', 'caviardage_derives'                   -- R156→R159 (bloc 29, annotations & caviardage)
+    'annotations', 'caviardage_derives',                  -- R156→R159 (bloc 29, annotations & caviardage)
+    'ia_productions'                                      -- R160→R163 (bloc 31, IA au service du dossier)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

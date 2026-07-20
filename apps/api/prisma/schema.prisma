@@ -627,3 +627,25 @@ model CaviardageDerive {
   @@index([tenantId, documentId])
   @@map("caviardage_derives")
 }
+
+model IaProduction {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  type          String                                    // REPONSE | PROPOSITION
+  cible         String?                                   // clientId ou documentId
+  question      String?
+  modele        String                                    // R161 — le modèle est signé
+  versionModele String    @map("version_modele")
+  shaContexte   String    @map("sha_contexte") @db.Char(64)
+  shaSortie     String    @map("sha_sortie") @db.Char(64)
+  sortie        String
+  confiance     Float?
+  par           String
+  at            DateTime
+  decision      String?                                   // R162 — ACCEPTEE | REJETEE (acte humain)
+  decidePar     String?   @map("decide_par")
+  decideAt      DateTime? @map("decide_at")
+  decisionMotif String?   @map("decision_motif")
+  @@index([tenantId, cible])
+  @@map("ia_productions")
+}
