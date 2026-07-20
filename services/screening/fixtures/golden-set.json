@@ -1,0 +1,1293 @@
+{
+ "_avertissement": "DONNÉES SYNTHÉTIQUES — aucune personne réelle, aucune donnée sous licence. Dev/test uniquement.",
+ "version": "2026-07-15",
+ "graine": 20260715,
+ "liste": "sanctions-synth.json@2026-07-15",
+ "nb": 127,
+ "repartition": {
+  "exact": 15,
+  "alias_connu": 12,
+  "translitteration_hors_liste": 20,
+  "ordre_nom": 12,
+  "typo": 12,
+  "diacritiques": 8,
+  "homonyme": 18,
+  "proche_non_liste": 8,
+  "entite_forme": 12,
+  "client_ordinaire": 10
+ },
+ "doivent_matcher": 91,
+ "doivent_pas_matcher": 36,
+ "cas": [
+  {
+   "id": "G-EXACT-SYN-SAN-P-100000",
+   "requete": {
+    "nom": "Muhammad Haddad",
+    "dob": "1980-05-22"
+   },
+   "attendu": "SYN-SAN-P-100000",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100001",
+   "requete": {
+    "nom": "Huang Min",
+    "dob": "1990-06-03"
+   },
+   "attendu": "SYN-SAN-P-100001",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100002",
+   "requete": {
+    "nom": "Yang Fang",
+    "dob": "1966-07-04"
+   },
+   "attendu": "SYN-SAN-P-100002",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100003",
+   "requete": {
+    "nom": "Zhao Wei",
+    "dob": "1974"
+   },
+   "attendu": "SYN-SAN-P-100003",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100004",
+   "requete": {
+    "nom": "Katarzyna Müller",
+    "dob": "1979-09-19"
+   },
+   "attendu": "SYN-SAN-P-100004",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100005",
+   "requete": {
+    "nom": "François Müller",
+    "dob": "1986"
+   },
+   "attendu": "SYN-SAN-P-100005",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100006",
+   "requete": {
+    "nom": "Yusuf El-Masri",
+    "dob": "1956-03-19"
+   },
+   "attendu": "SYN-SAN-P-100006",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100007",
+   "requete": {
+    "nom": "Mikhail Fedorov",
+    "dob": "1968-07-06"
+   },
+   "attendu": "SYN-SAN-P-100007",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100008",
+   "requete": {
+    "nom": "Aleksandr Morozov",
+    "dob": "1968-06-24"
+   },
+   "attendu": "SYN-SAN-P-100008",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100009",
+   "requete": {
+    "nom": "Mikhail Morozov",
+    "dob": "1988-05-22"
+   },
+   "attendu": "SYN-SAN-P-100009",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100010",
+   "requete": {
+    "nom": "Tariq Al-Habib",
+    "dob": "1988-06-24"
+   },
+   "attendu": "SYN-SAN-P-100010",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100011",
+   "requete": {
+    "nom": "Abdullah Al-Habib",
+    "dob": "1971-06-14"
+   },
+   "attendu": "SYN-SAN-P-100011",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100013",
+   "requete": {
+    "nom": "Nikolai Morozov",
+    "dob": "1971-02-28"
+   },
+   "attendu": "SYN-SAN-P-100013",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100014",
+   "requete": {
+    "nom": "Faisal Al-Jaber",
+    "dob": "1975-11-12"
+   },
+   "attendu": "SYN-SAN-P-100014",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-EXACT-SYN-SAN-P-100015",
+   "requete": {
+    "nom": "Hassan Haddad",
+    "dob": "1967-11-07"
+   },
+   "attendu": "SYN-SAN-P-100015",
+   "categorie": "exact",
+   "pourquoi": "nom et date identiques"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100000",
+   "requete": {
+    "nom": "Mohammed Haddad",
+    "dob": "1980-05-22"
+   },
+   "attendu": "SYN-SAN-P-100000",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100004",
+   "requete": {
+    "nom": "Katarzyna Mueller",
+    "dob": "1979-09-19"
+   },
+   "attendu": "SYN-SAN-P-100004",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100005",
+   "requete": {
+    "nom": "François Mueller",
+    "dob": "1986"
+   },
+   "attendu": "SYN-SAN-P-100005",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100006",
+   "requete": {
+    "nom": "Yousef El-Masri",
+    "dob": "1956-03-19"
+   },
+   "attendu": "SYN-SAN-P-100006",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100007",
+   "requete": {
+    "nom": "Michail Fedorov",
+    "dob": "1968-07-06"
+   },
+   "attendu": "SYN-SAN-P-100007",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100008",
+   "requete": {
+    "nom": "Alexander Morozov",
+    "dob": "1968-06-24"
+   },
+   "attendu": "SYN-SAN-P-100008",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100009",
+   "requete": {
+    "nom": "Michail Morozov",
+    "dob": "1988-05-22"
+   },
+   "attendu": "SYN-SAN-P-100009",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100018",
+   "requete": {
+    "nom": "Omar El Sayed",
+    "dob": "1978"
+   },
+   "attendu": "SYN-SAN-P-100018",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100029",
+   "requete": {
+    "nom": "Alexander Sokolov",
+    "dob": "1973-12-15"
+   },
+   "attendu": "SYN-SAN-P-100029",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100036",
+   "requete": {
+    "nom": "Ebrahim Al-Habib",
+    "dob": "1970-01-28"
+   },
+   "attendu": "SYN-SAN-P-100036",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100044",
+   "requete": {
+    "nom": "Evgeny Kuznetsov",
+    "dob": "1981-06-28"
+   },
+   "attendu": "SYN-SAN-P-100044",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-ALIAS-SYN-SAN-P-100046",
+   "requete": {
+    "nom": "Dmitry Petrov",
+    "dob": "1978-07-25"
+   },
+   "attendu": "SYN-SAN-P-100046",
+   "categorie": "alias_connu",
+   "pourquoi": "alias listé — le moteur n'a qu'à le lire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100000",
+   "requete": {
+    "nom": "Mohamad Haddad",
+    "dob": "1980-05-22"
+   },
+   "attendu": "SYN-SAN-P-100000",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Mohamad » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100006",
+   "requete": {
+    "nom": "Yusef El-Masri",
+    "dob": "1956-03-19"
+   },
+   "attendu": "SYN-SAN-P-100006",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Yusef » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100007",
+   "requete": {
+    "nom": "Mihail Fedorov",
+    "dob": "1968-07-06"
+   },
+   "attendu": "SYN-SAN-P-100007",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Mihail » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100008",
+   "requete": {
+    "nom": "Alexandre Morozov",
+    "dob": "1968-06-24"
+   },
+   "attendu": "SYN-SAN-P-100008",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Alexandre » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100009",
+   "requete": {
+    "nom": "Mihail Morozov",
+    "dob": "1988-05-22"
+   },
+   "attendu": "SYN-SAN-P-100009",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Mihail » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100010",
+   "requete": {
+    "nom": "Tarek Al-Habib",
+    "dob": "1988-06-24"
+   },
+   "attendu": "SYN-SAN-P-100010",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Tarek » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100011",
+   "requete": {
+    "nom": "Abdallah Al-Habib",
+    "dob": "1971-06-14"
+   },
+   "attendu": "SYN-SAN-P-100011",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Abdallah » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100013",
+   "requete": {
+    "nom": "Nikolay Morozov",
+    "dob": "1971-02-28"
+   },
+   "attendu": "SYN-SAN-P-100013",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Nikolay » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100014",
+   "requete": {
+    "nom": "Faysal Al-Jaber",
+    "dob": "1975-11-12"
+   },
+   "attendu": "SYN-SAN-P-100014",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Faysal » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100015",
+   "requete": {
+    "nom": "Hasan Haddad",
+    "dob": "1967-11-07"
+   },
+   "attendu": "SYN-SAN-P-100015",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Hasan » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100017",
+   "requete": {
+    "nom": "Wladimir Fedorov",
+    "dob": "1986-07-21"
+   },
+   "attendu": "SYN-SAN-P-100017",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Wladimir » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100018",
+   "requete": {
+    "nom": "Umar Al-Sayed",
+    "dob": "1978"
+   },
+   "attendu": "SYN-SAN-P-100018",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Umar » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100025",
+   "requete": {
+    "nom": "Victor Orlov",
+    "dob": "1951-09-25"
+   },
+   "attendu": "SYN-SAN-P-100025",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Victor » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100029",
+   "requete": {
+    "nom": "Alexandre Sokolov",
+    "dob": "1973-12-15"
+   },
+   "attendu": "SYN-SAN-P-100029",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Alexandre » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100033",
+   "requete": {
+    "nom": "Victor Kuznetsov",
+    "dob": "1953"
+   },
+   "attendu": "SYN-SAN-P-100033",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Victor » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100036",
+   "requete": {
+    "nom": "Ibraheem Al-Habib",
+    "dob": "1970-01-28"
+   },
+   "attendu": "SYN-SAN-P-100036",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Ibraheem » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100038",
+   "requete": {
+    "nom": "Victor Volkov",
+    "dob": "1987-11-25"
+   },
+   "attendu": "SYN-SAN-P-100038",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Victor » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100044",
+   "requete": {
+    "nom": "Yevgeny Kuznetsov",
+    "dob": "1981-06-28"
+   },
+   "attendu": "SYN-SAN-P-100044",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Yevgeny » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100045",
+   "requete": {
+    "nom": "Victor Novikov",
+    "dob": "1956-05-26"
+   },
+   "attendu": "SYN-SAN-P-100045",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Victor » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-TRANSLIT-SYN-SAN-P-100046",
+   "requete": {
+    "nom": "Dmitrii Petrov",
+    "dob": "1978-07-25"
+   },
+   "attendu": "SYN-SAN-P-100046",
+   "categorie": "translitteration_hors_liste",
+   "pourquoi": "« Dmitrii » n'est dans aucun alias : à déduire"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100016",
+   "requete": {
+    "nom": "Yang Wei",
+    "dob": "1986"
+   },
+   "attendu": "SYN-SAN-P-100016",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100017",
+   "requete": {
+    "nom": "Vladimir Fedorov",
+    "dob": "1986-07-21"
+   },
+   "attendu": "SYN-SAN-P-100017",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100018",
+   "requete": {
+    "nom": "Omar Al-Sayed",
+    "dob": "1978"
+   },
+   "attendu": "SYN-SAN-P-100018",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100019",
+   "requete": {
+    "nom": "Ingrid de la Cruz",
+    "dob": "1967-04-21"
+   },
+   "attendu": "SYN-SAN-P-100019",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100020",
+   "requete": {
+    "nom": "Igor Petrov",
+    "dob": "1974-11-05"
+   },
+   "attendu": "SYN-SAN-P-100020",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100021",
+   "requete": {
+    "nom": "Liu Xiu",
+    "dob": "1979"
+   },
+   "attendu": "SYN-SAN-P-100021",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100022",
+   "requete": {
+    "nom": "Yang Tao",
+    "dob": "1962-12-07"
+   },
+   "attendu": "SYN-SAN-P-100022",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100023",
+   "requete": {
+    "nom": "Wu Wei",
+    "dob": "1966-09-25"
+   },
+   "attendu": "SYN-SAN-P-100023",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100024",
+   "requete": {
+    "nom": "Katarzyna Andersson",
+    "dob": "1963"
+   },
+   "attendu": "SYN-SAN-P-100024",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100025",
+   "requete": {
+    "nom": "Viktor Orlov",
+    "dob": "1951-09-25"
+   },
+   "attendu": "SYN-SAN-P-100025",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100026",
+   "requete": {
+    "nom": "Huang Lei",
+    "dob": "1955-05-10"
+   },
+   "attendu": "SYN-SAN-P-100026",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-ORDRE-SYN-SAN-P-100028",
+   "requete": {
+    "nom": "Liu Tao",
+    "dob": "1979-10-22"
+   },
+   "attendu": "SYN-SAN-P-100028",
+   "categorie": "ordre_nom",
+   "pourquoi": "nom et prénom inversés"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100029",
+   "requete": {
+    "nom": "Aleksand Sokolov",
+    "dob": "1973-12-15"
+   },
+   "attendu": "SYN-SAN-P-100029",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100030",
+   "requete": {
+    "nom": "ChenJing",
+    "dob": "1959"
+   },
+   "attendu": "SYN-SAN-P-100030",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100031",
+   "requete": {
+    "nom": "ChenTao",
+    "dob": "1958-07-14"
+   },
+   "attendu": "SYN-SAN-P-100031",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100032",
+   "requete": {
+    "nom": "Françoi Rossi",
+    "dob": "1977-09-16"
+   },
+   "attendu": "SYN-SAN-P-100032",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100033",
+   "requete": {
+    "nom": "Viktor Kznetsov",
+    "dob": "1953"
+   },
+   "attendu": "SYN-SAN-P-100033",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100034",
+   "requete": {
+    "nom": "ZhouXiu",
+    "dob": "1980"
+   },
+   "attendu": "SYN-SAN-P-100034",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100035",
+   "requete": {
+    "nom": "ZhouMin",
+    "dob": "1962-02-07"
+   },
+   "attendu": "SYN-SAN-P-100035",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100036",
+   "requete": {
+    "nom": "Ibrahim l-Habib",
+    "dob": "1970-01-28"
+   },
+   "attendu": "SYN-SAN-P-100036",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100037",
+   "requete": {
+    "nom": "Ingrid OSullivan",
+    "dob": "1950-03-12"
+   },
+   "attendu": "SYN-SAN-P-100037",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100038",
+   "requete": {
+    "nom": "ViktorVolkov",
+    "dob": "1987-11-25"
+   },
+   "attendu": "SYN-SAN-P-100038",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100039",
+   "requete": {
+    "nom": "ZhaoLing",
+    "dob": "1967-09-24"
+   },
+   "attendu": "SYN-SAN-P-100039",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-TYPO-SYN-SAN-P-100040",
+   "requete": {
+    "nom": "Zhan Xiu",
+    "dob": "1991-07-06"
+   },
+   "attendu": "SYN-SAN-P-100040",
+   "categorie": "typo",
+   "pourquoi": "une lettre manquante"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100004",
+   "requete": {
+    "nom": "Katarzyna Muller",
+    "dob": "1979-09-19"
+   },
+   "attendu": "SYN-SAN-P-100004",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100005",
+   "requete": {
+    "nom": "Francois Muller",
+    "dob": "1986"
+   },
+   "attendu": "SYN-SAN-P-100005",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100047",
+   "requete": {
+    "nom": "Alessandro Muller",
+    "dob": "1956-10-19"
+   },
+   "attendu": "SYN-SAN-P-100047",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100050",
+   "requete": {
+    "nom": "Katarzyna Bjornsson",
+    "dob": "1982-04-05"
+   },
+   "attendu": "SYN-SAN-P-100050",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100085",
+   "requete": {
+    "nom": "Ingrid Muller",
+    "dob": "1977-02-05"
+   },
+   "attendu": "SYN-SAN-P-100085",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100105",
+   "requete": {
+    "nom": "Pierre Bjornsson",
+    "dob": "1949-09-06"
+   },
+   "attendu": "SYN-SAN-P-100105",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100129",
+   "requete": {
+    "nom": "Henrik Bjornsson",
+    "dob": "1968-06-10"
+   },
+   "attendu": "SYN-SAN-P-100129",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-DIACRIT-SYN-SAN-P-100141",
+   "requete": {
+    "nom": "Miguel Muller",
+    "dob": "1957-09-21"
+   },
+   "attendu": "SYN-SAN-P-100141",
+   "categorie": "diacritiques",
+   "pourquoi": "accents retirés"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100000",
+   "requete": {
+    "nom": "Muhammad Haddad",
+    "dob": "2002-05-22"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100001",
+   "requete": {
+    "nom": "Huang Min",
+    "dob": "2012-06-03"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100002",
+   "requete": {
+    "nom": "Yang Fang",
+    "dob": "1988-07-04"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100003",
+   "requete": {
+    "nom": "Zhao Wei",
+    "dob": "1996"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100004",
+   "requete": {
+    "nom": "Katarzyna Müller",
+    "dob": "2001-09-19"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100005",
+   "requete": {
+    "nom": "François Müller",
+    "dob": "2008"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100006",
+   "requete": {
+    "nom": "Yusuf El-Masri",
+    "dob": "1978-03-19"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100007",
+   "requete": {
+    "nom": "Mikhail Fedorov",
+    "dob": "1990-07-06"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100008",
+   "requete": {
+    "nom": "Aleksandr Morozov",
+    "dob": "1990-06-24"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100009",
+   "requete": {
+    "nom": "Mikhail Morozov",
+    "dob": "2010-05-22"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100010",
+   "requete": {
+    "nom": "Tariq Al-Habib",
+    "dob": "2010-06-24"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100011",
+   "requete": {
+    "nom": "Abdullah Al-Habib",
+    "dob": "1993-06-14"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100013",
+   "requete": {
+    "nom": "Nikolai Morozov",
+    "dob": "1993-02-28"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100014",
+   "requete": {
+    "nom": "Faisal Al-Jaber",
+    "dob": "1997-11-12"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100015",
+   "requete": {
+    "nom": "Hassan Haddad",
+    "dob": "1989-11-07"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100016",
+   "requete": {
+    "nom": "Yang Wei",
+    "dob": "2008"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100017",
+   "requete": {
+    "nom": "Vladimir Fedorov",
+    "dob": "2008-07-21"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-HOMONYME-SYN-SAN-P-100018",
+   "requete": {
+    "nom": "Omar Al-Sayed",
+    "dob": "2000"
+   },
+   "attendu": null,
+   "categorie": "homonyme",
+   "pourquoi": "même nom, date incompatible → faux positif à écarter"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100042",
+   "requete": {
+    "nom": "Yan Wu",
+    "dob": "1988-04-01"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100043",
+   "requete": {
+    "nom": "Ingrid O'Sullivan",
+    "dob": "1952-05-21"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100044",
+   "requete": {
+    "nom": "Viktor Kuznetsov",
+    "dob": "1960-04-10"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100045",
+   "requete": {
+    "nom": "Vladimir Novikov",
+    "dob": "1953-05-28"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100046",
+   "requete": {
+    "nom": "Viktor Petrov",
+    "dob": "1971-12-02"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100047",
+   "requete": {
+    "nom": "Pierre Müller",
+    "dob": "1983-09-09"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100048",
+   "requete": {
+    "nom": "Vladimir Morozov",
+    "dob": "1983-09-16"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-PROCHE-SYN-SAN-P-100049",
+   "requete": {
+    "nom": "Omar Bin Zayed",
+    "dob": "1967-09-16"
+   },
+   "attendu": null,
+   "categorie": "proche_non_liste",
+   "pourquoi": "même nom de famille, autre personne"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100420",
+   "requete": {
+    "nom": "Volkov Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100420",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100421",
+   "requete": {
+    "nom": "Morozov Industries SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100421",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100422",
+   "requete": {
+    "nom": "Mansour Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100422",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100423",
+   "requete": {
+    "nom": "Al-Nouri Petroleum SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100423",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100424",
+   "requete": {
+    "nom": "Petrov Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100424",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100425",
+   "requete": {
+    "nom": "Wu Shipping SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100425",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100426",
+   "requete": {
+    "nom": "Mansour Maritime SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100426",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100427",
+   "requete": {
+    "nom": "Lebedev Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100427",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100428",
+   "requete": {
+    "nom": "Chen Capital SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100428",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100429",
+   "requete": {
+    "nom": "Wang Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100429",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100430",
+   "requete": {
+    "nom": "Al-Jaber Trading SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100430",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-ENTITE-SYN-SAN-E-100431",
+   "requete": {
+    "nom": "Fedorov Shipping SA",
+    "est_entite": true
+   },
+   "attendu": "SYN-SAN-E-100431",
+   "categorie": "entite_forme",
+   "pourquoi": "même entité, suffixe juridique différent"
+  },
+  {
+   "id": "G-NEUTRE-0",
+   "requete": {
+    "nom": "Jean Dupont",
+    "dob": "1970-01-10"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-1",
+   "requete": {
+    "nom": "Marie Martin",
+    "dob": "1971-02-11"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-2",
+   "requete": {
+    "nom": "Pierre Weber",
+    "dob": "1972-03-12"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-3",
+   "requete": {
+    "nom": "Anna Meier",
+    "dob": "1973-04-13"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-4",
+   "requete": {
+    "nom": "Luca Rossi",
+    "dob": "1974-05-14"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-5",
+   "requete": {
+    "nom": "Sofia Fontana",
+    "dob": "1975-06-15"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-6",
+   "requete": {
+    "nom": "Thomas Blanc",
+    "dob": "1976-07-16"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-7",
+   "requete": {
+    "nom": "Elena Keller",
+    "dob": "1977-08-17"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-8",
+   "requete": {
+    "nom": "Marc Girard",
+    "dob": "1978-09-18"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  },
+  {
+   "id": "G-NEUTRE-9",
+   "requete": {
+    "nom": "Nadia Baumann",
+    "dob": "1979-01-10"
+   },
+   "attendu": null,
+   "categorie": "client_ordinaire",
+   "pourquoi": "aucun rapport avec la liste"
+  }
+ ]
+}

@@ -1,0 +1,548 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  users     User[]
+  clients   Client[]
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  email        String
+  role         Role
+  name         String
+  passwordHash String  @map("password_hash")           // IAM : scrypt (jamais en clair)
+  active       Boolean @default(true) @map("active")    // IAM : désactivation sans suppression
+  mfaEnabled   Boolean @default(false) @map("mfa_enabled")     // IAM : MFA activée
+  mfaSecret    String? @map("mfa_secret")                        // IAM : secret TOTP base32 (chiffré au repos)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+enum Role {
+  RM
+  ARM
+  CO
+  CO_SR
+  MLRO
+  CF
+  BRM
+  DIR
+  ADMIN
+}
+
+model Client {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  externalRef String?  @map("external_ref")
+  name        String
+  structure   String
+  country     String   @db.Char(2)
+  riskLevel   String   @default("MEDIUM") @map("risk_level")
+  rmUserId    String?  @map("rm_user_id") @db.Uuid
+  corrLang    String   @default("FR") @map("corr_lang") @db.Char(2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  kycs        KycFile[]
+  documents   Document[]
+  @@unique([tenantId, externalRef])
+  @@index([tenantId, createdAt])
+  @@map("clients")
+}
+
+model KycFile {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  clientId      String    @map("client_id") @db.Uuid
+  client        Client    @relation(fields: [clientId], references: [id])
+  code          String
+  year          Int
+  countryCode   String    @map("country_code") @db.Char(2)
+  sequence      Int
+  revision      Int       @default(1)
+  previousKycId String?   @map("previous_kyc_id") @db.Uuid
+  previousKyc   KycFile?  @relation("KycRevisions", fields: [previousKycId], references: [id])
+  revisions     KycFile[] @relation("KycRevisions")
+  workflow      String
+  riskScore     Int       @map("risk_score")
+  riskLevel     String    @map("risk_level")
+  status        KycStatus @default(IN_PROGRESS)
+  createdBy     String    @map("created_by") @db.Uuid
+  validatedBy   String?   @map("validated_by") @db.Uuid
+  validatedAt   DateTime? @map("validated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  sections      KycSection[]
+  visas         KycVisa[]
+  lock          KycLock?
+  handoffPhase  Int          @default(0) @map("handoff_phase")   // R85 : index de phase du passage de main
+  @@unique([tenantId, code])
+  @@index([tenantId, clientId])
+  @@map("kyc_files")
+}
+
+enum KycStatus {
+  IN_PROGRESS
+  UNDER_REVIEW
+  VALIDATED
+  REJECTED
+}
+
+model KycSection {
+  id         String        @id @default(uuid()) @db.Uuid
+  kycFileId  String        @map("kyc_file_id") @db.Uuid
+  kycFile    KycFile       @relation(fields: [kycFileId], references: [id], onDelete: Cascade)
+  code       String
+  label      String
+  orderIndex Int           @map("order_index")
+  questions  KycQuestion[]
+  @@unique([kycFileId, code])
+  @@map("kyc_sections")
+}
+
+model KycQuestion {
+  id          String    @id @default(uuid()) @db.Uuid
+  sectionId   String    @map("section_id") @db.Uuid
+  section     KycSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  code        String
+  label       String
+  answer      String?
+  answeredBy  String?   @map("answered_by") @db.Uuid
+  answeredAt  DateTime? @map("answered_at")
+  accessRules KycAccessRule[]
+  history     KycQuestionHistory[]
+  @@unique([sectionId, code])
+  @@map("kyc_questions")
+}
+
+model KycAccessRule {
+  id         String      @id @default(uuid()) @db.Uuid
+  questionId String      @map("question_id") @db.Uuid
+  question   KycQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  role       Role
+  right      AccessRight
+  @@unique([questionId, role])
+  @@map("kyc_access_rules")
+}
+
+enum AccessRight {
+  HIDDEN
+  VIEW
+  EDIT
+  REQUIRED
+}
+
+model KycQuestionHistory {
+  id            String      @id @default(uuid()) @db.Uuid
+  questionId    String      @map("question_id") @db.Uuid
+  question      KycQuestion @relation(fields: [questionId], references: [id])
+  previousValue String?     @map("previous_value")
+  newValue      String?     @map("new_value")
+  changedBy     String      @map("changed_by") @db.Uuid
+  changedAt     DateTime    @map("changed_at")
+  hash          String      @db.Char(64)
+  @@index([questionId, changedAt])
+  @@map("kyc_question_history")
+}
+
+model KycVisa {
+  id           String     @id @default(uuid()) @db.Uuid
+  kycFileId    String     @map("kyc_file_id") @db.Uuid
+  kycFile      KycFile    @relation(fields: [kycFileId], references: [id], onDelete: Cascade)
+  sectionCode  String     @map("section_code")
+  requiredRole Role       @map("required_role")
+  validateur   String?    @map("validateur") @db.Uuid   // R2 : personne nommée assignée (si défini, contrôle strict au signVisa)
+  status       VisaStatus @default(PENDING)
+  signedBy     String?    @map("signed_by") @db.Uuid
+  signedAt     DateTime?  @map("signed_at")
+  verdict      String?    @map("verdict")                // R86 : OK | CONDITIONAL | NOK
+  message      String?    @map("message")                // R86 : justificatif (obligatoire si NOK/CONDITIONAL)
+  @@unique([kycFileId, sectionCode, requiredRole])
+  @@map("kyc_visas")
+}
+
+enum VisaStatus {
+  PENDING
+  SIGNED
+}
+
+model Document {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  // Contrat GED : clientId nullable (quarantaine à l'ingestion R139, classé plus tard)
+  clientId       String?  @map("client_id") @db.Uuid
+  client         Client?  @relation(fields: [clientId], references: [id])
+  // Nom Prisma = contrat GED (statut/nom) ; @map conserve la COLONNE v0.2 (migration douce).
+  nom            String   @map("name")
+  statut         String   @default("A_VALIDER") @map("status")   // R109/R137 : A_CLASSER | ACTIF | ARCHIVE | DETRUIT (données v0.2 migrées, cf. commit)
+  // Champs hérités v0.2 HORS contrat GED — CONSERVÉS (données + futur adaptateur stockage),
+  // rendus nullable car les services ratifiés ne les alimentent pas.
+  code           String?
+  lang           String?  @db.Char(2)
+  s3Key          String?  @map("s3_key")
+  sha256         String?  @db.Char(64)
+  sizeBytes      Int?     @map("size_bytes")
+  uploadedBy     String?  @map("uploaded_by") @db.Uuid
+  retentionUntil DateTime? @map("retention_until")               // R115 : nullable (posé par l'adaptateur rétention)
+  typeCode           String?   @map("type_code")
+  personId           String?   @map("person_id") @db.Uuid
+  kycFileId          String?   @map("kyc_file_id") @db.Uuid
+  expirationSignalee Boolean   @default(false) @map("expiration_signalee")
+  destructionProposee Boolean  @default(false) @map("destruction_proposee")
+  legalHold          Boolean   @default(false) @map("legal_hold")
+  holdMotif          String?   @map("hold_motif")
+  archiveMotif       String?   @map("archive_motif")
+  archivePar         String?   @map("archive_par")
+  archiveAt          DateTime? @map("archive_at")
+  destructionMotif   String?   @map("destruction_motif")
+  destructionPar     String?   @map("destruction_par")
+  destructionAt      DateTime? @map("destruction_at")
+  ingereAt           DateTime? @map("ingere_at")                 // R137 : horodatage d'ingestion (boîte d'arrivée)
+  inboxSignale       Boolean?  @map("inbox_signale")             // R139 : SLA d'arrivée signalé une fois (null = pas encore)
+  versions           DocumentVersion[]
+  createdAt      DateTime @default(now()) @map("created_at")
+  @@index([tenantId, clientId])
+  @@map("documents")
+}
+
+model KycLock {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  kycFileId String   @unique @map("kyc_file_id") @db.Uuid
+  kycFile   KycFile  @relation(fields: [kycFileId], references: [id], onDelete: Cascade)
+  holder    String?  @map("holder") @db.Uuid        // R84 : détenteur ; NULL = libéré (release)
+  acquiredAt DateTime @default(now()) @map("acquired_at")
+  requests  KycLockRequest[]
+  @@map("kyc_locks")
+}
+
+model KycLockRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  lockId    String   @map("lock_id") @db.Uuid
+  lock      KycLock  @relation(fields: [lockId], references: [id], onDelete: Cascade)
+  requester String   @map("requester") @db.Uuid     // R84 : demandeur de la main
+  requestedAt DateTime @default(now()) @map("requested_at")
+  @@unique([lockId, requester])
+  @@map("kyc_lock_requests")
+}
+
+model DomainEvent {
+  id          BigInt    @id @default(autoincrement())
+  tenantId    String    @map("tenant_id") @db.Uuid
+  type        String
+  aggregateId String    @map("aggregate_id") @db.Uuid
+  payload     Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+  publishedAt DateTime? @map("published_at")
+  @@index([publishedAt, id])
+  @@map("domain_events")
+}
+
+model AuditLog {
+  id       BigInt   @id @default(autoincrement())
+  tenantId String   @map("tenant_id") @db.Uuid
+  actor    String   @db.Uuid
+  action   String
+  target   String?
+  at       DateTime @default(now())
+  hash     String   @db.Char(64)
+  @@index([tenantId, at])
+  @@map("audit_log")
+}
+
+
+// ═══ v2 (19.07.2026) — R100→R116 ═══
+
+model ScreeningRun {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  liste        String                                     // 'SECO', 'OFAC'…
+  listeVersion String   @map("liste_version")             // R103 : la version fait la preuve
+  seuil        Int
+  prefiltre    Json                                       // R103 : le réglage fait partie de la trace
+  perimetre    Int                                        // combien de clients confrontés
+  nbHits       Int      @map("nb_hits")
+  at           DateTime @default(now())
+  hits         ScreeningHit[]
+  @@index([tenantId, at])
+  @@map("screening_runs")
+}
+model ScreeningHit {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  runId         String?  @map("run_id") @db.Uuid
+  run           ScreeningRun? @relation(fields: [runId], references: [id])
+  clientId      String   @map("client_id") @db.Uuid
+  entreeUid     String   @map("entree_uid")               // uid de l'entrée de liste
+  entreeHash    String   @map("entree_hash")              // R102 : l'empreinte, pas l'uid seul
+  score         Int
+  listeVersion  String   @map("liste_version")            // R100 : produit CONTRE cette version
+  statut        String   @default("BRUT")                 // BRUT | QUALIFIE
+  at            DateTime @default(now())
+  qualification ScreeningQualification?
+  @@index([tenantId, statut])
+  @@index([tenantId, clientId, entreeUid])
+  @@map("screening_hits")
+}
+model ScreeningQualification {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  hitId        String   @unique @map("hit_id") @db.Uuid   // un hit = au plus une qualification
+  hit          ScreeningHit @relation(fields: [hitId], references: [id])
+  verdict      String                                     // VRAI_POSITIF | FAUX_POSITIF
+  motif        String                                     // R7 : obligatoire, référentiel motifs
+  par          String                                     // R101 : personne nommée (jeton)
+  entreeHash   String   @map("entree_hash")               // R102 : la whitelist s'attache ici
+  listeVersion String   @map("liste_version")
+  at           DateTime @default(now())
+  @@index([tenantId, entreeHash, verdict])                // lookup whitelist du run
+  @@map("screening_qualifications")
+}
+
+model Person {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  nom              String
+  donnees          Json     @default("{}")          // R30 : la donnée vit ICI, pas dans les dossiers
+  etat             String   @default("ACTIVE")      // ACTIVE | ARCHIVEE (R35)
+  flags            String[] @default([])            // R31 : insider… — exposés aux scénarios AML
+  statutPep        Boolean  @default(false) @map("statut_pep")          // R32/R33
+  finMandatPep     DateTime? @map("fin_mandat_pep")
+  alerteDepepEmise Boolean  @default(false) @map("alerte_depep_emise")  // R33 : une alerte, pas une boucle
+  createdAt        DateTime @default(now()) @map("created_at")
+  roles            PersonRole[]
+  @@index([tenantId, etat])
+  @@index([tenantId, statutPep])
+  @@map("persons")
+}
+
+model PersonRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  personId  String   @map("person_id") @db.Uuid
+  person    Person   @relation(fields: [personId], references: [id])
+  kycFileId String   @map("kyc_file_id") @db.Uuid   // « dossier » = KycFile (porte le RM)
+  role      String                                   // titulaire, settlor, beneficiaire, UBO…
+  at        DateTime @default(now())
+  @@index([tenantId, personId])
+  @@index([tenantId, kycFileId])
+  @@map("person_roles")
+}
+
+model PersonRelation {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  aId      String @map("a_id") @db.Uuid
+  bId      String @map("b_id") @db.Uuid
+  typeAb   String @map("type_ab")                   // R34 : une arête, deux lectures
+  typeBa   String @map("type_ba")
+  @@index([tenantId, aId])
+  @@index([tenantId, bId])
+  @@map("person_relations")
+}
+
+model Mandate {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  clientId     String   @map("client_id") @db.Uuid
+  nom          String                                    // Équilibré, Croissance…
+  profilRequis String   @map("profil_requis")            // LOW | MEDIUM | HIGH — borné par Client.riskLevel (R107/R104)
+  strategie    Json                                      // { bornes: {ACTIONS:[40,60],…}, exclusions:[…], maxPositionPct: 10 }
+  statut       String   @default("ACTIF")                // ACTIF | EN_REVUE | RESILIE — jamais rétrogradé auto (R107)
+  createdAt    DateTime @default(now()) @map("created_at")
+  positions    Position[]
+  @@index([tenantId, clientId])
+  @@map("mandates")
+}
+
+model Position {
+  id         String  @id @default(uuid()) @db.Uuid
+  tenantId   String  @map("tenant_id") @db.Uuid
+  mandateId  String  @map("mandate_id") @db.Uuid
+  mandate    Mandate @relation(fields: [mandateId], references: [id])
+  instrument String
+  secteur    String                                      // confronté aux exclusions (R106)
+  classe     String                                      // ACTIONS | OBLIGATIONS | CASH | ALTERNATIFS…
+  valeurChf  Float   @map("valeur_chf")
+  @@index([tenantId, mandateId])
+  @@map("positions")
+}
+
+model PmsBreach {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  mandateId     String   @map("mandate_id") @db.Uuid
+  type          String                                   // DRIFT | NON_CONFORME | DOWNGRADE
+  detail        String
+  statut        String   @default("OUVERT")              // OUVERT | CLOS — l'échéance escalade, ne liquide pas (R39)
+  detecteAt     DateTime @map("detecte_at")
+  escaladeEmise Boolean  @default(false) @map("escalade_emise")   // une alerte, pas une boucle
+  clotureMotif  String?  @map("cloture_motif")           // R7 : obligatoire à la clôture
+  cloturePar    String?  @map("cloture_par")             // auteur = jeton, jamais le body
+  clotureAt     DateTime? @map("cloture_at")
+  @@index([tenantId, statut])
+  @@map("pms_breaches")
+}
+
+model DocumentVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  document   Document @relation(fields: [documentId], references: [id])
+  numero     Int                                        // 1, 2, 3… — R109 : succession, jamais remplacement
+  sha256     String   @db.Char(64)                      // R111 : empreinte au dépôt, immuable
+  deposePar  String   @map("depose_par")                 // jeton
+  deposeAt   DateTime @map("depose_at")
+  anchorBatchId String? @map("anchor_batch_id") @db.Uuid
+  merkleProof   Json?   @map("merkle_proof")
+  signature     Json?
+  ocrDerives    Json    @default("[]") @map("ocr_derives")       // R138 : dérivés OCR ajoutés (jamais de remplacement)
+  expirationSignalee Boolean? @map("expiration_signalee")        // R115 : signalement au niveau version (optionnel)
+  @@unique([documentId, numero])
+  @@index([tenantId, documentId])
+  @@map("document_versions")
+}
+
+model AnchorBatch {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  racineMerkle String   @map("racine_merkle") @db.Char(64)
+  tsaToken     String   @map("tsa_token")
+  tsaAt        DateTime @map("tsa_at")
+  nbVersions   Int      @map("nb_versions")
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("anchor_batches")
+}
+
+model Onboarding {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  prospectNom   String   @map("prospect_nom")
+  rmId          String?  @map("rm_id")
+  etape         String   @default("PROSPECT")
+  etapeDepuis   DateTime @map("etape_depuis")
+  slaSignale    Boolean  @default(false) @map("sla_signale")
+  kycFileId     String?  @map("kyc_file_id") @db.Uuid
+  motifTerminal String?  @map("motif_terminal")
+  terminePar    String?  @map("termine_par")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([tenantId, etape])
+  @@map("onboardings")
+}
+
+model IaPrerevue {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  kycFileId      String   @map("kyc_file_id") @db.Uuid
+  snapshotSha256 String   @map("snapshot_sha256") @db.Char(64)
+  modele         String
+  promptVersion  Int      @map("prompt_version")
+  points         Json
+  latenceMs      Int      @map("latence_ms")
+  at             DateTime
+  @@index([tenantId, kycFileId])
+  @@map("ia_prerevues")
+}
+
+model IaPromptVersion {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  numero   Int
+  texte    String
+  par      String
+  at       DateTime
+  @@unique([tenantId, numero])
+  @@map("ia_prompt_versions")
+}
+
+model TenantParamChange {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  cle      String
+  avant    Json?
+  apres    Json
+  motif    String
+  par      String
+  at       DateTime
+  effetAt  DateTime @map("effet_at")
+  @@index([tenantId, cle])
+  @@map("tenant_param_changes")
+}
+
+model MrosCommunication {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  riskCaseId     String    @map("risk_case_id")
+  clientId       String    @map("client_id") @db.Uuid
+  decision       String
+  motif          String
+  decidePar      String    @map("decide_par")
+  decideAt       DateTime  @map("decide_at")
+  pieces         Json
+  dossierSha256  String    @map("dossier_sha256") @db.Char(64)
+  notification   String?
+  gelActif       Boolean   @default(false) @map("gel_actif")
+  gelEcheance    DateTime? @map("gel_echeance")
+  gelSignale     Boolean   @default(false) @map("gel_signale")
+  gelPosePar     String?   @map("gel_pose_par")
+  gelMotif       String?   @map("gel_motif")
+  gelLevePar     String?   @map("gel_leve_par")
+  gelLeveMotif   String?   @map("gel_leve_motif")
+  @@unique([tenantId, riskCaseId])
+  @@index([tenantId, clientId, gelActif])
+  @@map("mros_communications")
+}
+
+model RiskCase {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  statut        String   @default("NOUVELLE")
+  etatDepuis    DateTime @map("etat_depuis")
+  slaSignale    Boolean  @default(false) @map("sla_signale")
+  signalIds     Json     @map("signal_ids")
+  ouvertPar     String   @map("ouvert_par")
+  motifTerminal String?  @map("motif_terminal")
+  terminePar    String?  @map("termine_par")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@map("risk_cases")
+}
+
+model RiskCaseNote {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  caseId   String   @map("case_id") @db.Uuid
+  texte    String
+  par      String
+  at       DateTime
+  @@index([tenantId, caseId])
+  @@map("risk_case_notes")
+}
+
+model GedIngestEntry {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  canal      String
+  source     String
+  operateur  String
+  at         DateTime
+  @@index([tenantId, documentId])
+  @@map("ged_ingest_entries")
+}
