@@ -108,7 +108,8 @@ DO $$ DECLARE t text; BEGIN
     'risk_cases', 'risk_case_notes',                      -- R133→R136 (bloc 23)
     'ged_ingest_entries',                                 -- R137→R139 (bloc 24, capture & ingestion)
     'tx_verdicts',                                        -- R140→R143 (bloc 25, portail transactionnel)
-    'search_entries'                                      -- R148→R151 (bloc 27, la recherche)
+    'search_entries',                                     -- R148→R151 (bloc 27, la recherche)
+    'personne_liens'                                      -- R152→R155 (bloc 28, personnes liées)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

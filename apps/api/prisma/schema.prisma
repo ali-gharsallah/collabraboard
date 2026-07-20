@@ -581,3 +581,19 @@ model SearchEntry {
   @@index([tenantId])
   @@map("search_entries")
 }
+
+model PersonneLien {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  personneId String   @map("personne_id") @db.Uuid
+  typeCode   String   @map("type_code")                  // R153 — référentiel lienTypes
+  categorie  String                                      // OFFICIEL | NON_OFFICIEL
+  cibleType  String   @map("cible_type")                 // COMPTE | KYC | PERSONNE
+  cibleId    String   @map("cible_id") @db.Uuid
+  paireId    String?  @map("paire_id") @db.Uuid          // R154 — le miroir bijectif
+  posePar    String   @map("pose_par")
+  poseAt     DateTime @map("pose_at")
+  @@unique([tenantId, personneId, typeCode, cibleType, cibleId])   // R153 — pas de doublon exact
+  @@index([tenantId, cibleType, cibleId])
+  @@map("personne_liens")
+}
