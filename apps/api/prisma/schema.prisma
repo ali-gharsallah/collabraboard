@@ -649,3 +649,15 @@ model IaProduction {
   @@index([tenantId, cible])
   @@map("ia_productions")
 }
+
+model GedVue {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  code     String
+  label    String
+  critere  Json                                          // R164 — la vue est une REQUÊTE
+  creePar  String   @map("cree_par")
+  at       DateTime
+  @@unique([tenantId, code])
+  @@map("ged_vues")
+}

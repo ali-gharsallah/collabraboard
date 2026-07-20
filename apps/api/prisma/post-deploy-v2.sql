@@ -111,7 +111,8 @@ DO $$ DECLARE t text; BEGIN
     'search_entries',                                     -- R148→R151 (bloc 27, la recherche)
     'personne_liens',                                     -- R152→R155 (bloc 28, personnes liées)
     'annotations', 'caviardage_derives',                  -- R156→R159 (bloc 29, annotations & caviardage)
-    'ia_productions'                                      -- R160→R163 (bloc 31, IA au service du dossier)
+    'ia_productions',                                     -- R160→R163 (bloc 31, IA au service du dossier)
+    'ged_vues'                                            -- R164→R166 (bloc 32, dossiers-vues)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

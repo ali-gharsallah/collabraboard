@@ -38,6 +38,8 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Pseudonymiser les identités avant transmission au port IA ?" },
   { cle: "screeningSeuil", type: "int", defaut: 85, regle: "R100", requis: false,
     description: "Seuil de similarité du screening (0-100)" },
+  { cle: "vueRoles", type: "json", defaut: ["CO", "CF", "ADMIN"], regle: "R164", requis: false,
+    description: "Rôles habilités à créer/retirer des dossiers-vues (la vue est une requête, jamais une copie)" },
   { cle: "iaResidence", type: "string", defaut: "CH", regle: "R163", requis: false,
     description: "Résidence exigée du prestataire IA — un document bancaire suisse ne part pas n'importe où" },
   { cle: "iaProviderRef", type: "string", defaut: null, regle: "R163", requis: false,
