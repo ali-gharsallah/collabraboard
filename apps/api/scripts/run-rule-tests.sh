@@ -25,6 +25,10 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/mros/mros.service.ts src/modules/mros/mros.wiring.spec.ts \
   src/modules/riskcases/risk-case.service.ts src/modules/riskcases/risk-case.wiring.spec.ts \
   src/modules/ged/ged-ingestion.service.ts src/modules/ged/ged-ingestion.wiring.spec.ts \
+  src/modules/transactions/transaction-gate.service.ts src/modules/transactions/transaction-gate.wiring.spec.ts \
+  src/modules/coffre/coffre.service.ts src/modules/coffre/coffre.wiring.spec.ts \
+  src/modules/recherche/recherche.service.ts src/modules/recherche/recherche.wiring.spec.ts \
+  src/modules/personnes/personne-lien.service.ts src/modules/personnes/personne-lien.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -56,3 +60,7 @@ echo "── Câblage paramètres R-Q (RQ-01..06, R125→R128) ──"; run para
 echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
 echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js
 echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-ingestion.wiring.spec.js
+echo "── Câblage Portail TX (TX-01..06, R140→R143) ──"; run transaction-gate.wiring.spec.js
+echo "── Câblage Coffre (CV-01..06, R144→R147) ──"; run coffre.wiring.spec.js
+echo "── Câblage Recherche (RS-01..06, R148→R151) ──"; run recherche.wiring.spec.js
+echo "── Câblage Personnes liées (PL-01..04, R152→R155) ──"; run personne-lien.wiring.spec.js

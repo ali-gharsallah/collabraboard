@@ -18,5 +18,8 @@
       "@olive/shared": ["../../packages/shared/src/contracts"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/modules/coffre/s3-storage.adapter.ts"
+  ]
 }

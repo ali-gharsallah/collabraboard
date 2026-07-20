@@ -412,7 +412,8 @@ model DocumentVersion {
   signature     Json?
   ocrDerives    Json    @default("[]") @map("ocr_derives")       // R138 : dérivés OCR ajoutés (jamais de remplacement)
   expirationSignalee Boolean? @map("expiration_signalee")        // R115 : signalement au niveau version (optionnel)
-  @@unique([documentId, numero])
+  storageKey         String?   @map("storage_key")           // R144 — clé de coffre, jamais le contenu
+  @@unique([tenantId, documentId, numero])                 // canon : tenant STRUCTUREL partout (défense en profondeur + index tenant-scopé)
   @@index([tenantId, documentId])
   @@map("document_versions")
 }
@@ -545,4 +546,54 @@ model GedIngestEntry {
   at         DateTime
   @@index([tenantId, documentId])
   @@map("ged_ingest_entries")
+}
+
+model TxVerdict {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  clientId    String   @map("client_id") @db.Uuid
+  txRef       String   @map("tx_ref")
+  type        String
+  montantChf  Float    @map("montant_chf")
+  verdict     String
+  motif       String?
+  gardes      Json
+  at          DateTime
+  slaSignale  Boolean  @default(false) @map("sla_signale")
+  decidePar   String?  @map("decide_par")
+  revueMotif  String?  @map("revue_motif")
+  @@index([tenantId, clientId, type, at])
+  @@index([tenantId, verdict])
+  @@map("tx_verdicts")
+}
+
+model SearchEntry {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  documentId      String   @map("document_id") @db.Uuid
+  versionId       String   @map("version_id") @db.Uuid
+  texte           String                                    // dérivé — jamais une vérité (R148)
+  shaDeriveSource String   @map("sha_derive_source") @db.Char(64)
+  typeCode        String?  @map("type_code")
+  statut          String
+  indexeAt        DateTime @map("indexe_at")
+  @@unique([tenantId, documentId])                          // R151 — une entrée par document
+  @@index([tenantId])
+  @@map("search_entries")
+}
+
+model PersonneLien {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  personneId String   @map("personne_id") @db.Uuid
+  typeCode   String   @map("type_code")                  // R153 — référentiel lienTypes
+  categorie  String                                      // OFFICIEL | NON_OFFICIEL
+  cibleType  String   @map("cible_type")                 // COMPTE | KYC | PERSONNE
+  cibleId    String   @map("cible_id") @db.Uuid
+  paireId    String?  @map("paire_id") @db.Uuid          // R154 — le miroir bijectif
+  posePar    String   @map("pose_par")
+  poseAt     DateTime @map("pose_at")
+  @@unique([tenantId, personneId, typeCode, cibleType, cibleId])   // R153 — pas de doublon exact
+  @@index([tenantId, cibleType, cibleId])
+  @@map("personne_liens")
 }

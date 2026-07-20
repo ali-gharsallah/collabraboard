@@ -51,6 +51,38 @@ DROP TRIGGER IF EXISTS domain_events_guard ON domain_events;
 CREATE TRIGGER domain_events_guard BEFORE UPDATE OR DELETE ON domain_events
   FOR EACH ROW EXECUTE FUNCTION outbox_guard();
 
+-- ── tx_verdicts (R140→R143) : PAS d'append-only strict (la revue R143 écrit la décision) ──
+-- Les FAITS ne se réécrivent jamais ; seule la DÉCISION de revue s'écrit UNE fois, depuis SUSPEND.
+-- DELETE toujours interdit (le verdict se rejoue, R48/R49). sla_signale reste librement mutable (R39).
+CREATE OR REPLACE FUNCTION tx_verdict_guard() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'tx_verdicts : DELETE interdit (R140 : le verdict se rejoue, ne se supprime pas)';
+  END IF;
+  -- Faits immuables (jamais réécrits)
+  IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id
+     OR NEW.client_id  IS DISTINCT FROM OLD.client_id
+     OR NEW.tx_ref     IS DISTINCT FROM OLD.tx_ref
+     OR NEW.type       IS DISTINCT FROM OLD.type
+     OR NEW.montant_chf IS DISTINCT FROM OLD.montant_chf
+     OR NEW.gardes     IS DISTINCT FROM OLD.gardes
+     OR NEW.motif      IS DISTINCT FROM OLD.motif
+     OR NEW.at         IS DISTINCT FROM OLD.at THEN
+    RAISE EXCEPTION 'tx_verdicts : faits immuables (tx_ref/type/montant_chf/gardes/motif/at) — R140';
+  END IF;
+  -- Décision de revue : uniquement depuis un verdict SUSPEND, une seule fois (R143)
+  IF (NEW.verdict IS DISTINCT FROM OLD.verdict
+      OR NEW.decide_par  IS DISTINCT FROM OLD.decide_par
+      OR NEW.revue_motif IS DISTINCT FROM OLD.revue_motif)
+     AND OLD.verdict <> 'SUSPEND' THEN
+    RAISE EXCEPTION 'tx_verdicts : la décision de revue ne s''écrit qu''une fois, sur une transaction SUSPEND (R143)';
+  END IF;
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS tx_verdict_guard ON tx_verdicts;
+CREATE TRIGGER tx_verdict_guard BEFORE UPDATE OR DELETE ON tx_verdicts
+  FOR EACH ROW EXECUTE FUNCTION tx_verdict_guard();
+
 -- ── 2. RLS RÉELLE : FORCE + policies sur toutes les tables tenantées ────────
 -- FIX 2026-07-19 : la policy tenant_isolation est basée sur la colonne tenant_id.
 -- 6 tables enfant du dossier n'ont PAS de colonne tenant_id dans le schéma
@@ -74,7 +106,10 @@ DO $$ DECLARE t text; BEGIN
     'tenant_param_changes',                               -- R125→R128 (bloc 21)
     'mros_communications',                                -- R129→R132 (bloc 22)
     'risk_cases', 'risk_case_notes',                      -- R133→R136 (bloc 23)
-    'ged_ingest_entries'                                  -- R137→R139 (bloc 24, capture & ingestion)
+    'ged_ingest_entries',                                 -- R137→R139 (bloc 24, capture & ingestion)
+    'tx_verdicts',                                        -- R140→R143 (bloc 25, portail transactionnel)
+    'search_entries',                                     -- R148→R151 (bloc 27, la recherche)
+    'personne_liens'                                      -- R152→R155 (bloc 28, personnes liées)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
