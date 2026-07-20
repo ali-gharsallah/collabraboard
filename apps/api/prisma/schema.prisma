@@ -566,3 +566,18 @@ model TxVerdict {
   @@index([tenantId, verdict])
   @@map("tx_verdicts")
 }
+
+model SearchEntry {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  documentId      String   @map("document_id") @db.Uuid
+  versionId       String   @map("version_id") @db.Uuid
+  texte           String                                    // dérivé — jamais une vérité (R148)
+  shaDeriveSource String   @map("sha_derive_source") @db.Char(64)
+  typeCode        String?  @map("type_code")
+  statut          String
+  indexeAt        DateTime @map("indexe_at")
+  @@unique([tenantId, documentId])                          // R151 — une entrée par document
+  @@index([tenantId])
+  @@map("search_entries")
+}
