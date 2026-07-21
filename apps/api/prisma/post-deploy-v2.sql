@@ -115,7 +115,8 @@ DO $$ DECLARE t text; BEGIN
     'ged_vues',                                           -- R164→R166 (bloc 32, dossiers-vues)
     'core_sync_lots', 'core_quarantaines',                -- R167→R169 (lot 33, core banking en port)
     'workflow_defs',                                      -- R171→R173 (lot 34, workflow gouverné)
-    'ocr_extractions', 'ocr_propositions'                 -- R174→R176 (lot 36, OCR typé)
+    'ocr_extractions', 'ocr_propositions',                -- R174→R176 (lot 36, OCR typé)
+    'tasks'                                               -- R183→R185 (lot 39, capacité équipe)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
