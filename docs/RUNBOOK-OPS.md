@@ -33,6 +33,13 @@ inclus — les triggers R48 sont enfin exercés en continu. **Tous les steps CI 
 (plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (324), e2e (6/6),
 recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo Playwright (étape 6).
 
+> **CONFORMITÉ (lot 41, 21.07.2026)** — Lot d'arbitrage, **aucune règle nouvelle, harnais INCHANGÉ à 324**.
+> Le modèle s'aligne sur les services ratifiés : `DomainEvent.at` devient un champ réel (les services
+> l'écrivaient déjà), `DomainEvent.aggregateId` perd `@db.Uuid` (codes métier prouvés par les corpus,
+> ex. R182/R183), `Document.expireAt` ajouté (active le signal R187 « pièce expirante », jusqu'ici
+> dormant). Erratum E1 : `crm.service`/`crm.wiring.spec` alignés sur `Client.rmUserId` (comportement
+> inchangé, CR 5/5). Non traités (backlog reconnu, lots dédiés) : surface GED `lister`/`lire`, typage `tx:any`.
+
 > **RÉSOLU (chantier « alignement Document », 20.07.2026)** : le modèle `Document`/`DocumentVersion`
 > est désormais aligné sur le contrat GED R109→R116 + R137→R139 — champ Prisma = contrat
 > (`statut`, `nom`) avec `@map` conservant les colonnes v0.2 (migration douce), `clientId`/`retentionUntil`

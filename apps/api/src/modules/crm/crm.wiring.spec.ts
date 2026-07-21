@@ -49,7 +49,7 @@ const mk = () => {
       crmEntretiens: [{ type: 'CONSEIL_PLACEMENT', champsObligatoires: ['participants', 'produitsDiscutes', 'risquesExpliques', 'suites'] },
                       { type: 'VISITE', champsObligatoires: ['participants', 'sujets'] }],
       rolesVisibiliteEtendue: ['CO', 'CF'] } }],
-    clients: [{ id: 'cli-dupont', tenantId: 't1', name: 'Jean Dupont', rmUserId: 'u-rm1' }],   // ÉCART lot 40 : fixture alignée sur le champ ratifié Client.rmUserId (le zip semait rmId) — intention du test inchangée
+    clients: [{ id: 'cli-dupont', tenantId: 't1', name: 'Jean Dupont', rmUserId: 'u-rm1' }],
     documents: [{ id: 'doc-1', tenantId: 't1', clientId: 'cli-dupont', nomFichier: 'passeport-dupont.pdf', statut: 'ACTIF', expireAt: '2026-09-15' }],
     tasks: [{ id: 'k1', tenantId: 't1', clientId: 'cli-dupont', assigneeId: 'u-rm1', type: 'ACCOUNT_REVIEW', statut: 'OUVERTE', createdAt: J('2026-07-01'), dueAt: '2026-07-10' }],
     events: [

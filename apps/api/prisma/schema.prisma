@@ -198,6 +198,7 @@ model Document {
   sizeBytes      Int?     @map("size_bytes")
   uploadedBy     String?  @map("uploaded_by") @db.Uuid
   retentionUntil DateTime? @map("retention_until")               // R115 : nullable (posé par l'adaptateur rétention)
+  expireAt       DateTime? @map("expire_at")                     // conformité lot 41 : validité de la pièce — active le signal R187 « pièce expirante »
   typeCode           String?   @map("type_code")
   personId           String?   @map("person_id") @db.Uuid
   kycFileId          String?   @map("kyc_file_id") @db.Uuid
@@ -244,8 +245,9 @@ model DomainEvent {
   id          BigInt    @id @default(autoincrement())
   tenantId    String    @map("tenant_id") @db.Uuid
   type        String
-  aggregateId String    @map("aggregate_id") @db.Uuid
+  aggregateId String    @map("aggregate_id")               // conformité lot 41 : codes métier OU uuid — usage prouvé par les corpus (ex. R182/R183), @db.Uuid retiré
   payload     Json
+  at          DateTime  @default(now())                    // conformité lot 41 : horodatage métier écrit par les services ratifiés (n'est plus un « champ fantôme »)
   createdAt   DateTime  @default(now()) @map("created_at")
   publishedAt DateTime? @map("published_at")
   @@index([publishedAt, id])

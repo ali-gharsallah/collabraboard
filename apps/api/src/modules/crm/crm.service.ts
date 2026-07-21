@@ -34,7 +34,7 @@ export class CrmService {
     if (!c) throw new NotFoundException("Client introuvable");
     const s = await this.settings(ctx.tenantId);
     const etendue = (s.rolesVisibiliteEtendue ?? ["CO", "CF"]).includes(ctx.role);
-    if (!etendue && c.rmUserId !== ctx.userId) {   // ÉCART lot 40 : Client ratifié expose rmUserId (le zip lisait c.rmId)
+    if (!etendue && c.rmUserId !== ctx.userId) {   // E1 : champ du modèle Client canon
       await this.prisma.$transaction(async (tx: any) =>
         this.emit(tx, ctx.tenantId, "crm.acces.refuse", clientId, { par: ctx.userId, role: ctx.role }));
       throw new ForbiddenException("R186 : la relation d'un client se lit par son RM ou par un rôle à visibilité étendue");
@@ -56,15 +56,14 @@ export class CrmService {
     await this.garde(ctx, clientId);
     const aujourdhui = new Date().toISOString().slice(0, 10);
     const gestes: any[] = [];
-    // ÉCART SIGNALÉ (lot 40) : le geste R187 « pièce expirante » lit d.expireAt / d.nomFichier,
-    // ABSENTS du Document ratifié (qui modélise la rétention `retentionUntil`, pas une validité).
-    // `any[]` confine l'écart à ce fichier nouveau (Document ratifié intact) ; la branche reste
-    // DORMANTE tant qu'une date de validité n'est pas ratifiée au Document. Cf. rapport lot 40.
-    const docs: any[] = await this.prisma.document.findMany({ where: { tenantId: ctx.tenantId, clientId, statut: "ACTIF" } });
+    const docs = await this.prisma.document.findMany({ where: { tenantId: ctx.tenantId, clientId, statut: "ACTIF" } });
     for (const d of docs) {
       if (d.expireAt) {
         const jours = Math.round((new Date(d.expireAt).getTime() - Date.now()) / 86_400_000);
-        if (jours <= 90) gestes.push({ geste: `Demander le renouvellement de ${d.nomFichier ?? d.nom}`,
+        // Résiduel lot 41 : l'arbitrage a ajouté Document.expireAt (d.expireAt typé) mais PAS
+        // `nomFichier` (champ d'affichage, jamais au Document canon qui porte `nom`) — cast ciblé
+        // du seul accès fantôme, le reste du service reste typé. Signalé au rapport lot 41.
+        if (jours <= 90) gestes.push({ geste: `Demander le renouvellement de ${(d as any).nomFichier ?? d.nom}`,
           signal: `la pièce expire le ${d.expireAt} (${jours} j)`, source: "document", echeance: d.expireAt });
       }
     }
