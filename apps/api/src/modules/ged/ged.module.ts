@@ -32,6 +32,11 @@ const simple = (C: any) => ({ provide: C, useFactory: (p: PrismaService, a: Audi
     simple(RechercheService),
     simple(CoffreService),
     { provide: StorageResolverService, useFactory: (p: PrismaService) => new StorageResolverService(p), inject: [PrismaService] },
+    // Production — GED de la banque par WebDAV (R180-R182) : remplacer la factory ci-dessus par
+    //   new StorageResolverService(p, { GED_EXTERNE: new WebDavStorageAdapter({
+    //     baseUrl: process.env.WEBDAV_URL!, user: process.env.WEBDAV_USER,
+    //     password: process.env.WEBDAV_PASSWORD, prefixe: process.env.WEBDAV_PREFIXE ?? "olive" }) })
+    // — le coffre vérifie chaque relecture (R145) : l'hébergeur n'a pas à être de confiance.
   ],
 })
 export class GedModule {}
