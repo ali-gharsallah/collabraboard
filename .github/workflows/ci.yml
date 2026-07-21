@@ -77,8 +77,8 @@ jobs:
       # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
       # harnais jest unitaire est ajouté.
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (319 verts) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 319/319)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (324 verts) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 324/324)"
         working-directory: apps/api
         run: pnpm run test:rules
 

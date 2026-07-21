@@ -41,6 +41,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/ocr/ocr-extraction.service.ts src/modules/ocr/ocr-extraction.wiring.spec.ts \
   src/modules/license/vendor-license.service.ts src/modules/license/vendor-license.wiring.spec.ts \
   src/modules/workload/workload.service.ts src/modules/workload/workload.wiring.spec.ts \
+  src/modules/crm/crm.service.ts src/modules/crm/crm.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -75,6 +76,7 @@ echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-in
 echo "── Câblage Portail TX (TX-01..06, R140→R143) ──"; run transaction-gate.wiring.spec.js
 echo "── Câblage Coffre (CV-01..06, R144→R147) ──"; run coffre.wiring.spec.js
 echo "── Câblage Capacité d'équipe (WK-01..05, R183→R185) ──"; run workload.wiring.spec.js
+echo "── Câblage CRM Relation (CR-01..05, R186→R188) ──"; run crm.wiring.spec.js
 echo "── Câblage Port GED externe (GX-01..05, R180→R182) ──"; run ged-externe.wiring.spec.js
 echo "── Câblage Recherche (RS-01..06, R148→R151) ──"; run recherche.wiring.spec.js
 echo "── Câblage Personnes liées (PL-01..04, R152→R155) ──"; run personne-lien.wiring.spec.js

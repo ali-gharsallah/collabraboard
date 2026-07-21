@@ -763,6 +763,23 @@ model Task {
   // lexicale `depuisLe <= doneAt.slice(0,10)`, barème du jour) — champs String, fidèles.
   createdAt  String    @map("created_at")
   doneAt     String?   @map("done_at")                     // R185 : jour de l'accomplissement (barème du jour)
+  // ÉCART SIGNALÉ (lot 40) : extension additive du modèle Task (authoré lot 39) — le CRM
+  // R187 dérive « le prochain geste » de tâches liées au client et en retard. clientId +
+  // dueAt ajoutés en nullable (aucune donnée existante impactée). Cf. rapport lot 40.
+  clientId   String?   @map("client_id") @db.Uuid          // R187 — tâche rattachée à un client
+  dueAt      String?   @map("due_at")                      // R187 — échéance (ISO), « tâche en retard »
   @@index([tenantId, assigneeId])
   @@map("tasks")
+}
+
+model CrmContact {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  clientId String   @map("client_id") @db.Uuid
+  type     String                                       // paramètre crmEntretiens — R188
+  contenu  Json                                         // la trace du conseil (LSFin)
+  origine  String                                       // MANUEL | IA_VALIDEE — l'humain signe
+  par      String
+  at       DateTime @default(now())
+  @@map("crm_contacts")
 }

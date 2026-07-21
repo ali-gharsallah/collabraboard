@@ -27,6 +27,8 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Tolérance (points de base) avant qu'un écart d'allocation devienne un drift" },
   { cle: "pmsBreachDelaiJours", type: "int", defaut: 30, regle: "R108", requis: false,
     description: "Délai de régularisation d'un breach avant escalade" },
+  { cle: "crmEntretiens", type: "json", defaut: [], regle: "R188", requis: false,
+    description: "Types d'entretiens client et champs obligatoires par type — la trace du conseil (LSFin). Un champ obligatoire manquant est un refus explicite : la documentation du conseil n'est pas optionnelle." },
   { cle: "workloadResponsables", type: "json", defaut: [], regle: "R183", requis: false,
     description: "Qui chapeaute qui : liste {responsableRole, equipeRole}. Le responsable déclaré voit la charge de son équipe ; chaque collaborateur voit toujours ses propres mesures (transparence structurelle, art. 26 OLT 3)." },
   { cle: "workloadBareme", type: "json", defaut: [], regle: "R185", requis: false,
