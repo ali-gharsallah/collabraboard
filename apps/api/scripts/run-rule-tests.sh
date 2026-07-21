@@ -18,6 +18,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/personnes/personnes.service.ts src/modules/personnes/personnes.wiring.spec.ts \
   src/modules/pms/pms.service.ts src/modules/pms/pms.wiring.spec.ts \
   src/modules/ged/ged.service.ts src/modules/ged/ged.controller.ts src/modules/ged/ged.wiring.spec.ts \
+  src/modules/ged/ged-consultation.service.ts src/modules/ged/ged-consultation.wiring.spec.ts \
   src/modules/ged/ged-avance.service.ts src/modules/ged/ged-avance.wiring.spec.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
   src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
@@ -66,6 +67,7 @@ echo "── Chiffrement mfa_secret (SB-01..06) ──"; run secret-box.spec.js
 echo "── Câblage personnes (P-01..08, R30→R36) ──"; run personnes.wiring.spec.js
 echo "── Câblage PMS (PF-01..06, R105→R108) ──"; run pms.wiring.spec.js
 echo "── Câblage GED (GD-01..06, R109→R112) ──"; run ged.wiring.spec.js
+echo "── Câblage Surface consultation GED (GS-01..05, R110/R112/R125/R145) ──"; run ged-consultation.wiring.spec.js
 echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-avance.wiring.spec.js
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js

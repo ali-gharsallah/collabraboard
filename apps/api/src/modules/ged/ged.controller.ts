@@ -5,12 +5,16 @@ import { GedAvanceService } from "./ged-avance.service";
 import { VuesService } from "./vues.service";
 import { RechercheService } from "../recherche/recherche.service";
 import { CoffreService } from "../coffre/coffre.service";
+import { GedConsultationService } from "./ged-consultation.service";
 
 /**
- * Surface REST de la GED — une PORTE, pas une logique : toutes les gardes (droits par
- * type, filtrage au résultat, motifs, gels) vivent aux services, déjà testées. Le
- * contexte (banque/utilisateur/rôle) est porté par req.ctx (JWT/IAM en production —
- * même middleware que kyc.controller). Doc d'intégration : docs/ged-api.md.
+ * Surface REST de la GED — une PORTE, pas une logique : chaque endpoint mappe UNE méthode
+ * du domaine ratifié, sans en inventer. Les gardes (droits par type, filtrage au résultat,
+ * motifs, gels) vivent aux services, déjà testées. Contexte (banque/utilisateur/rôle) :
+ * req.ctx — même middleware que kyc.controller. Doc : docs/ged-api.md.
+ * CORRECTIF (écart attrapé par la chaîne à deux postes) : la première version appelait
+ * lister/lire — inexistants au domaine. Lot 42 : la consultation (lister/fiche) existe
+ * désormais, prouvée GS-01..05 — la promesse est tenue.
  */
 @Controller("ged")
 export class GedController {
@@ -21,7 +25,19 @@ export class GedController {
     private vues: VuesService,
     private recherche: RechercheService,
     private coffre: CoffreService,
+    private consultation: GedConsultationService,
   ) {}
+
+  // ── Consultation (GS-01..05 : R110 relu à l'acte, jamais de contenu — R145) ──
+  @Get("documents")
+  listerDocuments(@Req() req: any, @Query("clientId") clientId?: string,
+    @Query("typeCode") typeCode?: string, @Query("statut") statut?: string) {
+    return this.consultation.listerDocuments(req.ctx, { clientId, typeCode, statut });
+  }
+  @Get("documents/:id")
+  fiche(@Req() req: any, @Param("id") id: string) {
+    return this.consultation.fiche(req.ctx, id);
+  }
 
   // ── Entrée ──
   @Post("documents")
@@ -33,11 +49,7 @@ export class GedController {
     return this.ingestion.classer(req.ctx, id, body.typeCode);
   }
 
-  // ── Consultation (filtrée aux droits du porteur du jeton) ──
-  // ÉCART SIGNALÉ (lot 36) : la porte livrée appelait `this.ged.lister` / `this.ged.lire`,
-  // méthodes ABSENTES du `GedService` ratifié (qui n'expose aucune surface de consultation).
-  // Endpoints GET /documents et GET /documents/:id RETIRÉS en attendant la ratification de
-  // cette surface — aucun service ratifié n'est modifié. Cf. rapport lot 36.
+  // ── Contenu : la seule voie est la relecture vérifiée du coffre (empreinte — R145) ──
   @Get("documents/:id/contenu/:versionId")
   contenu(@Req() req: any, @Param("versionId") versionId: string) {
     return this.coffre.lire(req.ctx, versionId);   // relecture vérifiée par empreinte

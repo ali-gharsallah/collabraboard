@@ -57,11 +57,13 @@ jobs:
       - name: Install (vraies libs — pnpm workspace)
         run: pnpm install --frozen-lockfile
 
-      - name: Prisma generate + db push + prisma:post (RLS FORCE + immuabilité)
+      - name: Prisma generate + migrate deploy + prisma:post (RLS FORCE + immuabilité)
         working-directory: apps/api
+        # Lot 42 : bascule migrations versionnées — `migrate deploy` remplace `db push`
+        # (plus jamais db push hors sandbox). La baseline 0_baseline_lot42 crée le schéma.
         run: |
           pnpm exec prisma generate
-          pnpm exec prisma db push --skip-generate
+          pnpm exec prisma migrate deploy
           pnpm run prisma:post
 
       # ── RUNBOOK §2 · 1 — Lint + types (BLOQUANT) ─────────────────────────────
@@ -77,8 +79,8 @@ jobs:
       # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
       # harnais jest unitaire est ajouté.
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (324 verts) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 324/324)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (329 verts) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 329/329)"
         working-directory: apps/api
         run: pnpm run test:rules
 
