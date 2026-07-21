@@ -25,7 +25,12 @@ export class PreRevueController {
     AuditService,
     {
       provide: PreRevueService,
-      useFactory: (p: PrismaService, a: AuditService) => new PreRevueService(p, a, { ia: claudeIaAdapter() }),
+      // Lot 45 (arbitrage Ali, option 1) : l'adaptateur ratifié JETTE sans ANTHROPIC_API_KEY
+      // (CL-01/R138). L'appel eager au boot est GARDÉ — sans clé, port = undefined : le module
+      // démarre, la pré-revue refuse proprement à l'appel (comportement préservé). Ce module
+      // (prerevue.module.ts) est le câblage Nest actif importé par app.module.
+      useFactory: (p: PrismaService, a: AuditService) =>
+        new PreRevueService(p, a, { ia: process.env.ANTHROPIC_API_KEY ? claudeIaAdapter() : undefined }),
       inject: [PrismaService, AuditService],
     },
   ],
