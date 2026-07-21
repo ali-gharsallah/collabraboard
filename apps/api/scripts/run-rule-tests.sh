@@ -38,6 +38,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/workflow/workflow-def.service.ts src/modules/workflow/workflow-def.wiring.spec.ts \
   src/modules/workflow/kyc-workflow.chaine.ts src/modules/workflow/kyc-workflow.chaine.wiring.spec.ts \
   src/modules/ocr/ocr-extraction.service.ts src/modules/ocr/ocr-extraction.wiring.spec.ts \
+  src/modules/license/vendor-license.service.ts src/modules/license/vendor-license.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -82,3 +83,4 @@ echo "── Rétention au classement (RN-01..04, R170) ──"; run retention.w
 echo "── Câblage Workflow gouverné (WF-01..05, R171→R173) ──"; run workflow-def.wiring.spec.js
 echo "── Câblage KYC↔Workflow (KW-01..05, clause R172) ──"; run kyc-workflow.chaine.wiring.spec.js
 echo "── Câblage OCR typé (OC-01..06, R174→R176) ──"; run ocr-extraction.wiring.spec.js
+echo "── Câblage Licence vendor (LC-01..05, R177→R179) ──"; run vendor-license.wiring.spec.js

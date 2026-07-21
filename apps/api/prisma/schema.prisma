@@ -734,3 +734,17 @@ model OcrProposition {
   motifRefus   String?   @map("motif_refus")
   @@map("ocr_propositions")
 }
+
+model VendorLicense {
+  id         String   @id @default(uuid()) @db.Uuid
+  instanceId String   @map("instance_id")               // instance on-premise d'O-Live
+  version    String                                     // version du produit livrée
+  modules    Json                                       // périmètre — registre MODULES_PRODUIT (R177)
+  effetAt    String   @map("effet_at")                  // R179 — jamais rétroactif
+  expiry     String
+  signature  String                                     // R177 — vérifiée à chaque lecture
+  motif      String                                     // R7
+  emisPar    String   @map("emis_par")
+  at         DateTime @default(now())
+  @@map("vendor_licenses")
+}
