@@ -29,6 +29,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/transactions/transaction-gate.service.ts src/modules/transactions/transaction-gate.wiring.spec.ts \
   src/modules/coffre/coffre.service.ts src/modules/coffre/coffre.wiring.spec.ts \
   src/modules/coffre/ged-externe.adapter.ts src/modules/coffre/storage-resolver.service.ts src/modules/coffre/ged-externe.wiring.spec.ts \
+  src/modules/coffre/webdav-storage.adapter.ts src/modules/coffre/webdav-storage.wiring.spec.ts \
   src/modules/recherche/recherche.service.ts src/modules/recherche/recherche.wiring.spec.ts \
   src/modules/personnes/personne-lien.service.ts src/modules/personnes/personne-lien.wiring.spec.ts \
   src/modules/annotations/annotation.service.ts src/modules/annotations/annotation.wiring.spec.ts \
@@ -80,6 +81,7 @@ echo "── Câblage Coffre (CV-01..06, R144→R147) ──"; run coffre.wiring
 echo "── Câblage Capacité d'équipe (WK-01..05, R183→R185) ──"; run workload.wiring.spec.js
 echo "── Câblage CRM Relation (CR-01..05, R186→R188) ──"; run crm.wiring.spec.js
 echo "── Câblage Port GED externe (GX-01..05, R180→R182) ──"; run ged-externe.wiring.spec.js
+echo "── Câblage Adaptateur WebDAV (WD-01..05, R180→R182/R145) ──"; run webdav-storage.wiring.spec.js
 echo "── Câblage Recherche (RS-01..06, R148→R151) ──"; run recherche.wiring.spec.js
 echo "── Câblage Personnes liées (PL-01..04, R152→R155) ──"; run personne-lien.wiring.spec.js
 echo "── Câblage Annotations (AN-01..06, R156→R159) ──"; run annotation.wiring.spec.js
