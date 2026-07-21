@@ -748,3 +748,21 @@ model VendorLicense {
   at         DateTime @default(now())
   @@map("vendor_licenses")
 }
+
+// ÉCART SIGNALÉ (lot 39) : le schéma canonique du zip OMET le modèle Task, alors que
+// workload.service.ts lit `this.prisma.task` (typé) et que l'amendement R183 déclare son
+// contrat (« assigneeId, type, statut OUVERTE|EN_COURS|FAITE, createdAt, doneAt »).
+// Modèle reconstruit fidèlement depuis l'amendement + l'usage du service. Cf. rapport lot 39.
+model Task {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  assigneeId String    @map("assignee_id")                 // référence applicative vers users.id
+  type       String                                        // registre workloadBareme (points par type)
+  statut     String    @default("OUVERTE")                 // OUVERTE | EN_COURS | FAITE (R183)
+  // Le corpus R183/R185 traite les dates de tâche comme des ISO strings (comparaison
+  // lexicale `depuisLe <= doneAt.slice(0,10)`, barème du jour) — champs String, fidèles.
+  createdAt  String    @map("created_at")
+  doneAt     String?   @map("done_at")                     // R185 : jour de l'accomplissement (barème du jour)
+  @@index([tenantId, assigneeId])
+  @@map("tasks")
+}
