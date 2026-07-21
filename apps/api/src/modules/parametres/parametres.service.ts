@@ -27,6 +27,8 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Tolérance (points de base) avant qu'un écart d'allocation devienne un drift" },
   { cle: "pmsBreachDelaiJours", type: "int", defaut: 30, regle: "R108", requis: false,
     description: "Délai de régularisation d'un breach avant escalade" },
+  { cle: "docStorage", type: "json", defaut: { adaptateur: "COFFRE_INTERNE" }, regle: "R180", requis: false,
+    description: "Hébergeur documentaire de l'établissement : coffre interne O-Live, stockage objet suisse, ou GED existante de la banque (adaptateur déclaré). Le changer est un acte motivé, jamais rétroactif — les invariants de preuve ne bougent pas (R181)." },
   { cle: "gedDocTypes", type: "json", defaut: null, regle: "R110/R112", requis: true,
     exemple: [{ code: "PASSEPORT", validiteMois: 120, requisPour: ["KYC_VALIDATION"], rolesAutorises: ["RM", "CO", "CF"] }],
     description: "Référentiel des types de documents : validité, exigences par passage, rôles autorisés, retentionAnnees (R170 : la rétention naît au classement) · chaque type peut porter son gabarit d'extraction OCR versionné (champs, contrôles, mapping — R174)" },
