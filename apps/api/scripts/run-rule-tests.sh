@@ -17,7 +17,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/events/golden-record.projector.ts src/modules/events/golden-record.projector.spec.ts \
   src/modules/personnes/personnes.service.ts src/modules/personnes/personnes.wiring.spec.ts \
   src/modules/pms/pms.service.ts src/modules/pms/pms.wiring.spec.ts \
-  src/modules/ged/ged.service.ts src/modules/ged/ged.wiring.spec.ts \
+  src/modules/ged/ged.service.ts src/modules/ged/ged.controller.ts src/modules/ged/ged.wiring.spec.ts \
   src/modules/ged/ged-avance.service.ts src/modules/ged/ged-avance.wiring.spec.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
   src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
@@ -37,6 +37,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/ged/retention.wiring.spec.ts \
   src/modules/workflow/workflow-def.service.ts src/modules/workflow/workflow-def.wiring.spec.ts \
   src/modules/workflow/kyc-workflow.chaine.ts src/modules/workflow/kyc-workflow.chaine.wiring.spec.ts \
+  src/modules/ocr/ocr-extraction.service.ts src/modules/ocr/ocr-extraction.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -80,3 +81,4 @@ echo "── Câblage Core banking (SY-01..05, R167→R169) ──"; run core-sy
 echo "── Rétention au classement (RN-01..04, R170) ──"; run retention.wiring.spec.js
 echo "── Câblage Workflow gouverné (WF-01..05, R171→R173) ──"; run workflow-def.wiring.spec.js
 echo "── Câblage KYC↔Workflow (KW-01..05, clause R172) ──"; run kyc-workflow.chaine.wiring.spec.js
+echo "── Câblage OCR typé (OC-01..06, R174→R176) ──"; run ocr-extraction.wiring.spec.js

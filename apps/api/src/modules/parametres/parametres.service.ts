@@ -29,7 +29,7 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Délai de régularisation d'un breach avant escalade" },
   { cle: "gedDocTypes", type: "json", defaut: null, regle: "R110/R112", requis: true,
     exemple: [{ code: "PASSEPORT", validiteMois: 120, requisPour: ["KYC_VALIDATION"], rolesAutorises: ["RM", "CO", "CF"] }],
-    description: "Référentiel des types de documents : validité, exigences par passage, rôles autorisés, retentionAnnees (R170 : la rétention naît au classement)" },
+    description: "Référentiel des types de documents : validité, exigences par passage, rôles autorisés, retentionAnnees (R170 : la rétention naît au classement) · chaque type peut porter son gabarit d'extraction OCR versionné (champs, contrôles, mapping — R174)" },
   { cle: "onboardingSlaJours", type: "json", defaut: { COLLECTE: 30, KYC_EN_COURS: 45, DECISION: 10 },
     regle: "R120", requis: false, description: "SLA par étape du funnel d'onboarding (jours)" },
   { cle: "iaPrerevueTraitementRequis", type: "bool", defaut: false, regle: "R123", requis: false,

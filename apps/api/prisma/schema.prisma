@@ -703,3 +703,34 @@ model WorkflowDef {
   @@unique([tenantId, code, version])
   @@map("workflow_defs")
 }
+
+model OcrExtraction {
+  id             String  @id @default(uuid()) @db.Uuid
+  tenantId       String  @map("tenant_id") @db.Uuid
+  documentId     String  @map("document_id") @db.Uuid
+  versionId      String  @map("version_id") @db.Uuid
+  gabaritVersion Int?    @map("gabarit_version")          // R174 — le dérivé garde À VIE sa version
+  moteur         String
+  champs         Json                                     // {nom, valeur, confiance}[]
+  controles      Json                                     // {controle, resultat}[] — R175
+  shaSource      String  @map("sha_source")
+  shaDerive      String  @map("sha_derive")
+  at             DateTime @default(now())
+  @@unique([versionId, gabaritVersion])
+  @@map("ocr_extractions")
+}
+
+model OcrProposition {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  extractionId String    @map("extraction_id") @db.Uuid
+  cible        Json                                       // {form, section, question, dossierCode}
+  champ        String
+  valeur       String
+  confiance    Float
+  statut       String                                     // EN_ATTENTE | ACCEPTEE | REFUSEE — R176
+  decidePar    String?   @map("decide_par")
+  decideAt     DateTime? @map("decide_at")
+  motifRefus   String?   @map("motif_refus")
+  @@map("ocr_propositions")
+}
