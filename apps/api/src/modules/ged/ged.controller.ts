@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { GedIngestionService } from "./ged-ingestion.service";
-import { GedService } from "./ged.service";
 import { GedAvanceService } from "./ged-avance.service";
 import { VuesService } from "./vues.service";
 import { RechercheService } from "../recherche/recherche.service";
@@ -20,7 +19,9 @@ import { GedConsultationService } from "./ged-consultation.service";
 export class GedController {
   constructor(
     private ingestion: GedIngestionService,
-    private ged: GedService,
+    // Lot 43 : `GedService` retiré — dépendance MORTE (aucun endpoint ne l'appelle ; la
+    // consultation est portée par GedConsultationService). Aligne la porte sur le canon
+    // et permet à GedModule de démarrer sans provider inutile. Aucun service modifié.
     private avance: GedAvanceService,
     private vues: VuesService,
     private recherche: RechercheService,

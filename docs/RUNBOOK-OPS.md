@@ -40,6 +40,9 @@ recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo 
 > dormant). Erratum E1 : `crm.service`/`crm.wiring.spec` alignés sur `Client.rmUserId` (comportement
 > inchangé, CR 5/5). Non traités (backlog reconnu, lots dédiés) : surface GED `lister`/`lire`, typage `tx:any`.
 
+> **CÂBLAGE (lot 43, 21.07.2026)** — Lot de **pur câblage DI, aucune règle, aucun test nouveau, harnais INCHANGÉ à 329**.
+> `GedModule` (nouveau) câble les services GED par **`useFactory`** — les services à **ports optionnels** (`ports = {}` : ingestion, avancé, coffre, resolver) ne passent pas la résolution auto de Nest, la factory appelle le constructeur avec les ports vides (= comportement ratifié). `app.module` importe `GedModule`. **Boot RÉEL vérifié** : la DI résout (aucune erreur), `GET /v1/ged/documents` → 200 (filtré au registre : CO voit, INTRUS `[]` — R110), `GET /v1/ged/documents/<uuid-inexistant>` → 404. `ged.controller` : dépendance MORTE `GedService` retirée (aucun endpoint ne l'appelait) — aucun service modifié.
+
 > **RÉSOLU (chantier « alignement Document », 20.07.2026)** : le modèle `Document`/`DocumentVersion`
 > est désormais aligné sur le contrat GED R109→R116 + R137→R139 — champ Prisma = contrat
 > (`statut`, `nom`) avec `@map` conservant les colonnes v0.2 (migration douce), `clientId`/`retentionUntil`
@@ -61,6 +64,9 @@ recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo 
    survivent (résolution par kid via `/.well-known/jwks.json`).
 4. **SSO** : renseigner `OIDC_JWKS_URI` — `verifyIdToken` est branché sur le JWKS réel de l'IdP
    depuis le 19.07 (JV-01..07) ; sans la variable, le login OIDC refuse proprement.
+5. **Adaptateurs réels (lot 43)** : l'injection des ports de production — coffre S3 suisse
+   (Exoscale SOS), GED externe (CMIS/WebDAV) — se fait en **remplaçant les factories du
+   `GedModule`** (`useFactory`), **jamais** les services (dont le comportement est ratifié et testé).
 
 ## 4. Incidents — chemins courts
 
