@@ -112,7 +112,8 @@ DO $$ DECLARE t text; BEGIN
     'personne_liens',                                     -- R152→R155 (bloc 28, personnes liées)
     'annotations', 'caviardage_derives',                  -- R156→R159 (bloc 29, annotations & caviardage)
     'ia_productions',                                     -- R160→R163 (bloc 31, IA au service du dossier)
-    'ged_vues'                                            -- R164→R166 (bloc 32, dossiers-vues)
+    'ged_vues',                                           -- R164→R166 (bloc 32, dossiers-vues)
+    'core_sync_lots', 'core_quarantaines'                 -- R167→R169 (lot 33, core banking en port)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

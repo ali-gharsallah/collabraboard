@@ -33,6 +33,8 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/chaines/chaines.service.ts src/modules/chaines/chaines.wiring.spec.ts \
   src/modules/ia/ia-ged.service.ts src/modules/ia/ia-ged.wiring.spec.ts \
   src/modules/ged/vues.service.ts src/modules/ged/vues.wiring.spec.ts \
+  src/modules/corebanking/core-sync.service.ts src/modules/corebanking/core-sync.wiring.spec.ts \
+  src/modules/ged/retention.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -72,3 +74,5 @@ echo "── Câblage Annotations (AN-01..06, R156→R159) ──"; run annotati
 echo "── Câblage Chaînes (CB-01..06, clauses R144/R148/R151) ──"; run chaines.wiring.spec.js
 echo "── Câblage IA dossier (AI-01..06, R160→R163) ──"; run ia-ged.wiring.spec.js
 echo "── Câblage Dossiers-vues (VU-01..05, R164→R166) ──"; run vues.wiring.spec.js
+echo "── Câblage Core banking (SY-01..05, R167→R169) ──"; run core-sync.wiring.spec.js
+echo "── Rétention au classement (RN-01..04, R170) ──"; run retention.wiring.spec.js
