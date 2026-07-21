@@ -11,7 +11,7 @@ commande et sa preuve attendue.
 cd apps/api
 cp .env.example .env      # DATABASE_URL · AUDIT_HMAC_SECRET · MFA_ENC_KEY · OIDC_* · OIDC_JWKS_URI
 npm i
-npm run prisma:push && npm run prisma:post      # schéma + triggers + RLS (post-deploy-v2)
+npm run prisma:migrate && npm run prisma:post   # migrations versionnées (lot 42) + triggers/RLS (post-deploy-v2)
 npm run start:dev
 ```
 Secrets **obligatoires au boot** (fail-fast volontaire) : `AUDIT_HMAC_SECRET` (audit sans valeur
@@ -23,14 +23,14 @@ probante sinon), `MFA_ENC_KEY` (chiffrement mfa_secret). L'appli refuse de déma
 |---|---|---|
 | 1. Lint + types | `npm run lint && npm run typecheck` | 0 erreur — **bloquant en CI** (eslint.config.mjs racine + apps/api/tsconfig.json ajoutés au chantier B) |
 | 2. Unitaires | — | **Couverte par `test:rules`** — pas de suite jest unitaire dans le dépôt. Step retiré du CI (`jest` sans config/spec ⇒ « No tests found ») ; à réintroduire **bloquant** le jour où un harnais jest unitaire existe. |
-| 3. Règles + IAM + corpus session | `npm run test:rules` | **324 verts** (… + Licence vendor LC-01..05 R177→R179 + Port GED externe GX-01..05 R180→R182 + Capacité d'équipe WK-01..05 R183→R185 + CRM Relation CR-01..05 R186→R188 depuis le lot 40 ; cf. `docs/verify-run-2026-07-19.txt`) |
+| 3. Règles + IAM + corpus session | `npm run test:rules` | **329 verts** (+ Surface consultation GED GS-01..05 R110/R112/R125/R145, lot 42) (… + Licence vendor LC-01..05 R177→R179 + Port GED externe GX-01..05 R180→R182 + Capacité d'équipe WK-01..05 R183→R185 + CRM Relation CR-01..05 R186→R188 depuis le lot 40 ; cf. `docs/verify-run-2026-07-19.txt`) |
 | 4. e2e Postgres réel | `npm run test:e2e:setup && npm run test:e2e` | 6/6 — exige le patch `kyc.controller` (guard `validate` retiré, sinon 403≠409) |
 | 5. Moteurs Python | `python3 services/workflow-engine-py/run_tests.py` · `…/run_tests_sql.py` · `…/cpsi-server-py/run_tests.py` | 19/19 · SQL vert · **18/18** (⚠ faux-vert CPSI : ajouter `sys.exit(0 if total_ok==len(mods) else 1)` — la CI a une garde grep en attendant) |
 | 6. Démo | `npm run test:smoke` (73 écrans) + onglet Screening → « 🧪 Preuves moteur » → Tout rejouer | 73/73 · 16/16 verts — **hors CI** : exige Playwright + navigateurs (hors scope CI actuel). Step retiré du workflow, même doctrine que test:unit ; à réintroduire bloquant quand l'environnement navigateurs sera provisionné. |
 
 `verify:all` enchaîne 1→4. La CI (`.github/workflows/ci.yml`) rejoue le tout, `prisma:post`
 inclus — les triggers R48 sont enfin exercés en continu. **Tous les steps CI sont bloquants**
-(plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (324), e2e (6/6),
+(plus aucun advisory) : lint + typecheck, `prisma:post`, `test:rules` (329), e2e (6/6),
 recette RLS, moteurs Python (19/19 · SQL 11/11 · CPSI 18/18). Hors CI : démo Playwright (étape 6).
 
 > **CONFORMITÉ (lot 41, 21.07.2026)** — Lot d'arbitrage, **aucune règle nouvelle, harnais INCHANGÉ à 324**.
@@ -113,3 +113,19 @@ new CoffreService(prisma, audit, { storage: exoscaleStoragePort() })
   → **aucun** événement `coffre.reconciliation.orphelin` ni `…manquant`. Un écart d'inventaire est
   un FAIT D'AUDIT (orphelin → alerte ; manquant → CRITIQUE + tâche, une fois) — jamais de ménage
   automatique (R39/R147). La purge n'existe qu'en destruction certifiée R115 (l'empreinte survit).
+
+## 7. Migrations versionnées (bascule lot 42, 21.07.2026)
+
+Le dépôt fonctionnait en `prisma db push` (schéma poussé, aucun historique). **Depuis le lot 42,
+le schéma est versionné par migrations Prisma** — `db push` ne sert plus qu'en sandbox jetable.
+
+- **Baseline** : `prisma/migrations/0_baseline_lot42/migration.sql` fige l'état complet du schéma
+  (48 tables/enums) à la bascule. Générée par `prisma migrate diff --from-empty
+  --to-schema-datamodel prisma/schema.prisma --script`.
+- **Toute évolution de schéma désormais** : `npm run prisma:migrate` (`prisma migrate dev -n <nom>`)
+  — **jamais** `db push` hors sandbox. La migration est commitée avec le changement de `schema.prisma`.
+- **Déploiement / CI** : `prisma migrate deploy` (remplace `db push` dans `ci.yml`), puis `prisma:post`
+  (triggers R48 + RLS FORCE, hors périmètre migrations). Vérifié : `migrate reset`/`deploy` rejoue la
+  baseline, e2e 6/6, recette RLS `clients` → 0 ligne sans GUC.
+- **Base existante déjà poussée par `db push`** (sans `_prisma_migrations`) : marquer la baseline
+  appliquée une fois — `prisma migrate resolve --applied 0_baseline_lot42` — puis basculer sur `deploy`.
