@@ -38,6 +38,8 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Pseudonymiser les identités avant transmission au port IA ?" },
   { cle: "screeningSeuil", type: "int", defaut: 85, regle: "R100", requis: false,
     description: "Seuil de similarité du screening (0-100)" },
+  { cle: "workflowRoles", type: "json", defaut: ["CO", "ADMIN"], regle: "R173", requis: false,
+    description: "Rôles habilités à éditer et publier les définitions de workflow (l'atelier gouverné)" },
   { cle: "coreMapping", type: "json", defaut: [], regle: "R169", requis: false,
     description: "Correspondances compteCore ↔ clientId, versionnées à date de mise en vigueur (depuisLe) — l'inconnu va en quarantaine" },
   { cle: "coreSystemeRef", type: "string", defaut: null, regle: "R167", requis: false,

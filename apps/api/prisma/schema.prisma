@@ -687,3 +687,19 @@ model CoreQuarantaine {
   @@index([tenantId, statut])
   @@map("core_quarantaines")
 }
+
+model WorkflowDef {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  code      String
+  version   Int                                          // R171 — versionnée
+  statut    String                                       // BROUILLON | PUBLIEE (immuable)
+  depuisLe  String?   @map("depuis_le")                  // R171/R172 — date de mise en vigueur
+  contenu   Json                                         // étapes, sections, visas par rôle
+  creePar   String    @map("cree_par")
+  publiePar String?   @map("publie_par")
+  publieAt  DateTime? @map("publie_at")
+  motif     String?                                      // R7 — la publication se motive
+  @@unique([tenantId, code, version])
+  @@map("workflow_defs")
+}
