@@ -1,5 +1,15 @@
 # Olive Enterprise — architecture cible & plan de convergence
 
+## État réel vérifié au 2026-07-22
+Diagnostic automatisé (`docs/ETAT-REEL-VERIFIE.md`). **Correctifs** à la matrice ci-dessous :
+- Ligne **AML Engine** (« scénarios en lib », P2) — **partiellement obsolète** : la détection AML
+  privé (**R189→R206**, 18 détecteurs + persistance `aml_signals`, 45 tests) est **implémentée et
+  mergée**, plus une **couche Shariah/Islamic** (R207→R221). Ce n'est plus seulement une lib de démo.
+- Ligne **Rule Engine** (« règles en constantes ») — les seuils AML/Islamic sont désormais **pilotés
+  par le registre R-Q** (`tenant.settings`, motivé/daté/non-rétroactif), pas des constantes figées.
+- Restent **cible/roadmap** (non implémentés) : Keycloak, générateur synthétique, et un rejeu-à-date
+  **généralisé** aux agrégats métier (aujourd'hui limité aux paramètres).
+
 Complète ARCHITECTURE.md (MVP). Source : revue d'architecture bancaire (20
 briques). Principe senior : **modular monolith + ports** — chaque brique cible
 a son interface dès aujourd'hui ; l'extraction en microservice est une décision

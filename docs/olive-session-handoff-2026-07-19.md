@@ -1,5 +1,12 @@
 # O-Live — Journal de session & handoff · 2026-07-19
 
+> ## État réel vérifié au 2026-07-22
+> **Snapshot daté du 19.07** — les comptes de tests cités plus bas (« 202 », « 200 tests »,
+> « 150/150 », etc.) sont **périmés** : ils précèdent les blocs 42→49b. Périmètre courant
+> vérifié = **425 tests de règles (50 suites) + 6 e2e sur vraie DB**, règles **R1→R221**.
+> Document conservé comme archive de session ; état à jour : `docs/ETAT-REEL-VERIFIE.md` et `docs/RUNBOOK-OPS.md`.
+
+
 > **À lire avant toute reprise.** La source de vérité est le **dépôt + la matrice de traçabilité +
 > le catalogue v4.x**, PAS la mémoire de l'assistant. Cette session a démarré sur une mémoire
 > périmée (« R13 à implémenter, tests rouges ») qui était **fausse** : R13 est fait et vert depuis

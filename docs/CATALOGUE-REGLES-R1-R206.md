@@ -1,5 +1,12 @@
 # Catalogue Complet des Règles O-Live — R1..R206
 
+> ## État réel vérifié au 2026-07-22
+> Ce catalogue s'arrête à **R206**, mais le **code va désormais jusqu'à R221** : la **couche
+> Shariah / Islamic (R207→R221)** est implémentée et mergée (module `apps/api/src/modules/islamic/`,
+> 41 tests verts, PR #22/#23). Le titre « R1..R206 » est donc **incomplet**. Référentiel Islamic :
+> `spec/islamic-scenarios-shariah/`. Vérification complète : `docs/ETAT-REEL-VERIFIE.md`.
+
+
 **État :** Ratifié R1→R188 (existant), Nouveau R189→R206 (AML Private Banking).  
 **Statut :** ✅ Spec validée, attendu implémentation Bloc 48.
 
