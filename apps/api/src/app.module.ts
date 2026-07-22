@@ -10,8 +10,9 @@ import { GedModule } from "./modules/ged/ged.module";
 import { ParametresModule } from "./modules/parametres/parametres.module";
 import { CrmModule } from "./modules/crm/crm.module";
 import { WorkloadModule } from "./modules/workload/workload.module";
+import { AmlModule } from "./modules/aml/aml.module";
 
-@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule] })
+@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }
