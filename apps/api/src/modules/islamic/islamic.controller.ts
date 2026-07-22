@@ -11,6 +11,7 @@ export class IslamicController {
   constructor(private svc: IslamicService) {}
   @Post("evaluer")            evaluer(@Req() r: any, @Body() b: any) { return this.svc.evaluer(r.ctx, b); }              // R207→R213/R216/R221
   @Get("clients/:id/signaux") signaux(@Req() r: any, @Param("id") id: string) { return this.svc.signaux(r.ctx, id); }
+  @Get("clients/:id/zakat")   zakatHisto(@Req() r: any, @Param("id") id: string) { return this.svc.zakatHistorique(r.ctx, id); }
   @Post("zakat")              zakat(@Req() r: any, @Body() b: any) { return this.svc.zakat(r.ctx, b); }                  // R211
   @Post("mudaraba")           mudaraba(@Req() r: any, @Body() b: any) { return this.svc.mudaraba(r.ctx, b); }            // R215
   @Post("waqf/retrait")       waqf(@Req() r: any, @Body() b: any) { return this.svc.waqfRetrait(r.ctx, b); }             // R218

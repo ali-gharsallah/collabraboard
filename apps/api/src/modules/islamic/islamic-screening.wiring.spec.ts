@@ -42,13 +42,17 @@ const estSignal = (s: SignalIslamic | null, type: string, regle: string, niveau:
 
 function fakePrisma(settings: any = {}) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { signals: [] as any[], events: [] as any[] };
+  const db = { signals: [] as any[], events: [] as any[], zakat: [] as any[], waqf: [] as any[], mudaraba: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => row[k] === v);
+  const table = (rows: any[], prefix: string) => ({
+    create: async ({ data }: any) => { const r = { id: id(prefix), ...data }; rows.push(r); return r; },
+    findMany: async ({ where }: any = {}) => rows.filter((x) => match(x, where)) });
   const p: any = { _db: db,
     tenant: { findFirst: async ({ where }: any) => ({ id: where.id, settings }) },
-    islamicSignal: {
-      create: async ({ data }: any) => { const r = { id: id('I'), ...data }; db.signals.push(r); return r; },
-      findMany: async ({ where }: any = {}) => db.signals.filter((x) => match(x, where)) },
+    islamicSignal: table(db.signals, 'I'),
+    zakatCalculation: table(db.zakat, 'Z'),
+    waqfDistribution: table(db.waqf, 'W'),
+    mudarabaDistribution: table(db.mudaraba, 'M'),
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } } };
   p.$transaction = async (fn: any) => fn(p);
   return p;
@@ -229,11 +233,33 @@ const MLRO = { tenantId: 't1', userId: 'u-mlro', role: 'MLRO' };
     ok(r.bloque === false && r.revueManuelle === true, 'jamais d\'auto-blocage sur entité caritative');
     ok(p._db.signals[0].revueManuelle === true, 'signal marqué revue');
   });
-  await it('SVC zakat : calcule, émet le ledger, ne persiste aucun signal', async () => {
+  await it('SVC zakat (49b) : calcule, PERSISTE le ledger signé jeton, ne lève aucun signal', async () => {
     const p = fakePrisma(); const s = new IslamicService(p, fakeAudit());
-    const z: any = await s.zakat(MLRO, { clientId: 'ahmed', patrimoineChf: 500000 });
-    ok(z.zakatDue === 12500, 'zakat calculée');
-    ok(p._db.signals.length === 0 && p._db.events.some((e: any) => e.type === 'islamic.zakat.calcule'), 'ledger, pas de signal');
+    const z: any = await s.zakat(MLRO, { clientId: 'ahmed', patrimoineChf: 500000, annee: 2026 });
+    ok(z.zakatDue === 12500 && !!z.id, 'zakat calculée et persistée');
+    ok(p._db.signals.length === 0 && p._db.zakat.length === 1, 'ledger persisté, aucun signal');
+    ok(p._db.zakat[0].emisPar === 'u-mlro' && p._db.zakat[0].annee === 2026, 'auteur = jeton, année portée');
+    ok(p._db.events.some((e: any) => e.type === 'islamic.zakat.calcule'), 'événement émis');
+  });
+  await it('SVC zakat historique (49b) : lecture tenant-scopée du ledger', async () => {
+    const p = fakePrisma(); const s = new IslamicService(p, fakeAudit());
+    await s.zakat(MLRO, { clientId: 'ahmed', patrimoineChf: 500000 });
+    ok((await s.zakatHistorique(MLRO, 'ahmed')).length === 1, 'l\'historique du client');
+    ok((await s.zakatHistorique(MLRO, 'autre')).length === 0, 'rien pour un autre client');
+  });
+  await it('SVC mudaraba (49b) : distribution PERSISTÉE, part client tracée, signée jeton', async () => {
+    const p = fakePrisma(); const s = new IslamicService(p, fakeAudit());
+    const m: any = await s.mudaraba(MLRO, { clientId: 'mariam', profitChf: 12000, bankSharePct: 70, clientSharePct: 30 });
+    ok(m.clientShare === 3600 && !!m.id, 'part client 30%');
+    ok(p._db.mudaraba.length === 1 && p._db.mudaraba[0].emisPar === 'u-mlro' && p._db.mudaraba[0].clientShare === 3600, 'ledger signé jeton');
+  });
+  await it('SVC waqf (49b) : retrait autorisé PERSISTÉ (revenu seul) ; refus non persisté', async () => {
+    const p = fakePrisma(); const s = new IslamicService(p, fakeAudit());
+    const w: any = await s.waqfRetrait(MLRO, { waqfId: 'w1', incomeChf: 200000, retraitChf: 100000 });
+    ok(w.autorise === true && !!w.id, 'retrait autorisé persisté');
+    ok(p._db.waqf.length === 1 && p._db.waqf[0].source === 'INCOME_ONLY' && p._db.waqf[0].emisPar === 'u-mlro', 'ledger signé jeton');
+    await jette(s.waqfRetrait(MLRO, { waqfId: 'w1', incomeChf: 200000, retraitChf: 250000 }), 'R218');
+    ok(p._db.waqf.length === 1, 'le refus ne persiste rien');
   });
   await it('SVC tenant param : relever la volatilité maysir fait taire un cas limite', async () => {
     const p = fakePrisma({ islamicMaysirVolatilitePct: 90 }); const s = new IslamicService(p, fakeAudit());

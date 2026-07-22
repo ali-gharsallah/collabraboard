@@ -827,3 +827,50 @@ model IslamicSignal {
   @@index([tenantId, clientId])
   @@map("islamic_signals")
 }
+
+// Ledgers Shariah — R211/R215/R218 (Bloc 49b, augmentation additive, option Ali). Les
+// calculateurs restaient purs + événements ; on PERSISTE désormais leur trace (append-only,
+// tenant-scopé, RLS FORCE) pour l'audit AAOIFI. Conventions du dépôt : uuid + @db.Uuid, Int
+// (pas de BigInt/cuid), pas de modèle Account — le clientId/waqfId sont des références
+// applicatives (comme partout ailleurs). Auteur = jeton (emisPar).
+model ZakatCalculation {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  clientId    String   @map("client_id") @db.Uuid
+  annee       Int
+  totalWealth Int      @map("total_wealth")             // CHF
+  nisab       Int
+  zakatDue    Int      @map("zakat_due")                // 2,5% si assujetti, sinon 0
+  statut      String                                    // PENDING_PAYMENT | NON_ASSUJETTI
+  emisPar     String   @map("emis_par")
+  at          DateTime @default(now())
+  @@index([tenantId, clientId, annee])
+  @@map("zakat_calculations")
+}
+
+model WaqfDistribution {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  waqfId     String   @map("waqf_id")                   // référence applicative du Waqf
+  montantChf Int      @map("montant_chf")               // retrait autorisé (revenu seul)
+  incomeChf  Int      @map("income_chf")                // revenu de référence
+  source     String                                     // INCOME_ONLY — principal immuable (R218)
+  emisPar    String   @map("emis_par")
+  at         DateTime @default(now())
+  @@index([tenantId, waqfId])
+  @@map("waqf_distributions")
+}
+
+model MudarabaDistribution {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  clientId    String   @map("client_id") @db.Uuid
+  profitChf   Int      @map("profit_chf")
+  bankShare   Int      @map("bank_share")
+  clientShare Int      @map("client_share")
+  statut      String                                    // POSTED (R215)
+  emisPar     String   @map("emis_par")
+  at          DateTime @default(now())
+  @@index([tenantId, clientId])
+  @@map("mudaraba_distributions")
+}
