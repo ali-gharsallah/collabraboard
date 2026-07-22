@@ -768,6 +768,24 @@ CREATE TABLE "aml_signals" (
     CONSTRAINT "aml_signals_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "islamic_signals" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "regle" TEXT NOT NULL,
+    "niveau" INTEGER NOT NULL,
+    "note" TEXT NOT NULL,
+    "motif" TEXT NOT NULL,
+    "bloquant" BOOLEAN NOT NULL DEFAULT false,
+    "revue_manuelle" BOOLEAN NOT NULL DEFAULT false,
+    "emis_par" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "islamic_signals_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -941,6 +959,9 @@ CREATE INDEX "tasks_tenant_id_assignee_id_idx" ON "tasks"("tenant_id", "assignee
 
 -- CreateIndex
 CREATE INDEX "aml_signals_tenant_id_client_id_idx" ON "aml_signals"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE INDEX "islamic_signals_tenant_id_client_id_idx" ON "islamic_signals"("tenant_id", "client_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

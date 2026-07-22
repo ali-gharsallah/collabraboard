@@ -24,7 +24,8 @@ DO $$ DECLARE t text; BEGIN
     'ia_prompt_versions',                                 -- R124 (le prompt est une règle : registre append-only)
     'tenant_param_changes',                               -- R126 (un paramètre est une règle)
     'risk_case_notes',                                    -- R134 (l'instruction append-only)
-    'aml_signals'                                         -- R189→R206 (le signal AML est un fait)
+    'aml_signals',                                        -- R189→R206 (le signal AML est un fait)
+    'islamic_signals'                                     -- R207→R221 (le signal Shariah est un fait)
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -119,7 +120,8 @@ DO $$ DECLARE t text; BEGIN
     'ocr_extractions', 'ocr_propositions',                -- R174→R176 (lot 36, OCR typé)
     'tasks',                                              -- R183→R185 (lot 39, capacité équipe)
     'crm_contacts',                                       -- R186→R188 (lot 40, CRM relation)
-    'aml_signals'                                         -- R189→R206 (lot 48, surveillance AML)
+    'aml_signals',                                        -- R189→R206 (lot 48, surveillance AML)
+    'islamic_signals'                                     -- R207→R221 (lot 49, couche Shariah)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
