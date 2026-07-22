@@ -71,24 +71,50 @@ export class IslamicService {
     await this.audit.log(ctx.tenantId, ctx.userId, type.toUpperCase().replace(/\./g, "_"), aggregateId);
   }
 
-  async zakat(ctx: Ctx, dto: { clientId: string; patrimoineChf: number }) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    const rapport = calculerZakat(dto.patrimoineChf, paramsIslamicDepuisSettings(t?.settings));
-    await this.ledger(ctx, "islamic.zakat.calcule", dto.clientId, { ...rapport, par: ctx.userId });
-    return rapport;
+  // Bloc 49b (augmentation additive) : les calculateurs Zakat/Mudaraba/Waqf PERSISTENT
+  // désormais leur trace (append-only, tenant-scopé, RLS) pour l'audit AAOIFI — l'auteur
+  // reste le jeton, jamais le corps.
+  async zakat(ctx: Ctx, dto: { clientId: string; patrimoineChf: number; annee?: number }) {
+    return this.prisma.$transaction(async (tx: any) => {
+      const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
+      const rapport = calculerZakat(dto.patrimoineChf, paramsIslamicDepuisSettings(t?.settings));
+      const annee = dto.annee ?? new Date().getUTCFullYear();
+      const row = await tx.zakatCalculation.create({ data: {
+        tenantId: ctx.tenantId, clientId: dto.clientId, annee,
+        totalWealth: rapport.totalWealth, nisab: rapport.nisab, zakatDue: rapport.zakatDue,
+        statut: rapport.status, emisPar: ctx.userId, at: new Date().toISOString() } });
+      await this.emit(tx, ctx.tenantId, "islamic.zakat.calcule", row.id, { clientId: dto.clientId, ...rapport, par: ctx.userId });
+      return { ...rapport, id: row.id, annee };
+    });
+  }
+
+  async zakatHistorique(ctx: Ctx, clientId: string) {
+    const rows = await this.prisma.zakatCalculation.findMany({ where: { tenantId: ctx.tenantId, clientId } });
+    return rows.slice().sort((a: any, b: any) => new Date(a.at).getTime() - new Date(b.at).getTime());
   }
 
   async mudaraba(ctx: Ctx, dto: { clientId: string; profitChf: number; bankSharePct: number; clientSharePct: number }) {
     const rapport = distribuerMudaraba(dto.profitChf, dto.bankSharePct, dto.clientSharePct);
-    await this.ledger(ctx, "islamic.mudaraba.distribue", dto.clientId, { ...rapport, par: ctx.userId });
-    return rapport;
+    return this.prisma.$transaction(async (tx: any) => {
+      const row = await tx.mudarabaDistribution.create({ data: {
+        tenantId: ctx.tenantId, clientId: dto.clientId, profitChf: rapport.profit,
+        bankShare: rapport.bankShare, clientShare: rapport.clientShare, statut: rapport.status,
+        emisPar: ctx.userId, at: new Date().toISOString() } });
+      await this.emit(tx, ctx.tenantId, "islamic.mudaraba.distribue", row.id, { clientId: dto.clientId, ...rapport, par: ctx.userId });
+      return { ...rapport, id: row.id };
+    });
   }
 
   async waqfRetrait(ctx: Ctx, dto: { waqfId: string; incomeChf: number; retraitChf: number }) {
     const rapport = validerRetraitWaqf(dto.incomeChf, dto.retraitChf);
     if (!rapport.autorise) throw new BadRequestException(rapport.motif);
-    await this.ledger(ctx, "islamic.waqf.distribue", dto.waqfId, { ...rapport, par: ctx.userId });
-    return rapport;
+    return this.prisma.$transaction(async (tx: any) => {
+      const row = await tx.waqfDistribution.create({ data: {
+        tenantId: ctx.tenantId, waqfId: dto.waqfId, montantChf: rapport.retrait,
+        incomeChf: rapport.income, source: rapport.source, emisPar: ctx.userId, at: new Date().toISOString() } });
+      await this.emit(tx, ctx.tenantId, "islamic.waqf.distribue", row.id, { waqfId: dto.waqfId, ...rapport, par: ctx.userId });
+      return { ...rapport, id: row.id };
+    });
   }
 
   async qard(ctx: Ctx, dto: { clientId: string; principalChf: number }) {

@@ -786,6 +786,51 @@ CREATE TABLE "islamic_signals" (
     CONSTRAINT "islamic_signals_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "zakat_calculations" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "annee" INTEGER NOT NULL,
+    "total_wealth" INTEGER NOT NULL,
+    "nisab" INTEGER NOT NULL,
+    "zakat_due" INTEGER NOT NULL,
+    "statut" TEXT NOT NULL,
+    "emis_par" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "zakat_calculations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "waqf_distributions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "waqf_id" TEXT NOT NULL,
+    "montant_chf" INTEGER NOT NULL,
+    "income_chf" INTEGER NOT NULL,
+    "source" TEXT NOT NULL,
+    "emis_par" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "waqf_distributions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "mudaraba_distributions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "profit_chf" INTEGER NOT NULL,
+    "bank_share" INTEGER NOT NULL,
+    "client_share" INTEGER NOT NULL,
+    "statut" TEXT NOT NULL,
+    "emis_par" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "mudaraba_distributions_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -962,6 +1007,15 @@ CREATE INDEX "aml_signals_tenant_id_client_id_idx" ON "aml_signals"("tenant_id",
 
 -- CreateIndex
 CREATE INDEX "islamic_signals_tenant_id_client_id_idx" ON "islamic_signals"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE INDEX "zakat_calculations_tenant_id_client_id_annee_idx" ON "zakat_calculations"("tenant_id", "client_id", "annee");
+
+-- CreateIndex
+CREATE INDEX "waqf_distributions_tenant_id_waqf_id_idx" ON "waqf_distributions"("tenant_id", "waqf_id");
+
+-- CreateIndex
+CREATE INDEX "mudaraba_distributions_tenant_id_client_id_idx" ON "mudaraba_distributions"("tenant_id", "client_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
