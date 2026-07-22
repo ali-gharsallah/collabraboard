@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { DemoModeBanner } from "../../components/DemoModeBanner";
 
 // Détail dossier : sections → questions (droits appliqués côté serveur),
 // visas de section, validation four-eyes. Miroir produit de l'écran démo.
@@ -11,7 +12,7 @@ export function KycDetail({ code }: { code: string }) {
   const load = () => fetch(`${base}/v1/kyc/${code}`, { headers: H })
     .then(r => r.json()).then(setKyc);
   useEffect(() => { if (base) load(); }, [code]);
-  if (!base) return <p>Mode démo : API non connectée.</p>;
+  if (!base) return <DemoModeBanner/>;
   if (!kyc) return <p>Chargement…</p>;
 
   async function call(path: string, method: string, body?: any) {

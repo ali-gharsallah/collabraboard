@@ -1,5 +1,13 @@
 # État réel vérifié — O-Live
 
+> ## Addendum Vague 1 (2026-07-22)
+> Deux constats de ce diagnostic ont **évolué** : (1) le rejeu-à-date n'est **plus limité aux
+> paramètres** — le **dossier KYC à date** existe (`GET /v1/kyc/:code/a-date`, reconstruction
+> depuis le journal append-only, preuve FAT-REJEU-KYC-01) ; (2) le frontend réel compte
+> désormais **6 écrans** (ajout File d'alertes + Rejeu KYC) avec fallback seed **visible**.
+> Le reste du diagnostic tient. Certificat à jour : `docs/CERTIFICAT-ETAT.md` · index : `docs/PROJECT-INDEX.md`.
+
+
 **État vérifié au 2026-07-22 par diagnostic automatisé.** Chaque affirmation est adossée à
 une commande shell réellement exécutée (sorties brutes ci-dessous). Rien n'est décrit « de
 mémoire ». `master` = commit `521bc54` (working tree propre).

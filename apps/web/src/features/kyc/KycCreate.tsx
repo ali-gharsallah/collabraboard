@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { apiGet } from "../../lib/api";
+import { apiGetSourced } from "../../lib/api";
+import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
 
 export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) {
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
@@ -7,13 +8,14 @@ export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) 
     accountType: "ADVISORY", countryCode: "CH", rmId: "00000000-0000-0000-0000-000000000001" });
   const [risk, setRisk] = useState<any>(null);
   const [err, setErr] = useState("");
-  useEffect(() => { apiGet<{ data: any[] }>("/v1/clients", { data: [] })
-    .then(r => setClients(r.data)); }, []);
+  const [demo, setDemo] = useState(false);
+  useEffect(() => { apiGetSourced<{ data: any[] }>("/v1/clients", { data: [] })
+    .then(r => { setClients(r.data.data); setDemo(r.isDemo); }); }, []);
 
   async function submit() {
     setErr("");
     const base = (window as any).OLIVE_API_URL;
-    if (!base) { setErr("Mode démo : API non connectée"); return; }
+    if (!base) { setErr(DEMO_MESSAGE); return; }
     const r = await fetch(`${base}/v1/kyc`, { method: "POST",
       headers: { "Content-Type": "application/json",
         Authorization: `Bearer ${sessionStorage.getItem("olive_jwt")}`,
@@ -26,6 +28,7 @@ export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) 
   }
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   return <div>
+    {demo && <DemoModeBanner/>}
     <h3>Nouveau dossier KYC — 4 informations, le moteur décide du reste</h3>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       <select style={inp} value={form.clientId} onChange={e => setForm({ ...form, clientId: e.target.value })}>

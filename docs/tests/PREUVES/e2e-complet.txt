@@ -1,0 +1,3 @@
+Test Suites: 2 passed, 2 total
+Tests:       16 passed, 16 total
+Câblage Couche Shariah (IS-01..IS-15, R207→R221) — 41/41 tests verts

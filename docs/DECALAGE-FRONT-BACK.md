@@ -1,5 +1,13 @@
 # Décalage Frontend ↔ Backend — cartographie prouvée
 
+> ## Addendum Vague 1 (2026-07-22)
+> Ce document décrivait **5 écrans**. Depuis la Vague 1, le vrai frontend en compte **6** :
+> ajout de **File d'alertes** (`GET /v1/aml/clients/:id/signaux` + décision `POST /v1/riskcases`)
+> et **Rejeu KYC à date** (`GET /v1/kyc/:code/a-date`). Le **fallback seed est désormais visible**
+> partout (bandeau « Mode démonstration »). Le décalage de **couverture** subsiste (6 écrans /
+> 75 routes) mais se réduit. Source de vérité à jour : `docs/CERTIFICAT-ETAT.md`.
+
+
 **Vérifié au 2026-07-22 par diagnostic automatisé.** Chaque ligne est adossée à une commande
 shell réellement exécutée (sorties brutes ci-dessous). `master` = `dad0ae4`.
 Note de chemins : ce dépôt utilise `apps/api/src` (backend) et `apps/web/src` (frontend), pas

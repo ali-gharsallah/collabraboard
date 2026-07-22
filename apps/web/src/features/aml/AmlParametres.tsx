@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { apiGet } from "../../lib/api";
+import { apiGetSourced } from "../../lib/api";
+import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
 
 // Onglet « Paramétrages AML » (Bloc 48, R189→R206). Ce n'est PAS un module à part : les
 // seuils AML vivent dans le registre R-Q (préfixe `aml`), sous la même gouvernance que tout
@@ -21,10 +22,11 @@ export function AmlParametres() {
   const [entrees, setEntrees] = useState<Entree[]>([]);
   const [edit, setEdit] = useState<Record<string, { valeur: string; motif: string }>>({});
   const [msg, setMsg] = useState("");
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
-    apiGet<Entree[]>("/v1/parametres/registre", SEED)
-      .then((r) => setEntrees((r ?? []).filter((e) => e.cle.startsWith("aml"))));
+    apiGetSourced<Entree[]>("/v1/parametres/registre", SEED)
+      .then((r) => { setEntrees((r.data ?? []).filter((e) => e.cle.startsWith("aml"))); setDemo(r.isDemo); });
   }, []);
 
   async function enregistrer(e: Entree) {
@@ -32,7 +34,7 @@ export function AmlParametres() {
     const base = (window as any).OLIVE_API_URL;
     const brouillon = edit[e.cle];
     if (!brouillon || !brouillon.motif.trim()) { setMsg(`« ${e.cle} » : motif obligatoire (R7)`); return; }
-    if (!base) { setMsg("Mode démo : API non connectée"); return; }
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
     let valeur: unknown = brouillon.valeur;
     if (e.type === "int") valeur = Number(brouillon.valeur);
     else if (e.type === "json") { try { valeur = JSON.parse(brouillon.valeur); } catch { setMsg("JSON invalide"); return; } }
@@ -47,6 +49,7 @@ export function AmlParametres() {
 
   const inp = { padding: 6, borderRadius: 6, border: "1px solid #ccc", fontSize: 13 };
   return <div>
+    {demo && <DemoModeBanner/>}
     <h3>Paramétrages AML — chaque seuil est une règle (R7/R125)</h3>
     <p style={{ color: "#666", fontSize: 13 }}>
       Le régler passe par le registre : motivé, daté, jamais rétroactif. Détection R189→R206.</p>

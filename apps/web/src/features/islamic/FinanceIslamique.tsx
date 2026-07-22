@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { isDemoMode } from "../../lib/api";
+import { DemoModeBanner } from "../../components/DemoModeBanner";
 
 // Onglet « Finance Islamique » (Bloc 49, R207→R221) — adaptation minimale (option Ali).
 // Deux vues concrètes : le calcul de Zakat (R211) et l'évaluation Shariah d'une opération
@@ -40,6 +42,7 @@ export function FinanceIslamique() {
   }
 
   return <div>
+    {isDemoMode() && <DemoModeBanner/>}
     <h3>Finance Islamique — conformité Shariah (R207→R221)</h3>
     <p style={{ color: "#666", fontSize: 13 }}>
       Le moteur signale et calcule ; il ne décide jamais seul. Seul le maysir (R209) bloque.

@@ -58,6 +58,13 @@ export class RiskCaseService {
     });
   }
 
+  // ── Lecture : la file des dossiers de risque (Vague 1, écran « File d'alertes »), tenant-scopée ──
+  async liste(ctx: Ctx, statut?: string) {
+    const cases = await this.prisma.riskCase.findMany({
+      where: { tenantId: ctx.tenantId, ...(statut ? { statut } : {}) } });
+    return cases.slice().sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   // ── R133/R136 : transitions — fermées, terminaux motivés, clôture cohérente avec le MROS ──
   async transitionner(ctx: Ctx, caseId: string, vers: string, motif?: string) {
     return this.prisma.$transaction(async (tx: any) => {

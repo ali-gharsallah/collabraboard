@@ -1,12 +1,13 @@
 # Olive MVP — production-ready, minimal, scalable
 
 ## État réel vérifié au 2026-07-22
-Diagnostic automatisé (voir `docs/ETAT-REEL-VERIFIE.md`). Périmètre **réellement en code** :
-règles **R1→R221** (dont AML privé R189-R206 et couche Shariah/Islamic R207-R221, **mergés**),
-**27 modules NestJS** écrivant en Postgres réel (0 mock jest), **431 tests verts** (425 harnais
-de règles + 6 e2e sur vraie DB), RLS FORCE multi-tenant prouvée. Le frontend appelle le backend
-(`/v1/...`) avec un **fallback seed** si `OLIVE_API_URL` est absent (mode démo). Rejeu-à-date :
-présent pour les **paramètres** (R127, exposé HTTP), pas généralisé aux agrégats métier.
+Certificat unique : **`docs/CERTIFICAT-ETAT.md`** · index maître : **`docs/PROJECT-INDEX.md`**.
+Périmètre **réellement en code** : règles **R1→R221** (AML R189-R206 + Islamic R207-R221),
+**27 modules NestJS** en Postgres réel (0 mock jest), **441 tests verts** (425 règles + 16 e2e),
+RLS FORCE prouvée. **Vague 1** : 6 écrans React réels (Clients, KYC, Règles AML, File d'alertes,
+Rejeu KYC à date, Finance Islamique), **fallback seed rendu visible** (bandeau). **Rejeu-à-date :
+OUI** pour les paramètres (R127) **et** le dossier KYC (`/v1/kyc/:code/a-date`). Recette Vague 1 :
+**10/10 FAT PASS**.
 Monorepo pnpm. Voir ARCHITECTURE.md. Démarrage :
 ```bash
 docker compose up -d          # postgres + redis + minio
