@@ -1,5 +1,12 @@
 # Olive — Plan d'exécution global & priorisation
 
+## État réel vérifié au 2026-07-22
+Diagnostic automatisé (`docs/ETAT-REEL-VERIFIE.md`). Ce plan liste AML/CRS/screening en roadmap ;
+**mise à jour factuelle** : la **détection AML privé (R189→R206)** et la **couche Shariah/Islamic
+(R207→R221)** sont désormais **en code, testées et mergées** (modules `aml/` et `islamic/`, Postgres
+réel, 431 tests verts). Le reporting CRS/FATCA/goAML « depuis données réelles » (P1-5) reste **à
+faire**. Rejeu-à-date : présent pour les paramètres uniquement.
+
 Date : 2026-07-11 · Hypothèse d'équipe : solo (toi + IA) jusqu'au pilote signé,
 puis +1 dev senior. Les durées sont calibrées sur cette hypothèse.
 

@@ -1,5 +1,12 @@
 # Matrice de traçabilité — Addendum 19.07.2026 (à fusionner au §2)
 
+> ## État réel vérifié au 2026-07-22
+> **Snapshot daté du 19.07** couvrant ~R100→R108. Le code couvre désormais **jusqu'à R221**
+> (blocs 42→49b : GED avancée, portail TX, coffre, recherche, personnes liées, annotations, IA
+> dossier, dossiers-vues, core banking, workflow gouverné, OCR, licence vendor, capacité équipe,
+> CRM, **AML R189-R206**, **Islamic R207-R221**). Archive conservée ; état à jour : `docs/ETAT-REEL-VERIFIE.md`.
+
+
 | Règle | Domaine | Câblage | Tests | Verts |
 |---|---|---|---|---|
 | **R104** (PROPOSÉE) — propagation contrôlée golden record | `events/golden-record.projector.ts` | OutboxWorker (tx du drain), mapping fermé, idempotent | GR-01..04 (+5 gardes) | 9/9 |
