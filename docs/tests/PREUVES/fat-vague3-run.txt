@@ -1,0 +1,15 @@
+    FAT-ONBOARD-01 PASS — aiguillage EDD (TRUST/LOMBARD/RU) & SDD (PP/CURRENT/CH), ouverture bloquée sans VALIDATED (R119)
+    FAT-SCREEN-01 PASS — hit qualifié VRAI_POSITIF (auteur=jeton), sans motif refusé (R7), escalade proposée (R39/R44), run tracé (R103)
+    FAT-REVIEW-01 PASS — re-screening tracé (R103) + conclusion par primitive ratifiée (KYC four-eyes), aucun agrégat « revue » inventé
+    FAT-UBO-01 PASS — UBO rattaché (R31), relation bijective relue des deux côtés (R34), isolation tenant
+    FAT-COC-01 PASS — CoC identité → re-screening déclenché (R42) + propagation au dossier (R30), aucune bascule par effet de bord
+    FAT-DASH-01 PASS — stock lisible (onboardings=1, hits=1, dossiers=0), autre tenant cloisonné
+    FAT-CYCLE-01 PASS — cycle complet joué sur Postgres réel : entrée(SDD) → screening → revue → CoC propagé, sans trou
+    ✓ FAT-ONBOARD-01 [RM] entrée en relation : aiguillage vers le bon niveau de diligence (R117/R119) (254 ms)
+    ✓ FAT-SCREEN-01 [CO] qualifier un hit : escalade PROPOSÉE, motif obligatoire, trace toujours (R101/R7/R103) (78 ms)
+    ✓ FAT-REVIEW-01 [CO] conduire une revue : re-screening tracé (R103) + décision par primitive ratifiée (58 ms)
+    ✓ FAT-UBO-01 [RM] chaîne de contrôle : UBO rattaché + relation bijective, cloisonnée (R31/R34) (110 ms)
+    ✓ FAT-COC-01 [CO] un changement d'identité déclenche re-screening + propagation (R30/R42) (68 ms)
+    ✓ FAT-DASH-01 [COO] stock par état, cloisonné au tenant (23 ms)
+    ✓ FAT-CYCLE-01 [bout-en-bout] entrée → KYC → screening → revue → changement, sans trou (91 ms)
+Tests:       7 passed, 7 total

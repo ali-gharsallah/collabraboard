@@ -1,19 +1,6 @@
-PASS test/e2e/fat-vague2.e2e-spec.ts
-      FAT-DOSSIER-01 PASS — 2 notes append-only, EN_ANALYSE ok, clôture sans motif refusée (R7), clôture motivée → CLOTUREE
-      FAT-DOSSIER-02 PASS — NOUVELLE→CLOTUREE refusée (transition illégale, R133)
-      FAT-GED-01 PASS — CO voit 1 pièce(s) (R110), MLRO non autorisé voit 0, fiche accessible
-      FAT-GED-02 PASS — autre tenant voit 0 pièce (isolation RLS)
+PASS test/e2e/fat-vague3.e2e-spec.ts
 PASS test/e2e/fat-vague1.e2e-spec.ts
-      FAT-CLIENT-01 PASS — client créé, visible du bon tenant, invisible des autres
-      FAT-KYC-01 PASS — créateur bloqué (four-eyes), tiers valide → VALIDATED, événement kyc.validated émis (1)
-      FAT-KYC-02 PASS — le contributeur est exclu de son propre visa (R13)
-      FAT-AML-01 PASS — sanctions R192 : bloque=true, signal signé par b01641d8-f66a-42d8-9bcc-8f3b87d3477b
-      FAT-AML-02 PASS — structuring R189 : signal niveau 2, bloque=false
-      FAT-ALERTE-01 PASS — 2 alertes pour le client, 0 pour un autre
-      FAT-ALERTE-02 PASS — maysir bloque=true (R209) ; caritative bloque=false revue=true (R216)
-      FAT-ALERTE-03 PASS — dossier ouvert (e9c05537), cas vide refusé (R133), file cloisonnée
-      FAT-REJEU-KYC-01 PASS — KYC-2026-CH-0003-R1 : avant création=INEXISTANT · à 21:16:29 (création)=EN_COURS · à 21:16:30 (validation)=VALIDE
-      FAT-REJEU-01 PASS — aujourd'hui=45, à la date 2026-07-21 (hier)=30 (valeur d'alors, R127)
+PASS test/e2e/fat-vague2.e2e-spec.ts
 PASS test/e2e/kyc-rules.e2e-spec.ts
-Test Suites: 3 passed, 3 total
-Tests:       20 passed, 20 total
+Test Suites: 4 passed, 4 total
+Tests:       27 passed, 27 total

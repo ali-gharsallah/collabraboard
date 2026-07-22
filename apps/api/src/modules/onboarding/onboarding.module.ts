@@ -19,6 +19,8 @@ export class OnboardingController {
   tr(@Req() r: any, @Param("id") id: string, @Body() b: any) {
     return this.svc.transitionner(r.ctx, id, b?.vers, { motif: b?.motif, form: b?.form });
   }
+  @Get()                                  // Vague 3 — stock du pipeline pour le dashboard exécutif
+  liste(@Req() r: any) { return this.svc.liste(r.ctx); }
   @Get(":id/funnel")
   funnel(@Req() r: any, @Param("id") id: string) { return this.svc.funnel(r.ctx, id); }
 }
