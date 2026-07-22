@@ -1,46 +1,44 @@
-# Cahier de tests — comment rejouer la recette Vague 1
+# Cahier de tests — O-Live (global, évolutif)
 
-**2026-07-22.** Procédure reproductible pour ré-exécuter l'ensemble et régénérer les preuves.
+**Mis à jour le 2026-07-22.** Cahier consolidé, une section par vague. Chaque ligne renvoie à une
+exigence et à une preuve. Résultats prouvés (voir `docs/tests/PREUVES/`). Certificat : `docs/CERTIFICAT-ETAT.md`.
 
-## Prérequis
-
-- Postgres 16 local sur :5433, base `olive_test`, rôles `olive` (owner) + `olive_app` (RLS).
-- Secrets au boot : `AUDIT_HMAC_SECRET`, `MFA_ENC_KEY` (fail-fast volontaire).
-- Dépendances installées (`pnpm install`).
-
-## Étapes
+## Comment rejouer (auditeur)
 
 ```bash
 cd apps/api
-
-# 1. Base propre + RLS FORCE + triggers d'immuabilité
-npx prisma migrate reset --force --skip-seed --skip-generate
-pnpm run prisma:post
-
-# 2. Tests de règles (unitaire) — attendu 425/425
-pnpm run test:rules
-
-# 3. e2e intégration + FAT (backend réel) — attendu 14/14
-pnpm run test:e2e                      # tout
-pnpm run test:e2e -- fat-vague1        # les 8 FAT seuls
-
-# 4. Recette RLS (isolation) — 0 ligne sans GUC
-psql "postgresql://olive_app:olive_app@localhost:5433/olive_test" -tAc "SELECT count(*) FROM clients;"   # → 0
+npx prisma migrate reset --force --skip-seed --skip-generate && pnpm run prisma:post   # base propre + RLS
+pnpm run test:rules                     # règles R1→R221 — attendu 425/425
+pnpm run test:e2e                       # intégration + FAT — attendu 16/16
+pnpm run test:e2e -- fat-vague1         # les 10 FAT métier seuls
+psql "postgresql://olive_app:olive_app@localhost:5433/olive_test" -tAc "SELECT count(*) FROM clients;"  # RLS → 0
+cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 ```
 
-## Cas de test FAT (résumé)
+## Vague 1 — cahier par écran
 
-| ID | Fichier | Ligne d'exécution |
-|---|---|---|
-| FAT-CLIENT-01 · FAT-KYC-01/02 · FAT-AML-01/02 · FAT-ALERTE-01/02 · FAT-REJEU-01 | `apps/api/test/e2e/fat-vague1.e2e-spec.ts` | `pnpm --filter api test:e2e -- fat-vague1` |
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Clients | FAT-CLIENT-01 | RLS | Création client + un autre tenant ne le voit pas | e2e/FAT | `POST /v1/clients` · `GET /v1/clients` | ✅ PASS |
+| KYC | FAT-KYC-01 | Four-eyes / golden record | Le créateur ne valide pas ; un tiers valide → VALIDATED + `kyc.validated` | e2e/FAT | `POST /v1/kyc/:code/validate` | ✅ PASS |
+| KYC | FAT-KYC-02 | R13 | Un contributeur ne vise pas sa section | e2e/FAT | `POST /v1/kyc/:code/visas/:section` | ✅ PASS |
+| Règles AML | FAT-AML-01 | R192 | Contrepartie sanctionnée → blocage auto | e2e/FAT | `POST /v1/aml/evaluer` | ✅ PASS |
+| Règles AML | FAT-AML-02 | R189 | Structuring → alerte niveau 2 non bloquante | e2e/FAT | `POST /v1/aml/evaluer` | ✅ PASS |
+| File d'alertes | FAT-ALERTE-01 | tenant-scope | Alertes consultables et cloisonnées | e2e/FAT | `GET /v1/aml/clients/:id/signaux` | ✅ PASS |
+| File d'alertes | FAT-ALERTE-02 | R209 / R216 | Maysir bloque ; caritative sanctionnée → revue humaine | e2e/FAT | `POST /v1/islamic/evaluer` | ✅ PASS |
+| File d'alertes | **FAT-ALERTE-03** | **R133** | **Décider une alerte = ouvrir un dossier de risque ; jamais un cas vide ; file cloisonnée** | e2e/FAT | **`POST /v1/riskcases`** · `GET /v1/riskcases` | ✅ PASS |
+| Rejeu KYC à date | **FAT-REJEU-KYC-01** | **R127 (esprit)** | **Dossier reconstruit à une date : INEXISTANT → EN_COURS → VALIDE (journal append-only)** | e2e/FAT | **`GET /v1/kyc/:code/a-date`** | ✅ PASS |
+| Rejeu à date (paramètre) | FAT-REJEU-01 | R127 | Valeur d'une règle à une date passée (aujourd'hui=45, hier=30) | e2e/FAT | `GET /v1/parametres/valeur/:cle?date=` | ✅ PASS |
+| (transverse) | Bandeau démo | crédibilité | Seed → bandeau ; API → rien | unit (front) | — | ✅ 9/9 |
 
-Détail métier de chaque cas : `docs/tests/FAT/FAT-VAGUE1.md`.
-Preuve d'exécution horodatée : `docs/tests/PREUVES/fat-vague1-run.txt`.
+**Vague 1 : 10/10 FAT PASS + bandeau 9/9. Non-régression : règles 425/425, e2e 16/16.**
 
-## Note technique (erratum E4)
+## Socle technique (rappel)
 
-La suite `kyc-rules.e2e-spec.ts` contenait une sous-requête SQL **tenant-aveugle**
-(`WHERE code = …`). Le `code` KYC n'étant unique **que par tenant**, l'ajout de la suite FAT
-(qui crée aussi des dossiers) provoquait `21000 (more than one row)`. Corrigé en scopant la
-sous-requête au tenant (`AND tenant_id = …`). Correction stricte, sans impact fonctionnel —
-les deux suites passent désormais ensemble (14/14).
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **16 e2e** (Postgres réel). Traçabilité
+règle-par-règle : `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête
+`kyc-rules` scopée au tenant — le `code` KYC n'est unique que par tenant).
+
+## Vagues suivantes
+
+*(À compléter — le cahier grandit par section : Vague 2, etc.)*

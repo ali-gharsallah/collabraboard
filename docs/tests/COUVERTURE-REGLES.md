@@ -17,8 +17,10 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 | 8 | R209 : spéculation maysir → blocage automatique | FAT-ALERTE-02 | islamic-screening.wiring (IS-03) | ✅ |
 | 9 | R216 : entité caritative sanctionnée → revue humaine, jamais auto-block | FAT-ALERTE-02 | islamic-screening.wiring (IS-10) | ✅ |
 | 10 | R127 : rejeu à date (valeur d'un paramètre à une date passée) | FAT-REJEU-01 | parametres.wiring (RQ-05) | ✅ |
+| 11 | R133 : décision sur alerte = ouvrir un dossier de risque (jamais un cas vide) | FAT-ALERTE-03 | risk-case.wiring (RK-01..06) | ✅ |
+| 12 | R127 (esprit) : rejeu **KYC** à date — état d'un dossier reconstruit du journal | FAT-REJEU-KYC-01 | e2e `kyc/:code/a-date` | ✅ |
 
-**Couverture des exigences Vague 1 : 10 / 10 (100 %).**
+**Couverture des exigences Vague 1 : 12 / 12 (100 %).**
 
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
@@ -31,6 +33,7 @@ les **exigences métier de Vague 1** exercées en recette d'acceptation.
 
 | Exigence | Statut |
 |---|---|
-| Rejeu à date **généralisé** aux agrégats métier (dossier KYC, client) | Non implémenté (rejeu limité aux paramètres) |
+| Rejeu à date — **dossier KYC** | ✅ **Implémenté (Vague 1)** — `GET /v1/kyc/:code/a-date` (FAT-REJEU-KYC-01) |
+| Rejeu à date généralisé aux **autres** agrégats (client, risk case…) | Non implémenté (aujourd'hui : paramètres + KYC) |
 | Reporting CRS/FATCA/goAML depuis données réelles | Backlog (P1) |
 | Écrans front GED/screening/MROS/risk cases/workflow/transactions | Backend prêt, surface produit à construire |

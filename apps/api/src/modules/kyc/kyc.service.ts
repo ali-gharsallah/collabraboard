@@ -64,6 +64,25 @@ export class KycService {
     });
   }
 
+  // ── Rejeu KYC à date (Vague 1, esprit R127) : reconstruit l'état d'un dossier À une date
+  //    passée UNIQUEMENT depuis le journal APPEND-ONLY domain_events (kyc.created, kyc.validated),
+  //    jamais depuis les colonnes courantes — auditable. Un événement ne compte que si son
+  //    horodatage est <= à la date demandée. ──
+  async etatADate(ctx: Ctx, code: string, date: Date) {
+    const kyc = await this.prisma.kycFile.findFirst({
+      where: { code, tenantId: ctx.tenantId }, select: { id: true } });
+    if (!kyc) throw new NotFoundException("Dossier introuvable");
+    const evs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, aggregateId: kyc.id } }))
+      .filter((e: any) => new Date(e.at).getTime() <= date.getTime())
+      .sort((a: any, b: any) => new Date(a.at).getTime() - new Date(b.at).getTime());
+    const cree = evs.some((e: any) => e.type === "kyc.created");
+    const valide = evs.some((e: any) => e.type === "kyc.validated");
+    const statutADate = !cree ? "INEXISTANT" : valide ? "VALIDE" : "EN_COURS";
+    return { code, dateDemandee: date.toISOString(), existeADate: cree, statutADate,
+      evenementsConsideres: evs.map((e: any) => ({ type: e.type, at: new Date(e.at).toISOString() })) };
+  }
+
   // ── Réponse : default-deny + change tracker HMAC chaîné ──
   async answer(ctx: Ctx, code: string, qCode: string, answer: string) {
     const q = await this.prisma.kycQuestion.findFirst({

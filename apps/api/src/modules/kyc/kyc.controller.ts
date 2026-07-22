@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Patch, Req, BadRequestException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Patch, Query, Req, BadRequestException } from "@nestjs/common";
 import { KycCreate, QuestionAnswer } from "@olive/shared/src/contracts";
 import { KycService } from "./kyc.service";
 
@@ -22,6 +22,12 @@ export class KycController {
   }
   @Get(":code")
   get(@Req() req: any, @Param("code") code: string) { return this.svc.get(req.ctx, code); }
+
+  // Rejeu KYC à date (Vague 1, esprit R127) — état reconstruit depuis le journal d'événements
+  @Get(":code/a-date")
+  etatADate(@Req() req: any, @Param("code") code: string, @Query("date") date?: string) {
+    return this.svc.etatADate(req.ctx, code, date ? new Date(date) : new Date());
+  }
 
   @Patch(":code/questions/:qcode")
   answer(@Req() req: any, @Param("code") code: string, @Param("qcode") qcode: string, @Body() body: unknown) {

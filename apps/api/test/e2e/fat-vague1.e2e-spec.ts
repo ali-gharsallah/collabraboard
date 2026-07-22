@@ -119,6 +119,56 @@ describe("FAT Vague 1 — recette métier (backend réel)", () => {
     console.log(`FAT-ALERTE-02 PASS — maysir bloque=${maysir.body.bloque} (R209) ; caritative bloque=${charity.body.bloque} revue=${charity.body.revueManuelle} (R216)`);
   });
 
+  it("FAT-ALERTE-03 [CO] décider d'une alerte = ouvrir un dossier de risque (POST /v1/riskcases) ; jamais un cas vide (R133)", async () => {
+    // une alerte est levée sur le client
+    const alerte = await request(http).post("/v1/aml/evaluer").set(bearer(TID, MLRO, "MLRO"))
+      .send({ clientId: CLIENT, beneficiaireSanctionne: true });
+    const signalId = alerte.body.signaux[0].id;
+    // décision : ouvrir un dossier de risque rattaché à l'alerte
+    const ouvre = await request(http).post("/v1/riskcases").set(bearer(TID, CO_A, "CO"))
+      .send({ clientId: CLIENT, signalIds: [signalId] });
+    expect(ouvre.status).toBeLessThan(300);
+    expect(ouvre.body.caseId).toBeDefined();
+    // un dossier ne peut PAS naître sans alerte (R133)
+    const vide = await request(http).post("/v1/riskcases").set(bearer(TID, CO_A, "CO"))
+      .send({ clientId: CLIENT, signalIds: [] });
+    expect(vide.status).toBe(400);
+    expect(jstr(vide)).toContain("R133");
+    // la file des dossiers est consultable et tenant-scopée
+    const file = await request(http).get("/v1/riskcases").set(bearer(TID, CO_A, "CO"));
+    expect(file.body.length).toBeGreaterThanOrEqual(1);
+    const autre = await request(http).get("/v1/riskcases").set(bearer(TID2, CO_A, "CO"));
+    expect(autre.body.length).toBe(0);
+    console.log(`FAT-ALERTE-03 PASS — dossier ouvert (${ouvre.body.caseId.slice(0, 8)}), cas vide refusé (R133), file cloisonnée`);
+  });
+
+  it("FAT-REJEU-KYC-01 [Auditeur] voir un dossier KYC tel qu'il était à une date passée (rejeu, esprit R127)", async () => {
+    // dossier créé puis validé (four-eyes) → journal kyc.created + kyc.validated
+    const res = await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
+      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM });
+    const code = res.body.code;
+    await request(http).patch(`/v1/kyc/${code}/questions/IDE-Q3`).set(bearer(TID, CO_A, "CO")).send({ answer: "x" }).expect(200);
+    await request(http).post(`/v1/kyc/${code}/visas/IDENTITY`).set(bearer(TID, CO_B, "CO")).send({ verdict: "OK" });
+    await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR"));
+    // état AUJOURD'HUI reconstruit depuis le journal → VALIDE, avec les 2 événements
+    const auj = await request(http).get(`/v1/kyc/${code}/a-date`).set(bearer(TID, AUDIT, "AUDIT"));
+    expect(auj.body.statutADate).toBe("VALIDE");
+    const Tc = auj.body.evenementsConsideres.find((e: any) => e.type === "kyc.created").at;
+    const Tv = auj.body.evenementsConsideres.find((e: any) => e.type === "kyc.validated").at;
+    // AVANT la création → n'existait pas
+    const avant = new Date(new Date(Tc).getTime() - 10000).toISOString();
+    const rAvant = await request(http).get(`/v1/kyc/${code}/a-date?date=${avant}`).set(bearer(TID, AUDIT, "AUDIT"));
+    expect(rAvant.body.existeADate).toBe(false);
+    expect(rAvant.body.statutADate).toBe("INEXISTANT");
+    // À la date de création (avant validation) → EN_COURS
+    const rCree = await request(http).get(`/v1/kyc/${code}/a-date?date=${Tc}`).set(bearer(TID, AUDIT, "AUDIT"));
+    expect(rCree.body.statutADate).toBe("EN_COURS");
+    // À la date de validation → VALIDE
+    const rValide = await request(http).get(`/v1/kyc/${code}/a-date?date=${Tv}`).set(bearer(TID, AUDIT, "AUDIT"));
+    expect(rValide.body.statutADate).toBe("VALIDE");
+    console.log(`FAT-REJEU-KYC-01 PASS — ${code} : avant création=INEXISTANT · à ${Tc.slice(11, 19)} (création)=EN_COURS · à ${Tv.slice(11, 19)} (validation)=VALIDE`);
+  });
+
   // ══ REJEU À DATE ══════════════════════════════════════════════════════════
   it("FAT-REJEU-01 [Auditeur] la valeur d'un paramètre à une date PASSÉE est celle d'alors, pas la valeur courante (R127)", async () => {
     // une valeur scalaire est renvoyée en corps brut (r.text) — helper de lecture

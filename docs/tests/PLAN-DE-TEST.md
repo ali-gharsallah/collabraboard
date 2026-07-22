@@ -29,7 +29,7 @@ dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
 | **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1`) | **14 tests, 2 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1.e2e-spec.ts` | **8 FAT** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1.e2e-spec.ts` | **10 FAT** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau

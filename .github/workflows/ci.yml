@@ -85,7 +85,7 @@ jobs:
         run: pnpm run test:rules
 
       # ── RUNBOOK §2 · 4 — e2e Postgres réel (6/6) ─────────────────────────────
-      - name: "4 · e2e API réelle + Postgres (attendu 14/14 : kyc-rules 6 + FAT Vague 1 8)"
+      - name: "4 · e2e API réelle + Postgres (attendu 16/16 : kyc-rules 6 + FAT Vague 1 10)"
         working-directory: apps/api
         run: pnpm run test:e2e
 
