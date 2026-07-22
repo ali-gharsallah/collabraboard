@@ -1,0 +1,10 @@
+    FAT-DOSSIER-01 PASS — 2 notes append-only, EN_ANALYSE ok, clôture sans motif refusée (R7), clôture motivée → CLOTUREE
+    FAT-DOSSIER-02 PASS — NOUVELLE→CLOTUREE refusée (transition illégale, R133)
+    FAT-GED-01 PASS — CO voit 1 pièce(s) (R110), MLRO non autorisé voit 0, fiche accessible
+    FAT-GED-02 PASS — autre tenant voit 0 pièce (isolation RLS)
+PASS test/e2e/fat-vague2.e2e-spec.ts
+    ✓ FAT-DOSSIER-01 [CO] instruire : note append-only (R134) + transition motivée (R133/R7) (227 ms)
+    ✓ FAT-DOSSIER-02 [CO] une transition non prévue est refusée (NOUVELLE → CLOTUREE) (41 ms)
+    ✓ FAT-GED-01 [CO] pièces filtrées au rôle (R110) + fiche ; rôle non autorisé → rien (31 ms)
+    ✓ FAT-GED-02 [CO] isolation tenant : un autre établissement ne voit aucune pièce (7 ms)
+Tests:       4 passed, 4 total

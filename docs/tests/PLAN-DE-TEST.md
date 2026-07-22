@@ -8,7 +8,7 @@ domaine : CDB 20, LBA/OBA-FINMA, LSFin, CRS/FATCA.
 ## 1. Objet et périmètre
 
 **Objet.** Définir la stratégie, les niveaux, les critères et la traçabilité des tests
-permettant de prononcer la recette de la **Vague 1** d'O-Live.
+permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 
 **Dans le périmètre (Vague 1)** — 5 domaines fonctionnels :
 1. **Clients** — création, consultation, isolation multi-tenant.
@@ -17,10 +17,14 @@ permettant de prononcer la recette de la **Vague 1** d'O-Live.
 4. **Alertes** — signaux levés, blocage automatique vs revue humaine, consultation.
 5. **Rejeu à date** — valeur d'un paramètre/règle telle qu'elle était à une date passée.
 
+**Dans le périmètre (Vague 2 — Surveillance & Dossiers)** — 2 domaines fonctionnels supplémentaires :
+6. **Dossiers de risque** — instruction : notes append-only (R134), transitions gouvernées avec motif (R133/R136/R7).
+7. **Pièces (GED)** — consultation filtrée au rôle (R110), fiche = empreinte, jamais le contenu (R145), isolation tenant.
+
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
-rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres uniquement) ;
-écrans front des domaines non encore construits (GED, screening, MROS, risk cases, workflow,
-transactions — le backend existe, la surface produit non). Ces points sont documentés
+rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
+écrans front des domaines non encore construits (screening, MROS, workflow, transactions
+— le backend existe, la surface produit non). Ces points sont documentés
 dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 
 ## 2. Niveaux de test
@@ -28,8 +32,8 @@ dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1`) | **14 tests, 2 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1.e2e-spec.ts` | **10 FAT** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1` + `fat-vague2`) | **20 tests, 3 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1.e2e-spec.ts` · `fat-vague2.e2e-spec.ts` | **14 FAT (V1 10 + V2 4)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -72,8 +76,8 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 14 e2e verts.
-- Toute exigence métier de Vague 1 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
+- **0 régression** : 425 règles + 20 e2e verts.
+- Toute exigence métier de Vagues 1 & 2 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies
 

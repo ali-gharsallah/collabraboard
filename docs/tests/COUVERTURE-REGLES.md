@@ -1,4 +1,4 @@
-# Matrice de traçabilité — exigences → tests (Vague 1)
+# Matrice de traçabilité — exigences → tests (Vagues 1 & 2)
 
 **2026-07-22.** Chaque exigence métier / règle est reliée à son **FAT** (acceptation métier) et à
 son **test technique** (règle unitaire dans le harnais et/ou e2e).
@@ -22,10 +22,23 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 1 : 12 / 12 (100 %).**
 
+## Exigences Vague 2 — Surveillance & Dossiers (couverture FAT)
+
+| # | Exigence métier / règle | FAT | Test technique | Couvert |
+|---|---|---|---|---|
+| 13 | R134 : notes d'instruction d'un dossier **append-only** (aucune édition/suppression) | FAT-DOSSIER-01 | risk-case.wiring (notes) + e2e notes | ✅ |
+| 14 | R133/R136 : transitions gouvernées d'un dossier (états prévus uniquement) | FAT-DOSSIER-01 / FAT-DOSSIER-02 | risk-case.wiring (RK) + e2e transition | ✅ |
+| 15 | R7 : un état terminal (clôture/escalade) exige un **motif** | FAT-DOSSIER-01 | risk-case.service (motif requis) + e2e | ✅ |
+| 16 | R110 : pièces GED filtrées au **rôle**, relu à l'acte | FAT-GED-01 | ged-consultation (GS-01..05) + e2e | ✅ |
+| 17 | R145 : la fiche GED expose l'**empreinte**, jamais le contenu | FAT-GED-01 | ged-consultation.fiche (versions sans contenuRef) | ✅ |
+| 18 | Isolation tenant des pièces GED (RLS) | FAT-GED-02 | Recette RLS + e2e (autre tenant → 0) | ✅ |
+
+**Couverture des exigences Vague 2 : 6 / 6 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **14
-tests e2e** (Postgres réel). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **20
+tests e2e** (Postgres réel : kyc-rules 6 + FAT Vague 1 10 + FAT Vague 2 4). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 
