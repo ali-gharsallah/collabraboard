@@ -785,3 +785,23 @@ model CrmContact {
   at       DateTime @default(now())
   @@map("crm_contacts")
 }
+
+// Surveillance AML private banking — R189→R206 (Bloc 48, A-69..A-86). Un signal est un
+// FAIT append-only, tenant-scopé (RLS FORCE) : le moteur le lève, l'humain l'instruit
+// (risk case R133). L'auteur est le jeton (emisPar), jamais le corps. Niveau 1 bloquant =
+// suspension de l'opération (sanctions R192, HRI R197, CRS R203).
+model AmlSignal {
+  id       String   @id @default(uuid()) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  clientId String   @map("client_id") @db.Uuid
+  type     String                                       // STRUCTURING, CROSS_BORDER_CIRCULAR, …
+  regle    String                                       // R189..R206
+  niveau   Int                                          // 1 = sévère ; 2 = signal
+  note     String                                       // le fait, en clair
+  motif    String                                       // la qualification (Rxxx)
+  bloquant Boolean  @default(false)                     // suspend l'opération (R192/R197/R203)
+  emisPar  String   @map("emis_par")                    // jeton — jamais le corps
+  at       DateTime @default(now())
+  @@index([tenantId, clientId])
+  @@map("aml_signals")
+}

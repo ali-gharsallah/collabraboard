@@ -751,6 +751,23 @@ CREATE TABLE "crm_contacts" (
     CONSTRAINT "crm_contacts_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "aml_signals" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "regle" TEXT NOT NULL,
+    "niveau" INTEGER NOT NULL,
+    "note" TEXT NOT NULL,
+    "motif" TEXT NOT NULL,
+    "bloquant" BOOLEAN NOT NULL DEFAULT false,
+    "emis_par" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "aml_signals_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -921,6 +938,9 @@ CREATE UNIQUE INDEX "ocr_extractions_version_id_gabarit_version_key" ON "ocr_ext
 
 -- CreateIndex
 CREATE INDEX "tasks_tenant_id_assignee_id_idx" ON "tasks"("tenant_id", "assignee_id");
+
+-- CreateIndex
+CREATE INDEX "aml_signals_tenant_id_client_id_idx" ON "aml_signals"("tenant_id", "client_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
