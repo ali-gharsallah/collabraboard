@@ -55,9 +55,13 @@ describe("KYC — règles moteur (e2e)", () => {
     const res = await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
       .send({ clientId: CLIENT, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM });
     const code2 = res.body.code;
+    // Erratum E4 (recette Vague 1) : la sous-requête était tenant-AVEUGLE (WHERE code = …).
+    // Le `code` KYC n'est unique QUE par tenant (KYC-{an}-{pays}-{seq}, séquence par tenant) :
+    // dès qu'une seconde suite e2e crée un dossier de même code sous un autre tenant, la
+    // sous-requête rend >1 ligne (21000). On la scope au tenant — correction stricte, multi-tenant.
     await prisma.$executeRaw`UPDATE kyc_visas SET validateur = ${CO_A}::uuid
       WHERE section_code = 'IDENTITY'
-        AND kyc_file_id = (SELECT id FROM kyc_files WHERE code = ${code2})`;
+        AND kyc_file_id = (SELECT id FROM kyc_files WHERE code = ${code2} AND tenant_id = ${TID}::uuid)`;
     const bad = await request(http).post(`/v1/kyc/${code2}/visas/IDENTITY`)
       .set(bearer(TID, CO_B, "CO")).send({ verdict: "OK" });
     expect(bad.status).toBe(403);
