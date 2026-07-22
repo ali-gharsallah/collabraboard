@@ -141,6 +141,18 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Paradis fiscaux d'un circuit d'optimisation CH→paradis→CH" },
   { cle: "amlListesReglementaires", type: "json", defaut: ["OFAC", "EU", "UN", "SECO"], regle: "R192", requis: false,
     description: "Listes réglementaires de sanctions synchronisées (matching → refus immédiat)" },
+  // ── Couche de conformité Shariah — R207→R221 (Bloc 49). Nisab, taux Zakat et référentiels
+  //    de secteurs/contrats illicites sont des règles : réglés par le registre (R7/R125). ──
+  { cle: "islamicNisabChf", type: "int", defaut: 100000, regle: "R211", requis: false,
+    description: "Nisab (CHF) — seuil de patrimoine au-delà duquel la Zakat est due" },
+  { cle: "islamicZakatTauxBps", type: "int", defaut: 250, regle: "R211", requis: false,
+    description: "Taux de Zakat en points de base (250 = 2,5%)" },
+  { cle: "islamicSecteursHaram", type: "json", defaut: ["ALCOOL", "JEUX", "CASINO", "PORC", "TABAC", "ARMES", "ADULTE", "PORNOGRAPHIE"], regle: "R207", requis: false,
+    description: "Secteurs illicites (haram) — screening client R207 et contrepartie R213" },
+  { cle: "islamicGhararTypes", type: "json", defaut: ["DERIVE", "HEDGING", "OPTION", "FUTURE", "SWAP"], regle: "R210", requis: false,
+    description: "Familles de contrats à incertitude excessive (gharar)" },
+  { cle: "islamicMaysirVolatilitePct", type: "int", defaut: 80, regle: "R209", requis: false,
+    description: "Volatilité (%) au-delà de laquelle une plateforme relève de la spéculation maysir (blocage auto)" },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

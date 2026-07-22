@@ -805,3 +805,25 @@ model AmlSignal {
   @@index([tenantId, clientId])
   @@map("aml_signals")
 }
+
+// Couche de conformité Shariah — R207→R221 (Bloc 49, IS-01..IS-15). Un signal est un FAIT
+// append-only, tenant-scopé (RLS FORCE) : le moteur le lève, l'humain l'instruit. Auteur =
+// jeton (emisPar). Niveau 1 bloquant = R209 (maysir). revueManuelle = R216 (entité islamique
+// caritative sous sanction : jamais d'auto-blocage). Adaptation minimale (option Ali) : un
+// seul modèle, pas d'Account/enum ; Zakat/Mudaraba/Waqf/… = calculs + événements ledger.
+model IslamicSignal {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  type          String                                  // ISLAMIC_PROFILE_VIOLATION, RIBA_INCOME, …
+  regle         String                                  // R207..R221
+  niveau        Int                                     // 1 = sévère ; 2 = signal
+  note          String
+  motif         String
+  bloquant      Boolean  @default(false)                // R209 (maysir) uniquement
+  revueManuelle Boolean  @default(false) @map("revue_manuelle") // R216 : surseoir à l'auto-blocage
+  emisPar       String   @map("emis_par")               // jeton — jamais le corps
+  at            DateTime @default(now())
+  @@index([tenantId, clientId])
+  @@map("islamic_signals")
+}
