@@ -1,0 +1,32 @@
+# PREUVE D'EXÉCUTION — FAT Vague 1
+# Environnement : recette locale (Postgres 16 :5433 olive_test), backend NestFactory réel.
+# Date d'exécution : 2026-07-22
+# Commande : pnpm --filter api test:e2e -- fat-vague1
+# ---------------------------------------------------------------------------
+
+  console.log
+    FAT-CLIENT-01 PASS — client créé, visible du bon tenant, invisible des autres
+  console.log
+    FAT-KYC-01 PASS — créateur bloqué (four-eyes), tiers valide → VALIDATED, événement kyc.validated émis (1)
+  console.log
+    FAT-KYC-02 PASS — le contributeur est exclu de son propre visa (R13)
+  console.log
+    FAT-AML-01 PASS — sanctions R192 : bloque=true, signal signé par 66766e2c-6196-400d-92f5-e9391fce2310
+  console.log
+    FAT-AML-02 PASS — structuring R189 : signal niveau 2, bloque=false
+  console.log
+    FAT-ALERTE-01 PASS — 2 alertes pour le client, 0 pour un autre
+  console.log
+    FAT-ALERTE-02 PASS — maysir bloque=true (R209) ; caritative bloque=false revue=true (R216)
+  console.log
+    FAT-REJEU-01 PASS — aujourd'hui=45, à la date 2026-07-21 (hier)=30 (valeur d'alors, R127)
+    ✓ FAT-CLIENT-01 [RM] créer un client puis le retrouver dans MA liste (isolation tenant) (90 ms)
+    ✓ FAT-KYC-01 [CO] la validation d'un dossier est protégée par le four-eyes ; elle seule autorise le golden record (142 ms)
+    ✓ FAT-KYC-02 [CO] un contributeur d'une section ne peut pas viser cette même section (R13) (57 ms)
+    ✓ FAT-AML-01 [CO] contrepartie sanctionnée → opération BLOQUÉE automatiquement, décision humaine requise (R192) (40 ms)
+    ✓ FAT-AML-02 [CO] fractionnement sous le seuil → signal STRUCTURING (alerte niveau 2, non bloquant) (R189) (15 ms)
+    ✓ FAT-ALERTE-01 [MLRO] les alertes d'un client sont consultables et tenant-scopées (11 ms)
+    ✓ FAT-ALERTE-02 [CO] spéculation maysir → blocage automatique (R209) ; entité caritative sanctionnée → revue humaine, PAS d'auto-blocage (R216) (50 ms)
+    ✓ FAT-REJEU-01 [Auditeur] la valeur d'un paramètre à une date PASSÉE est celle d'alors, pas la valeur courante (R127) (63 ms)
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
