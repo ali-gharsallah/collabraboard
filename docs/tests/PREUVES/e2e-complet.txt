@@ -1,8 +1,9 @@
+PASS test/e2e/fat-vague7.e2e-spec.ts
 PASS test/e2e/fat-vague5.e2e-spec.ts
-PASS test/e2e/fat-vague6.e2e-spec.ts
+PASS test/e2e/fat-vague3.e2e-spec.ts
 PASS test/e2e/fat-vague1.e2e-spec.ts
 PASS test/e2e/fat-vague4.e2e-spec.ts
-PASS test/e2e/fat-vague3.e2e-spec.ts
-PASS test/e2e/fat-vague2.e2e-spec.ts
 PASS test/e2e/kyc-rules.e2e-spec.ts
-Tests:       39 passed, 39 total
+PASS test/e2e/fat-vague2.e2e-spec.ts
+PASS test/e2e/fat-vague6.e2e-spec.ts
+Tests:       41 passed, 41 total

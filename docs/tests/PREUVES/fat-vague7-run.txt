@@ -1,0 +1,2 @@
+      FAT-PMS-ADEQ-01 PASS — mandat HIGH sur client LOW refusé (R107) ; 1 alerte(s) d'adéquation sans rétrogradation
+      FAT-PMS-DRIFT-01 PASS — drift constaté (2 positions intactes), pre-trade exclusion+concentration BLOQUE, ordre conforme OK, breach clôturé motivé (R7)
