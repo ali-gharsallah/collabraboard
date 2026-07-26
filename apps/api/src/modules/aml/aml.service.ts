@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
-import { ContexteAml, evaluer, paramsDepuisSettings, REFERENTIEL_AML } from "./aml-scoring.engine";
+import { ContexteAml, SignalAml, evaluer, paramsDepuisSettings, REFERENTIEL_AML } from "./aml-scoring.engine";
+import { REGISTRE_RQ } from "../parametres/parametres.service";
 
 /**
  * AmlService — câblage de la surveillance AML (R189→R206, A-69..A-86). Écrit depuis le
@@ -61,5 +62,58 @@ export class AmlService {
     const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
     if (!t) throw new NotFoundException("Tenant introuvable");
     return { scenarios: REFERENTIEL_AML, seuils: paramsDepuisSettings(t.settings) };
+  }
+
+  // ── Vague 9 : le BAC À SABLE AML — dry-run d'un seuil (R94, scénario B-02) ──
+  // « Voir avant d'écrire » : on rejoue le moteur PUR sur des contextes réels, avec les seuils
+  // ACTUELS puis les seuils SIMULÉS, et l'on rend l'impact NOMINATIF (alertes avant/après,
+  // nouvelles/disparues, chaque nouvelle NOMMÉE : client, fait, seuil franchi). AUCUNE écriture :
+  // ni signal, ni tâche, ni case (R70/R94) — la lecture seule prouve le dry-run. L'application
+  // reste un acte GOUVERNÉ au registre R-Q (POST /v1/parametres/valeur, motivé/daté R126/R29) :
+  // proposer n'est pas appliquer.
+  async sandbox(
+    ctx: Ctx,
+    dto: { override?: { cle?: string; valeur?: any }; contextes?: Array<ContexteAml & { clientId: string }> },
+  ) {
+    const cle = dto?.override?.cle;
+    if (!cle) throw new BadRequestException("override.cle requis");
+    const entree = REGISTRE_RQ.find((e) => e.cle === cle);
+    if (!entree || !cle.startsWith("aml"))
+      throw new BadRequestException(`R125 : «${cle}» n'est pas un paramètre AML gouverné du registre`);
+    const contextes = dto.contextes ?? [];
+    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+    if (!t) throw new NotFoundException("Tenant introuvable");
+
+    const actuels = paramsDepuisSettings(t.settings);                                   // seuils en vigueur
+    const simules = paramsDepuisSettings({ ...(t.settings as any), [cle]: dto.override!.valeur }); // seuils simulés
+    const nomme = (clientId: string, s: SignalAml) =>
+      ({ clientId, regle: s.regle, type: s.type, niveau: s.niveau, note: s.note, motif: s.motif, bloquant: s.bloquant });
+
+    const parClient = contextes.map((c) => {
+      const avant = evaluer(c, actuels);
+      const apres = evaluer(c, simules);
+      const clesAvant = new Set(avant.map((s) => s.regle));
+      const clesApres = new Set(apres.map((s) => s.regle));
+      return {
+        clientId: c.clientId,
+        avant: avant.map((s) => s.regle),
+        apres: apres.map((s) => s.regle),
+        nouvelles: apres.filter((s) => !clesAvant.has(s.regle)).map((s) => nomme(c.clientId, s)),
+        disparues: avant.filter((s) => !clesApres.has(s.regle)).map((s) => nomme(c.clientId, s)),
+      };
+    });
+    const nouvelles = parClient.flatMap((p) => p.nouvelles);
+    const disparues = parClient.flatMap((p) => p.disparues);
+    return {
+      override: { cle, valeurActuelle: (t.settings as any)?.[cle] ?? entree.defaut, valeurSimulee: dto.override!.valeur },
+      ecriture: false,                                                                  // R70/R94 — aucune écriture
+      totaux: {
+        avant: parClient.reduce((n, p) => n + p.avant.length, 0),
+        apres: parClient.reduce((n, p) => n + p.apres.length, 0),
+        nouvelles: nouvelles.length,
+        disparues: disparues.length,
+      },
+      parClient, nouvelles, disparues,
+    };
   }
 }

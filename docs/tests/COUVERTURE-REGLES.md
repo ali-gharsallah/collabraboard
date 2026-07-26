@@ -111,10 +111,20 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 8 : 2 / 2 (100 %).**
 
+## Exigences Vague 9 — Bac à sable AML : dry-run d'un seuil (couverture FAT)
+
+| # | Exigence (règle) | FAT | Test technique | Statut |
+|---|---|---|---|---|
+| 53 | R94 / B-02 : un seuil simulé montre l'impact **nominatif** (avant/après/nouvelles nommées) | FAT-SBAML-01 | aml.sandbox (moteur pur rejoué) + e2e | ✅ |
+| 54 | R70 : la simulation ne crée **ni signal, ni tâche, ni case** (0 écriture prouvée en base) | FAT-SBAML-01 | e2e (`amlSignal.count()===0`) | ✅ |
+| 55 | R94 / R96 / R126 / R29 : proposer ≠ appliquer — l'application passe par le registre gouverné, daté, journalisé | FAT-SBAML-02 | parametres.wiring + e2e | ✅ |
+
+**Couverture des exigences Vague 9 : 3 / 3 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **43
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **45
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

@@ -50,8 +50,10 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 **Dans le périmètre (Vague 7 — PMS)** — 1 domaine (canon ratifié, intégration) :
 26. **PMS** — adéquation LSFin (R107), drift constaté (R105/R44), pre-trade bloquant (R106), breaches (R108/R7).
 
-**Dans le périmètre (Vague 8 — Référentiel AML)** — 1 domaine (canon ratifié, projection) :
-27. **Référentiel AML** — 18 scénarios de surveillance (R189→R206) + seuils effectifs pilotés par le registre (R125→R127).
+**Dans le périmètre (Vague 9 — Bac à sable AML)** — 1 domaine (canon ratifié R94/B-02) :
+28. **Bac à sable AML** — dry-run d'un seuil sur données réelles, impact **nominatif** (avant/après/nouvelles nommées), **aucune écriture** (R70/R94) ; appliquer passe par le registre gouverné (R96/R126/R29).
+
+*(Vague 8 — Référentiel AML : 18 scénarios de surveillance R189→R206 + seuils effectifs pilotés par le registre R125→R127, cf. FAT-VAGUE8.)*
 
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
 rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
@@ -67,8 +69,8 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..8`) | **43 tests, 9 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..8.e2e-spec.ts` | **37 FAT (… + V7 2 + V8 2)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..9`) | **45 tests, 10 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..9.e2e-spec.ts` | **39 FAT (… + V8 2 + V9 2)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -111,7 +113,7 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 43 e2e verts.
+- **0 régression** : 425 règles + 45 e2e verts.
 - Toute exigence métier de Vagues 1 à 8 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies

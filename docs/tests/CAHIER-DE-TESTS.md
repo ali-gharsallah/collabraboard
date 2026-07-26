@@ -110,6 +110,15 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 **Vague 8 : 2/2 FAT PASS. Non-régression : règles 425/425 (AML 45/45), e2e 43/43. Zéro invention — référentiel = projection du canon.**
 **Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=3` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
 
+## Vague 9 — cahier par écran (Bac à sable AML : dry-run d'un seuil)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Bac à sable AML | **FAT-SBAML-01** | **R94 / B-02 / R70** | **Seuil simulé → avant/après/nouvelles nommées (client, fait, règle) ; `ecriture=false` et 0 signal en base** | e2e/FAT | `POST /v1/aml/sandbox` | ✅ PASS |
+| Bac à sable AML | **FAT-SBAML-02** | **R94 / R96 / R126 / R29** | **Simulation inchangée (100000) ; appliquer passe par le registre gouverné → 200000 (daté, journalisé)** | e2e/FAT | `GET/POST /v1/parametres/valeur/amlStructuringSeuilChf` | ✅ PASS |
+
+**Vague 9 : 2/2 FAT PASS. Non-régression : règles 425/425 (AML 45/45), e2e 45/45. Zéro invention — dry-run = R94 ratifié rejoué sur le moteur ratifié.** Lève le report « sandboxes différés » (Vague 6) pour le bac AML.
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

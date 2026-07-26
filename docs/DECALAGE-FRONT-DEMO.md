@@ -10,7 +10,7 @@ Deux objets **différents** :
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~28 / 73 ≈ 38 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 8 a ajouté le Référentiel AML — 18 scénarios R189→R206 + seuils gouvernés).
+Couverture actuelle : **~29 / 73 ≈ 40 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 9 a ajouté le Bac à sable AML — dry-run d'un seuil R94/B-02, impact nominatif sans écriture).
 
 ---
 
@@ -46,6 +46,7 @@ Couverture actuelle : **~28 / 73 ≈ 38 %** des écrans démo ont un équivalent
 |---|---|---|
 | aml (AML Investigation Workspace) | Règles AML + File d'alertes + Dossiers de risque | Le **workspace d'investigation** unifié (timeline, liens, graphe d'enquête) |
 | ✅ **FAIT (Vague 8)** amlcat (Référentiel AML) | `ReferentielAml` (18 scénarios R189→R206 + seuils effectifs) | — |
+| ✅ **FAIT (Vague 9)** sbaml (Bac à sable AML) | `SandboxAml` (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | `POST /v1/aml/sandbox` |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
 ---
@@ -56,7 +57,7 @@ Couverture actuelle : **~28 / 73 ≈ 38 %** des écrans démo ont un équivalent
 - ✅ **FAIT (Vague 5)** : `crm` (CRM Banque), `contactreports` (Contact Reports) · reste : `nextbestaction`, `tasks`
 - ✅ **FAIT (Vague 5)** : `wfdesigner`/`wfengine` (Workflow Designer/Rules, porte `WorkflowModule`) · reste : `wfmanagement` (instances)
 - ✅ **FAIT (Vague 5)** : `corrob` (Corroboration KYC) · reste : `offboarding` (canon à fournir)
-- ✅ **PARTIEL (Vague 6)** : `sbowner` (gouvernance registre R-Q) via Registre de paramétrage + Config & Go-live · ⚠️ **DRY-RUN sandboxes** (`sbaml`/`sbkyc`/`sbbrm`/`sbonb`/`sbcf`/`sbwf` : abaisser un seuil → alertes nommées, stress test) = **PAS de service Nest ratifié** (R93→R99 vit dans la maquette) → **en attente de canon**, pas inventés
+- ✅ **PARTIEL (Vague 6/9)** : `sbowner` (gouvernance registre R-Q) via Registre de paramétrage + Config & Go-live · ✅ **`sbaml` FAIT (Vague 9)** — dry-run AML sur le moteur ratifié `evaluer` (R94/B-02, canon confirmé dans `spec/catalogue-amendements-R89-R99-ratifies.md`) · ⚠️ **DRY-RUN restants** (`sbkyc`/`sbbrm`/`sbonb`/`sbcf`/`sbwf` : mêmes R93→R99 sur d'autres moteurs) = à ouvrir sur le même patron `sandbox` quand chaque moteur cible est isolé — R95 (stress test/courbe de réponse), R96 (propose≠applique), R97 (cumul de tension) non encore surfacés
 - Sections & droits (`sdkyc`, `sdar`, `sdgar`, `paramfields`, `cocparam`) → registre R-Q existe
 
 **b) « Intégrer, pas refaire » — dépend d'un PORT externe, pas d'un moteur à recoder** :
