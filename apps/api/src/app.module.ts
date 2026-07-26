@@ -15,8 +15,11 @@ import { IslamicModule } from "./modules/islamic/islamic.module";
 import { RiskCaseModule } from "./modules/riskcases/risk-case.module";
 import { ScreeningModule } from "./modules/screening/screening.module";
 import { PersonnesModule } from "./modules/personnes/personnes.module";
+import { TransactionsModule } from "./modules/transactions/transactions.module";
+import { MrosModule } from "./modules/mros/mros.module";
+import { CorebankingModule } from "./modules/corebanking/corebanking.module";
 
-@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule] })
+@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }

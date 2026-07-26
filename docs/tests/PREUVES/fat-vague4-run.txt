@@ -1,0 +1,6 @@
+      FAT-TX-01 PASS — SUSPEND tracé (R142), file habilitée (R143), sans motif refusé (R7), LIBERER → statut client EXECUTEE sans fuite AML (R132)
+      FAT-SETTLE-01 PASS — état sync lisible (lots=0), import sans port REFUSÉ (R114/R167), aucun simulacre
+      FAT-SCREEN-ADV-01 PASS — screening liste complémentaire ADVERSE_MEDIA tracé (R103) + hit qualifié (R101) ; la liste est un paramètre, pas un moteur séparé
+      FAT-MROS-01 PASS — décision ESCALADÉ → empreinte 1047c3882941… opposable (R130), re-décision refusée (dossier figé), non-habilité bloqué (art. 10a R132)
+      FAT-GED-COFFRE-01 PASS — fiche = 1 version(s), filtrée au rôle (R110), sans contenu (R145)
+      FAT-REGISTRE-01 PASS — registre agrège comms MROS=1 + runs=1, autre tenant cloisonné (RLS)
