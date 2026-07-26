@@ -12,6 +12,11 @@ model Tenant {
   name      String
   settings  Json     @default("{}")
   createdAt DateTime @default(now()) @map("created_at")
+  // R128 (go-live gouverné) — champs écrits par ParametresService.activer, jusqu'ici absents du
+  // modèle (le fake du corpus les acceptait ; le vrai endpoint plantait). Alignement schéma↔canon.
+  statut     String?   @default("BROUILLON")
+  rqSignePar String?   @map("rq_signe_par")
+  rqSigneAt  DateTime? @map("rq_signe_at")
   users     User[]
   clients   Client[]
   @@map("tenants")

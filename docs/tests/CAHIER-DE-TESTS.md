@@ -81,15 +81,24 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 | Corroboration KYC | **FAT-CORROB-01** | **R36** | **Divergence → Central File ouvert + tâche ; aucune donnée modifiée** | e2e/FAT | `POST /v1/personnes/:id/corroboration` | ✅ PASS |
 
 **Vague 5 : 4/4 FAT PASS. Non-régression : règles 425/425, e2e 37/37 (aucun modèle Prisma nouveau). Zéro invention — canon déjà ratifié.**
+
+## Vague 6 — cahier par écran (Paramétrage & Gouvernance)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Registre de paramétrage | **FAT-PARAM-01** | **R125/R126/R127/R7** | **Écriture typée/motivée ; sans motif, mauvais type, rétroactif refusés ; valeur d'alors** | e2e/FAT | `GET /v1/parametres/registre` · `GET/POST /valeur/:cle` | ✅ PASS |
+| Config à date & Go-live | **FAT-GOLIVE-01** | **R127/R128** | **Config reconstruite ; sans signature refusé ; clé requise nommée ; puis ACTIF** | e2e/FAT | `GET /v1/parametres/config` · `POST /v1/parametres/activer` | ✅ PASS |
+
+**Vague 6 : 2/2 FAT PASS. Non-régression : règles 425/425, e2e 39/39. Conformité schéma↔canon (Tenant.statut/rqSignePar/rqSigneAt, baseline régénérée). DRY-RUN sandboxes différés (canon manquant).**
 **Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=3` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
 
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **37 e2e** (Postgres réel : kyc-rules 6
-+ FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4). Traçabilité règle-par-règle :
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **39 e2e** (Postgres réel : kyc-rules 6
++ FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2). Traçabilité règle-par-règle :
 `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête `kyc-rules` scopée au
 tenant — le `code` KYC n'est unique que par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 6, etc.)*
+*(À compléter — le cahier grandit par section : Vague 7, etc.)*

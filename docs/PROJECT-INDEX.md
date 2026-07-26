@@ -14,6 +14,7 @@
 | `spec/vague3-scenarios/VAGUE3-ECRANS.feature` | Gherkin spec-first Vague 3 (Onboarding · Review · Screening · UBO · CoC · Dashboard) | 2026-07-22 |
 | `spec/vague4-scenarios/VAGUE4-ECRANS.feature` | Gherkin spec-first Vague 4 (Transferts · Settlement · Screening avancé · MROS · GED/coffre · Registre LBA) | 2026-07-22 |
 | `spec/vague5-scenarios/VAGUE5-ECRANS.feature` | Gherkin spec-first Vague 5 (CRM · Contact Reports · Workflow · Corroboration) | 2026-07-26 |
+| `spec/vague6-scenarios/VAGUE6-ECRANS.feature` | Gherkin spec-first Vague 6 (Registre paramétrage · Config & Go-live) | 2026-07-26 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
 
 ## Recette & tests
@@ -27,8 +28,9 @@
 | `docs/tests/FAT/FAT-VAGUE3.md` | 7 FAT métier Vague 3 (cycle de bout en bout) + statuts |
 | `docs/tests/FAT/FAT-VAGUE4.md` | 6 FAT métier Vague 4 (écrans plateforme) + statuts |
 | `docs/tests/FAT/FAT-VAGUE5.md` | 4 FAT métier Vague 5 (CRM & Workflow) + statuts |
-| `docs/tests/COUVERTURE-REGLES.md` | Matrice traçabilité exigences → FAT + tests (V1 12/12 · V2 6/6 · V3 11/11 · V4 9/9 · V5 5/5) |
-| `docs/tests/PREUVES/` | Sorties brutes horodatées (`fat-vague1..5-run.txt`, `e2e-complet.txt`) |
+| `docs/tests/FAT/FAT-VAGUE6.md` | 2 FAT métier Vague 6 (Paramétrage & Gouvernance) + statuts |
+| `docs/tests/COUVERTURE-REGLES.md` | Matrice traçabilité exigences → FAT + tests (V1 12/12 · V2 6/6 · V3 11/11 · V4 9/9 · V5 5/5 · V6 3/3) |
+| `docs/tests/PREUVES/` | Sorties brutes horodatées (`fat-vague1..6-run.txt`, `e2e-complet.txt`) |
 | `docs/RUNBOOK-OPS.md` | Chaîne de vérification + notes par lot |
 
 *(L'ancien `docs/tests/RAPPORT-RECETTE.md` a été **fusionné** dans `docs/CERTIFICAT-ETAT.md` et supprimé — une seule source.)*
@@ -50,9 +52,9 @@
 ## Chiffres de référence (2026-07-22, prouvés)
 
 - **Règles moteur** : 425/425 (50 suites).
-- **e2e (Postgres réel)** : 37/37 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4).
-- **FAT recette** : V1 10/10 + V2 4/4 + V3 7/7 + V4 6/6 + V5 4/4 = **31/31 PASS (100 %)**. Bandeau démo front : 9/9.
-- **Écrans réels** : 24 (V1 6 · V2 2 · V3 6 · V4 6 · V5 : CRM Banque, Contact Reports, Workflow, Corroboration). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md`.
+- **e2e (Postgres réel)** : 39/39 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2).
+- **FAT recette** : V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 = **33/33 PASS (100 %)**. Bandeau démo front : 9/9.
+- **Écrans réels** : 26 (… V5 4 · V6 : Registre de paramétrage, Config & Go-live). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md`.
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **33 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.

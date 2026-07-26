@@ -6,11 +6,11 @@ Deux objets **différents** :
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **24** écrans |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **26** écrans |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~24 / 73 ≈ 33 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 5 a ajouté CRM Banque, Contact Reports, Workflow, Corroboration).
+Couverture actuelle : **~26 / 73 ≈ 36 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 6 a ajouté Registre de paramétrage + Config & Go-live sur le registre R-Q ratifié).
 
 ---
 
@@ -56,7 +56,7 @@ Couverture actuelle : **~24 / 73 ≈ 33 %** des écrans démo ont un équivalent
 - ✅ **FAIT (Vague 5)** : `crm` (CRM Banque), `contactreports` (Contact Reports) · reste : `nextbestaction`, `tasks`
 - ✅ **FAIT (Vague 5)** : `wfdesigner`/`wfengine` (Workflow Designer/Rules, porte `WorkflowModule`) · reste : `wfmanagement` (instances)
 - ✅ **FAIT (Vague 5)** : `corrob` (Corroboration KYC) · reste : `offboarding` (canon à fournir)
-- Sandboxes de paramétrage (`sbaml`, `sbkyc`, `sbbrm`, `sbonb`, `sbcf`, `sbowner`, `sbwf`) → services de paramétrage/registre existent
+- ✅ **PARTIEL (Vague 6)** : `sbowner` (gouvernance registre R-Q) via Registre de paramétrage + Config & Go-live · ⚠️ **DRY-RUN sandboxes** (`sbaml`/`sbkyc`/`sbbrm`/`sbonb`/`sbcf`/`sbwf` : abaisser un seuil → alertes nommées, stress test) = **PAS de service Nest ratifié** (R93→R99 vit dans la maquette) → **en attente de canon**, pas inventés
 - Sections & droits (`sdkyc`, `sdar`, `sdgar`, `paramfields`, `cocparam`) → registre R-Q existe
 
 **b) « Intégrer, pas refaire » — dépend d'un PORT externe, pas d'un moteur à recoder** :

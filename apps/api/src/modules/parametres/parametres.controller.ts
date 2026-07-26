@@ -21,4 +21,16 @@ export class ParametresController {
     @Body() body: { valeur: any; motif: string; effetAt?: string }) {
     return this.parametres.ecrire(req.ctx, cle, body?.valeur, body?.motif, body?.effetAt);
   }
+
+  // Vague 6 — config COMPLÈTE reconstruite à une date (R127) : la gouvernance relit tout l'état d'alors.
+  @Get("config")
+  config(@Req() req: any, @Query("date") date?: string) {
+    return this.parametres.configALaDate(req.ctx, date ? new Date(date) : new Date());
+  }
+
+  // Vague 6 — go-live (R128) : pas d'activation sur un questionnaire troué (clés requises manquantes).
+  @Post("activer")
+  activer(@Req() req: any, @Body() body: { signataire: string }) {
+    return this.parametres.activer(req.ctx, body?.signataire);
+  }
 }

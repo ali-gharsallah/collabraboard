@@ -1,4 +1,4 @@
-# Matrice de traçabilité — exigences → tests (Vagues 1 à 5)
+# Matrice de traçabilité — exigences → tests (Vagues 1 à 6)
 
 **2026-07-22.** Chaque exigence métier / règle est reliée à son **FAT** (acceptation métier) et à
 son **test technique** (règle unitaire dans le harnais et/ou e2e).
@@ -81,10 +81,20 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 5 : 5 / 5 (100 %).**
 
+## Exigences Vague 6 — Paramétrage & Gouvernance (couverture FAT)
+
+| # | Exigence métier / règle | FAT | Test technique | Couvert |
+|---|---|---|---|---|
+| 44 | R125/R126 : écriture de paramètre typée, motivée, jamais rétroactive | FAT-PARAM-01 | parametres.wiring (RQ) + e2e | ✅ |
+| 45 | R127 : valeur/config reconstruite à une date | FAT-PARAM-01 / FAT-GOLIVE-01 | parametres.wiring + e2e | ✅ |
+| 46 | R128 : go-live gouverné (signature + clés requises nommées) | FAT-GOLIVE-01 | parametres.wiring + e2e | ✅ |
+
+**Couverture des exigences Vague 6 : 3 / 3 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **37
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **39
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

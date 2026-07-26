@@ -43,6 +43,10 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 22. **Workflow Designer/Rules** — définition versionnée, publiée datée + immuable, grandfathering (R171→R173).
 23. **Corroboration KYC** — divergence → Central File, sans modification (R36).
 
+**Dans le périmètre (Vague 6 — Paramétrage & Gouvernance)** — 2 domaines (canon ratifié) :
+24. **Registre de paramétrage** — écriture typée/motivée/datée non-rétroactive (R125/R126), valeur à date (R127).
+25. **Config à date & Go-live** — config reconstruite (R127), activation gouvernée (R128).
+
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
 rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
 écrans front des domaines non encore construits (workflow — le backend existe, la surface
@@ -57,8 +61,8 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..5`) | **37 tests, 6 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..5.e2e-spec.ts` | **31 FAT (V1 10 + V2 4 + V3 7 + V4 6 + V5 4)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..6`) | **39 tests, 7 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..6.e2e-spec.ts` | **33 FAT (… + V6 2)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -101,8 +105,8 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 37 e2e verts.
-- Toute exigence métier de Vagues 1 à 5 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
+- **0 régression** : 425 règles + 39 e2e verts.
+- Toute exigence métier de Vagues 1 à 6 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies
 
