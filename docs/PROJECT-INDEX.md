@@ -18,6 +18,8 @@
 | `spec/vague7-scenarios/VAGUE7-ECRANS.feature` | Gherkin spec-first Vague 7 (PMS : mandats, adéquation, breaches) | 2026-07-26 |
 | `spec/vague8-scenarios/VAGUE8-ECRANS.feature` | Gherkin spec-first Vague 8 (Référentiel AML : scénarios & seuils) | 2026-07-26 |
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
+| `spec/proposed-R222-R238/` | Gherkin GELÉ (BT-01..10, FO-01..08) — R222..R238 PROPOSÉES (Business Trip / Formations), attente validation | 2026-07-26 |
+| `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées | 2026-07-26 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
 
 ## Recette & tests
@@ -35,6 +37,7 @@
 | `docs/tests/FAT/FAT-VAGUE7.md` | 2 FAT métier Vague 7 (PMS) + statuts |
 | `docs/tests/FAT/FAT-VAGUE8.md` | 2 FAT métier Vague 8 (Référentiel AML) + statuts |
 | `docs/tests/FAT/FAT-VAGUE9.md` | 2 FAT métier Vague 9 (Bac à sable AML : dry-run) + statuts |
+| `docs/tests/FAT/FAT-VAGUE10.md` | 2 FAT Ports (backend) + 5 tests FE-CORE (Vitest) + écarts front |
 | `docs/tests/COUVERTURE-REGLES.md` | Matrice traçabilité exigences → FAT + tests (… · V6 3/3 · V7 4/4 · V8 2/2) |
 | `docs/tests/PREUVES/` | Sorties brutes horodatées (`fat-vague1..9-run.txt`, `e2e-complet.txt`) |
 | `docs/RUNBOOK-OPS.md` | Chaîne de vérification + notes par lot |
@@ -58,9 +61,9 @@
 ## Chiffres de référence (2026-07-22, prouvés)
 
 - **Règles moteur** : 425/425 (50 suites).
-- **e2e (Postgres réel)** : 45/45 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2).
+- **e2e (Postgres réel)** : 47/47 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2). Front FE-CORE : 5/5 (Vitest).
 - **FAT recette** : V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 = **37/37 PASS (100 %)**. Bandeau démo front : 9/9.
-- **Écrans réels** : 29 (… V7 : PMS · V8 : Référentiel AML · V9 : Bac à sable AML). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md`.
+- **Écrans réels** : 31 (… V8 : Référentiel AML · V9 : Bac à sable AML · V10 : Ports, NBA). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front v2 : `docs/ECARTS-FRONT.md`.
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **34 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.

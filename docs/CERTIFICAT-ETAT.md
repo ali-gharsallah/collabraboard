@@ -66,12 +66,14 @@ Index maître : `docs/PROJECT-INDEX.md`.
 |---|---|---|---|---|
 | 26 | **PMS** | **`POST/GET /v1/pms/mandats`** · `/:id/valoriser` · `/:id/pre-trade` · `GET /clients/:id/adequation` · `GET /breaches` · `POST /breaches/:id/clore` (R105→R108) | **visible** | ✅ réel (nouveau) |
 
-## Écrans réels (frontend React `apps/web`) — Vague 9 (Bac à sable AML)
+## Écrans réels (frontend React `apps/web`) — Vague 10 (Front-câblage v2 : Ports, NBA)
 
 | # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
 |---|---|---|---|---|
 | 27 | **Référentiel AML** | **`GET /v1/aml/referentiel`** (18 scénarios R189→R206 + seuils effectifs, pilotés par le registre) | **visible** | ✅ réel |
-| 29 | **Bac à sable AML** | **`POST /v1/aml/sandbox`** (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | **visible** | ✅ réel (nouveau) |
+| 29 | **Bac à sable AML** | **`POST /v1/aml/sandbox`** (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | **visible** | ✅ réel |
+| 30 | **Ports** | **`GET /v1/ports`**, **`GET\|POST /v1/ports/:id/health`** (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | **visible** | ✅ réel (nouveau) |
+| 31 | **Next Best Action** | **`GET /v1/crm/clients/:id/gestes`** (R187, gestes proposés ; décision R44 en lecture — route de décision non ratifiée) | **visible** | ✅ réel (lecture) |
 
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
@@ -81,7 +83,8 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (… + V7 2 + V8 2 + V9 2) | **45 / 45** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (… + V8 2 + V9 2 + V10 2) | **47 / 47** | `pnpm --filter api run test:e2e` |
+| FE-CORE (front, Vitest — couche `api.ts`) | **5 / 5** | `pnpm --filter web run test:unit` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
@@ -91,6 +94,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | **FAT recette Vague 7** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague7` |
 | **FAT recette Vague 8** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague8` |
 | **FAT recette Vague 9** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague9` |
+| **FAT recette Vague 10** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague10` |
 | Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
 | Régressions | **0** | — |
 
@@ -110,7 +114,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~117 routes** (+ bac à sable AML Vague 9), **34 modules** en Postgres réel (0 mock). Frontend : **29 écrans** (… + V7 1 + V8 1 + V9 1).
+- Backend : **~120 routes** (+ Ports Vague 10 : registre + health), **35 modules** en Postgres réel (0 mock). Frontend : **31 écrans** (… + V9 1 + V10 2 : Ports, NBA). Écarts front consignés : `docs/ECARTS-FRONT.md`.
 - Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
   (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
   trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.

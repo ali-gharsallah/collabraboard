@@ -50,10 +50,15 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 **Dans le périmètre (Vague 7 — PMS)** — 1 domaine (canon ratifié, intégration) :
 26. **PMS** — adéquation LSFin (R107), drift constaté (R105/R44), pre-trade bloquant (R106), breaches (R108/R7).
 
-**Dans le périmètre (Vague 9 — Bac à sable AML)** — 1 domaine (canon ratifié R94/B-02) :
-28. **Bac à sable AML** — dry-run d'un seuil sur données réelles, impact **nominatif** (avant/après/nouvelles nommées), **aucune écriture** (R70/R94) ; appliquer passe par le registre gouverné (R96/R126/R29).
+**Dans le périmètre (Vague 10 — Front-câblage v2, phase 1)** — SPEC-FRONT-CÂBLAGE v2, décisions actées :
+29. **Ports** (FE-PORT) — état des ports **ratifiés** (core/IA/coffre), refus gracieux, **aucun secret** (R167/R163/R180).
+30. **Next Best Action** (FE-NBA) — gestes R187 en lecture, cadre R44 (décision non ratifiée → désactivée).
+31. **FE-CORE** (`api.ts`) — seed signalé, propagation session, rejeu `asOf` (R48), erreurs non traduites (Vitest).
 
-*(Vague 8 — Référentiel AML : 18 scénarios de surveillance R189→R206 + seuils effectifs pilotés par le registre R125→R127, cf. FAT-VAGUE8.)*
+*Gelé (attente « OK pour R222..R238 »)* : Business Trip (MOD-75) & Formations (MOD-43) — Gherkin seul.
+*Gelé (aucun service ratifié)* : Workflow Instances (FE-WFI), Tâches (FE-TASK). Détail : `docs/ECARTS-FRONT.md`.
+
+*(Vague 9 — Bac à sable AML : dry-run d'un seuil R94/B-02 ; Vague 8 — Référentiel AML R189→R206, cf. FAT-VAGUE8/9.)*
 
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
 rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
@@ -69,8 +74,9 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..9`) | **45 tests, 10 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..9.e2e-spec.ts` | **39 FAT (… + V8 2 + V9 2)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..10`) | **47 tests, 11 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..10.e2e-spec.ts` | **41 FAT (… + V9 2 + V10 2)** |
+| **Front (Vitest)** | Prouver la couche FE-CORE (`api.ts`) hors backend | `pnpm --filter web run test:unit` | **5 tests (FE-01..04)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -113,7 +119,7 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 45 e2e verts.
+- **0 régression** : 425 règles + 47 e2e + 5 Vitest verts.
 - Toute exigence métier de Vagues 1 à 8 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies
