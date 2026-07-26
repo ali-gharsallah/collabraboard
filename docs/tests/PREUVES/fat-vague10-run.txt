@@ -1,0 +1,7 @@
+    FAT-PORT-01 PASS — 3 ports ratifiés (core-banking, ia, storage), tenant nu → NOT_CONFIGURED, aucun secret exposé
+    FAT-PORT-02 PASS — core-banking déclaré au registre → CONFIGURED ; health OK ; port inconnu 'fx' → 404 (jamais inventé)
+PASS test/e2e/fat-vague10.e2e-spec.ts
+    ✓ FAT-PORT-01 [Admin] le registre expose les ports RATIFIÉS ; tenant nu → tous NOT_CONFIGURED, aucun secret (52 ms)
+    ✓ FAT-PORT-02 [Admin] configurer un port au registre (R167/R126) → CONFIGURED reflété ; port inconnu → 404 (86 ms)
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total

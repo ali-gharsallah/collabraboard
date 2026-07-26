@@ -119,6 +119,20 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 
 **Vague 9 : 2/2 FAT PASS. Non-régression : règles 425/425 (AML 45/45), e2e 45/45. Zéro invention — dry-run = R94 ratifié rejoué sur le moteur ratifié.** Lève le report « sandboxes différés » (Vague 6) pour le bac AML.
 
+## Vague 10 — cahier par écran (Front-câblage v2, phase 1 : FE-CORE + Ports + NBA)
+
+| Écran / couche | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Ports | **FAT-PORT-01** | **R167/R163/R180 · « pas de secret »** | **Registre = ports RATIFIÉS uniquement ; tenant nu → NOT_CONFIGURED ; aucun secret exposé ; fx/custody/mobile non listés** | e2e/FAT | `GET /v1/ports` | ✅ PASS |
+| Ports | **FAT-PORT-02** | **R167 / R126** | **Port déclaré au registre → CONFIGURED ; health OK ; port inconnu → 404 (jamais fabriqué)** | e2e/FAT | `GET\|POST /v1/ports/:id/health` | ✅ PASS |
+| FE-CORE (api.ts) | **FE-01** | seed sans backend | Lecture → seed signalé ; écriture `apiPost` refusée (DEMO_MODE) | Vitest | `src/lib/api.ts` | ✅ PASS |
+| FE-CORE | **FE-02** | propagation session | headers-mode → x-tenant/user/role ; JWT (défaut) → Authorization Bearer | Vitest | `src/lib/api.ts` | ✅ PASS |
+| FE-CORE | **FE-03** | rejeu à date (R48) | `?asOf=` propagé ; vue historique → écriture refusée | Vitest | `src/lib/api.ts` | ✅ PASS |
+| FE-CORE | **FE-04** | erreur non traduite | 422 {code,message} → OliveError message serveur tel quel | Vitest | `src/lib/api.ts` | ✅ PASS |
+
+**Vague 10 : 2/2 FAT backend + 5/5 Vitest FE-CORE. Non-régression : règles 425/425, e2e 47/47, baseline en sync.**
+**Écarts signalés (jamais inventés — `docs/ECARTS-FRONT.md`)** : FE-WFI et FE-TASK **gelés** (aucun service ratifié) ; décision NBA non ratifiée (écran en lecture) ; auth headers-mode inerte (backend en JWT). **R222..R238 gelées** (Gherkin seul, attente « OK »).
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

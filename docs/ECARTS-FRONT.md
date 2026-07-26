@@ -7,7 +7,10 @@ le serveur décide ; on ne fabrique JAMAIS de canon ; tout écart est signalé a
 **Conclusion en une ligne** : les 4 blocs front dits « constructibles immédiatement » (Ports, Workflow
 Instances, Tâches, Next Best Action) ciblent des endpoints qui **n'existent pas** sous cette forme dans
 le backend ratifié. Deux invariants de plateforme (préfixe d'URL, mode d'authentification) divergent aussi.
-Rien n'a été codé côté écrans : ce document + le Gherkin gelé (BT/FO) sont les seuls livrables de cette passe.
+
+**Suite (Vague 10, décisions §4 actées)** : sur les 4 blocs, seuls **Ports** (porte mince réelle) et **NBA**
+(lecture R187) sont buildables sans inventer ; **WFI** et **Tasks** restent **gelés** (aucun service ratifié).
+FE-CORE (`api.ts`) livré en incrémental (JWT défaut, `/v1`). Détail de la recette : `docs/tests/FAT/FAT-VAGUE10.md`.
 
 ---
 
@@ -57,11 +60,18 @@ Rien n'a été codé côté écrans : ce document + le Gherkin gelé (BT/FO) son
 
 ---
 
-## 4. Décisions requises avant de coder les blocs FE-CORE→FE-NBA
+## 4. Décisions ACTÉES (Ali, 2026-07-26) et suite
 
-1. **Backends absents (Ports / WFI / Tasks / NBA)** : construire des **portes minces** au-dessus des services ratifiés existants (corebanking, workflow-def, workload, crm-gestes) en signalant chaque projection — **ou** écrans seed-only signalés — **ou** attendre du canon dédié ?
-2. **Auth** : garder **JWT** (réalité backend) comme défaut, avec `OLIVE_AUTH_MODE` offrant headers-mode en option inerte tant que le backend ne l'accepte pas — **ou** autre ?
-3. **Architecture front** : adopter **maintenant** la refonte (`apiGet`/`apiPost`/`useApiOrSeed`, `theme/tokens.ts`, Vitest+MSW, préfixe) sur un seul arbre — **ou** l'introduire **incrémentalement** en gardant `apiGetSourced` et les écrans existants ?
-4. **Préfixe d'URL** : aligner la spec sur **`/v1`** (réalité) — **ou** ajouter `/api` au backend ?
+1. **Backends absents** → **portes minces là où un service ratifié existe**. Livré Vague 10 : `PortsModule`
+   (projection des ports ratifiés core/IA/coffre) ; FE-NBA branché en **lecture** sur `crm/gestes` (R187).
+   **WFI et Tasks GELÉS** (aucun service ratifié — ni instances de workflow, ni backlog de tâches) : non codés.
+2. **Auth** → **JWT par défaut** ; headers-mode câblé mais **inerte** (`OLIVE_AUTH_MODE`) — livré dans `api.ts`.
+3. **Architecture front** → **incrémentale** : `apiGetSourced` et les écrans existants conservés ; `apiPost`,
+   `asOf`, `useApiOrSeed`, **Vitest** introduits au fil des nouveaux blocs. `theme/tokens.ts` + MSW : différés
+   (pas requis par les blocs livrés ; à introduire quand un bloc les exige).
+4. **Préfixe** → **`/v1`** (réalité backend). La spec est lue en `/v1`, le routing ratifié n'est pas touché.
 
-*Tant que ces points ne sont pas tranchés, aucun écran FE n'est codé : coder sur une hypothèse fausse = refonte à jeter.*
+**Reste ouvert (attente canon / validation)** : FE-WFI, FE-TASK (canon backend dédié) ; route de **décision NBA**
+(`POST /nba/:id/decision`) ; ports **fx/custody/mobile** ; R222..R238 (Business Trip / Formations, **PROPOSÉES** —
+attente « OK pour R222..R238 ») ; zone canon manquant (Command Center, Investigation, SWIFT, Legal, Octopulse,
+CPSI-Nest, Olivia/BI, écrans IAM/SSO, Audit).

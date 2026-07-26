@@ -10,7 +10,7 @@ Deux objets **différents** :
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~29 / 73 ≈ 40 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 9 a ajouté le Bac à sable AML — dry-run d'un seuil R94/B-02, impact nominatif sans écriture).
+Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 10 a ajouté Ports — état des ports ratifiés, refus gracieux — et Next Best Action — gestes R187 en lecture, cadre R44). Écarts front v2 : `docs/ECARTS-FRONT.md`.
 
 ---
 
@@ -47,6 +47,9 @@ Couverture actuelle : **~29 / 73 ≈ 40 %** des écrans démo ont un équivalent
 | aml (AML Investigation Workspace) | Règles AML + File d'alertes + Dossiers de risque | Le **workspace d'investigation** unifié (timeline, liens, graphe d'enquête) |
 | ✅ **FAIT (Vague 8)** amlcat (Référentiel AML) | `ReferentielAml` (18 scénarios R189→R206 + seuils effectifs) | — |
 | ✅ **FAIT (Vague 9)** sbaml (Bac à sable AML) | `SandboxAml` (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | `POST /v1/aml/sandbox` |
+| ✅ **FAIT (Vague 10)** Ports (intégrations) | `Ports` (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | `GET /v1/ports`, `GET\|POST /v1/ports/:id/health` |
+| ✅ **FAIT (Vague 10)** NBA (Next Best Action) | `NextBestAction` (gestes R187 en lecture, cadre R44 ; décision non ratifiée → désactivée) | `GET /v1/crm/clients/:id/gestes` |
+| ⛔ **GELÉ (v2)** Workflow Instances, Tâches | aucun service ratifié (workflow=définitions ; pas de backlog tâches) — non codés, signalés | — |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
 ---
