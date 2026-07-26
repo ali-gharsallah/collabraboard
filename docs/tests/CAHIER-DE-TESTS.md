@@ -31,14 +31,26 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 | Rejeu à date (paramètre) | FAT-REJEU-01 | R127 | Valeur d'une règle à une date passée (aujourd'hui=45, hier=30) | e2e/FAT | `GET /v1/parametres/valeur/:cle?date=` | ✅ PASS |
 | (transverse) | Bandeau démo | crédibilité | Seed → bandeau ; API → rien | unit (front) | — | ✅ 9/9 |
 
-**Vague 1 : 10/10 FAT PASS + bandeau 9/9. Non-régression : règles 425/425, e2e 16/16.**
+**Vague 1 : 10/10 FAT PASS + bandeau 9/9. Non-régression : règles 425/425, e2e 20/20.**
+
+## Vague 2 — cahier par écran (Surveillance & Dossiers)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Dossiers de risque | **FAT-DOSSIER-01** | **R134 · R133/R136 · R7** | **2 notes append-only relues en ordre ; NOUVELLE→EN_ANALYSE ok ; clôture sans motif refusée ; clôture motivée → CLOTUREE** | e2e/FAT | **`POST`/`GET /v1/riskcases/:id/notes`** · `POST …/transition` | ✅ PASS |
+| Dossiers de risque | **FAT-DOSSIER-02** | **R133** | **NOUVELLE→CLOTUREE directe refusée (transition illégale)** | e2e/FAT | `POST /v1/riskcases/:id/transition` | ✅ PASS |
+| Pièces (GED) | **FAT-GED-01** | **R110 · R145** | **CO autorisé voit la pièce ; MLRO voit 0 ; fiche = empreinte, jamais le contenu** | e2e/FAT | `GET /v1/ged/documents?clientId=` · `GET /v1/ged/documents/:id` | ✅ PASS |
+| Pièces (GED) | **FAT-GED-02** | **RLS** | **Un autre tenant ne voit aucune pièce** | e2e/FAT | `GET /v1/ged/documents?clientId=` | ✅ PASS |
+
+**Vague 2 : 4/4 FAT PASS. Non-régression : règles 425/425, e2e 20/20 (aucun modèle Prisma nouveau).**
 
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **16 e2e** (Postgres réel). Traçabilité
-règle-par-règle : `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête
-`kyc-rules` scopée au tenant — le `code` KYC n'est unique que par tenant).
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **20 e2e** (Postgres réel : kyc-rules 6
++ FAT Vague 1 10 + FAT Vague 2 4). Traçabilité règle-par-règle : `docs/tests/COUVERTURE-REGLES.md`.
+Errata de test : **E4** (sous-requête `kyc-rules` scopée au tenant — le `code` KYC n'est unique que
+par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 2, etc.)*
+*(À compléter — le cahier grandit par section : Vague 3, etc.)*

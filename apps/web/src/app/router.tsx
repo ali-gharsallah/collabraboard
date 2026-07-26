@@ -5,10 +5,12 @@ import { KycDetail } from "../features/kyc/KycDetail";
 import { RejeuKyc } from "../features/kyc/RejeuKyc";
 import { AmlParametres } from "../features/aml/AmlParametres";
 import { AlertsQueue } from "../features/alertes/AlertsQueue";
+import { DossiersRisque } from "../features/dossiers/DossiersRisque";
+import { GedPieces } from "../features/ged/GedPieces";
 import { FinanceIslamique } from "../features/islamic/FinanceIslamique";
 
 export function Router() {
-  const [screen, setScreen] = useState<"clients" | "kyc" | "aml" | "alertes" | "rejeu" | "islamic">("clients");
+  const [screen, setScreen] = useState<"clients" | "kyc" | "aml" | "alertes" | "dossiers" | "ged" | "rejeu" | "islamic">("clients");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const tab = (id: typeof screen, label: string) =>
     <button onClick={() => setScreen(id)} style={{ padding: "8px 16px", border: "none",
@@ -17,7 +19,7 @@ export function Router() {
       {label}</button>;
   return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
     <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-      {tab("clients", "Clients")}{tab("kyc", "KYC")}{tab("aml", "Règles AML")}{tab("alertes", "File d'alertes")}{tab("rejeu", "Rejeu KYC à date")}{tab("islamic", "Finance Islamique")}
+      {tab("clients", "Clients")}{tab("kyc", "KYC")}{tab("aml", "Règles AML")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("ged", "Pièces (GED)")}{tab("rejeu", "Rejeu KYC à date")}{tab("islamic", "Finance Islamique")}
     </div>
     {screen === "clients" && <ClientsList/>}
     {screen === "kyc" && <div>
@@ -26,6 +28,8 @@ export function Router() {
     </div>}
     {screen === "aml" && <AmlParametres/>}
     {screen === "alertes" && <AlertsQueue/>}
+    {screen === "dossiers" && <DossiersRisque/>}
+    {screen === "ged" && <GedPieces/>}
     {screen === "rejeu" && <RejeuKyc/>}
     {screen === "islamic" && <FinanceIslamique/>}
   </div>;
