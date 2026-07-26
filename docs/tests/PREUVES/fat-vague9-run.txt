@@ -1,0 +1,7 @@
+    FAT-SBAML-01 PASS — dry-run seuil 100000→200000 : avant=0, nouvelles=1 (nommées), 0 écriture en base (R70/R94)
+    FAT-SBAML-02 PASS — simulation inchangée (100000), application gouvernée au registre → 200000 (R126/R29)
+PASS test/e2e/fat-vague9.e2e-spec.ts
+    ✓ FAT-SBAML-01 [CO] un seuil simulé montre l'impact NOMINATIF, sans AUCUNE écriture (R94/B-02, R70) (60 ms)
+    ✓ FAT-SBAML-02 [CO] proposer n'est pas appliquer : la valeur reste inchangée, l'application passe par le registre (R126/R29) (74 ms)
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total

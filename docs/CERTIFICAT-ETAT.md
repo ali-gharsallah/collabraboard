@@ -66,11 +66,12 @@ Index maître : `docs/PROJECT-INDEX.md`.
 |---|---|---|---|---|
 | 26 | **PMS** | **`POST/GET /v1/pms/mandats`** · `/:id/valoriser` · `/:id/pre-trade` · `GET /clients/:id/adequation` · `GET /breaches` · `POST /breaches/:id/clore` (R105→R108) | **visible** | ✅ réel (nouveau) |
 
-## Écrans réels (frontend React `apps/web`) — Vague 8 (Référentiel AML)
+## Écrans réels (frontend React `apps/web`) — Vague 9 (Bac à sable AML)
 
 | # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
 |---|---|---|---|---|
-| 27 | **Référentiel AML** | **`GET /v1/aml/referentiel`** (18 scénarios R189→R206 + seuils effectifs, pilotés par le registre) | **visible** | ✅ réel (nouveau) |
+| 27 | **Référentiel AML** | **`GET /v1/aml/referentiel`** (18 scénarios R189→R206 + seuils effectifs, pilotés par le registre) | **visible** | ✅ réel |
+| 29 | **Bac à sable AML** | **`POST /v1/aml/sandbox`** (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | **visible** | ✅ réel (nouveau) |
 
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
@@ -80,7 +81,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (… + V7 2 + V8 2) | **43 / 43** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (… + V7 2 + V8 2 + V9 2) | **45 / 45** | `pnpm --filter api run test:e2e` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
@@ -89,6 +90,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | **FAT recette Vague 6** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague6` |
 | **FAT recette Vague 7** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague7` |
 | **FAT recette Vague 8** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague8` |
+| **FAT recette Vague 9** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague9` |
 | Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
 | Régressions | **0** | — |
 
@@ -101,13 +103,14 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 - **Consultation GED filtrée au rôle** (R110) sans jamais exposer le contenu (R145) : **OUI** (FAT-GED-01).
 - **Aiguillage de diligence** SDD/CDD/EDD au risque (R117) + ouverture sous KYC VALIDATED (R119) : **OUI** (FAT-ONBOARD-01).
 - **Screening** : qualification motivée (R101/R7), escalade **proposée** jamais exécutée (R39/R44) : **OUI** (FAT-SCREEN-01).
+- **Dry-run d'un seuil AML** (R94/B-02) — simuler sur données réelles, impact **nominatif**, **sans aucune écriture** (R70) : **OUI** — `POST /v1/aml/sandbox` (preuve FAT-SBAML-01 : 0 signal en base ; FAT-SBAML-02 : appliquer passe par le registre gouverné).
 - **Cycle complet de bout en bout** (entrée→KYC→screening→revue→changement) sur Postgres réel : **OUI** (FAT-CYCLE-01).
 - **Four-eyes KYC** protégeant le golden record : **OUI** (FAT-KYC-01).
 - **Isolation multi-tenant** (RLS FORCE) : **OUI** (recette RLS + FAT-CLIENT-01 + FAT-GED-02 + FAT-UBO-01/FAT-DASH-01).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~116 routes** (+ référentiel AML Vague 8), **34 modules** en Postgres réel (0 mock). Frontend : **28 écrans** (… + V7 1 + V8 1).
+- Backend : **~117 routes** (+ bac à sable AML Vague 9), **34 modules** en Postgres réel (0 mock). Frontend : **29 écrans** (… + V7 1 + V8 1 + V9 1).
 - Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
   (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
   trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
