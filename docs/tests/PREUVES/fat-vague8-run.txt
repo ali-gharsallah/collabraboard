@@ -1,0 +1,2 @@
+      FAT-AMLCAT-01 PASS — 18 scénarios (R189→R206), seuils effectifs (structuringSeuilChf=100000)
+      FAT-AMLCAT-02 PASS — seuil structuring abaissé au registre (100000 → 50000) reflété dans le référentiel (R125→R127)

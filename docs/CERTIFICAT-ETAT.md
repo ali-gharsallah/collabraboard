@@ -66,6 +66,12 @@ Index maître : `docs/PROJECT-INDEX.md`.
 |---|---|---|---|---|
 | 26 | **PMS** | **`POST/GET /v1/pms/mandats`** · `/:id/valoriser` · `/:id/pre-trade` · `GET /clients/:id/adequation` · `GET /breaches` · `POST /breaches/:id/clore` (R105→R108) | **visible** | ✅ réel (nouveau) |
 
+## Écrans réels (frontend React `apps/web`) — Vague 8 (Référentiel AML)
+
+| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
+|---|---|---|---|---|
+| 27 | **Référentiel AML** | **`GET /v1/aml/referentiel`** (18 scénarios R189→R206 + seuils effectifs, pilotés par le registre) | **visible** | ✅ réel (nouveau) |
+
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
@@ -74,7 +80,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (… + V6 2 + V7 2) | **41 / 41** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (… + V7 2 + V8 2) | **43 / 43** | `pnpm --filter api run test:e2e` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
@@ -82,6 +88,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | **FAT recette Vague 5** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague5` |
 | **FAT recette Vague 6** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague6` |
 | **FAT recette Vague 7** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague7` |
+| **FAT recette Vague 8** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague8` |
 | Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
 | Régressions | **0** | — |
 
@@ -100,7 +107,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~115 routes** (+ PMS Vague 7), **34 modules** en Postgres réel (0 mock). Frontend : **27 écrans** (… + V6 2 + V7 1).
+- Backend : **~116 routes** (+ référentiel AML Vague 8), **34 modules** en Postgres réel (0 mock). Frontend : **28 écrans** (… + V7 1 + V8 1).
 - Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
   (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
   trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
@@ -144,6 +151,11 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 ## Décision de recette Vague 7 (PMS)
 
 - [ ] **Recette PRONONCÉE** — 2/2 FAT (2 critiques : adéquation LSFin R107, drift/pre-trade/breach R105/R106/R108), 0 régression, 0 modèle Prisma nouveau. **Intégrer, pas refaire** : compliance sur positions, pas de moteur de portefeuille.
+- Signé (sponsor / Compliance) : ______________________  Date : __________
+
+## Décision de recette Vague 8 (Référentiel AML)
+
+- [ ] **Recette PRONONCÉE** — 2/2 FAT (référentiel R189→R206 + seuils gouvernés R125→R127), 0 régression, 0 modèle Prisma nouveau. **Zéro invention** : catalogue = projection du canon ratifié ; seuils pilotés par le registre, jamais en dur.
 - Signé (sponsor / Compliance) : ______________________  Date : __________
 
 ---

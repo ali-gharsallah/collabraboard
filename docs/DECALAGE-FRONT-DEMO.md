@@ -6,11 +6,11 @@ Deux objets **différents** :
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **27** écrans |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **28** écrans |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~27 / 73 ≈ 37 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 7 a ajouté PMS — compliance sur positions, R105→R108).
+Couverture actuelle : **~28 / 73 ≈ 38 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 8 a ajouté le Référentiel AML — 18 scénarios R189→R206 + seuils gouvernés).
 
 ---
 
@@ -45,7 +45,7 @@ Couverture actuelle : **~27 / 73 ≈ 37 %** des écrans démo ont un équivalent
 | Écran démo | Ce que React couvre | Ce qui manque |
 |---|---|---|
 | aml (AML Investigation Workspace) | Règles AML + File d'alertes + Dossiers de risque | Le **workspace d'investigation** unifié (timeline, liens, graphe d'enquête) |
-| amlcat (Référentiel AML) | `AmlParametres` (registre R-Q) | Vue catalogue scénarios/seuils dédiée |
+| ✅ **FAIT (Vague 8)** amlcat (Référentiel AML) | `ReferentielAml` (18 scénarios R189→R206 + seuils effectifs) | — |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
 ---

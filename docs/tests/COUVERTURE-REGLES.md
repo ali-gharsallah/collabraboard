@@ -1,4 +1,4 @@
-# Matrice de traçabilité — exigences → tests (Vagues 1 à 7)
+# Matrice de traçabilité — exigences → tests (Vagues 1 à 8)
 
 **2026-07-22.** Chaque exigence métier / règle est reliée à son **FAT** (acceptation métier) et à
 son **test technique** (règle unitaire dans le harnais et/ou e2e).
@@ -102,10 +102,19 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 7 : 4 / 4 (100 %).**
 
+## Exigences Vague 8 — Référentiel AML : scénarios & seuils (couverture FAT)
+
+| # | Exigence métier / règle | FAT | Test technique | Couvert |
+|---|---|---|---|---|
+| 51 | R189→R206 : le référentiel expose les 18 scénarios de surveillance | FAT-AMLCAT-01 | aml-scoring.wiring (A-69..A-86) + e2e | ✅ |
+| 52 | R125→R127 : seuils AML pilotés par le registre, reflétés à chaud | FAT-AMLCAT-02 | parametres.wiring + e2e | ✅ |
+
+**Couverture des exigences Vague 8 : 2 / 2 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **41
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **43
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

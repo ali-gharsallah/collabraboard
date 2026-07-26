@@ -99,15 +99,24 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 | PMS | **FAT-PMS-DRIFT-01** | **R105/R106/R108/R7** | **Drift constaté (positions intactes) ; pre-trade exclusion+concentration BLOQUE ; breach clôturé motivé** | e2e/FAT | `GET /mandats/:id/valoriser` · `POST /mandats/:id/pre-trade` · `GET /breaches` · `POST /breaches/:id/clore` | ✅ PASS |
 
 **Vague 7 : 2/2 FAT PASS. Non-régression : règles 425/425, e2e 41/41 (aucun modèle Prisma nouveau). Intégrer, pas refaire.**
+
+## Vague 8 — cahier par écran (Référentiel AML : scénarios & seuils)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Référentiel AML | **FAT-AMLCAT-01** | **R189→R206** | **18 scénarios (code/type/niveau/libellé) + seuils effectifs** | e2e/FAT | `GET /v1/aml/referentiel` | ✅ PASS |
+| Référentiel AML | **FAT-AMLCAT-02** | **R125→R127** | **Seuil changé au registre reflété à chaud dans le référentiel** | e2e/FAT | `POST /v1/parametres/valeur/amlStructuringSeuilChf` · `GET /v1/aml/referentiel` | ✅ PASS |
+
+**Vague 8 : 2/2 FAT PASS. Non-régression : règles 425/425 (AML 45/45), e2e 43/43. Zéro invention — référentiel = projection du canon.**
 **Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=3` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
 
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **41 e2e** (Postgres réel : kyc-rules 6
-+ FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2). Traçabilité règle-par-règle :
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6
++ FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2). Traçabilité règle-par-règle :
 `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête `kyc-rules` scopée au
 tenant — le `code` KYC n'est unique que par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 8, etc.)*
+*(À compléter — le cahier grandit par section : Vague 9, etc.)*
