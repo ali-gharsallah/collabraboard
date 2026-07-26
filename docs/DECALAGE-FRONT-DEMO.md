@@ -6,11 +6,11 @@ Deux objets **différents** :
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **26** écrans |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **27** écrans |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~26 / 73 ≈ 36 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 6 a ajouté Registre de paramétrage + Config & Go-live sur le registre R-Q ratifié).
+Couverture actuelle : **~27 / 73 ≈ 37 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 7 a ajouté PMS — compliance sur positions, R105→R108).
 
 ---
 
@@ -60,7 +60,7 @@ Couverture actuelle : **~26 / 73 ≈ 36 %** des écrans démo ont un équivalent
 - Sections & droits (`sdkyc`, `sdar`, `sdgar`, `paramfields`, `cocparam`) → registre R-Q existe
 
 **b) « Intégrer, pas refaire » — dépend d'un PORT externe, pas d'un moteur à recoder** :
-- `pms` (PMS) · `fx` (Multi-devise/FX) · `custody` · `mobile` (Mobile Banking) · `integrations`/`apidoc` (Core Banking)
+- ✅ **FAIT (Vague 7)** : `pms` (PMS — compliance sur positions, R105→R108, PAS un moteur recodé) · reste : `fx` · `custody` · `mobile` · `integrations`/`apidoc` (Core Banking)
 - → le **port** core existe (`CorebankingModule`, R167→R169) ; l'écran se branchera sur un connecteur réel, jamais sur un moteur réimplémenté.
 
 **c) Domaines non encore ouverts (ni backend ratifié, ni écran)** :

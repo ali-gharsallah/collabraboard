@@ -59,6 +59,14 @@ export class PmsService {
     });
   }
 
+  // ── Vague 7 : lectures tenant-scopées pour l'écran PMS (aucune règle, projection) ──
+  async mandats(ctx: Ctx, clientId?: string) {
+    return this.prisma.mandate.findMany({ where: { tenantId: ctx.tenantId, ...(clientId ? { clientId } : {}) } });
+  }
+  async breaches(ctx: Ctx, statut?: string) {
+    return this.prisma.pmsBreach.findMany({ where: { tenantId: ctx.tenantId, ...(statut ? { statut } : {}) } });
+  }
+
   // ── R106 / PF-02..03 : pre-trade — exclusions + concentration, blocage motivé ──
   async preTrade(ctx: Ctx, mandateId: string, ordre: { instrument: string; secteur: string; classe: string; montantChf: number }) {
     return this.prisma.$transaction(async (tx: any) => {
