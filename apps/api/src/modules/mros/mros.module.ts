@@ -1,0 +1,26 @@
+import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
+import { Module } from "@nestjs/common";
+import { PrismaService } from "../../common/prisma.service";
+import { AuditService } from "../../common/audit.service";
+import { MrosService } from "./mros.service";
+
+/**
+ * Porte HTTP du reporting réglementaire MROS (Vague 4). Délégation PURE vers le domaine
+ * ratifié R129→R132. La décision (communiquer / s'abstenir) est habilitée + motivée (R7),
+ * le dossier est FIGÉ et empreinté (R130, dossierSha256 opposable — jamais re-décidé), la
+ * relecture rend l'empreinte à l'identique, et l'art. 10a (R132, interdiction d'informer) est
+ * tenu par l'habilitation à chaque lecture. Auteur = jeton (r.ctx).
+ */
+@Controller("mros")
+export class MrosController {
+  constructor(private svc: MrosService) {}
+  @Post("decider")            decider(@Req() r: any, @Body() b: any) { return this.svc.decider(r.ctx, b); }                              // R129/R130
+  @Get()                      lister(@Req() r: any) { return this.svc.lister(r.ctx); }                                                   // registre / états
+  @Get(":id")                 relire(@Req() r: any, @Param("id") id: string) { return this.svc.relire(r.ctx, id); }                     // R130 opposable
+  @Post(":id/notification")   notif(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.saisirNotification(r.ctx, id, b?.notification); } // R131
+  @Post(":id/gel")            gel(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.poserGel(r.ctx, id, b?.motif); }        // R131
+  @Post(":id/gel/lever")      lever(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.leverGel(r.ctx, id, b?.motif); }     // R131
+}
+
+@Module({ controllers: [MrosController], providers: [PrismaService, AuditService, MrosService], exports: [MrosService] })
+export class MrosModule {}

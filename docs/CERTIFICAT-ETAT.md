@@ -33,6 +33,17 @@ Index maître : `docs/PROJECT-INDEX.md`.
 | 12 | **Change of Circumstances** | **`POST /v1/personnes/:id/coc`** (R30/R42) | **visible** | ✅ réel (nouveau) |
 | 13 | **Dashboard exécutif** | **`GET /v1/onboarding`** · `/v1/riskcases` · `/v1/screening/hits` (stock par état, RLS) | **visible** | ✅ réel (nouveau) |
 
+## Écrans réels (frontend React `apps/web`) — Vague 4 (Écrans « plateforme »)
+
+| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
+|---|---|---|---|---|
+| 14 | **Transferts & ordres** | **`POST /v1/transactions/evaluer`** · `/revue` · `/:id/decider` · `/:id/statut-client` (R140→R143, R132) | **visible** | ✅ réel (nouveau) |
+| 15 | **Settlement** | **`GET /v1/corebanking/etat`** · `POST /importer` (port R167→R169 ; refus sans connecteur) | **visible** | ✅ réel (nouveau) |
+| 16 | **Screening avancé** | `POST /v1/screening/run` (listes complémentaires) · `/hits/:id/qualify` (R100→R103) | **visible** | ✅ réel (nouveau) |
+| 17 | **Reporting MROS** | **`GET /v1/mros`** · `POST /decider` · `GET /:id` · `/:id/gel` (R129→R132, empreinte opposable) | **visible** | ✅ réel (nouveau) |
+| 18 | **GED / coffre** | `GET /v1/ged/documents` · `/documents/:id` (preuve = versions, jamais le contenu R145) | **visible** | ✅ réel (nouveau) |
+| 19 | **Registre LBA** | `GET /v1/mros` · `/v1/transactions/revue` · `/v1/screening/runs` (agrégation, RLS) | **visible** | ✅ réel (nouveau) |
+
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
@@ -41,10 +52,11 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7) | **27 / 27** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6) | **33 / 33** | `pnpm --filter api run test:e2e` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
+| **FAT recette Vague 4** | **6 / 6 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague4` |
 | Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
 | Régressions | **0** | — |
 
@@ -63,11 +75,16 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~88 routes** (+ portes Vague 3 : screening, personnes, onboarding list), **29 modules** en Postgres réel (0 mock). Frontend : **14 écrans** (Vague 1 = 6 + Vague 2 = 2 + Vague 3 = 6).
-- Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écrans front des autres
-  domaines (MROS, workflow, transactions — routes prêtes) ; rejeu à date sur d'autres agrégats.
+- Backend : **~100 routes** (+ portes Vague 4 : transactions, mros, corebanking), **32 modules** en Postgres réel (0 mock). Frontend : **20 écrans** (V1 6 + V2 2 + V3 6 + V4 6).
+- Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
+  (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
+  trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
 - Écarts signalés (non résolus par invention) : `PersonneLienService` R152→R155 **dormant** (aucun
-  modèle `Personne` au schéma) ; **% de détention** non ratifié ; 12 `no-explicit-any` préexistants (écrans Vague 1).
+  modèle `Personne`) ; **% de détention** non ratifié ; **fiche GED** empreinte de version non
+  restituée (divergence fake/modèle `no`/`empreinte` vs `numero`/`sha256`, hors périmètre) ;
+  12 `no-explicit-any` préexistants (écrans Vague 1).
+- Dette d'infra corrigée (Vague 4) : `PrismaService.onModuleDestroy` ajouté (fuite de connexions
+  e2e) + `connection_limit=1` ; un `PrismaModule` @Global (client unique) reste le correctif de fond.
 
 ## Décision de recette Vague 1
 
@@ -82,6 +99,11 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 ## Décision de recette Vague 3 (Le cycle client de bout en bout)
 
 - [ ] **Recette PRONONCÉE** — 7/7 FAT (dont 6 critiques : aiguillage R117/R119, screening R101/R7/R39, revue orchestrée, UBO R31/R34, CoC R30/R42, cycle bout-en-bout), 0 régression, 0 modèle Prisma nouveau.
+- Signé (sponsor / Compliance) : ______________________  Date : __________
+
+## Décision de recette Vague 4 (Écrans « plateforme »)
+
+- [ ] **Recette PRONONCÉE** — 6/6 FAT (dont 4 critiques : portail tx R140→R143/R132, core=port R167/R114, MROS opposable R130/R132, GED preuve R110/R145), 0 régression, 0 modèle Prisma nouveau. Doctrine « intégrer, pas refaire » tenue ; liste noire respectée.
 - Signé (sponsor / Compliance) : ______________________  Date : __________
 
 ---

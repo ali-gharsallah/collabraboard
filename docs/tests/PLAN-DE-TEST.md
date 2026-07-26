@@ -29,20 +29,30 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 12. **Change of Circumstances** — CoC propagé + re-screening déclenché sur identité (R30/R42).
 13. **Dashboard exécutif** — stock par état, cloisonné RLS.
 
+**Dans le périmètre (Vague 4 — Écrans « plateforme »)** — 6 domaines fonctionnels supplémentaires :
+14. **Transferts & ordres** — portail transactionnel (R140/R142), file habilitée (R143), statut client sans motif AML (R132).
+15. **Settlement** — core = **port** (R167→R169) ; sans connecteur, refus explicite (R114), jamais un simulacre.
+16. **Screening avancé** — adverse media / listes complémentaires = paramètre du moteur ratifié (R100→R103).
+17. **Reporting MROS** — décision figée + empreinte opposable (R130), art. 10a (R132).
+18. **GED / coffre** — preuve d'intégrité (versions), jamais le contenu (R110/R145).
+19. **Registre LBA** — piste d'audit agrégée, cloisonnée RLS.
+
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
 rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
-écrans front des domaines non encore construits (MROS, workflow, transactions — le backend
-existe, la surface produit non) ; `PersonneLienService` (R152→R155) **dormant** (aucun modèle
-`Personne`) ; **% de détention** non ratifié. Ces points sont documentés dans
-`docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
+écrans front des domaines non encore construits (workflow — le backend existe, la surface
+produit non) ; **liste noire** (RH, e-learning, business trip, budget, réunions, cyber-SOC) —
+jamais construite ; `PersonneLienService` (R152→R155) **dormant** (aucun modèle `Personne`) ;
+**% de détention** non ratifié ; **fiche GED** : empreinte de version non restituée (divergence
+fake/modèle `no`/`empreinte` vs `numero`/`sha256`, correctif hors périmètre). Ces points sont
+documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 
 ## 2. Niveaux de test
 
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..3`) | **27 tests, 4 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1.e2e-spec.ts` · `fat-vague2` · `fat-vague3` | **21 FAT (V1 10 + V2 4 + V3 7)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..4`) | **33 tests, 5 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..4.e2e-spec.ts` | **27 FAT (V1 10 + V2 4 + V3 7 + V4 6)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -85,8 +95,8 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 27 e2e verts.
-- Toute exigence métier de Vagues 1, 2 & 3 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
+- **0 régression** : 425 règles + 33 e2e verts.
+- Toute exigence métier de Vagues 1 à 4 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies
 

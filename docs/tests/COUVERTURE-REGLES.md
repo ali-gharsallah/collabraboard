@@ -1,4 +1,4 @@
-# Matrice de traçabilité — exigences → tests (Vagues 1, 2 & 3)
+# Matrice de traçabilité — exigences → tests (Vagues 1 à 4)
 
 **2026-07-22.** Chaque exigence métier / règle est reliée à son **FAT** (acceptation métier) et à
 son **test technique** (règle unitaire dans le harnais et/ou e2e).
@@ -53,10 +53,26 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 3 : 11 / 11 (100 %).**
 
+## Exigences Vague 4 — Écrans « plateforme » (couverture FAT)
+
+| # | Exigence métier / règle | FAT | Test technique | Couvert |
+|---|---|---|---|---|
+| 30 | R140/R142 : toute transaction passe par le portail, verdict tracé | FAT-TX-01 | transaction-gate.wiring (TX) + e2e | ✅ |
+| 31 | R143/R7 : file de revue habilitée, décision motivée | FAT-TX-01 | transaction-gate.wiring + e2e | ✅ |
+| 32 | R132 : vue client sans motif AML (art. 10a) | FAT-TX-01 | transaction-gate.vueClient + e2e | ✅ |
+| 33 | R167/R114 : core = port ; sans port, refus explicite (pas de simulacre) | FAT-SETTLE-01 | core-sync.wiring (SY) + e2e | ✅ |
+| 34 | R100→R103 : screening listes complémentaires (adverse media) tracé | FAT-SCREEN-ADV-01 | screening.wiring (SC) + e2e | ✅ |
+| 35 | R130 : décision MROS figée + empreinte opposable | FAT-MROS-01 | mros.wiring + e2e | ✅ |
+| 36 | R132 : art. 10a — lecture MROS habilitée seulement | FAT-MROS-01 | mros.wiring + e2e | ✅ |
+| 37 | R110/R145 : GED filtrée au rôle, preuve sans contenu | FAT-GED-COFFRE-01 | ged-consultation (GS) + e2e | ✅ |
+| 38 | Registre LBA agrégé, cloisonné RLS | FAT-REGISTRE-01 | e2e (agrégation lecture) | ✅ |
+
+**Couverture des exigences Vague 4 : 9 / 9 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **27
-tests e2e** (Postgres réel : kyc-rules 6 + FAT Vague 1 10 + FAT Vague 2 4 + FAT Vague 3 7). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **33
+tests e2e** (Postgres réel : kyc-rules 6 + FAT Vague 1 10 + Vague 2 4 + Vague 3 7 + Vague 4 6). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

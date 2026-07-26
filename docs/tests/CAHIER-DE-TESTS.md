@@ -58,13 +58,27 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 
 **Vague 3 : 7/7 FAT PASS. Non-régression : règles 425/425, e2e 27/27 (aucun modèle Prisma nouveau).**
 
+## Vague 4 — cahier par écran (Écrans « plateforme »)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Transferts & ordres | **FAT-TX-01** | **R140/R142/R143/R7/R132** | **SUSPEND tracé ; file habilitée ; décision motivée ; statut client sans motif AML** | e2e/FAT | `POST /v1/transactions/evaluer` · `/revue` · `/:id/decider` · `/:id/statut-client` | ✅ PASS |
+| Settlement | **FAT-SETTLE-01** | **R167/R168/R114** | **État sync lisible ; import sans port REFUSÉ (jamais un simulacre)** | e2e/FAT | `GET /v1/corebanking/etat` · `POST /importer` | ✅ PASS |
+| Screening avancé | **FAT-SCREEN-ADV-01** | **R100→R103** | **Adverse media = paramètre du moteur ratifié ; trace + qualification** | e2e/FAT | `POST /v1/screening/run` · `/hits/:id/qualify` | ✅ PASS |
+| Reporting MROS | **FAT-MROS-01** | **R130/R132** | **Empreinte opposable ; dossier figé (re-décision refusée) ; art. 10a** | e2e/FAT | `POST /v1/mros/decider` · `GET /v1/mros/:id` | ✅ PASS |
+| GED / coffre | **FAT-GED-COFFRE-01** | **R110/R145** | **Fiche = versions (preuve) filtrées au rôle, jamais le contenu** | e2e/FAT | `GET /v1/ged/documents` · `/documents/:id` | ✅ PASS |
+| Registre LBA | **FAT-REGISTRE-01** | **RLS** | **Piste d'audit agrégée (MROS + runs) ; autre tenant cloisonné** | e2e/FAT | `GET /v1/mros` · `/v1/screening/runs` | ✅ PASS |
+
+**Vague 4 : 6/6 FAT PASS. Non-régression : règles 425/425, e2e 33/33 (aucun modèle Prisma nouveau).**
+**Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=1` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
+
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **27 e2e** (Postgres réel : kyc-rules 6
-+ FAT Vague 1 10 + FAT Vague 2 4 + FAT Vague 3 7). Traçabilité règle-par-règle :
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **33 e2e** (Postgres réel : kyc-rules 6
++ FAT Vague 1 10 + Vague 2 4 + Vague 3 7 + Vague 4 6). Traçabilité règle-par-règle :
 `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête `kyc-rules` scopée au
 tenant — le `code` KYC n'est unique que par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 4, etc.)*
+*(À compléter — le cahier grandit par section : Vague 5, etc.)*

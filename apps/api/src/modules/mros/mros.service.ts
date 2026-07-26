@@ -86,6 +86,16 @@ export class MrosService {
       dossierSha256: c.dossierSha256, decidePar: c.decidePar, decideAt: c.decideAt };
   }
 
+  // ── Vague 4 : le REGISTRE des communications (reporting/états) — habilité, tenant-scopé ──
+  // Lecture seule des métadonnées opposables ; l'art. 10a (R132) est tenu par `habilite`.
+  async lister(ctx: Ctx) {
+    await this.habilite(this.prisma, ctx);
+    const comms = await this.prisma.mrosCommunication.findMany({ where: { tenantId: ctx.tenantId } });
+    return comms.map((c: any) => ({ id: c.id, riskCaseId: c.riskCaseId, clientId: c.clientId,
+      decision: c.decision, notification: c.notification, gelActif: c.gelActif,
+      dossierSha256: c.dossierSha256, decidePar: c.decidePar, decideAt: c.decideAt }));
+  }
+
   // ── R131 : notification, gel posé/appliqué/surveillé/levé ──
   async saisirNotification(ctx: Ctx, communicationId: string,
       notification: "TRANSMISSION_AUTORITE" | "NON_TRANSMISSION") {
