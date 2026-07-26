@@ -21,6 +21,7 @@ export class PersonnesController {
   @Post("relations")         relation(@Req() r: any, @Body() b: any) { return this.svc.declarerRelation(r.ctx, b?.aId, b?.bId, b?.typeAb, b?.typeBa); }         // R34
   @Get(":id/relations")      relations(@Req() r: any, @Param("id") id: string) { return this.svc.relationsDe(r.ctx, id); }
   @Post(":id/coc")           coc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.changementCirconstances(r.ctx, id, b?.champ, b?.valeur, b?.document); } // R30/R42
+  @Post(":id/corroboration") corrob(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.signalerDivergence(r.ctx, id, b?.champ, b?.constats ?? {}); }         // R36 (Vague 5)
 }
 
 @Module({ controllers: [PersonnesController], providers: [PrismaService, AuditService, PersonnesService], exports: [PersonnesService] })

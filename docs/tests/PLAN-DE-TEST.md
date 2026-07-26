@@ -37,6 +37,12 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 18. **GED / coffre** — preuve d'intégrité (versions), jamais le contenu (R110/R145).
 19. **Registre LBA** — piste d'audit agrégée, cloisonnée RLS.
 
+**Dans le périmètre (Vague 5 — Rattrapage maquette : CRM & Workflow)** — 4 domaines (canon ratifié) :
+20. **CRM Banque** — timeline (R186) + prochains gestes (R187).
+21. **Contact Reports** — compte rendu tracé (R188), pré-remplissage IA gouverné (R138).
+22. **Workflow Designer/Rules** — définition versionnée, publiée datée + immuable, grandfathering (R171→R173).
+23. **Corroboration KYC** — divergence → Central File, sans modification (R36).
+
 **Hors périmètre (à ce stade)** : reporting CRS/FATCA/goAML depuis données réelles ;
 rejeu-à-date **généralisé** aux agrégats métier (aujourd'hui : paramètres + dossier KYC) ;
 écrans front des domaines non encore construits (workflow — le backend existe, la surface
@@ -51,8 +57,8 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..4`) | **33 tests, 5 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..4.e2e-spec.ts` | **27 FAT (V1 10 + V2 4 + V3 7 + V4 6)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..5`) | **37 tests, 6 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..5.e2e-spec.ts` | **31 FAT (V1 10 + V2 4 + V3 7 + V4 6 + V5 4)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -95,8 +101,8 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 33 e2e verts.
-- Toute exigence métier de Vagues 1 à 4 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
+- **0 régression** : 425 règles + 37 e2e verts.
+- Toute exigence métier de Vagues 1 à 5 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies
 

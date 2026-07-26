@@ -1,0 +1,4 @@
+      FAT-CRM-01 PASS — timeline projetée (R186) + gestes proposés (R187), sans exécution
+      FAT-CR-01 PASS — compte rendu tracé (R188) ; pré-remplissage sans port IA refusé (400, R138)
+      FAT-WF-01 PASS — non-habilité refusé (R173), sans motif refusé (R7), PUBLIEE immuable (R171), résolution datée v1 (R172)
+      FAT-CORROB-01 PASS — divergence → dossier Central File ouvert (R36), aucune donnée modifiée avant décision
