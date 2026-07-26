@@ -44,6 +44,15 @@ Index maître : `docs/PROJECT-INDEX.md`.
 | 18 | **GED / coffre** | `GET /v1/ged/documents` · `/documents/:id` (preuve = versions, jamais le contenu R145) | **visible** | ✅ réel (nouveau) |
 | 19 | **Registre LBA** | `GET /v1/mros` · `/v1/transactions/revue` · `/v1/screening/runs` (agrégation, RLS) | **visible** | ✅ réel (nouveau) |
 
+## Écrans réels (frontend React `apps/web`) — Vague 5 (Rattrapage maquette : CRM & Workflow)
+
+| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
+|---|---|---|---|---|
+| 20 | **CRM Banque** | `GET /v1/crm/clients/:id/timeline` · `/gestes` (R186/R187) | **visible** | ✅ réel (nouveau) |
+| 21 | **Contact Reports** | `POST /v1/crm/clients/:id/entretiens` · `/pre-remplir` (R188/R138) | **visible** | ✅ réel (nouveau) |
+| 22 | **Workflow Designer/Rules** | **`POST/PATCH /v1/workflow/definitions`** · `/:id/publier` · `GET /resoudre` (R171→R173) | **visible** | ✅ réel (nouveau) |
+| 23 | **Corroboration KYC** | **`POST /v1/personnes/:id/corroboration`** (R36) | **visible** | ✅ réel (nouveau) |
+
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
@@ -52,11 +61,12 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6) | **33 / 33** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4) | **37 / 37** | `pnpm --filter api run test:e2e` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
 | **FAT recette Vague 4** | **6 / 6 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague4` |
+| **FAT recette Vague 5** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague5` |
 | Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
 | Régressions | **0** | — |
 
@@ -75,7 +85,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~100 routes** (+ portes Vague 4 : transactions, mros, corebanking), **32 modules** en Postgres réel (0 mock). Frontend : **20 écrans** (V1 6 + V2 2 + V3 6 + V4 6).
+- Backend : **~106 routes** (+ portes Vague 5 : workflow, corroboration), **33 modules** en Postgres réel (0 mock). Frontend : **24 écrans** (V1 6 + V2 2 + V3 6 + V4 6 + V5 4).
 - Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
   (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
   trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
@@ -104,6 +114,11 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 ## Décision de recette Vague 4 (Écrans « plateforme »)
 
 - [ ] **Recette PRONONCÉE** — 6/6 FAT (dont 4 critiques : portail tx R140→R143/R132, core=port R167/R114, MROS opposable R130/R132, GED preuve R110/R145), 0 régression, 0 modèle Prisma nouveau. Doctrine « intégrer, pas refaire » tenue ; liste noire respectée.
+- Signé (sponsor / Compliance) : ______________________  Date : __________
+
+## Décision de recette Vague 5 (Rattrapage maquette : CRM & Workflow)
+
+- [ ] **Recette PRONONCÉE** — 4/4 FAT (dont 2 critiques : Workflow gouverné R171→R173, Corroboration R36), 0 régression, 0 modèle Prisma nouveau. **Zéro invention** : canon déjà ratifié (CRM R186→R188, Workflow R171→R173, R36).
 - Signé (sponsor / Compliance) : ______________________  Date : __________
 
 ---

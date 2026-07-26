@@ -70,15 +70,26 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 | Registre LBA | **FAT-REGISTRE-01** | **RLS** | **Piste d'audit agrégée (MROS + runs) ; autre tenant cloisonné** | e2e/FAT | `GET /v1/mros` · `/v1/screening/runs` | ✅ PASS |
 
 **Vague 4 : 6/6 FAT PASS. Non-régression : règles 425/425, e2e 33/33 (aucun modèle Prisma nouveau).**
+
+## Vague 5 — cahier par écran (Rattrapage maquette : CRM & Workflow)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| CRM Banque | **FAT-CRM-01** | **R186/R187** | **Timeline projetée + prochains gestes proposés, jamais exécutés** | e2e/FAT | `GET /v1/crm/clients/:id/timeline` · `/gestes` | ✅ PASS |
+| Contact Reports | **FAT-CR-01** | **R188/R138** | **Compte rendu tracé ; pré-remplissage IA refusé sans port** | e2e/FAT | `POST /v1/crm/clients/:id/entretiens` · `/pre-remplir` | ✅ PASS |
+| Workflow Designer/Rules | **FAT-WF-01** | **R171/R172/R173/R7** | **Publiée datée + immuable ; non-habilité refusé ; sans motif refusé ; résolution datée** | e2e/FAT | `POST/PATCH /v1/workflow/definitions` · `/:id/publier` · `GET /resoudre` | ✅ PASS |
+| Corroboration KYC | **FAT-CORROB-01** | **R36** | **Divergence → Central File ouvert + tâche ; aucune donnée modifiée** | e2e/FAT | `POST /v1/personnes/:id/corroboration` | ✅ PASS |
+
+**Vague 5 : 4/4 FAT PASS. Non-régression : règles 425/425, e2e 37/37 (aucun modèle Prisma nouveau). Zéro invention — canon déjà ratifié.**
 **Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=3` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
 
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **33 e2e** (Postgres réel : kyc-rules 6
-+ FAT Vague 1 10 + Vague 2 4 + Vague 3 7 + Vague 4 6). Traçabilité règle-par-règle :
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **37 e2e** (Postgres réel : kyc-rules 6
++ FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4). Traçabilité règle-par-règle :
 `docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête `kyc-rules` scopée au
 tenant — le `code` KYC n'est unique que par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 5, etc.)*
+*(À compléter — le cahier grandit par section : Vague 6, etc.)*

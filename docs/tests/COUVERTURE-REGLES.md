@@ -1,4 +1,4 @@
-# Matrice de traçabilité — exigences → tests (Vagues 1 à 4)
+# Matrice de traçabilité — exigences → tests (Vagues 1 à 5)
 
 **2026-07-22.** Chaque exigence métier / règle est reliée à son **FAT** (acceptation métier) et à
 son **test technique** (règle unitaire dans le harnais et/ou e2e).
@@ -69,10 +69,22 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 4 : 9 / 9 (100 %).**
 
+## Exigences Vague 5 — Rattrapage maquette : CRM & Workflow (couverture FAT)
+
+| # | Exigence métier / règle | FAT | Test technique | Couvert |
+|---|---|---|---|---|
+| 39 | R186/R187 : timeline projetée + prochains gestes proposés | FAT-CRM-01 | crm.wiring (CR) + e2e | ✅ |
+| 40 | R188/R138 : compte rendu tracé ; pré-remplissage IA refusé sans port | FAT-CR-01 | crm.wiring + e2e | ✅ |
+| 41 | R171/R173/R7 : définition publiée datée, immuable, habilitée, motivée | FAT-WF-01 | workflow-def.wiring (WF) + e2e | ✅ |
+| 42 | R172 : résolution datée (grandfathering structurel) | FAT-WF-01 | workflow-def.wiring + e2e | ✅ |
+| 43 | R36 : divergence → Central File + corroboration, sans modifier de donnée | FAT-CORROB-01 | personnes.wiring + e2e | ✅ |
+
+**Couverture des exigences Vague 5 : 5 / 5 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
-Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **33
-tests e2e** (Postgres réel : kyc-rules 6 + FAT Vague 1 10 + Vague 2 4 + Vague 3 7 + Vague 4 6). La couverture règle-par-règle complète est portée par les
+Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **37
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 
