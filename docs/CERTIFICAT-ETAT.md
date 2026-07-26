@@ -84,7 +84,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
   restituée (divergence fake/modèle `no`/`empreinte` vs `numero`/`sha256`, hors périmètre) ;
   12 `no-explicit-any` préexistants (écrans Vague 1).
 - Dette d'infra corrigée (Vague 4) : `PrismaService.onModuleDestroy` ajouté (fuite de connexions
-  e2e) + `connection_limit=1` ; un `PrismaModule` @Global (client unique) reste le correctif de fond.
+  e2e) + `connection_limit=3` ; un `PrismaModule` @Global (client unique) reste le correctif de fond.
 
 ## Décision de recette Vague 1
 

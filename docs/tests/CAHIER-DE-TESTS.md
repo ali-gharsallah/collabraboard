@@ -70,7 +70,7 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 | Registre LBA | **FAT-REGISTRE-01** | **RLS** | **Piste d'audit agrégée (MROS + runs) ; autre tenant cloisonné** | e2e/FAT | `GET /v1/mros` · `/v1/screening/runs` | ✅ PASS |
 
 **Vague 4 : 6/6 FAT PASS. Non-régression : règles 425/425, e2e 33/33 (aucun modèle Prisma nouveau).**
-**Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=1` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
+**Correctif d'infra** : `PrismaService.onModuleDestroy(){ $disconnect() }` (fuite de connexions entre suites e2e) + `connection_limit=3` (DATABASE_URL test/CI). **Liste noire respectée** (aucun écran RH/e-learning/voyage/budget/réunions/cyber-SOC).
 
 ## Socle technique (rappel)
 

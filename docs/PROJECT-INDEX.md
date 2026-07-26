@@ -52,4 +52,4 @@
 - **Écrans réels** : 20 (V1 6 · V2 2 · V3 6 · V4 : Transferts & ordres, Settlement, Screening avancé, Reporting MROS, GED/coffre, Registre LBA).
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
-- **Périmètre règles** : R1 → R221 · **32 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=1`.
+- **Périmètre règles** : R1 → R221 · **32 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.

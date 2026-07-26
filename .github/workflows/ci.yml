@@ -34,10 +34,10 @@ jobs:
           --health-retries 20
 
     env:
-      # connection_limit=1 : chaque module câble sa propre PrismaService (≈18 clients au boot) ;
+      # connection_limit=3 : ~18 clients Prisma au boot (un par module) + onModuleDestroy($disconnect) ;
       # sans plafond, un seul boot dépasse les 100 connexions Postgres. Dette signalée (Vague 4) :
       # un PrismaModule @Global (client unique) est le correctif de fond — lot dédié.
-      DATABASE_URL: postgresql://olive:olive@localhost:5433/olive_test?connection_limit=1
+      DATABASE_URL: postgresql://olive:olive@localhost:5433/olive_test?connection_limit=3
       WEBHOOK_SECRET: ci-webhook-secret
 
     steps:
