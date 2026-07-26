@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
-import { ContexteAml, evaluer, paramsDepuisSettings } from "./aml-scoring.engine";
+import { ContexteAml, evaluer, paramsDepuisSettings, REFERENTIEL_AML } from "./aml-scoring.engine";
 
 /**
  * AmlService — câblage de la surveillance AML (R189→R206, A-69..A-86). Écrit depuis le
@@ -53,5 +53,13 @@ export class AmlService {
   async signaux(ctx: Ctx, clientId: string) {
     const rows = await this.prisma.amlSignal.findMany({ where: { tenantId: ctx.tenantId, clientId } });
     return rows.slice().sort((a: any, b: any) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  }
+
+  // ── Vague 8 : le RÉFÉRENTIEL — les 18 scénarios R189→R206 + les seuils EFFECTIFS du tenant ──
+  // Projection lisible du canon (aucune règle nouvelle) ; les seuils sont pilotés par le registre R-Q.
+  async referentiel(ctx: Ctx) {
+    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+    if (!t) throw new NotFoundException("Tenant introuvable");
+    return { scenarios: REFERENTIEL_AML, seuils: paramsDepuisSettings(t.settings) };
   }
 }

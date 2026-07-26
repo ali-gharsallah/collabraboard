@@ -12,4 +12,5 @@ export class AmlController {
   constructor(private svc: AmlService) {}
   @Post("evaluer")            evaluer(@Req() r: any, @Body() b: any) { return this.svc.evaluer(r.ctx, b); }            // R189→R206
   @Get("clients/:id/signaux") signaux(@Req() r: any, @Param("id") id: string) { return this.svc.signaux(r.ctx, id); } // consultation
+  @Get("referentiel")         referentiel(@Req() r: any) { return this.svc.referentiel(r.ctx); }                     // Vague 8 : 18 scénarios + seuils effectifs
 }

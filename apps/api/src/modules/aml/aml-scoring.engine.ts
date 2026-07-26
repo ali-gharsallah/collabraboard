@@ -121,6 +121,34 @@ export const AML_PARAMS_DEFAUT: AmlParams = {
   listesReglementaires: ["OFAC", "EU", "UN", "SECO"],
 };
 
+/**
+ * Référentiel des scénarios de surveillance — INDEX des 18 détecteurs R189→R206 (A-69..A-86).
+ * Métadonnées FACTUELLES (code, type, niveau, libellé, clés de seuil au registre R-Q) : c'est la
+ * projection lisible du canon, pas une règle nouvelle. `niveau` 1 = sévère, 2 = signal. Les seuils
+ * effectifs se lisent via `paramsDepuisSettings` (défaut + surcharge tenant).
+ */
+export interface ScenarioAml { regle: string; type: string; niveau: NiveauAml; libelle: string; seuils: string[] }
+export const REFERENTIEL_AML: ScenarioAml[] = [
+  { regle: "R189", type: "STRUCTURING", niveau: 2, libelle: "Structuring : fractionnement sous le seuil, même bénéficiaire", seuils: ["amlStructuringAlertCount", "amlStructuringSeuilChf", "amlStructuringFenetreH"] },
+  { regle: "R190", type: "CROSS_BORDER_CIRCULAR", niveau: 2, libelle: "Cross-border circular : même UBO, ≥N pays, fenêtre courte", seuils: ["amlCrossBorderFenetreH", "amlCrossBorderMinPays"] },
+  { regle: "R191", type: "UNUSUAL_VELOCITY", niveau: 2, libelle: "Unusual velocity : réveil d'un compte dormant", seuils: ["amlVelocityDormantMois", "amlVelocityMultiplicateur"] },
+  { regle: "R192", type: "SANCTIONS", niveau: 1, libelle: "Sanctions : liste réglementaire → refus immédiat non révocable", seuils: ["amlListesReglementaires"] },
+  { regle: "R193", type: "UBO_MISMATCH", niveau: 2, libelle: "UBO mismatch : déclaré ≠ détecté", seuils: [] },
+  { regle: "R194", type: "PLACEMENT_WITHDRAWAL", niveau: 2, libelle: "In/Out same day : entrée puis sortie ≈montant, fenêtre courte", seuils: ["amlInOutFenetreH"] },
+  { regle: "R195", type: "THIRD_PARTY_PAYER", niveau: 1, libelle: "Third-party payer : le titulaire ne paie jamais", seuils: [] },
+  { regle: "R196", type: "CIRCULAR_FLOW", niveau: 2, libelle: "Circular flow : cycle A→B→C→A entre comptes du même UBO", seuils: ["amlCircularFenetreJours"] },
+  { regle: "R197", type: "HRI_JURISDICTION", niveau: 2, libelle: "HRI jurisdiction : pays à haut risque → blocage attente CO", seuils: ["amlHriPays"] },
+  { regle: "R198", type: "ROUND_AMOUNTS", niveau: 1, libelle: "Round amounts : forte proportion de montants ronds", seuils: ["amlRoundSeuilPct"] },
+  { regle: "R199", type: "CASH_WIRE_PATTERN", niveau: 2, libelle: "Cash deposit + wire out : espèces puis virement >X% en <Yh", seuils: ["amlCashWirePct", "amlCashWireFenetreH"] },
+  { regle: "R200", type: "PEP_ADJACENT", niveau: 2, libelle: "PEP adjacent : le client paie un tiers PEP/Near-PEP", seuils: [] },
+  { regle: "R201", type: "INVOICE_UNDERPAY", niveau: 1, libelle: "Invoice underpay : sous-paiement systématique des factures", seuils: [] },
+  { regle: "R202", type: "COUNTERPARTY_VELOCITY", niveau: 2, libelle: "Counterparty velocity : montant > facteur × (moyenne + σ)", seuils: ["amlCounterpartyFacteurPct"] },
+  { regle: "R203", type: "CRS_NON_COMPLIANCE", niveau: 2, libelle: "CRS/FATCA non-compliance : périmètre CRS, gros solde, pas d'auto-certification", seuils: ["amlCrsResidences", "amlCrsSeuilChf"] },
+  { regle: "R204", type: "FIDUCIARY_ABUSE", niveau: 2, libelle: "Fiduciary abuse : retrait personnel > X% des dépôts clients", seuils: ["amlFiduciaireSeuilPct"] },
+  { regle: "R205", type: "TAX_MINIMIZATION", niveau: 1, libelle: "Tax minimization : circuit CH → tax haven", seuils: ["amlTaxHavens"] },
+  { regle: "R206", type: "CONCENTRATION_RISK", niveau: 1, libelle: "Concentration risk : >X% du patrimoine sur 1-2 comptes courants", seuils: ["amlConcentrationSeuilPct"] },
+];
+
 // ── utilitaires purs ────────────────────────────────────────────────────────
 const ms = (iso: string) => Date.parse(iso);
 const heures = (a: string, b: string) => Math.abs(ms(a) - ms(b)) / 3_600_000;
