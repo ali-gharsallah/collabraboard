@@ -23,10 +23,12 @@ import { CrmBanque } from "../features/crm/CrmBanque";
 import { ContactReports } from "../features/crm/ContactReports";
 import { WorkflowDesigner } from "../features/workflow/WorkflowDesigner";
 import { CorroborationKyc } from "../features/corroboration/CorroborationKyc";
+import { ParametrageRegistre } from "../features/parametrage/ParametrageRegistre";
+import { ConfigGolive } from "../features/parametrage/ConfigGolive";
 import { FinanceIslamique } from "../features/islamic/FinanceIslamique";
 
 export function Router() {
-  const [screen, setScreen] = useState<"clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "islamic">("clients");
+  const [screen, setScreen] = useState<"clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "islamic">("clients");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const tab = (id: typeof screen, label: string) =>
     <button onClick={() => setScreen(id)} style={{ padding: "8px 16px", border: "none",
@@ -35,7 +37,7 @@ export function Router() {
       {label}</button>;
   return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
     <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-      {tab("dashboard", "Dashboard")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("corroboration", "Corroboration")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}
+      {tab("dashboard", "Dashboard")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("corroboration", "Corroboration")}{tab("parametrage", "Paramétrage")}{tab("golive", "Config & Go-live")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}
     </div>
     {screen === "dashboard" && <Dashboard/>}
     {screen === "clients" && <ClientsList/>}
@@ -62,6 +64,8 @@ export function Router() {
     {screen === "contactreports" && <ContactReports/>}
     {screen === "workflow" && <WorkflowDesigner/>}
     {screen === "corroboration" && <CorroborationKyc/>}
+    {screen === "parametrage" && <ParametrageRegistre/>}
+    {screen === "golive" && <ConfigGolive/>}
     {screen === "rejeu" && <RejeuKyc/>}
     {screen === "islamic" && <FinanceIslamique/>}
   </div>;

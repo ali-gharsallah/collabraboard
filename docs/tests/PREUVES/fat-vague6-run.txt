@@ -1,0 +1,2 @@
+      FAT-PARAM-01 PASS — écriture typée/motivée → 90 ; sans motif (R7), mauvais type (R125), rétroactif (R126) refusés ; valeur d'alors=85 (R127)
+      FAT-GOLIVE-01 PASS — config reconstruite (screeningSeuil=90) ; sans signature (R128), clé requise manquante nommée (gedDocTypes), puis go-live ACTIF

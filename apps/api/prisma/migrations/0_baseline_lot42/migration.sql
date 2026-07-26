@@ -16,6 +16,9 @@ CREATE TABLE "tenants" (
     "name" TEXT NOT NULL,
     "settings" JSONB NOT NULL DEFAULT '{}',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "statut" TEXT DEFAULT 'BROUILLON',
+    "rq_signe_par" TEXT,
+    "rq_signe_at" TIMESTAMP(3),
 
     CONSTRAINT "tenants_pkey" PRIMARY KEY ("id")
 );
