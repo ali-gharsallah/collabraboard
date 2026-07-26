@@ -50,6 +50,11 @@ export class OnboardingService {
     });
   }
 
+  // ── Vague 3 : lecture du stock du pipeline (tenant-scopée) pour le dashboard exécutif ──
+  async liste(ctx: Ctx) {
+    return this.prisma.onboarding.findMany({ where: { tenantId: ctx.tenantId } });
+  }
+
   // ── R117/R118/R119 : LA transition — garde des états, délégations, blocages ──
   async transitionner(ctx: Ctx, onboardingId: string, vers: string,
                       opts: { motif?: string; form?: any } = {}) {

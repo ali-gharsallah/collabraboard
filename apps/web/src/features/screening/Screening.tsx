@@ -1,0 +1,78 @@
+import React, { useState } from "react";
+import { apiGetSourced, isDemoMode } from "../../lib/api";
+import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+
+// Écran « Screening » (Vague 3). Lance un screening (POST /v1/screening/run — trace TOUJOURS
+// écrite, R103), liste les hits, qualifie un hit (POST /v1/screening/hits/:id/qualify — motif
+// obligatoire R7, auteur = jeton R101). VRAI_POSITIF PROPOSE l'escalade (gel/clarif/MROS),
+// jamais exécutée (R39/R44). Aucune règle côté écran : le service porte les invariants.
+
+type Hit = { id: string; clientId: string; entreeUid: string; score: number; statut: string };
+const apiBase = (): string | undefined => (window as unknown as { OLIVE_API_URL?: string }).OLIVE_API_URL;
+const auth = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("olive_jwt")}` });
+
+export function Screening() {
+  const [clientId, setClientId] = useState("");
+  const [nom, setNom] = useState("");
+  const [hits, setHits] = useState<Hit[]>([]);
+  const [msg, setMsg] = useState("");
+  const [motifs, setMotifs] = useState<Record<string, string>>({});
+
+  async function lancer() {
+    setMsg("");
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/screening/run`, { method: "POST", headers: auth(), body: JSON.stringify({
+      liste: "SECO", version: "manuel", seuil: 100, prefiltre: {},
+      entries: nom ? [{ uid: "M1", nom_complet: nom, alias: [] }] : [], clientIds: clientId ? [clientId] : undefined }) });
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) { setMsg(b.message ?? "Erreur"); return; }
+    setMsg(`Run tracé (R103) — périmètre ${b.run?.perimetre ?? "?"}, ${b.hits?.length ?? 0} hit(s).`);
+    charger();
+  }
+  async function charger() {
+    const h = await apiGetSourced<Hit[]>("/v1/screening/hits", []);
+    setHits(h.data);
+  }
+  async function qualifier(id: string, verdict: string) {
+    setMsg("");
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/screening/hits/${id}/qualify`, { method: "POST", headers: auth(),
+      body: JSON.stringify({ verdict, motif: motifs[id] ?? "" }) });
+    const b = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Hit qualifié ${verdict}${verdict === "VRAI_POSITIF" ? " — escalade PROPOSÉE (jamais exécutée)" : ""}.` : (b.message ?? "Erreur (motif requis ? R7)"));
+    if (r.ok) charger();
+  }
+
+  const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
+  const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
+  return <div>
+    {isDemoMode() && <DemoModeBanner/>}
+    <h3>Screening (sanctions/PEP) — lancer & qualifier un hit (R100→R103)</h3>
+    <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap" }}>
+      <input style={inp} placeholder="clientId (périmètre)" value={clientId} onChange={(e) => setClientId(e.target.value)}/>
+      <input style={inp} placeholder="Nom d'entrée de liste" value={nom} onChange={(e) => setNom(e.target.value)}/>
+      <button style={btn} onClick={lancer}>Lancer le screening</button>
+      <button style={{ ...btn, background: "#777" }} onClick={charger}>Rafraîchir les hits</button>
+    </div>
+    {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <thead><tr style={{ textAlign: "left", borderBottom: "2px solid #4A6B28" }}>
+        <th style={{ padding: 6 }}>Client</th><th>Entrée</th><th>Score</th><th>Statut</th><th>Motif</th><th/></tr></thead>
+      <tbody>
+        {hits.map((h) => <tr key={h.id} style={{ borderBottom: "1px solid #eee" }}>
+          <td style={{ padding: 6 }}>{h.clientId.slice(0, 8)}</td><td>{h.entreeUid}</td>
+          <td align="center">{h.score}</td><td>{h.statut}</td>
+          <td><input style={{ ...inp, width: 160 }} placeholder="motif (R7)" value={motifs[h.id] ?? ""}
+            onChange={(e) => setMotifs({ ...motifs, [h.id]: e.target.value })} disabled={h.statut === "QUALIFIE"}/></td>
+          <td>{h.statut !== "QUALIFIE" && <>
+            <button style={{ ...btn, background: "#c33" }} onClick={() => qualifier(h.id, "VRAI_POSITIF")}>Vrai positif</button>{" "}
+            <button style={{ ...btn, background: "#3a7" }} onClick={() => qualifier(h.id, "FAUX_POSITIF")}>Faux positif</button>
+          </>}</td>
+        </tr>)}
+        {hits.length === 0 && <tr><td colSpan={6} style={{ padding: 6, color: "#666" }}>Aucun hit chargé.</td></tr>}
+      </tbody>
+    </table>
+  </div>;
+}

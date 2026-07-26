@@ -44,13 +44,27 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 
 **Vague 2 : 4/4 FAT PASS. Non-régression : règles 425/425, e2e 20/20 (aucun modèle Prisma nouveau).**
 
+## Vague 3 — cahier par écran (Le cycle client de bout en bout)
+
+| Écran | ID test | Exigence | Ce qui est vérifié (humain) | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Onboarding | **FAT-ONBOARD-01** | **R117/R118/R119** | **Aiguillage EDD/SDD (trace auditable) ; ouverture bloquée sans KYC VALIDATED** | e2e/FAT | `POST /v1/kyc` · `POST /v1/onboarding` · `/:id/transition` | ✅ PASS |
+| Screening | **FAT-SCREEN-01** | **R100/R101/R7/R103 · R39/R44** | **Run tracé ; qualif sans motif refusée ; VP → escalade proposée ; auteur = jeton** | e2e/FAT | `POST /v1/screening/run` · `/hits/:id/qualify` · `GET /runs` | ✅ PASS |
+| Account Review | **FAT-REVIEW-01** | **R103 + four-eyes** | **Re-screening tracé + décision par visa KYC gouverné ; aucun agrégat « revue » inventé** | e2e/FAT | `POST /v1/screening/run` · `POST /v1/kyc/:code/validate` | ✅ PASS |
+| Personnes / UBO | **FAT-UBO-01** | **R31 · R34** | **UBO rattaché ; relation bijective relue des deux côtés ; isolation tenant** | e2e/FAT | `POST /v1/personnes` · `/:id/roles` · `/relations` · `GET /:id/relations` | ✅ PASS |
+| Change of Circumstances | **FAT-COC-01** | **R30 · R42** | **CoC identité → re-screening déclenché + propagation ; aucune bascule par effet de bord** | e2e/FAT | `POST /v1/personnes/:id/coc` | ✅ PASS |
+| Dashboard | **FAT-DASH-01** | **RLS** | **Stock par état (onboardings/dossiers/hits) ; autre tenant cloisonné** | e2e/FAT | `GET /v1/onboarding` · `/v1/riskcases` · `/v1/screening/hits` | ✅ PASS |
+| (bout-en-bout) | **FAT-CYCLE-01** | **cycle complet** | **Entrée → KYC → screening → revue → changement, sans trou, Postgres réel** | e2e/FAT | (chaînage des routes ci-dessus) | ✅ PASS |
+
+**Vague 3 : 7/7 FAT PASS. Non-régression : règles 425/425, e2e 27/27 (aucun modèle Prisma nouveau).**
+
 ## Socle technique (rappel)
 
-Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **20 e2e** (Postgres réel : kyc-rules 6
-+ FAT Vague 1 10 + FAT Vague 2 4). Traçabilité règle-par-règle : `docs/tests/COUVERTURE-REGLES.md`.
-Errata de test : **E4** (sous-requête `kyc-rules` scopée au tenant — le `code` KYC n'est unique que
-par tenant).
+Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **27 e2e** (Postgres réel : kyc-rules 6
++ FAT Vague 1 10 + FAT Vague 2 4 + FAT Vague 3 7). Traçabilité règle-par-règle :
+`docs/tests/COUVERTURE-REGLES.md`. Errata de test : **E4** (sous-requête `kyc-rules` scopée au
+tenant — le `code` KYC n'est unique que par tenant).
 
 ## Vagues suivantes
 
-*(À compléter — le cahier grandit par section : Vague 3, etc.)*
+*(À compléter — le cahier grandit par section : Vague 4, etc.)*
