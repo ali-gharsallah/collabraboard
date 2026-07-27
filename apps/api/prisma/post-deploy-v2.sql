@@ -31,6 +31,7 @@ DO $$ DECLARE t text; BEGIN
     'cpsi_events',                                        -- CPSI porte (R63→R83 : journal append-only, source d'état)
     'olivia_messages',                                    -- Olivia R257 : le journal de conversation est append-only
     'olivia_agents',                                      -- Olivia v2 R259 : modifier = nouvelle version, JAMAIS une mutation
+    'olivia_run_events',                                  -- Olivia v2 R260/R265 : LE journal du run — append-only
     'coc_config_versions'                                 -- R276/R68 : la config CoC est un registre versionné, append-only
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
@@ -137,7 +138,8 @@ DO $$ DECLARE t text; BEGIN
     'offboarding_files', 'offboarding_sensibles',         -- Offboarding (R267→R271)
     'review_deadlines',                                   -- Échéances de review (R272→R275)
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
-    'olivia_tools', 'olivia_agents'                       -- Olivia v2 R264/R259 (registres)
+    'olivia_tools', 'olivia_agents',                      -- Olivia v2 R264/R259 (registres)
+    'olivia_runs', 'olivia_run_events'                    -- Olivia v2 R260 (runs + journal)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -195,6 +197,12 @@ DO $$ BEGIN
      AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'agent_statut_contrat') THEN
     ALTER TABLE olivia_agents ADD CONSTRAINT agent_statut_contrat
       CHECK (statut IN ('ACTIF','RETIRE'));
+  END IF;
+  -- R260 (Olivia v2) : la machine à états du run — au niveau SQL aussi (B.2).
+  IF to_regclass('olivia_runs') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'run_statut_machine') THEN
+    ALTER TABLE olivia_runs ADD CONSTRAINT run_statut_machine
+      CHECK (statut IN ('PLANIFIE','EN_COURS','PAUSE_PORTE','TERMINE','ECHOUE','INTERROMPU','EPUISE'));
   END IF;
 END $$;
 

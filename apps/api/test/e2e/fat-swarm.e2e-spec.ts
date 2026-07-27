@@ -11,11 +11,16 @@
  */
 import * as request from "supertest";
 import { randomUUID } from "crypto";
+import * as path from "path";
 import { INestApplication } from "@nestjs/common";
 import { PrismaService } from "../../src/common/prisma.service";
 import { boot, bearer, seedTenantClient } from "./util";
 // La MÊME source que la CI et le runtime : une seule vérité, pas trois listes.
 import * as listeBlanche from "../../src/modules/swarm/outils-liste-blanche.json";
+
+// Fournisseur mocké déterministe (B.7 crit. 1) : plans/sorties en FIXTURES — outillage de test.
+process.env.OLIVIA_FAKE_PORT = "1";
+process.env.SWARM_PLAN_FIXTURES = path.resolve(__dirname, "fixtures", "swarm-plans.fixture.json");
 
 describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
   let app: INestApplication; let prisma: PrismaService; let http: any;
@@ -134,5 +139,91 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     await expect(prisma.$executeRawUnsafe(
       `UPDATE olivia_agents SET gabarit_ref = 'pirate' WHERE tenant_id = '${T}'`)).rejects.toThrow();
     console.log("SW-01/02 PASS (partie refus) — RUN_AGENT_INCONNU/RETIRE typés, versionnage R68 à date, append-only SQL");
+  });
+
+  // ── Étape 3 : R260 — le run est un JOURNAL, chaque pas est un événement avant d'être un effet ──
+
+  const fakeCalls = () => ((global as any).__swarmFakeCalls ?? 0);
+  const eventsDe = (runId: string) =>
+    prisma.oliviaRunEvent.findMany({ where: { runId }, orderBy: { seq: "asc" } });
+  const chaineContigue = (evts: any[]) => {
+    let prev: string | null = null;
+    for (const [i, e] of evts.entries()) {
+      expect(e.seq).toBe(i + 1);                                          // seq 1..n sans trou
+      expect(e.prevHash).toBe(prev);                                      // chaîne sans rupture
+      prev = e.recordHash;
+    }
+  };
+
+  it("R260 : préparation — agents redéclarés (le retrait n'est pas une fin : nouvelle version), missions déclarées + activées", async () => {
+    // agent-kyc a été RETIRE en SW-02 : le redéclarer crée la version suivante, ACTIF
+    const v = await request(http).post("/v1/olivia/agents").set(bearer(T, ADMIN, "ADMIN")).send({
+      code: "agent-kyc", capacite: "completude_dossier", outilsAutorises: ["kyc.dossier"], gabaritRef: "agent-kyc.v3" });
+    expect(v.status).toBe(201);
+    expect(v.body.statut).toBe("ACTIF");
+    await request(http).post("/v1/olivia/agents").set(bearer(T, ADMIN, "ADMIN")).send({
+      code: "agent-redacteur", capacite: "syntheses", outilsAutorises: [], gabaritRef: "agent-redacteur.v1" }).expect(201);
+    // Déclaration ratifiée des missions de TEST (jamais une mission ad hoc) + activation explicite
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...((t!.settings as any) ?? {}),
+      missionsActives: ["MISSION_SIMPLE", "MISSION_AGENT_FANTOME", "MISSION_CRASH"],
+      missionsDeclarees: {
+        MISSION_SIMPLE: { agents: ["agent-kyc", "agent-redacteur"], portes: [], roles: ["CO", "CO_SR"] },
+        MISSION_AGENT_FANTOME: { agents: ["agent-fantome"], portes: [], roles: ["CO"] },
+        MISSION_CRASH: { agents: ["agent-kyc"], portes: [], roles: ["CO"] } } } } });
+    console.log("R260 PRÉPARATION OK");
+  });
+
+  it("SW-01 [R259/R260] pas déclaré, pas invoqué : run ECHOUE immédiat RUN_AGENT_INCONNU, événement journalisé, ZÉRO appel fournisseur", async () => {
+    const avant = fakeCalls();
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_AGENT_FANTOME" });
+    expect(r.status).toBe(422);
+    expect(JSON.stringify(r.body)).toContain("RUN_AGENT_INCONNU");
+    expect(fakeCalls()).toBe(avant);                                      // ZÉRO appel fournisseur
+    const run = (await prisma.oliviaRun.findMany({ where: { tenantId: T, missionCode: "MISSION_AGENT_FANTOME" } }))[0];
+    expect(run.statut).toBe("ECHOUE");                                    // ECHOUE immédiat, persistant
+    const evts = await eventsDe(run.id);
+    expect(evts.map((e: any) => e.type)).toEqual(["TRANSITION"]);         // l'échec EST un événement
+    expect(JSON.stringify(evts[0].sortie)).toContain("RUN_AGENT_INCONNU");
+    chaineContigue(evts);
+    console.log("SW-01 PASS — ECHOUE immédiat typé, journalisé, zéro appel fournisseur");
+  });
+
+  it("SW-03 [R260] le pas précède l'effet (write-ahead) : tué entre deux étapes → journal net, INTERROMPU à la reprise, chaînage intact", async () => {
+    // 1. La machine TERMINE proprement sur une mission saine — le journal est complet et chaîné
+    const ok = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_SIMPLE" });
+    expect(ok.status).toBe(201);
+    expect(ok.body.statut).toBe("TERMINE");
+    const evtsOk = await eventsDe(ok.body.id);
+    expect(evtsOk.map((e: any) => e.type)).toEqual(
+      ["PLAN", "TRANSITION", "ETAPE_AGENT", "ETAPE_AGENT", "ETAPE_AGENT", "LIVRABLE", "TRANSITION"]);
+    chaineContigue(evtsOk);
+    expect((ok.body.consomme ?? {}).etapes).toBe(3);
+    expect(evtsOk[2].agentCode).toBe("agent-kyc");
+    expect(evtsOk[2].agentVersion).toBeGreaterThan(0);                    // la VERSION d'agent est journalisée (R259/SW-02)
+
+    // 2. Kill -9 simulé ENTRE deux étapes (marqueur fixture) : le processus meurt, rien n'est rattrapé
+    const crash = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_CRASH" });
+    expect(crash.status).toBe(500);                                       // mort en plein vol
+    const run = (await prisma.oliviaRun.findMany({ where: { tenantId: T, missionCode: "MISSION_CRASH" } }))[0];
+    expect(run.statut).toBe("EN_COURS");                                  // l'état n'a PAS menti : personne ne l'a « fermé »
+    const evts = await eventsDe(run.id);
+    expect(evts.map((e: any) => e.type)).toEqual(["PLAN", "TRANSITION", "ETAPE_AGENT", "ETAPE_AGENT"]);
+    chaineContigue(evts);                                                 // s'arrête NET après la dernière étape complète
+
+    // 3. À la REPRISE : INTERROMPU (événement d'abord, effet ensuite) — jamais de reprise implicite
+    const rep = await request(http).post("/v1/olivia/runs/reprise").set(bearer(T, ADMIN, "ADMIN"));
+    expect(rep.status).toBe(201);
+    expect(rep.body.interrompus).toContain(run.id);
+    expect((await prisma.oliviaRun.findFirst({ where: { id: run.id } }))!.statut).toBe("INTERROMPU");
+    const evts2 = await eventsDe(run.id);
+    expect(evts2.length).toBe(5);
+    expect(evts2[4].type).toBe("TRANSITION");
+    chaineContigue(evts2);                                                // le chaînage reste intact après reprise
+
+    // 4. Le journal est APPEND-ONLY au niveau SQL — l'histoire ne se réécrit pas
+    await expect(prisma.$executeRawUnsafe(
+      `UPDATE olivia_run_events SET sortie = '{}' WHERE run_id = '${run.id}'`)).rejects.toThrow();
+    console.log("SW-03 PASS — write-ahead prouvé : journal net après kill, INTERROMPU à la reprise, chaîne intacte, append-only SQL");
   });
 });

@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "livreLe": "2026-07-27",
+  "commentaire": "B.4 — les 2 missions v2 LIVRÉES, pas plus. Toute nouvelle mission = DÉCLARATION (code, agents, portes, matrice de rôles) ratifiée — jamais une mission ad hoc : les missions supplémentaires (dont celles des tests SW) se déclarent dans tenant.settings.missionsDeclarees, et ne tournent qu'activées dans missions_actives (B.5, vide par défaut — v2 éteinte). PREREVUE_DOSSIER est HÉRITIÈRE du bloc pré-revue IA existant (R121–R124, AG-01..06, PreRevueModule) — réutilisation, pas concurrence (décision Ali 2026-07-27).",
+  "PREREVUE_DOSSIER": {
+    "ancrage": "KYC_FILE",
+    "agents": ["agent-kyc", "agent-screening", "agent-redacteur"],
+    "portes": [{ "avant": "proposition_aiguillage", "regle": "R263 — porte humaine avant toute proposition d'aiguillage (point R44)" }],
+    "roles": ["RM", "ARM", "CO", "CO_SR"],
+    "livrable": "rapport de pré-revue sourcé + propositions de clarification"
+  },
+  "ANALYSE_CORRELATION": {
+    "ancrage": "RISK_CASE",
+    "agents": ["agent-aml", "agent-redacteur"],
+    "portes": [{ "avant": "proposition_escalade", "regle": "R263 — porte humaine avant proposition d'escalade (point R44)" }],
+    "roles": ["CO", "CO_SR"],
+    "livrable": "analyse des scénarios corrélés + proposition de qualification"
+  }
+}

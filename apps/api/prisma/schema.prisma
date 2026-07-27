@@ -1221,3 +1221,42 @@ model OliviaAgent {
   @@unique([tenantId, code, version])
   @@map("olivia_agents")
 }
+
+model OliviaRun {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  missionCode       String   @map("mission_code")
+  commanditaireId   String   @map("commanditaire_id") @db.Uuid  // scope hérité, figé (R261) — jeton, jamais le corps
+  roleCode          String   @map("role_code")
+  ancrageType       String?  @map("ancrage_type")
+  ancrageId         String?  @map("ancrage_id") @db.Uuid
+  statut            String   @default("PLANIFIE")               // machine R260 (CHECK SQL)
+  budget            Json                                        // {maxEtapes,maxDureeS,maxCoutTokens} figé à la création
+  consomme          Json     @default("{\"etapes\":0,\"duree_s\":0,\"tokens\":0}")
+  livrableMessageId String?  @map("livrable_message_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
+  events            OliviaRunEvent[]
+  @@index([tenantId, statut])
+  @@map("olivia_runs")
+}
+
+model OliviaRunEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  runId           String    @map("run_id") @db.Uuid
+  run             OliviaRun @relation(fields: [runId], references: [id])
+  seq             Int
+  type            String                                        // PLAN|ETAPE_AGENT|ETAPE_OUTIL|PORTE_OUVERTE|PORTE_DECISION|SCOPE_DENIED|BUDGET_TICK|TRANSITION|LIVRABLE
+  agentCode       String?   @map("agent_code")
+  agentVersion    Int?      @map("agent_version")
+  outilCode       String?   @map("outil_code")
+  entreeEmpreinte String?   @map("entree_empreinte") @db.Char(64)
+  contexteObjets  Json?     @map("contexte_objets")
+  sortie          Json?
+  cout            Json?                                         // {tokens, dureeMs}
+  at              DateTime  @default(now())
+  recordHash      String    @map("record_hash") @db.Char(64)    // chaînage R260/R265
+  prevHash        String?   @map("prev_hash") @db.Char(64)
+  @@unique([runId, seq])
+  @@map("olivia_run_events")
+}

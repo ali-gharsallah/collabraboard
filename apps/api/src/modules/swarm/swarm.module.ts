@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, ForbiddenException, BadRequestException, ConflictException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, ForbiddenException, BadRequestException, ConflictException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
+import { createHash } from "crypto";
+import { readFileSync } from "fs";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
@@ -156,9 +158,171 @@ export class SwarmAgentsService {
   }
 }
 
+/**
+ * Étape 3 : R260 — LE RUN EST UN JOURNAL : chaque pas est un événement AVANT d'être un effet.
+ * Machine : PLANIFIE → EN_COURS → {TERMINE|ECHOUE|INTERROMPU|EPUISE} (↑ PAUSE_PORTE ↔ EN_COURS,
+ * R263 à venir). Write-ahead PROUVÉ (SW-03) : l'événement de chaque étape complète est écrit
+ * avant que la suivante ne démarre ; une transition = événement PUIS mise à jour du statut.
+ * Un processus tué en plein vol laisse un journal NET (seq contigus, chaîne record_hash sans
+ * rupture) et un run EN_COURS que la REPRISE passe à INTERROMPU — jamais de reprise implicite.
+ *
+ * Fournisseur = PORT optionnel (pattern R251/R253) : OLIVIA_FAKE_PORT=1 sert des plans
+ * DÉTERMINISTES depuis les fixtures (SWARM_PLAN_FIXTURES) — outillage de TEST, jamais un chemin
+ * de prod ; sans port : 503 typé. Les missions sont DÉCLARÉES (artefact missions.default.json
+ * = les 2 missions B.4, + tenant.settings.missionsDeclarees pour toute mission ratifiée
+ * supplémentaire) et ne tournent qu'ACTIVÉES (missions_actives, vide par défaut — B.5/SW-18).
+ */
+import * as missionsLivrees from "./missions.default.json";
+
+const shaSw = (s: string) => createHash("sha256").update(s).digest("hex");
+
+// Le port swarm : planifier(mission) → { etapes: [{agent, sortie, cout?, marqueur?}] }.
+function portSwarm(): { planifier: (missionCode: string) => any } | null {
+  if (process.env.OLIVIA_FAKE_PORT === "1") {
+    return { planifier: (missionCode: string) => {
+      (global as any).__swarmFakeCalls = ((global as any).__swarmFakeCalls ?? 0) + 1;
+      const chemin = process.env.SWARM_PLAN_FIXTURES;
+      const plans = chemin ? JSON.parse(readFileSync(chemin, "utf8")) : {};
+      const plan = plans[missionCode];
+      if (!plan) throw new ServiceUnavailableException(`SWARM_GATE_UNAVAILABLE: aucune fixture de plan pour ${missionCode}`);
+      return plan;
+    } };
+  }
+  return null;                                                            // port réel à brancher — refus 503 typé sans lui
+}
+
+@Injectable()
+export class SwarmRunsService {
+  constructor(private prisma: PrismaService, private audit: AuditService, private agents: SwarmAgentsService) {}
+
+  private async settings(tenantId: string) {
+    const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
+    return ((t?.settings as any) ?? {});
+  }
+  // B.4 : les missions livrées + les missions DÉCLARÉES du tenant — jamais une mission ad hoc.
+  private missionDef(settings: any, code: string): any | null {
+    const livrees = missionsLivrees as Record<string, any>;
+    return livrees[code] ?? (settings.missionsDeclarees ?? {})[code] ?? null;
+  }
+
+  // ── R260 : append d'un événement au journal — seq contigu, chaîne record_hash ──
+  private async appendEvent(tx: Tx, run: { id: string; tenantId: string }, type: string, champs: {
+    agentCode?: string; agentVersion?: number; outilCode?: string; entreeEmpreinte?: string;
+    contexteObjets?: any; sortie?: any; cout?: any } = {}) {
+    const dernier = await tx.oliviaRunEvent.findFirst({ where: { runId: run.id }, orderBy: { seq: "desc" } });
+    const seq = (dernier?.seq ?? 0) + 1;
+    const prevHash = dernier?.recordHash ?? null;
+    const recordHash = shaSw((prevHash ?? "") + JSON.stringify({ seq, type, ...champs }));
+    return tx.oliviaRunEvent.create({ data: { tenantId: run.tenantId, runId: run.id, seq, type,
+      agentCode: champs.agentCode ?? null, agentVersion: champs.agentVersion ?? null,
+      outilCode: champs.outilCode ?? null, entreeEmpreinte: champs.entreeEmpreinte ?? null,
+      contexteObjets: champs.contexteObjets ?? undefined, sortie: champs.sortie ?? undefined,
+      cout: champs.cout ?? undefined, recordHash, prevHash } });
+  }
+  // R260 : une transition est un ÉVÉNEMENT avant d'être un effet — jamais l'inverse.
+  private async transition(tx: Tx, run: { id: string; tenantId: string }, de: string, vers: string, sortie: any = {}) {
+    await this.appendEvent(tx, run, "TRANSITION", { sortie: { de, vers, ...sortie } });
+    await tx.oliviaRun.update({ where: { id: run.id }, data: { statut: vers } });
+  }
+
+  // ── POST /runs — création + exécution (synchrone v1 du transport, comme Olivia v1) ──
+  async creer(ctx: Ctx, dto: { missionCode?: string; ancrageType?: string; ancrageId?: string; budgetSurcharge?: any }) {
+    if (!dto?.missionCode) throw new BadRequestException("missionCode requis");
+    const settings = await this.settings(ctx.tenantId);
+    const def = this.missionDef(settings, dto.missionCode);
+    if (!def) throw new UnprocessableEntityException(`RUN_MISSION_INCONNUE: « ${dto.missionCode} » n'est déclarée nulle part (B.4 — jamais une mission ad hoc)`);
+    const actives: string[] = settings.missionsActives ?? [];             // B.5 : {} par défaut — v2 ÉTEINTE
+    if (!actives.includes(dto.missionCode))
+      throw new ForbiddenException(`RUN_MISSION_INACTIVE: « ${dto.missionCode} » n'est pas dans missions_actives (SW-18 — activation explicite, pattern R177/HO-02)`);
+    if (def.roles && !def.roles.includes(ctx.role))
+      throw new ForbiddenException(`R261 : le rôle ${ctx.role} n'est pas dans la matrice de la mission (B.4)`);
+    if (def.ancrage && (!dto.ancrageId || dto.ancrageType !== def.ancrage))
+      throw new BadRequestException(`B.4 : la mission exige un ancrage ${def.ancrage}`);
+    const port = portSwarm();
+    if (!port) throw new ServiceUnavailableException("SWARM_GATE_UNAVAILABLE: port fournisseur non configuré (R251/R253 — refus gracieux typé)");
+
+    // Budget B.5 figé à la création (tenant-paramétré ; surcharge = étape 4/R262)
+    const budget = { maxEtapes: settings.runMaxEtapes ?? 20, maxDureeS: settings.runMaxDureeS ?? 300,
+      maxCoutTokens: settings.runMaxCoutTokens ?? 200000 };
+    const run = await this.prisma.oliviaRun.create({ data: { tenantId: ctx.tenantId,
+      missionCode: dto.missionCode, commanditaireId: ctx.userId, roleCode: ctx.role,   // jeton, jamais le corps
+      ancrageType: dto.ancrageType ?? null, ancrageId: dto.ancrageId ?? null, budget } });
+
+    // SW-01/SW-02 : AUCUN agent implicite — chaque agent de la mission se résout AVANT tout
+    // appel fournisseur ; l'échec est immédiat, journalisé, persistant.
+    const versions = new Map<string, number>();
+    for (const code of def.agents ?? []) {
+      try { versions.set(code, (await this.agents.resoudre(ctx, code)).version); }
+      catch (e: any) {
+        await this.prisma.$transaction(async (tx: Tx) => {
+          await this.transition(tx, run, "PLANIFIE", "ECHOUE", { erreur: e?.message ?? String(e) });
+        });
+        throw e;                                                          // le refus typé (422) sort tel quel
+      }
+    }
+
+    // Le plan vient du port ; PLAN est un événement AVANT toute exécution (write-ahead du run)
+    const plan = port.planifier(dto.missionCode);
+    await this.prisma.$transaction(async (tx: Tx) => {
+      await this.appendEvent(tx, run, "PLAN", { sortie: { mission: dto.missionCode,
+        agents: def.agents ?? [], nbEtapes: (plan.etapes ?? []).length } });
+      await this.transition(tx, run, "PLANIFIE", "EN_COURS");
+    });
+
+    await this.executer(ctx, run, plan, versions);
+    const fini = await this.prisma.oliviaRun.findFirst({ where: { id: run.id } });
+    return this.vue(fini);
+  }
+
+  // ── R260 : l'exécuteur — une étape complète = un événement, AVANT que la suivante ne démarre ──
+  private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>) {
+    let etapes = 0;
+    let derniereSortie: any = null;
+    for (const etape of plan.etapes ?? []) {
+      // Simulation kill -9 (fixture SW-03) : le processus « meurt » — AUCUN rattrapage, AUCUNE
+      // écriture : le journal s'arrête net après la dernière étape complète, le statut ne ment pas.
+      if (etape.marqueur === "CRASH_TEST") throw new Error("SWARM_CRASH_TEST: processus tué entre deux étapes (simulation SW-03)");
+      derniereSortie = etape.sortie ?? {};
+      etapes++;
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.appendEvent(tx, run, "ETAPE_AGENT", { agentCode: etape.agent,
+          agentVersion: versions.get(etape.agent) ?? null as any, sortie: derniereSortie, cout: etape.cout ?? null });
+        await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { etapes,
+          duree_s: 0, tokens: 0 } } });                                   // décompte complet = étape 4 (R262)
+      });
+    }
+    await this.prisma.$transaction(async (tx: Tx) => {
+      await this.appendEvent(tx, run, "LIVRABLE", { sortie: derniereSortie ?? {} });
+      await this.transition(tx, run, "EN_COURS", "TERMINE");
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_TERMINE", run.id);
+  }
+
+  // ── SW-03 : la REPRISE — un run EN_COURS orphelin passe INTERROMPU, jamais repris en douce ──
+  async reprise(ctx: Ctx) {
+    if (ctx.role !== "ADMIN") throw new ForbiddenException("R260 : la reprise est une route ops (ADMIN)");
+    const orphelins = await this.prisma.oliviaRun.findMany({ where: { tenantId: ctx.tenantId, statut: "EN_COURS" } });
+    const interrompus: string[] = [];
+    for (const run of orphelins) {
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.transition(tx, run, "EN_COURS", "INTERROMPU", { motif: "processus interrompu — constaté à la reprise (R260 : jamais de reprise implicite)" });
+      });
+      interrompus.push(run.id);
+      await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_INTERROMPU", run.id);
+    }
+    return { interrompus };
+  }
+
+  private vue(r: any) {
+    return { id: r.id, missionCode: r.missionCode, statut: r.statut, roleCode: r.roleCode,
+      ancrageType: r.ancrageType, ancrageId: r.ancrageId, budget: r.budget, consomme: r.consomme,
+      livrableMessageId: r.livrableMessageId, createdAt: r.createdAt };
+  }
+}
+
 @Controller("olivia")
 export class SwarmController {
-  constructor(private outils: SwarmToolsService, private agents: SwarmAgentsService) {}
+  constructor(private outils: SwarmToolsService, private agents: SwarmAgentsService, private runs: SwarmRunsService) {}
   @Get("tools")  listerOutils(@Req() r: any) { return this.outils.lister(r.ctx); }               // R264 (tous)
   @Post("tools") declarerOutil(@Req() r: any, @Body() b: any) { return this.outils.declarer(r.ctx, b ?? {}); } // R264 (ADMIN)
   @Get("agents") listerAgents(@Req() r: any, @Query("asOf") asOf?: string) { return this.agents.lister(r.ctx, asOf); } // R259 (tous, à date R68)
@@ -167,11 +331,13 @@ export class SwarmController {
     return this.agents.retirer(r.ctx, code, b ?? {}); }                                          // R259 (ADMIN)
   @Get("agents/:code/en-vigueur") resoudreAgent(@Req() r: any, @Param("code") code: string, @Query("asOf") asOf?: string) {
     return this.agents.resoudre(r.ctx, code, asOf); }                                            // SW-01/02 (résolution des runs)
+  @Post("runs")         creerRun(@Req() r: any, @Body() b: any) { return this.runs.creer(r.ctx, b ?? {}); }  // R260 (matrice mission)
+  @Post("runs/reprise") reprise(@Req() r: any) { return this.runs.reprise(r.ctx); }              // SW-03 (ops, ADMIN)
 }
 
 @Module({
   controllers: [SwarmController],
-  providers: [PrismaService, AuditService, SwarmToolsService, SwarmAgentsService],
-  exports: [SwarmToolsService, SwarmAgentsService],
+  providers: [PrismaService, AuditService, SwarmToolsService, SwarmAgentsService, SwarmRunsService],
+  exports: [SwarmToolsService, SwarmAgentsService, SwarmRunsService],
 })
 export class SwarmModule {}
