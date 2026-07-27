@@ -140,3 +140,10 @@ Fixes de l'audit `docs/AUDIT-ARCHITECTURE.md`, appliqués behavior-preserving (s
   MILLISECONDE — l'ORM restitue la Date JS (ms), le µs Postgres est perdu. Ces agrégats étant créés à cadence
   humaine (jamais deux dans la même ms d'un tenant), le keyset est exact en pratique ; pour tasks/nba
   (`createdAt` String) il est exact par construction. La borne par défaut, elle, est exacte en toutes circonstances.
+
+- **A6 — code-splitting front (`app/router.tsx`).** Les 35 imports eager du routeur passent en
+  `React.lazy` + `<Suspense>` : le chunk initial `index-*.js` tombe de **252 KB → 152 KB** (gzip 49 KB),
+  chaque écran devient un chunk 1–5 KB chargé à l'ouverture. Comportement identique (mêmes écrans, même
+  aiguillage ; Vitest 13/13). **Reste à faire (suivi)** : virtualisation des tables (react-window) au-delà
+  d'un seuil de lignes — valeur marginale désormais faible, les listes serveur étant bornées par A4
+  (défaut 200) ; sera fait au fil des écrans touchés (règle boy-scout, comme la migration `theme/tokens`).
