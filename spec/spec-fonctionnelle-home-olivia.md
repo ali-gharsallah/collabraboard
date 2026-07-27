@@ -468,7 +468,9 @@ un paramètre ne s'applique jamais sans simulation.
 > une entrée de simulation R70 pré-remplie est créée ; le paramètre en vigueur est
 > inchangé tant que la simulation n'est pas passée puis appliquée par la voie R68.
 
-**R257 — Journal**
+**R257 — Journal** — **LIVRÉ (étape 7, 2026-07-27)** : rejeu complet + à date avec
+propositions/décisions incluses ; preuve « zéro écriture métier » (B.11.3) par comptage ;
+feedback = ÉVÉNEMENT `OLIVIA_FEEDBACK`, diff de config vide (OL-22). e2e fat-olivia 23/23.
 > **OL-21 — La conversation se rejoue à date** : replay `as_of` → IN, empreinte+liste de
 > contexte, OUT, citations, décisions, dans l'ordre des seq ; le chaînage record_hash se
 > vérifie de bout en bout ; UPDATE/DELETE sur olivia_messages → exception du trigger.

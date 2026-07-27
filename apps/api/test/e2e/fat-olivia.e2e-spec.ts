@@ -396,3 +396,83 @@ describe("FAT OLIVIA — R254 propositions + capacités C3/C4 (OL-12, OL-15..20,
     console.log("OL-20 PASS — entrée bac à sable EN_ATTENTE créée, paramètre en vigueur inchangé");
   });
 });
+
+describe("FAT OLIVIA — R257 journal probant (OL-21/22, étape 7)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const COSR = randomUUID(), CO1 = randomUUID();
+  let clientId = "", rcId = "";
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    await prisma.tenant.update({ where: { id: T },
+      data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5" } } });
+    rcId = (await request(http).post("/v1/riskcases").set(bearer(T, CO1, "CO"))
+      .send({ clientId, signalIds: ["SIG-R257"] })).body.caseId;
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("OL-21 [R257] le rejeu à date restitue TOUT dans l'ordre : IN, empreinte+contexte, OUT, citations, décisions — et rien n'écrit hors olivia_*", async () => {
+    // Comptages métier AVANT (preuve « zéro écriture métier », critère B.11.3)
+    const compte = async () => ({
+      kycs: await prisma.kycFile.count({ where: { tenantId: T } }),
+      clients: await prisma.client.count({ where: { tenantId: T } }),
+      cases: await prisma.riskCase.count({ where: { tenantId: T } }),
+      cpsi: await prisma.cpsiEvent.count({ where: { tenantId: T } }),
+    });
+    const avant = await compte();
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, COSR, "CO_SR"))
+      .send({ capacite: "C3", ancrageType: "RISK_CASE", ancrageId: rcId })).body;
+    const m1 = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, COSR, "CO_SR"))
+      .send({ texte: `Analyse. CITE_TEST:RISK_CASE:${rcId}` })).body;
+    expect(m1.estSource).toBe(true);
+    const apresMilieu = new Date().toISOString();                            // borne as_of ENTRE les deux tours
+    await new Promise((r) => setTimeout(r, 20));
+    const m2 = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, COSR, "CO_SR"))
+      .send({ texte: `Confirme. CITE_TEST:RISK_CASE:${rcId}` })).body;
+    const p = (await request(http).post("/v1/olivia/proposals").set(bearer(T, COSR, "CO_SR"))
+      .send({ messageId: m2.messageId, type: "QUALIF_ALERTE_FP", cibleType: "ALERTE",
+        cibleId: `${clientId}|SC_R257`, justification: "bénin récurrent" })).body;
+    await request(http).post(`/v1/olivia/proposals/${p.id}/reject`).set(bearer(T, COSR, "CO_SR"))
+      .send({ motif: "analyse insuffisante" }).expect(201);
+    expect(await compte()).toEqual(avant);                                   // AUCUNE écriture métier (B.11.3)
+    // Rejeu COMPLET : ordre des seq, empreintes, citations, décision REJETEE avec motif
+    const full = (await request(http).get(`/v1/olivia/conversations/${conv.id}/replay`).set(bearer(T, CO1, "CO"))).body;
+    expect(full.chaineVerifiee).toBe(true);
+    expect(full.messages.map((m: any) => m.seq)).toEqual([1, 2, 3, 4]);      // IN,OUT,IN,OUT
+    expect(full.messages[1].contexteEmpreinte).toBeTruthy();
+    expect(full.messages[1].citations.length).toBeGreaterThan(0);
+    expect(full.propositions.length).toBe(1);
+    expect(full.propositions[0].statut).toBe("REJETEE");
+    expect(full.propositions[0].motifRejet).toContain("insuffisante");
+    // Rejeu À DATE (entre les deux tours) : seuls IN/OUT du 1er tour, AUCUNE proposition
+    const aDate = (await request(http).get(`/v1/olivia/conversations/${conv.id}/replay?as_of=${apresMilieu}`).set(bearer(T, CO1, "CO"))).body;
+    expect(aDate.messages.map((m: any) => m.seq)).toEqual([1, 2]);
+    expect(aDate.propositions.length).toBe(0);
+    expect(aDate.messages[1].contexteEmpreinte).toBe(full.messages[1].contexteEmpreinte); // l'empreinte d'époque
+    console.log("OL-21 PASS — rejeu complet + à date, décisions incluses, zéro écriture métier");
+  });
+
+  it("OL-22 [R44] AUCUN auto-ajustement : « inutile » consigné, diff de config avant/après VIDE", async () => {
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, COSR, "CO_SR"))
+      .send({ capacite: "C3", ancrageType: "RISK_CASE", ancrageId: rcId })).body;
+    await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, COSR, "CO_SR"))
+      .send({ texte: "Réponse quelconque" }).expect(201);
+    const configAvant = JSON.stringify((await prisma.tenant.findFirst({ where: { id: T } }))!.settings);
+    const propsAvant = await prisma.oliviaProposal.count({ where: { tenantId: T } });
+    const cpsiAvant = await prisma.cpsiEvent.count({ where: { tenantId: T } });
+    await request(http).post(`/v1/olivia/conversations/${conv.id}/feedback`).set(bearer(T, COSR, "CO_SR"))
+      .send({ seq: 2, note: "INUTILE" }).expect(201);
+    // Diff de config : VIDE. Aucun gabarit, aucun paramètre, aucun poids modifié.
+    expect(JSON.stringify((await prisma.tenant.findFirst({ where: { id: T } }))!.settings)).toBe(configAvant);
+    expect(await prisma.oliviaProposal.count({ where: { tenantId: T } })).toBe(propsAvant);      // au plus une PENDING — ici zéro
+    expect(await prisma.cpsiEvent.count({ where: { tenantId: T } })).toBe(cpsiAvant);
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "OLIVIA_FEEDBACK", aggregateId: conv.id } });
+    expect(ev).toBeTruthy();                                                 // le retour est un ÉVÉNEMENT, pas un réglage
+    expect((ev!.payload as any).note).toBe("INUTILE");
+    console.log("OL-22 PASS — feedback consigné en événement, configuration byte-identique");
+  });
+});

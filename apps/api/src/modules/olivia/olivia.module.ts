@@ -377,10 +377,33 @@ export class OliviaService {
       if ((m.prevHash ?? null) !== prev) throw new BadRequestException(`OLIVIA_CHAIN_BROKEN: seq ${m.seq}`);
       prev = m.recordHash;
     }
+    // R257/OL-21 : le rejeu porte AUSSI les décisions — les propositions issues des messages
+    // de la conversation (≤ as_of), avec leur sort (PENDING/ADOPTEE/REJETEE/CADUQUE, qui, quand).
+    const propositions = (await this.prisma.oliviaProposal.findMany({
+      where: { tenantId: ctx.tenantId, messageId: { in: messages.map((m: any) => m.id) } } }))
+      .filter((p: any) => !asOf || p.createdAt <= new Date(asOf))
+      .map((p: any) => ({ id: p.id, messageId: p.messageId, type: p.type, cibleType: p.cibleType,
+        cibleId: p.cibleId, statut: p.statut, decidePar: p.decidePar, decideAt: p.decideAt, motifRejet: p.motifRejet }));
     return { conversationId: id, asOf: asOf ?? null, chaineVerifiee: true,
       messages: messages.map((m: any) => ({ seq: m.seq, direction: m.direction, texte: m.texte,
         provider: m.provider, model: m.model, modelVersion: m.modelVersion,
-        contexteEmpreinte: m.contexteEmpreinte, contexteObjets: m.contexteObjets, citations: m.citations, at: m.createdAt })) };
+        contexteEmpreinte: m.contexteEmpreinte, contexteObjets: m.contexteObjets, citations: m.citations, at: m.createdAt })),
+      propositions };
+  }
+
+  // ── R257/OL-22 : le retour utilisateur est un ÉVÉNEMENT — jamais un auto-ajustement.
+  //    Aucun paramètre, aucun gabarit, aucun poids ne change ; la seule voie d'évolution
+  //    d'un paramètre reste une proposition R254 décidée par un humain (R44). ──
+  async noterMessage(ctx: Ctx, conversationId: string, dto: { seq?: number; note?: string }) {
+    await this.port(ctx.tenantId);
+    const conv = await this.prisma.oliviaConversation.findFirst({ where: { id: conversationId, tenantId: ctx.tenantId } });
+    if (!conv) throw new NotFoundException("Conversation introuvable");
+    if (conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire note");
+    if (!dto?.note || !["UTILE", "INUTILE"].includes(dto.note))
+      throw new BadRequestException("note requise : UTILE | INUTILE");
+    await this.prisma.$transaction(async (tx: any) =>
+      this.emit(tx, ctx.tenantId, "OLIVIA_FEEDBACK", conversationId, { seq: dto.seq ?? null, note: dto.note, par: ctx.userId }));
+    return { note: dto.note, consigne: true };
   }
 
   // ── Lecture des propositions (B.2) — socle T10 Home ; la décision (adopt/reject) arrive à l'étape 6. ──
@@ -514,6 +537,7 @@ export class OliviaController {
   @Post("conversations/:id/messages")       envoyer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.envoyerMessage(r.ctx, id, b); }
   @Get("conversations/:id/replay")          replay(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) { return this.svc.replay(r.ctx, id, asOf); }
   @Get("conversations/:id")                 lire(@Req() r: any, @Param("id") id: string) { return this.svc.conversation(r.ctx, id); }
+  @Post("conversations/:id/feedback")       noter(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.noterMessage(r.ctx, id, b ?? {}); } // R257/OL-22
   @Get("proposals")                         proposals(@Req() r: any, @Query("statut") statut?: string) { return this.svc.listerProposals(r.ctx, statut); }
   @Post("proposals")                        proposer(@Req() r: any, @Body() b: any) { return this.svc.creerProposition(r.ctx, b ?? {}); }               // R254/OL-12
   @Post("proposals/:id/adopt")              adopter(@Req() r: any, @Param("id") id: string) { return this.svc.deciderProposition(r.ctx, id, "adopt"); } // OL-16
