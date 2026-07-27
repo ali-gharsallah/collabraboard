@@ -156,10 +156,26 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 13 : 8 / 8 (100 %).**
 
+## Exigences Vague 14 — MOD-75 Business Trip (R222→R230, couverture FAT)
+
+| # | Exigence (règle) | FAT | Statut |
+|---|---|---|---|
+| 70 | R222 : cycle de vie événementiel (TRIP_SUBMITTED) | BT-01 | ✅ |
+| 71 | R223 : avis cross-border attaché, ne décide pas | BT-02 | ✅ |
+| 72 | R224 : KYC non approuvé — INFORMATIF / BLOQUANT | BT-03/04 | ✅ |
+| 73 | R225/R15 : visa uniforme + matrice tenant | BT-05 | ✅ |
+| 74 | R225/R13 : auto-approbation interdite | BT-06 | ✅ |
+| 75 | R226/R39 : contact reports mesurés, non coercés | BT-07 | ✅ |
+| 76 | R228/R237 : certification à la date du voyage (depuis MOD-43) | BT-08 | ✅ |
+| 77 | R229 : rejeu avec grandfathering du référentiel | BT-09 | ✅ |
+| 78 | R230 : révision chaînée après approbation | BT-10 | ✅ |
+
+**Couverture des exigences Vague 14 : 9 / 9 (100 %).** R222→R238 intégralement couvert (MOD-43 V13 + MOD-75 V14).
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2 + V12 3) + **11 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
+tests e2e** (Postgres réel : kyc-rules 6 + … + V10 2 + V12 3 + V13 8 + V14 10) + **13 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

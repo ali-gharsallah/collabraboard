@@ -174,6 +174,23 @@ FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed le
 
 **Vague 13 : 8/8 FAT backend + composant FE-FORM. e2e 50 → 58, harnais 425/425, baseline régénérée (RLS FORCE sur 3 tables), recette RLS 0 ligne sans GUC.** 3 modèles Prisma nouveaux (dont 2 append-only R234). MOD-75 (Business Trip) suit en Vague 14.
 
+## Vague 14 — MOD-75 Business Trip (R222→R230, ratifié)
+
+| Domaine | ID test | Exigence | Ce qui est vérifié | Type | Résultat |
+|---|---|---|---|---|---|
+| Business Trip | **BT-01** | R222 | Cycle événementiel DRAFT → PENDING_APPROVAL + TRIP_SUBMITTED | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-02** | R223 | Avis cross-border attaché, ne décide pas (statut inchangé) | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-03/04** | R224 | KYC non approuvé : INFORMATIF (signal) vs BLOQUANT (TRIP_KYC_NOT_APPROVED) | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-05** | R225/R15 | 2 visas (matrice + COMPLIANCE), APPROVED aux deux | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-06** | R225/R13 | Auto-approbation interdite (TRIP_SELF_APPROVAL_FORBIDDEN) | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-07** | R226/R39 | Contact reports mesurés, bloque=false | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-08** | R228/R237 | Certification résolue depuis MOD-43 à la date du voyage | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-09** | R229 | Rejeu grandfathering (avis V1 au 2026-03-01) | e2e/FAT | ✅ PASS |
+| Business Trip | **BT-10** | R230 | Révision chaînée, V1 intacte | e2e/FAT | ✅ PASS |
+| Business Trip | **FE-TRIP** | R223 affichage | Avis INTERDITE affiché, panneau visas actif | Vitest+RTL+MSW | ✅ PASS |
+
+**Vague 14 : 10/10 FAT backend + FE-TRIP. e2e 58 → 68, harnais 425/425, baseline régénérée (RLS FORCE sur 2 tables), recette RLS OK.** **R222→R238 intégralement implémenté** (MOD-43 V13 + MOD-75 V14).
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

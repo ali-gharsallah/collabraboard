@@ -877,6 +877,39 @@ CREATE TABLE "training_attestations" (
     CONSTRAINT "training_attestations_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "trips" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "traveler_id" UUID NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "purpose" TEXT,
+    "date_start" TEXT NOT NULL,
+    "date_end" TEXT NOT NULL,
+    "destinations" JSONB NOT NULL DEFAULT '[]',
+    "clients" JSONB NOT NULL DEFAULT '[]',
+    "advisories" JSONB NOT NULL DEFAULT '[]',
+    "signals" JSONB NOT NULL DEFAULT '[]',
+    "revision" INTEGER NOT NULL DEFAULT 1,
+    "previous_trip_id" UUID,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "trips_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "trip_visas" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "trip_id" UUID NOT NULL,
+    "role" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "signed_by" UUID,
+    "signed_at" TIMESTAMP(3),
+
+    CONSTRAINT "trip_visas_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -1071,6 +1104,12 @@ CREATE INDEX "certifications_tenant_id_user_id_code_idx" ON "certifications"("te
 
 -- CreateIndex
 CREATE INDEX "training_attestations_tenant_id_user_id_idx" ON "training_attestations"("tenant_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "trips_tenant_id_traveler_id_idx" ON "trips"("tenant_id", "traveler_id");
+
+-- CreateIndex
+CREATE INDEX "trip_visas_tenant_id_trip_id_idx" ON "trip_visas"("tenant_id", "trip_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

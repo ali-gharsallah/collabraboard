@@ -165,6 +165,24 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode de validation de complétion : { mode: AUTO } (attestation suffit) ou { mode: VALIDATED, role } (visa uniforme R15 ; l'auteur ne valide pas sa propre complétion, R13)." },
   { cle: "trainingVisibiliteRoles", type: "json", defaut: ["CO", "CF", "ADMIN"], regle: "R236", requis: false,
     description: "Rôles qui voient TOUS les dossiers formation du tenant (Compliance/RH). Les autres voient leur périmètre (soi + équipe si responsable — R236)." },
+  // ── Business Trip — MOD-75 (R222→R230, lot 51). Le référentiel cross-border, la matrice
+  //    d'approbation et les sévérités sont des règles : réglés par le registre (R7/R125). ──
+  { cle: "tripCrossBorderReferentiel", type: "json", defaut: [], regle: "R223", requis: false,
+    exemple: [{ jurisdiction: "SA", activite: "sollicitation", verdict: "INTERDITE", depuisLe: "2026-01-01" }],
+    description: "Référentiel cross-border versionné (par date d'effet, R229) : verdict AUTORISEE|INTERDITE|SOUMISE_A_LICENCE par (juridiction, activité). L'avis ne décide pas — l'approbation reste humaine (R223)." },
+  { cle: "tripKycCheckSeverity", type: "string", defaut: "INFORMATIF", regle: "R224", requis: false,
+    description: "Sévérité si un client visité n'a pas de KYC approuvé : INFORMATIF ou BLOQUANT_APPROBATION (R224)." },
+  { cle: "tripApprovalMatrix", type: "json", defaut: ["DIR"], regle: "R225", requis: false,
+    description: "Rôles approbateurs d'un voyage (visa uniforme R15). Une destination à risque ajoute un visa COMPLIANCE (R225)." },
+  { cle: "tripJuridictionsRisque", type: "json", defaut: [], regle: "R225", requis: false,
+    description: "Juridictions à risque : une destination listée ajoute un visa COMPLIANCE à l'approbation (R225)." },
+  { cle: "tripContactReportDeadlineDays", type: "int", defaut: 5, regle: "R226", requis: false,
+    description: "Délai (jours) après le voyage pour produire un contact report par visite (mesuré, jamais coercitif — R226/R39)." },
+  { cle: "tripCertificationRequise", type: "json", defaut: [], regle: "R228", requis: false,
+    exemple: [{ jurisdiction: "AE", code: "CROSS_BORDER_AE" }],
+    description: "Certifications exigées par juridiction (résolues depuis MOD-43 à la date du voyage, R228/R237)." },
+  { cle: "tripCertificationCheckSeverity", type: "string", defaut: "INFORMATIF", regle: "R228", requis: false,
+    description: "Sévérité si une certification requise est absente/expirée à la date du voyage (R228)." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

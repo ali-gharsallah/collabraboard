@@ -1,6 +1,6 @@
 # language: fr
-@proposed @R222-R230 @MOD-75 @gele-attente-validation-Ali
-Fonctionnalité: MOD-75 Business Trip (R222..R230) — RÈGLES PROPOSÉES, code gelé
+@ratifie @R222-R230 @MOD-75 @implemente-vague14
+Fonctionnalité: MOD-75 Business Trip (R222..R230) — RATIFIÉ, implémenté (Vague 14)
   Statut: PROPOSÉ (SPEC-FRONT-CÂBLAGE v2, section 7.1). AUCUN code front ni back
   tant qu'Ali n'a pas validé « OK pour R222..R238 ». Gherkin d'abord.
   Numérotation R222..R230 continue après R221 (Bloc 49). Toute divergence en

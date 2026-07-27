@@ -927,3 +927,40 @@ model TrainingAttestation {
   @@index([tenantId, userId])
   @@map("training_attestations")
 }
+
+// ── MOD-75 Business Trip (R222→R230, lot 51) ────────────────────────────────
+// Le voyage est un objet à cycle de vie événementiel (R222). Destinations/clients/avis/signaux
+// sont des projections calculées à la soumission (R223/R224/R228) ; l'approbation est un visa
+// uniforme R15 (R225) — le voyageur ne vise jamais son propre voyage (R13). Rejeu avec
+// grandfathering du référentiel (R229) ; révision chaînée après approbation (R230).
+model Trip {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  travelerId    String   @map("traveler_id") @db.Uuid          // le voyageur (créateur)
+  status        String   @default("DRAFT")                     // DRAFT|PENDING_APPROVAL|APPROVED|IN_PROGRESS|COMPLETED|CANCELLED
+  purpose       String?
+  dateStart     String   @map("date_start")                    // ISO date
+  dateEnd       String   @map("date_end")
+  destinations  Json     @default("[]")                        // string[] (juridictions)
+  clients       Json     @default("[]")                        // string[] (clientId visités)
+  advisories    Json     @default("[]")                        // [{ jurisdiction, activite, verdict, referentielVersion }] (R223)
+  signals       Json     @default("[]")                        // [{ type, severite, detail }] (R224/R228)
+  revision      Int      @default(1)                           // R230
+  previousTripId String? @map("previous_trip_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([tenantId, travelerId])
+  @@map("trips")
+}
+
+// Visa d'approbation d'un voyage — visa uniforme R15 (R225).
+model TripVisa {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  tripId    String    @map("trip_id") @db.Uuid
+  role      String                                             // rôle approbateur requis
+  status    String    @default("PENDING")                     // PENDING|SIGNED
+  signedBy  String?   @map("signed_by") @db.Uuid
+  signedAt  DateTime? @map("signed_at")
+  @@index([tenantId, tripId])
+  @@map("trip_visas")
+}
