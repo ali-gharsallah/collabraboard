@@ -19,7 +19,10 @@ export class KycService {
   // 2 args) et si le tenant n'exige rien ; câblé en app via PreRevueModule (useFactory). Le
   // service PreRevue CONSTATE, le moteur KYC BLOQUE (pattern R110).
   constructor(private prisma: PrismaService, private audit: AuditService,
-              private prerevue?: { verifierTraitement(ctx: Ctx, kycFileId: string): Promise<{ bloquant: boolean; ouverts: any[] }> }) {}
+              private prerevue?: { verifierTraitement(ctx: Ctx, kycFileId: string): Promise<{ bloquant: boolean; ouverts: any[] }> },
+              // R272/R275 (canon débloquants partie 1) : hook d'échéance de review — appelé DANS la
+              // transaction d'approbation (jamais un cron). Optionnel : absent en tests unitaires.
+              private reviews?: { surApprobation(ctx: Ctx, tx: any, kyc: any): Promise<any> }) {}
 
   // ── R267/OF-10 : client clôturé = LECTURE SEULE INTÉGRALE — toute écriture refuse typé.
   //    La consultation et le rejeu à date restent ouverts (jamais d'amputation de l'audit). ──
@@ -216,6 +219,8 @@ export class KycService {
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
         type: "kyc.validated", aggregateId: kyc.id,
         payload: { code, validatedBy: ctx.userId } as any } });
+      if (this.reviews) await this.reviews.surApprobation(ctx, tx,            // RV-01/07 : l'échéance naît ICI
+        { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt: updated.validatedAt });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VALIDATED", code);
       return updated;
     });

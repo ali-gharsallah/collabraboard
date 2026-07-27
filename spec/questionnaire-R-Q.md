@@ -184,3 +184,27 @@ avec ses scénarios, avant implémentation.*
                 Capacité absente ⇒ 400
                 OLIVIA_CAPACITE_NON_OUVERTE.
   ------------- ----------------------------------------- ----------------------
+
+15. Paramètres tenant — échéances de review (R272-R275, canon débloquants Home partie 1, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R272**      `cadenceReviewMois` {EDD, CDD, SDD} —      Reviews
+                cadence par niveau de diligence (défauts
+                12 / 36 / 60). La valeur EN VIGUEUR au
+                calcul est FIGÉE dans l'échéance
+                (grandfathering R29 — RV-02).
+
+  **R274**      `preavisReviewJours` — préavis de tâche    Reviews
+                RM + notification (défaut 30). Notifie
+                UNE fois, ne bloque jamais (R39).
+
+  **R274**      `escaladeRetardJours` {CO, DIR} —          Reviews
+                escalade du retard (défauts 30 / 90).
+                EN_RETARD est un fait CALCULÉ à la
+                lecture, jamais un statut stocké.
+
+  **R273**      `rolesReportEcheance` — rôles habilités    Reviews
+                à RECULER une échéance (défaut [CO_SR]) ;
+                motif R7 + visa four-eyes d'un SECOND
+                (R13, l'initiateur ne vise pas).
+  ------------- ----------------------------------------- ----------------------

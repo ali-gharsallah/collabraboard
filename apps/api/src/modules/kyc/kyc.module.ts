@@ -7,16 +7,18 @@ import { KycLockService } from "./rules/kyc-lock.service";            // R84
 import { QualifiedVisaService } from "./rules/qualified-visa.service"; // R86
 import { PreRevueModule } from "../ia/prerevue.module";               // R123
 import { PreRevueService } from "../ia/prerevue.service";
+import { ReviewsModule } from "../reviews/reviews.module";            // R272/R275 (débloquants partie 1)
+import { ReviewsService } from "../reviews/reviews.module";
 @Module({
-  imports: [PreRevueModule],                                          // fournit PreRevueService (gate R123)
+  imports: [PreRevueModule, ReviewsModule],                           // PreRevueService (R123) + ReviewsService (R272)
   controllers: [KycController],
   providers: [
     PrismaService, AuditService, KycLockService, QualifiedVisaService,
     // KycService reçoit le hook de pré-revue IA (R123) en 3e param optionnel.
     {
       provide: KycService,
-      useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService) => new KycService(p, a, pr),
-      inject: [PrismaService, AuditService, PreRevueService],
+      useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService, rv: ReviewsService) => new KycService(p, a, pr, rv),
+      inject: [PrismaService, AuditService, PreRevueService, ReviewsService],
     },
   ],
   exports: [KycService, KycLockService, QualifiedVisaService],   // KycService exporté pour OnboardingModule (R118)

@@ -267,3 +267,15 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   d'audit d'un module inactif : GET + ADMIN (écart SO connu).
 - T7 ← partie 1 (reviews R272-R275) et T8 ← partie 2 (CoC R276-R278, **R276 ÉTENDU ratifié :
   le canon crée le store COC_CONFIG**) : à solder à leurs livraisons.
+
+## SOLDE — T7 (2026-07-27, canon débloquants Home partie 1 LIVRÉE)
+
+- **T7 SOLDÉ** : les échéances de review EXISTENT (R272-R275, `review_deadlines`, hook dans la
+  transaction d'approbation KYC — pas un cron ; index partiel unique = UNE PLANIFIEE par client).
+  `GET /v1/reviews/deadlines?horizonJours=` sert la tuile T7 (RM/ARM/CO, périmètre serveur,
+  EN_RETARD calculé à la lecture) ET l'écran Review. RV-01..08 e2e verts.
+- 🟡 Écarts résiduels : le déclencheur AUTOMATIQUE d'anticipation (CoC Haute RV-04/CC-04,
+  franchissement de bande CPSI) reste un consommateur d'événement à câbler — l'anticipation est
+  livrée avec `declencheur` tracé, appelable par la partie 2 CoC ; le tick préavis/escalade est
+  une route ops (`POST /v1/reviews/tick`), pattern tickSla existant.
+- Reste : **T8 ← partie 2** (CoC R276-R278 + création du store COC_CONFIG, ratifiée).

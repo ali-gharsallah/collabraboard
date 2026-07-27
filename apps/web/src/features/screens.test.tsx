@@ -251,6 +251,7 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
     server.use(
       http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
       http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([{ kycCode: "K-1", section: "IDENTITY", requiredRole: "CO" }])),
+      http.get("*/v1/reviews/deadlines", () => HttpResponse.json([{ clientId: "c1", ddlLevel: "EDD", dueDate: "2026-06-01", enRetard: true, joursRetard: 56 }])),
       http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "UNDER_REVIEW" }, { code: "K-2", status: "UNDER_REVIEW" }, { code: "K-3", status: "IN_PROGRESS" }])),
       http.get("*/v1/tasks", () => HttpResponse.json([])),
       http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [{ client: "c1" }] })),
@@ -269,6 +270,7 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
     server.use(
       http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
       http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([])),
+      http.get("*/v1/reviews/deadlines", () => HttpResponse.json([])),
       http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "DRAFT" }])),
       http.get("*/v1/tasks", () => HttpResponse.json([])),
       http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [] })),

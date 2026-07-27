@@ -132,7 +132,8 @@ DO $$ DECLARE t text; BEGIN
     'nba_suggestions',                                    -- R243→R246 (lot 53, MOD décision NBA)
     'cpsi_events',                                        -- CPSI porte (R63→R83, journal tenant-scopé)
     'olivia_conversations', 'olivia_messages', 'olivia_proposals', -- Olivia v1 (R253→R257)
-    'offboarding_files', 'offboarding_sensibles'          -- Offboarding (R267→R271)
+    'offboarding_files', 'offboarding_sensibles',         -- Offboarding (R267→R271)
+    'review_deadlines'                                    -- Échéances de review (R272→R275)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -161,6 +162,14 @@ DO $$ BEGIN
       AS RESTRICTIVE FOR SELECT
       USING (current_setting('app.role', true) = ANY (string_to_array(
         COALESCE(NULLIF(current_setting('app.roles_motif_sensible', true), ''), 'CO_SR,MLRO'), ',')));
+  END IF;
+END $$;
+
+-- ── 2c. RV-08 : au plus UNE échéance PLANIFIEE par client (index partiel unique) ────
+DO $$ BEGIN
+  IF to_regclass('review_deadlines') IS NOT NULL THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS review_deadline_une_planifiee
+      ON review_deadlines (tenant_id, client_id) WHERE statut = 'PLANIFIEE';
   END IF;
 END $$;
 

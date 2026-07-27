@@ -99,6 +99,13 @@ export function Home() {
         seed={{ profondeurJournal: 0, dernierRejeuMs: null }}
         rendre={(h: { profondeurJournal: number; dernierRejeuMs: number | null }) =>
           <div>journal : <strong>{h.profondeurJournal}</strong> évts · rejeu {h.dernierRejeuMs ?? "—"} ms</div>} clic="écran cpsiparam"/>}
+      {/* T7 (partie 1 débloquants, R272-R275) : reviews dues sous 30 j — EN_RETARD est un fait CALCULÉ servi */}
+      {["RM", "ARM", "CO"].includes(r) && <Tuile titre="Reviews à échéance" path="/v1/reviews/deadlines?horizonJours=30"
+        seed={[{ clientId: "c-demo", ddlLevel: "CDD", dueDate: "2026-08-01", enRetard: false, joursRetard: 0 }]}
+        rendre={(ds: { ddlLevel: string; dueDate: string; enRetard: boolean; joursRetard: number }[]) => <div>{n(ds)}
+          {ds.slice(0, 3).map((x, i) => <div key={i} style={{ color: x.enRetard ? tokens.color.danger : tokens.color.muted }}>
+            {x.ddlLevel} · {String(x.dueDate).slice(0, 10)}{x.enRetard ? ` · EN RETARD ${x.joursRetard} j` : ""}</div>)}</div>}
+        clic="écran Review"/>}
       {tous && <Tuile titre="Olivia — propositions en attente" path="/v1/olivia/proposals?statut=PENDING"
         seed={[]}
         rendre={(ps: unknown[]) => n(ps)} clic="écran Olivia"/>}

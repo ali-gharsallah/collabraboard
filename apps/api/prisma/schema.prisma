@@ -1113,3 +1113,29 @@ model OffboardingSensible {
   @@index([tenantId])
   @@map("offboarding_sensibles")
 }
+
+// ── Échéances de review (R272-R275, canon débloquants Home partie 1, ratifié 2026-07-27) ──
+// R272 : l'échéance est CALCULÉE (approbation + cadence(ddl_level)), la cadence appliquée est
+// FIGÉE dans la ligne (grandfathering R29/RV-02). EN_RETARD n'est PAS un statut stocké : c'est
+// due_date < today AND statut='PLANIFIEE' — un fait calculé à la lecture. REMPLACEE = recalcul
+// (anticipation R273, changement ddl) chaîné par remplace_par ; REALISEE référence le KYC Rn+1
+// (R275). Au plus UNE PLANIFIEE par client : index partiel unique (post-deploy, RV-08).
+model ReviewDeadline {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  clientId          String    @map("client_id") @db.Uuid
+  sourceKycId       String    @map("source_kyc_id") @db.Uuid   // le KYC dont part le calcul
+  ddlLevel          String    @map("ddl_level")                // niveau au moment du calcul (figé)
+  cadenceMois       Int       @map("cadence_mois")             // valeur EN VIGUEUR au calcul (figée, R272)
+  dueDate           DateTime  @map("due_date") @db.Date
+  statut            String    @default("PLANIFIEE")            // PLANIFIEE | REALISEE | REMPLACEE
+  remplacePar       String?   @map("remplace_par") @db.Uuid
+  realiseeKycId     String?   @map("realisee_kyc_id") @db.Uuid // R275
+  preavisSignale    Boolean   @default(false) @map("preavis_signale")     // R274 : notifié une fois
+  escaladeSignalee  Boolean   @default(false) @map("escalade_signalee")   // R274 : escaladé une fois
+  reportEnAttente   Json?     @map("report_en_attente")        // R273/R13 : {nouvelleDate, motif, par, at} — visa d'un second requis
+  createdAt         DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut, dueDate])
+  @@index([tenantId, clientId])
+  @@map("review_deadlines")
+}
