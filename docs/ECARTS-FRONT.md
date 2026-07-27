@@ -237,3 +237,18 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
 - 🟡 R273 « franchissement de bande CPSI à la hausse » : le déclencheur automatique
   d'anticipation (consommateur d'événement CPSI) est à câbler — signalé. RV-04/CC-04
   (anticipation par CoC Haute) ne se prouveront qu'à l'ouverture de la partie 2 (patron OL-07).
+
+## Arbitrages Ali (2026-07-27, 2e ratification vague pilote) — exécutoires
+
+- **BS ratifié** (famille bacs à sable, ex-SB).
+- **P1** : timeline client + reporting = **commandes à AJOUTER au contrat de la porte CPSI**
+  (extension du canon R248-R252, scénarios **PC-11+**, signalées — pas des routes inventées).
+- **P2** : l'application d'un paramètre est un **événement du journal `cpsi_events`** (R68/R249),
+  même extension de contrat.
+- **P3** : endpoints dry-run à créer **sous le patron SandboxAml**, signalés comme application
+  de R70 — zéro mutation prouvée (**BS-01** exécuté sur chacun des 5).
+- **P4** : `sdkyc` rendu sur le modèle ACTUEL (par question) ; **SD-04 SUSPENDU** — écart
+  « versionnage `kyc_access_rules` à ratifier » consigné ici ; **`sdar`/`sdgar` REPORTÉS**
+  (écart : store de questionnaire de review inexistant) ; **`cocparam` séquencé APRÈS la PR CoC**
+  du canon débloquants (R276 crée COC_CONFIG).
+- Ordre : partie 5 (LIVRÉE) → P1 → P2 → P4 partiel → P3 ; **Olivia étapes 6-8 en parallèle (go)**.

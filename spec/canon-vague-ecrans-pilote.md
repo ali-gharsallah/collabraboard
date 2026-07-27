@@ -6,6 +6,16 @@ lisent BS-01..06). Bloc Offboarding **R267–R271 RATIFIÉ** — partie 5 en ex�
 Conséquence codée : `CATALOGUE_MAX_REGLE` 266 → 271 (R256). Les autres points d'arbitrage
 (portes P1/P2, dry-run P3, P4) restent OUVERTS.
 
+**ARBITRAGES ALI (2026-07-27, 2e ratification)** : « BS ratifié. 2. P1 timeline/reporting =
+commandes à AJOUTER au contrat de la porte CPSI (extension canon R248-R252, scénarios PC-11+,
+signalées) ; P2 = l'application de paramètre est un événement du journal cpsi_events (R68/R249),
+même extension ; P3 = crée les endpoints dry-run sous le patron SandboxAml, signalés comme
+application de R70 — zéro mutation prouvée (BS-01). 3. Partie 4 : sdkyc rendu sur le modèle
+actuel, SD-04 suspendu + écart « versionnage kyc_access_rules » consigné ; sdar/sdgar reportés
+(écart) ; cocparam séquencé après la PR CoC du canon débloquants (R276 crée COC_CONFIG).
+4. R267-R271 ratifiés — partie 5 d'abord, puis P1, P2, P4 partiel, P3. » Olivia étapes 6-8 en
+parallèle : go.
+
 **PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
 intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
 listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·
