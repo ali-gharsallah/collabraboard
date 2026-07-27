@@ -13,6 +13,7 @@ import { CpsiProfiling } from "./cpsi/CpsiProfiling";
 import { CpsiSegmentation } from "./cpsi/CpsiSegmentation";
 import { CpsiRiskCases } from "./cpsi/CpsiRiskCases";
 import { CpsiParam } from "./cpsi/CpsiParam";
+import { CpsiGuide } from "./cpsi/CpsiGuide";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -198,5 +199,20 @@ describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), ale
     expect(screen.getByRole("button", { name: "Proposer" })).toBeDisabled();                  // re-verrouillé si valeurs modifiées
     expect(screen.getByRole("button", { name: "Adopter" })).toBeEnabled();                    // R69 : décision humaine sur EN_ATTENTE
     expect(screen.getByRole("button", { name: "Rejeter" })).toBeEnabled();
+  });
+
+  it("CPSI Guide : ancré sur le réel — règles R68 + catalogue R79 servis par la porte", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/cpsi/rules", () => HttpResponse.json({ asOf: null, regles: ["Half-life : 90 jours (config tenant)."] })),
+      http.get("*/v1/cpsi/compliance-catalogue", () => HttpResponse.json({ asOf: null, catalogue: [
+        { id: "SC_X", label: "Structuration PEP", domaine: "Tx", champ_label: "Score de structuration",
+          champ_formule: "Indice de fractionnement.", operateur: "≥", seuils: { PEP: 60 }, groupes: ["PEP"] }] })),
+    );
+    render(<CpsiGuide/>);
+    expect(await screen.findByText(/Half-life : 90 jours/)).toBeInTheDocument();  // règles LIVE, pas statiques
+    expect(await screen.findByText("Structuration PEP")).toBeInTheDocument();     // catalogue R79
+    expect(screen.getByText(/PEP ≥ 60/)).toBeInTheDocument();                     // seuil par groupe en clair
+    expect(screen.getByText("Signal scoré")).toBeInTheDocument();                 // vocabulaire ratifié
   });
 });
