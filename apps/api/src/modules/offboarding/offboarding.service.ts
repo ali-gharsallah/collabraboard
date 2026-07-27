@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { etatCloture } from "./cloture.util";
@@ -102,6 +102,54 @@ export class OffboardingService {
       clotureEffectiveAt: o.clotureEffectiveAt, retentionJusqua: o.retentionJusqua, createdAt: o.createdAt };
   }
 
+  // ── R268 : le type impose ses visas et ses documents — le refus liste TOUT ce qui manque ──
+  private docsRequis(s: any, type: string): string[] {
+    return (s.documentsParTypeCloture ?? {})[type]
+      ?? (type === "DEMANDE_CLIENT" ? ["INSTRUCTION_TRANSFERT_SIGNEE"]
+        : type === "DECES_SUCCESSION" ? ["ACTE_DECES"] : []);
+  }
+  private manquantsR268(o: any, s: any): string[] {
+    const manquants: string[] = [];
+    for (const v of (o.visas as any[]) ?? [])
+      if (v.statut !== "SIGNED") manquants.push(`visa ${v.role}`);
+    const fournis = new Set(((o.documents as any[]) ?? []).map((d) => d.type));
+    for (const d of this.docsRequis(s, o.type))
+      if (!fournis.has(d)) manquants.push(`document ${d}`);
+    return manquants;
+  }
+
+  // ── R268/R13 : viser — mécanisme uniforme (R15) ; l'initiateur n'appose JAMAIS le visa final ──
+  async viser(ctx: Ctx, id: string) {
+    return this.prisma.$transaction(async (tx: any) => {
+      const o = await this.dossier(tx, ctx, id);
+      if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
+      const visas = ((o.visas as any[]) ?? []).slice();
+      const idx = visas.findIndex((v) => v.role === ctx.role && v.statut === "PENDING");
+      if (idx < 0) throw new ForbiddenException(`Aucun visa en attente pour le rôle ${ctx.role}`);
+      const pendants = visas.filter((v) => v.statut === "PENDING");
+      if (pendants.length === 1 && o.initiateur === ctx.userId)
+        throw new ForbiddenException("R13 : l'initiateur de la clôture ne peut pas apposer le visa final");
+      visas[idx] = { ...visas[idx], statut: "SIGNED", par: ctx.userId, at: new Date().toISOString() };
+      await tx.offboardingFile.update({ where: { id: o.id }, data: { visas } });
+      await this.emit(tx, ctx.tenantId, "offboarding.visa", o.id, { role: ctx.role, par: ctx.userId });
+      await this.audit.log(ctx.tenantId, ctx.userId, "OFFBOARDING_VISA", `${o.id}:${ctx.role}`);
+      return { visas };
+    });
+  }
+
+  // ── R268 : compléter le dossier documentaire — tracé ──
+  async ajouterDocument(ctx: Ctx, id: string, doc: { type: string; ref: string }) {
+    if (!doc?.type) throw new BadRequestException("Document sans type");
+    return this.prisma.$transaction(async (tx: any) => {
+      const o = await this.dossier(tx, ctx, id);
+      if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
+      const documents = [...(((o.documents as any[]) ?? [])), { type: doc.type, ref: doc.ref ?? null }];
+      await tx.offboardingFile.update({ where: { id: o.id }, data: { documents } });
+      await this.emit(tx, ctx.tenantId, "offboarding.document", o.id, { type: doc.type, par: ctx.userId });
+      return { documents };
+    });
+  }
+
   // ── R267 : transitions fermées ; CLOTUREE pose la rétention ; annulation motivée (OF-12) ──
   async transitionner(ctx: Ctx, id: string, vers: string, motif?: string) {
     return this.prisma.$transaction(async (tx: any) => {
@@ -114,6 +162,9 @@ export class OffboardingService {
       if (vers === "CLOTURE_ANNULEE") data.motifAnnulation = motif!.trim();
       if (vers === "CLOTUREE") {
         const s = await this.settings(tx, ctx.tenantId);
+        const manquants = this.manquantsR268(o, s);                 // OF-02 : visas + documents du type
+        if (manquants.length)
+          throw new BadRequestException(`R268 : clôture refusée — manquants : ${manquants.join(", ")}`);
         const now = new Date();
         const retention = new Date(now);
         retention.setFullYear(retention.getFullYear() + (s.retentionPostClotureAns ?? 10)); // LBA art. 7

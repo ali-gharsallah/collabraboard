@@ -17,6 +17,8 @@ export class OffboardingController {
   @Get("statut/:clientId")      statut(@Req() r: any, @Param("clientId") cid: string) { return this.svc.statutClient(r.ctx, cid); } // bannières OF-10
   @Get(":id")                   detail(@Req() r: any, @Param("id") id: string) { return this.svc.detail(r.ctx, id); }
   @Post(":id/transition")       transition(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.transitionner(r.ctx, id, b?.vers, b?.motif); } // R267
+  @Post(":id/visa")             viser(@Req() r: any, @Param("id") id: string) { return this.svc.viser(r.ctx, id); }         // R268/R13 — rôle du jeton
+  @Post(":id/documents")        doc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.ajouterDocument(r.ctx, id, b ?? {}); } // R268
 }
 
 function fakeCorePort(): CoreBankingPort | undefined {

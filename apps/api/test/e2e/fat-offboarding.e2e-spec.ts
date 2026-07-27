@@ -22,6 +22,7 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
     const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
       .send({ clientId, type: "DECISION_BANQUE", motif: "Relation non rentable" })).body;
     await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);  // R268 — visa CO (pas l'initiateur, R13)
     await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO2, "CO")).send({ vers: "CLOTUREE" }).expect(201);
     return o.id;
   };
@@ -112,5 +113,53 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
       .send({ clientId, type: "DEMANDE_CLIENT", motif: "Départ confirmé cette fois" });
     expect(o2.status).toBe(201);
     console.log("OF-12 PASS — annulation motivée tracée, dossier ACTIVE, nouvelle demande possible");
+  });
+
+  it("OF-02 [R268] le type impose visas ET documents : refus typé listant les manquants", async () => {
+    // EXIT_COMPLIANCE : visas CO_SR + DIR (Head PB → DIR, mapping ratifié) requis
+    const c1 = randomUUID();
+    await seedTenantClient(prisma, T, c1);
+    const CO_SR = randomUUID(), DIR = randomUUID();
+    const o1 = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId: c1, type: "EXIT_COMPLIANCE", motif: "Soupçon LBA fondé, communication en cours" })).body;
+    await request(http).post(`/v1/offboarding/${o1.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    const r1 = await request(http).post(`/v1/offboarding/${o1.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r1.status).toBe(400);
+    expect(r1.body.message).toContain("visa CO_SR");
+    expect(r1.body.message).toContain("visa DIR");                          // TOUS les manquants, pas le premier
+    await request(http).post(`/v1/offboarding/${o1.id}/visa`).set(bearer(T, CO_SR, "CO_SR")).expect(201);
+    const r1b = await request(http).post(`/v1/offboarding/${o1.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r1b.status).toBe(400);
+    expect(r1b.body.message).toContain("visa DIR");
+    expect(r1b.body.message).not.toContain("visa CO_SR");                   // signé — sorti de la liste
+    await request(http).post(`/v1/offboarding/${o1.id}/visa`).set(bearer(T, DIR, "DIR")).expect(201);
+    await request(http).post(`/v1/offboarding/${o1.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
+    // DEMANDE_CLIENT : l'instruction de transfert signée est un document REQUIS
+    const c2 = randomUUID();
+    await seedTenantClient(prisma, T, c2);
+    const o2 = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId: c2, type: "DEMANDE_CLIENT", motif: "Départ volontaire" })).body;
+    await request(http).post(`/v1/offboarding/${o2.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o2.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);
+    const r2 = await request(http).post(`/v1/offboarding/${o2.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r2.status).toBe(400);
+    expect(r2.body.message).toContain("document INSTRUCTION_TRANSFERT_SIGNEE");
+    await request(http).post(`/v1/offboarding/${o2.id}/documents`).set(bearer(T, CO, "CO"))
+      .send({ type: "INSTRUCTION_TRANSFERT_SIGNEE", ref: "GED-123" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o2.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
+    console.log("OF-02 PASS — refus typés listant visas et documents manquants, clôtures après complétion");
+  });
+
+  it("OF-03 [R268/R13] four-eyes : l'initiateur ne peut pas apposer le visa FINAL", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "DECISION_BANQUE", motif: "Dé-risking sectoriel" })).body;
+    expect((o.visas as any[]).length).toBe(1);                              // un seul visa CO → il est FINAL
+    const r = await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO, "CO"));
+    expect(r.status).toBe(403);
+    expect(JSON.stringify(r.body)).toContain("R13");
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201); // un second signe
+    console.log("OF-03 PASS — visa final refusé à l'initiateur (403 R13), accordé à un second");
   });
 });
