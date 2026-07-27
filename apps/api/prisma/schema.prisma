@@ -1049,6 +1049,11 @@ model OliviaMessage {
   contexteEmpreinte  String?  @map("contexte_empreinte") @db.Char(64)  // R255 : HMAC du contexte
   contexteObjets     Json?    @map("contexte_objets")      // R255 : [{type,id}] — la LISTE, prouvable
   latenceMs          Int?     @map("latence_ms")
+  // ── v1.1 (R258) — le comportement est un CONTRAT paramétré, journalisé pour le rejeu ──
+  personaVersion     String?  @map("persona_version")       // OL-23 : la version du gabarit de l'époque
+  langue             String?                                // OL-25/26 : langue effective de la réponse
+  statutStream       String?  @map("statut_stream")         // OL-31 : COMPLET | INTERROMPU (jamais de fragments)
+  conforme           Boolean? @default(true)                // OL-24 : false = recommandation en prose non corrigée
   createdAt          DateTime @default(now()) @map("created_at")
   recordHash         String   @map("record_hash") @db.Char(64)         // chaînage R257
   prevHash           String?  @map("prev_hash") @db.Char(64)

@@ -136,6 +136,16 @@ Le gabarit système (paramètre `olivia_persona`, versionné) impose :
 
 ## A.9 Critères d'acceptation v1.1
 
+**A.9 — POINTAGE FINAL v1.1 (2026-07-27)** : 1. ✅ OL-23..34 verts (fat-olivia 33/33, port de
+test déterministe — marqueurs STREAM_INTERROMPU_TEST/RECO_PROSE_TEST bornés à la question
+courante). 2. ✅ Persona + refus + excuses + lexiques = artefact livré
+`olivia-gabarits.default.json` versionné (garde grep CI « Tu es Olivia » hors code). 3. ✅
+Détecteur « recommandation en prose » + corpus 20 cas (10/10) livré
+(`corpus-recommandation-prose.json`), testé e2e. Écarts signalés : SSE réel = transport à
+brancher (v1 synchrone — les invariants de journal OL-31 sont, eux, prouvés : statut_stream,
+seq consommé, jamais de fragments) ; longueur A.2 = directive contractuelle du gabarit (une
+coupe serveur altérerait la sortie) ; OL-30 juge le rôle PORTÉ PAR LE JETON contre le rôle figé.
+
 1. OL-23..34 verts (fournisseur mocké déterministe pour les classes de sortie).
 2. Gabarits persona C1..C4 livrés comme paramètres versionnés — zéro texte de persona
    en dur dans le code (grep CI).

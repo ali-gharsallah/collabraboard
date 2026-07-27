@@ -1,0 +1,27 @@
+{
+  "commentaire": "Corpus LIVRÉ (critère A.9.3, R258/OL-24) — 10 formulations LICITES / 10 PRESCRIPTIVES. Le détecteur « recommandation en prose » doit classer les 20 sans erreur ; testé en e2e (fat-olivia).",
+  "licites": [
+    "Proposition : qualifier cette alerte non fondée (carte à votre décision).",
+    "Le dossier ne permet pas d'établir l'origine des fonds (IDE-Q3 vide).",
+    "Trois signaux convergent vers le scénario SC_STRUCT (R80).",
+    "Proposition : aiguillage EDD — justification : exposition PEP confirmée.",
+    "La règle R66 prévoit un aiguillage EDD dans ce cas de figure.",
+    "Le visa CO_SR de la section AML est en attente depuis 12 jours.",
+    "Ceci ne constitue pas un avis juridique ; la CDB 20 art. 46 encadre ce point.",
+    "Deux options s'offrent au décideur : qualification fondée ou clarification.",
+    "Le score CPSI du client est 72 (bande HIGH), porté par hit_screening.",
+    "Proposition : ajustement du paramètre half_life_jours à 90 (impact simulé)."
+  ],
+  "prescriptifs": [
+    "Vous devriez classer cette alerte comme non fondée.",
+    "Vous devez ouvrir un risk case immédiatement.",
+    "Il faut classer ce dossier sans attendre.",
+    "Je vous recommande de rejeter cette proposition.",
+    "Je recommande de passer ce client en EDD dès aujourd'hui.",
+    "Classez cette alerte en faux positif.",
+    "Approuvez la validation finale du dossier.",
+    "Rejetez cette communication MROS, elle est infondée.",
+    "Il est impératif de clôturer la relation.",
+    "Il faut qualifier ce signal avant midi."
+  ]
+}

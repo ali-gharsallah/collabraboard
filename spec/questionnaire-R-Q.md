@@ -234,3 +234,27 @@ avec ses scénarios, avant implémentation.*
                 J+n (défaut 30 ; déclencheur `coc_haute`
                 tracé — RV-04/CC-04).
   ------------- ----------------------------------------- ----------------------
+
+14b. Paramètres tenant — Olivia v1.1 comportement (R258/A.7, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R258/A.2**  `oliviaPersona` {version, texte} — gabarit Olivia
+                de persona VERSIONNÉ à date (défaut =
+                artefact livré, version journalisée sur
+                chaque OUT — le rejeu restitue la version
+                de l'époque, OL-23).
+
+  **R258/A.2**  `oliviaReponseMaxMots` — longueur          Olivia
+                contractuelle (défaut 300 ; directive du
+                gabarit — la coupe dure serait une
+                altération de sortie, écart noté).
+
+  **R258/A.3**  `oliviaLanguesActives` / `oliviaLangueDefaut` Olivia
+                (défauts {FR,DE,EN} / FR). Langue inactive
+                ⇒ défaut + excuse contractuelle dans la
+                langue demandée (artefact livré, OL-26).
+
+  **R258/A.4**  `oliviaFenetreTours` — fenêtre glissante   Olivia
+                du prompt (défaut 10 couples IN/OUT) ;
+                le journal garde TOUT (OL-27).
+  ------------- ----------------------------------------- ----------------------

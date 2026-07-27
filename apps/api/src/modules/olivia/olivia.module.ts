@@ -30,12 +30,31 @@ type Ctx = { tenantId: string; userId: string; role: string };
 // Port fournisseur (R253) : l'unique voie vers l'extérieur. La version du modèle est celle
 // RENVOYÉE par le fournisseur, jamais supposée.
 export type Citation = { type: string; ref: string; assertion: string; valide?: boolean };
-export type PortOlivia = { repondre(prompt: string): Promise<{ texte: string; modelVersion: string; citations?: Citation[] }> };
+export type PortOlivia = { repondre(prompt: string): Promise<{ texte: string; modelVersion: string; citations?: Citation[]; interrompu?: boolean }> };
 // R256 : « REGLE doit exister au catalogue » — borne haute du catalogue ratifié (à incrémenter
 // avec chaque amendement ; R259-R266 = Olivia v2 ratifiée).
 const CATALOGUE_MAX_REGLE = 271;   // R256 — borne du catalogue : R267-R271 (offboarding) ratifiés 2026-07-27
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+// ═══ R258 — le comportement est un CONTRAT : détecteurs DÉTERMINISTES sur lexiques LIVRÉS ═══
+const G: any = GABARITS_LIVRES;
+function detecterLangue(texte: string): string {
+  const t = ` ${texte.toLowerCase()} `;
+  const marque = (mots: string[]) => mots.reduce((n, m) => n + (t.includes(` ${m} `) ? 1 : 0), 0);
+  const scores: [string, number][] = [
+    ["DE", marque(["der", "die", "das", "und", "ist", "nicht", "welche", "bitte", "für", "wie"])],
+    ["EN", marque(["the", "is", "what", "which", "please", "and", "not", "for", "does"])],
+    ["IT", marque(["che", "di", "il", "per", "sono", "quale", "non", "come", "della"])],
+  ];
+  scores.sort((a, b) => b[1] - a[1]);
+  return scores[0][1] > 0 ? scores[0][0] : "FR";
+}
+const estHorsPerimetre = (texte: string) =>
+  (G.horsPerimetre as string[]).some((m) => texte.toLowerCase().includes(m));
+const detecterInjection = (contenu: string) =>
+  (G.injectionMarqueurs as string[]).find((m) => contenu.toLowerCase().includes(m)) ?? null;
+const detecterRecoProse = (texte: string) =>
+  (G.recoProse.prescriptifs as string[]).some((m) => texte.toLowerCase().includes(m));
 const CONVERSER_C1 = ["RM", "ARM", "CO", "CO_SR", "BRM", "DIR"];          // matrice B.3 (Direction→DIR)
 const CONVERSER_C2 = ["RM", "ARM", "CO", "CO_SR"];                        // matrice B.3
 const CONVERSER_C3 = ["CO", "CO_SR"];                                     // matrice B.3 — pré-analyse alerte/risk case
@@ -55,10 +74,19 @@ const CIBLES_PROPOSITION = ["ALERTE", "KYC_FILE", "PARAM"];
 function fakePort(): PortOlivia {
   return {
     async repondre(prompt: string) {
-      (globalThis as any).__oliviaFakeCalls = ((globalThis as any).__oliviaFakeCalls ?? 0) + 1;   // compteur de test (OL-08)
-      if (prompt.includes("TIMEOUT_TEST")) await new Promise((r) => setTimeout(r, 60_000).unref());
+      (globalThis as any).__oliviaFakeCalls = ((globalThis as any).__oliviaFakeCalls ?? 0) + 1;   // compteur de test (OL-08/OL-32)
+      (globalThis as any).__oliviaLastPrompt = prompt;                                            // inspection de la fenêtre (OL-27)
+      // Les marqueurs de test ne valent que pour la QUESTION COURANTE — la fenêtre multi-tour
+      // (v1.1/A.4) rejoue les tours passés dans le prompt, leurs marqueurs ne doivent pas re-agir.
+      const question = prompt.split(/Question:|Demande:/).pop() ?? prompt;
+      if (question.includes("TIMEOUT_TEST")) await new Promise((r) => setTimeout(r, 60_000).unref());
+      if (question.includes("STREAM_INTERROMPU_TEST"))                                            // OL-31 : coupure simulée à 40 %
+        return { texte: "Début de réponse coupée à 40 % —", modelVersion: "fake-1.0", interrompu: true };
+      if (question.includes("RECO_PROSE_TEST"))                                                   // OL-24 : prescriptif, même après correctif
+        return { texte: "Vous devriez classer cette alerte comme non fondée immédiatement.", modelVersion: "fake-1.0",
+          citations: [{ type: "REGLE", ref: "R80", assertion: "seuil" }] };
       // Citations déterministes pilotées par le test : marqueurs CITE_TEST:<type>:<ref> dans la question.
-      const citations = [...prompt.matchAll(/CITE_TEST:([A-Z_]+):([\w-]+)/g)]
+      const citations = [...question.matchAll(/CITE_TEST:([A-Z_]+):([\w-]+)/g)]
         .map((m) => ({ type: m[1], ref: m[2], assertion: "assertion de test" }));
       return { texte: `Réponse déterministe de test (${sha(prompt).slice(0, 8)})`, modelVersion: "fake-1.0",
         ...(citations.length ? { citations } : {}) };
@@ -294,7 +322,17 @@ export class OliviaService {
     const conv = await this.prisma.oliviaConversation.findFirst({ where: { id: conversationId, tenantId: ctx.tenantId } });
     if (!conv) throw new NotFoundException("Conversation introuvable");   // OL-10 : cross-tenant = 404
     if (conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire converse");
-    if (conv.statut !== "OUVERTE") throw new BadRequestException("Conversation fermée");
+    // OL-30 (R258/A.4) : le rôle est FIGÉ à la création — s'il a changé, la conversation FERME
+    // automatiquement (motif tracé) : pas de conversation qui survit à son périmètre.
+    if (conv.statut === "OUVERTE" && conv.roleCode !== ctx.role) {
+      await this.prisma.$transaction(async (tx: any) => {
+        await tx.oliviaConversation.update({ where: { id: conv.id }, data: { statut: "FERMEE" } });
+        await this.emit(tx, ctx.tenantId, "OLIVIA_CONVERSATION_FERMEE", conv.id,
+          { motif: "rôle modifié", roleFige: conv.roleCode, roleCourant: ctx.role });
+      });
+      throw new ConflictException("OLIVIA_CONVERSATION_FERMEE: rôle modifié — la conversation ne survit pas à son périmètre");
+    }
+    if (conv.statut !== "OUVERTE") throw new ConflictException("OLIVIA_CONVERSATION_FERMEE: conversation fermée");
 
     // IN journalisé d'abord (append-only chaîné)
     const msgIn = await this.prisma.$transaction(async (tx: any) => {
@@ -306,22 +344,71 @@ export class OliviaService {
       return m;
     });
 
+    // R258/A.3 : la langue SUIT le message si active ; sinon défaut + excuse contractuelle (OL-25/26)
+    const languesActives: string[] = s.oliviaLanguesActives ?? ["FR", "DE", "EN"];
+    const langueDefaut: string = s.oliviaLangueDefaut ?? "FR";
+    const langueDemandee = detecterLangue(dto.texte);
+    const langue = languesActives.includes(langueDemandee) ? langueDemandee : langueDefaut;
+    const personaVersion: string = s.oliviaPersona?.version ?? (G.version as string);
+    // OL-32 (A.6) : hors périmètre = refus CONTRACTUEL en 1 phrase — ZÉRO expansion de contexte,
+    // ZÉRO appel fournisseur ; l'échange est journalisé normalement.
+    if (estHorsPerimetre(dto.texte)) {
+      const refus = (G.refusHorsPerimetre[langue] ?? G.refusHorsPerimetre.FR) as string;
+      const msgRefus = await this.prisma.$transaction(async (tx: any) => {
+        const { seq, hash } = await this.dernierHash(tx, conv.id);
+        const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
+          seq, direction: "OUT", texte: refus, provider, model, personaVersion, langue,
+          estSource: false, citations: [], contexteObjets: [], statutStream: "COMPLET",
+          prevHash: hash, recordHash: this.chain(hash, { seq, direction: "OUT", texte: refus }) } });
+        await this.emit(tx, ctx.tenantId, "OLIVIA_MESSAGE_OUT", conv.id, { messageId: m.id, seq, horsPerimetre: true });
+        return m;
+      });
+      return { conversationId: conv.id, seq: msgRefus.seq, messageId: msgRefus.id, texte: refus,
+        provider, model, langue, personaVersion, estSource: false, citations: [] as Citation[],
+        contexteObjets: [], contexteEmpreinte: null, contextePartiel: null, horsPerimetre: true };
+    }
+
     // R255 : le contexte objet est re-résolu à CHAQUE tour (B.5) — borne AVANT l'appel fournisseur.
     const cx = await this.construireContexte(ctx, { capacite: conv.capacite, ancrageId: conv.ancrageId }, s, (dto as any).refs ?? []);
+    // OL-33 (A.6) : le contenu du contexte est une DONNÉE, jamais une instruction — une injection
+    // détectée est TRACÉE (info SO), jamais bloquante pour le dossier (R39).
+    const marqueurInjection = detecterInjection(JSON.stringify(cx.contenu));
+    if (marqueurInjection) await this.prisma.$transaction(async (tx: any) =>
+      this.emit(tx, ctx.tenantId, "OLIVIA_INJECTION_SUSPECTEE", conv.id, { marqueur: marqueurInjection, seq: msgIn.seq }));
     // Gabarit versionné PAR CAPACITÉ (paramètre tenant R68). Le défaut est l'artefact LIVRÉ
     // `olivia-gabarits.default.json` (B.11.6 : zéro texte de persona en dur dans le code — grep CI).
-    const gabarit = s.oliviaPromptTemplate?.[conv.capacite]
-      ?? (GABARITS_LIVRES as Record<string, string>)[conv.capacite] ?? (GABARITS_LIVRES as any).C1;
-    const prompt = gabarit.replace("{contexte}", JSON.stringify(cx.contenu)).replace("{question}", dto.texte);
+    const gabarit: string = s.oliviaPromptTemplate?.[conv.capacite]
+      ?? (G as Record<string, any>)[conv.capacite] ?? (G as any).C1;
+    // R258/A.4 (OL-27) : fenêtre de tours GLISSANTE — seuls les N derniers couples IN/OUT entrent
+    // dans le prompt ; le JOURNAL, lui, garde tout (rien n'est perdu, tout se rejoue).
+    const fenetre = (s.oliviaFenetreTours ?? 10) * 2;
+    const anciens = await this.prisma.oliviaMessage.findMany({
+      where: { conversationId: conv.id, seq: { lt: msgIn.seq } }, orderBy: { seq: "desc" }, take: fenetre });
+    const historique = anciens.reverse().map((m: any) => `${m.direction}: ${m.texte}`).join("\n");
+    const persona: string = s.oliviaPersona?.texte ?? (G.persona as string);   // A.2 — gabarit LIVRÉ, versionné
+    const maxMots = s.oliviaReponseMaxMots ?? 300;                          // A.2 : longueur contractuelle
+    const prompt = [persona, `Réponds en ${langue}, en ${maxMots} mots au plus ; si la réponse complète dépasse, termine par « Souhaitez-vous le détail sur … ? ».`,
+      historique ? `Historique (fenêtre glissante):\n${historique}` : "",
+      gabarit.replace("{contexte}", JSON.stringify(cx.contenu)).replace("{question}", dto.texte)]
+      .filter(Boolean).join("\n\n");
 
     const t0 = Date.now();
-    let sortie: { texte: string; modelVersion: string; citations?: Citation[] } | null = null; let echec: string | null = null;
-    try {
-      sortie = await Promise.race([
-        port.repondre(prompt),
-        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs).unref()),
-      ]);
-    } catch (e) { echec = (e as Error).message; }
+    const avecTimeout = (pr: Promise<any>) => Promise.race([pr,
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs).unref())]);
+    let sortie: { texte: string; modelVersion: string; citations?: Citation[]; interrompu?: boolean } | null = null;
+    let echec: string | null = null; let conforme = true;
+    try { sortie = await avecTimeout(port.repondre(prompt)); }
+    catch (e) { echec = (e as Error).message; }
+    // OL-24 (R258/A.2) : une recommandation EN PROSE (C3/C4) est renvoyée AU GABARIT une fois
+    // avec le correctif contractuel ; si elle persiste, la sortie est marquée NON CONFORME
+    // (et ne sera jamais proposable).
+    if (sortie && !sortie.interrompu && (conv.capacite === "C3" || conv.capacite === "C4")
+        && detecterRecoProse(sortie.texte)) {
+      try {
+        const reprise = await avecTimeout(port.repondre(`${prompt}\n\n${G.recoProse.correctif}`));
+        if (reprise && !detecterRecoProse(reprise.texte)) sortie = reprise; else conforme = false;
+      } catch { conforme = false; }
+    }
     const latence = Date.now() - t0;
 
     // R256 : vérification des citations sur la sortie COMPLÈTE — chaque ref doit exister DANS le
@@ -334,13 +421,19 @@ export class OliviaService {
         : idsContexte.has(c.ref) }));
     const estSource = citations.some((c) => c.valide);
 
-    // OUT journalisé dans TOUS les cas (OL-04 : « un OUT d'erreur est aussi un événement », seq consommé).
+    // OUT journalisé dans TOUS les cas (OL-04 : « un OUT d'erreur est aussi un événement », seq
+    // consommé). Le journal ne contient JAMAIS de fragments : un stream interrompu est journalisé
+    // COMPLET-avec-drapeau (statut_stream=INTERROMPU, OL-31) — « régénérer » = nouveau tour/seq.
+    const excuse = sortie && langueDemandee !== langue
+      ? `${(G.excuseLangueInactive[langueDemandee] ?? G.excuseLangueInactive.FR) as string}\n\n` : "";   // OL-26
+    const statutStream = sortie ? (sortie.interrompu ? "INTERROMPU" : "COMPLET") : null;
     const msgOut = await this.prisma.$transaction(async (tx: any) => {
       const { seq, hash } = await this.dernierHash(tx, conv.id);
-      const texte = sortie ? sortie.texte : `ÉCHEC FOURNISSEUR: ${echec}`;
+      const texte = sortie ? excuse + sortie.texte : `ÉCHEC FOURNISSEUR: ${echec}`;
       const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
         seq, direction: "OUT", texte, provider, model,
         modelVersion: sortie?.modelVersion ?? null, latenceMs: latence,
+        personaVersion, langue, statutStream, conforme,                    // R258 : le CONTRAT journalisé (OL-23/25/31/24)
         estSource, citations: citations as any,                            // R256 : vérifiées, stockées avec leur verdict
         contexteEmpreinte: cx.empreinte, contexteObjets: cx.objets,        // R255 : la LISTE, prouvable + HMAC
         prevHash: hash, recordHash: this.chain(hash, { seq, direction: "OUT", texte, provider, model, empreinte: cx.empreinte }) } });
@@ -351,6 +444,7 @@ export class OliviaService {
     if (echec) throw new BadGatewayException(`OLIVIA_PROVIDER_DOWN: ${echec}`);
     return { conversationId: conv.id, seq: msgOut.seq, messageId: msgOut.id, texte: msgOut.texte,
       provider, model, modelVersion: msgOut.modelVersion, latenceMs: latence,
+      personaVersion, langue, statutStream, conforme,
       estSource, citations,
       contexteEmpreinte: cx.empreinte, contexteObjets: cx.objets,
       contextePartiel: cx.exclus > 0 ? `Réponse fondée sur un contexte partiel : ${cx.exclus} objet(s) exclu(s)` : null };
@@ -388,6 +482,7 @@ export class OliviaService {
     return { conversationId: id, asOf: asOf ?? null, chaineVerifiee: true,
       messages: messages.map((m: any) => ({ seq: m.seq, direction: m.direction, texte: m.texte,
         provider: m.provider, model: m.model, modelVersion: m.modelVersion,
+        personaVersion: m.personaVersion, langue: m.langue, statutStream: m.statutStream, conforme: m.conforme,   // R258 : le contrat d'époque
         contexteEmpreinte: m.contexteEmpreinte, contexteObjets: m.contexteObjets, citations: m.citations, at: m.createdAt })),
       propositions };
   }
@@ -459,6 +554,8 @@ export class OliviaService {
       throw new BadRequestException("Seules les sorties C3/C4 sont proposables (B.7)");
     if (!m.estSource)                                                      // OL-12 — contrainte SERVEUR, pas UI
       throw new UnprocessableEntityException("OLIVIA_UNSOURCED_PROPOSAL: sortie non sourcée — aucune proposition (R256)");
+    if (m.conforme === false)                                              // OL-24 — recommandation en prose non corrigée
+      throw new UnprocessableEntityException("OLIVIA_NON_CONFORME: recommandation en prose non corrigée — sortie non proposable (R258/A.2)");
     const { etat } = await this.etatCible(ctx, dto.cibleType, dto.cibleId);
     const p = await this.prisma.$transaction(async (tx: any) => {
       const cree = await tx.oliviaProposal.create({ data: { tenantId: ctx.tenantId, messageId: m.id,
