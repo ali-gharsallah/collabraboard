@@ -6,6 +6,8 @@
  * graphe DI ratifié intact). `client` = un `tx` de transaction interactive OU `this.prisma`.
  * `tenantId` peut être `null` (événements vendeur cross-tenant, R177). Comportement identique.
  */
-export function emitEvent(client: any, tenantId: string | null, type: string, aggregateId: string, payload: any) {
+import { DbClient } from "./tx";
+
+export function emitEvent(client: DbClient, tenantId: string | null, type: string, aggregateId: string, payload: any) {
   return client.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
 }

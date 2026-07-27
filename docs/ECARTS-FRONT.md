@@ -147,3 +147,9 @@ Fixes de l'audit `docs/AUDIT-ARCHITECTURE.md`, appliqués behavior-preserving (s
   aiguillage ; Vitest 13/13). **Reste à faire (suivi)** : virtualisation des tables (react-window) au-delà
   d'un seuil de lignes — valeur marginale désormais faible, les listes serveur étant bornées par A4
   (défaut 200) ; sera fait au fil des écrans touchés (règle boy-scout, comme la migration `theme/tokens`).
+
+- **A3 — typage `tx` (`common/tx.ts`).** Alias cible `Tx = Prisma.TransactionClient` / `DbClient =
+  TransactionClient | PrismaService`. Appliqué aux 4 helpers partagés (A2) et aux 3 modules de la session
+  (businesstrip, tasks, nba) : `$transaction(async (tx: Tx) => …)`. Un seul cast nécessaire (champ Json
+  `trip.clients`). **Reste (suivi, ratifié incrémental)** : propager `Tx` aux ~30 autres services, fichier
+  par fichier, sans toucher la logique. Comportement identique — la suite verte le prouve.

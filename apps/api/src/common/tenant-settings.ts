@@ -1,4 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
+import { DbClient } from "./tx";
 
 /**
  * Lecture des `settings` du tenant — SOURCE UNIQUE (A2, audit-architecture). Le motif
@@ -8,7 +9,7 @@ import { NotFoundException } from "@nestjs/common";
  * ou `this.prisma`. `orThrow` reproduit à l'identique la variante levant l'exception. Comportement
  * identique — aucune règle changée (le contenu de `settings` reste le référentiel gouverné R125-128).
  */
-export async function loadSettings(client: any, tenantId: string, orThrow = false): Promise<any> {
+export async function loadSettings(client: DbClient, tenantId: string, orThrow = false): Promise<any> {
   const t = await client.tenant.findFirst({ where: { id: tenantId } });
   if (!t && orThrow) throw new NotFoundException("Tenant introuvable");
   return (t?.settings as any) ?? {};

@@ -1,5 +1,8 @@
 # AUDIT ARCHITECTURE & SCALABILITÉ — O-Live (apps/api + apps/web)
 
+> **Statut d'application (branche `claude/audit-architecture`)** — A1 ✅ (PrismaModule @Global) · A5 ✅ (N+1 BusinessTrip batché) · A4 ✅ (pagination keyset bornée) · A2 ✅ (sources uniques emit/settings/visibilité) · A6 ✅ (code-splitting 252→152 KB) · A3 ◻︎ amorcé (alias `Tx` + 4 helpers + 3 modules ; sweep incrémental en cours). Tous behavior-preserving : e2e 85/85, harness 425/425, Vitest 13/13, tsc 0, lint 0.**
+
+
 **Date : 2026-07-27.** Audit **en lecture seule** — aucune fonctionnalité modifiée, aucun refactor
 appliqué. Réalisé dans l'esprit des cinq personas d'ingénierie fournis (reverse-engineering,
 debug root-cause, performance, clean-architecture). **Portée & garde-fou** : le backend est un

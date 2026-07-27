@@ -6,8 +6,10 @@
  * leurs `settings` déjà chargés. Retourne `null` = voit-tout (aucune restriction), sinon l'ensemble
  * autorisé (soi + équipe). Comportement identique — le filtrage/narrowing reste à l'appelant.
  */
+import { DbClient } from "./tx";
+
 export async function teamScope(
-  client: any, tenantId: string, role: string, userId: string, settings: any, voitToutRoles: string[],
+  client: DbClient, tenantId: string, role: string, userId: string, settings: any, voitToutRoles: string[],
 ): Promise<Set<string> | null> {
   if (voitToutRoles.includes(role)) return null;                         // voit-tout : aucun périmètre
   const equipes = (settings.workloadResponsables ?? [])

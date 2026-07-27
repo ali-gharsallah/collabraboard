@@ -5,6 +5,7 @@ import { TasksModule } from "../tasks/tasks.module";
 import { TasksService } from "../tasks/tasks.module";
 import { applyKeyset, PageParams } from "../../common/pagination";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * MOD Décision NBA (R243→R246, lot 53). Écrit spec-first depuis le Gherkin NB-01..06, sur ratification
@@ -22,7 +23,7 @@ const HUMAINS = ["RM", "ARM", "CO", "CO_SR", "MLRO", "CF", "BRM", "DIR", "ADMIN"
 export class NbaService {
   constructor(private prisma: PrismaService, private audit: AuditService, private tasks: TasksService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async ttl(ctx: Ctx) {
@@ -70,7 +71,7 @@ export class NbaService {
     const decision = dto?.decision;
     if (!["ACCEPT", "ADJUST", "REJECT"].includes(decision)) throw new BadRequestException("decision ∈ {ACCEPT,ADJUST,REJECT}");
     const { s } = await this.ttl(ctx);
-    const created = await this.prisma.$transaction(async (tx: any) => {
+    const created = await this.prisma.$transaction(async (tx: Tx) => {
       const n = await tx.nbaSuggestion.findFirst({ where: { id, tenantId: ctx.tenantId } });
       if (!n) throw new NotFoundException("Suggestion introuvable");
       if (n.statut !== "PROPOSED") throw new ConflictException("NBA_ALREADY_DECIDED");             // R244 : une seule fois

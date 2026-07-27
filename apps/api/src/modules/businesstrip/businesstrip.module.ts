@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { applyKeyset, PageParams } from "../../common/pagination";
 import { emitEvent } from "../../common/domain-event";
 import { loadSettings } from "../../common/tenant-settings";
+import { Tx } from "../../common/tx";
 
 /**
  * MOD-75 Business Trip (R222→R230, lot 51). Écrit spec-first depuis le Gherkin BT-01..10, sur
@@ -22,10 +23,10 @@ type RefEntry = { jurisdiction: string; activite: string; verdict: string; depui
 export class BusinessTripService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async settings(tx: any, ctx: Ctx) {
+  private async settings(tx: Tx, ctx: Ctx) {
     return loadSettings(tx, ctx.tenantId, true);
   }
 
@@ -50,7 +51,7 @@ export class BusinessTripService {
   }
 
   // Calcule avis + signaux + visas et passe le voyage en PENDING_APPROVAL (R223/R224/R228/R225).
-  private async instruire(tx: any, ctx: Ctx, trip: any) {
+  private async instruire(tx: Tx, ctx: Ctx, trip: any) {
     const s = await this.settings(tx, ctx);
     const destinations: string[] = trip.destinations ?? [];
     const clients: string[] = trip.clients ?? [];
@@ -93,7 +94,7 @@ export class BusinessTripService {
 
   // ── R222 : soumission (DRAFT → PENDING_APPROVAL), acte tracé ──
   async soumettre(ctx: Ctx, tripId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "DRAFT") throw new BadRequestException("R222 : seul un DRAFT se soumet");
@@ -106,7 +107,7 @@ export class BusinessTripService {
   // ── R225/R13/R224 : viser (approbation) ──
   async viser(ctx: Ctx, tripId: string, role: string) {
     if (!role) throw new BadRequestException("role requis");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "PENDING_APPROVAL") throw new BadRequestException("Le voyage n'est pas en attente d'approbation");
@@ -128,7 +129,7 @@ export class BusinessTripService {
 
   // ── R230 : révision chaînée après approbation (V2 en PENDING_APPROVAL, V1 intacte) ──
   async reviser(ctx: Ctx, tripId: string, dto: { destinations?: string[]; clients?: string[] }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "APPROVED") throw new BadRequestException("R230 : la révision suit une approbation");
@@ -146,7 +147,7 @@ export class BusinessTripService {
 
   // ── R226/R39 : mesurer les contact reports manquants (jamais de blocage) ──
   async mesurerContactReports(ctx: Ctx, tripId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       const manquants: string[] = [];
@@ -155,7 +156,7 @@ export class BusinessTripService {
         if (n === 0) manquants.push(clientId);
       }
       if (manquants.length) await this.emit(tx, ctx.tenantId, "trip.contactreports.manquants", tripId, { manquants });
-      return { visites: (trip.clients ?? []).length, manquants, bloque: false };        // R39 : signal, pas coercition
+      return { visites: ((trip.clients ?? []) as string[]).length, manquants, bloque: false };  // R39 : signal, pas coercition
     });
   }
 
