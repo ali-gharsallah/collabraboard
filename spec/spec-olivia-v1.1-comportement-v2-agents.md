@@ -157,7 +157,8 @@ coupe serveur altérerait la sortie) ; OL-30 juge le rôle PORTÉ PAR LE JETON c
 
 # PARTIE B — OLIVIA v2 : ARCHITECTURE AGENTIQUE (R259–R266)
 
-**RATIFIÉE – CODE GELÉ (déclencheur : décision Ali / demande prospect).** Cette partie fixe le contrat pour que
+**RATIFIÉE – DÉGELÉE le 2026-07-27 (déclencheur « décision Ali » ACTIONNÉ — dégel décidé par Ali,
+prérequis vérifié : OL-01..34 verts sur la branche, 33/33).** Cette partie fixe le contrat pour que
 v1 soit construit compatible (mêmes tables de journal, même ContextBuilder, mêmes
 propositions) — aucun code v2 avant le déclencheur (demande prospect ou décision Ali).
 
@@ -412,6 +413,13 @@ réutilisation, pas concurrence. Toute divergence entre le run v2 et la pré-rev
 3. v1.1 (R258, OL-23..34) : paramètres A.7 au R-Q ; langues ; multi-tour ; streaming SSE ;
    refus & limites + détecteur « recommandation en prose » avec corpus 20 cas en fixtures.
 4. Partie B : AUCUN code (runs, agents, outils) avant déclencheur.
+   → **Déclencheur actionné le 2026-07-27 (décision Ali)** — ordre de livraison ratifié :
+   R264 (outils) → R259 (registre) → R260 (journal) → R262 (budgets) → R261 (scope) →
+   R263 (portes) → mission PREREVUE_DOSSIER → R265 (replay) → R266 (écran) → mission
+   ANALYSE_CORRELATION → snapshot-compare SW-14 automatisé + paramètres B.5 au R-Q.
+   (Le message de dégel numérotait R260–R267/AG-xx : mapping vers la numérotation
+   RATIFIÉE ci-dessus = décalage uniforme −1 et famille AG→SW — R267 est pris par
+   l'Offboarding, AG-01..06 par la pré-revue IA.)
 
 Interdits inchangés : texte de persona en dur (grep CI) ; traitement du contenu d'un objet
 métier comme instruction ; journalisation de fragments de stream. Tout écart repo vs spec :

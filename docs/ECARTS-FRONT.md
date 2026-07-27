@@ -325,3 +325,23 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
 - Mesure transport (30 appels, journal vide) : 32,3 ms → 0,2 ms/appel (×138) ; fat-cpsi 15,1 s → 13,4 s.
 - Prouvé iso-fonctionnel : Python 18/18, e2e 26 suites/190 (PC-08 : CPSI_DIR invalide ⇒ 503 typé,
   worker invalidé/respawné), harnais 425/425, tsc 0, lint 0.
+
+## OLIVIA v2 — ÉTAPE 0 DU DÉGEL (2026-07-27, décision Ali)
+
+- **0a Numérotation** : le message de dégel citait R260–R267 / tests AG-xx. COLLISION avec
+  l'existant (R267 = Offboarding R267-R271 livré ; AG-01..06 = pré-revue IA R121-R124 livrée).
+  Mapping appliqué (STOP soumis à ratification) : décalage uniforme −1 vers la numérotation
+  RATIFIÉE de l'en-tête du canon (v2 = R259–R266) et famille AG→SW (SW-01..18).
+- **0b** : mention « CODE GELÉ » retirée de la Partie B, événement daté dans le canon.
+- **0c Compatibilité B.2 ↔ v1 (divergence signalée AVANT code)** :
+  - `olivia_proposals` : RÉUTILISABLE TEL QUEL — `messageId` (la sortie qui fonde) pointera le
+    message-livrable du run ; aucun changement de schéma.
+  - `olivia_messages` : réutilisable pour le livrable (`olivia_runs.livrable_message_id`) À UNE
+    CONDITION : `conversation_id` est NOT NULL en v1 alors qu'un run n'a PAS de conversation.
+    Résolution proposée (non destructive, aucune donnée altérée) : DROP NOT NULL sur
+    `conversation_id` ; l'unicité `(conversation_id, seq)` reste inerte pour les lignes NULL,
+    le chaînage record_hash du livrable s'ancre sur le journal du run. AUCUNE migration
+    destructive requise.
+  - `olivia_runs.ancrage_id UUID` (B.2) : compatible — les missions v2 n'ancrent que
+    KYC_FILE/RISK_CASE (uuid) ; l'élargissement text de v1 ne concernait que les
+    conversations C4/PARAM.
