@@ -87,7 +87,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 | Niveau | Résultat | Commande |
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (… + V12 3 + V13 8 + V14 10) | **68 / 68** | `pnpm --filter api run test:e2e` |
+| e2e Postgres réel (… + V13 8 + V14 10 + A3 PT-01 4) | **72 / 72** | `pnpm --filter api run test:e2e` |
 | Front (Vitest — FE-CORE 7 + composants WFI/Ports/NBA/FE-05/FE-FORM/FE-TRIP 6) | **13 / 13** | `pnpm --filter web run test:unit` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |

@@ -1,0 +1,11 @@
+    PT-01a PASS — filtres status/type/subjectId, subjectRef=98929c2a-93b6-4e89-8c6c-578fd6e93eab exposé
+    PT-01b PASS — détail (steps+visas R15+subjectRef+currentStep) ; asOf reconstruit l'état d'alors
+    PT-01c PASS — timeline (type+at+acteur), asOf filtre les événements
+    PT-01d PASS — aucun endpoint d'écriture sur les instances (404)
+PASS test/e2e/fat-vague15.e2e-spec.ts
+    ✓ PT-01a [list] filtres status/type/subjectId ; subjectRef exposé ; la porte relaie (54 ms)
+    ✓ PT-01b [detail] steps + visas R15 + currentStep + subjectRef ; asOf rejoue l'état d'alors (R48) (28 ms)
+    ✓ PT-01c [events] acteur lu dans le payload moteur + horodatage + type ; asOf filtre (R48) (13 ms)
+    ✓ PT-01d [invariant] AUCUN endpoint d'écriture sur les instances (A3.2) (6 ms)
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total

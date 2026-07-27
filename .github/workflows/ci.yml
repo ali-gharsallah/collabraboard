@@ -88,7 +88,7 @@ jobs:
         run: pnpm run test:rules
 
       # ── RUNBOOK §2 · 4 — e2e Postgres réel (6/6) ─────────────────────────────
-      - name: "4 · e2e API réelle + Postgres (attendu 68/68 : kyc-rules 6 + … + V10 2 + V12 3 + V13 8 + V14 10)"
+      - name: "4 · e2e API réelle + Postgres (attendu 72/72 : kyc-rules 6 + … + V13 8 + V14 10 + A3/PT-01 4)"
         working-directory: apps/api
         run: pnpm run test:e2e
 

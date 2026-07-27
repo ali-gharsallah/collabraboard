@@ -31,28 +31,36 @@ describe("FE-05 — écran sans service ratifié : seed lecture seule (Tâches)"
   });
 });
 
-describe("FE-WFI — Workflow Instances : liste → détail (visas R15) + timeline (FE-20/21)", () => {
-  it("liste, ouvre le détail, affiche steps, visa signé et timeline ordonnée", async () => {
+describe("FE-WFI — Workflow Instances : liste → détail (visas R15) + timeline acteur (FE-20/21) + rejeu asOf (FE-23)", () => {
+  it("ouvre le détail (steps, visa R15, timeline avec acteur), puis rejoue en lecture seule (asOf)", async () => {
     w.OLIVE_API_URL = "http://api.test";
     server.use(
       http.get("*/v1/workflow-instances/:id/events", () => HttpResponse.json([
-        { type: "kyc.created", at: "2026-07-01T10:00:00Z", payload: {} },
-        { type: "kyc.visa.signed", at: "2026-07-02T09:00:00Z", payload: {} },
+        { type: "kyc.created", at: "2026-07-01T10:00:00Z", acteur: null },
+        { type: "kyc.lock.acquired", at: "2026-07-02T09:00:00Z", acteur: "u-co" },
       ])),
-      http.get("*/v1/workflow-instances/:id", () => HttpResponse.json({
-        id: "i1", code: "WF-1", type: "KYC:CDD", status: "IN_PROGRESS", etapeCourante: "Collecte", revision: 1,
-        steps: [{ code: "IDENTITY", label: "Identité", ordre: 0 }],
-        visas: [{ section: "IDENTITY", roleRequis: "CO", statut: "SIGNED", signePar: "u-co", signeAt: "2026-07-02T09:00:00Z", verdict: "OK" }],
-      })),
+      http.get("*/v1/workflow-instances/:id", ({ request }) => {
+        const asOf = new URL(request.url).searchParams.get("asOf");
+        if (asOf) return HttpResponse.json({ id: "i1", code: "WF-1", type: "KYC:CDD", subjectRef: "c1", status: "EN_COURS",
+          currentStep: "EN_COURS", existeADate: true, lectureSeule: true, asOf, steps: [{ code: "IDENTITY", label: "Identité", ordre: 0 }], visas: [] });
+        return HttpResponse.json({ id: "i1", code: "WF-1", type: "KYC:CDD", subjectRef: "c1", status: "IN_PROGRESS", currentStep: "Collecte", revision: 1,
+          steps: [{ code: "IDENTITY", label: "Identité", ordre: 0 }],
+          visas: [{ section: "IDENTITY", roleRequis: "CO", statut: "SIGNED", signePar: "u-co", signeAt: "2026-07-02T09:00:00Z", verdict: "OK" }] });
+      }),
       http.get("*/v1/workflow-instances", () => HttpResponse.json([
-        { id: "i1", code: "WF-1", type: "KYC:CDD", clientId: "c1", status: "IN_PROGRESS", etapeCourante: "Collecte", visas: "1/2", revision: 1, majAt: "2026-07-01T10:00:00Z" },
+        { id: "i1", code: "WF-1", type: "KYC:CDD", subjectRef: "c1", status: "IN_PROGRESS", currentStep: "Collecte", visas: "1/2", revision: 1 },
       ])),
     );
     render(<WorkflowInstances/>);
     fireEvent.click(await screen.findByText("WF-1"));
-    expect(await screen.findByText(/Identité/)).toBeInTheDocument();          // step (section)
+    expect(await screen.findByText(/Identité/)).toBeInTheDocument();          // step
     expect(screen.getByText(/signé par u-co/)).toBeInTheDocument();           // visa R15 signataire
-    expect(screen.getByText("kyc.created")).toBeInTheDocument();              // timeline append-only
+    expect(screen.getByText("kyc.lock.acquired")).toBeInTheDocument();        // FE-20 : événement porteur d'acteur
+    expect(screen.getAllByText(/par u-co/).length).toBeGreaterThanOrEqual(2); // acteur affiché (visa + timeline)
+    // FE-23 : rejeu à date → lecture seule
+    fireEvent.change(screen.getByDisplayValue(""), { target: { value: "2026-06-15" } });
+    fireEvent.click(screen.getByRole("button", { name: /Rejouer/i }));
+    expect(await screen.findByText(/Vue historique — lecture seule/)).toBeInTheDocument();
   });
 });
 
