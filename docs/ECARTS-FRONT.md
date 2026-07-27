@@ -213,3 +213,27 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
 - **Partie 5** — exécutable dès ratification : dépendances vérifiées présentes (riskcases, gel MROS,
   port core banking, `KycFile.previousKycId`) ; l'état ACTIVE/CLOTUREE vivra dans
   `offboarding_files.statut` (le modèle `Client` n'a pas de champ statut — conforme au §5.2).
+
+## Écarts — canon DÉBLOQUANTS HOME (étape 0, 2026-07-27) — verdict complet en tête de `spec/canon-debloquants-home.md`
+
+- **Référence croisée (étape 0-d)** : les 3 écarts Home ci-dessus sont ADRESSÉS par ce canon —
+  **T7** (échéances de review) ← partie 1 (R272–R275, RV-01..08) · **T8** (cycle de vie CoC)
+  ← partie 2 (R276–R278, CC-01..08) · **HO-02** (licence surfacée) ← partie 3. Ils seront
+  SOLDÉS ici à la livraison verte de chaque partie, pas avant.
+- **Collision de famille `LC`** : LC-01..05 déjà pris par le corpus licence vendor
+  (`vendor-license.service.ts`, R177→R179). Renommage proposé **LC → LS** (Licence Servie,
+  libre) — validation requise.
+- **R279 requalifié en APPLICATION** (prévu par le canon lui-même) : DEUX services de licence
+  existent, codés et spécifiés, AUCUN branché — `LicenseService` (tenant, Ed25519 hors ligne,
+  `assertModule`) et `VendorLicenseService` (instance, DB append-only R179, LC-01..05). Aucune
+  route, aucun guard, `MODULE_INACTIF` nulle part. La partie 3 = endpoint + branchement sur
+  l'existant, AUCUNE règle nouvelle ; le numéro R279 n'est pas consommé. **Arbitrage résiduel :
+  laquelle des deux sources fait foi** (proposition : `VendorLicenseService`, DB + append-only ;
+  l'autre consignée en écart de doublon).
+- **STOP partie 2 (CoC)** : R276 copie matérialité/action depuis « COC_CONFIG EN VIGUEUR » —
+  or le store **COC_CONFIG n'existe pas** dans le repo (CoC = événement brut sur la personne ;
+  `coc_sensible` = simple poids dans le moteur CPSI Python, jamais émis depuis le CoC réel).
+  Inexécutable sans créer le store : extension de R276 ou canon COC_CONFIG séparé, à trancher.
+- 🟡 R273 « franchissement de bande CPSI à la hausse » : le déclencheur automatique
+  d'anticipation (consommateur d'événement CPSI) est à câbler — signalé. RV-04/CC-04
+  (anticipation par CoC Haute) ne se prouveront qu'à l'ouverture de la partie 2 (patron OL-07).

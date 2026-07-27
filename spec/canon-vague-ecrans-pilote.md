@@ -1,5 +1,11 @@
 # ═══ VERDICT ÉTAPE 0 (Claude Code, 2026-07-27) — canon reçu d'Ali, enregistré tel quel ci-dessous ═══
 
+**RATIFICATION (Ali, 2026-07-27)** : « OK BS ratifié, OK R267–R271 — partie 5 d'abord ».
+→ Famille bacs à sable = **BS** (BS-01..06, les scénarios ex-SB-01..06 de la partie 3 se
+lisent BS-01..06). Bloc Offboarding **R267–R271 RATIFIÉ** — partie 5 en exécution.
+Conséquence codée : `CATALOGUE_MAX_REGLE` 266 → 271 (R256). Les autres points d'arbitrage
+(portes P1/P2, dry-run P3, P4) restent OUVERTS.
+
 **a) Numérotation : R267–R271 LIBRES.** Grep exhaustif (`spec/ docs/ apps/ services/`) : aucune
 occurrence de R267..R271 après la renumérotation Olivia (v1 = R253–R257 · v1.1 = R258 ·
 v2 = R259–R266). Le bloc Offboarding peut garder **R267–R271 tel que proposé**.
