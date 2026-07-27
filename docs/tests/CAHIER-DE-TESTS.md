@@ -147,6 +147,17 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 **Vague 11 : 11/11 Vitest (7 lib FE-01..06 + 4 composants). Backend intact : e2e 47/47, harnais 425/425, baseline en sync.**
 FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed lecture seule, jamais de porte inventée. Un service dédié = amendement A2.
 
+## Vague 12 — Workflow Instances réel (FE-WFI)
+
+| Écran | ID test | Exigence | Ce qui est vérifié | Type | Route | Résultat |
+|---|---|---|---|---|---|---|
+| Workflow Instances | **FAT-WFI-01** | projection R171-173 | Liste des instances = dossiers KYC (code, type, statut, visas « signés/total ») | e2e/FAT | `GET /v1/workflow-instances` | ✅ PASS |
+| Workflow Instances | **FAT-WFI-02** | R15 / R13 | Détail : steps (sections) + visas ; visa signé porte son signataire (four-eyes respecté) | e2e/FAT | `GET /v1/workflow-instances/:id` | ✅ PASS |
+| Workflow Instances | **FAT-WFI-03** | FE-20 | Timeline append-only (DomainEvents), ordre serveur, contient `kyc.created` | e2e/FAT | `GET /:id/events` | ✅ PASS |
+| Workflow Instances | **FE-WFI** | R15 affichage | Liste → détail : steps, `<VisaBadge>` (signataire), timeline (composant) | Vitest+RTL+MSW | — | ✅ PASS |
+
+**Vague 12 : 3/3 FAT backend + composant FE-WFI. e2e 47 → 50, harnais 425/425, baseline en sync. Zéro invention — l'instance EST le dossier KYC ratifié.** WFI n'est plus FE-05 ; **Tâches** reste FE-05 (pas de service backlog).
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

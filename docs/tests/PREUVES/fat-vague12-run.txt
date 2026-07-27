@@ -1,0 +1,9 @@
+    FAT-WFI-01 PASS — instance KYC-2026-CH-0001-R1 projetée (type=KYC:SDD, statut=IN_PROGRESS, visas=0/1)
+    FAT-WFI-02 PASS — 2 steps, visa IDENTITY signé par b0495e86-6a85-4780-af9c-8a6ab6f4de97 (statut=SIGNED)
+    FAT-WFI-03 PASS — timeline 1 événements dans l'ordre (types: kyc.created)
+PASS test/e2e/fat-vague12.e2e-spec.ts
+    ✓ FAT-WFI-01 [CO] la liste des instances projette les dossiers KYC (code, type, statut, visas) (27 ms)
+    ✓ FAT-WFI-02 [CO] le détail expose steps (sections) + visas uniformes (R15) ; un visa signé porte son signataire (48 ms)
+    ✓ FAT-WFI-03 [CO] la timeline est fidèle à l'audit (DomainEvents de l'agrégat, ordre serveur — FE-20) (8 ms)
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total

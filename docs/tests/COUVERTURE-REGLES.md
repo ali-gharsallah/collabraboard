@@ -129,12 +129,22 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 | 57 | R167/R126 : déclarer un port au registre → CONFIGURED ; port inconnu → 404 (jamais fabriqué) | FAT-PORT-02 | e2e | ✅ |
 | 58 | FE-CORE : seed signalé, propagation session (JWT/headers), rejeu `asOf` (R48), erreurs non traduites | FE-01..04 | Vitest `api.test.ts` | ✅ |
 
-**Couverture des exigences Vague 10 : 3 / 3 (100 %).** Écarts (non couverts car non ratifiés — `docs/ECARTS-FRONT.md`) : FE-WFI, FE-TASK (gelés), décision NBA, R222..R238 (proposées).
+**Couverture des exigences Vague 10 : 3 / 3 (100 %).** Écarts (non couverts car non ratifiés — `docs/ECARTS-FRONT.md`) : FE-TASK (backlog), décision NBA, R222..R238 (proposées).
+
+## Exigences Vague 12 — Workflow Instances (FE-WFI, couverture FAT)
+
+| # | Exigence | FAT | Test technique | Statut |
+|---|---|---|---|---|
+| 59 | Projection du workflow gouverné (dossiers KYC) : liste des instances | FAT-WFI-01 | workflow-instances porte + e2e | ✅ |
+| 60 | R15/R13 : détail = steps + visas uniformes ; visa signé porte son signataire | FAT-WFI-02 | e2e (visa SIGNED, signePar) | ✅ |
+| 61 | FE-20 : timeline append-only (DomainEvents), ordre serveur | FAT-WFI-03 | e2e (`/:id/events`) | ✅ |
+
+**Couverture des exigences Vague 12 : 3 / 3 (100 %).** FE-WFI n'est plus FE-05 (câblé au canon KYC).
 
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2) + **11 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2 + V12 3) + **11 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

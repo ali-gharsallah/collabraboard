@@ -49,7 +49,8 @@ Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câb
 | ✅ **FAIT (Vague 9)** sbaml (Bac à sable AML) | `SandboxAml` (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | `POST /v1/aml/sandbox` |
 | ✅ **FAIT (Vague 10)** Ports (intégrations) | `Ports` (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | `GET /v1/ports`, `GET\|POST /v1/ports/:id/health` |
 | ✅ **FAIT (Vague 10)** NBA (Next Best Action) | `NextBestAction` (gestes R187 en lecture, cadre R44 ; décision non ratifiée → désactivée) | `GET /v1/crm/clients/:id/gestes` |
-| ⚠️ **FE-05 (Vague 11/A1)** Workflow Instances, Tâches | aucun service ratifié (workflow=définitions ; pas de backlog tâches) → écrans **seed lecture seule** avec bandeau « service backend non ratifié ». Service à venir = amendement A2. | — |
+| ✅ **FAIT (Vague 12)** Workflow Instances | `WorkflowInstances` **réel** — projection du workflow gouverné KYC (steps + visas R15 + timeline). `<VisaBadge>` composant unique. | `GET /v1/workflow-instances`, `/:id`, `/:id/events` |
+| ⚠️ **FE-05** Tâches | pas de service backlog ratifié (seul `workload.reassigner`) → écran **seed lecture seule**. Service à venir = amendement A2. | — |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
 ---
