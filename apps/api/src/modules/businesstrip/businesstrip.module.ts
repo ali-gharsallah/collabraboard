@@ -55,16 +55,28 @@ export class BusinessTripService {
     const clients: string[] = trip.clients ?? [];
     const advisories = this.avisA(s.tripCrossBorderReferentiel ?? [], destinations, new Date().toISOString().slice(0, 10));
     const signals: any[] = [];
-    // R224 : KYC des clients visités
+    // R224 : KYC des clients visités — un seul findMany batché (au lieu d'un findFirst par client, N+1).
+    const kycRows = clients.length
+      ? await tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, clientId: { in: clients } }, orderBy: { createdAt: "desc" } })
+      : [];
+    const kycLatest = new Map<string, any>();
+    for (const k of kycRows) if (!kycLatest.has(k.clientId)) kycLatest.set(k.clientId, k);   // desc ⇒ le premier vu = le plus récent
     for (const clientId of clients) {
-      const kyc = await tx.kycFile.findFirst({ where: { tenantId: ctx.tenantId, clientId }, orderBy: { createdAt: "desc" } });
+      const kyc = kycLatest.get(clientId);
       if (!kyc || kyc.status !== "VALIDATED")
         signals.push({ type: "KYC_NOT_APPROVED", severite: s.tripKycCheckSeverity ?? "INFORMATIF", detail: `client ${clientId} : KYC ${kyc?.status ?? "ABSENT"}` });
     }
-    // R228/R237 : certification requise, résolue depuis MOD-43 à la DATE DU VOYAGE
-    for (const req of (s.tripCertificationRequise ?? []) as { jurisdiction: string; code: string }[]) {
-      if (!destinations.includes(req.jurisdiction)) continue;
-      const certs = await tx.certification.findMany({ where: { tenantId: ctx.tenantId, userId: trip.travelerId, code: req.code } });
+    // R228/R237 : certification requise, résolue depuis MOD-43 à la DATE DU VOYAGE.
+    const reqsApplicables = ((s.tripCertificationRequise ?? []) as { jurisdiction: string; code: string }[])
+      .filter((req) => destinations.includes(req.jurisdiction));
+    const codes = [...new Set(reqsApplicables.map((r) => r.code))];
+    const certRows = codes.length
+      ? await tx.certification.findMany({ where: { tenantId: ctx.tenantId, userId: trip.travelerId, code: { in: codes } } })
+      : [];
+    const certsParCode = new Map<string, any[]>();
+    for (const c of certRows) (certsParCode.get(c.code) ?? certsParCode.set(c.code, []).get(c.code))!.push(c);
+    for (const req of reqsApplicables) {
+      const certs = certsParCode.get(req.code) ?? [];
       const couvre = certs.some((c: any) => c.obtenueLe <= trip.dateStart && c.expireLe > trip.dateStart);
       if (!couvre)
         signals.push({ type: "CERTIFICATION_EXPIRED_AT_TRIP_DATE", severite: s.tripCertificationCheckSeverity ?? "INFORMATIF", detail: `${req.code} requise en ${req.jurisdiction}, non couverte au ${trip.dateStart}` });
