@@ -171,13 +171,41 @@ def _reporting(engine, q):
     return engine.reporting_cases(q.get("sla_jours", 30))
 
 
+# PC-14 (extension ratifiée 2026-07-27, vague écrans pilote P1) : TIMELINE d'un client —
+# PROJECTION du journal rejoué (déjà filtré ≤ as_of par la porte, R48), jamais un calcul.
+# Le pont REND les événements du client dans l'ordre du journal ; rejouer redonne l'identique.
+def _timeline(engine, q):
+    journal = getattr(engine, "_journal_porte", [])
+    return {"client": q["client"], "evenements": [
+        {k: v for k, v in ev.items() if k != "statique"}                  # entrées PLATES du journal (type, at, …)
+        for ev in journal if ev.get("client") == q["client"]]}
+
+
+# PC-13 (extension ratifiée 2026-07-27, vague écrans pilote P1) : VOLUMÉTRIE par scénario —
+# comptages des signaux scorés/alertes/near-miss du moteur à date. Le pont COMPTE ce que le
+# moteur a produit (projection) — aucun seuil, aucune règle nouvelle.
+def _volumetrie(engine, q):
+    at = _dt(q["at"])
+    signaux = engine.signaux(at, q.get("seuil"))
+    par_scenario = {}
+    for s in signaux:
+        sc = par_scenario.setdefault(s.get("scenario"), {"signaux": 0, "alertes": 0, "near_miss": 0})
+        sc["signaux"] += 1
+        if s.get("statut") == "ALERTE":
+            sc["alertes"] += 1
+        elif s.get("statut") == "NEAR_MISS":
+            sc["near_miss"] += 1
+    return {"total_signaux": len(signaux), "par_scenario": par_scenario}
+
+
 QUERIES = {"score": _score, "segmentation": _segmentation,
            "compliance_catalogue": _compliance_catalogue, "rules": _rules,
            "client_groups": _client_groups, "groups": _groups,
            "evaluate_scenario": _evaluate_scenario, "alerts": _alerts,
            "sandbox_simulate": _sandbox_simulate, "propose_param": _propose_param,
            "proposition": _proposition, "propositions": _propositions, "insiders": _insiders,
-           "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting}
+           "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting,
+           "timeline": _timeline, "volumetrie": _volumetrie}
 
 
 # R248 : versions d'enveloppe supportées. Une version inconnue est refusée typée (pas de 500 opaque).
@@ -198,6 +226,7 @@ def main():
         journal = env.get("journal") or []
         t0 = time.perf_counter()
         _replay(engine, journal)                                          # journal filtré ≤ as_of par la porte (R48)
+        engine._journal_porte = journal                                   # PC-14 : la timeline PROJETTE le journal rejoué
         duree_ms = round((time.perf_counter() - t0) * 1000, 3)           # R250 : jauge d'hydratation
         commande = env.get("commande")
         payload = env.get("payload") or {}

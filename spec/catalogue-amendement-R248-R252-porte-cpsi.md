@@ -133,3 +133,30 @@ déplacée :
 5. **R252** — émission `case_proposal` (idempotent) consommable par riskcases ; **débranchement**
    CP-15/16/17 (SUPERSEDED) ; ZÉRO modif `modules/riskcases`/`modules/aml`. PC-09..12. ECARTS : réconciliation R83↔R133–R136.
 6. Ajout `cpsi_gate_timeout_ms`, `cpsi_replay_warn_ms`, `cpsi_contract_version` au questionnaire R-Q.
+
+---
+
+## EXTENSION DE CONTRAT (ratifiée Ali 2026-07-27, vague écrans pilote P1/P2)
+
+Arbitrage : « P1 timeline/reporting = commandes à AJOUTER au contrat de la porte CPSI
+(extension canon R248-R252, scénarios PC-11+, signalées) ; P2 = l'application de paramètre
+est un événement du journal cpsi_events (R68/R249), même extension. »
+⚠ Écart de numérotation signalé : PC-11 et PC-12 étaient déjà pris (invariants R252) —
+les nouveaux scénarios commencent à **PC-13**.
+
+> **PC-13 — Volumétrie (onglet Reporting du workspace AML, AW-01)** : commande `volumetrie` —
+> le pont COMPTE les signaux/alertes/near-miss produits par le moteur, par scénario, à date.
+> Projection pure (aucun seuil, aucune règle nouvelle) ; cohérente avec `alerts` ; rejouable
+> `as_of`. Route : `GET /v1/cpsi/volumetrie?asOf&seuil`. Le délai hit→MROS reste chez
+> riskcases (PC-12 INTACT) — le surfacer = porte de lecture riskcases à ratifier (écart ouvert).
+> **PC-14 — Timeline client (drill du workspace, AW-04)** : commande `timeline` — PROJECTION
+> du journal rejoué (déjà filtré ≤ as_of par la porte, R48) pour UN client : ses événements
+> seuls, dans l'ordre du journal, sans le bloc `statique`. Rejouer redonne l'identique.
+> Route : `GET /v1/cpsi/clients/:cid/timeline?asOf`.
+> **PC-15 (P2, À IMPLÉMENTER) — L'application d'un paramètre est un ÉVÉNEMENT du journal** :
+> `cpsi.param.applied {chemin, valeur, date_vigueur, par}` — rejoué comme tout événement ;
+> une date de vigueur FUTURE n'affecte le calcul qu'à partir d'elle (PA-03) ; l'historique
+> des versions est la lecture du journal.
+
+**LIVRÉ (2026-07-27)** : PC-13/14 — bridge (`_timeline`, `_volumetrie`), routes, e2e
+fat-cpsi 24/24, moteur `olive_cpsi/` INTOUCHÉ (18/18). PC-15 : au chantier P2.

@@ -202,6 +202,22 @@ export class CpsiService {
       correlations: r.correlations };
   }
 
+  // ── PC-14 (extension ratifiée 2026-07-27, P1) : timeline d'un client — PROJECTION du journal
+  //    rejoué ≤ as_of, servie par la porte. Rejouer à la même date redonne l'identique (R48). ──
+  async timeline(ctx: Ctx, clientId: string, asOf?: string) {
+    const r: any = await this.call(ctx, "timeline", { client: clientId }, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
+  }
+
+  // ── PC-13 (extension ratifiée 2026-07-27, P1) : volumétrie par scénario — comptages du moteur
+  //    à date (onglet Reporting du workspace AML). Le délai hit→MROS reste chez riskcases (PC-12). ──
+  async volumetrie(ctx: Ctx, asOf?: string, seuil?: number) {
+    const r: any = await this.call(ctx, "volumetrie", seuil != null ? { seuil } : {}, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
+  }
+
   // Écriture gouvernée : scelle le candidat, le VALIDE par rejeu (via une op de lecture qui renvoie
   // l'entité résultante), et ne persiste QU'APRÈS succès. Toute CpsiError du moteur (habilitation,
   // motif manquant, transition impossible…) devient un 4xx AVANT persistance — 403 si habilitation.
@@ -308,6 +324,8 @@ export class CpsiController {
   @Post("scenarios")               defScenario(@Req() r: any, @Body() b: any) { return this.svc.definirScenario(r.ctx, b); }                           // CP-06
   @Get("scenarios/:sid/evaluate")  evalScenario(@Req() r: any, @Param("sid") sid: string, @Query("asOf") asOf?: string) { return this.svc.evaluerScenario(r.ctx, sid, asOf); } // CP-06
   @Get("alerts")                   alertes(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.alertes(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // CP-12
+  @Get("clients/:cid/timeline")    timeline(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.timeline(r.ctx, cid, asOf); }   // PC-14 (P1)
+  @Get("volumetrie")               volumetrie(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.volumetrie(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // PC-13 (P1)
   @Post("sandbox/simulate")        simuler(@Req() r: any, @Body() b: any) { return this.svc.simuler(r.ctx, b?.changements); }                            // CP-09
   @Get("params/proposals")         propositions(@Req() r: any) { return this.svc.listerPropositions(r.ctx); }                                          // CP-10 (lecture)
   @Post("params/proposals")        proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // CP-10

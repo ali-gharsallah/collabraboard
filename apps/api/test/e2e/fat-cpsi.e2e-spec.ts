@@ -257,7 +257,67 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
       expect(JSON.stringify(cpsi.body)).toContain("CPSI_GATE_UNAVAILABLE");
       const horsCpsi = await request(http).get(`/v1/tasks`).set(bearer(A, U, "CO"));
       expect(horsCpsi.status).toBe(200);                                 // route non-CPSI intacte
-    } finally { process.env.CPSI_DIR = sauve; }
+    } finally { if (sauve === undefined) delete process.env.CPSI_DIR; else process.env.CPSI_DIR = sauve; }
     console.log("PC-08 PASS — CPSI 503 typé, route non-CPSI 200");
+  });
+});
+
+describe("FAT CPSI — extension P1 ratifiée : timeline + volumétrie (PC-13/14 — PC-11/12 pris, écart de numérotation signalé)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const U = randomUUID();
+  const c1 = randomUUID(), c2 = randomUUID();
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, randomUUID());
+    for (const [cid, sev] of [[c1, 3], [c2, 1]] as [string, number][]) {
+      await request(http).post("/v1/cpsi/clients").set(bearer(T, U, "CO"))
+        .send({ clientId: cid, statique: { pep: true }, at: "2026-01-01T00:00:00.000Z" }).expect(201);
+      await request(http).post(`/v1/cpsi/clients/${cid}/signals`).set(bearer(T, U, "CO"))
+        .send({ type: "hit_screening", severite: sev, at: "2026-02-01T00:00:00.000Z" }).expect(201);
+    }
+    await request(http).post(`/v1/cpsi/clients/${c1}/signals`).set(bearer(T, U, "CO"))
+      .send({ type: "velocite_tx", severite: 2, at: "2026-03-01T00:00:00.000Z" }).expect(201);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("PC-14 [AW-04/R48] la timeline d'un client est un REJEU : ses événements seuls, as_of strict, rejouable identique", async () => {
+    const g = await request(http).get(`/v1/cpsi/clients/${c1}/timeline`).set(bearer(T, U, "CO"));
+    expect(g.status).toBe(200);
+    expect(g.body.contractVersion).toBe("1");                               // enveloppe R248
+    const types = g.body.evenements.map((e: any) => e.type);
+    expect(types).toContain("cpsi.client.registered");
+    expect(types).toContain("cpsi.signal.ingested");
+    expect(g.body.evenements.every((e: any) => e.client === c1)).toBe(true); // JAMAIS un événement d'un autre client
+    // as_of = J-avant le 2e signal → il n'y figure PAS (rejeu strict ≤ as_of, AW-04)
+    const avant = await request(http).get(`/v1/cpsi/clients/${c1}/timeline?asOf=2026-02-15T00:00:00.000Z`).set(bearer(T, U, "CO"));
+    expect(avant.body.evenements.map((e: any) => e.type)).not.toContain("velocite_tx");
+    expect(avant.body.evenements.length).toBe(2);
+    // Rejouer la même requête redonne EXACTEMENT le même résultat
+    const rejeu = await request(http).get(`/v1/cpsi/clients/${c1}/timeline?asOf=2026-02-15T00:00:00.000Z`).set(bearer(T, U, "CO"));
+    expect(JSON.stringify(rejeu.body.evenements)).toBe(JSON.stringify(avant.body.evenements));
+    console.log("PC-14 PASS — timeline scopée client, as_of strict, rejouable");
+  });
+
+  it("PC-13 [AW-01] la volumétrie COMPTE ce que le moteur produit — cohérente avec /alerts, rejouable", async () => {
+    await request(http).post("/v1/cpsi/groups").set(bearer(T, U, "CO"))
+      .send({ gid: "PEP", label: "Clients PEP", at: "2026-01-12T00:00:00.000Z",
+        predicat: { logique: "OU", conditions: [{ champ: "pep", op: "eq", val: true }] } }).expect(201);
+    await request(http).post("/v1/cpsi/scenarios").set(bearer(T, U, "CO"))
+      .send({ sid: "SC_VOL", label: "Volumétrie test", champ: "score",
+        groupesSeuils: { PEP: 1 }, at: "2026-01-15T00:00:00.000Z" }).expect(201);
+    const alerts = (await request(http).get("/v1/cpsi/alerts").set(bearer(T, U, "CO"))).body;
+    const vol = await request(http).get("/v1/cpsi/volumetrie").set(bearer(T, U, "CO"));
+    expect(vol.status).toBe(200);
+    expect(vol.body.total_signaux).toBe(alerts.signaux.length);             // le compte = la source (aucun re-calcul front)
+    const sc = vol.body.par_scenario.SC_VOL;
+    expect(sc.signaux).toBeGreaterThan(0);
+    expect(sc.alertes).toBe(alerts.alertes.filter((a: any) => a.scenario === "SC_VOL").length);
+    // Rejouable à date : avant la définition du scénario → volumétrie vide
+    const avant = await request(http).get("/v1/cpsi/volumetrie?asOf=2026-01-10T00:00:00.000Z").set(bearer(T, U, "CO"));
+    expect(avant.body.total_signaux).toBe(0);
+    console.log("PC-13 PASS — volumétrie = comptage moteur, cohérente alerts, rejouable à date");
   });
 });
