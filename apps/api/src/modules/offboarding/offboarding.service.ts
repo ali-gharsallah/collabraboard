@@ -96,7 +96,8 @@ export class OffboardingService {
   // ── R268/R269 (complétés aux commits suivants) : le détail — checklist vivante ──
   async detail(ctx: Ctx, id: string) {
     const o = await this.dossier(this.prisma, ctx, id);
-    return { id: o.id, clientId: o.clientId, type: o.type, motif: o.motif, statut: o.statut,
+    const obstacles = ACTIFS.includes(o.statut) ? await this.obstaclesR269(this.prisma, ctx, o) : []; // checklist R269 en direct
+    return { id: o.id, clientId: o.clientId, type: o.type, motif: o.motif, statut: o.statut, obstacles,
       initiateur: o.initiateur, documents: o.documents, visas: o.visas,
       attestationAvoirs: o.attestationAvoirs, motifAnnulation: o.motifAnnulation,
       clotureEffectiveAt: o.clotureEffectiveAt, retentionJusqua: o.retentionJusqua, createdAt: o.createdAt };
@@ -116,6 +117,52 @@ export class OffboardingService {
     for (const d of this.docsRequis(s, o.type))
       if (!fournis.has(d)) manquants.push(`document ${d}`);
     return manquants;
+  }
+
+  // ── R269 : les BLOCAGES sont vérifiés par le backend — refus LISTÉ, jamais partiel, aucun
+  //    contournement (même ADMIN : aucune voie par rôle n'existe). AUCUNE table : vérification
+  //    à la transition contre les sources de vérité existantes. ──
+  private async obstaclesR269(tx: any, ctx: Ctx, o: any): Promise<string[]> {
+    const obstacles: string[] = [];
+    const cases = await tx.riskCase.findMany({
+      where: { tenantId: ctx.tenantId, clientId: o.clientId, statut: { not: "CLOTUREE" } } });
+    for (const c of cases) obstacles.push(`risk case ouvert ${c.id} (${c.statut})`);
+    const comms = await tx.mrosCommunication.findMany({
+      where: { tenantId: ctx.tenantId, clientId: o.clientId } });
+    for (const m of comms) {
+      if (m.gelActif) obstacles.push(`gel sanctions/SECO actif (communication ${m.id})`);
+      if (m.decision === "COMMUNIQUER" && !m.notification)
+        obstacles.push(`communication MROS en cours de délai (${m.id})`);
+    }
+    // Avoirs : port core connecté → soldes réels ; port absent → attestation manuelle VISÉE (R167 :
+    // jamais un silence, jamais une donnée simulée).
+    if (this.ports.core && this.ports.core.perimetre.includes("soldes")) {
+      const soldes = await this.ports.core.lire("soldes");
+      for (const s of soldes)
+        if (s.clientId === o.clientId && Number(s.solde) !== 0)
+          obstacles.push(`avoirs non transférés (compte ${s.compte ?? "?"} : solde ${s.solde})`);
+    } else if (!o.attestationAvoirs) {
+      obstacles.push("avoirs : attestation manuelle visée requise (port core banking absent)");
+    }
+    return obstacles;
+  }
+
+  // ── R269/OF-06 : attester les avoirs à la main — uniquement SANS port core, motivé, tracé ──
+  async attesterAvoirs(ctx: Ctx, id: string, motif?: string) {
+    if (!motif || !motif.trim())
+      throw new BadRequestException("R7 : l'attestation d'avoirs exige un motif");
+    if (this.ports.core && this.ports.core.perimetre.includes("soldes"))
+      throw new BadRequestException(
+        "R269 : port core banking connecté — l'attestation manuelle ne remplace pas la vérification des soldes");
+    return this.prisma.$transaction(async (tx: any) => {
+      const o = await this.dossier(tx, ctx, id);
+      if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
+      const attestation = { par: ctx.userId, at: new Date().toISOString(), motif: motif.trim() };
+      await tx.offboardingFile.update({ where: { id: o.id }, data: { attestationAvoirs: attestation } });
+      await this.emit(tx, ctx.tenantId, "offboarding.attestation_avoirs", o.id, attestation);
+      await this.audit.log(ctx.tenantId, ctx.userId, "OFFBOARDING_ATTESTATION_AVOIRS", o.id);
+      return { attestationAvoirs: attestation };
+    });
   }
 
   // ── R268/R13 : viser — mécanisme uniforme (R15) ; l'initiateur n'appose JAMAIS le visa final ──
@@ -165,6 +212,9 @@ export class OffboardingService {
         const manquants = this.manquantsR268(o, s);                 // OF-02 : visas + documents du type
         if (manquants.length)
           throw new BadRequestException(`R268 : clôture refusée — manquants : ${manquants.join(", ")}`);
+        const obstacles = await this.obstaclesR269(tx, ctx, o);     // OF-04/05/06 : TOUS les obstacles
+        if (obstacles.length)
+          throw new BadRequestException(`R269 : clôture refusée — obstacles : ${obstacles.join(" ; ")}`);
         const now = new Date();
         const retention = new Date(now);
         retention.setFullYear(retention.getFullYear() + (s.retentionPostClotureAns ?? 10)); // LBA art. 7

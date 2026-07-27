@@ -19,13 +19,14 @@ export class OffboardingController {
   @Post(":id/transition")       transition(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.transitionner(r.ctx, id, b?.vers, b?.motif); } // R267
   @Post(":id/visa")             viser(@Req() r: any, @Param("id") id: string) { return this.svc.viser(r.ctx, id); }         // R268/R13 — rôle du jeton
   @Post(":id/documents")        doc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.ajouterDocument(r.ctx, id, b ?? {}); } // R268
+  @Post(":id/attestation-avoirs") attester(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.attesterAvoirs(r.ctx, id, b?.motif); } // R269/OF-06
 }
 
 function fakeCorePort(): CoreBankingPort | undefined {
-  if (!process.env.OFFB_FAKE_CORE_SOLDES) return undefined;   // port de test OF-06 — jamais en prod
-  const soldes = JSON.parse(process.env.OFFB_FAKE_CORE_SOLDES);
+  if (process.env.OFFB_FAKE_CORE !== "1") return undefined;   // port de test OF-06 — jamais en prod
   return { systeme: "fake-core", version: "test", perimetre: ["soldes"],
-    lire: async (type: string) => (type === "soldes" ? soldes : []) };
+    lire: async (type: string) =>                              // données lues à l'APPEL (les tests font varier les soldes)
+      (type === "soldes" ? JSON.parse(process.env.OFFB_FAKE_CORE_SOLDES ?? "[]") : []) };
 }
 
 @Module({

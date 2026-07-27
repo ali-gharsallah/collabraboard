@@ -23,6 +23,8 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
       .send({ clientId, type: "DECISION_BANQUE", motif: "Relation non rentable" })).body;
     await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
     await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);  // R268 — visa CO (pas l'initiateur, R13)
+    await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO"))
+      .send({ motif: "Comptes soldés, relevés archivés" }).expect(201);                              // R269 — port core absent
     await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO2, "CO")).send({ vers: "CLOTUREE" }).expect(201);
     return o.id;
   };
@@ -133,6 +135,7 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
     expect(r1b.body.message).toContain("visa DIR");
     expect(r1b.body.message).not.toContain("visa CO_SR");                   // signé — sorti de la liste
     await request(http).post(`/v1/offboarding/${o1.id}/visa`).set(bearer(T, DIR, "DIR")).expect(201);
+    await request(http).post(`/v1/offboarding/${o1.id}/attestation-avoirs`).set(bearer(T, CO, "CO")).send({ motif: "Comptes soldés" }).expect(201);
     await request(http).post(`/v1/offboarding/${o1.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
     // DEMANDE_CLIENT : l'instruction de transfert signée est un document REQUIS
     const c2 = randomUUID();
@@ -146,6 +149,7 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
     expect(r2.body.message).toContain("document INSTRUCTION_TRANSFERT_SIGNEE");
     await request(http).post(`/v1/offboarding/${o2.id}/documents`).set(bearer(T, CO, "CO"))
       .send({ type: "INSTRUCTION_TRANSFERT_SIGNEE", ref: "GED-123" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o2.id}/attestation-avoirs`).set(bearer(T, CO, "CO")).send({ motif: "Transfert exécuté" }).expect(201);
     await request(http).post(`/v1/offboarding/${o2.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
     console.log("OF-02 PASS — refus typés listant visas et documents manquants, clôtures après complétion");
   });
@@ -161,5 +165,99 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
     expect(JSON.stringify(r.body)).toContain("R13");
     await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201); // un second signe
     console.log("OF-03 PASS — visa final refusé à l'initiateur (403 R13), accordé à un second");
+  });
+
+  it("OF-05 [R269] le gel sanctions bloque — MÊME pour ADMIN", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const rc = await prisma.riskCase.create({ data: { tenantId: T, clientId, statut: "CLOTUREE",
+      etatDepuis: new Date(), signalIds: ["SIG-GEL"], ouvertPar: CO, motifTerminal: "instruit", terminePar: CO2 } });
+    await prisma.mrosCommunication.create({ data: { tenantId: T, riskCaseId: rc.id, clientId,
+      decision: "COMMUNIQUER", motif: "soupçon fondé", decidePar: CO, decideAt: new Date(),
+      pieces: [], dossierSha256: "0".repeat(64), gelActif: true, notification: "notifiée" } });
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "DECISION_BANQUE", motif: "Sortie de relation" })).body;
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO")).send({ motif: "soldé" }).expect(201);
+    for (const role of ["CO", "ADMIN"]) {                                    // aucun contournement, même ADMIN
+      const r = await request(http).post(`/v1/offboarding/${o.id}/transition`)
+        .set(bearer(T, randomUUID(), role)).send({ vers: "CLOTUREE" });
+      expect(r.status).toBe(400);
+      expect(r.body.message).toContain("gel sanctions/SECO actif");
+    }
+    console.log("OF-05 PASS — gel SECO : clôture refusée pour CO ET pour ADMIN");
+  });
+
+  it("OF-04+OF-06a [R269] port core ABSENT : les obstacles sont TOUS listés ; l'attestation est visée, tracée — jamais un silence", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const rc = await prisma.riskCase.create({ data: { tenantId: T, clientId, statut: "EN_ANALYSE",
+      etatDepuis: new Date(), signalIds: ["SIG-OF04"], ouvertPar: CO } });
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "DECISION_BANQUE", motif: "Dé-risking" })).body;
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);
+    // Refus listant LES DEUX obstacles (risk case + avoirs) — pas le premier trouvé
+    const r1 = await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r1.status).toBe(400);
+    expect(r1.body.message).toContain(`risk case ouvert ${rc.id}`);
+    expect(r1.body.message).toContain("attestation manuelle visée requise");
+    // La checklist du détail est la même vérité
+    const d = (await request(http).get(`/v1/offboarding/${o.id}`).set(bearer(T, CO, "CO"))).body;
+    expect(d.obstacles.length).toBe(2);
+    // Lever le risk case → il ne reste qu'UN obstacle
+    await request(http).post(`/v1/riskcases/${rc.id}/transition`).set(bearer(T, CO2, "CO"))
+      .send({ vers: "CLOTUREE", motif: "instruit sans suite" }).expect(201);
+    const r2 = await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r2.status).toBe(400);
+    expect(r2.body.message).not.toContain("risk case");
+    expect(r2.body.message).toContain("attestation");
+    // Attestation sans motif → refus (R7) ; avec motif → événement tracé, puis clôture
+    await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO")).send({}).expect(400);
+    await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO"))
+      .send({ motif: "Relevés vérifiés à la main, soldes nuls" }).expect(201);
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, aggregateId: o.id, type: "offboarding.attestation_avoirs" } });
+    expect(ev).toBeTruthy();
+    expect((ev!.payload as any).par).toBe(CO2);
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
+    console.log("OF-04+OF-06a PASS — 2 obstacles listés, puis 1 ; attestation motivée tracée, clôture");
+  });
+});
+
+describe("FAT OFFBOARDING — R269/OF-06b avec PORT CORE (port de test, jamais en prod)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const CO = randomUUID(), CO2 = randomUUID();
+
+  beforeAll(async () => {
+    process.env.OFFB_FAKE_CORE = "1";                                       // port présent pour CE boot
+    process.env.OFFB_FAKE_CORE_SOLDES = "[]";
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { delete process.env.OFFB_FAKE_CORE; delete process.env.OFFB_FAKE_CORE_SOLDES; await app.close(); });
+
+  it("OF-06b [R269] port core PRÉSENT : le solde réel décide ; l'attestation manuelle est refusée", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    process.env.OFFB_FAKE_CORE_SOLDES = JSON.stringify([{ clientId, compte: "CH93-0000", solde: 12500 }]);
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "DECISION_BANQUE", motif: "Sortie" })).body;
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, CO2, "CO")).expect(201);
+    // Solde ≠ 0 → obstacle nominatif ; l'attestation manuelle NE remplace PAS le port
+    const r1 = await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" });
+    expect(r1.status).toBe(400);
+    expect(r1.body.message).toContain("avoirs non transférés");
+    expect(r1.body.message).toContain("12500");
+    const att = await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO")).send({ motif: "tentative" });
+    expect(att.status).toBe(400);
+    expect(att.body.message).toContain("port core banking connecté");
+    // Avoirs transférés (solde 0 côté core) → la clôture passe SANS attestation
+    process.env.OFFB_FAKE_CORE_SOLDES = JSON.stringify([{ clientId, compte: "CH93-0000", solde: 0 }]);
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
+    console.log("OF-06b PASS — solde réel bloque puis libère ; attestation refusée port présent");
   });
 });
