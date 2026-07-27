@@ -1024,7 +1024,7 @@ model OliviaConversation {
   roleCode    String   @map("role_code")                  // rôle AU MOMENT de la création (figé)
   capacite    String                                      // C1 | C2 | C3 | C4
   ancrageType String?  @map("ancrage_type")               // KYC_FILE | RISK_CASE | ALERTE | PARAM
-  ancrageId   String?  @map("ancrage_id") @db.Uuid
+  ancrageId   String?  @map("ancrage_id")                 // uuid (KYC_FILE/RISK_CASE) OU chemin de paramètre (C4/PARAM) — élargi à l'étape 6
   statut      String   @default("OUVERTE")                // OUVERTE | FERMEE
   createdAt   DateTime @default(now()) @map("created_at")
   messages    OliviaMessage[]
@@ -1064,6 +1064,7 @@ model OliviaProposal {
   type          String                                     // QUALIF_ALERTE_* | AIGUILLAGE_EDD | ALLEGEMENT_EDD | AJUSTEMENT_PARAM
   cibleType     String    @map("cible_type")               // ALERTE | KYC_FILE | PARAM
   cibleId       String    @map("cible_id")
+  cibleEtat     String?   @map("cible_etat")               // R254 : état de la cible FIGÉ à la création — la caducité (B.7) se juge contre lui
   justification String                                     // obligatoire à la création
   impactEstime  Json?     @map("impact_estime")            // C4 : sortie du bac à sable R70
   statut        String    @default("PENDING")              // PENDING | ADOPTEE | REJETEE | CADUQUE

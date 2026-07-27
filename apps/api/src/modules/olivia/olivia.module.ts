@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException, ServiceUnavailableException, BadGatewayException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException, ServiceUnavailableException, BadGatewayException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
 import { createHash, createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { KycModule } from "../kyc/kyc.module";
+import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 import { KycService } from "../kyc/kyc.service";
 
 /**
@@ -36,6 +37,16 @@ const CATALOGUE_MAX_REGLE = 271;   // R256 — borne du catalogue : R267-R271 (o
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const CONVERSER_C1 = ["RM", "ARM", "CO", "CO_SR", "BRM", "DIR"];          // matrice B.3 (Direction→DIR)
 const CONVERSER_C2 = ["RM", "ARM", "CO", "CO_SR"];                        // matrice B.3
+const CONVERSER_C3 = ["CO", "CO_SR"];                                     // matrice B.3 — pré-analyse alerte/risk case
+const CONVERSER_C4 = ["CO_SR", "ADMIN"];                                  // matrice B.3 — paramétrage (lecture BRM : v1.1)
+// R254 — décideurs par type de proposition (B.3, default-deny : même ADMIN ne décide pas hors liste).
+// AIGUILLAGE_EDD « selon workflow existant » : CO_SR (le circuit R66 est CPSI/compliance).
+const DECIDEURS = (type: string): string[] =>
+  type.startsWith("QUALIF_ALERTE") ? ["CO_SR"]
+  : type === "AIGUILLAGE_EDD" || type === "ALLEGEMENT_EDD" ? ["CO_SR"]
+  : type === "AJUSTEMENT_PARAM" ? ["ADMIN", "CO_SR"] : [];
+const TYPES_PROPOSITION = /^(QUALIF_ALERTE_[A-Z_]+|AIGUILLAGE_EDD|ALLEGEMENT_EDD|AJUSTEMENT_PARAM)$/;
+const CIBLES_PROPOSITION = ["ALERTE", "KYC_FILE", "PARAM"];
 
 // Port de TEST déterministe (critère B.11.1 : « le mock est un port de test, jamais utilisé en
 // prod ») — actif uniquement via OLIVIA_FAKE_PORT=1 (e2e/CI). Le marqueur TIMEOUT_TEST permet
@@ -72,7 +83,8 @@ function anthropicPort(model: string): PortOlivia {
 
 @Injectable()
 export class OliviaService {
-  constructor(private prisma: PrismaService, private audit: AuditService, private kyc: KycService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private kyc: KycService,
+    private cpsi?: { score(ctx: Ctx, clientId: string, asOf?: string): Promise<any>; regles(ctx: Ctx, asOf?: string): Promise<any>; proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }): Promise<any> }) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
@@ -141,6 +153,38 @@ export class OliviaService {
         visas: (vue.visas ?? []).map((x: any) => ({ section: x.sectionCode, statut: x.status })) };
       else contenu.ancrage = { code: vue.code, statut: vue.status };
     }
+    // 2) C3 (B.5-2) : risk case ancré (vérifié) → signaux + score CPSI/drivers en PÉRIPHÉRIQUE —
+    // porte CPSI indisponible ou client non enregistré = objet EXCLU, tracé, « contexte partiel »
+    // (OL-07 re-prouvé sur C3, comme consigné en ECARTS — jamais un échec silencieux).
+    if (conv.capacite === "C3" && conv.ancrageId) {
+      const rc = await this.prisma.riskCase.findFirst({ where: { id: conv.ancrageId, tenantId: ctx.tenantId } });
+      if (!rc) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: vous n'avez pas accès ou cet objet n'existe pas");
+      objets.push({ type: "RISK_CASE", id: rc.id, v: rc.statut });
+      contenu.riskCase = { id: rc.id, statut: rc.statut, clientId: rc.clientId, signaux: rc.signalIds };
+      try {
+        const score = await this.cpsi!.score(ctx, rc.clientId);
+        objets.push({ type: "CPSI_SCORE", id: rc.clientId, v: sha(JSON.stringify(score)).slice(0, 12) });
+        contenu.scoreCpsi = score;                                        // score + drivers (R67)
+      } catch {
+        exclus++;
+        await this.prisma.$transaction(async (tx: any) =>
+          this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", rc.clientId, { qui: ctx.userId, quoi: "CPSI_SCORE", pourquoi: "porte CPSI indisponible ou client non enregistré" }));
+      }
+    }
+    // 2) C4 (B.5-2) : paramètre visé → règles en vigueur via la porte CPSI (périphérique, même règle).
+    if (conv.capacite === "C4" && conv.ancrageId) {
+      objets.push({ type: "PARAM", id: conv.ancrageId, v: "en_vigueur" });
+      contenu.parametre = { chemin: conv.ancrageId };
+      try {
+        const r = await this.cpsi!.regles(ctx);
+        objets.push({ type: "CPSI_RULES", id: "rules", v: sha(JSON.stringify(r)).slice(0, 12) });
+        contenu.reglesEnVigueur = r;
+      } catch {
+        exclus++;
+        await this.prisma.$transaction(async (tx: any) =>
+          this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", conv.ancrageId!, { qui: ctx.userId, quoi: "CPSI_RULES", pourquoi: "porte CPSI indisponible" }));
+      }
+    }
     // 2-3) C1 : objets EXPLICITEMENT référencés — chacun re-vérifié individuellement (§3).
     for (const ref of refs) {
       // R270/OF-08 : dossier de clôture référencé — le cloisonnement art. 10a s'applique AUSSI ici :
@@ -200,15 +244,22 @@ export class OliviaService {
   async creerConversation(ctx: Ctx, dto: { capacite?: string; ancrageType?: string; ancrageId?: string }) {
     await this.port(ctx.tenantId);                                        // OL-01 : porte fermée = 503 partout
     const cap = dto?.capacite;
-    if (cap !== "C1" && cap !== "C2")
-      throw new BadRequestException("OLIVIA_CAPACITE_NON_OUVERTE: C3/C4 ouvrent à l'étape 6 (propositions)");
-    const roles = cap === "C1" ? CONVERSER_C1 : CONVERSER_C2;
+    if (cap !== "C1" && cap !== "C2" && cap !== "C3" && cap !== "C4")
+      throw new BadRequestException("OLIVIA_CAPACITE_NON_OUVERTE: capacité inconnue");
+    const roles = cap === "C1" ? CONVERSER_C1 : cap === "C2" ? CONVERSER_C2 : cap === "C3" ? CONVERSER_C3 : CONVERSER_C4;
     if (!roles.includes(ctx.role)) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: rôle non autorisé à converser (matrice B.3)");
     if (cap === "C2" && (dto?.ancrageType !== "KYC_FILE" || !dto?.ancrageId))
       throw new BadRequestException("C2 exige un ancrage KYC_FILE");
-    if (dto?.ancrageId && dto?.ancrageType !== "KYC_FILE")
-      throw new BadRequestException("Ancrage non pris en charge (v1 : KYC_FILE)");
-    if (dto?.ancrageId) {
+    // C3 : ancrage RISK_CASE requis (écart signalé : « alerte scorée » n'est pas un objet en base —
+    // projection du journal CPSI — l'ancrage v1 est le risk case ; l'alerte reste une CIBLE de
+    // proposition, cf. OL-19). C4 : ancrage PARAM (chemin du paramètre visé).
+    if (cap === "C3" && (dto?.ancrageType !== "RISK_CASE" || !dto?.ancrageId))
+      throw new BadRequestException("C3 exige un ancrage RISK_CASE");
+    if (cap === "C4" && (dto?.ancrageType !== "PARAM" || !dto?.ancrageId))
+      throw new BadRequestException("C4 exige un ancrage PARAM (chemin du paramètre)");
+    if (dto?.ancrageId && cap === "C1" && dto?.ancrageType !== "KYC_FILE")
+      throw new BadRequestException("Ancrage non pris en charge (C1 : KYC_FILE)");
+    if (dto?.ancrageId && dto?.ancrageType === "KYC_FILE") {
       try { await this.verifierAncrageKyc(ctx, dto.ancrageId); }
       catch (e) {                                                          // OL-05 : événement, AUCUNE conversation
         await this.prisma.$transaction(async (tx: any) =>
@@ -216,9 +267,17 @@ export class OliviaService {
         throw e;
       }
     }
+    if (dto?.ancrageType === "RISK_CASE") {                                // C3 : vérifié AVANT création (OL-05)
+      const rc = await this.prisma.riskCase.findFirst({ where: { id: dto.ancrageId!, tenantId: ctx.tenantId } });
+      if (!rc) {
+        await this.prisma.$transaction(async (tx: any) =>
+          this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", dto.ancrageId!, { qui: ctx.userId, quoi: "RISK_CASE", pourquoi: "ancrage hors périmètre ou inexistant" }));
+        throw new ForbiddenException("OLIVIA_SCOPE_DENIED: vous n'avez pas accès ou cet objet n'existe pas");
+      }
+    }
     const conv = await this.prisma.oliviaConversation.create({ data: {
       tenantId: ctx.tenantId, userId: ctx.userId, roleCode: ctx.role, capacite: cap,
-      ancrageType: dto?.ancrageId ? "KYC_FILE" : null, ancrageId: dto?.ancrageId ?? null } });
+      ancrageType: dto?.ancrageId ? dto!.ancrageType! : null, ancrageId: dto?.ancrageId ?? null } });
     await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_CONVERSATION_CREATED", conv.id);
     return { id: conv.id, capacite: conv.capacite, ancrageType: conv.ancrageType, ancrageId: conv.ancrageId, statut: conv.statut };
   }
@@ -248,6 +307,8 @@ export class OliviaService {
     const defauts: Record<string, string> = {
       C1: "Tu es Olivia, assistante compliance d'O-Live. Réponds sobrement, sans agir. Contexte: {contexte}. Question: {question}",
       C2: "Tu es Olivia, assistante compliance d'O-Live. Synthèse structurée et sourcée du dossier, sans agir. Dossier: {contexte}. Demande: {question}",
+      C3: "Tu es Olivia, assistante compliance d'O-Live. Pré-analyse l'alerte/le risk case et propose une qualification SOURCÉE — tu proposes, l'humain décide (R44). Contexte: {contexte}. Question: {question}",
+      C4: "Tu es Olivia, assistante compliance d'O-Live. Analyse le paramètre visé et propose un ajustement justifié — toute application passera par le bac à sable (R70). Contexte: {contexte}. Question: {question}",
     };
     const gabarit = s.oliviaPromptTemplate?.[conv.capacite] ?? defauts[conv.capacite] ?? defauts.C1;
     const prompt = gabarit.replace("{contexte}", JSON.stringify(cx.contenu)).replace("{question}", dto.texte);
@@ -287,7 +348,7 @@ export class OliviaService {
     });
     await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_MESSAGE", `${conv.id}:${msgIn.seq}/${msgOut.seq}`);
     if (echec) throw new BadGatewayException(`OLIVIA_PROVIDER_DOWN: ${echec}`);
-    return { conversationId: conv.id, seq: msgOut.seq, texte: msgOut.texte,
+    return { conversationId: conv.id, seq: msgOut.seq, messageId: msgOut.id, texte: msgOut.texte,
       provider, model, modelVersion: msgOut.modelVersion, latenceMs: latence,
       estSource, citations,
       contexteEmpreinte: cx.empreinte, contexteObjets: cx.objets,
@@ -331,6 +392,110 @@ export class OliviaService {
     return this.prisma.oliviaProposal.findMany({ where, orderBy: { createdAt: "desc" }, take: 200 });
   }
 
+  // ═══ R254 — Propositions : Olivia PROPOSE, l'humain DÉCIDE (R44). La proposition n'agit
+  // JAMAIS sur sa cible (OL-15) ; l'adoption ne fait que créer l'événement/la tâche du circuit
+  // existant (OL-16) ; la caducité se juge contre l'état de cible FIGÉ à la création (B.7). ═══
+
+  // État courant de la cible — même calcul à la création (figé) et à la décision (caducité).
+  private async etatCible(ctx: Ctx, cibleType: string, cibleId: string, depuis?: Date): Promise<{ etat: string; refHumaine?: any }> {
+    if (cibleType === "KYC_FILE") {
+      const k = await this.prisma.kycFile.findFirst({ where: { id: cibleId, tenantId: ctx.tenantId } });
+      if (!k) throw new NotFoundException("Cible KYC introuvable");
+      return { etat: `${k.status}:${k.workflow}` };
+    }
+    if (cibleType === "ALERTE") {                                          // cibleId = "client|scenario" (clé R252)
+      const [client, scenario] = cibleId.split("|");
+      const evs = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId, clientId: client, type: "cpsi.fp.declared", ...(depuis ? { createdAt: { gt: depuis } } : {}) } });
+      const q = evs.find((e: any) => (e.payload as any)?.scenario === scenario);
+      return q ? { etat: `QUALIFIEE_FP:${(q.payload as any)?.acteur}`, refHumaine: { evenement: q.id, par: (q.payload as any)?.acteur, le: q.at } } : { etat: "NON_QUALIFIEE" };
+    }
+    if (cibleType === "PARAM") {                                           // décision humaine sur le même chemin = caducité
+      const evs = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId, type: { in: ["cpsi.param.adopted", "cpsi.param.rejected"] }, ...(depuis ? { createdAt: { gt: depuis } } : {}) } });
+      const q = evs.find((e: any) => (e.payload as any)?.chemin === cibleId);
+      return q ? { etat: `DECIDE:${q.type}`, refHumaine: { evenement: q.id, le: q.at } } : { etat: "EN_VIGUEUR" };
+    }
+    throw new BadRequestException(`Cible inconnue : ${cibleType}`);
+  }
+
+  // ── R254/OL-12 : créer — UNIQUEMENT depuis une sortie SOURCÉE d'une conversation C3/C4. ──
+  async creerProposition(ctx: Ctx, dto: { messageId?: string; type?: string; cibleType?: string;
+    cibleId?: string; justification?: string; impactEstime?: any }) {
+    await this.port(ctx.tenantId);
+    if (!dto?.type || !TYPES_PROPOSITION.test(dto.type))
+      throw new BadRequestException(`Type de proposition inconnu : ${dto?.type}`);
+    if (!dto?.cibleType || !CIBLES_PROPOSITION.includes(dto.cibleType) || !dto?.cibleId)
+      throw new BadRequestException("cibleType/cibleId requis (ALERTE | KYC_FILE | PARAM)");
+    if (!dto?.justification?.trim())
+      throw new BadRequestException("R7 : la justification est obligatoire à la création");
+    const m = await this.prisma.oliviaMessage.findFirst({ where: { id: dto.messageId ?? "", tenantId: ctx.tenantId, direction: "OUT" } });
+    if (!m) throw new NotFoundException("Message OUT fondateur introuvable");
+    const conv = await this.prisma.oliviaConversation.findFirst({ where: { id: m.conversationId, tenantId: ctx.tenantId } });
+    if (!conv || conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire propose depuis sa conversation");
+    if (conv.capacite !== "C3" && conv.capacite !== "C4")
+      throw new BadRequestException("Seules les sorties C3/C4 sont proposables (B.7)");
+    if (!m.estSource)                                                      // OL-12 — contrainte SERVEUR, pas UI
+      throw new UnprocessableEntityException("OLIVIA_UNSOURCED_PROPOSAL: sortie non sourcée — aucune proposition (R256)");
+    const { etat } = await this.etatCible(ctx, dto.cibleType, dto.cibleId);
+    const p = await this.prisma.$transaction(async (tx: any) => {
+      const cree = await tx.oliviaProposal.create({ data: { tenantId: ctx.tenantId, messageId: m.id,
+        type: dto.type!, cibleType: dto.cibleType!, cibleId: dto.cibleId!, cibleEtat: etat,
+        justification: dto.justification!.trim(), impactEstime: dto.impactEstime ?? null } });
+      await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_CREATED", cree.id,
+        { type: dto.type, cibleType: dto.cibleType, cibleId: dto.cibleId, messageId: m.id }); // payload minimal (B.1)
+      return cree;
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_PROPOSAL_CREATED", p.id);
+    return { id: p.id, statut: p.statut, type: p.type, cibleType: p.cibleType, cibleId: p.cibleId };
+    // OL-15 : AUCUN effet sur la cible — seule une ligne PENDING existe.
+  }
+
+  // ── R254/OL-16..19 : décider — rôle décideur du type (default-deny), caducité automatique tracée. ──
+  async deciderProposition(ctx: Ctx, id: string, decision: "adopt" | "reject", motif?: string) {
+    await this.port(ctx.tenantId);
+    const p = await this.prisma.oliviaProposal.findFirst({ where: { id, tenantId: ctx.tenantId } });
+    if (!p) throw new NotFoundException("Proposition introuvable");
+    if (p.statut !== "PENDING") throw new ConflictException(`OLIVIA_PROPOSAL_DECIDEE: proposition déjà ${p.statut}`);
+    // B.7 : la cible a changé d'état avant décision → CADUQUE automatique, TRACÉE (jamais silencieuse),
+    // avec la référence de la décision humaine (OL-19) — puis 409 pour l'appelant.
+    const courant = await this.etatCible(ctx, p.cibleType, p.cibleId, p.createdAt);
+    if (courant.etat !== p.cibleEtat) {
+      await this.prisma.$transaction(async (tx: any) => {
+        await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "CADUQUE", decideAt: new Date() } });
+        await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_CADUQUE", p.id,
+          { etatFige: p.cibleEtat, etatCourant: courant.etat, decisionHumaine: courant.refHumaine ?? null });
+      });
+      throw new ConflictException(`OLIVIA_PROPOSAL_DECIDEE: caduque — la cible a déjà été décidée par un humain (${courant.etat})`);
+    }
+    if (!DECIDEURS(p.type).includes(ctx.role))                             // OL-18 : la proposition RESTE PENDING
+      throw new ForbiddenException(`OLIVIA_SCOPE_DENIED: le rôle ${ctx.role} ne décide pas ${p.type} (matrice B.3)`);
+    if (decision === "reject") {
+      if (!motif?.trim()) throw new UnprocessableEntityException("OLIVIA_MOTIF_REQUIS: le rejet exige un motif (R7)");
+      await this.prisma.$transaction(async (tx: any) => {
+        await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "REJETEE", decidePar: ctx.userId, decideAt: new Date(), motifRejet: motif!.trim() } });
+        await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_REJECTED", p.id, { par: ctx.userId, motif: motif!.trim() });
+      });
+      await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_PROPOSAL_REJECTED", p.id);
+      return { id: p.id, statut: "REJETEE" };
+    }
+    // ADOPTION (OL-16) : l'adoption N'EXÉCUTE RIEN — elle crée l'événement/la tâche du circuit
+    // existant. AJUSTEMENT_PARAM (OL-20) : entrée de bac à sable R70 pré-remplie via la porte CPSI
+    // (proposition EN_ATTENTE — le paramètre en vigueur est INCHANGÉ tant que la voie R68 n'a pas statué).
+    await this.prisma.$transaction(async (tx: any) => {
+      await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "ADOPTEE", decidePar: ctx.userId, decideAt: new Date() } });
+      await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_ADOPTED", p.id, { par: ctx.userId, type: p.type });
+      const tache = p.type === "AIGUILLAGE_EDD" ? "tache.aiguillage.edd"
+        : p.type === "ALLEGEMENT_EDD" ? "tache.allegement.edd"
+        : p.type.startsWith("QUALIF_ALERTE") ? "tache.qualification.alerte" : null;
+      if (tache) await this.emit(tx, ctx.tenantId, tache, p.cibleId,       // la VOIE NORMALE (circuit R66)
+        { proposalId: p.id, cibleType: p.cibleType, par: ctx.userId });
+    });
+    if (p.type === "AJUSTEMENT_PARAM")
+      await this.cpsi!.proposer(ctx, { chemin: p.cibleId, valeur: (p.impactEstime as any)?.valeur,
+        justification: `Olivia — proposition ${p.id} adoptée par ${ctx.userId} : ${p.justification}` });
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_PROPOSAL_ADOPTED", p.id);
+    return { id: p.id, statut: "ADOPTEE" };
+  }
+
   // ── Santé (ADMIN — écart SO) : port configuré, provider/model, latence médiane. ──
   async health(ctx: Ctx) {
     if (ctx.role !== "ADMIN") throw new ForbiddenException("OLIVIA_SCOPE_DENIED");
@@ -350,15 +515,18 @@ export class OliviaController {
   @Get("conversations/:id/replay")          replay(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) { return this.svc.replay(r.ctx, id, asOf); }
   @Get("conversations/:id")                 lire(@Req() r: any, @Param("id") id: string) { return this.svc.conversation(r.ctx, id); }
   @Get("proposals")                         proposals(@Req() r: any, @Query("statut") statut?: string) { return this.svc.listerProposals(r.ctx, statut); }
+  @Post("proposals")                        proposer(@Req() r: any, @Body() b: any) { return this.svc.creerProposition(r.ctx, b ?? {}); }               // R254/OL-12
+  @Post("proposals/:id/adopt")              adopter(@Req() r: any, @Param("id") id: string) { return this.svc.deciderProposition(r.ctx, id, "adopt"); } // OL-16
+  @Post("proposals/:id/reject")             rejeter(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.deciderProposition(r.ctx, id, "reject", b?.motif); } // OL-17
   @Get("health")                            health(@Req() r: any) { return this.svc.health(r.ctx); }
 }
 
 @Module({
-  imports: [KycModule],                                                    // R255 : l'ancrage se résout VIA les services existants
+  imports: [KycModule, CpsiModule],                                        // R255 : l'ancrage se résout VIA les services existants (C3/C4 : porte CPSI)
   controllers: [OliviaController],
   providers: [
     PrismaService, AuditService,
-    { provide: OliviaService, useFactory: (p: PrismaService, a: AuditService, k: KycService) => new OliviaService(p, a, k), inject: [PrismaService, AuditService, KycService] }],
+    { provide: OliviaService, useFactory: (p: PrismaService, a: AuditService, k: KycService, c: CpsiService) => new OliviaService(p, a, k, c), inject: [PrismaService, AuditService, KycService, CpsiService] }],
   exports: [OliviaService],
 })
 export class OliviaModule {}

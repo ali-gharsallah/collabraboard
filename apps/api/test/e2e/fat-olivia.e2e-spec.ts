@@ -92,9 +92,11 @@ describe("FAT OLIVIA — R253 port IA (OL-01..04, backend réel + port de test)"
     const m = await prisma.oliviaMessage.findFirst({ where: { conversationId: conv.id } });
     await expect(prisma.oliviaMessage.update({ where: { id: m!.id }, data: { texte: "altéré" } })).rejects.toThrow(/append-only/);
     await expect(prisma.oliviaMessage.delete({ where: { id: m!.id } })).rejects.toThrow(/append-only/);
-    const ko = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C3", ancrageType: "RISK_CASE", ancrageId: randomUUID() });
+    const ko = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C9" });
     expect(ko.status).toBe(400);
-    expect(JSON.stringify(ko.body)).toContain("OLIVIA_CAPACITE_NON_OUVERTE");           // C3/C4 fermées jusqu'à l'étape 6
+    expect(JSON.stringify(ko.body)).toContain("OLIVIA_CAPACITE_NON_OUVERTE");           // capacité inconnue (C3/C4 ouvertes à l'étape 6)
+    const koC3 = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C3", ancrageType: "RISK_CASE", ancrageId: randomUUID() });
+    expect(koC3.status).toBe(403);                                                      // ancrage risk case inexistant = SCOPE_DENIED
     const koAncrage = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: randomUUID() });
     expect(koAncrage.status).toBe(403);                                                 // ancrage inexistant = SCOPE_DENIED (ne révèle rien)
     console.log("Socle PASS — trigger append-only ; C3 fermée ; ancrage inexistant refusé sans révéler");
@@ -253,5 +255,144 @@ describe("FAT OLIVIA — R256 citations (OL-11/13/14 ; OL-12 à l'étape 6 avec 
     expect(r15.valide).toBe(true);                                         // R15 (visa uniforme) existe
     expect(r.estSource).toBe(true);                                        // une valide suffit
     console.log("OL-14 PASS — R999 invalidée, R15 valide");
+  });
+});
+
+describe("FAT OLIVIA — R254 propositions + capacités C3/C4 (OL-12, OL-15..20, étape 6)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const CO1 = randomUUID(), COSR = randomUUID(), RM = randomUUID(), ADMIN = randomUUID();
+  let clientId = "", kyc: any = null, rcId = "";
+
+  const converser = async (cap: string, ancrageType: string, ancrageId: string, texte: string, user = COSR, role = "CO_SR") => {
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, user, role))
+      .send({ capacite: cap, ancrageType, ancrageId })).body;
+    const r = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, user, role)).send({ texte })).body;
+    return { conv, out: r };
+  };
+  const proposer = (body: any, user = COSR, role = "CO_SR") =>
+    request(http).post("/v1/olivia/proposals").set(bearer(T, user, role)).send(body);
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    await prisma.tenant.update({ where: { id: T },
+      data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5" } } });
+    kyc = (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM })).body;
+    rcId = (await request(http).post("/v1/riskcases").set(bearer(T, CO1, "CO"))
+      .send({ clientId, signalIds: ["SIG-OLIVIA-1"] })).body.caseId;
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("OL-12 [R256] non sourcé = pas de proposition : 422 OLIVIA_UNSOURCED_PROPOSAL (contrainte serveur)", async () => {
+    const { out } = await converser("C3", "RISK_CASE", rcId, "Analyse cette alerte sans citer");
+    expect(out.estSource).toBe(false);
+    const r = await proposer({ messageId: out.messageId, type: "QUALIF_ALERTE_FP",
+      cibleType: "ALERTE", cibleId: `${clientId}|SC_T`, justification: "sans source" });
+    expect(r.status).toBe(422);
+    expect(JSON.stringify(r.body)).toContain("OLIVIA_UNSOURCED_PROPOSAL");
+    console.log("OL-12 PASS — 422 typé, aucune proposition depuis une sortie non sourcée");
+  });
+
+  it("OL-15 [R254] la proposition n'AGIT pas — et OL-07 re-prouvé sur C3 (périphérique CPSI exclu, tracé)", async () => {
+    const { out } = await converser("C3", "RISK_CASE", rcId, `Qualifie. CITE_TEST:RISK_CASE:${rcId}`);
+    expect(out.estSource).toBe(true);                                        // le risk case ancré est DANS le contexte
+    expect(out.contexteObjets.some((o: any) => o.type === "RISK_CASE" && o.id === rcId)).toBe(true);
+    // OL-07 (écart soldé) : client non enregistré au CPSI → score périphérique EXCLU, jamais silencieux
+    expect(out.contextePartiel).toContain("exclu");
+    const ev = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "OLIVIA_CONTEXT_DENIED", aggregateId: clientId } });
+    expect(ev.some((e: any) => (e.payload as any).quoi === "CPSI_SCORE")).toBe(true);
+    const avant = await prisma.kycFile.findFirst({ where: { id: kyc.id } });
+    const r = await proposer({ messageId: out.messageId, type: "AIGUILLAGE_EDD",
+      cibleType: "KYC_FILE", cibleId: kyc.id, justification: "risque accru — passage EDD proposé" });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("PENDING");
+    const apres = await prisma.kycFile.findFirst({ where: { id: kyc.id } });
+    expect(apres!.status).toBe(avant!.status);                               // le dossier est INCHANGÉ
+    expect(apres!.workflow).toBe(avant!.workflow);
+    console.log("OL-15 PASS — PENDING seul, dossier intact ; OL-07 : périph CPSI exclu + tracé");
+  });
+
+  it("OL-18 [B.3] le mauvais rôle ne décide pas : RM → 403, la proposition RESTE PENDING", async () => {
+    const p = await prisma.oliviaProposal.findFirst({ where: { tenantId: T, type: "AIGUILLAGE_EDD", statut: "PENDING" } });
+    const r = await request(http).post(`/v1/olivia/proposals/${p!.id}/adopt`).set(bearer(T, RM, "RM"));
+    expect(r.status).toBe(403);
+    expect((await prisma.oliviaProposal.findFirst({ where: { id: p!.id } }))!.statut).toBe("PENDING");
+    console.log("OL-18 PASS — 403 matrice B.3, statut intact");
+  });
+
+  it("OL-16 [R254] l'adoption emprunte la VOIE NORMALE : tâche du circuit créée, dossier inchangé, auteur tracé", async () => {
+    const p = await prisma.oliviaProposal.findFirst({ where: { tenantId: T, type: "AIGUILLAGE_EDD", statut: "PENDING" } });
+    const avant = await prisma.kycFile.findFirst({ where: { id: kyc.id } });
+    await request(http).post(`/v1/olivia/proposals/${p!.id}/adopt`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    const maj = await prisma.oliviaProposal.findFirst({ where: { id: p!.id } });
+    expect(maj!.statut).toBe("ADOPTEE");
+    expect(maj!.decidePar).toBe(COSR);
+    expect(maj!.decideAt).toBeTruthy();
+    const tache = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "tache.aiguillage.edd", aggregateId: kyc.id } });
+    expect(tache).toBeTruthy();                                              // l'événement du circuit R66 existant
+    expect((tache!.payload as any).proposalId).toBe(p!.id);
+    const apres = await prisma.kycFile.findFirst({ where: { id: kyc.id } });
+    expect(apres!.workflow).toBe(avant!.workflow);                           // l'adoption n'exécute RIEN
+    console.log("OL-16 PASS — tache.aiguillage.edd émise, dossier inchangé, auteur+date tracés");
+  });
+
+  it("OL-17 [R7] le rejet exige un motif : 422 OLIVIA_MOTIF_REQUIS, puis REJETEE motif consultable", async () => {
+    const { out } = await converser("C3", "RISK_CASE", rcId, `Autre analyse. CITE_TEST:RISK_CASE:${rcId}`);
+    const p = (await proposer({ messageId: out.messageId, type: "ALLEGEMENT_EDD",
+      cibleType: "KYC_FILE", cibleId: kyc.id, justification: "risque réduit" })).body;
+    const sans = await request(http).post(`/v1/olivia/proposals/${p.id}/reject`).set(bearer(T, COSR, "CO_SR")).send({});
+    expect(sans.status).toBe(422);
+    expect(JSON.stringify(sans.body)).toContain("OLIVIA_MOTIF_REQUIS");
+    await request(http).post(`/v1/olivia/proposals/${p.id}/reject`).set(bearer(T, COSR, "CO_SR"))
+      .send({ motif: "l'analyse d'Olivia néglige le facteur pays" }).expect(201);
+    const liste = (await request(http).get("/v1/olivia/proposals?statut=REJETEE").set(bearer(T, COSR, "CO_SR"))).body;
+    const rejetee = liste.find((x: any) => x.id === p.id);
+    expect(rejetee.motifRejet).toContain("facteur pays");
+    console.log("OL-17 PASS — 422 sans motif, REJETEE motivée consultable");
+  });
+
+  it("OL-19 [B.7] la caducité est AUTOMATIQUE et tracée : qualification humaine → CADUQUE + réf, puis 409", async () => {
+    await request(http).post("/v1/cpsi/clients").set(bearer(T, CO1, "CO")).send({ clientId }).expect(201);
+    const { out } = await converser("C3", "RISK_CASE", rcId, `FP probable. CITE_TEST:RISK_CASE:${rcId}`);
+    const p = (await proposer({ messageId: out.messageId, type: "QUALIF_ALERTE_FP",
+      cibleType: "ALERTE", cibleId: `${clientId}|SC_CADUC`, justification: "schéma récurrent bénin" })).body;
+    // L'HUMAIN qualifie l'alerte AVANT la décision (voie CPSI réelle, R82)
+    await request(http).post("/v1/cpsi/false-positives").set(bearer(T, CO1, "CO"))
+      .send({ client: clientId, scenario: "SC_CADUC" }).expect(201);
+    const r1 = await request(http).post(`/v1/olivia/proposals/${p.id}/adopt`).set(bearer(T, COSR, "CO_SR"));
+    expect(r1.status).toBe(409);
+    expect(JSON.stringify(r1.body)).toContain("OLIVIA_PROPOSAL_DECIDEE");
+    const maj = await prisma.oliviaProposal.findFirst({ where: { id: p.id } });
+    expect(maj!.statut).toBe("CADUQUE");
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "OLIVIA_PROPOSAL_CADUQUE", aggregateId: p.id } });
+    expect(ev).toBeTruthy();                                                 // jamais silencieuse : la référence humaine est là
+    expect((ev!.payload as any).decisionHumaine).toBeTruthy();
+    expect((ev!.payload as any).etatCourant).toContain("QUALIFIEE_FP");
+    const r2 = await request(http).post(`/v1/olivia/proposals/${p.id}/reject`).set(bearer(T, COSR, "CO_SR")).send({ motif: "x" });
+    expect(r2.status).toBe(409);                                             // décision ultérieure → 409
+    console.log("OL-19 PASS — CADUQUE automatique avec réf humaine, 409 ensuite");
+  });
+
+  it("OL-20 [R70] un paramètre adopté passe par le BAC À SABLE : entrée pré-remplie, rien en vigueur", async () => {
+    const reglesAvant = (await request(http).get("/v1/cpsi/rules").set(bearer(T, COSR, "CO_SR"))).body;
+    const { out } = await converser("C4", "PARAM", "half_life_jours", "Réduire la mémoire ? CITE_TEST:PARAM:half_life_jours", ADMIN, "ADMIN");
+    expect(out.estSource).toBe(true);                                        // le paramètre ancré est DANS le contexte
+    const p = (await proposer({ messageId: out.messageId, type: "AJUSTEMENT_PARAM",
+      cibleType: "PARAM", cibleId: "half_life_jours", justification: "signaux anciens surpondérés",
+      impactEstime: { valeur: 90 } }, ADMIN, "ADMIN")).body;
+    await request(http).post(`/v1/olivia/proposals/${p.id}/adopt`).set(bearer(T, ADMIN, "ADMIN")).expect(201);
+    // L'entrée de bac à sable R70 pré-remplie EXISTE côté CPSI (statut EN_ATTENTE)...
+    const props = (await request(http).get("/v1/cpsi/params/proposals").set(bearer(T, COSR, "CO_SR"))).body;
+    const entree = (props.resultat ?? props).find?.((x: any) => x.chemin === "half_life_jours" && x.statut === "EN_ATTENTE")
+      ?? (props.propositions ?? []).find?.((x: any) => x.chemin === "half_life_jours");
+    expect(entree).toBeTruthy();
+    // ...et RIEN n'est en vigueur : les règles servies sont identiques
+    const reglesApres = (await request(http).get("/v1/cpsi/rules").set(bearer(T, COSR, "CO_SR"))).body;
+    expect(JSON.stringify(reglesApres)).toBe(JSON.stringify(reglesAvant));
+    console.log("OL-20 PASS — entrée bac à sable EN_ATTENTE créée, paramètre en vigueur inchangé");
   });
 });

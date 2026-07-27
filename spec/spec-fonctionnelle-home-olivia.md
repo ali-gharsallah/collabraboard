@@ -357,6 +357,15 @@ Vérification à la réception de la sortie du modèle :
 
 ## B.7 R254 — Cycle de vie d'une proposition
 
+**LIVRÉ (étape 6, 2026-07-27)** — C3 (ancrage RISK_CASE — écart : « alerte scorée » n'est pas un
+objet en base, elle reste une CIBLE de proposition `client|scenario`) et C4 (ancrage PARAM =
+chemin) OUVERTES ; contexte C3 = risk case + score CPSI/drivers en périphérique (OL-07 re-prouvé :
+porte CPSI indisponible ⇒ exclu + `OLIVIA_CONTEXT_DENIED` + « contexte partiel ») ; OL-12 422 ;
+propositions PENDING sans effet (OL-15) ; adoption = tâche du circuit (`tache.aiguillage.edd`,
+OL-16) ; rejet motivé (OL-17) ; matrice B.3 default-deny (OL-18) ; caducité automatique tracée
+contre l'état de cible FIGÉ `cible_etat` + réf humaine (OL-19) ; AJUSTEMENT_PARAM adopté ⇒ entrée
+de bac à sable CPSI EN_ATTENTE, rien en vigueur (OL-20). e2e fat-olivia 21/21.
+
 ```
                     adopt (rôle décideur, B.3)
    PENDING ────────────────────────────────► ADOPTEE ──► voie workflow NORMALE
