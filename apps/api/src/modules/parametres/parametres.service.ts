@@ -191,6 +191,11 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Rôles qui voient TOUTES les tâches du tenant. Les autres voient leur périmètre (soi + équipe si responsable — R240)." },
   { cle: "taskCompleteRoles", type: "json", defaut: [], regle: "R241", requis: false,
     description: "Rôles habilités à compléter une tâche EN PLUS de l'assignee (contrôle exclusivement serveur, R241)." },
+  // ── Décision NBA — MOD (R243→R246, lot 53). TTL et exigence de motif de rejet sont des règles. ──
+  { cle: "nbaTtlDays", type: "int", defaut: 30, regle: "R243", requis: false,
+    description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
+  { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
+    description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

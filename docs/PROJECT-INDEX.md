@@ -45,6 +45,7 @@
 | `docs/tests/FAT/FAT-VAGUE14.md` | 10 FAT MOD-75 Business Trip (R222→R230) + FE-TRIP |
 | `docs/tests/FAT/FAT-A3-WORKFLOW.md` | A3 : reconnaissance CAS A + 4 PT-01 porte lecture workflow |
 | `docs/tests/FAT/FAT-VAGUE16.md` | 6 FAT MOD Tâches (R239→R242) + FE-TASK |
+| `docs/tests/FAT/FAT-VAGUE17.md` | 6 FAT MOD Décision NBA (R243→R246) + FE-40 |
 | `docs/tests/COUVERTURE-REGLES.md` | Matrice traçabilité exigences → FAT + tests (… · V6 3/3 · V7 4/4 · V8 2/2) |
 | `docs/tests/PREUVES/` | Sorties brutes horodatées (`fat-vague1..9-run.txt`, `e2e-complet.txt`) |
 | `docs/RUNBOOK-OPS.md` | Chaîne de vérification + notes par lot |
@@ -68,7 +69,7 @@
 ## Chiffres de référence (2026-07-22, prouvés)
 
 - **Règles moteur** : 425/425 (50 suites).
-- **e2e (Postgres réel)** : 78/78 (kyc-rules 6 + … + V14 10 + A3 4 + V16 6). Front : 13/13 (Vitest — FE-CORE `api.ts` + composants FE-WFI/10/40 + FE-05).
+- **e2e (Postgres réel)** : 84/84 (kyc-rules 6 + … + A3 4 + V16 6 + V17 6). Front : 13/13 (Vitest — FE-CORE `api.ts` + composants FE-WFI/10/40 + FE-05).
 - **FAT recette** : V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 = **37/37 PASS (100 %)**. Bandeau démo front : 9/9.
 - **Écrans réels** : 35 (… **V13 : Formations** · **V14 : Business Trip** · Tâches reste FE-05 seed). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front + A1 : `docs/ECARTS-FRONT.md`.
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).

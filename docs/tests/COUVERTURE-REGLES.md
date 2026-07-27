@@ -183,10 +183,21 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 16 : 6 / 6 (100 %).**
 
+## Exigences Vague 17 — MOD Décision NBA (R243→R246, couverture FAT)
+
+| # | Exigence (règle) | FAT | Statut |
+|---|---|---|---|
+| 83 | R243 : suggestion immuable une fois proposée | NB-01 | ✅ |
+| 84 | R244 : décision unique événementielle + motif/ajustement | NB-02/03/04 | ✅ |
+| 85 | R245/R44 : humain seulement, zéro exécution directe | NB-05 | ✅ |
+| 86 | R246/R48 : rejeu suggestions & décisions à date | NB-06 | ✅ |
+
+**Couverture des exigences Vague 17 : 4 / 4 (100 %).** R239→R246 intégralement couvert (V16 + V17).
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47
-tests e2e** (Postgres réel : kyc-rules 6 + … + V13 8 + V14 10 + A3 4 + V16 6) + **13 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
+tests e2e** (Postgres réel : kyc-rules 6 + … + V14 10 + A3 4 + V16 6 + V17 6) + **13 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

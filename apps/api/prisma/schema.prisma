@@ -972,3 +972,27 @@ model TripVisa {
   @@index([tenantId, tripId])
   @@map("trip_visas")
 }
+
+// ── MOD Décision NBA (R243→R246, lot 53) ────────────────────────────────────
+// Une suggestion NBA est générée par le moteur ; une fois PROPOSED, proposition & facteurs sont
+// IMMUABLES (R243, explicabilité). La décision est un ÉVÉNEMENT append-only (R244, NBA_DECIDED) ;
+// R44 strict : humain seulement, aucune exécution directe (R245) — l'ACCEPT émet l'événement, un
+// consommateur (service Tâches) le traduit en tâche. Rejeu à date (R246). Statut mutable (matérialisé).
+model NbaSuggestion {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  contexte    String                                      // client | kyc | task
+  subjectId   String   @map("subject_id")
+  proposition String                                      // R243 : ce que l'humain voit (immuable une fois PROPOSED)
+  facteurs    Json     @default("[]")                     // R243 : les facteurs (immuables)
+  statut      String   @default("PROPOSED")               // PROPOSED | DECIDED | EXPIRED
+  ttlDays     Int?     @map("ttl_days")                   // R243 : expiration paramétrée tenant
+  decision    String?                                     // R244 : ACCEPT | ADJUST | REJECT
+  adjustment  Json?                                       // R244 : non vide si ADJUST
+  rationale   String?                                     // R244 : motif (obligatoire si paramétré)
+  decidedBy   String?  @map("decided_by") @db.Uuid        // R244 : acteur humain
+  decidedAt   String?  @map("decided_at")                 // ISO — pour le rejeu R246
+  createdAt   String   @map("created_at")                 // ISO
+  @@index([tenantId, subjectId])
+  @@map("nba_suggestions")
+}

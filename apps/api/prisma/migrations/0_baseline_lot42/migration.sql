@@ -915,6 +915,26 @@ CREATE TABLE "trip_visas" (
     CONSTRAINT "trip_visas_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "nba_suggestions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "contexte" TEXT NOT NULL,
+    "subject_id" TEXT NOT NULL,
+    "proposition" TEXT NOT NULL,
+    "facteurs" JSONB NOT NULL DEFAULT '[]',
+    "statut" TEXT NOT NULL DEFAULT 'PROPOSED',
+    "ttl_days" INTEGER,
+    "decision" TEXT,
+    "adjustment" JSONB,
+    "rationale" TEXT,
+    "decided_by" UUID,
+    "decided_at" TEXT,
+    "created_at" TEXT NOT NULL,
+
+    CONSTRAINT "nba_suggestions_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -1115,6 +1135,9 @@ CREATE INDEX "trips_tenant_id_traveler_id_idx" ON "trips"("tenant_id", "traveler
 
 -- CreateIndex
 CREATE INDEX "trip_visas_tenant_id_trip_id_idx" ON "trip_visas"("tenant_id", "trip_id");
+
+-- CreateIndex
+CREATE INDEX "nba_suggestions_tenant_id_subject_id_idx" ON "nba_suggestions"("tenant_id", "subject_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

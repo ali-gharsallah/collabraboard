@@ -48,7 +48,7 @@ Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câb
 | ✅ **FAIT (Vague 8)** amlcat (Référentiel AML) | `ReferentielAml` (18 scénarios R189→R206 + seuils effectifs) | — |
 | ✅ **FAIT (Vague 9)** sbaml (Bac à sable AML) | `SandboxAml` (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | `POST /v1/aml/sandbox` |
 | ✅ **FAIT (Vague 10)** Ports (intégrations) | `Ports` (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | `GET /v1/ports`, `GET\|POST /v1/ports/:id/health` |
-| ✅ **FAIT (Vague 10)** NBA (Next Best Action) | `NextBestAction` (gestes R187 en lecture, cadre R44 ; décision non ratifiée → désactivée) | `GET /v1/crm/clients/:id/gestes` |
+| ✅ **FAIT (Vague 10→17)** NBA (Next Best Action) | `NextBestAction` — suggestions décidables (R243), décision humaine unique câblée (R244/R245, R44) | `GET /v1/nba` · `POST /:id/decision` |
 | ✅ **FAIT (Vague 12)** Workflow Instances | `WorkflowInstances` **réel** — projection du workflow gouverné KYC (steps + visas R15 + timeline). `<VisaBadge>` composant unique. | `GET /v1/workflow-instances`, `/:id`, `/:id/events` |
 | ✅ **FAIT (Vague 13)** Formations & Certifications (MOD-43) | `Formations` — catalogue tenant (R231), complétion événementielle + attestation GED (R232), visa (R235), rejeu certifiant (R238) | `GET/POST /v1/formations/*` |
 | ✅ **FAIT (Vague 14)** Business Trip (MOD-75) | `BusinessTrip` — cycle R222, avis cross-border R223, signaux KYC/certif R224/R228, visas R225, contact reports R226, rejeu R229, révision R230 | `GET/POST /v1/trips/*` |
