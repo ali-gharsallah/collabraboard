@@ -2,12 +2,18 @@
 @propose @CPSI @porte-mince @R63-R83
 Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, aucun code
 
-  Statut: RATIFIÉ « OK pour la porte CPSI ». SQUELETTE VERTICAL implémenté (Vague CPSI-1) :
-  CP-01 (score+drivers), CP-02 (rejeu à date), CP-11 (ingestion default-deny), CP-18 (isolation)
-  — e2e `test/e2e/fat-cpsi.e2e-spec.ts` verts contre le moteur Python réel (shell-out). Décisions
-  actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le moteur ;
-  Q3 = complète (frontière avec riskcases R133-136 documentée, aucune route existante touchée) ;
-  Q4 = shell-out `services/cpsi-server-py/bridge.py`. Les scénarios CP-03..17/19 restent À CÂBLER.
+  Statut: RATIFIÉ « OK pour la porte CPSI ». Implémenté (e2e `test/e2e/fat-cpsi.e2e-spec.ts`,
+  contre le moteur Python réel en shell-out) :
+    • Vague CPSI-1 (squelette) : CP-01 score+drivers, CP-02 rejeu à date, CP-11 ingestion
+      default-deny, CP-18 isolation.
+    • Vague CPSI-2 (lectures, zéro écriture) : CP-03 segmentation, CP-07 catalogue conformité,
+      CP-08 règles en clair.
+  Décisions actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le
+  moteur ; Q3 = complète (frontière avec riskcases R133-136 documentée, aucune route existante
+  touchée) ; Q4 = shell-out `services/cpsi-server-py/bridge.py`.
+  RESTENT À CÂBLER : CP-04/05/06 (groupes & ciblage), CP-09/10 (bac à sable, IA propose),
+  CP-12 (alertes/near-miss/corrélations), CP-13 (faux-positif), CP-14 (insider), CP-15/16/17
+  (risk cases & reporting). CP-19 (la porte ne calcule rien) = invariant vérifié par construction.
 
   Doctrine de la porte (pattern PT-01, comme workflow-instances / ports) :
     • La porte RELAIE / PROJETTE / CALCULE via le moteur ratifié `services/cpsi-server-py`

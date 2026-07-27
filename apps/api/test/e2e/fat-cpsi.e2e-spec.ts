@@ -65,4 +65,31 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     expect(g.status).toBe(404);                                           // client inconnu dans le périmètre de B
     console.log("CP-18 PASS — client de A invisible pour B");
   });
+
+  it("CP-03 [R65] segmentation déterministe : le client porte un segment stable", async () => {
+    const g = await request(http).get(`/v1/cpsi/segmentation`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    const mien = g.body.segments.find((s: any) => s.client === cid);
+    expect(mien).toBeDefined();
+    expect(mien.segment).toMatch(/^[BMH]-(CALME|ACTIF|INTENSE)$/);        // grille statique × comportement
+    const g2 = await request(http).get(`/v1/cpsi/segmentation`).set(bearer(A, U, "CO"));
+    expect(g2.body.segments.find((s: any) => s.client === cid).segment).toBe(mien.segment);  // stable (déterminisme)
+    console.log("CP-03 PASS — segment", mien.segment);
+  });
+
+  it("CP-07 [R79] catalogue de conformité en lecture seule (bien formé, vide sans scénario)", async () => {
+    const g = await request(http).get(`/v1/cpsi/compliance-catalogue`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    expect(Array.isArray(g.body.catalogue)).toBe(true);                   // ATTR_DEFS/paramètres exposés, aucune écriture
+    console.log("CP-07 PASS — catalogue lecture seule, entrées:", g.body.catalogue.length);
+  });
+
+  it("CP-08 [R68] règles de calcul en clair (half-life + explicabilité R67)", async () => {
+    const g = await request(http).get(`/v1/cpsi/rules`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    const txt = (g.body.regles as string[]).join("\n");
+    expect(txt).toContain("Half-life");
+    expect(txt).toMatch(/drivers.*reconstitue le score/);                 // R67 énoncé en clair
+    console.log("CP-08 PASS — règles en clair,", g.body.regles.length, "lignes");
+  });
 });

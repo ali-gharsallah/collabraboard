@@ -81,6 +81,29 @@ export class CpsiService {
     if (res.error) throw new NotFoundException(res.error.message);        // client inconnu / non enregistré
     return { clientId, asOf: asOf ?? null, ...res.ok };
   }
+
+  // Lecture générique : rejoue le journal du tenant et exécute une op de lecture du moteur.
+  private async lire(ctx: Ctx, op: string, extra: any = {}, asOf?: string) {
+    const at = asOf ?? new Date().toISOString();
+    const res = await runBridge({ config: await this.config(ctx.tenantId), journal: await this.journal(ctx.tenantId), query: { op, at, ...extra } });
+    if (res.error) throw new BadRequestException(res.error.message);
+    return res.ok;
+  }
+
+  // ── CP-03 (R65) : segmentation déterministe en groupes de pairs, rejeu à date. ──
+  async segmentation(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, segments: await this.lire(ctx, "segmentation", {}, asOf) };
+  }
+
+  // ── CP-07 (R79) : catalogue de conformité, lecture seule. ──
+  async catalogueConformite(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, catalogue: await this.lire(ctx, "compliance_catalogue", {}, asOf) };
+  }
+
+  // ── CP-08 (R68) : règles de calcul en clair. ──
+  async regles(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, regles: await this.lire(ctx, "rules", {}, asOf) };
+  }
 }
 
 @Controller("cpsi")
@@ -89,6 +112,9 @@ export class CpsiController {
   @Post("clients")                 enregistrer(@Req() r: any, @Body() b: any) { return this.svc.enregistrerClient(r.ctx, b); }
   @Post("clients/:cid/signals")    ingerer(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.ingererSignal(r.ctx, cid, b); } // CP-11
   @Get("clients/:cid/score")       score(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.score(r.ctx, cid, asOf); } // CP-01/02
+  @Get("segmentation")             segmentation(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.segmentation(r.ctx, asOf); }            // CP-03
+  @Get("compliance-catalogue")     catalogue(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.catalogueConformite(r.ctx, asOf); }        // CP-07
+  @Get("rules")                    regles(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.regles(r.ctx, asOf); }                        // CP-08
 }
 
 @Module({

@@ -47,7 +47,24 @@ def _score(engine, q):
     }
 
 
-QUERIES = {"score": _score}
+# CP-03 (R65) : segmentation en groupes de pairs — déterministe, explicable.
+def _segmentation(engine, q):
+    res = engine.segmenter(_dt(q["at"]))
+    return [{"client": c, "segment": s} for c, s in res.items()]
+
+
+# CP-07 (R79) : catalogue de conformité, lecture seule (vide tant qu'aucun scénario défini).
+def _compliance_catalogue(engine, q):
+    return engine.catalogue_conformite(_dt(q["at"]))
+
+
+# CP-08 (R68) : règles de calcul en clair.
+def _rules(engine, q):
+    return engine.decrire_regles(_dt(q["at"]))
+
+
+QUERIES = {"score": _score, "segmentation": _segmentation,
+           "compliance_catalogue": _compliance_catalogue, "rules": _rules}
 
 
 def main():
