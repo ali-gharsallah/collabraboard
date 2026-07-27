@@ -185,3 +185,31 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   périphérique refusé ⇒ exclu + `OLIVIA_CONTEXT_DENIED` + « contexte partiel », le nombre jamais
   la nature) est implémentée et prouvée via les **références explicites C1** (chemin ratifié B.5-2).
   À re-prouver sur C3 quand elle ouvrira.
+
+## Écarts — canon VAGUE ÉCRANS PILOTE (étape 0, 2026-07-27) — verdict complet en tête de `spec/canon-vague-ecrans-pilote.md`
+
+- **Collision de famille `SB`** : SB-01..06 déjà pris (SecretBox `mfa_secret`, 2026-07-19).
+  Renommage proposé **SB → BS** (BS-01..06, libre) — **STOP, validation requise** (partie 3 seule bloquée).
+- **R267–R271 vérifiés LIBRES** (grep exhaustif post-renumérotation Olivia). À la ratification :
+  `CATALOGUE_MAX_REGLE` 266 → 271 (R256, olivia.module.ts).
+- **Partie 1** — endpoints MANQUANTS signalés avant code : onglet **Reporting** (volumétrie +
+  délai hit→MROS — la query pont ex-CP-17 n'a plus de route HTTP depuis R252) ; **timeline client**
+  CPSI rejouable `as_of` (aucune projection par client). Le graphe de corrélation, lui, peut rendre
+  `alerts.correlations` (existant). C3 Olivia : dépendance temporelle (ouvre à l'étape 6 Olivia).
+  AW-05 : idempotence du rattachement signal→case à PROUVER sur l'existant, pas à corriger en douce.
+- **Partie 2** — `CpsiParam`/`CpsiGuide` EXISTENT déjà (extension, pas reconstruction). MANQUANTS :
+  route **historique des versions** (journal `cpsi_events` non exposé) ; commande d'**application
+  de barème** (`cpsi.param.applied`) avec date de mise en vigueur (PA-03) — aucune mutation directe
+  des paramètres n'existe (seuls groupes/scénarios/propositions/FP/insider).
+- **Partie 3** — `sbonb` : ÉCART DE LEVIERS (livré = seuils SLA ; canon = aiguillage
+  structure→workflow, endpoint dry-run d'aiguillage inexistant). `sbkyc`/`sbbrm`/`sbcf`/`sbwf` :
+  aucun endpoint dry-run (+ blocages sous-jacents déjà consignés ci-dessus : barèmes non gouvernés,
+  moteurs non isolés, objet sbwf indéfini). Chaque endpoint à créer est signalé ICI, avant code.
+- **Partie 4** — `sdkyc` : `KycAccessRule` existe en base mais AUCUNE route matrice, modèle par
+  QUESTION (pas section×rôle), **aucun versionnage à date** (SD-04 impossible sans évolution de
+  modèle), aucun garde-fou backend, pas de « Voir comme ». `sdar`/`sdgar` : aucun store de
+  questionnaire de review. **`cocparam` : le store `COC_CONFIG` n'existe PAS** (le CoC est un
+  événement brut sans typologie) — le canon le dit « existant » : divergence repo vs canon → STOP.
+- **Partie 5** — exécutable dès ratification : dépendances vérifiées présentes (riskcases, gel MROS,
+  port core banking, `KycFile.previousKycId`) ; l'état ACTIVE/CLOTUREE vivra dans
+  `offboarding_files.statut` (le modèle `Client` n'a pas de champ statut — conforme au §5.2).
