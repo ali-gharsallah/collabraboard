@@ -71,7 +71,7 @@ FE-CORE (`api.ts`) livré en incrémental (JWT défaut, `/v1`). Détail de la re
    (pas requis par les blocs livrés ; à introduire quand un bloc les exige).
 4. **Préfixe** → **`/v1`** (réalité backend). La spec est lue en `/v1`, le routing ratifié n'est pas touché.
 
-**Reste ouvert (attente canon / validation)** : FE-WFI, FE-TASK (canon backend dédié) ; route de **décision NBA**
+**Reste ouvert (attente canon / validation)** : FE-TASK (backlog list/complete — canon backend dédié) ; route de **décision NBA**
 (`POST /nba/:id/decision`) ; ports **fx/custody/mobile** ; R222..R238 (Business Trip / Formations, **PROPOSÉES** —
 attente « OK pour R222..R238 ») ; zone canon manquant (Command Center, Investigation, SWIFT, Legal, Octopulse,
 CPSI-Nest, Olivia/BI, écrans IAM/SSO, Audit).
@@ -84,7 +84,7 @@ A1 ratifie les 4 arbitrages (D1 portes minces / D2 JWT défaut / D3 incrémental
 | Bloc | Service ratifié ? | Résolution A1 |
 |---|---|---|
 | **Ports** | oui (core R167 + config tenant) | Porte mince livrée (Vague 10). PT-01 ≡ FAT-PORT-01/02 (relaie/projette, ne décide pas). |
-| **Workflow Instances** | **non** — `workflow` = *définitions* R171-173, pas d'instances/events/visas | **FE-05** (écran seed lecture seule, `WorkflowInstances.tsx`). Aucune porte inventée. |
+| **Workflow Instances** | **oui (V12)** — projection du **dossier KYC** (workflow gouverné ratifié : `KycFile`+`KycVisa` R15 + `DomainEvent` timeline) | **Porte mince réelle** `WorkflowInstancesModule` (liste/détail/events). L'instance = le dossier KYC. FAT-WFI-01/02/03. Les autres types de workflow s'ajouteront avec leur canon. |
 | **Tâches** | **partiel** — `workload.reassigner` (R184) + lectures internes ; **pas** de service backlog list/complete | **FE-05** (`Tasks.tsx`) ; bouton « Compléter » **absent** (capacité non ratifiée, D1). |
 | **NBA** | oui (per-client `crm/gestes` R187) ; **pas** de route de décision | Lecture livrée (Vague 10) ; décision **désactivée** (D1 : capacité absente → action absente). |
 

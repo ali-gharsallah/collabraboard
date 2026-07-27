@@ -55,8 +55,11 @@ permettant de prononcer la recette des **Vagues 1 & 2** d'O-Live.
 30. **Next Best Action** (FE-NBA) — gestes R187 en lecture, cadre R44 (décision non ratifiée → désactivée).
 31. **FE-CORE** (`api.ts`) — seed signalé, propagation session, rejeu `asOf` (R48), erreurs non traduites (Vitest).
 
+**Dans le périmètre (Vague 12 — Workflow Instances)** — FE-WFI câblé au canon KYC :
+32. **Workflow Instances** — projection du workflow gouverné ratifié (dossier KYC) : liste, détail (steps + visas R15), timeline append-only (FE-20). Porte mince `WorkflowInstancesModule`.
+
 *Gelé (attente « OK pour R222..R238 »)* : Business Trip (MOD-75) & Formations (MOD-43) — Gherkin seul.
-*Gelé (aucun service ratifié)* : Workflow Instances (FE-WFI), Tâches (FE-TASK). Détail : `docs/ECARTS-FRONT.md`.
+*Reste FE-05 (aucun service backlog ratifié)* : Tâches (FE-TASK). Décision NBA non ratifiée. Détail : `docs/ECARTS-FRONT.md`.
 
 *(Vague 9 — Bac à sable AML : dry-run d'un seuil R94/B-02 ; Vague 8 — Référentiel AML R189→R206, cf. FAT-VAGUE8/9.)*
 
@@ -74,8 +77,8 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..10`) | **47 tests, 11 suites** |
-| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..10.e2e-spec.ts` | **41 FAT (… + V9 2 + V10 2)** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..10,12`) | **50 tests, 12 suites** |
+| **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..12.e2e-spec.ts` | **44 FAT (… + V10 2 + V12 3)** |
 | **Front (Vitest + RTL + MSW)** | Prouver FE-CORE (`api.ts`) + composants (Ports/NBA/FE-05) hors backend | `pnpm --filter web run test:unit` | **11 tests (FE-01..06 + FE-05/10/40)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
@@ -119,7 +122,7 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 47 e2e + 11 Vitest verts.
+- **0 régression** : 425 règles + 50 e2e + 11 Vitest verts.
 - Toute exigence métier de Vagues 1 à 8 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies

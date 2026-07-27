@@ -21,17 +21,36 @@ afterEach(() => { server.resetHandlers(); cleanup(); w.OLIVE_API_URL = undefined
 afterAll(() => server.close());
 beforeEach(() => { w.OLIVE_API_URL = undefined; });
 
-describe("FE-05 — écran sans service ratifié : seed lecture seule", () => {
-  it("Workflow Instances affiche le bandeau démonstration et n'appelle aucun endpoint", () => {
-    render(<WorkflowInstances/>);                             // aucun OLIVE_API_URL, aucun fetch
-    expect(screen.getByText(/Démonstration — service backend non ratifié/i)).toBeInTheDocument();
-    expect(screen.getByText(/WF-DEMO-001/)).toBeInTheDocument();
-  });
-
+describe("FE-05 — écran sans service ratifié : seed lecture seule (Tâches)", () => {
   it("Tâches affiche le bandeau démonstration et n'a pas de bouton Compléter", () => {
     render(<Tasks/>);
     expect(screen.getByText(/Démonstration — service backend non ratifié/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Compléter/i })).toBeNull();   // capacité non ratifiée
+  });
+});
+
+describe("FE-WFI — Workflow Instances : liste → détail (visas R15) + timeline (FE-20/21)", () => {
+  it("liste, ouvre le détail, affiche steps, visa signé et timeline ordonnée", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/workflow-instances/:id/events", () => HttpResponse.json([
+        { type: "kyc.created", at: "2026-07-01T10:00:00Z", payload: {} },
+        { type: "kyc.visa.signed", at: "2026-07-02T09:00:00Z", payload: {} },
+      ])),
+      http.get("*/v1/workflow-instances/:id", () => HttpResponse.json({
+        id: "i1", code: "WF-1", type: "KYC:CDD", status: "IN_PROGRESS", etapeCourante: "Collecte", revision: 1,
+        steps: [{ code: "IDENTITY", label: "Identité", ordre: 0 }],
+        visas: [{ section: "IDENTITY", roleRequis: "CO", statut: "SIGNED", signePar: "u-co", signeAt: "2026-07-02T09:00:00Z", verdict: "OK" }],
+      })),
+      http.get("*/v1/workflow-instances", () => HttpResponse.json([
+        { id: "i1", code: "WF-1", type: "KYC:CDD", clientId: "c1", status: "IN_PROGRESS", etapeCourante: "Collecte", visas: "1/2", revision: 1, majAt: "2026-07-01T10:00:00Z" },
+      ])),
+    );
+    render(<WorkflowInstances/>);
+    fireEvent.click(await screen.findByText("WF-1"));
+    expect(await screen.findByText(/Identité/)).toBeInTheDocument();          // step (section)
+    expect(screen.getByText(/signé par u-co/)).toBeInTheDocument();           // visa R15 signataire
+    expect(screen.getByText("kyc.created")).toBeInTheDocument();              // timeline append-only
   });
 });
 
