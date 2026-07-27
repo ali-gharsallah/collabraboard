@@ -6,6 +6,17 @@ lisent BS-01..06). Bloc Offboarding **R267–R271 RATIFIÉ** — partie 5 en ex�
 Conséquence codée : `CATALOGUE_MAX_REGLE` 266 → 271 (R256). Les autres points d'arbitrage
 (portes P1/P2, dry-run P3, P4) restent OUVERTS.
 
+**PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
+intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
+listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·
+R270 (cloisonnement art. 10a : réponse réseau, courrier, Olivia R256, **policy SQL RESTRICTIVE
+prouvée** — critère 5.6-2) · R271 (retour = NOUVEL onboarding, KYC Rn+1 `previousKycId`, EDD
+imposé ex-EXIT_COMPLIANCE). **e2e fat-offboarding 12/12 (OF-01..12, OF-06 port présent ET
+absent — critère 5.6-1)** ; écran `offboarding` + bannières lecture seule sur client/KYC/comptes
+(critère 5.6-4, Vitest) ; paramètres §5.4 au questionnaire R-Q (critère 5.6-3). Écarts
+d'implémentation signalés : `offboarding_sensibles` = table dédiée (pas de politique par colonne
+en Postgres — même sémantique, vraie policy) ; Head PB → DIR ; SO → non ratifié (défaut CO_SR+MLRO).
+
 **a) Numérotation : R267–R271 LIBRES.** Grep exhaustif (`spec/ docs/ apps/ services/`) : aucune
 occurrence de R267..R271 après la renumérotation Olivia (v1 = R253–R257 · v1.1 = R258 ·
 v2 = R259–R266). Le bloc Offboarding peut garder **R267–R271 tel que proposé**.

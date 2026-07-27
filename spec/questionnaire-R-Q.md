@@ -115,3 +115,38 @@ avec ses scénarios, avant implémentation.*
 
   Ces paramètres vivent sous `tenant.settings.cpsiConfig` (R68 : versionnés par
   date de mise en vigueur ; le rejeu à date utilise la config d'alors).
+
+13. Paramètres tenant — bloc Offboarding (R267-R271, canon vague écrans pilote §5.4, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R267**      `retentionPostClotureAns` — durée de       Offboarding
+                rétention post-clôture (défaut 10 ans,
+                LBA art. 7). La purge de fin de rétention
+                est un processus distinct (R170).
+
+  **R268**      `visasParTypeCloture` — visas requis par   Offboarding
+                type (défauts : EXIT_COMPLIANCE →
+                [CO_SR, DIR] (Head PB → DIR, mapping
+                ratifié), DECES_SUCCESSION → [CO],
+                autres → [CO]).
+
+  **R268**      `documentsParTypeCloture` — documents      Offboarding
+                exigés par type (défauts : DEMANDE_CLIENT
+                → INSTRUCTION_TRANSFERT_SIGNEE,
+                DECES_SUCCESSION → ACTE_DECES).
+
+  **R270**      `rolesMotifSensible` — rôles habilités au  Offboarding
+                motif détaillé + réf MROS d'un
+                EXIT_COMPLIANCE (défaut [CO_SR, MLRO] ;
+                le canon cite SO — rôle non ratifié,
+                écart consigné). Appliqué au contrôleur,
+                à Olivia (R256) ET par policy SQL
+                RESTRICTIVE (GUC app.role).
+
+  **R271**      `exExitComplianceForceEdd` — un ex-        Offboarding
+                EXIT_COMPLIANCE qui revient entre en
+                workflow EDD imposé (défaut vrai).
+  ------------- ----------------------------------------- ----------------------
+
+  Ces paramètres vivent sous `tenant.settings` (R68) ; les valeurs appliquées à une
+  clôture (visas, documents) sont figées dans le dossier au moment de l'acte.

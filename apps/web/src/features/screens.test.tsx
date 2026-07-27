@@ -16,6 +16,10 @@ import { CpsiParam } from "./cpsi/CpsiParam";
 import { CpsiGuide } from "./cpsi/CpsiGuide";
 import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
 import { Home } from "./home/Home";
+import { Offboarding } from "./offboarding/Offboarding";
+import { ClientsList } from "./clients/ClientsList";
+import { KycDetail } from "./kyc/KycDetail";
+import { TransfertsOrdres } from "./transactions/TransfertsOrdres";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -287,5 +291,71 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
     expect(screen.queryByText("Mes dossiers KYC")).toBeNull();                 // tuiles client ABSENTES du DOM
     expect(screen.queryByText("Visas en attente de moi")).toBeNull();
     expect(screen.queryByText("Risk cases")).toBeNull();
+  });
+});
+
+describe("FE-OFFB — Offboarding : workflow rendu, obstacles servis, cloisonnement R270, bannières R267 (canon partie 5)", () => {
+  it("liste + détail : obstacles R269 EN DIRECT, panneau sensible ABSENT du DOM quand le backend ne le sert pas", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/offboarding/OFF-1", () => HttpResponse.json({
+        id: "OFF-1", clientId: "c1", type: "EXIT_COMPLIANCE", motif: "Décision de l'établissement",
+        statut: "EN_CLOTURE", obstacles: ["risk case ouvert RC-9 (EN_ANALYSE)", "avoirs : attestation manuelle visée requise (port core banking absent)"],
+        initiateur: "u1", documents: [], visas: [{ role: "CO_SR", statut: "SIGNED" }, { role: "DIR", statut: "PENDING" }],
+        attestationAvoirs: null, createdAt: "2026-07-27" })),                   // PAS de motifSensible : rôle non habilité
+      http.get("*/v1/offboarding", () => HttpResponse.json([
+        { id: "OFF-1", clientId: "c1", type: "EXIT_COMPLIANCE", statut: "EN_CLOTURE", createdAt: "2026-07-27" }])),
+    );
+    render(<Offboarding/>);
+    expect(await screen.findByText("EXIT_COMPLIANCE")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Détail" }));
+    expect(await screen.findByText(/risk case ouvert RC-9/)).toBeInTheDocument();       // checklist servie, tous les obstacles
+    expect(screen.getByText(/attestation manuelle visée requise/)).toBeInTheDocument();
+    expect(screen.getByText(/Motif : Décision de l'établissement/)).toBeInTheDocument(); // motif générique
+    expect(screen.queryByTestId("panneau-sensible")).toBeNull();                        // R270 : ABSENT du DOM (servi conditionnellement)
+    expect(screen.getByText(/✓ CO_SR/)).toBeInTheDocument();                            // visas du type (R268)
+  });
+
+  it("rôle habilité : le panneau sensible existe UNIQUEMENT parce que le backend a servi la clé", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/offboarding/OFF-2", () => HttpResponse.json({
+        id: "OFF-2", clientId: "c2", type: "EXIT_COMPLIANCE", motif: "Décision de l'établissement",
+        statut: "CLOTUREE", obstacles: [], initiateur: "u1", documents: [], visas: [],
+        clotureEffectiveAt: "2026-07-27T10:00:00Z", retentionJusqua: "2036-07-27",
+        motifSensible: "Soupçon art. 305bis CP", mrosRef: "mros-44", createdAt: "2026-07-27" })),
+      http.get("*/v1/offboarding", () => HttpResponse.json([
+        { id: "OFF-2", clientId: "c2", type: "EXIT_COMPLIANCE", statut: "CLOTUREE", createdAt: "2026-07-27",
+          clotureEffectiveAt: "2026-07-27T10:00:00Z", retentionJusqua: "2036-07-27" }])),
+    );
+    render(<Offboarding/>);
+    expect(await screen.findByText("EXIT_COMPLIANCE")).toBeInTheDocument();   // données réelles chargées (pas le seed)
+    fireEvent.click(screen.getByRole("button", { name: "Détail" }));
+    expect(await screen.findByTestId("panneau-sensible")).toBeInTheDocument();
+    expect(screen.getByText(/305bis/)).toBeInTheDocument();
+    expect(screen.getByText(/rétention jusqu'au 2036-07-27/)).toBeInTheDocument();      // post-clôture : bannière lecture seule
+  });
+
+  it("bannières R267 (critère 5.6-4) : client, KYC et comptes affichent « lecture seule » quand le backend dit CLOTUREE", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/offboarding/statut/*", () => HttpResponse.json(
+        { cloture: true, le: "2026-07-27T10:00:00Z", retentionJusqua: "2036-07-27", type: "DECISION_BANQUE" })),
+      http.get("*/v1/clients", () => HttpResponse.json({ data: [
+        { id: "c1", name: "Suzuki Ltd", structure: "PP", country: "CH", riskLevel: "LOW" }] })),
+      http.get("*/v1/kyc/K-1", () => HttpResponse.json({ code: "K-1", clientId: "c1", workflow: "SDD",
+        riskScore: 5, status: "VALIDATED", sections: [], visas: [] })),
+    );
+    render(<ClientsList/>);                                                            // écran CLIENT
+    fireEvent.click(await screen.findByText("Suzuki Ltd"));
+    expect(await screen.findByTestId("banniere-cloture")).toBeInTheDocument();
+    cleanup();
+    render(<KycDetail code="K-1"/>);                                                   // écran KYC
+    expect(await screen.findByTestId("banniere-cloture")).toBeInTheDocument();
+    cleanup();
+    render(<TransfertsOrdres/>);                                                       // écran COMPTES/ordres
+    fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c1" } });
+    expect(await screen.findByTestId("banniere-cloture")).toBeInTheDocument();
+    expect(screen.getAllByText(/lecture seule/).length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { BanniereCloture } from "../../components/BanniereCloture"; // R267/OF-10 — écran comptes/ordres
 
 // Écran « Transferts & ordres » (Vague 4). Toute transaction passe par le portail
 // (POST /v1/transactions/evaluer) : verdict PASSE|BLOQUE|SUSPEND tracé garde par garde (R140).
@@ -52,6 +53,7 @@ export function TransfertsOrdres() {
   return <div>
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Transferts & ordres — portail transactionnel (R140→R143)</h3>
+    <BanniereCloture clientId={clientId.trim() || null}/>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap" }}>
       <input style={inp} placeholder="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)}/>
       <input style={{ ...inp, width: 100 }} placeholder="txRef" value={txRef} onChange={(e) => setTxRef(e.target.value)}/>
