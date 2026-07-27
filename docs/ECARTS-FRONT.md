@@ -357,3 +357,20 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   la colonne est bien uuid + RLS. Cohérence > littéralité, signalé.
 - `missions ad hoc de TEST` : déclarées via tenant.settings.missionsDeclarees (véhicule de
   déclaration ratifiée B.4) — l'artefact livré ne porte QUE les 2 missions du canon.
+
+## OLIVIA v2 — PARTIE B LIVRÉE (2026-07-27, B.7 : 5/5 ✅) — solde des écarts v2
+
+- Livraison complète en 11 étapes (un commit par règle) : R264→R259→R260→R262→R261→R263→
+  mission PREREVUE_DOSSIER→R265→R266→mission ANALYSE_CORRELATION→SW-14 automatisé+B.5.
+  SW-01..18 tous verts (fat-swarm, 20 tests) ; suite v1/v1.1 INTACTE (OL-01..34 verts).
+- 🟡 Écarts v2 consignés, à ratifier pour être soldés :
+  1. Rôles **SO / Direction** (B.3) absents du modèle de rôles du repo → gardes rendues
+     ADMIN/CO_SR (répertorié depuis v1 ; le rôle SO reste à créer au canon).
+  2. **Type CLARIFICATION** absent du catalogue R254 (cf. écart étape 7).
+  3. **File d'attente de saturation** (runs_actifs_max_par_tenant) : impossible en
+     transport SYNCHRONE v1 — le dépassement est un événement notifié (R39), la file
+     arrive avec le transport asynchrone (même écart que le SSE v1.1).
+  4. **Empreinte C3 volatile** : le hachage du score CPSI embarque la mesure de rejeu
+     (duree_ms) → l'égalité BYTE des empreintes entre agents est prouvée sur C2 (SW-04),
+     l'égalité de PÉRIMÈTRE (type+id) sur C3 (mission 2). Stabiliser = retirer la mesure
+     du hachage côté v1 (changement v1 à ratifier).

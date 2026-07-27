@@ -273,6 +273,17 @@ export class SwarmRunsService {
     if (def.ancrage)
       await this.olivia.construireContexte(ctx, { capacite, ancrageId: dto.ancrageId! }, settings);
 
+    // B.5/R266 : runs_actifs_max_par_tenant (défaut 5) — le dépassement NOTIFIE, ne bloque
+    // jamais (R39). La « file d'attente » du canon exige un transport ASYNCHRONE — écart
+    // consigné : en transport synchrone v1, la saturation est un événement, pas une file.
+    const capActifs = settings.runsActifsMaxParTenant ?? 5;
+    const actifs = await this.prisma.oliviaRun.count({
+      where: { tenantId: ctx.tenantId, statut: { in: ["EN_COURS", "PAUSE_PORTE"] } } });
+    if (actifs >= capActifs)
+      await this.prisma.$transaction(async (tx: Tx) =>
+        this.emit(tx, ctx.tenantId, "olivia.runs.saturation", ctx.userId,
+          { actifs, plafond: capActifs, mission: dto.missionCode }));
+
     const run = await this.prisma.oliviaRun.create({ data: { tenantId: ctx.tenantId,
       missionCode: dto.missionCode, commanditaireId: ctx.userId, roleCode: ctx.role,   // jeton, jamais le corps
       ancrageType: dto.ancrageType ?? null, ancrageId: dto.ancrageId ?? null, budget } });

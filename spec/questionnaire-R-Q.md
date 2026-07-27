@@ -258,3 +258,37 @@ avec ses scénarios, avant implémentation.*
                 du prompt (défaut 10 couples IN/OUT) ;
                 le journal garde TOUT (OL-27).
   ------------- ----------------------------------------- ----------------------
+
+17. Paramètres tenant — Olivia v2 architecture agentique (R259-R266, Partie B dégelée 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R262/B.5**  `runMaxEtapes` / `runMaxDureeS` /          Olivia v2
+                `runMaxCoutTokens` — budgets durs par run
+                (défauts 20 / 300 / 200000). Le premier
+                épuisé ⇒ EPUISE, livrable partiel avec
+                mention ; surcharge par mission À LA
+                BAISSE uniquement (SW-08).
+
+  **R263/B.5**  `porteTimeoutH` — expiration d'une porte   Olivia v2
+                humaine sans décision (défaut 72 h) ⇒
+                INTERROMPU notifié, JAMAIS une reprise
+                (SW-11).
+
+  **R266/B.5**  `runsActifsMaxParTenant` — plafond de      Olivia v2
+                runs actifs (défaut 5). Le dépassement
+                NOTIFIE (olivia.runs.saturation), ne
+                bloque jamais (R39) — la file d'attente
+                exige le transport asynchrone (écart).
+
+  **B.5/SW-18** `missionsActives` — interrupteur v2        Olivia v2
+                (défaut {} : v2 ÉTEINTE partout).
+                Activation EXPLICITE mission par mission ;
+                servi au front par /v1/olivia/missions
+                (pattern R177/HO-02).
+
+  **B.4**       `missionsDeclarees` — déclaration          Olivia v2
+                ratifiée de missions SUPPLÉMENTAIRES
+                {code: {agents, portes, roles, ancrage?}}
+                — jamais une mission ad hoc ; l'artefact
+                livré ne porte que les 2 missions B.4.
+  ------------- ----------------------------------------- ----------------------

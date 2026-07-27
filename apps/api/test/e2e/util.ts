@@ -32,3 +32,20 @@ export async function seedTenantClient(prisma: PrismaService, tid: string, clien
     VALUES (${clientId}::uuid, ${tid}::uuid, 'Suzuki Ltd', 'PP', 'CH', 'LOW', NOW())
     ON CONFLICT (id) DO NOTHING`;
 }
+
+// ── SW-14 AUTOMATISÉ (B.7 critère 3) : photo BYTE-À-BYTE des tables MÉTIER — générée depuis le
+// catalogue pg_tables (jamais une liste manuelle silencieusement incomplète). Sont exclues les
+// SEULES écritures licites d'un run (B.0/R264) : olivia_* (journal, registres, messages,
+// propositions) + domain_events + audit_log. Toute autre table qui bouge = mutation métier. ──
+export async function photoTablesMetier(prisma: PrismaService): Promise<string> {
+  const exclues = (t: string) => t.startsWith("olivia_") || t === "domain_events" || t === "audit_log" || t.startsWith("_");
+  const tables = await prisma.$queryRawUnsafe<{ tablename: string }[]>(
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`);
+  const photo: Record<string, unknown> = {};
+  for (const { tablename } of tables) {
+    if (exclues(tablename)) continue;
+    photo[tablename] = await prisma.$queryRawUnsafe(
+      `SELECT md5(coalesce(string_agg(t.*::text, '|' ORDER BY t.*::text), 'vide')) FROM "${tablename}" t`);
+  }
+  return JSON.stringify(photo);
+}

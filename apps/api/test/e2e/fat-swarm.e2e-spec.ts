@@ -14,7 +14,7 @@ import { randomUUID } from "crypto";
 import * as path from "path";
 import { INestApplication } from "@nestjs/common";
 import { PrismaService } from "../../src/common/prisma.service";
-import { boot, bearer, seedTenantClient } from "./util";
+import { boot, bearer, seedTenantClient, photoTablesMetier } from "./util";
 // La MÊME source que la CI et le runtime : une seule vérité, pas trois listes.
 import * as listeBlanche from "../../src/modules/swarm/outils-liste-blanche.json";
 
@@ -465,14 +465,9 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
       .send({ clientId: clientP, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: CO })).body;
     expect(kycPrerevue.id).toBeTruthy();
 
-    // SW-14 (photo AVANT) : l'état métier, byte-identique après le run (automatisation = étape 11)
-    const photo = async () => JSON.stringify({
-      kyc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM kyc_files t WHERE tenant_id = '${T}'`),
-      q: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM kyc_questions t`),
-      cl: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM clients t WHERE tenant_id = '${T}'`),
-      rc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM risk_cases t WHERE tenant_id = '${T}'`),
-      cpsi: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM cpsi_events t WHERE tenant_id = '${T}'`) });
-    const avant = await photo();
+    // SW-14 AUTOMATISÉ (B.7 crit. 3) : dump ciblé de TOUTES les tables métier (catalogue
+    // pg_tables moins olivia_*/domain_events/audit_log) — byte-identique après le run.
+    const avant = await photoTablesMetier(prisma);
 
     const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
       .send({ missionCode: "PREREVUE_DOSSIER", ancrageType: "KYC_FILE", ancrageId: kycPrerevue.id });
@@ -492,7 +487,7 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     expect(evts[evts.length - 2].type).toBe("PORTE_OUVERTE");
     chaineContigue(evts);
     // SW-14 : AUCUNE écriture métier — photo byte-identique (le run n'écrit que olivia_* / domain_events / audit)
-    expect(await photo()).toBe(avant);
+    expect(await photoTablesMetier(prisma)).toBe(avant);
     console.log("SW-13/14 PASS — outil du voisin refusé et tracé, run continué, état métier byte-identique");
   });
 
@@ -645,12 +640,8 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     const rc = await prisma.riskCase.create({ data: { tenantId: T, clientId: clientA, statut: "EN_ANALYSE",
       etatDepuis: new Date(), signalIds: [], ouvertPar: CO } });
 
-    // SW-14 (re-passe) : photo de l'état métier AVANT — byte-identique APRÈS
-    const photo = async () => JSON.stringify({
-      rc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM risk_cases t WHERE tenant_id = '${T}'`),
-      cpsi: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM cpsi_events t WHERE tenant_id = '${T}'`),
-      cl: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM clients t WHERE tenant_id = '${T}'`) });
-    const avant = await photo();
+    // SW-14 (re-passe, AUTOMATISÉ) : dump de TOUTES les tables métier — byte-identique après
+    const avant = await photoTablesMetier(prisma);
 
     const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
       .send({ missionCode: "ANALYSE_CORRELATION", ancrageType: "RISK_CASE", ancrageId: rc.id });
@@ -682,8 +673,23 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     expect(props[0].cibleId).toBe(`${clientA}|SC_STRUCT`);                // clé R252, __CLIENT__ résolu
     expect(props[0].statut).toBe("PENDING");
     expect(props[0].cibleEtat).toBe("NON_QUALIFIEE");                     // état FIGÉ (caducité B.7)
-    // SW-14 (re-passe) : l'état métier est BYTE-IDENTIQUE — risk case, cpsi_events, clients intacts
-    expect(await photo()).toBe(avant);
+    // SW-14 (re-passe) : l'état métier est BYTE-IDENTIQUE — TOUTES tables métier confondues
+    expect(await photoTablesMetier(prisma)).toBe(avant);
     console.log("Mission 2 PASS — porte escalade, proposition ALERTE clé R252, SW-04/SW-14 re-passés verts");
+  });
+
+  // ── Étape 11 : B.5 — la saturation NOTIFIE, ne bloque jamais (R39/R266) ──
+
+  it("B.5 [R266] runs_actifs_max_par_tenant : au plafond, le dépassement est NOTIFIÉ (événement), jamais bloqué", async () => {
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any);
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s, runsActifsMaxParTenant: 0 } } });
+    const avant = await prisma.domainEvent.count({ where: { tenantId: T, type: "olivia.runs.saturation" } });
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_SIMPLE" });
+    expect(r.status).toBe(201);                                           // mesure, PAS coercition
+    expect(r.body.statut).toBe("TERMINE");
+    expect(await prisma.domainEvent.count({ where: { tenantId: T, type: "olivia.runs.saturation" } })).toBe(avant + 1);
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s, runsActifsMaxParTenant: 5 } } });
+    console.log("B.5 PASS — saturation notifiée (événement), run servi");
   });
 });

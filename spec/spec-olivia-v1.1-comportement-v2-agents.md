@@ -155,7 +155,7 @@ coupe serveur altérerait la sortie) ; OL-30 juge le rôle PORTÉ PAR LE JETON c
 ---
 ---
 
-# PARTIE B — OLIVIA v2 : ARCHITECTURE AGENTIQUE (R259–R266)
+# PARTIE B — OLIVIA v2 : ARCHITECTURE AGENTIQUE (R259–R266) — **LIVRÉE le 2026-07-27 (B.7 : 5/5 ✅)**
 
 **RATIFIÉE – DÉGELÉE le 2026-07-27 (déclencheur « décision Ali » ACTIONNÉ — dégel décidé par Ali,
 prérequis vérifié : OL-01..34 verts sur la branche, 33/33).** Cette partie fixe le contrat pour que
@@ -390,16 +390,26 @@ réutilisation, pas concurrence. Toute divergence entre le run v2 et la pré-rev
 > **SW-18 — v2 éteinte par défaut** : tenant sans missions_actives → POST /runs répond
 > refus typé ; aucun écran Runs au menu (pattern R177/HO-02).
 
-## B.7 Critères d'acceptation v2
+## B.7 Critères d'acceptation v2 — **POINTAGE FINAL (LIVRÉ le 2026-07-27, 11 étapes, un commit par règle)**
 
-1. SW-01..18 verts (fournisseur mocké déterministe : le mock rejoue des plans/sorties
-   fixés par fixture — le déterminisme du TEST, pas de la prod).
-2. Liste blanche d'endpoints outils en CI : le build échoue si un outil déclaré pointe
-   hors liste.
-3. Snapshot-compare SW-14 automatisé (dump ciblé avant/après run sur les tables métier).
-4. Écran Runs + replay livrés (R265/R266) — la démo FINMA « déroulez ce que le swarm a
-   fait » fonctionne sur les 2 missions.
-5. Paramètres B.5 au questionnaire R-Q ; missions_actives vide par défaut partout.
+1. ✅ SW-01..18 verts (fournisseur mocké déterministe : plans/sorties en fixtures
+   `swarm-plans.fixture.json` — outillage de TEST ; sans port réel : 503 typé). Les 18
+   scénarios sont couverts dans `fat-swarm.e2e-spec.ts` (20 tests).
+2. ✅ Liste blanche d'endpoints outils en CI : étape 1c bloquante
+   (`scripts/verifier-liste-blanche-outils.js`) — build rouge hors liste ; même artefact
+   appliqué au runtime (SW-12).
+3. ✅ Snapshot-compare SW-14 AUTOMATISÉ : `photoTablesMetier()` (util e2e) — dump md5 de
+   TOUTES les tables métier depuis le catalogue pg_tables (moins olivia_*/domain_events/
+   audit_log), byte-identique avant/après run, passé sur les 2 missions.
+4. ✅ Écran Runs (`Runs.tsx` : liste, timeline, STOP, agrégat, interrupteur SW-18) +
+   replay R265 (chaînage vérifié, à date, version d'agent d'époque) — sur les 2 missions.
+5. ✅ Paramètres B.5 au questionnaire R-Q (§17) ; missions_actives vide par défaut
+   partout (SW-18 : refus typé + écran neutralisé, pattern R177/HO-02).
+
+Écarts signalés (ECARTS) : rôles SO/Direction absents du repo (gardes = ADMIN/CO_SR) ·
+type CLARIFICATION absent du catalogue R254 (types existants en attendant l'amendement) ·
+file d'attente de saturation impossible en transport synchrone v1 (notifiée, R39) ·
+FK users(id) non posée (pattern uniforme du repo) · empreinte C3 volatile (mesure CPSI).
 
 ---
 
