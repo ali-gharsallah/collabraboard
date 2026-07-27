@@ -147,3 +147,22 @@ CLOTUREE | ESCALADEE. Le module plateforme `modules/riskcases` (R133–R136) por
 **la correspondance formelle des deux machines reste à ratifier** — divergence = écart de catalogue, pas
 un détail d'implémentation. Tant que non réconciliées : le CPSI n'expose aucune surface risk-case (PC-11),
 le `risk_cases` du moteur Python reste un outil de test (jamais produit), aucune route R133–R136 touchée.
+
+## Écarts — bacs à sable restants (reconnaissance 2026-07-27, patron R94)
+
+Le patron ratifié R94 exige un MOTEUR PUR + un PARAMÈTRE GOUVERNÉ au registre R-Q à simuler.
+Reconnaissance faite moteur par moteur ; **seul `sbonb` était constructible sans nouveau canon**
+(fait : `POST /v1/onboarding/sandbox` sur `onboardingSlaJours`, FAT-SBONB-01/02). Les 4 autres :
+
+- **`sbkyc`** : `kyc/risk-engine.computeRisk` est PUR et tracé (idéal), mais ses barèmes
+  (STRUCTURE_PTS, pays à risque, seuils 25/50) sont des **constantes codées en dur** — aucun
+  paramètre KYC scoring gouverné au R-Q. Rien à « simuler » au sens R94 tant que ces barèmes ne
+  sont pas ratifiés comme paramètres tenant. → amendement de catalogue requis d'abord.
+- **`sbbrm`** : la capacité d'équipe (R183-185) est mesurée en DB (`WorkloadService`), aucun moteur
+  pur isolé. Refactor d'isolation requis avant tout dry-run.
+- **`sbcf`** : `transaction-gate.evaluer` a des **effets de bord** (gardes recevant prisma+emit,
+  événements émis) — non isolable en l'état, bien que `txGardes` soit gouverné. Refactor requis.
+- **`sbwf`** : le moteur workflow (R1-R51) est INTOUCHABLE et n'expose aucun `evaluer` pur ;
+  l'objet même de la simulation (defs R171-173 ? matrice ?) n'est pas défini. Canon à ratifier.
+
+Aucun de ces quatre n'a été construit — signalé, pas inventé.

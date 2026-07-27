@@ -21,6 +21,8 @@ export class OnboardingController {
   }
   @Get()                                  // Vague 3 — stock du pipeline pour le dashboard exécutif
   liste(@Req() r: any) { return this.svc.liste(r.ctx); }
+  @Post("sandbox")                        // Bac à sable SLA — dry-run d'un seuil (application R94, 0 écriture)
+  sandbox(@Req() r: any, @Body() b: any) { return this.svc.sandbox(r.ctx, b); }
   @Get(":id/funnel")
   funnel(@Req() r: any, @Param("id") id: string) { return this.svc.funnel(r.ctx, id); }
 }

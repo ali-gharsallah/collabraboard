@@ -14,6 +14,7 @@ import { CpsiSegmentation } from "./cpsi/CpsiSegmentation";
 import { CpsiRiskCases } from "./cpsi/CpsiRiskCases";
 import { CpsiParam } from "./cpsi/CpsiParam";
 import { CpsiGuide } from "./cpsi/CpsiGuide";
+import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -214,5 +215,21 @@ describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), ale
     expect(await screen.findByText("Structuration PEP")).toBeInTheDocument();     // catalogue R79
     expect(screen.getByText(/PEP ≥ 60/)).toBeInTheDocument();                     // seuil par groupe en clair
     expect(screen.getByText("Signal scoré")).toBeInTheDocument();                 // vocabulaire ratifié
+  });
+});
+
+describe("FE-SBONB — Bac à sable Onboarding : dry-run d'un seuil SLA (R94, impact nominatif)", () => {
+  it("simule un seuil et montre les entrées en dépassement NOMMÉES, avec écriture=false", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.post("*/v1/onboarding/sandbox", () => HttpResponse.json({
+      override: { etape: "COLLECTE", valeurActuelle: 30, valeurSimulee: 15 }, ecriture: false,
+      totaux: { avant: 0, apres: 1, nouveaux: 1, disparus: 0 },
+      nouveaux: [{ onboardingId: "o1", prospect: "Prospect Vingt Jours", etape: "COLLECTE", jours: 20, seuil: 15 }],
+      disparus: [] })));
+    render(<SandboxOnboarding/>);
+    fireEvent.click(screen.getByRole("button", { name: /Simuler \(dry-run\)/i }));
+    expect(await screen.findByText("Prospect Vingt Jours")).toBeInTheDocument();  // impact NOMINATIF
+    expect(screen.getByText(/20 j/)).toBeInTheDocument();
+    expect(screen.getByText(/écriture : false/)).toBeInTheDocument();             // R70/R94 : dry-run prouvé à l'écran
   });
 });
