@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { applyKeyset, PageParams } from "../../common/pagination";
 
 /**
  * MOD-75 Business Trip (R222→R230, lot 51). Écrit spec-first depuis le Gherkin BT-01..10, sur
@@ -171,10 +172,11 @@ export class BusinessTripService {
     return { ...trip, visas };
   }
 
-  async lister(ctx: Ctx, filtre: { status?: string }) {
+  async lister(ctx: Ctx, filtre: { status?: string } & PageParams) {
     const where: any = { tenantId: ctx.tenantId };
     if (filtre.status) where.status = filtre.status;
-    return this.prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
+    const take = applyKeyset(where, filtre);                                       // A4 : défaut borné + curseur keyset
+    return this.prisma.trip.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
   }
 }
 
@@ -182,7 +184,7 @@ export class BusinessTripService {
 export class BusinessTripController {
   constructor(private svc: BusinessTripService) {}
   @Post()                    creer(@Req() r: any, @Body() b: any) { return this.svc.creer(r.ctx, b); }                                  // R222
-  @Get()                     lister(@Req() r: any, @Query("status") status?: string) { return this.svc.lister(r.ctx, { status }); }
+  @Get()                     lister(@Req() r: any, @Query("status") status?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) { return this.svc.lister(r.ctx, { status, limit, cursor }); }
   @Get(":id")                get(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.get(r.ctx, id, asOf); } // R229
   @Post(":id/submit")        soumettre(@Req() r: any, @Param("id") id: string) { return this.svc.soumettre(r.ctx, id); }                 // R222
   @Post(":id/visa")          viser(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.viser(r.ctx, id, b?.role); } // R225/R13

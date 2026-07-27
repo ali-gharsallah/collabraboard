@@ -161,4 +161,27 @@ describe("FAT Vague 14 — MOD-75 Business Trip (backend réel)", () => {
     expect(g1.body.status).toBe("APPROVED");                             // V1 reste intacte
     console.log("BT-10 PASS — révision V2 chaînée (PENDING_APPROVAL), V1 reste APPROVED");
   });
+
+  it("BT-PAGE [audit A4] pagination keyset : ?limit borne, ?cursor pagine sans doublon ni trou", async () => {
+    const P = randomUUID();                                              // tenant isolé pour compter précisément
+    await seedTenantClient(prisma, P, randomUUID());
+    const mk = () => request(http).post("/v1/trips").set(bearer(P, randomUUID(), "RM"))
+      .send({ destinations: [], clients: [], dateStart: "2026-09-01", dateEnd: "2026-09-02" });
+    const ids: string[] = [];
+    for (let i = 0; i < 5; i++) ids.push((await mk()).body.id);
+    // Page 1 : bornée à 2, ordre createdAt desc (id desc en départage) — la liste complète en référence.
+    const full = (await request(http).get("/v1/trips").set(bearer(P, randomUUID(), "DIR"))).body as any[];
+    expect(full.length).toBe(5);
+    const p1 = (await request(http).get("/v1/trips?limit=2").set(bearer(P, randomUUID(), "DIR"))).body as any[];
+    expect(p1.map((t) => t.id)).toEqual(full.slice(0, 2).map((t) => t.id));
+    // Page 2 : curseur = dernière ligne de p1 (`${createdAt}|${id}`) — suite exacte, sans recouvrement.
+    const last = p1[p1.length - 1];
+    const cur = encodeURIComponent(`${last.createdAt}|${last.id}`);
+    const p2 = (await request(http).get(`/v1/trips?limit=2&cursor=${cur}`).set(bearer(P, randomUUID(), "DIR"))).body as any[];
+    expect(p2.map((t) => t.id)).toEqual(full.slice(2, 4).map((t) => t.id));
+    // Union des pages == liste complète, aucun doublon (keyset stable).
+    const paged = [...p1, ...p2].map((t) => t.id);
+    expect(new Set(paged).size).toBe(paged.length);
+    console.log("BT-PAGE PASS — limit borne, cursor keyset pagine sans doublon ni trou");
+  });
 });

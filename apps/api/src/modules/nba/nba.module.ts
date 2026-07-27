@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { TasksModule } from "../tasks/tasks.module";
 import { TasksService } from "../tasks/tasks.module";
+import { applyKeyset, PageParams } from "../../common/pagination";
 
 /**
  * MOD Décision NBA (R243→R246, lot 53). Écrit spec-first depuis le Gherkin NB-01..06, sur ratification
@@ -41,12 +42,13 @@ export class NbaService {
     return this.dto(row);
   }
 
-  async lister(ctx: Ctx, f: { context?: string; subjectId?: string; status?: string }) {
+  async lister(ctx: Ctx, f: { context?: string; subjectId?: string; status?: string } & PageParams) {
     const where: any = { tenantId: ctx.tenantId };
     if (f.context) where.contexte = f.context;
     if (f.subjectId) where.subjectId = f.subjectId;
     if (f.status) where.statut = f.status;
-    return (await this.prisma.nbaSuggestion.findMany({ where, orderBy: { createdAt: "desc" } })).map(this.dto);
+    const take = applyKeyset(where, f);                                            // A4 : défaut borné + curseur keyset
+    return (await this.prisma.nbaSuggestion.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take })).map(this.dto);
   }
 
   // ── R246 : rejeu à date — « que proposait le système le JJ et qu'a décidé qui » ──
@@ -94,8 +96,8 @@ export class NbaService {
 @Controller("nba")
 export class NbaController {
   constructor(private svc: NbaService) {}
-  @Get()             lister(@Req() r: any, @Query("context") context?: string, @Query("subjectId") subjectId?: string, @Query("status") status?: string) {
-    return this.svc.lister(r.ctx, { context, subjectId, status }); }
+  @Get()             lister(@Req() r: any, @Query("context") context?: string, @Query("subjectId") subjectId?: string, @Query("status") status?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.svc.lister(r.ctx, { context, subjectId, status, limit, cursor }); }
   @Post("propose")   proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // moteur
   @Get(":id")        get(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.get(r.ctx, id, asOf); } // R246
   @Post(":id/decision") decider(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.decider(r.ctx, id, b); }      // R244/R245

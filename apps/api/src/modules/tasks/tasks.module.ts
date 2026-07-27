@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { WorkloadModule } from "../workload/workload.module";
 import { WorkloadService } from "../workload/workload.service";
+import { applyKeyset, PageParams } from "../../common/pagination";
 
 /**
  * MOD Tâches (R239→R242, lot 52). Écrit spec-first depuis le Gherkin TA-01..06, sur ratification
@@ -71,7 +72,7 @@ export class TasksService {
   }
 
   // ── R240 : listage SCOPÉ serveur (soi / équipe / tout). asOf = rejeu (R48). ──
-  async lister(ctx: Ctx, f: { status?: string; assignee?: string; dueBefore?: string; subjectId?: string; asOf?: string }) {
+  async lister(ctx: Ctx, f: { status?: string; assignee?: string; dueBefore?: string; subjectId?: string; asOf?: string } & PageParams) {
     const s = await this.settings(ctx);
     const voitTout: string[] = s.taskVisibiliteRoles ?? ["CO", "CF", "ADMIN"];
     const where: any = { tenantId: ctx.tenantId };
@@ -91,7 +92,8 @@ export class TasksService {
     }
     if (f.subjectId) where.subjectId = f.subjectId;
     if (f.dueBefore) where.dueAt = { lte: f.dueBefore };
-    let rows = await this.prisma.task.findMany({ where, orderBy: { createdAt: "desc" } });
+    const take = applyKeyset(where, f);                                       // A4 : défaut borné + curseur keyset
+    let rows = await this.prisma.task.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
     if (f.asOf) rows = rows.filter((k: any) => k.createdAt <= f.asOf!);       // R48 : n'existe pas avant sa création
     let out = rows.map((k: any) => this.dto(k, f.asOf));
     if (f.status) out = out.filter((t: any) => t.statut === f.status);
@@ -136,8 +138,8 @@ export class TasksService {
 @Controller("tasks")
 export class TasksController {
   constructor(private svc: TasksService) {}
-  @Get()               lister(@Req() r: any, @Query("status") status?: string, @Query("assignee") assignee?: string, @Query("dueBefore") dueBefore?: string, @Query("subjectId") subjectId?: string, @Query("asOf") asOf?: string) {
-    return this.svc.lister(r.ctx, { status, assignee, dueBefore, subjectId, asOf }); }               // R240
+  @Get()               lister(@Req() r: any, @Query("status") status?: string, @Query("assignee") assignee?: string, @Query("dueBefore") dueBefore?: string, @Query("subjectId") subjectId?: string, @Query("asOf") asOf?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.svc.lister(r.ctx, { status, assignee, dueBefore, subjectId, asOf, limit, cursor }); }   // R240
   @Post()              creer(@Req() r: any, @Body() b: any) { return this.svc.creerManuel(r.ctx, b); }                 // R239 (gated)
   @Post("from-event")  fromEvent(@Req() r: any, @Body() b: any) { return this.svc.creerDepuisEvenement(r.ctx, b); }    // R239 : surface de consommation d'événement
   @Post(":id/complete") completer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.completer(r.ctx, id, b); } // R241

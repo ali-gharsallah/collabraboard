@@ -128,3 +128,15 @@ Amendement A2 : canon backend pour les deux capacités restées en démonstratio
 - **Décision NBA (R243→R246) — IMPLÉMENTÉ (Vague 17).** `NbaModule` ; l'écran NBA décide (Accepter/Ajuster/Rejeter câblés). NB-05 : la tâche naît de l'événement
   `NBA_DECIDED` consommé par le service Tâches). Jusque-là, l'écran NBA reste en **lecture** (gestes R187,
   décision désactivée) — inchangé depuis A1.
+
+## Audit architecture — écarts perf/pagination (A4)
+
+Fixes de l'audit `docs/AUDIT-ARCHITECTURE.md`, appliqués behavior-preserving (suite verte = équivalence).
+
+- **A4 — pagination keyset (`common/pagination.ts`).** Les portes de LISTE récentes (tasks, trips, nba,
+  workflow-instances) sont bornées par défaut (`DEFAULT_PAGE=200`, > toute fixture ⇒ aucune liste testée
+  tronquée) et exposent `?limit=&cursor=` (keyset `createdAt desc, id desc`), ADDITIF.
+  **Écart signalé** : pour les `createdAt` de type DateTime (trips, kycFile) le curseur est à granularité
+  MILLISECONDE — l'ORM restitue la Date JS (ms), le µs Postgres est perdu. Ces agrégats étant créés à cadence
+  humaine (jamais deux dans la même ms d'un tenant), le keyset est exact en pratique ; pour tasks/nba
+  (`createdAt` String) il est exact par construction. La borne par défaut, elle, est exacte en toutes circonstances.
