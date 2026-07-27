@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { MrosService } from "../mros/mros.service";
+import { Tx as PrismaTx } from "../../common/tx";
 
 /**
  * Portail transactionnel — R140→R143 (TX-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -72,11 +73,11 @@ export function gardeComportement(): Garde {
 export class TransactionGateService {
   constructor(private prisma: PrismaService, private audit: AuditService, private gardes: Garde[] = []) {}
 
-  private emitter(tx: any, tenantId: string) {
+  private emitter(tx: PrismaTx, tenantId: string) {
     return (type: string, aggregateId: string, payload: any) =>
       tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: PrismaTx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { severites: s.txGardes ?? {}, revueRoles: s.txRevueRoles ?? ["CO", "MLRO"],
@@ -85,7 +86,7 @@ export class TransactionGateService {
 
   // ── R140/R141 : LE point de passage — pire verdict, fail-secure, tracé garde par garde ──
   async evaluer(ctx: Ctx, dto: Tx) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: PrismaTx) => {
       const emit = this.emitter(tx, ctx.tenantId);
       const { severites } = await this.cfg(tx, ctx.tenantId);
       const traces: any[] = []; let pire: GardeResultat = "OK"; let motif = "";
@@ -113,7 +114,7 @@ export class TransactionGateService {
   }
 
   // ── R143 : la file de revue — habilitée, motivée, sans fuite, jamais automatique ──
-  private async habiliteRevue(tx: any, ctx: Ctx, ref: string) {
+  private async habiliteRevue(tx: PrismaTx, ctx: Ctx, ref: string) {
     const { revueRoles } = await this.cfg(tx, ctx.tenantId);
     if (!revueRoles.includes(ctx.role)) {
       await this.emitter(tx, ctx.tenantId)("tx.revue.acces.refuse", ref, { par: ctx.userId, role: ctx.role });
@@ -125,7 +126,7 @@ export class TransactionGateService {
     return this.prisma.txVerdict.findMany({ where: { tenantId: ctx.tenantId, verdict: "SUSPEND" } });
   }
   async decider(ctx: Ctx, verdictId: string, decision: "LIBERER" | "BLOQUER", motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: PrismaTx) => {
       const v = await tx.txVerdict.findFirst({ where: { id: verdictId, tenantId: ctx.tenantId } });
       if (!v) throw new NotFoundException("Verdict introuvable");
       await this.habiliteRevue(tx, ctx, v.id);
@@ -148,7 +149,7 @@ export class TransactionGateService {
     return { txRef: v.txRef, statut };   // rien d'autre — pas de motif, pas de gardes
   }
   async tickRevue(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: PrismaTx) => {
       const { slaHeures } = await this.cfg(tx, ctx.tenantId);
       const attente = await tx.txVerdict.findMany({ where: { tenantId: ctx.tenantId,
         verdict: "SUSPEND", slaSignale: false,

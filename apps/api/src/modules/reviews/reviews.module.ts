@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Échéances de review — R272→R275 (RV-01..08), canon `spec/canon-debloquants-home.md` partie 1
@@ -28,7 +29,7 @@ function plusMois(d: Date, mois: number): Date {
 export class ReviewsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(db: any, tenantId: string) {
@@ -42,7 +43,7 @@ export class ReviewsService {
   // ── R272/R275 : LE hook — appelé DANS la transaction d'approbation du KYC (jamais un cron).
   //    Clôt l'échéance courante (REALISEE, référence au KYC) et calcule la suivante avec la
   //    cadence EN VIGUEUR (figée dans la ligne). ──
-  async surApprobation(ctx: Ctx, tx: any, kyc: { id: string; clientId: string; workflow: string; validatedAt?: Date | null }) {
+  async surApprobation(ctx: Ctx, tx: Tx, kyc: { id: string; clientId: string; workflow: string; validatedAt?: Date | null }) {
     const s = await this.settings(tx, ctx.tenantId);
     const courante = await tx.reviewDeadline.findFirst({
       where: { tenantId: ctx.tenantId, clientId: kyc.clientId, statut: "PLANIFIEE" } });
@@ -67,7 +68,7 @@ export class ReviewsService {
   async recalcul(ctx: Ctx, clientId: string, dto: { ddlLevel?: string; motif?: string }) {
     if (!dto?.ddlLevel || !(dto.ddlLevel in CADENCE_DEFAUT))
       throw new BadRequestException("ddlLevel requis : EDD | CDD | SDD");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const courante = await tx.reviewDeadline.findFirst({
         where: { tenantId: ctx.tenantId, clientId, statut: "PLANIFIEE" } });
       if (!courante) throw new NotFoundException("Aucune échéance PLANIFIEE pour ce client");
@@ -92,7 +93,7 @@ export class ReviewsService {
   async anticiper(ctx: Ctx, deadlineId: string, dto: { nouvelleDate?: string; motif?: string; declencheur?: string }) {
     if (!dto?.motif?.trim()) throw new BadRequestException("R7 : anticiper exige un motif");
     if (!dto?.nouvelleDate) throw new BadRequestException("nouvelleDate requise");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await tx.reviewDeadline.findFirst({ where: { id: deadlineId, tenantId: ctx.tenantId } });
       if (!d) throw new NotFoundException("Échéance introuvable");
       if (d.statut !== "PLANIFIEE") throw new ConflictException(`Échéance ${d.statut} — non modifiable`);
@@ -114,7 +115,7 @@ export class ReviewsService {
 
   // ── R273/R13 : RECULER — rôle habilité + motif, PUIS visa d'un second (l'initiateur ne vise pas). ──
   async demanderReport(ctx: Ctx, deadlineId: string, dto: { nouvelleDate?: string; motif?: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const s = await this.settings(tx, ctx.tenantId);
       const habilites: string[] = s.rolesReportEcheance ?? ["CO_SR"];
       if (!habilites.includes(ctx.role))
@@ -133,7 +134,7 @@ export class ReviewsService {
     });
   }
   async viserReport(ctx: Ctx, deadlineId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const s = await this.settings(tx, ctx.tenantId);
       const habilites: string[] = s.rolesReportEcheance ?? ["CO_SR"];
       if (!habilites.includes(ctx.role)) throw new ForbiddenException("R273 : rôle non habilité au visa de report");
@@ -156,7 +157,7 @@ export class ReviewsService {
   }
 
   // ── T7 / R274 : la liste — périmètre SERVEUR (matrice A.3), EN_RETARD CALCULÉ à la lecture. ──
-  async deadlines(ctx: Ctx, horizonJours?: number, scope?: string) {
+  async deadlines(ctx: Ctx, horizonJours?: number, _scope?: string) {
     if (ctx.role === "ADMIN") throw new ForbiddenException("HOME_SCOPE: ADMIN ne voit aucune donnée client (matrice A.3)");
     let clients: string[] | null = null;
     if (ctx.role === "RM" || ctx.role === "ARM") {
@@ -178,7 +179,7 @@ export class ReviewsService {
 
   // ── R274/R39 : préavis + escalade — notifient UNE fois, ne bloquent JAMAIS (pattern tickSla). ──
   async tick(ctx: Ctx, now = new Date()) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const s = await this.settings(tx, ctx.tenantId);
       const preavis = s.preavisReviewJours ?? 30;
       const escaladeCo = (s.escaladeRetardJours ?? {}).CO ?? 30;

@@ -291,3 +291,27 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   désormais ÉMIS et RATTACHÉ au dossier (l'échec est tracé COC_SIGNAL_NON_EMIS, jamais silencieux).
 - Les 3 écarts Home d'origine (T7, T8, HO-02) sont TOUS SOLDÉS — le canon débloquants est livré
   (parties 3, 1, 2). Reste du canon : rien.
+
+## CHANTIER #4 — sweep A3 `tx: Tx` COMPLET (2026-07-27, reliquat audit architecture)
+
+- **Sweep livré** : les ~228 `tx: any` restants (39 fichiers de services) sont typés
+  `Tx = Prisma.TransactionClient` (`common/tx.ts`). Iso-fonctionnel prouvé : tsc 0, lint 0,
+  e2e 26 suites/190, harnais 425/425, CPSI 18/18, Vitest 41/41.
+- ⚠️ **Écart de branche (signalé)** : l'audit A1–A6 (PR #45, `claude/audit-architecture`) n'est
+  MERGÉ NI dans master ni dans cette branche. La fondation `common/tx.ts` est recréée ICI À
+  L'IDENTIQUE (copie du commit e1668d0) — au merge de #45, la réconciliation est triviale
+  (même fichier, même contenu) ; les amorces A3 de #45 (businesstrip/tasks/nba) convergeront.
+- 🔴 **4 anomalies latentes SURFACÉES par le typage — casts iso-runtime posés, CORRECTION À
+  RATIFIER** (les corriger change le comportement : requêtes/événements) :
+  1. `prerevue.service.ts` (`demander`, R121-R124) : `kycSection` interrogé avec `tenantId`
+     (colonne inexistante — Prisma réel lèverait) + `kyc.clientName` et `s.reponses` inexistants.
+     Chemin NON couvert e2e (bloc 20 prouvé sur harnais/fake prisma uniquement).
+  2. `personne-lien.service.ts` (R152-R155) : délégué `tx.personne` INEXISTANT (modèle `Person`,
+     champs `statut/creePar/creeAt/type` absents du schéma) — 4 sites, crash à l'exécution ;
+     chemins non couverts e2e.
+  3. `personnes.service.ts` (divergence identité) : `kycFile.rmId` inexistant (Client.rmUserId
+     existe) — l'événement `tache.corroboration` ne s'est JAMAIS émis (if toujours faux).
+  4. `reviews.module.ts` : paramètre `scope` inutilisé (lint pré-existant sur HEAD) → `_scope`
+     (le périmètre T7 est décidé SERVEUR, le paramètre client est volontairement ignoré).
+- A6 (virtualisation des tables front) : ratifié « au fil des écrans » (valeur marginale, listes
+  bornées) — inchangé.

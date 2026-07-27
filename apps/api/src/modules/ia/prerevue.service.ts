@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Agent de pré-revue IA — R121→R124 (AG-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -26,15 +27,15 @@ export class PreRevueService {
   constructor(private prisma: PrismaService, private audit: AuditService,
               private ports: { ia?: PortIa } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async settings(tx: any, tenantId: string) {
+  private async settings(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { traitementRequis: s.iaPrerevueTraitementRequis ?? false, pseudonymise: s.iaPseudonymise ?? true };
   }
-  private async promptCourant(tx: any, tenantId: string) {
+  private async promptCourant(tx: Tx, tenantId: string) {
     const v = await tx.iaPromptVersion.findFirst({ where: { tenantId }, orderBy: { numero: "desc" } });
     return v ?? { numero: 0, texte: PROMPT_DEFAUT };
   }
@@ -42,15 +43,17 @@ export class PreRevueService {
   // ── R121/R122/R124 : la pré-revue — lecture minimisée, trace rejouable, dossier intact ──
   async demander(ctx: Ctx, kycFileId: string) {
     if (!this.ports.ia) throw new BadRequestException("R121 : port IA non configuré — fonction absente");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const kyc = await tx.kycFile.findFirst({ where: { id: kycFileId, tenantId: ctx.tenantId } });
       if (!kyc) throw new NotFoundException("Dossier KYC introuvable");
-      const sections = await tx.kycSection.findMany({ where: { tenantId: ctx.tenantId, kycFileId } });
+      // ÉCART A3 (signalé) : KycSection n'a PAS de colonne tenant_id ni de champ `reponses` —
+      // ce chemin (non couvert e2e) échouerait sur Prisma réel ; cast posé pour rester iso-runtime.
+      const sections = await tx.kycSection.findMany({ where: { tenantId: ctx.tenantId, kycFileId } as any });
       const cfg = await this.settings(tx, ctx.tenantId);
       // Minimisation (R124) : le dossier concerné, rien d'autre ; nom pseudonymisé par défaut
       const alias = "CLIENT-" + sha(ctx.tenantId + ":" + kycFileId).slice(0, 8);   // alias STABLE
       const snapshot = {
-        client: cfg.pseudonymise ? alias : kyc.clientName,
+        client: cfg.pseudonymise ? alias : (kyc as any).clientName,
         statut: kyc.status, risque: kyc.riskLevel,
         sections: sections.map((s: any) => ({ code: s.code, reponses: s.reponses })),
       };
@@ -82,10 +85,10 @@ export class PreRevueService {
   async traiterPoint(ctx: Ctx, prerevueId: string, index: number, statut: "TRAITE" | "ECARTE", motif?: string) {
     if (statut === "ECARTE" && !(motif && motif.trim()))
       throw new BadRequestException("R7 : écarter un point de pré-revue exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const pr = await tx.iaPrerevue.findFirst({ where: { id: prerevueId, tenantId: ctx.tenantId } });
       if (!pr || !pr.points[index]) throw new NotFoundException("Point introuvable");
-      const points = pr.points.slice();
+      const points = (pr.points as any[]).slice();
       points[index] = { ...points[index], traitement: { statut, motif: motif?.trim() ?? null,
         par: ctx.userId, at: new Date().toISOString() } };
       await tx.iaPrerevue.update({ where: { id: pr.id }, data: { points } });
@@ -108,7 +111,7 @@ export class PreRevueService {
   // ── R124 : le prompt est une règle — versionné, tracé, jamais modifié en silence ──
   async versionnerPrompt(ctx: Ctx, texte: string) {
     if (!texte || !texte.trim()) throw new BadRequestException("Prompt vide");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const courant = await this.promptCourant(tx, ctx.tenantId);
       const v = await tx.iaPromptVersion.create({ data: { tenantId: ctx.tenantId,
         numero: courant.numero + 1, texte: texte.trim(), par: ctx.userId, at: new Date().toISOString() } });

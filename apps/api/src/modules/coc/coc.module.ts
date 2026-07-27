@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 import { ReviewsModule, ReviewsService } from "../reviews/reviews.module";
 import * as CONFIG_LIVREE from "./coc-config.default.json";
+import { Tx } from "../../common/tx";
 
 /**
  * Cycle de vie du CoC — R276→R278 (CC-01..08), canon débloquants Home partie 2 (R276 ÉTENDU
@@ -34,7 +35,7 @@ export class CocService {
     private cpsi?: { ingererSignal(ctx: Ctx, clientId: string, dto: any): Promise<any> },
     private reviews?: { anticiper(ctx: Ctx, id: string, dto: any): Promise<any> }) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(tenantId: string) {
@@ -90,7 +91,7 @@ export class CocService {
     const now = new Date();
     const cfg = await this.configEnVigueur(this.prisma, ctx.tenantId, dto.typeCode, now);
     if (!cfg) throw new BadRequestException(`Type CoC inconnu du registre : ${dto.typeCode} (default-deny)`);
-    const d = await this.prisma.$transaction(async (tx: any) => {
+    const d = await this.prisma.$transaction(async (tx: Tx) => {
       const cree = await tx.cocFile.create({ data: {
         tenantId: ctx.tenantId, clientId: dto.clientId!, typeCode: dto.typeCode!,
         materialite: cfg.materialite, actionRequise: cfg.actionRequise, roleTraitant: cfg.roleTraitant,
@@ -106,7 +107,7 @@ export class CocService {
       await this.cpsi?.ingererSignal(ctx, dto.clientId, { type: "coc_sensible",
         severite: cfg.severiteCpsi ?? 1, meta: { cocFileId: d.id, typeCode: dto.typeCode } });
     } catch {
-      await this.prisma.$transaction(async (tx: any) =>
+      await this.prisma.$transaction(async (tx: Tx) =>
         this.emit(tx, ctx.tenantId, "COC_SIGNAL_NON_EMIS", d.id,
           { clientId: dto.clientId, pourquoi: "porte CPSI indisponible ou client non enregistré" }));
     }
@@ -156,7 +157,7 @@ export class CocService {
   // ── R277 : traiter — l'action FIGÉE est VÉRIFIÉE, le refus LISTE, rôle du type, four-eyes HAUTE ──
   async traiter(ctx: Ctx, id: string, dto: { revisionKycId?: string; majRefs?: any[]; sansMajMotif?: string }) {
     const s = await this.settings(ctx.tenantId);
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.dossier(tx, ctx, id);
       if (!(TRANSITIONS[d.statut] ?? []).includes("TRAITE"))
         throw new ConflictException(`Transition illégale : ${d.statut} → TRAITE`);
@@ -204,7 +205,7 @@ export class CocService {
   }
 
   async transitionner(ctx: Ctx, id: string, vers: string, motif?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.dossier(tx, ctx, id);
       if (!(TRANSITIONS[d.statut] ?? []).includes(vers))
         throw new ConflictException(`Transition illégale : ${d.statut} → ${vers}`);

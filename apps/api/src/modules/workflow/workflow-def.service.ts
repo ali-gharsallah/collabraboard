@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Le workflow est un paramètre gouverné — R171→R173 (WF-01..05). Écrit APRÈS l'amendement,
@@ -22,17 +23,17 @@ type Ctx = { tenantId: string; userId: string; role: string };
 export class WorkflowDefService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async roles(tx: any, tenantId: string) {
+  private async roles(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     return ((t?.settings as any) ?? {}).workflowRoles ?? ["CO", "ADMIN"];
   }
 
   // ── R173 : le brouillon — modifiable, tracé, invisible au moteur ──
   async creerBrouillon(ctx: Ctx, dto: { code: string; contenu: any }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const roles = await this.roles(tx, ctx.tenantId);
       if (!roles.includes(ctx.role)) {
         await this.emit(tx, ctx.tenantId, "workflow.def.acces.refuse", dto.code, { par: ctx.userId, role: ctx.role });
@@ -49,7 +50,7 @@ export class WorkflowDefService {
   }
 
   async modifierBrouillon(ctx: Ctx, defId: string, contenu: any) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await tx.workflowDef.findFirst({ where: { id: defId, tenantId: ctx.tenantId } });
       if (!d) throw new NotFoundException("Définition introuvable");
       if (d.statut === "PUBLIEE")
@@ -62,7 +63,7 @@ export class WorkflowDefService {
 
   // ── R171/R173 : publier — l'acte qui grave ──
   async publier(ctx: Ctx, defId: string, dto: { depuisLe: string; motif: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await tx.workflowDef.findFirst({ where: { id: defId, tenantId: ctx.tenantId } });
       if (!d) throw new NotFoundException("Définition introuvable");
       if (d.statut === "PUBLIEE") throw new BadRequestException("La publication ne se rejoue pas");

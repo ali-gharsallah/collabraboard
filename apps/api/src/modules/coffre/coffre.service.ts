@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Le coffre — stockage gouverné. R144→R147 (CV-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -33,7 +34,7 @@ export class CoffreService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { storage?: StoragePort } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private port(): StoragePort {
@@ -41,12 +42,12 @@ export class CoffreService {
       throw new BadRequestException("R144 : aucun coffre configuré — pas de dépôt fantôme");
     return this.ports.storage;
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { region: s.storageRegion ?? "ch-gva-2", chiffrementRef: s.storageChiffrement };
   }
-  private async version(tx: any, ctx: Ctx, versionId: string) {
+  private async version(tx: Tx, ctx: Ctx, versionId: string) {
     const v = await tx.documentVersion.findFirst({ where: { id: versionId, tenantId: ctx.tenantId } });
     if (!v) throw new NotFoundException("Version introuvable");
     return v;
@@ -60,7 +61,7 @@ export class CoffreService {
   // ── R144 : le contenu au coffre, la preuve en base ──
   async ecrire(ctx: Ctx, versionId: string, contenu: string) {
     const port = this.port();
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const v = await this.version(tx, ctx, versionId);
       if (sha(contenu) !== v.sha256)
         throw new BadRequestException("R111 : le contenu ne correspond pas à l'empreinte de la version");
@@ -99,7 +100,7 @@ export class CoffreService {
   // ── R146/R115 : on n'efface qu'en certifiant ──
   async purgerCertifie(ctx: Ctx, versionId: string, motif: string) {
     const port = this.port();
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : la purge certifiée exige un motif");
       const v = await this.version(tx, ctx, versionId);
       const d = await tx.document.findFirst({ where: { id: v.documentId, tenantId: ctx.tenantId } });
@@ -118,7 +119,7 @@ export class CoffreService {
   // ── R147 : la réconciliation mesure — jamais de ménage automatique ──
   async reconcilier(ctx: Ctx) {
     const port = this.port();
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const clesCoffre = await port.lister(ctx.tenantId + "/");
       const versions = await tx.documentVersion.findMany({ where: { tenantId: ctx.tenantId } });
       const clesBase = new Set(versions.filter((v: any) => v.storageKey).map((v: any) => v.storageKey));

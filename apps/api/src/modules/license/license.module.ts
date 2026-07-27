@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, Module, Injectable, ForbiddenExceptio
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { LicenseService, OliveLicense } from "./license.service";
+import { Tx } from "../../common/tx";
 
 /**
  * LA LICENCE EST SERVIE ET APPLIQUÉE (canon débloquants Home partie 3 — APPLICATION de
@@ -45,7 +46,7 @@ export class ModulesActifsService {
       throw new BadRequestException("R177 : la licence ne vise pas ce tenant");
     this.lic.load(raw);                                   // signature Ed25519/RSA + expiration — refus typé sinon
     const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       await tx.tenant.update({ where: { id: ctx.tenantId },
         data: { settings: { ...((t?.settings as any) ?? {}), licence: raw } } });
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "module.licence.chargee",

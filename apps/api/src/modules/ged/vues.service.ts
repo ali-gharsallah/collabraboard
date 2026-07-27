@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Les dossiers-vues — classer sans copier. R164→R166 (VU-01..05). Écrit APRÈS l'amendement,
@@ -22,16 +23,16 @@ type Critere = { typeCode?: string; statut?: string; clientId?: string; expireAv
 export class VuesService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { types: s.gedDocTypes ?? [], inboxRoles: s.gedInboxRoles ?? ["CO", "CF"],
       vueRoles: s.vueRoles ?? ["CO", "CF", "ADMIN"] };
   }
-  private async habilite(tx: any, ctx: Ctx, ref: string) {
+  private async habilite(tx: Tx, ctx: Ctx, ref: string) {
     const { vueRoles } = await this.cfg(tx, ctx.tenantId);
     if (!vueRoles.includes(ctx.role)) {
       await this.emit(tx, ctx.tenantId, "ged.vue.acces.refuse", ref, { par: ctx.userId, role: ctx.role });
@@ -41,7 +42,7 @@ export class VuesService {
 
   // ── R164 : créer — un critère, pas un conteneur ──
   async creerVue(ctx: Ctx, dto: { code: string; label: string; critere: Critere }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx, dto.code);
       const deja = await tx.gedVue.findFirst({ where: { tenantId: ctx.tenantId, code: dto.code } });
       if (deja) throw new BadRequestException(`R164 : la vue « ${dto.code} » existe déjà`);
@@ -55,7 +56,7 @@ export class VuesService {
 
   // ── R164 : retirer — motivé, et RIEN n'est détruit (il n'y a rien dedans) ──
   async retirerVue(ctx: Ctx, code: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : le retrait d'une vue exige un motif");
       await this.habilite(tx, ctx, code);
       const v = await tx.gedVue.findFirst({ where: { tenantId: ctx.tenantId, code } });
@@ -71,11 +72,11 @@ export class VuesService {
 
   // ── R165/R166 : évaluer — la requête, au résultat, sur l'état vivant ──
   async evaluer(ctx: Ctx, code: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const vue = await tx.gedVue.findFirst({ where: { tenantId: ctx.tenantId, code } });
       if (!vue) throw new NotFoundException("Vue introuvable");
       const { types, inboxRoles } = await this.cfg(tx, ctx.tenantId);
-      const c: Critere = vue.critere ?? {};
+      const c: Critere = (vue.critere as any) ?? {};
       const docs = await tx.document.findMany({ where: { tenantId: ctx.tenantId } });
       const servis = docs.filter((d: any) => {
         if (d.statut === "DETRUIT") return false;                       // R166 — l'état fait foi

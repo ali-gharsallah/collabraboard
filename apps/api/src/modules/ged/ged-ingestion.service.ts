@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Capture & ingestion GED — R137→R139 (IG-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -25,10 +26,10 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 export class GedIngestionService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { canaux: s.gedCanauxIngestion ?? ["SCAN", "EMAIL", "UPLOAD", "API"],
@@ -38,7 +39,7 @@ export class GedIngestionService {
 
   // ── R137 : l'entrée — canal déclaré, origine pièce du dossier ──
   async ingerer(ctx: Ctx, dto: { canal: string; source: string; nomFichier: string; contenu: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { canaux } = await this.cfg(tx, ctx.tenantId);
       if (!canaux.includes(dto.canal))
         throw new BadRequestException(`R137 : canal « ${dto.canal} » hors registre R-Q (gedCanauxIngestion)`);
@@ -62,7 +63,7 @@ export class GedIngestionService {
   async ocriser(ctx: Ctx, versionId: string, contenu: string) {
     if (!this.ports.ocr)
       throw new BadRequestException("R138 : prestataire OCR non configuré — pas d'extraction simulée");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const v = await tx.documentVersion.findFirst({ where: { id: versionId, tenantId: ctx.tenantId } });
       if (!v) throw new NotFoundException("Version introuvable");
       if (sha(contenu) !== v.sha256)
@@ -71,7 +72,7 @@ export class GedIngestionService {
       const derive = { texte, sha256Derive: sha(texte), moteur: this.ports.ocr!.moteur,
         at: new Date().toISOString() };
       await tx.documentVersion.update({ where: { id: v.id },
-        data: { ocrDerives: [...(v.ocrDerives ?? []), derive] } });   // AJOUT — jamais de remplacement
+        data: { ocrDerives: [...((v.ocrDerives as any[]) ?? []), derive] } });   // AJOUT — jamais de remplacement
       await this.emit(tx, ctx.tenantId, "ged.ocr.derive", v.documentId,
         { versionId: v.id, moteur: derive.moteur, sha256Derive: derive.sha256Derive });
       return derive;
@@ -79,7 +80,7 @@ export class GedIngestionService {
   }
 
   // ── R139 : l'arrivée — default-deny tracé, classement doublement habilité ──
-  private async habiliteInbox(tx: any, ctx: Ctx, refDoc?: string) {
+  private async habiliteInbox(tx: Tx, ctx: Ctx, refDoc?: string) {
     const { inboxRoles } = await this.cfg(tx, ctx.tenantId);
     if (!inboxRoles.includes(ctx.role)) {
       await this.emit(tx, ctx.tenantId, "ged.inbox.acces.refuse", refDoc ?? "inbox",
@@ -92,7 +93,7 @@ export class GedIngestionService {
     return this.prisma.document.findMany({ where: { tenantId: ctx.tenantId, statut: "A_CLASSER" } });
   }
   async classer(ctx: Ctx, documentId: string, dto: { typeCode: string; clientId: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habiliteInbox(tx, ctx, documentId);
       const d = await tx.document.findFirst({ where: { id: documentId, tenantId: ctx.tenantId, statut: "A_CLASSER" } });
       if (!d) throw new NotFoundException("Document à classer introuvable");
@@ -113,7 +114,7 @@ export class GedIngestionService {
     });
   }
   async tickArrivee(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { slaJours } = await this.cfg(tx, ctx.tenantId);
       const attente = await tx.document.findMany({ where: { tenantId: ctx.tenantId,
         statut: "A_CLASSER", inboxSignale: null } });

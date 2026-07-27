@@ -10,6 +10,7 @@ import { QualifiedVisaService, VisaError, Verdict } from "./rules/qualified-visa
 import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
 import { KycHandoff, HandoffError, HandoffStatus } from "./rules/kyc-handoff"; // R85
 import { etatCloture } from "../offboarding/cloture.util"; // R267/OF-10 — lecture seule intégrale
+import { Tx } from "../../common/tx";
 
 type Ctx = { tenantId: string; userId: string; role: string };
 
@@ -22,7 +23,7 @@ export class KycService {
               private prerevue?: { verifierTraitement(ctx: Ctx, kycFileId: string): Promise<{ bloquant: boolean; ouverts: any[] }> },
               // R272/R275 (canon débloquants partie 1) : hook d'échéance de review — appelé DANS la
               // transaction d'approbation (jamais un cron). Optionnel : absent en tests unitaires.
-              private reviews?: { surApprobation(ctx: Ctx, tx: any, kyc: any): Promise<any> }) {}
+              private reviews?: { surApprobation(ctx: Ctx, tx: Tx, kyc: any): Promise<any> }) {}
 
   // ── R267/OF-10 : client clôturé = LECTURE SEULE INTÉGRALE — toute écriture refuse typé.
   //    La consultation et le rejeu à date restent ouverts (jamais d'amputation de l'audit). ──
@@ -356,7 +357,7 @@ export class KycService {
     return svc;
   }
   // Émet un événement (outbox transactionnel) + audit — invariant : rien ne change sans trace.
-  private async emit(tx: any, ctx: Ctx, type: string, aggregateId: string, payload: any) {
+  private async emit(tx: Tx, ctx: Ctx, type: string, aggregateId: string, payload: any) {
     await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type, aggregateId, payload } });
     await this.audit.log(ctx.tenantId, ctx.userId, type.toUpperCase().replace(/\./g, "_"), JSON.stringify(payload));
   }

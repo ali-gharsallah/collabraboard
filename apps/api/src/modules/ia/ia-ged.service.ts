@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, ForbiddenException, NotFoundException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * L'IA au service du dossier — R160→R163 (AI-01..06). Écrit APRÈS l'amendement, APRÈS les
@@ -28,16 +29,16 @@ export class IaGedService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { ia?: IaPort } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { types: s.gedDocTypes ?? [], inboxRoles: s.gedInboxRoles ?? ["CO", "CF"],
       residence: s.iaResidence ?? "CH" };
   }
-  private async portOuRefus(tx: any, ctx: Ctx): Promise<IaPort> {
+  private async portOuRefus(tx: Tx, ctx: Ctx): Promise<IaPort> {
     if (!this.ports.ia)
       throw new BadRequestException("R163 : aucun prestataire IA configuré — pas de réponse simulée");
     const { residence } = await this.cfg(tx, ctx.tenantId);
@@ -51,7 +52,7 @@ export class IaGedService {
   }
 
   /** R160 — le contexte du dossier, filtré par l'habilitation DU CONVOCATEUR. */
-  private async contexte(tx: any, ctx: Ctx, clientId: string) {
+  private async contexte(tx: Tx, ctx: Ctx, clientId: string) {
     const { types, inboxRoles } = await this.cfg(tx, ctx.tenantId);
     const docs = await tx.document.findMany({ where: { tenantId: ctx.tenantId, clientId } });
     const servis: Array<{ id: string; texte: string }> = [];
@@ -73,7 +74,7 @@ export class IaGedService {
   // ── R160/R161/R163 : interroger ──
   async interroger(ctx: Ctx, clientId: string, question: string) {
     if (!question || !question.trim()) throw new BadRequestException("Question vide");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const port = await this.portOuRefus(tx, ctx);
       const servis = await this.contexte(tx, ctx, clientId);
       const textes = servis.map((s) => s.texte);
@@ -96,7 +97,7 @@ export class IaGedService {
 
   // ── R162 : proposer — n'applique RIEN ──
   async proposerClassement(ctx: Ctx, documentId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const port = await this.portOuRefus(tx, ctx);
       const d = await tx.document.findFirst({ where: { id: documentId, tenantId: ctx.tenantId } });
       if (!d) throw new NotFoundException("Document introuvable");
@@ -120,7 +121,7 @@ export class IaGedService {
 
   // ── R162 : décider — l'acte est humain ──
   async decider(ctx: Ctx, propositionId: string, decision: "ACCEPTEE" | "REJETEE", motif?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const prod = await tx.iaProduction.findFirst({ where: { id: propositionId, tenantId: ctx.tenantId, type: "PROPOSITION" } });
       if (!prod) throw new NotFoundException("Proposition introuvable");
       if (prod.decision) throw new BadRequestException("Proposition déjà décidée — la décision ne se rejoue pas");

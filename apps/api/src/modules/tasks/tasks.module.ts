@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { WorkloadModule } from "../workload/workload.module";
 import { WorkloadService } from "../workload/workload.service";
+import { Tx } from "../../common/tx";
 
 /**
  * MOD Tâches (R239→R242, lot 52). Écrit spec-first depuis le Gherkin TA-01..06, sur ratification
@@ -22,7 +23,7 @@ const AU_DTO: Record<string, string> = { OUVERTE: "OPEN", EN_COURS: "OPEN", FAIT
 export class TasksService {
   constructor(private prisma: PrismaService, private audit: AuditService, private workload: WorkloadService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(ctx: Ctx) {
@@ -41,7 +42,7 @@ export class TasksService {
   async creerDepuisEvenement(ctx: Ctx, dto: { origine: string; type: string; subjectType?: string; subjectId?: string; assignee: string; echeance?: string }) {
     if (!dto?.origine) throw new BadRequestException("R239 : origine (événement) requise");
     if (!dto?.assignee || !dto?.type) throw new BadRequestException("assignee et type requis");
-    const row = await this.prisma.$transaction(async (tx: any) => {
+    const row = await this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.create({ data: {
         tenantId: ctx.tenantId, assigneeId: dto.assignee, type: dto.type, statut: "OUVERTE",
         createdAt: new Date().toISOString(), dueAt: dto.echeance ?? null,
@@ -58,7 +59,7 @@ export class TasksService {
     const s = await this.settings(ctx);
     if (!s.taskManualCreation) throw new BadRequestException("TASK_MANUAL_CREATION_DISABLED");
     if (!dto?.type) throw new BadRequestException("type requis");
-    const row = await this.prisma.$transaction(async (tx: any) => {
+    const row = await this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.create({ data: {
         tenantId: ctx.tenantId, assigneeId: dto.assignee ?? ctx.userId, type: dto.type, statut: "OUVERTE",
         createdAt: new Date().toISOString(), dueAt: dto.echeance ?? null,
@@ -100,7 +101,7 @@ export class TasksService {
 
   // ── R241 : complétion ÉVÉNEMENTIELLE immuable + habilitée. ──
   async completer(ctx: Ctx, id: string, dto: { comment?: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.findFirst({ where: { id, tenantId: ctx.tenantId } });
       if (!k) throw new NotFoundException("Tâche introuvable");
       if (k.statut === "FAITE") throw new ConflictException("TASK_ALREADY_COMPLETED");
@@ -126,7 +127,7 @@ export class TasksService {
   async mesurerSla(ctx: Ctx, now: string) {
     const rows = await this.prisma.task.findMany({ where: { tenantId: ctx.tenantId, statut: { not: "FAITE" } } });
     const enRetard = rows.filter((k: any) => k.dueAt && k.dueAt < now);
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       for (const k of enRetard) await this.emit(tx, ctx.tenantId, "task.sla.retard", k.id, { dueAt: k.dueAt, assignee: k.assigneeId });
     });
     return { enRetard: enRetard.length, bloque: false };                     // R39 : signal, jamais coercition

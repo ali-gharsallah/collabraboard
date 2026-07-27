@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * GED — documents & preuve. R109→R112 (GD-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -26,15 +27,15 @@ const TYPES_DEFAUT = [
 export class GedService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
   }
-  private async types(tx: any, tenantId: string): Promise<any[]> {
+  private async types(tx: Tx, tenantId: string): Promise<any[]> {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     return ((t?.settings as any)?.gedDocTypes) ?? TYPES_DEFAUT;
   }
   private sha(contenu: string) { return createHash("sha256").update(contenu).digest("hex"); }
-  private async doc(tx: any, ctx: Ctx, id: string) {
+  private async doc(tx: Tx, ctx: Ctx, id: string) {
     const d = await tx.document.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!d) throw new NotFoundException("Document introuvable");
     return d;
@@ -47,7 +48,7 @@ export class GedService {
   // ── R109/R111 : dépôt — nouveau document OU nouvelle version, empreinte au dépôt ──
   async deposer(ctx: Ctx, dto: { documentId?: string; clientId?: string; kycFileId?: string; personId?: string;
     typeCode?: string; nom?: string; contenu: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       let d: any;
       if (dto.documentId) {
         d = await this.doc(tx, ctx, dto.documentId);
@@ -75,7 +76,7 @@ export class GedService {
   async archiver(ctx: Ctx, documentId: string, motif: string) {
     if (!motif || !motif.trim())
       throw new BadRequestException("R7 : l'archivage d'un document exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       await tx.document.update({ where: { id: d.id }, data: {
         statut: "ARCHIVE", archiveMotif: motif.trim(), archivePar: ctx.userId, archiveAt: new Date().toISOString() } });
@@ -86,7 +87,7 @@ export class GedService {
 
   // ── R110 : le tick constate l'expiration — une fois — et ne bloque rien ──
   async tickPeremptions(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const types = await this.types(tx, ctx.tenantId);
       const docs = await tx.document.findMany({ where: {
         tenantId: ctx.tenantId, statut: "ACTIF", expirationSignalee: false } });
@@ -106,7 +107,7 @@ export class GedService {
 
   // ── R110 : complétude au point de passage — la GED constate, l'appelant bloque ──
   async verifierCompletude(ctx: Ctx, clientId: string, passage: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const types = await this.types(tx, ctx.tenantId);
       const requis = types.filter((t: any) => (t.requisPour ?? []).includes(passage));
       const now = new Date();
@@ -128,7 +129,7 @@ export class GedService {
 
   // ── R111/R112 : restitution — accès default-deny tracé, intégrité prouvée ──
   async restituer(ctx: Ctx, documentId: string, contenu: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       const types = await this.types(tx, ctx.tenantId);
       const typ = types.find((t: any) => t.code === d.typeCode);

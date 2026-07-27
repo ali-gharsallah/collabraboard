@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * MOD-43 Formations & Certifications (R231→R238, lot 50). Écrit spec-first depuis le Gherkin
@@ -19,7 +20,7 @@ const jours = (aIso: string, bIso: string) => (new Date(aIso).getTime() - new Da
 export class FormationsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(ctx: Ctx) {
@@ -67,7 +68,7 @@ export class FormationsService {
   // ── R232/R235 : compléter = événement + attestation (GED) ; AUTO → COMPLETED, VALIDATED → visa ──
   async completer(ctx: Ctx, id: string, dto: { attestationDocId: string }) {
     if (!dto?.attestationDocId) throw new BadRequestException("R232 : attestation (GED) obligatoire pour compléter");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const a = await tx.trainingAssignment.findFirst({ where: { id, tenantId: ctx.tenantId } });
       if (!a) throw new NotFoundException("Assignation introuvable");
       const s = (await tx.tenant.findFirst({ where: { id: ctx.tenantId } })).settings ?? {};
@@ -86,7 +87,7 @@ export class FormationsService {
 
   // ── R235/R13 : valider une complétion (mode VALIDATED) = visa uniforme, jamais soi-même ──
   async validerCompletion(ctx: Ctx, id: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const a = await tx.trainingAssignment.findFirst({ where: { id, tenantId: ctx.tenantId } });
       if (!a) throw new NotFoundException("Assignation introuvable");
       if (a.visaStatut !== "PENDING") throw new BadRequestException("Aucun visa en attente sur cette complétion");
@@ -128,7 +129,7 @@ export class FormationsService {
     const seuils: number[] = s.trainingReminderDays ?? [30, 7];
     const rows = await this.prisma.certification.findMany({ where: { tenantId: ctx.tenantId } });
     let rappels = 0;
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       for (const c of rows) {
         const d = Math.round(jours(c.expireLe, now));
         if (d >= 0 && seuils.includes(d)) {

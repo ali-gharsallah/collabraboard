@@ -6,6 +6,7 @@ import { KycModule } from "../kyc/kyc.module";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 import { KycService } from "../kyc/kyc.service";
 import * as GABARITS_LIVRES from "./olivia-gabarits.default.json"; // B.11.6 — gabarits C1..C4 livrés, versionnés
+import { Tx } from "../../common/tx";
 
 /**
  * Module OLIVIA v1 — étape 3 du plan (spec `spec-fonctionnelle-home-olivia.md`) : R253 (port IA)
@@ -115,7 +116,7 @@ export class OliviaService {
   constructor(private prisma: PrismaService, private audit: AuditService, private kyc: KycService,
     private cpsi?: { score(ctx: Ctx, clientId: string, asOf?: string): Promise<any>; regles(ctx: Ctx, asOf?: string): Promise<any>; proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }): Promise<any> }) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(tenantId: string) {
@@ -137,7 +138,7 @@ export class OliviaService {
   private chain(prev: string | null, fields: any) {
     return sha((prev ?? "") + JSON.stringify(fields));
   }
-  private async dernierHash(tx: any, conversationId: string): Promise<{ seq: number; hash: string | null }> {
+  private async dernierHash(tx: Tx, conversationId: string): Promise<{ seq: number; hash: string | null }> {
     const last = await tx.oliviaMessage.findFirst({ where: { conversationId }, orderBy: { seq: "desc" } });
     return { seq: (last?.seq ?? 0) + 1, hash: last?.recordHash ?? null };
   }
@@ -196,7 +197,7 @@ export class OliviaService {
         contenu.scoreCpsi = score;                                        // score + drivers (R67)
       } catch {
         exclus++;
-        await this.prisma.$transaction(async (tx: any) =>
+        await this.prisma.$transaction(async (tx: Tx) =>
           this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", rc.clientId, { qui: ctx.userId, quoi: "CPSI_SCORE", pourquoi: "porte CPSI indisponible ou client non enregistré" }));
       }
     }
@@ -210,7 +211,7 @@ export class OliviaService {
         contenu.reglesEnVigueur = r;
       } catch {
         exclus++;
-        await this.prisma.$transaction(async (tx: any) =>
+        await this.prisma.$transaction(async (tx: Tx) =>
           this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", conv.ancrageId!, { qui: ctx.userId, quoi: "CPSI_RULES", pourquoi: "porte CPSI indisponible" }));
       }
     }
@@ -227,7 +228,7 @@ export class OliviaService {
         }
         if (refuseOff) {
           exclus++;
-          await this.prisma.$transaction(async (tx: any) =>
+          await this.prisma.$transaction(async (tx: Tx) =>
             this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", ref.code, { qui: ctx.userId, quoi: ref.type, pourquoi: "hors périmètre ou inexistant" }));
           continue;
         }
@@ -250,7 +251,7 @@ export class OliviaService {
       }
       if (refuse) {                                                        // refus périphérique : PAS silencieux (OL-07)
         exclus++;
-        await this.prisma.$transaction(async (tx: any) =>
+        await this.prisma.$transaction(async (tx: Tx) =>
           this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", ref.code, { qui: ctx.userId, quoi: ref.type, pourquoi: "hors périmètre ou inexistant" }));
         continue;
       }
@@ -295,7 +296,7 @@ export class OliviaService {
     if (dto?.ancrageId && dto?.ancrageType === "KYC_FILE") {
       try { await this.verifierAncrageKyc(ctx, dto.ancrageId); }
       catch (e) {                                                          // OL-05 : événement, AUCUNE conversation
-        await this.prisma.$transaction(async (tx: any) =>
+        await this.prisma.$transaction(async (tx: Tx) =>
           this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", dto.ancrageId!, { qui: ctx.userId, quoi: "KYC_FILE", pourquoi: "ancrage hors périmètre ou inexistant" }));
         throw e;
       }
@@ -303,7 +304,7 @@ export class OliviaService {
     if (dto?.ancrageType === "RISK_CASE") {                                // C3 : vérifié AVANT création (OL-05)
       const rc = await this.prisma.riskCase.findFirst({ where: { id: dto.ancrageId!, tenantId: ctx.tenantId } });
       if (!rc) {
-        await this.prisma.$transaction(async (tx: any) =>
+        await this.prisma.$transaction(async (tx: Tx) =>
           this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", dto.ancrageId!, { qui: ctx.userId, quoi: "RISK_CASE", pourquoi: "ancrage hors périmètre ou inexistant" }));
         throw new ForbiddenException("OLIVIA_SCOPE_DENIED: vous n'avez pas accès ou cet objet n'existe pas");
       }
@@ -325,7 +326,7 @@ export class OliviaService {
     // OL-30 (R258/A.4) : le rôle est FIGÉ à la création — s'il a changé, la conversation FERME
     // automatiquement (motif tracé) : pas de conversation qui survit à son périmètre.
     if (conv.statut === "OUVERTE" && conv.roleCode !== ctx.role) {
-      await this.prisma.$transaction(async (tx: any) => {
+      await this.prisma.$transaction(async (tx: Tx) => {
         await tx.oliviaConversation.update({ where: { id: conv.id }, data: { statut: "FERMEE" } });
         await this.emit(tx, ctx.tenantId, "OLIVIA_CONVERSATION_FERMEE", conv.id,
           { motif: "rôle modifié", roleFige: conv.roleCode, roleCourant: ctx.role });
@@ -335,7 +336,7 @@ export class OliviaService {
     if (conv.statut !== "OUVERTE") throw new ConflictException("OLIVIA_CONVERSATION_FERMEE: conversation fermée");
 
     // IN journalisé d'abord (append-only chaîné)
-    const msgIn = await this.prisma.$transaction(async (tx: any) => {
+    const msgIn = await this.prisma.$transaction(async (tx: Tx) => {
       const { seq, hash } = await this.dernierHash(tx, conv.id);
       const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
         seq, direction: "IN", texte: dto.texte!, prevHash: hash,
@@ -354,7 +355,7 @@ export class OliviaService {
     // ZÉRO appel fournisseur ; l'échange est journalisé normalement.
     if (estHorsPerimetre(dto.texte)) {
       const refus = (G.refusHorsPerimetre[langue] ?? G.refusHorsPerimetre.FR) as string;
-      const msgRefus = await this.prisma.$transaction(async (tx: any) => {
+      const msgRefus = await this.prisma.$transaction(async (tx: Tx) => {
         const { seq, hash } = await this.dernierHash(tx, conv.id);
         const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
           seq, direction: "OUT", texte: refus, provider, model, personaVersion, langue,
@@ -373,7 +374,7 @@ export class OliviaService {
     // OL-33 (A.6) : le contenu du contexte est une DONNÉE, jamais une instruction — une injection
     // détectée est TRACÉE (info SO), jamais bloquante pour le dossier (R39).
     const marqueurInjection = detecterInjection(JSON.stringify(cx.contenu));
-    if (marqueurInjection) await this.prisma.$transaction(async (tx: any) =>
+    if (marqueurInjection) await this.prisma.$transaction(async (tx: Tx) =>
       this.emit(tx, ctx.tenantId, "OLIVIA_INJECTION_SUSPECTEE", conv.id, { marqueur: marqueurInjection, seq: msgIn.seq }));
     // Gabarit versionné PAR CAPACITÉ (paramètre tenant R68). Le défaut est l'artefact LIVRÉ
     // `olivia-gabarits.default.json` (B.11.6 : zéro texte de persona en dur dans le code — grep CI).
@@ -427,7 +428,7 @@ export class OliviaService {
     const excuse = sortie && langueDemandee !== langue
       ? `${(G.excuseLangueInactive[langueDemandee] ?? G.excuseLangueInactive.FR) as string}\n\n` : "";   // OL-26
     const statutStream = sortie ? (sortie.interrompu ? "INTERROMPU" : "COMPLET") : null;
-    const msgOut = await this.prisma.$transaction(async (tx: any) => {
+    const msgOut = await this.prisma.$transaction(async (tx: Tx) => {
       const { seq, hash } = await this.dernierHash(tx, conv.id);
       const texte = sortie ? excuse + sortie.texte : `ÉCHEC FOURNISSEUR: ${echec}`;
       const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
@@ -497,7 +498,7 @@ export class OliviaService {
     if (conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire note");
     if (!dto?.note || !["UTILE", "INUTILE"].includes(dto.note))
       throw new BadRequestException("note requise : UTILE | INUTILE");
-    await this.prisma.$transaction(async (tx: any) =>
+    await this.prisma.$transaction(async (tx: Tx) =>
       this.emit(tx, ctx.tenantId, "OLIVIA_FEEDBACK", conversationId, { seq: dto.seq ?? null, note: dto.note, par: ctx.userId }));
     return { note: dto.note, consigne: true };
   }
@@ -557,7 +558,7 @@ export class OliviaService {
     if (m.conforme === false)                                              // OL-24 — recommandation en prose non corrigée
       throw new UnprocessableEntityException("OLIVIA_NON_CONFORME: recommandation en prose non corrigée — sortie non proposable (R258/A.2)");
     const { etat } = await this.etatCible(ctx, dto.cibleType, dto.cibleId);
-    const p = await this.prisma.$transaction(async (tx: any) => {
+    const p = await this.prisma.$transaction(async (tx: Tx) => {
       const cree = await tx.oliviaProposal.create({ data: { tenantId: ctx.tenantId, messageId: m.id,
         type: dto.type!, cibleType: dto.cibleType!, cibleId: dto.cibleId!, cibleEtat: etat,
         justification: dto.justification!.trim(), impactEstime: dto.impactEstime ?? null } });
@@ -580,7 +581,7 @@ export class OliviaService {
     // avec la référence de la décision humaine (OL-19) — puis 409 pour l'appelant.
     const courant = await this.etatCible(ctx, p.cibleType, p.cibleId, p.createdAt);
     if (courant.etat !== p.cibleEtat) {
-      await this.prisma.$transaction(async (tx: any) => {
+      await this.prisma.$transaction(async (tx: Tx) => {
         await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "CADUQUE", decideAt: new Date() } });
         await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_CADUQUE", p.id,
           { etatFige: p.cibleEtat, etatCourant: courant.etat, decisionHumaine: courant.refHumaine ?? null });
@@ -591,7 +592,7 @@ export class OliviaService {
       throw new ForbiddenException(`OLIVIA_SCOPE_DENIED: le rôle ${ctx.role} ne décide pas ${p.type} (matrice B.3)`);
     if (decision === "reject") {
       if (!motif?.trim()) throw new UnprocessableEntityException("OLIVIA_MOTIF_REQUIS: le rejet exige un motif (R7)");
-      await this.prisma.$transaction(async (tx: any) => {
+      await this.prisma.$transaction(async (tx: Tx) => {
         await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "REJETEE", decidePar: ctx.userId, decideAt: new Date(), motifRejet: motif!.trim() } });
         await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_REJECTED", p.id, { par: ctx.userId, motif: motif!.trim() });
       });
@@ -601,7 +602,7 @@ export class OliviaService {
     // ADOPTION (OL-16) : l'adoption N'EXÉCUTE RIEN — elle crée l'événement/la tâche du circuit
     // existant. AJUSTEMENT_PARAM (OL-20) : entrée de bac à sable R70 pré-remplie via la porte CPSI
     // (proposition EN_ATTENTE — le paramètre en vigueur est INCHANGÉ tant que la voie R68 n'a pas statué).
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       await tx.oliviaProposal.update({ where: { id: p.id }, data: { statut: "ADOPTEE", decidePar: ctx.userId, decideAt: new Date() } });
       await this.emit(tx, ctx.tenantId, "OLIVIA_PROPOSAL_ADOPTED", p.id, { par: ctx.userId, type: p.type });
       const tache = p.type === "AIGUILLAGE_EDD" ? "tache.aiguillage.edd"

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ConflictException, 
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { etatCloture } from "./cloture.util";
+import { Tx } from "../../common/tx";
 
 /**
  * Bloc OFFBOARDING — R267→R271 (OF-01..12), canon `spec/canon-vague-ecrans-pilote.md` partie 5
@@ -34,7 +35,7 @@ export class OffboardingService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { core?: CoreBankingPort } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(db: any, tenantId: string) {
@@ -54,7 +55,7 @@ export class OffboardingService {
       throw new BadRequestException(`R268 : type de clôture inconnu — ${dto.type}`);
     if (!dto.motif || !dto.motif.trim())
       throw new BadRequestException("R7 : le motif de clôture est obligatoire");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const client = await tx.client.findFirst({ where: { id: dto.clientId, tenantId: ctx.tenantId } });
       if (!client) throw new NotFoundException("Client introuvable dans ce tenant");
       const active = await tx.offboardingFile.findFirst({
@@ -152,7 +153,7 @@ export class OffboardingService {
   // ── R269 : les BLOCAGES sont vérifiés par le backend — refus LISTÉ, jamais partiel, aucun
   //    contournement (même ADMIN : aucune voie par rôle n'existe). AUCUNE table : vérification
   //    à la transition contre les sources de vérité existantes. ──
-  private async obstaclesR269(tx: any, ctx: Ctx, o: any): Promise<string[]> {
+  private async obstaclesR269(tx: Tx, ctx: Ctx, o: any): Promise<string[]> {
     const obstacles: string[] = [];
     const cases = await tx.riskCase.findMany({
       where: { tenantId: ctx.tenantId, clientId: o.clientId, statut: { not: "CLOTUREE" } } });
@@ -184,7 +185,7 @@ export class OffboardingService {
     if (this.ports.core && this.ports.core.perimetre.includes("soldes"))
       throw new BadRequestException(
         "R269 : port core banking connecté — l'attestation manuelle ne remplace pas la vérification des soldes");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.dossier(tx, ctx, id);
       if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
       const attestation = { par: ctx.userId, at: new Date().toISOString(), motif: motif.trim() };
@@ -197,7 +198,7 @@ export class OffboardingService {
 
   // ── R268/R13 : viser — mécanisme uniforme (R15) ; l'initiateur n'appose JAMAIS le visa final ──
   async viser(ctx: Ctx, id: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.dossier(tx, ctx, id);
       if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
       const visas = ((o.visas as any[]) ?? []).slice();
@@ -217,7 +218,7 @@ export class OffboardingService {
   // ── R268 : compléter le dossier documentaire — tracé ──
   async ajouterDocument(ctx: Ctx, id: string, doc: { type: string; ref: string }) {
     if (!doc?.type) throw new BadRequestException("Document sans type");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.dossier(tx, ctx, id);
       if (!ACTIFS.includes(o.statut)) throw new BadRequestException("R267 : clôture non active");
       const documents = [...(((o.documents as any[]) ?? [])), { type: doc.type, ref: doc.ref ?? null }];
@@ -229,7 +230,7 @@ export class OffboardingService {
 
   // ── R267 : transitions fermées ; CLOTUREE pose la rétention ; annulation motivée (OF-12) ──
   async transitionner(ctx: Ctx, id: string, vers: string, motif?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.dossier(tx, ctx, id);
       if (!(TRANSITIONS[o.statut] ?? []).includes(vers))
         throw new BadRequestException(`R267 : transition illégale — ${o.statut} → ${vers}`);

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Onboarding — l'entrée en relation. R117→R120 (OB-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -28,11 +29,11 @@ export class OnboardingService {
   constructor(private prisma: PrismaService, private audit: AuditService,
               private kycSvc: { create: (ctx: Ctx, dto: any) => Promise<any> }) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload,
       at: new Date().toISOString() } });
   }
-  private async ob(tx: any, ctx: Ctx, id: string) {
+  private async ob(tx: Tx, ctx: Ctx, id: string) {
     const o = await tx.onboarding.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!o) throw new NotFoundException("Onboarding introuvable");
     return o;
@@ -40,7 +41,7 @@ export class OnboardingService {
 
   // ── R117 : création — l'entrée du funnel ──
   async creer(ctx: Ctx, dto: { prospectNom: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await tx.onboarding.create({ data: { tenantId: ctx.tenantId,
         prospectNom: dto.prospectNom, etape: "PROSPECT",
         etapeDepuis: new Date().toISOString(), slaSignale: false } });
@@ -58,7 +59,7 @@ export class OnboardingService {
   // ── R117/R118/R119 : LA transition — garde des états, délégations, blocages ──
   async transitionner(ctx: Ctx, onboardingId: string, vers: string,
                       opts: { motif?: string; form?: any } = {}) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.ob(tx, ctx, onboardingId);
       if (!(TRANSITIONS[o.etape] ?? []).includes(vers))
         throw new BadRequestException(`Transition illégale : ${o.etape} → ${vers}`);
@@ -103,7 +104,7 @@ export class OnboardingService {
 
   // ── R120 : le SLA alerte une fois — l'abandon reste une décision humaine ──
   async tickSla(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
       const sla = { ...SLA_DEFAUT, ...((t?.settings as any)?.onboardingSlaJours ?? {}) };
       const actifs = await tx.onboarding.findMany({ where: { tenantId: ctx.tenantId,

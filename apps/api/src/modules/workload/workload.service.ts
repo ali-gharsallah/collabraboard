@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Capacité d'équipe — R183→R185 (WK-01..05). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -19,7 +20,7 @@ type Ctx = { tenantId: string; userId: string; role: string };
 export class WorkloadService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(tenantId: string) {
@@ -61,7 +62,7 @@ export class WorkloadService {
   async chargeEquipe(ctx: Ctx, equipeRole: string) {
     const s = await this.settings(ctx.tenantId);
     if (!(await this.estResponsableDe(ctx, equipeRole, s))) {
-      await this.prisma.$transaction(async (tx: any) =>
+      await this.prisma.$transaction(async (tx: Tx) =>
         this.emit(tx, ctx.tenantId, "workload.acces.refuse", equipeRole, { par: ctx.userId, role: ctx.role }));
       throw new ForbiddenException(`R183 : voir la charge de l'équipe ${equipeRole} exige d'en être le responsable déclaré (workloadResponsables)`);
     }
@@ -80,7 +81,7 @@ export class WorkloadService {
     const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId: ctx.tenantId } });
     if (!user) throw new NotFoundException("Collaborateur introuvable");
     if (ctx.userId !== userId && !(await this.estResponsableDe(ctx, user.role, s))) {
-      await this.prisma.$transaction(async (tx: any) =>
+      await this.prisma.$transaction(async (tx: Tx) =>
         this.emit(tx, ctx.tenantId, "workload.acces.refuse", userId, { par: ctx.userId, role: ctx.role }));
       throw new ForbiddenException("R183 : les mesures d'un collaborateur se lisent par lui-même ou par son responsable déclaré");
     }
@@ -93,7 +94,7 @@ export class WorkloadService {
     const s = await this.settings(ctx.tenantId);
     const seuil = s.workloadCapacite?.seuilSurchargePct ?? 80;
     const sur = eq.membres.filter((m: any) => m.chargePct > seuil);
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       for (const m of sur)
         await this.emit(tx, ctx.tenantId, "workload.surcharge.signalee", m.userId,
           { chargePct: m.chargePct, seuil, suggestion: "rééquilibrer vers un membre disponible — la décision vous appartient" });
@@ -104,7 +105,7 @@ export class WorkloadService {
   // ── R184 : réassigner — l'acte motivé du responsable ──
   async reassigner(ctx: Ctx, taskId: string, versUserId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : réassigner se motive — motif obligatoire");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.findFirst({ where: { id: taskId, tenantId: ctx.tenantId } });
       if (!k) throw new NotFoundException("Tâche introuvable");
       const s = await this.settings(ctx.tenantId);
@@ -129,7 +130,7 @@ export class WorkloadService {
     const eq = await this.chargeEquipe(ctx, equipeRole);
     const membres = eq.membres.map((m: any) => ({ userId: m.userId, nom: m.nom, points: m.points,
       faites: m.faites, delaiMoyenJours: m.delaiMoyenJours }));
-    await this.prisma.$transaction(async (tx: any) =>
+    await this.prisma.$transaction(async (tx: Tx) =>
       this.emit(tx, ctx.tenantId, "rh.bonification.snapshot", equipeRole,
         { membres, note: "matière pour la décision humaine de fin d'année — le moteur ne décide rien" }));
     return { equipeRole, membres };

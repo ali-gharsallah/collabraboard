@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Personnes liées — le lien est un acte. R152→R155 (PL-01..04). Écrit APRÈS l'amendement,
@@ -51,10 +52,10 @@ const TYPES_DEFAUT = {
 export class PersonneLienService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return {
@@ -77,7 +78,7 @@ export class PersonneLienService {
 
   // ── R152/R153/R154 : lier ──
   async lier(ctx: Ctx, dto: LienDto) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { rolesOff, rolesNon, types } = await this.cfg(tx, ctx.tenantId);
       const typ = this.trouve(types, dto.typeCode);
       if (!typ) throw new BadRequestException(`R153 : type « ${dto.typeCode} » hors référentiel (lienTypes)`);
@@ -87,7 +88,9 @@ export class PersonneLienService {
           { par: ctx.userId, role: ctx.role, typeCode: dto.typeCode });
         throw new ForbiddenException(`R152 : rôle ${ctx.role} non habilité à poser un lien ${typ.categorie}`);
       }
-      const pers = await tx.personne.findFirst({ where: { id: dto.personneId, tenantId: ctx.tenantId } });
+      // ÉCART A3 (signalé) : le délégué `personne` n'existe pas (modèle Person, champs différents) —
+      // chemins non couverts e2e, échoueraient à l'exécution ; casts iso-runtime, correction à ratifier.
+      const pers = await (tx as any).personne.findFirst({ where: { id: dto.personneId, tenantId: ctx.tenantId } });
       if (!pers) throw new NotFoundException("Personne introuvable");
       const doublon = await tx.personneLien.findFirst({ where: { tenantId: ctx.tenantId,
         personneId: dto.personneId, typeCode: dto.typeCode, cibleType: dto.cibleType, cibleId: dto.cibleId } });
@@ -112,7 +115,7 @@ export class PersonneLienService {
 
   // ── R152/R154 : retirer — motivé, les deux côtés ──
   async retirer(ctx: Ctx, lienId: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : le retrait d'un lien exige un motif");
       const lien = await tx.personneLien.findFirst({ where: { id: lienId, tenantId: ctx.tenantId } });
       if (!lien) throw new NotFoundException("Lien introuvable");
@@ -133,17 +136,17 @@ export class PersonneLienService {
   // ── R155 : chercher-ou-créer-et-lier — LE geste du popup ──
   async chercherOuCreerEtLier(ctx: Ctx, dto: { nom: string; type: string; typeCode: string;
     cibleType: string; cibleId: string; creer?: boolean }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       let pers;
       if (!dto.creer) {
         // Le popup a SÉLECTIONNÉ une existante : on lie, on ne crée pas.
-        pers = await tx.personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
+        pers = await (tx as any).personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
         if (!pers)
           throw new NotFoundException(`R155 : « ${dto.nom} » introuvable — repasser avec creer:true pour créer une fiche minimale`);
       } else {
         // L'humain a cliqué « Créer » : on crée — l'homonymie SIGNALE, elle n'empêche pas (R39).
-        const homonyme = await tx.personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
-        pers = await tx.personne.create({ data: { tenantId: ctx.tenantId, nom: dto.nom,
+        const homonyme = await (tx as any).personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
+        pers = await (tx as any).personne.create({ data: { tenantId: ctx.tenantId, nom: dto.nom,
           type: dto.type, statut: "A_COMPLETER", creePar: ctx.userId, creeAt: new Date().toISOString() } });
         await this.emit(tx, ctx.tenantId, "personne.creee.minimale", pers.id, { nom: dto.nom, par: ctx.userId });
         await this.emit(tx, ctx.tenantId, "tache.personne.completion", pers.id, { nom: dto.nom });
@@ -157,7 +160,7 @@ export class PersonneLienService {
     });
   }
   /** lier() sans ouvrir une 2e transaction (appel interne de chercherOuCreerEtLier). */
-  private async lierInterne(tx: any, ctx: Ctx, dto: LienDto) {
+  private async lierInterne(tx: Tx, ctx: Ctx, dto: LienDto) {
     const { rolesOff, rolesNon, types } = await this.cfg(tx, ctx.tenantId);
     const typ = this.trouve(types, dto.typeCode);
     if (!typ) throw new BadRequestException(`R153 : type « ${dto.typeCode} » hors référentiel`);

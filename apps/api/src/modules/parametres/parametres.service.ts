@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Gouvernance des paramètres tenant — R125→R128 (RQ-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -208,10 +209,10 @@ const bonType = (t: Entree["type"], v: any) =>
 export class ParametresService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async tenant(tx: any, ctx: Ctx) {
+  private async tenant(tx: Tx, ctx: Ctx) {
     const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
     if (!t) throw new NotFoundException("Tenant introuvable");
     return t;
@@ -231,7 +232,7 @@ export class ParametresService {
     const effet = effetAt ?? new Date().toISOString();
     if (new Date(effet).getTime() < Date.now() - 60_000)
       throw new BadRequestException("R126 : effet rétroactif refusé — on ne réécrit pas le passé (R48)");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const avant = await this.valeurEffectiveTx(tx, ctx, cle, new Date());
       await tx.tenantParamChange.create({ data: { tenantId: ctx.tenantId, cle,
@@ -248,7 +249,7 @@ export class ParametresService {
   }
 
   // ── R127 / RQ-05 : la valeur d'alors — reconstruite des changements, sinon le défaut ──
-  private async valeurEffectiveTx(tx: any, ctx: Ctx, cle: string, date: Date) {
+  private async valeurEffectiveTx(tx: Tx, ctx: Ctx, cle: string, date: Date) {
     const chgs = (await tx.tenantParamChange.findMany({ where: { tenantId: ctx.tenantId, cle } }))
       .filter((c: any) => new Date(c.effetAt) <= date)
       .sort((a: any, b: any) => new Date(a.effetAt).getTime() - new Date(b.effetAt).getTime());
@@ -268,7 +269,7 @@ export class ParametresService {
 
   // ── R126 : tick — applique les effets différés atteints (matérialise la vue courante) ──
   async tickEffets(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const settings = { ...(t.settings as any) };
       let touche = false;
@@ -287,7 +288,7 @@ export class ParametresService {
   async activer(ctx: Ctx, signataire: string) {
     if (!signataire || !signataire.trim())
       throw new BadRequestException("R128 : signature du répondant bancaire obligatoire");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const manquants: string[] = [];
       for (const e of REGISTRE_RQ.filter((x) => x.requis)) {

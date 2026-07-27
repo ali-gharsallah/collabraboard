@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * GED avancée — R113→R116 (GD-07..14). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -22,10 +23,10 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 export class GedAvanceService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
   }
-  private async doc(tx: any, ctx: Ctx, id: string) {
+  private async doc(tx: Tx, ctx: Ctx, id: string) {
     const d = await tx.document.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!d) throw new NotFoundException("Document introuvable");
     return d;
@@ -59,7 +60,7 @@ export class GedAvanceService {
   // ── R113 / GD-07 : le lot du jour s'ancre, une fois ──
   async tickAncrage(ctx: Ctx) {
     if (!this.ports.tsa) throw new BadRequestException("R113 : port TSA non configuré");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const nonAncrees = await tx.documentVersion.findMany({ where: { tenantId: ctx.tenantId, anchorBatchId: null } });
       if (nonAncrees.length === 0) return { lot: null, versions: 0 };
       const { racine, chemins } = this.merkle(nonAncrees.map((v: any) => v.sha256));
@@ -91,7 +92,7 @@ export class GedAvanceService {
   // ── R114 / GD-09..10 : la signature qualifiée est une version — jamais un simulacre ──
   async demanderSignature(ctx: Ctx, documentId: string, signataire: string) {
     if (!this.ports.qes) throw new BadRequestException("R114 : prestataire QES non configuré — pas de signature simulée");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       const derniere = await tx.documentVersion.findFirst({
         where: { tenantId: ctx.tenantId, documentId: d.id }, orderBy: { numero: "desc" } });
@@ -110,7 +111,7 @@ export class GedAvanceService {
 
   // ── R115 / GD-11 : l'échéance propose — une fois — et ne détruit pas ──
   async tickRetention(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const echus = await tx.document.findMany({ where: { tenantId: ctx.tenantId,
         statut: "ACTIF", legalHold: false, destructionProposee: false, retentionUntil: { lte: now.toISOString() } } });
       for (const d of echus) {
@@ -126,7 +127,7 @@ export class GedAvanceService {
   // ── R115 / GD-12 : destruction certifiée — le contenu part, la preuve reste ──
   async detruire(ctx: Ctx, documentId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : la destruction exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       if (d.legalHold) throw new ForbiddenException(`legal hold actif : ${d.holdMotif ?? "destruction gelée"}`);
       const versions = await tx.documentVersion.findMany({ where: { tenantId: ctx.tenantId, documentId: d.id } });
@@ -143,7 +144,7 @@ export class GedAvanceService {
   // ── R115 / GD-13 : le legal hold gèle tout — pose et levée motivées ──
   async poserHold(ctx: Ctx, clientId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : le legal hold exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const docs = await tx.document.findMany({ where: { tenantId: ctx.tenantId, clientId } });
       for (const d of docs) await tx.document.update({ where: { id: d.id },
         data: { legalHold: true, holdMotif: motif.trim() } });
@@ -152,7 +153,7 @@ export class GedAvanceService {
   }
   async leverHold(ctx: Ctx, clientId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : la levée du hold exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const docs = await tx.document.findMany({ where: { tenantId: ctx.tenantId, clientId, legalHold: true } });
       for (const d of docs) await tx.document.update({ where: { id: d.id },
         data: { legalHold: false, holdMotif: null } });
@@ -164,7 +165,7 @@ export class GedAvanceService {
   // ── R116 / GD-14 : l'IA propose (événement), l'humain applique (jeton) ──
   async classifier(ctx: Ctx, documentId: string, contenu: string) {
     if (!this.ports.ia) throw new BadRequestException("R116 : port IA non configuré");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       const prop = await this.ports.ia.classifier(contenu);
       await this.emit(tx, ctx.tenantId, "ged.classification.proposee", d.id,
@@ -173,7 +174,7 @@ export class GedAvanceService {
     });
   }
   async confirmerClassification(ctx: Ctx, documentId: string, type: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await this.doc(tx, ctx, documentId);
       await tx.document.update({ where: { id: d.id }, data: { typeCode: type } });
       await this.emit(tx, ctx.tenantId, "ged.classification.confirmee", d.id, { type, par: ctx.userId });

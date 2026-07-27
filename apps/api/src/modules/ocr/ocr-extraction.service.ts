@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * L'extraction comprend le document — R174→R176 (OC-01..06). Écrit APRÈS l'amendement,
@@ -26,7 +27,7 @@ type Ports = { ocr?: OcrPort; form?: FormPort };
 export class OcrExtractionService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private sha(x: string) { return createHash("sha256").update(x).digest("hex"); }
@@ -64,7 +65,7 @@ export class OcrExtractionService {
   // ── R174/R175 : extraction typée — contrat, contrôles, dérivé signé, idempotente ──
   async extraireTypee(ctx: Ctx, documentId: string, versionId: string, contenu: string) {
     if (!this.ports.ocr) throw new BadRequestException("R138 : aucun moteur OCR configuré — pas d'extraction simulée");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const doc = await tx.document.findFirst({ where: { id: documentId, tenantId: ctx.tenantId } });
       if (!doc) throw new NotFoundException("Document introuvable");
       if (!doc.typeCode) throw new BadRequestException("R174 : l'extraction typée exige un document classé — le type dit le gabarit");
@@ -99,7 +100,7 @@ export class OcrExtractionService {
 
   // ── R176 : proposer — le mapping du gabarit, rien d'écrit ──
   async proposer(ctx: Ctx, extractionId: string, cible: { form: string; dossierCode: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const x = await tx.ocrExtraction.findFirst({ where: { id: extractionId, tenantId: ctx.tenantId } });
       if (!x) throw new NotFoundException("Extraction introuvable");
       const doc = await tx.document.findFirst({ where: { id: x.documentId, tenantId: ctx.tenantId } });
@@ -124,7 +125,7 @@ export class OcrExtractionService {
   // ── R176 : l'acte humain — accepter écrit PAR LE PORT, avec provenance ──
   async accepter(ctx: Ctx, propositionId: string) {
     if (!this.ports.form) throw new BadRequestException("Aucun port de formulaire configuré — rien ne s'écrit dans le vide");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const pr = await tx.ocrProposition.findFirst({ where: { id: propositionId, tenantId: ctx.tenantId } });
       if (!pr) throw new NotFoundException("Proposition introuvable");
       if (pr.statut !== "EN_ATTENTE") throw new BadRequestException("La décision ne se rejoue pas");
@@ -138,7 +139,7 @@ export class OcrExtractionService {
   }
 
   async refuser(ctx: Ctx, propositionId: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const pr = await tx.ocrProposition.findFirst({ where: { id: propositionId, tenantId: ctx.tenantId } });
       if (!pr) throw new NotFoundException("Proposition introuvable");
       if (pr.statut !== "EN_ATTENTE") throw new BadRequestException("La décision ne se rejoue pas");

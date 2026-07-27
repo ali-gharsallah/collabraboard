@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * PMS — mandats & adéquation. R105→R108 (PF-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -18,15 +19,15 @@ const NIVEAU: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
 export class PmsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
   }
-  private async params(tx: any, tenantId: string) {
+  private async params(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { driftBp: s.pmsDriftToleranceBp ?? 200, breachJours: s.pmsBreachDelaiJours ?? 30 };
   }
-  private async mandat(tx: any, ctx: Ctx, mandateId: string) {
+  private async mandat(tx: Tx, ctx: Ctx, mandateId: string) {
     const m = await tx.mandate.findFirst({ where: { id: mandateId, tenantId: ctx.tenantId } });
     if (!m) throw new NotFoundException("Mandat introuvable");
     return m;
@@ -34,7 +35,7 @@ export class PmsService {
 
   // ── R105 / PF-01 : valorisation → drift constaté, tracé, jamais corrigé ──
   async valoriser(ctx: Ctx, mandateId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const m = await this.mandat(tx, ctx, mandateId);
       const cfg = await this.params(tx, ctx.tenantId);
       const pos = await tx.position.findMany({ where: { tenantId: ctx.tenantId, mandateId } });
@@ -42,7 +43,7 @@ export class PmsService {
       const parClasse: Record<string, number> = {};
       for (const p of pos) parClasse[p.classe] = (parClasse[p.classe] ?? 0) + p.valeurChf;
       const drifts: any[] = [];
-      for (const [classe, [min, max]] of Object.entries((m.strategie?.bornes ?? {}) as Record<string, [number, number]>)) {
+      for (const [classe, [min, max]] of Object.entries(((m.strategie as any)?.bornes ?? {}) as Record<string, [number, number]>)) {
         const reelPct = total ? Math.round((parClasse[classe] ?? 0) / total * 100) : 0;
         const ecartBp = Math.max((min - reelPct) * 100, (reelPct - max) * 100, 0);
         if (ecartBp > cfg.driftBp) {
@@ -69,9 +70,9 @@ export class PmsService {
 
   // ── R106 / PF-02..03 : pre-trade — exclusions + concentration, blocage motivé ──
   async preTrade(ctx: Ctx, mandateId: string, ordre: { instrument: string; secteur: string; classe: string; montantChf: number }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const m = await this.mandat(tx, ctx, mandateId);
-      const strat = m.strategie ?? {};
+      const strat = (m.strategie as any) ?? {};
       const bloque = async (motif: string) => {
         await this.emit(tx, ctx.tenantId, "pms.pretrade.bloque", m.id,
           { instrument: ordre.instrument, motif, mandat: m.nom });
@@ -96,7 +97,7 @@ export class PmsService {
 
   // ── R107 / PF-04 : le riskLevel CLIENT (golden record) borne le mandat — l'humain décide ──
   async verifierAdequation(ctx: Ctx, clientId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await tx.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });
       if (!c) throw new NotFoundException("Client introuvable");
       const mandats = await tx.mandate.findMany({ where: { tenantId: ctx.tenantId, clientId, statut: "ACTIF" } });
@@ -116,7 +117,7 @@ export class PmsService {
 
   // ── R107 / PF-05 : adéquation à la souscription ──
   async attacherMandat(ctx: Ctx, clientId: string, dto: { nom: string; profilRequis: string; strategie: any }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await tx.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });
       if (!c) throw new NotFoundException("Client introuvable");
       if (NIVEAU[c.riskLevel] < NIVEAU[dto.profilRequis])
@@ -131,7 +132,7 @@ export class PmsService {
 
   // ── R108 / PF-06 : registre — escalade UNE fois au délai, clôture motivée ──
   async tickBreaches(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const cfg = await this.params(tx, ctx.tenantId);
       const ouverts = await tx.pmsBreach.findMany({ where: {
         tenantId: ctx.tenantId, statut: "OUVERT", escaladeEmise: false } });
@@ -147,7 +148,7 @@ export class PmsService {
   }
   async cloreBreach(ctx: Ctx, breachId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : la clôture d'un breach exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const b = await tx.pmsBreach.findFirst({ where: { id: breachId, tenantId: ctx.tenantId } });
       if (!b) throw new NotFoundException("Breach introuvable");
       await tx.pmsBreach.update({ where: { id: b.id },

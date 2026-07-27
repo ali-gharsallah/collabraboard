@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Communication MROS — R129→R132 (MR-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -24,20 +25,20 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 export class MrosService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { roles: s.mrosRolesHabilites ?? ["MLRO"], gelJours: s.mrosGelJoursOuvrables ?? 5 };
   }
-  private async habilite(tx: any, ctx: Ctx) {
+  private async habilite(tx: Tx, ctx: Ctx) {
     const { roles } = await this.cfg(tx, ctx.tenantId);
     if (!roles.includes(ctx.role))
       throw new ForbiddenException(`R129/R132 : rôle ${ctx.role} non habilité MROS (paramètre R-Q)`);
   }
-  private async comm(tx: any, ctx: Ctx, id: string) {
+  private async comm(tx: Tx, ctx: Ctx, id: string) {
     const c = await tx.mrosCommunication.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!c) throw new NotFoundException("Communication introuvable");
     return c;
@@ -51,7 +52,7 @@ export class MrosService {
   // ── R129/R130 : LA décision — habilitée, motivée, dossier figé et empreinté ──
   async decider(ctx: Ctx, dto: { riskCaseId: string; clientId: string;
     decision: "COMMUNIQUER" | "NE_PAS_COMMUNIQUER"; motif: string; pieces: Piece[] }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx);
       if (!dto.motif || !dto.motif.trim())
         throw new BadRequestException("R7 : la décision MROS — communiquer OU s'abstenir — exige un motif");
@@ -99,7 +100,7 @@ export class MrosService {
   // ── R131 : notification, gel posé/appliqué/surveillé/levé ──
   async saisirNotification(ctx: Ctx, communicationId: string,
       notification: "TRANSMISSION_AUTORITE" | "NON_TRANSMISSION") {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx);
       const c = await this.comm(tx, ctx, communicationId);
       await tx.mrosCommunication.update({ where: { id: c.id }, data: { notification } });
@@ -107,7 +108,7 @@ export class MrosService {
     });
   }
   async poserGel(ctx: Ctx, communicationId: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx);
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : poser un gel exige un motif");
       const c = await this.comm(tx, ctx, communicationId);
@@ -132,7 +133,7 @@ export class MrosService {
       : { bloquant: false };
   }
   async leverGel(ctx: Ctx, communicationId: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx);
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : lever un gel exige un motif");
       const c = await this.comm(tx, ctx, communicationId);
@@ -143,7 +144,7 @@ export class MrosService {
     });
   }
   async tickGel(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const gels = await tx.mrosCommunication.findMany({
         where: { tenantId: ctx.tenantId, gelActif: true, gelSignale: false, gelEcheance: { lte: now.toISOString() } } });
       for (const c of gels) {

@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * CRM Relation — R186→R188 (CR-01..05). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -22,7 +23,7 @@ export class CrmService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { ia?: IaPort } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
   private async settings(tenantId: string) {
@@ -35,7 +36,7 @@ export class CrmService {
     const s = await this.settings(ctx.tenantId);
     const etendue = (s.rolesVisibiliteEtendue ?? ["CO", "CF"]).includes(ctx.role);
     if (!etendue && c.rmUserId !== ctx.userId) {   // E1 : champ du modèle Client canon
-      await this.prisma.$transaction(async (tx: any) =>
+      await this.prisma.$transaction(async (tx: Tx) =>
         this.emit(tx, ctx.tenantId, "crm.acces.refuse", clientId, { par: ctx.userId, role: ctx.role }));
       throw new ForbiddenException("R186 : la relation d'un client se lit par son RM ou par un rôle à visibilité étendue");
     }
@@ -98,7 +99,7 @@ export class CrmService {
     });
     if (manquants.length)
       throw new BadRequestException(`R188 : la trace du conseil est incomplète — champs obligatoires manquants : ${manquants.join(", ")}`);
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const ct = await tx.crmContact.create({ data: { tenantId: ctx.tenantId, clientId: dto.clientId,
         type: dto.type, contenu: dto.contenu,
         origine: dto.origineProposition === "IA" ? "IA_VALIDEE" : "MANUEL",

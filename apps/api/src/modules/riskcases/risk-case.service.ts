@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Risk cases — l'instruction AML. R133→R136 (RK-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -27,15 +28,15 @@ const SLA_DEFAUT: Record<string, number> = { NOUVELLE: 2, EN_ANALYSE: 15, CLARIF
 export class RiskCaseService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
   }
-  private async cas(tx: any, ctx: Ctx, id: string) {
+  private async cas(tx: Tx, ctx: Ctx, id: string) {
     const c = await tx.riskCase.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!c) throw new NotFoundException("Risk case introuvable");
     return c;
   }
-  private async signalLibre(tx: any, ctx: Ctx, signalId: string) {
+  private async signalLibre(tx: Tx, ctx: Ctx, signalId: string) {
     const actifs = await tx.riskCase.findMany({ where: { tenantId: ctx.tenantId, statut: { in: ACTIFS } } });
     const occupant = actifs.find((c: any) => (c.signalIds ?? []).includes(signalId));
     if (occupant) throw new BadRequestException(
@@ -46,7 +47,7 @@ export class RiskCaseService {
   async ouvrir(ctx: Ctx, dto: { clientId: string; signalIds: string[] }) {
     if (!dto.signalIds || dto.signalIds.length === 0)
       throw new BadRequestException("R133 : un risk case naît d'au moins un signal");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       for (const s of dto.signalIds) await this.signalLibre(tx, ctx, s);
       const c = await tx.riskCase.create({ data: { tenantId: ctx.tenantId, clientId: dto.clientId,
         statut: "NOUVELLE", etatDepuis: new Date().toISOString(), slaSignale: false,
@@ -67,7 +68,7 @@ export class RiskCaseService {
 
   // ── R133/R136 : transitions — fermées, terminaux motivés, clôture cohérente avec le MROS ──
   async transitionner(ctx: Ctx, caseId: string, vers: string, motif?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await this.cas(tx, ctx, caseId);
       if (!(TRANSITIONS[c.statut] ?? []).includes(vers))
         throw new BadRequestException(`Transition illégale : ${c.statut} → ${vers}`);
@@ -94,7 +95,7 @@ export class RiskCaseService {
   // ── R134 : l'instruction append-only — AUCUNE API d'édition n'existe, à dessein ──
   async noter(ctx: Ctx, caseId: string, texte: string) {
     if (!texte || !texte.trim()) throw new BadRequestException("Note vide");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await this.cas(tx, ctx, caseId);
       const n = await tx.riskCaseNote.create({ data: { tenantId: ctx.tenantId, caseId: c.id,
         texte: texte.trim(), par: ctx.userId, at: new Date().toISOString() } });
@@ -112,22 +113,22 @@ export class RiskCaseService {
   //    rattacher un signal DÉJÀ dans CE cas est IDEMPOTENT — un seul lien, second appel sans effet
   //    ni erreur (pattern R76) ; dans un AUTRE cas actif, le refus R135 tient. ──
   async rattacher(ctx: Ctx, caseId: string, signalId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await this.cas(tx, ctx, caseId);
       if (!ACTIFS.includes(c.statut)) throw new BadRequestException("Cas non actif");
-      if ((c.signalIds ?? []).includes(signalId)) return { caseId: c.id, signalId, dejaRattache: true }; // AW-05
+      if (((c.signalIds as any[]) ?? []).includes(signalId)) return { caseId: c.id, signalId, dejaRattache: true }; // AW-05
       await this.signalLibre(tx, ctx, signalId);
-      await tx.riskCase.update({ where: { id: c.id }, data: { signalIds: [...c.signalIds, signalId] } });
+      await tx.riskCase.update({ where: { id: c.id }, data: { signalIds: [...(c.signalIds as any[]), signalId] } });
       await this.emit(tx, ctx.tenantId, "riskcase.signal.rattache", c.id, { signalId, par: ctx.userId });
     });
   }
   async detacher(ctx: Ctx, caseId: string, signalId: string, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : détacher un signal exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const c = await this.cas(tx, ctx, caseId);
-      if (!(c.signalIds ?? []).includes(signalId)) throw new NotFoundException("Signal non rattaché à ce cas");
+      if (!((c.signalIds as any[]) ?? []).includes(signalId)) throw new NotFoundException("Signal non rattaché à ce cas");
       await tx.riskCase.update({ where: { id: c.id },
-        data: { signalIds: c.signalIds.filter((s: string) => s !== signalId) } });
+        data: { signalIds: (c.signalIds as any[]).filter((s: string) => s !== signalId) } });
       await this.emit(tx, ctx.tenantId, "riskcase.signal.detache", c.id,
         { signalId, motif: motif.trim(), par: ctx.userId });
     });
@@ -135,7 +136,7 @@ export class RiskCaseService {
 
   // ── R135 : le SLA alerte une fois — l'instruction reste humaine ──
   async tickSla(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
       const sla = { ...SLA_DEFAUT, ...((t?.settings as any)?.riskCaseSlaJours ?? {}) };
       const actifs = await tx.riskCase.findMany({ where: { tenantId: ctx.tenantId,
