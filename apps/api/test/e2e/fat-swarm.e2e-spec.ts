@@ -627,4 +627,63 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     expect(chezT.actives).toContain("PREREVUE_DOSSIER");
     console.log("SW-18 PASS — v2 éteinte par défaut, refus typé, interrupteur menu servi");
   });
+
+  // ── Étape 10 : Mission 2 ANALYSE_CORRELATION (B.4) — re-passe SW-04 et SW-14 sur cette mission ──
+
+  it("Mission 2 [B.4] ANALYSE_CORRELATION : porte avant escalade, proposition de qualification R252/R254 ; SW-04 et SW-14 re-passés", async () => {
+    await request(http).post("/v1/olivia/agents").set(bearer(T, ADMIN, "ADMIN")).send({
+      code: "agent-aml", capacite: "analyse_alertes", outilsAutorises: [], gabaritRef: "agent-aml.v1" }).expect(201);
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any) ?? {};
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s,
+      missionsActives: [...new Set([...(s.missionsActives ?? []), "ANALYSE_CORRELATION"])] } } });
+    // Ancrage : un risk case dont le client est ENREGISTRÉ à la porte CPSI (score périphérique servi)
+    const clientA = randomUUID();
+    await seedTenantClient(prisma, T, clientA);
+    await request(http).post("/v1/cpsi/clients").set(bearer(T, CO, "CO"))
+      .send({ clientId: clientA, statique: { pep: false }, attributs: {} }).expect(201);
+    const rc = await prisma.riskCase.create({ data: { tenantId: T, clientId: clientA, statut: "EN_ANALYSE",
+      etatDepuis: new Date(), signalIds: [], ouvertPar: CO } });
+
+    // SW-14 (re-passe) : photo de l'état métier AVANT — byte-identique APRÈS
+    const photo = async () => JSON.stringify({
+      rc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM risk_cases t WHERE tenant_id = '${T}'`),
+      cpsi: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM cpsi_events t WHERE tenant_id = '${T}'`),
+      cl: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM clients t WHERE tenant_id = '${T}'`) });
+    const avant = await photo();
+
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "ANALYSE_CORRELATION", ancrageType: "RISK_CASE", ancrageId: rc.id });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("PAUSE_PORTE");                            // la porte AVANT la proposition d'escalade
+    // SW-04 (re-passe) : agent-aml ET agent-redacteur — même scope, même empreinte, contexte C3
+    const etapes = (await eventsDe(r.body.id)).filter((e: any) => e.type === "ETAPE_AGENT");
+    expect(etapes.map((e: any) => e.agentCode)).toEqual(["agent-aml", "agent-redacteur"]);
+    // Même SCOPE = même liste d'objets (type+id) pour les deux agents. (L'empreinte C3 embarque
+    // le hachage du score CPSI, qui porte une mesure de rejeu volatile — l'égalité BYTE des
+    // empreintes est prouvée par SW-04 sur C2 ; ici on prouve l'égalité du PÉRIMÈTRE.)
+    const perimetre = (e: any) => (e.contexteObjets as any[]).map((o) => `${o.type}:${o.id}`).sort();
+    expect(perimetre(etapes[0])).toEqual(perimetre(etapes[1]));
+    for (const e of etapes) {
+      const objets = e.contexteObjets as any[];
+      expect(objets.some((o: any) => o.type === "RISK_CASE" && o.id === rc.id)).toBe(true);
+      expect(objets.some((o: any) => o.type === "CPSI_SCORE")).toBe(true); // périphérique SERVI (client enregistré)
+    }
+    expect((await eventsDe(r.body.id)).some((e: any) => e.type === "SCOPE_DENIED")).toBe(false);
+
+    const fin = await request(http).post(`/v1/olivia/runs/${r.body.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" });
+    expect(fin.status).toBe(201);
+    expect(fin.body.statut).toBe("TERMINE");
+    const props = await prisma.oliviaProposal.findMany({ where: { tenantId: T, messageId: fin.body.livrableMessageId } });
+    expect(props.length).toBe(1);
+    expect(props[0].type).toBe("QUALIF_ALERTE_FONDEE");
+    expect(props[0].cibleType).toBe("ALERTE");
+    expect(props[0].cibleId).toBe(`${clientA}|SC_STRUCT`);                // clé R252, __CLIENT__ résolu
+    expect(props[0].statut).toBe("PENDING");
+    expect(props[0].cibleEtat).toBe("NON_QUALIFIEE");                     // état FIGÉ (caducité B.7)
+    // SW-14 (re-passe) : l'état métier est BYTE-IDENTIQUE — risk case, cpsi_events, clients intacts
+    expect(await photo()).toBe(avant);
+    console.log("Mission 2 PASS — porte escalade, proposition ALERTE clé R252, SW-04/SW-14 re-passés verts");
+  });
 });

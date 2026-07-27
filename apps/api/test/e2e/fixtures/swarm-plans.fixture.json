@@ -15,6 +15,19 @@
       { "type": "ALLEGEMENT_EDD", "justification": "Pré-revue : si la clarification IDE-Q3 est apportée, l'allègement redevient possible" }
     ]
   },
+  "ANALYSE_CORRELATION": {
+    "etapes": [
+      { "agent": "agent-aml", "sortie": { "analyse": "3 signaux convergent vers SC_STRUCT (R80)" }, "cout": { "tokens": 150 } },
+      { "agent": "agent-redacteur", "sortie": { "rapport": "Analyse corrélée rédigée" }, "cout": { "tokens": 120 } },
+      { "porte": "proposition_escalade" }
+    ],
+    "livrable": { "rapport": "Analyse des scénarios corrélés : trois signaux convergent vers SC_STRUCT.",
+      "citations": [{ "type": "RISK_CASE", "ref": "__ANCRAGE__", "assertion": "cas en analyse, signaux corrélés" }] },
+    "propositions": [
+      { "type": "QUALIF_ALERTE_FONDEE", "cibleType": "ALERTE", "cibleId": "__CLIENT__|SC_STRUCT",
+        "justification": "Corrélation multi-scénarios établie — qualification fondée proposée (l'humain décide, R44)" }
+    ]
+  },
   "MISSION_AGENT_FANTOME": { "etapes": [
     { "agent": "agent-fantome", "sortie": {} }
   ] },

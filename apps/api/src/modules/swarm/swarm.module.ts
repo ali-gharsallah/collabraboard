@@ -444,9 +444,19 @@ export class SwarmRunsService {
       });
       livrableMessageId = msg.id;
       const scopeProps: Ctx = { tenantId: run.tenantId, userId: run.commanditaireId, role: run.roleCode };
-      for (const p of plan.propositions ?? [])
+      // La cible d'une proposition suit le catalogue R254 (ALERTE = clé client|scenario, R252) —
+      // les marqueurs __ANCRAGE__/__CLIENT__ se résolvent depuis l'ancrage du run.
+      let clientAncrage = "";
+      if (run.ancrageType === "RISK_CASE" && run.ancrageId) {
+        const rc = await this.prisma.riskCase.findFirst({ where: { id: run.ancrageId, tenantId: run.tenantId } });
+        clientAncrage = rc?.clientId ?? "";
+      }
+      for (const p of plan.propositions ?? []) {
+        const cibleId = String(p.cibleId ?? "__ANCRAGE__")
+          .replace("__ANCRAGE__", run.ancrageId ?? "").replace("__CLIENT__", clientAncrage);
         await this.olivia.creerProposition(scopeProps, { messageId: msg.id, type: p.type,
-          cibleType: run.ancrageType ?? "KYC_FILE", cibleId: run.ancrageId, justification: p.justification });
+          cibleType: p.cibleType ?? run.ancrageType ?? "KYC_FILE", cibleId, justification: p.justification });
+      }
     }
     await this.prisma.$transaction(async (tx: Tx) => {
       const sortie = {
