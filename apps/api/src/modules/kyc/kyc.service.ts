@@ -31,14 +31,32 @@ export class KycService {
 
   // ── Création : code atomique + scoring tracé + gabarit + visas ──
   async create(ctx: Ctx, dto: { clientId: string; legalStructure: string;
-    accountType: string; countryCode: string; rmId: string }) {
+    accountType: string; countryCode: string; rmId: string },
+    opts: { viaOnboarding?: boolean } = {}) {
     const client = await this.prisma.client.findFirst({
       where: { id: dto.clientId, tenantId: ctx.tenantId } });
     if (!client) throw new NotFoundException("Client introuvable dans ce tenant");
-    await this.verifierNonCloture(ctx, dto.clientId);    // OF-10 — le retour passe par l'onboarding (R271)
+    // R271/OF-10 : client clôturé — le retour ne « rouvre » pas : SEUL un nouvel onboarding
+    // (MOD-69) crée le KYC Rn+1, chaîné au précédent ; la création directe refuse.
+    const cloture = await etatCloture(this.prisma, ctx.tenantId, dto.clientId);
+    if (cloture.cloture && !opts.viaOnboarding) throw new ConflictException(
+      `OFFBOARDING_LECTURE_SEULE : dossier clôturé le ${cloture.le?.slice(0, 10)} — le retour passe par un nouvel onboarding (R271)`);
 
-    const risk = computeRisk({ structure: dto.legalStructure,
+    let risk = computeRisk({ structure: dto.legalStructure,
       accountType: dto.accountType, countryCode: dto.countryCode });
+    let previousKycId: string | null = null;
+    let revision = 1;
+    if (cloture.cloture && opts.viaOnboarding) {          // R271 : réonboarding chaîné
+      const dernier = await this.prisma.kycFile.findFirst({
+        where: { tenantId: ctx.tenantId, clientId: dto.clientId }, orderBy: { createdAt: "desc" } });
+      previousKycId = dernier?.id ?? null;
+      revision = (dernier?.revision ?? 0) + 1;
+      const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+      const forceEdd = ((t?.settings as any) ?? {}).exExitComplianceForceEdd !== false;
+      if (cloture.type === "EXIT_COMPLIANCE" && forceEdd && risk.workflow !== "EDD")
+        risk = { ...risk, workflow: "EDD", level: "HIGH",
+          trace: [...(risk.trace ?? []), "R271 : ex-EXIT_COMPLIANCE — workflow EDD imposé (exExitComplianceForceEdd)"] } as any;
+    }
     const year = new Date().getFullYear();
 
     return this.prisma.$transaction(async (tx) => {
@@ -50,11 +68,12 @@ export class KycService {
         where: { tenantId: ctx.tenantId, year, countryCode: dto.countryCode },
         orderBy: { sequence: "desc" }, select: { sequence: true } });
       const sequence = (last?.sequence ?? 0) + 1;
-      const code = `KYC-${year}-${dto.countryCode}-${String(sequence).padStart(4, "0")}-R1`;
+      const code = `KYC-${year}-${dto.countryCode}-${String(sequence).padStart(4, "0")}-R${revision}`;
 
       const kyc = await tx.kycFile.create({ data: {
         tenantId: ctx.tenantId, clientId: dto.clientId, code, year,
         countryCode: dto.countryCode, sequence, workflow: risk.workflow,
+        revision, previousKycId,                                  // R271 : Rn+1 chaîné
         riskScore: risk.score, riskLevel: risk.level, createdBy: ctx.userId,
         sections: { create: SECTIONS_BY_WORKFLOW[risk.workflow].map((s, i) => ({
           code: s.code, label: s.label, orderIndex: i,

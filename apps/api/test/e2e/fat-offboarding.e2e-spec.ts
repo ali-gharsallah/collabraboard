@@ -302,6 +302,44 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
       expect(c.texte.toLowerCase()).not.toContain(interdit.toLowerCase());
     console.log("OF-09 PASS — courrier généré sans aucune mention compliance");
   });
+
+  it("OF-11 [R271] le retour est un NOUVEL onboarding : KYC Rn+1 chaîné, EDD imposé pour un ex-EXIT_COMPLIANCE", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const ancien = await creerKyc(clientId);
+    // Clôture EXIT_COMPLIANCE complète (visas CO_SR + DIR + attestation avoirs)
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "EXIT_COMPLIANCE", motif: "Soupçon fondé", mrosRef: randomUUID() })).body;
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "EN_CLOTURE" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, randomUUID(), "CO_SR")).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/visa`).set(bearer(T, randomUUID(), "DIR")).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/attestation-avoirs`).set(bearer(T, CO2, "CO")).send({ motif: "soldé" }).expect(201);
+    await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
+    // La création DIRECTE refuse (OF-10) — le retour passe par l'ONBOARDING (MOD-69)
+    await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM }).expect(409);
+    const ob = (await request(http).post("/v1/onboarding").set(bearer(T, RM, "RM")).send({ prospectNom: "Retour Suzuki" })).body;
+    await request(http).post(`/v1/onboarding/${ob.id}/transition`).set(bearer(T, RM, "RM"))
+      .send({ vers: "COLLECTE", form: { clientName: "Suzuki Ltd", legalStructure: "PP", rmId: RM,
+        accountType: "CURRENT", clientId, countryCode: "CH" } }).expect(201);
+    const obApres = await prisma.onboarding.findFirst({ where: { id: ob.id } });
+    const nouveau = await prisma.kycFile.findFirst({ where: { id: obApres!.kycFileId! } });
+    expect(nouveau!.previousKycId).toBe(ancien.id);                          // Rn+1 CHAÎNÉ au précédent
+    expect(nouveau!.revision).toBe(2);
+    expect(nouveau!.code.endsWith("-R2")).toBe(true);
+    expect(nouveau!.workflow).toBe("EDD");                                   // ex-EXIT_COMPLIANCE → EDD imposé (paramètre défaut vrai)
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, aggregateId: nouveau!.id, type: "kyc.created" } });
+    expect(JSON.stringify((ev!.payload as any).riskTrace ?? [])).toContain("R271");
+    // L'historique reste visible : l'ancien dossier se consulte toujours (lecture) et la relation est ROUVERTE
+    await request(http).get(`/v1/kyc/${ancien.code}`).set(bearer(T, CO, "CO")).expect(200);
+    const st = (await request(http).get(`/v1/offboarding/statut/${clientId}`).set(bearer(T, RM, "RM"))).body;
+    expect(st.cloture).toBe(false);                                          // rouvert par le KYC Rn+1
+    expect(st.type).toBe("EXIT_COMPLIANCE");                                 // l'antécédent reste un attribut visible
+    // Le NOUVEAU dossier est modifiable (la lecture seule ne s'applique plus)
+    await request(http).patch(`/v1/kyc/${nouveau!.code}/questions/IDE-Q1`).set(bearer(T, RM, "RM"))
+      .send({ answer: "Passeport re-vérifié au retour" }).expect(200);
+    console.log("OF-11 PASS — Rn+1 chaîné (", nouveau!.code, "), EDD imposé, antécédent visible, relation rouverte");
+  });
 });
 
 describe("FAT OFFBOARDING — R269/OF-06b avec PORT CORE (port de test, jamais en prod)", () => {

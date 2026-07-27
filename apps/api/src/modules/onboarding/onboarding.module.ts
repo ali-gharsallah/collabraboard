@@ -36,7 +36,11 @@ export class OnboardingController {
     {
       provide: OnboardingService,
       useFactory: (prisma: PrismaService, audit: AuditService, kyc: KycService) =>
-        new OnboardingService(prisma, audit, kyc),
+        // R271 : la création déléguée par l'onboarding est LA voie du retour d'un client
+        // clôturé — le moteur KYC chaîne alors Rn+1 (previousKycId) et impose l'EDD si
+        // ex-EXIT_COMPLIANCE (paramètre). La création directe, elle, reste refusée.
+        new OnboardingService(prisma, audit,
+          { create: (ctx: any, dto: any) => kyc.create(ctx, dto, { viaOnboarding: true }) }),
       inject: [PrismaService, AuditService, KycService],
     },
   ],

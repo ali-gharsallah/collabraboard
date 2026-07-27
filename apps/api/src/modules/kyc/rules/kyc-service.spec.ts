@@ -46,6 +46,9 @@ function fakePrisma(sc: Scenario) {
       return [...new Set(list)].map((changedBy) => ({ changedBy }));
     } },
     domainEvent: { create: async () => ({}) },
+    // R267/OF-10 : le garde « client clôturé » interroge offboarding_files — aucun scénario
+    // du corpus n'est clôturé (le bloc offboarding a ses propres FAT e2e).
+    offboardingFile: { findFirst: async () => null },
   };
   base.$transaction = async (fn: any) => fn(base);
   return base;
