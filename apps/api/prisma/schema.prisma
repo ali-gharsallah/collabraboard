@@ -1036,8 +1036,10 @@ model OliviaConversation {
 model OliviaMessage {
   id                 String   @id @default(uuid()) @db.Uuid
   tenantId           String   @map("tenant_id") @db.Uuid
-  conversationId     String   @map("conversation_id") @db.Uuid
-  conversation       OliviaConversation @relation(fields: [conversationId], references: [id])
+  // NULLABLE depuis v2 (0c ratifié, non destructif) : le LIVRABLE d'un run est un message SANS
+  // conversation (olivia_runs.livrable_message_id) — son chaînage s'ancre sur le journal du run.
+  conversationId     String?  @map("conversation_id") @db.Uuid
+  conversation       OliviaConversation? @relation(fields: [conversationId], references: [id])
   seq                Int                                   // monotone par conversation
   direction          String                                // IN | OUT
   texte              String

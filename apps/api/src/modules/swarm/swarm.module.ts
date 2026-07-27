@@ -279,9 +279,9 @@ export class SwarmRunsService {
 
     // SW-01/SW-02 : AUCUN agent implicite — chaque agent de la mission se résout AVANT tout
     // appel fournisseur ; l'échec est immédiat, journalisé, persistant.
-    const versions = new Map<string, number>();
+    const versions = new Map<string, any>();
     for (const code of def.agents ?? []) {
-      try { versions.set(code, (await this.agents.resoudre(ctx, code)).version); }
+      try { versions.set(code, await this.agents.resoudre(ctx, code)); }
       catch (e: any) {
         await this.prisma.$transaction(async (tx: Tx) => {
           await this.transition(tx, run, "PLANIFIE", "ECHOUE", { erreur: e?.message ?? String(e) });
@@ -303,7 +303,8 @@ export class SwarmRunsService {
     }
     await this.prisma.$transaction(async (tx: Tx) => {
       await this.appendEvent(tx, run, "PLAN", { sortie: { mission: dto.missionCode,
-        agents: def.agents ?? [], nbEtapes: (plan.etapes ?? []).length, etapes: plan.etapes ?? [] } });
+        agents: def.agents ?? [], nbEtapes: (plan.etapes ?? []).length, etapes: plan.etapes ?? [],
+        livrable: plan.livrable ?? null, propositions: plan.propositions ?? [] } });
       await this.transition(tx, run, "PLANIFIE", "EN_COURS");
     });
 
@@ -315,7 +316,7 @@ export class SwarmRunsService {
   // ── R260 : l'exécuteur — une étape complète = un événement, AVANT que la suivante ne démarre.
   //    R262 : les trois compteurs sont décomptés à CHAQUE étape ; le premier épuisé FERME —
   //    livrable partiel avec mention explicite, l'étape suivante N'EXISTE PAS. ──
-  private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>,
+  private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, any>,
     capacite = "C1", settings: any = {}, opts: { depuis?: number; consigneSeq?: number } = {}) {
     const debut = Date.now();
     const budget = run.budget as { maxEtapes: number; maxDureeS: number; maxCoutTokens: number };
@@ -323,6 +324,7 @@ export class SwarmRunsService {
     const dureeBase = consomme.duree_s ?? 0;                              // reprise : le temps déjà consommé compte
     let derniereSortie: any = null;
     let exclusTotal = 0;
+    let dernierCx: { objets: any[]; exclus: number; empreinte: string } | null = null;
     // R261 : le scope du run est FIGÉ — (commanditaire, rôle) du jeton d'origine, pas de l'appelant courant.
     const scope: Ctx = { tenantId: run.tenantId, userId: run.commanditaireId, role: run.roleCode };
     const etapesPlan = plan.etapes ?? [];
@@ -362,6 +364,27 @@ export class SwarmRunsService {
       // Simulation kill -9 (fixture SW-03) : le processus « meurt » — AUCUN rattrapage, AUCUNE
       // écriture : le journal s'arrête net après la dernière étape complète, le statut ne ment pas.
       if (etape.marqueur === "CRASH_TEST") throw new Error("SWARM_CRASH_TEST: processus tué entre deux étapes (simulation SW-03)");
+      // R264/SW-13 : un appel d'OUTIL — l'agent n'emprunte pas l'outil du voisin. Hors
+      // outils_autorises (ou hors registre) : échec TRACÉ (RUN_TOOL_NON_AUTORISE) et le run
+      // CONTINUE — l'étape est consommée, jamais rejouée en douce.
+      if (etape.outil) {
+        const agentRes = versions.get(etape.agent);
+        const autorises: string[] = (agentRes?.outilsAutorises as string[]) ?? [];
+        const outilRow = await this.prisma.oliviaTool.findFirst({ where: { tenantId: run.tenantId, code: etape.outil } });
+        const refus = !outilRow
+          ? `RUN_TOOL_NON_AUTORISE: outil « ${etape.outil} » non déclaré au registre (R264)`
+          : !autorises.includes(etape.outil)
+            ? `RUN_TOOL_NON_AUTORISE: « ${etape.outil} » hors outils_autorises de ${etape.agent} (SW-13)` : null;
+        consomme.etapes++;
+        if (!refus) { consomme.tokens += (etape.cout?.tokens ?? 0); derniereSortie = etape.sortie ?? {}; }
+        await this.prisma.$transaction(async (tx: Tx) => {
+          await this.appendEvent(tx, run, "ETAPE_OUTIL", { agentCode: etape.agent,
+            agentVersion: agentRes?.version ?? null as any, outilCode: etape.outil,
+            sortie: refus ? { erreur: refus } : (etape.sortie ?? {}), cout: refus ? null : etape.cout ?? null });
+          await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { ...consomme } } });
+        });
+        continue;
+      }
       // R261 : CHAQUE étape de CHAQUE agent repasse le ContextBuilder v1 (import, pas copie)
       // avec le scope FIGÉ du commanditaire — deux agents du même run = exactement le même scope.
       let cx: { objets: any[]; exclus: number; empreinte: string } | null = null;
@@ -388,16 +411,49 @@ export class SwarmRunsService {
         const objets = opts.consigneSeq
           ? [...cx!.objets, { type: "CONSIGNE", id: String(opts.consigneSeq) }] : cx!.objets;
         await this.appendEvent(tx, run, "ETAPE_AGENT", { agentCode: etape.agent,
-          agentVersion: versions.get(etape.agent) ?? null as any,
+          agentVersion: versions.get(etape.agent)?.version ?? null as any,
           entreeEmpreinte: cx!.empreinte, contexteObjets: objets,
           sortie: derniereSortie, cout: etape.cout ?? null });
         await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { ...consomme } } });
       });
+      dernierCx = cx;
+    }
+    // B.4/SW-15 : le LIVRABLE devient un MESSAGE v1 (0c ratifié : sans conversation, chaîné au
+    // journal du run) et les propositions passent par creerProposition v1 (R254) — la SEULE
+    // « écriture » d'un run : olivia_* et son journal, jamais l'état métier (SW-14).
+    let livrableMessageId: string | null = null;
+    if (plan.livrable) {
+      // Le livrable se cite contre le contexte RE-RÉSOLU à l'instant du livrable (même règle
+      // OL-29) — indispensable après une reprise de porte où aucune étape ne restait à courir.
+      if (!dernierCx && run.ancrageId)
+        dernierCx = await this.olivia.construireContexte(scope, { capacite, ancrageId: run.ancrageId }, settings);
+      const citations = (plan.livrable.citations ?? []).map((c: any) =>
+        ({ ...c, ref: c.ref === "__ANCRAGE__" ? run.ancrageId : c.ref }));
+      // Même règle qu'en v1 (R256) : une citation n'est valide que vers un objet DU contexte.
+      const ids = new Set(((dernierCx?.objets ?? []) as any[]).map((o: any) => o.id));
+      const estSource = citations.length > 0 && citations.every((c: any) => ids.has(c.ref));
+      const dernierEvt = await this.prisma.oliviaRunEvent.findFirst({ where: { runId: run.id }, orderBy: { seq: "desc" } });
+      const prevHash = dernierEvt?.recordHash ?? null;
+      const msg = await this.prisma.$transaction(async (tx: Tx) => {
+        const cree = await tx.oliviaMessage.create({ data: { tenantId: run.tenantId, conversationId: null,
+          seq: 1, direction: "OUT", texte: plan.livrable.rapport ?? "", citations, estSource,
+          contexteEmpreinte: dernierCx?.empreinte ?? null, contexteObjets: (dernierCx?.objets as any) ?? undefined,
+          prevHash, recordHash: shaSw((prevHash ?? "") + JSON.stringify({ run: run.id, livrable: plan.livrable.rapport ?? "" })) } });
+        await tx.oliviaRun.update({ where: { id: run.id }, data: { livrableMessageId: cree.id } });
+        return cree;
+      });
+      livrableMessageId = msg.id;
+      const scopeProps: Ctx = { tenantId: run.tenantId, userId: run.commanditaireId, role: run.roleCode };
+      for (const p of plan.propositions ?? [])
+        await this.olivia.creerProposition(scopeProps, { messageId: msg.id, type: p.type,
+          cibleType: run.ancrageType ?? "KYC_FILE", cibleId: run.ancrageId, justification: p.justification });
     }
     await this.prisma.$transaction(async (tx: Tx) => {
-      const sortie = exclusTotal > 0
-        ? { ...derniereSortie ?? {}, contextePartiel: `contexte partiel : ${exclusTotal} objet(s) exclu(s)` }
-        : derniereSortie ?? {};
+      const sortie = {
+        ...(derniereSortie ?? {}),
+        ...(exclusTotal > 0 ? { contextePartiel: `contexte partiel : ${exclusTotal} objet(s) exclu(s)` } : {}),
+        ...(livrableMessageId ? { livrableMessageId } : {}),
+      };
       await this.appendEvent(tx, run, "LIVRABLE", { sortie });
       await this.transition(tx, run, "EN_COURS", "TERMINE");
     });
@@ -440,13 +496,15 @@ export class SwarmRunsService {
     // Reprise depuis la position d'APRÈS la porte : le plan vit dans l'événement PLAN (R260),
     // la position = entrées du plan déjà consommées (étapes complètes + portes ouvertes).
     const planEv = await this.prisma.oliviaRunEvent.findFirst({ where: { runId: run.id, type: "PLAN" } });
-    const plan = { etapes: ((planEv?.sortie as any)?.etapes ?? []) };
+    const planSortie = (planEv?.sortie as any) ?? {};
+    const plan = { etapes: planSortie.etapes ?? [], livrable: planSortie.livrable ?? null,
+      propositions: planSortie.propositions ?? [] };
     const settings = await this.settings(ctx.tenantId);
     const def = this.missionDef(settings, run.missionCode) ?? { agents: [] };
-    const versions = new Map<string, number>();
-    for (const code of def.agents ?? []) versions.set(code, (await this.agents.resoudre(ctx, code)).version);
+    const versions = new Map<string, any>();
+    for (const code of def.agents ?? []) versions.set(code, await this.agents.resoudre(ctx, code));
     const faits = await this.prisma.oliviaRunEvent.count({
-      where: { runId: run.id, type: { in: ["ETAPE_AGENT", "PORTE_OUVERTE"] } } });
+      where: { runId: run.id, type: { in: ["ETAPE_AGENT", "ETAPE_OUTIL", "PORTE_OUVERTE"] } } });
     const frais = await this.prisma.oliviaRun.findFirst({ where: { id: run.id } });
     await this.executer(ctx, frais, plan, versions, CAPACITE_PAR_ANCRAGE[def.ancrage ?? ""] ?? "C1", settings,
       { depuis: faits, consigneSeq: d === "REORIENTER" ? decisionSeq : undefined });

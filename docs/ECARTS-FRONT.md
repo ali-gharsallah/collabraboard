@@ -345,3 +345,15 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   - `olivia_runs.ancrage_id UUID` (B.2) : compatible — les missions v2 n'ancrent que
     KYC_FILE/RISK_CASE (uuid) ; l'élargissement text de v1 ne concernait que les
     conversations C4/PARAM.
+
+## OLIVIA v2 — ÉCARTS DE LIVRAISON (2026-07-27, au fil des étapes)
+
+- 🟡 **« Propositions de clarification » (B.4)** : le type CLARIFICATION n'existe PAS au
+  catalogue R254 v1 (TYPES_PROPOSITION figé : QUALIF_ALERTE_*, AIGUILLAGE_EDD, ALLEGEMENT_EDD,
+  AJUSTEMENT_PARAM). Les propositions de la pré-revue sont rendues via les types EXISTANTS
+  (AIGUILLAGE_EDD/ALLEGEMENT_EDD) — étendre le catalogue = amendement R254 à ratifier.
+- `olivia_runs.commanditaire_id` : la FK SQL `REFERENCES users(id)` de B.2 n'est pas posée —
+  AUCUNE colonne user du schéma ne porte de FK (pattern uniforme du repo, jetons semés en test) ;
+  la colonne est bien uuid + RLS. Cohérence > littéralité, signalé.
+- `missions ad hoc de TEST` : déclarées via tenant.settings.missionsDeclarees (véhicule de
+  déclaration ratifiée B.4) — l'artefact livré ne porte QUE les 2 missions du canon.

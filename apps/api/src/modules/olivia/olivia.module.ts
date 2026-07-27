@@ -550,10 +550,19 @@ export class OliviaService {
       throw new BadRequestException("R7 : la justification est obligatoire à la création");
     const m = await this.prisma.oliviaMessage.findFirst({ where: { id: dto.messageId ?? "", tenantId: ctx.tenantId, direction: "OUT" } });
     if (!m) throw new NotFoundException("Message OUT fondateur introuvable");
-    const conv = await this.prisma.oliviaConversation.findFirst({ where: { id: m.conversationId, tenantId: ctx.tenantId } });
-    if (!conv || conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire propose depuis sa conversation");
-    if (conv.capacite !== "C3" && conv.capacite !== "C4")
-      throw new BadRequestException("Seules les sorties C3/C4 sont proposables (B.7)");
+    if (m.conversationId) {
+      const conv = await this.prisma.oliviaConversation.findFirst({ where: { id: m.conversationId, tenantId: ctx.tenantId } });
+      if (!conv || conv.userId !== ctx.userId) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le propriétaire propose depuis sa conversation");
+      if (conv.capacite !== "C3" && conv.capacite !== "C4")
+        throw new BadRequestException("Seules les sorties C3/C4 sont proposables (B.7)");
+    } else {
+      // v2 (0c ratifié) : message-LIVRABLE d'un run — le « propriétaire » est le COMMANDITAIRE
+      // du run (R261), la capacité est portée par la mission déclarée (B.4). Même garde-fou,
+      // autre fondation : réutilisation, pas concurrence.
+      const run = await this.prisma.oliviaRun.findFirst({ where: { livrableMessageId: m.id, tenantId: ctx.tenantId } });
+      if (!run || run.commanditaireId !== ctx.userId)
+        throw new ForbiddenException("OLIVIA_SCOPE_DENIED: seul le commanditaire du run propose depuis son livrable");
+    }
     if (!m.estSource)                                                      // OL-12 — contrainte SERVEUR, pas UI
       throw new UnprocessableEntityException("OLIVIA_UNSOURCED_PROPOSAL: sortie non sourcée — aucune proposition (R256)");
     if (m.conforme === false)                                              // OL-24 — recommandation en prose non corrigée

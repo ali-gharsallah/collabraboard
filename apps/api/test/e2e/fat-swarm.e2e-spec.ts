@@ -444,4 +444,89 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s, porteTimeoutH: 72 } } });
     console.log("SW-11 PASS — timeout porte → INTERROMPU notifié, reprise refusée");
   });
+
+  // ── Étape 7 : Mission 1 PREREVUE_DOSSIER (B.4) — héritière de la pré-revue IA, propositions R254 v1 ──
+
+  let runPrerevue: any = null;
+  let kycPrerevue: any = null;
+
+  it("SW-13/SW-14 [B.4/R264] mission réelle : l'agent n'emprunte pas l'outil du voisin (échec tracé, le run continue) ; le run n'écrit QUE chez lui", async () => {
+    // agent-screening (mission B.4) + activation de la mission livrée + fournisseur v1 configuré (R254)
+    await request(http).post("/v1/olivia/agents").set(bearer(T, ADMIN, "ADMIN")).send({
+      code: "agent-screening", capacite: "analyse_hits", outilsAutorises: ["kyc.dossier"], gabaritRef: "agent-screening.v1" }).expect(201);
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any) ?? {};
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s,
+      oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5",
+      missionsActives: [...new Set([...(s.missionsActives ?? []), "PREREVUE_DOSSIER"])] } } });
+    const clientP = randomUUID();
+    await seedTenantClient(prisma, T, clientP);
+    kycPrerevue = (await request(http).post("/v1/kyc").set(bearer(T, CO, "CO"))
+      .send({ clientId: clientP, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: CO })).body;
+    expect(kycPrerevue.id).toBeTruthy();
+
+    // SW-14 (photo AVANT) : l'état métier, byte-identique après le run (automatisation = étape 11)
+    const photo = async () => JSON.stringify({
+      kyc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM kyc_files t WHERE tenant_id = '${T}'`),
+      q: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM kyc_questions t`),
+      cl: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM clients t WHERE tenant_id = '${T}'`),
+      rc: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM risk_cases t WHERE tenant_id = '${T}'`),
+      cpsi: await prisma.$queryRawUnsafe(`SELECT md5(string_agg(t.*::text, '|' ORDER BY id)) FROM cpsi_events t WHERE tenant_id = '${T}'`) });
+    const avant = await photo();
+
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "PREREVUE_DOSSIER", ancrageType: "KYC_FILE", ancrageId: kycPrerevue.id });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("PAUSE_PORTE");                            // la porte AVANT toute proposition d'aiguillage
+    runPrerevue = r.body;
+    const evts = await eventsDe(r.body.id);
+    // SW-13 : agent-kyc a le droit d'utiliser kyc.dossier (ETAPE_OUTIL servie) ; agent-redacteur NON —
+    // échec TRACÉ (RUN_TOOL_NON_AUTORISE), et le run A CONTINUÉ jusqu'à la porte.
+    const outils = evts.filter((e: any) => e.type === "ETAPE_OUTIL");
+    expect(outils.length).toBe(2);
+    expect(outils[0].agentCode).toBe("agent-kyc");
+    expect(JSON.stringify(outils[0].sortie)).not.toContain("RUN_TOOL_NON_AUTORISE");
+    expect(outils[1].agentCode).toBe("agent-redacteur");
+    expect(JSON.stringify(outils[1].sortie)).toContain("RUN_TOOL_NON_AUTORISE");
+    expect(evts.filter((e: any) => e.type === "ETAPE_AGENT").length).toBe(2);   // les étapes d'après ont tourné
+    expect(evts[evts.length - 2].type).toBe("PORTE_OUVERTE");
+    chaineContigue(evts);
+    // SW-14 : AUCUNE écriture métier — photo byte-identique (le run n'écrit que olivia_* / domain_events / audit)
+    expect(await photo()).toBe(avant);
+    console.log("SW-13/14 PASS — outil du voisin refusé et tracé, run continué, état métier byte-identique");
+  });
+
+  it("SW-15 [R254] le livrable crée 2 propositions PENDING — décidables par la matrice, motifs et caducité comme en v1", async () => {
+    // La porte se décide : CONTINUER → le livrable devient un MESSAGE v1 (0c : sans conversation),
+    // les 2 propositions passent par creerProposition v1 — réutilisation, pas concurrence.
+    const fin = await request(http).post(`/v1/olivia/runs/${runPrerevue.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" });
+    expect(fin.status).toBe(201);
+    expect(fin.body.statut).toBe("TERMINE");
+    expect(fin.body.livrableMessageId).toBeTruthy();                      // le rapport EST un olivia_message
+    const msg = await prisma.oliviaMessage.findFirst({ where: { id: fin.body.livrableMessageId } });
+    expect(msg!.conversationId).toBeNull();                               // 0c ratifié : run ≠ conversation
+    expect(msg!.estSource).toBe(true);                                    // cité vers l'ancrage DU contexte (R256)
+    const props = await prisma.oliviaProposal.findMany({ where: { tenantId: T, messageId: msg!.id }, orderBy: { type: "asc" } });
+    expect(props.length).toBe(2);
+    expect(props.map((p: any) => p.statut)).toEqual(["PENDING", "PENDING"]);
+    expect(props.map((p: any) => p.type).sort()).toEqual(["AIGUILLAGE_EDD", "ALLEGEMENT_EDD"]);
+    expect(props[0].cibleId).toBe(kycPrerevue.id);
+    expect(props[0].cibleEtat).toBeTruthy();                              // état FIGÉ à la création (caducité B.7)
+
+    // Décidables comme en v1 : RM hors matrice → 403 et la proposition RESTE PENDING (OL-18)
+    const aig = props.find((p: any) => p.type === "AIGUILLAGE_EDD")!;
+    await request(http).post(`/v1/olivia/proposals/${aig.id}/adopt`).set(bearer(T, randomUUID(), "RM")).expect(403);
+    // Rejet sans motif → 422 (R7), avec motif → REJETEE
+    const alleg = props.find((p: any) => p.type === "ALLEGEMENT_EDD")!;
+    await request(http).post(`/v1/olivia/proposals/${alleg.id}/reject`).set(bearer(T, ADMIN, "CO_SR")).send({}).expect(422);
+    await request(http).post(`/v1/olivia/proposals/${alleg.id}/reject`).set(bearer(T, ADMIN, "CO_SR"))
+      .send({ motif: "clarification non pertinente à ce stade" }).expect(201);
+    // Adoption par le rôle de la matrice → ADOPTEE, la voie normale est empruntée (tâche du circuit)
+    const ok = await request(http).post(`/v1/olivia/proposals/${aig.id}/adopt`).set(bearer(T, ADMIN, "CO_SR"));
+    expect(ok.status).toBe(201);
+    const tache = await prisma.domainEvent.count({ where: { tenantId: T, type: "tache.aiguillage.edd", aggregateId: kycPrerevue.id } });
+    expect(tache).toBe(1);
+    console.log("SW-15 PASS — 2 propositions PENDING via R254 v1, matrice/motifs/adoption voie normale");
+  });
 });

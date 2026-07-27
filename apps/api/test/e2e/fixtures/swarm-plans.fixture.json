@@ -1,10 +1,20 @@
 {
   "commentaire": "Fixtures du FOURNISSEUR MOCKÉ déterministe (B.7 critère 1) — le mock rejoue des plans/sorties FIXÉS : le déterminisme du TEST, jamais un chemin de prod (le port réel reste à brancher, refus 503 typé sans lui). Une mission → un plan d'étapes ; chaque étape → l'agent invoqué et sa sortie fixée. Le marqueur CRASH_TEST simule un kill -9 entre deux étapes (SW-03).",
-  "PREREVUE_DOSSIER": { "etapes": [
-    { "agent": "agent-kyc", "sortie": { "constat": "IDE-Q3 vide — origine des fonds non établie" }, "cout": { "tokens": 120 } },
-    { "agent": "agent-kyc", "sortie": { "constat": "cohérence sections OK" }, "cout": { "tokens": 80 } },
-    { "agent": "agent-redacteur", "sortie": { "rapport": "Pré-revue : 1 manquant (IDE-Q3)" }, "cout": { "tokens": 200 } }
-  ] },
+  "PREREVUE_DOSSIER": {
+    "etapes": [
+      { "agent": "agent-kyc", "outil": "kyc.dossier", "sortie": { "lecture": "dossier chargé" }, "cout": { "tokens": 40 } },
+      { "agent": "agent-kyc", "sortie": { "constat": "IDE-Q3 vide — origine des fonds non établie" }, "cout": { "tokens": 120 } },
+      { "agent": "agent-redacteur", "outil": "kyc.dossier", "sortie": { "jamais": "exécuté" }, "cout": { "tokens": 10 } },
+      { "agent": "agent-redacteur", "sortie": { "rapport": "Pré-revue : 1 manquant (IDE-Q3)" }, "cout": { "tokens": 200 } },
+      { "porte": "proposition_aiguillage" }
+    ],
+    "livrable": { "rapport": "Rapport de pré-revue : le dossier ne permet pas d'établir l'origine des fonds (IDE-Q3 vide).",
+      "citations": [{ "type": "KYC_FILE", "ref": "__ANCRAGE__", "assertion": "IDE-Q3 vide" }] },
+    "propositions": [
+      { "type": "AIGUILLAGE_EDD", "justification": "Pré-revue : origine des fonds non établie — clarification EDD requise (IDE-Q3)" },
+      { "type": "ALLEGEMENT_EDD", "justification": "Pré-revue : si la clarification IDE-Q3 est apportée, l'allègement redevient possible" }
+    ]
+  },
   "MISSION_AGENT_FANTOME": { "etapes": [
     { "agent": "agent-fantome", "sortie": {} }
   ] },
