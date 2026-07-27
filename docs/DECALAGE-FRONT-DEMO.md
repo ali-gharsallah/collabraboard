@@ -1,16 +1,16 @@
 # Décalage — Front React (`apps/web`) vs Maquette démo (`olive-demo.html`)
 
-**Vérifié le 2026-07-26 (maj après Vague 5)** par lecture des fichiers (`demo/olive-demo.html` NAV @L12838, `apps/web/src/features/*`).
+**Vérifié le 2026-07-27 (maj après Vagues 13-17 + lot CPSI)** par lecture des fichiers (`demo/olive-demo.html` NAV @L12838, `apps/web/src/app/router.tsx`, `apps/web/src/features/*`).
 Deux objets **différents** :
 
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **28** écrans |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **38** écrans (comptés au routeur) |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câblés** au backend, + 2 écrans en **FE-05 seed lecture seule** (Workflow Instances, Tâches — services non ratifiés, Vague 11/A1). Vague 10 a ajouté Ports (ports ratifiés, refus gracieux) et Next Best Action (gestes R187, cadre R44). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
+Couverture actuelle : **38 / 73 ≈ 52 %** — **plus aucun écran en FE-05 seed** : Workflow Instances (V12), Formations (V13), Business Trip (V14), Tâches (V16), NBA décidable (V17) sont réels, et le lot **CPSI** (2026-07-27) ajoute Profil & score, Segmentation, Alertes & propositions de case (porte mince R63-R83, amendement R248-R252). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
 
 ---
 
@@ -71,22 +71,28 @@ Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câb
 - → le **port** core existe (`CorebankingModule`, R167→R169) ; l'écran se branchera sur un connecteur réel, jamais sur un moteur réimplémenté.
 
 **c) Domaines non encore ouverts (ni backend ratifié, ni écran)** :
-- `command` (Command Center) · `prospection` / `prospect_*` (pré-prospection) · `crossborder` · `invest` (investigation financière) · `swiftlab` (SWIFT/SEPA) · `legal` (contrats) · `opprisk` (Octopulse) · `regwatch` (veille régl.) · `cpsi` / `cpsiparam` / `cpsiguide` / `cpsigroupes` (profilage CPSI — service Python séparé) · `olivia` (AI Core) · `bi` (reporting sur mesure) · `wfaudit` / `auditit` (audit) · `paramnav` / `iamguide` / `ssoparam` (IAM/SSO) · `admin` / `editorconsole` · `home`
+- `command` (Command Center) · `prospection` / `prospect_*` (pré-prospection) · `crossborder` · `invest` (investigation financière) · `swiftlab` (SWIFT/SEPA) · `legal` (contrats) · `opprisk` (Octopulse) · `regwatch` (veille régl.) · `olivia` (AI Core) · `bi` (reporting sur mesure) · `wfaudit` / `auditit` (audit) · `paramnav` / `iamguide` / `ssoparam` (IAM/SSO) · `admin` / `editorconsole` · `home`
+- ✅ **PARTIEL (2026-07-27)** : `cpsi` / `cpsigroupes` — la porte mince CPSI (R63-R83, PR #46) est câblée et **3 écrans React** existent : `CpsiProfiling` (score+drivers R67), `CpsiSegmentation` (R65), `CpsiRiskCases` (alertes R80/R81 + émission `case_proposal` R252 — l'instruction reste chez riskcases). Restent : `cpsiparam` (gouvernance des barèmes via R68/R69/R70 — routes porte existantes `rules`/`sandbox`/`proposals`, écran à faire) · `cpsiguide`.
 
 ---
 
-## 4. Écrans démo relevant de la LISTE NOIRE (⛔ — jamais à construire)
+## 4. Liste noire (⛔) — CADUQUE pour `trip` et `formations`
 
-Présents dans la maquette, **délibérément non construits** (hors produit CLM) :
-- `trip` (**Business Trip**) · `formations` (**Formations & habilitations** = e-learning)
+**Correction (2026-07-27).** La version précédente de ce document classait `trip` (Business Trip) et
+`formations` (Formations & habilitations) « jamais à construire ». Ils ont depuis été **RATIFIÉS et
+CONSTRUITS** : « OK pour R222..R238 » → MOD-75 Business Trip (R222-R230, Vague 14, BT-01..10) et
+MOD-43 Formations & Certifications (R231-R238, Vague 13, FO-01..08), backend + écrans React câblés.
+La liste noire ne s'applique plus à aucun item de cette version de la maquette — **une exclusion
+n'était pas du canon** : seule la ratification décide, dans un sens comme dans l'autre.
 
-*(Les autres items de la liste noire — RH, budget, réunions, cyber-SOC — n'apparaissent pas sous ces noms dans cette version de la maquette.)*
+*(Les autres items historiques de la liste noire — RH, budget, réunions, cyber-SOC — n'apparaissent
+pas sous ces noms dans cette version de la maquette.)*
 
 ---
 
 ## 5. Lecture honnête
 
-- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~33 %**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**.
+- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~52 % (38/73)**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**. Il reste **~35 écrans** : bacs à sable restants + sections & droits (backend ratifié, écrans à faire) ; `fx`/`custody`/`mobile`/`integrations` (ports externes) ; et les domaines jamais ouverts (§3c).
 - La maquette reste la **vision cible** (73 écrans) ; la stratégie tenue est **incrémentale et prouvée** : chaque vague transforme un lot d'écrans-maquette en écrans React câblés + recette FAT.
 - Prochaines vagues « à fort levier & faible risque » = groupe **3.a** (backend déjà ratifié) : CRM/Contact Reports/Tâches, Workflow, Offboarding, Corroboration, Sandboxes de paramétrage.
 - Ne pas se laisser piéger par la maquette : **groupe 3.b = ports** (ne pas recoder un PMS/core), **groupe 4 = liste noire** (ignorer).
