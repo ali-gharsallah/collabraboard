@@ -176,6 +176,15 @@ export class OliviaService {
         contexteEmpreinte: m.contexteEmpreinte, contexteObjets: m.contexteObjets, citations: m.citations, at: m.createdAt })) };
   }
 
+  // ── Lecture des propositions (B.2) — socle T10 Home ; la décision (adopt/reject) arrive à l'étape 6. ──
+  async listerProposals(ctx: Ctx, statut?: string) {
+    await this.port(ctx.tenantId);                                        // contrat OL-01 : porte fermée = 503 partout
+    if (ctx.role === "ADMIN") throw new ForbiddenException("OLIVIA_SCOPE_DENIED: ADMIN ne lit pas les propositions métier");
+    const where: any = { tenantId: ctx.tenantId };
+    if (statut) where.statut = statut;
+    return this.prisma.oliviaProposal.findMany({ where, orderBy: { createdAt: "desc" }, take: 200 });
+  }
+
   // ── Santé (ADMIN — écart SO) : port configuré, provider/model, latence médiane. ──
   async health(ctx: Ctx) {
     if (ctx.role !== "ADMIN") throw new ForbiddenException("OLIVIA_SCOPE_DENIED");
@@ -194,6 +203,7 @@ export class OliviaController {
   @Post("conversations/:id/messages")       envoyer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.envoyerMessage(r.ctx, id, b); }
   @Get("conversations/:id/replay")          replay(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) { return this.svc.replay(r.ctx, id, asOf); }
   @Get("conversations/:id")                 lire(@Req() r: any, @Param("id") id: string) { return this.svc.conversation(r.ctx, id); }
+  @Get("proposals")                         proposals(@Req() r: any, @Query("statut") statut?: string) { return this.svc.listerProposals(r.ctx, statut); }
   @Get("health")                            health(@Req() r: any) { return this.svc.health(r.ctx); }
 }
 

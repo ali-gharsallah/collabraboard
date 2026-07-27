@@ -19,10 +19,14 @@ mêmes tables, mêmes conventions (tenant_id+RLS, trigger `audit_immutable`, cha
    nouveau », or : T1 (`GET /v1/kyc` liste) **n'existe pas** (seul `GET /v1/kyc/:code`) ; T2
    (`GET /v1/kyc/visas/pending`) **n'existe pas** ; T7 (« endpoint account review ») **n'existe pas**
    en tant que tel ; T8 (`GET` liste CoC) **n'existe pas** (seul `POST /personnes/:id/coc`).
-   Tuiles constructibles aujourd'hui : T3 (tasks), T4 (cpsi/alerts), T5 (riskcases), T6
-   (cpsi/params/proposals), T9 (cpsi/health), T10 (olivia — construit dans CE bloc).
-   T1/T2/T7/T8 = **bloquées** jusqu'à arbitrage (ajouter des portes de lecture = contredit le
-   critère A.7.2 ; il faut soit l'amender, soit différer ces tuiles).
+   **ARBITRAGE ALI (2026-07-27) : critère A.7.2 « zéro endpoint nouveau » AMENDÉ ET RATIFIÉ** —
+   les portes de LECTURE minces manquantes peuvent être ajoutées. Fait : T1 (`GET /v1/kyc`,
+   périmètre serveur via `Client.rmUserId`) et T2 (`GET /v1/kyc/visas/pending`) livrées + e2e
+   HO-01/03/05/06. **T7/T8 restent bloquées par les DONNÉES, pas par une route** : aucun modèle
+   ratifié d'échéance de review (T7) ni de cycle de vie « ouvert/traité » / matérialité CoC (T8 —
+   le CoC vit en événements sans statut). Les débloquer = canon nouveau à ratifier, pas une porte.
+   HO-02 (licence R177 par module) : PARTIEL — visibilité v1 par RÔLE ; la licence n'est pas
+   surfacée au front (écart consigné).
 Conventions héritées : tenant_id UUID + RLS sur toute table · append-only par trigger
 `audit_immutable()` (pattern `kyc_question_history`) · événements outbox `domain_events` ·
 erreurs typées `{code, http, message}` · tout paramètre « ça dépend de la banque » au
@@ -137,7 +141,7 @@ différemment (HO-01 le prouve).
 ## A.7 Critères d'acceptation Home
 
 1. HO-01..08 verts (e2e Postgres réel, deux rôles minimum par scénario de visibilité).
-2. Zéro endpoint nouveau côté backend (revue de diff : aucun fichier controller ajouté).
+2. ~~Zéro endpoint nouveau côté backend~~ **AMENDÉ (Ali, 2026-07-27)** : portes de LECTURE minces autorisées (T1/T2 livrées) ; aucun endpoint d'écriture, aucun agrégat serveur nouveau.
 3. Zéro agrégat calculé côté front (les compteurs viennent des réponses API telles quelles).
 
 ---

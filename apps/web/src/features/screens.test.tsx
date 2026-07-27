@@ -15,6 +15,7 @@ import { CpsiRiskCases } from "./cpsi/CpsiRiskCases";
 import { CpsiParam } from "./cpsi/CpsiParam";
 import { CpsiGuide } from "./cpsi/CpsiGuide";
 import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
+import { Home } from "./home/Home";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -231,5 +232,60 @@ describe("FE-SBONB — Bac à sable Onboarding : dry-run d'un seuil SLA (R94, im
     expect(await screen.findByText("Prospect Vingt Jours")).toBeInTheDocument();  // impact NOMINATIF
     expect(screen.getByText(/20 j/)).toBeInTheDocument();
     expect(screen.getByText(/écriture : false/)).toBeInTheDocument();             // R70/R94 : dry-run prouvé à l'écran
+  });
+});
+
+describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 côté composant)", () => {
+  type WS = typeof globalThis & { OLIVE_API_URL?: string; OLIVE_SESSION?: { role?: string } };
+  const ws = globalThis as WS;
+  afterEach(() => { ws.OLIVE_SESSION = undefined; });
+
+  it("HO-01/08 : CO voit ses tuiles, les compteurs viennent de l'API telle quelle, AUCUNE requête non-GET", async () => {
+    ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO" };
+    // MSW en onUnhandledRequest:error : tout POST/PUT (ou appel imprévu) ferait ÉCHOUER le test (HO-08).
+    server.use(
+      http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([{ kycCode: "K-1", section: "IDENTITY", requiredRole: "CO" }])),
+      http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "UNDER_REVIEW" }, { code: "K-2", status: "UNDER_REVIEW" }, { code: "K-3", status: "IN_PROGRESS" }])),
+      http.get("*/v1/tasks", () => HttpResponse.json([])),
+      http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [{ client: "c1" }] })),
+      http.get("*/v1/riskcases", () => HttpResponse.json([{ id: "rc1", statut: "NOUVELLE" }])),
+      http.get("*/v1/olivia/proposals", () => HttpResponse.json([])),
+    );
+    render(<Home/>);
+    expect(await screen.findByText("K-1 · IDENTITY")).toBeInTheDocument();     // T2 en premier, nominatif
+    expect((await screen.findAllByText((_, el) => el?.tagName === "DIV" && el.textContent === "UNDER_REVIEW : 2")).length).toBeGreaterThanOrEqual(1);   // T1 : compteur = réponse API telle quelle
+    expect(screen.getAllByText((_, el) => el?.tagName === "DIV" && el.textContent === "IN_PROGRESS : 1").length).toBeGreaterThanOrEqual(1);
+    expect((await screen.findAllByText("Aucun élément")).length).toBeGreaterThanOrEqual(1);  // vide réel ≠ indisponible
+  });
+
+  it("HO-04 : une source en panne affiche « indisponible » (pas 0), les autres tuiles vivent", async () => {
+    ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO" };
+    server.use(
+      http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([])),
+      http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "DRAFT" }])),
+      http.get("*/v1/tasks", () => HttpResponse.json([])),
+      http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [] })),
+      http.get("*/v1/riskcases", () => new HttpResponse(null, { status: 500 })),   // T5 en panne
+      http.get("*/v1/olivia/proposals", () => HttpResponse.json([])),
+    );
+    render(<Home/>);
+    expect(await screen.findByText("indisponible")).toBeInTheDocument();       // T5 : un état, pas une donnée
+    expect(screen.getByRole("button", { name: /réessayer/i })).toBeInTheDocument();
+    expect((await screen.findAllByText((_, el) => el?.tagName === "DIV" && el.textContent === "DRAFT : 1")).length).toBeGreaterThanOrEqual(1);     // T1 vit normalement
+  });
+
+  it("HO-06 : ADMIN ne voit que Tâches + Santé CPSI — aucune tuile client, aucun appel client", async () => {
+    ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "ADMIN" };
+    // SEULS ces deux handlers existent : un appel KYC/AML/clients déclencherait onUnhandledRequest:error.
+    server.use(
+      http.get("*/v1/tasks", () => HttpResponse.json([])),
+      http.get("*/v1/cpsi/health", () => HttpResponse.json({ profondeurJournal: 7, dernierRejeuMs: 4 })),
+    );
+    render(<Home/>);
+    expect(await screen.findByText(/journal :/)).toBeInTheDocument();          // T9 présent
+    expect(screen.getByText("Tâches ouvertes")).toBeInTheDocument();           // T3 présent
+    expect(screen.queryByText("Mes dossiers KYC")).toBeNull();                 // tuiles client ABSENTES du DOM
+    expect(screen.queryByText("Visas en attente de moi")).toBeNull();
+    expect(screen.queryByText("Risk cases")).toBeNull();
   });
 });

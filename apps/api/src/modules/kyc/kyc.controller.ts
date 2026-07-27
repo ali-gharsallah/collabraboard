@@ -20,6 +20,15 @@ export class KycController {
       legalStructure: p.data.legalStructure, accountType: p.data.accountType,
       countryCode: p.data.countryCode, rmId: p.data.rmId });
   }
+  // ── Portes minces Home (amendement Ali 2026-07-27 : critère « zéro endpoint nouveau » AMENDÉ). ──
+  // T1 : liste des dossiers, périmètre par RÔLE côté serveur (RM/ARM = ses clients via Client.rmUserId ;
+  // voit-tout = tenant ; ADMIN = refus, aucune donnée client — matrice A.3). Déclarées AVANT ":code".
+  @Get()
+  lister(@Req() req: any, @Query("statut") statut?: string) { return this.svc.lister(req.ctx, statut); }
+  // T2 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de mon périmètre (HO-05).
+  @Get("visas/pending")
+  visasPending(@Req() req: any) { return this.svc.visasPending(req.ctx); }
+
   @Get(":code")
   get(@Req() req: any, @Param("code") code: string) { return this.svc.get(req.ctx, code); }
 

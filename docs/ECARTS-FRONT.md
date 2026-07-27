@@ -173,6 +173,8 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   l'enum ratifiée (`RM ARM CO CO_SR MLRO CF BRM DIR ADMIN`). Mapping sans nouvelle règle :
   Direction/Head PB/CEO → DIR, Central File → CF. **SO : aucun équivalent** — v1 se code avec ADMIN
   là où la spec dit « ADMIN, SO » ; SO reste un rôle à ratifier (ajout à l'enum = migration + canon).
-- **4 tuiles Home sans endpoint source** (la spec exige « endpoints existants » + « zéro endpoint
-  nouveau ») : T1 `GET /v1/kyc` liste, T2 `GET /v1/kyc/visas/pending`, T7 account review, T8 liste
-  CoC — inexistants. T1/T2/T7/T8 bloquées jusqu'à arbitrage ; T3/T4/T5/T6/T9/T10 constructibles.
+- **Tuiles Home** — arbitrage Ali (2026-07-27) : critère « zéro endpoint nouveau » AMENDÉ →
+  T1/T2 livrées (portes de lecture minces, périmètre serveur, e2e HO-01/03/05/06). **T7/T8 restent
+  bloquées par les DONNÉES** : aucun modèle ratifié d'échéance de review (T7) ni de cycle de vie/
+  matérialité CoC (T8 — événements sans statut). Canon à ratifier pour les débloquer. HO-02
+  (licence R177 surfacée au front) : PARTIEL — visibilité v1 par rôle.

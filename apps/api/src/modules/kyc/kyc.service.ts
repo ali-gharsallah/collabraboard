@@ -189,6 +189,38 @@ export class KycService {
     });
   }
 
+  // ── Portes minces Home (amendement Ali 2026-07-27). Périmètre matrice A.3, appliqué SERVEUR : ──
+  // RM/ARM = ses clients (Client.rmUserId) ; ADMIN = refus (aucune donnée client, HO-06) ; sinon tenant.
+  private async scopeClientsHome(ctx: Ctx): Promise<string[] | null> {
+    if (ctx.role === "ADMIN") throw new ForbiddenException("HOME_SCOPE: ADMIN ne voit aucune donnée client (matrice A.3)");
+    if (ctx.role === "RM" || ctx.role === "ARM") {
+      const miens = await this.prisma.client.findMany({ where: { tenantId: ctx.tenantId, rmUserId: ctx.userId } });
+      return miens.map((c: any) => c.id);
+    }
+    return null;                                                          // voit-tout : périmètre = tenant
+  }
+
+  // T1/HO-01/HO-03 : liste des dossiers du périmètre (résumés seulement — les compteurs se font côté source).
+  async lister(ctx: Ctx, statut?: string) {
+    const scope = await this.scopeClientsHome(ctx);
+    const where: any = { tenantId: ctx.tenantId };
+    if (scope) where.clientId = { in: scope };
+    if (statut) where.status = statut;
+    const rows = await this.prisma.kycFile.findMany({ where, orderBy: { createdAt: "desc" }, take: 500 });
+    return rows.map((k: any) => ({ code: k.code, clientId: k.clientId, status: k.status, riskLevel: k.riskLevel, createdAt: k.createdAt }));
+  }
+
+  // T2/HO-05 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de MON périmètre.
+  async visasPending(ctx: Ctx) {
+    const scope = await this.scopeClientsHome(ctx);
+    const whereFile: any = { tenantId: ctx.tenantId };
+    if (scope) whereFile.clientId = { in: scope };
+    const visas = await this.prisma.kycVisa.findMany({
+      where: { status: "PENDING", requiredRole: ctx.role as any, kycFile: whereFile },
+      include: { kycFile: true }, take: 200 });
+    return visas.map((v: any) => ({ kycCode: v.kycFile.code, section: v.sectionCode, requiredRole: v.requiredRole }));
+  }
+
   async get(ctx: Ctx, code: string) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId },
