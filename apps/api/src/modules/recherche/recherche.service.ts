@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * La recherche — trouver sans trahir. R148→R151 (RS-01..06). Écrit APRÈS l'amendement, APRÈS
@@ -27,7 +28,7 @@ export class RechercheService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cfg(tx: any, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

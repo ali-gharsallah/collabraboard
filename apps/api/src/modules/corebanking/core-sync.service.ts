@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Le core banking est un port — R167→R169 (SY-01..05). Écrit APRÈS l'amendement, APRÈS les
@@ -28,7 +29,7 @@ export class CoreSyncService {
     private ports: { core?: CoreBankingPort } = {}) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── R167/R168/R169 : importer un lot ──

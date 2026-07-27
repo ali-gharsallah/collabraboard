@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, Not
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { applyKeyset, PageParams } from "../../common/pagination";
+import { emitEvent } from "../../common/domain-event";
+import { loadSettings } from "../../common/tenant-settings";
 
 /**
  * MOD-75 Business Trip (R222→R230, lot 51). Écrit spec-first depuis le Gherkin BT-01..10, sur
@@ -21,12 +23,10 @@ export class BusinessTripService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tx: any, ctx: Ctx) {
-    const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+    return loadSettings(tx, ctx.tenantId, true);
   }
 
   // ── R223/R229 : avis cross-border avec la version du référentiel en vigueur à `atDate` ──

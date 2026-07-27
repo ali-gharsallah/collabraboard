@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { TasksModule } from "../tasks/tasks.module";
 import { TasksService } from "../tasks/tasks.module";
 import { applyKeyset, PageParams } from "../../common/pagination";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * MOD Décision NBA (R243→R246, lot 53). Écrit spec-first depuis le Gherkin NB-01..06, sur ratification
@@ -22,7 +23,7 @@ export class NbaService {
   constructor(private prisma: PrismaService, private audit: AuditService, private tasks: TasksService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async ttl(ctx: Ctx) {
     const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });

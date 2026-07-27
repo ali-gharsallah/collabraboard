@@ -4,6 +4,7 @@ import { GedAvanceService } from "../ged/ged-avance.service";
 import { RechercheService } from "../recherche/recherche.service";
 import { CoffreService, StoragePort } from "../coffre/coffre.service";
 import { AnnotationService } from "../annotations/annotation.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Les chaînes — le composeur. CB-01..06. AUCUNE RÈGLE NOUVELLE : ce service tient les
@@ -31,7 +32,7 @@ export class ChainesService {
   ) {}
 
   private emit(tenantId: string, type: string, aggregateId: string, payload: any) {
-    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(this.prisma, tenantId, type, aggregateId, payload);
   }
 
   // ── CB-01/CB-06 : classer → indexer (clause R151) ──

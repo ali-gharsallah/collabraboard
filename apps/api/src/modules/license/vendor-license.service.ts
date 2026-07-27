@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, BadRequestException, NotFoundException 
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Le module est une licence — R177→R179 (LC-01..05). Écrit APRÈS l'amendement, APRÈS les
@@ -34,7 +35,7 @@ export class VendorLicenseService {
       .digest("hex");
   }
   private emit(tx: any, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId: null, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, null, type, aggregateId, payload);
   }
   private async courante(tx: any, instanceId: string) {
     const ls = (await tx.vendorLicense.findMany({ where: { instanceId } }))

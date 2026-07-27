@@ -4,6 +4,9 @@ import { AuditService } from "../../common/audit.service";
 import { WorkloadModule } from "../workload/workload.module";
 import { WorkloadService } from "../workload/workload.service";
 import { applyKeyset, PageParams } from "../../common/pagination";
+import { emitEvent } from "../../common/domain-event";
+import { loadSettings } from "../../common/tenant-settings";
+import { teamScope } from "../../common/visibility";
 
 /**
  * MOD Tâches (R239→R242, lot 52). Écrit spec-first depuis le Gherkin TA-01..06, sur ratification
@@ -24,12 +27,10 @@ export class TasksService {
   constructor(private prisma: PrismaService, private audit: AuditService, private workload: WorkloadService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(ctx: Ctx) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+    return loadSettings(this.prisma, ctx.tenantId, true);
   }
   private dto = (k: any, asOf?: string) => {
     const statutStock = asOf ? (k.doneAt && k.doneAt <= asOf ? "FAITE" : "OUVERTE") : k.statut;
@@ -77,12 +78,8 @@ export class TasksService {
     const voitTout: string[] = s.taskVisibiliteRoles ?? ["CO", "CF", "ADMIN"];
     const where: any = { tenantId: ctx.tenantId };
     // Périmètre SERVEUR : null = tout le tenant (voit-tout), sinon l'ensemble autorisé (soi + équipe).
-    let scope: Set<string> | null = null;
-    if (!voitTout.includes(ctx.role)) {
-      const equipes = (s.workloadResponsables ?? []).filter((r: any) => r.responsableRole === ctx.role).map((r: any) => r.equipeRole);
-      scope = new Set<string>([ctx.userId]);
-      if (equipes.length) (await this.prisma.user.findMany({ where: { tenantId: ctx.tenantId, role: { in: equipes } } })).forEach((m: any) => scope!.add(m.id));
-    }
+    // Source unique (A2, common/visibility) — même règle que MOD-43 Formations.
+    const scope = await teamScope(this.prisma, ctx.tenantId, ctx.role, ctx.userId, s, voitTout);
     // Le filtre `assignee` NARROW dans le périmètre — jamais l'élargir (R240) : hors périmètre ⇒ vide.
     if (f.assignee) {
       if (scope && !scope.has(f.assignee)) return [];

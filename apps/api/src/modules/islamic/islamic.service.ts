@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 import {
   ContexteIslamic, evaluerIslamic, paramsIslamicDepuisSettings,
   calculerZakat, suiviQard, distribuerMudaraba, auditShariah, validerRetraitWaqf,
@@ -25,7 +26,7 @@ export class IslamicService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async params(tx: any, ctx: Ctx) {
     const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
