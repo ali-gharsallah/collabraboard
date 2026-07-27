@@ -9,6 +9,9 @@ import { Ports } from "./ports/Ports";
 import { NextBestAction } from "./nba/NextBestAction";
 import { Formations } from "./formations/Formations";
 import { BusinessTrip } from "./businesstrip/BusinessTrip";
+import { CpsiProfiling } from "./cpsi/CpsiProfiling";
+import { CpsiSegmentation } from "./cpsi/CpsiSegmentation";
+import { CpsiRiskCases } from "./cpsi/CpsiRiskCases";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -128,5 +131,43 @@ describe("FE-40 — NBA : suggestion décidable (R244/R245), décision humaine a
     expect(await screen.findByText(/Déclencher revue EDD/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accepter" })).toBeEnabled();   // décision désormais ratifiée (R244)
     expect(screen.getByRole("button", { name: "Rejeter" })).toBeEnabled();
+  });
+});
+
+describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), alertes/risk cases (R80/R83)", () => {
+  it("CPSI Profil : charge le score d'un client et affiche ses drivers explicables", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/cpsi/clients/:cid/score", () => HttpResponse.json({
+      clientId: "c-1", score: 40, bande: "MEDIUM", drivers: [{ source: "statique:pep", contribution: 15 }, { source: "hit_screening@J-10", contribution: 25 }] })));
+    render(<CpsiProfiling/>);
+    fireEvent.change(screen.getByPlaceholderText(/Identifiant client/i), { target: { value: "c-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Charger le score/i }));
+    expect(await screen.findByText("40")).toBeInTheDocument();                 // score du moteur
+    expect(screen.getByText("MEDIUM")).toBeInTheDocument();                    // bande R66
+    expect(screen.getByText("statique:pep")).toBeInTheDocument();              // driver explicable R67
+  });
+
+  it("CPSI Segmentation : affiche les segments déterministes servis par la porte", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/cpsi/segmentation", () => HttpResponse.json({
+      asOf: null, segments: [{ client: "c-1", segment: "H-INTENSE" }, { client: "c-2", segment: "B-CALME" }] })));
+    render(<CpsiSegmentation/>);
+    expect(await screen.findByText("H-INTENSE")).toBeInTheDocument();
+    expect(screen.getByText("B-CALME")).toBeInTheDocument();
+  });
+
+  it("CPSI Risk cases : affiche les alertes scorées + reporting SLA, propose d'ouvrir un case", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/cpsi/alerts", () => HttpResponse.json({
+        signaux: [{ client: "c-1", scenario: "SC_STRUCT", groupe: "PEP", score: 72, statut: "ALERTE" }],
+        alertes: [{ client: "c-1", scenario: "SC_STRUCT", groupe: "PEP", score: 72, statut: "ALERTE" }], nearMiss: [], correlations: {} })),
+      http.get("*/v1/cpsi/risk-cases/reporting", () => HttpResponse.json({ par_etat: { NOUVELLE: 1 }, sla_jours: 30, hors_sla: 0 })),
+    );
+    render(<CpsiRiskCases/>);
+    expect(await screen.findByText("SC_STRUCT")).toBeInTheDocument();
+    expect(screen.getByText("72")).toBeInTheDocument();                        // score du signal
+    expect(screen.getAllByText("ALERTE").length).toBeGreaterThanOrEqual(1);    // statut R80 (aussi cité dans le libellé)
+    expect(screen.getByRole("button", { name: /Ouvrir un case/i })).toBeEnabled();
   });
 });
