@@ -118,17 +118,15 @@ describe("FE-TRIP — Business Trip : liste → détail (avis INTERDITE affiché
   });
 });
 
-describe("FE-40 — NBA : suggestion lue (R187), décision désactivée (route non ratifiée)", () => {
-  it("charge les gestes et présente les actions désactivées", async () => {
+describe("FE-40 — NBA : suggestion décidable (R244/R245), décision humaine active (FE-40..43)", () => {
+  it("charge les suggestions PROPOSED et propose Accepter/Ajuster/Rejeter", async () => {
     w.OLIVE_API_URL = "http://api.test";
-    server.use(http.get("*/v1/crm/clients/:id/gestes", () => HttpResponse.json([
-      { geste: "Demander le renouvellement du passeport", signal: "la pièce expire le 2026-08-15 (20 j)", source: "document", echeance: "2026-08-15" },
+    server.use(http.get("*/v1/nba", () => HttpResponse.json([
+      { id: "s1", contexte: "client", subjectId: "c1", proposition: "Déclencher revue EDD", facteurs: ["pep", "hri"], statut: "PROPOSED", decision: null },
     ])));
     render(<NextBestAction/>);
-    fireEvent.change(screen.getByPlaceholderText(/Identifiant client/i), { target: { value: "C1" } });
-    fireEvent.click(screen.getByRole("button", { name: /Voir les suggestions/i }));
-    expect(await screen.findByText(/Demander le renouvellement du passeport/)).toBeInTheDocument();
-    const accepter = screen.getByRole("button", { name: "Accepter" });
-    expect(accepter).toBeDisabled();                          // décision NBA non ratifiée
+    expect(await screen.findByText(/Déclencher revue EDD/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accepter" })).toBeEnabled();   // décision désormais ratifiée (R244)
+    expect(screen.getByRole("button", { name: "Rejeter" })).toBeEnabled();
   });
 });

@@ -1,0 +1,15 @@
+    NB-01 PASS — suggestion PROPOSED immuable (aucune route de modification)
+    NB-02 PASS — NBA_DECIDED { acteur } append-only, seconde décision refusée (NBA_ALREADY_DECIDED)
+    NB-03 PASS — rejet sans motif refusé, rejet motivé accepté
+    NB-04 PASS — ADJUST sans adjustment refusé ; avec adjustment accepté, proposition intacte
+    NB-05 PASS — compte de service refusé (NBA_DECISION_HUMAN_ONLY) ; ACCEPT → NBA_DECIDED, tâche née du service Tâches
+    NB-06 PASS — rejeu : inexistante avant création, DECIDED { REJECT, acteur } après décision
+PASS test/e2e/fat-vague17.e2e-spec.ts
+    ✓ NB-01 [R243] suggestion immuable une fois proposée (aucune route de modification) (72 ms)
+    ✓ NB-02 [R244] décision unique (58 ms)
+    ✓ NB-03 [R244] motif de rejet paramétré (35 ms)
+    ✓ NB-04 [R244] ajustement non vide (42 ms)
+    ✓ NB-05 [R245/R44] humain seulement, ZÉRO exécution directe (la tâche naît du service Tâches) (40 ms)
+    ✓ NB-06 [R246] rejeu des suggestions et décisions (33 ms)
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total

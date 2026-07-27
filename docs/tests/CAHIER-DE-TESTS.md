@@ -203,6 +203,19 @@ FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed le
 
 **Vague 16 : 6/6 FAT backend + FE-TASK. e2e 72 → 78, harnais 425/425, baseline régénérée (Task étendu additivement).** Reassign = ratifié workload. **Reste (V17)** : Décision NBA (R243→R246).
 
+## Vague 17 — MOD Décision NBA (R243→R246, ratifié)
+
+| Domaine | ID test | Exigence | Ce qui est vérifié | Type | Résultat |
+|---|---|---|---|---|---|
+| NBA | **NB-01** | R243 | Suggestion immuable une fois PROPOSED (aucune route de modification) | e2e/FAT | ✅ PASS |
+| NBA | **NB-02** | R244 | Décision unique (NBA_DECIDED append-only, NBA_ALREADY_DECIDED) | e2e/FAT | ✅ PASS |
+| NBA | **NB-03/04** | R244 | Motif de rejet paramétré ; ajustement non vide | e2e/FAT | ✅ PASS |
+| NBA | **NB-05** | R245/R44 | Humain seulement ; zéro exécution directe (tâche née du service Tâches) | e2e/FAT | ✅ PASS |
+| NBA | **NB-06** | R246/R48 | Rejeu suggestions & décisions à date | e2e/FAT | ✅ PASS |
+| NBA | **FE-40** | R244/R245 | Suggestions décidables ; Accepter/Ajuster/Rejeter actifs | Vitest+RTL+MSW | ✅ PASS |
+
+**Vague 17 : 6/6 FAT backend + FE-40. e2e 78 → 84, harnais 425/425, baseline régénérée (NbaSuggestion, RLS FORCE).** **R239→R246 intégralement implémenté** (Tâches V16 + NBA V17). Plus aucun écran en FE-05.
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

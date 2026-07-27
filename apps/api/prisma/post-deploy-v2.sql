@@ -126,7 +126,8 @@ DO $$ DECLARE t text; BEGIN
     'islamic_signals',                                    -- R207→R221 (lot 49, couche Shariah)
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (lot 49b, ledgers Shariah)
     'training_assignments', 'certifications', 'training_attestations', -- R231→R238 (lot 50, MOD-43 formations)
-    'trips', 'trip_visas'                                 -- R222→R230 (lot 51, MOD-75 business trip)
+    'trips', 'trip_visas',                                -- R222→R230 (lot 51, MOD-75 business trip)
+    'nba_suggestions'                                     -- R243→R246 (lot 53, MOD décision NBA)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
