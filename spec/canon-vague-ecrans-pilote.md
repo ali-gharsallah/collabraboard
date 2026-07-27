@@ -16,6 +16,14 @@ actuel, SD-04 suspendu + écart « versionnage kyc_access_rules » consigné ; s
 4. R267-R271 ratifiés — partie 5 d'abord, puis P1, P2, P4 partiel, P3. » Olivia étapes 6-8 en
 parallèle : go.
 
+**PARTIE 1 LIVRÉE (2026-07-27)** — écran `AmlWorkspace` (4 onglets, bandeau R77, drill 3 zones,
+filtres = préférence localStorage, tri §1.3, compteurs = endpoints). AW-01..08 : AW-01/02/03/07
+(Vitest), AW-04 (PC-14 e2e), AW-05 (rattachement idempotent même-cas — routes rattacher/detacher
+EXPOSÉES, R135 intact entre cas), AW-06 (FP motivé R7, motif journalisé, pénalité au recalcul),
+AW-08 (scope RM/ARM appliqué dans la porte CPSI — matrice A.3). Écarts : onglet Reporting =
+volumétrie PC-13 (délai hit→MROS chez riskcases, PC-12 — porte de lecture à ratifier) ;
+pré-analyse C3 exige un risk case ancré (écart d'ancrage consigné à l'étape 6 Olivia).
+
 **PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
 intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
 listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·

@@ -14,4 +14,6 @@ export class RiskCaseController {
   @Post(":id/transition") transition(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.transitionner(r.ctx, id, b?.vers, b?.motif); } // R133/R136
   @Post(":id/notes")      noter(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.noter(r.ctx, id, b?.texte); }                     // R134 (instruction append-only)
   @Get(":id/notes")       notes(@Req() r: any, @Param("id") id: string) { return this.svc.notes(r.ctx, id); }
+  @Post(":id/rattacher")  rattacher(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.rattacher(r.ctx, id, b?.signalId); } // R135/AW-05 (exposition P1)
+  @Post(":id/detacher")   detacher(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.detacher(r.ctx, id, b?.signalId, b?.motif); } // R135/R7
 }

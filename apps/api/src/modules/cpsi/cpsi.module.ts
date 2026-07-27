@@ -197,10 +197,19 @@ export class CpsiService {
   // ── CP-12 (R80/R81) : signaux scorés, alertes (≥X), near-miss, corrélations. ──
   async alertes(ctx: Ctx, asOf?: string, seuil?: number) {
     const r: any = await this.lire(ctx, "alerts", seuil != null ? { seuil } : {}, asOf);
-    return { asOf: asOf ?? null, signaux: r.signaux,
-      alertes: r.signaux.filter((s: any) => s.statut === "ALERTE"),
-      nearMiss: r.signaux.filter((s: any) => s.statut === "NEAR_MISS"),
-      correlations: r.correlations };
+    // AW-08 (canon vague pilote, ratifié) : le SCOPE est appliqué ICI — un RM/ARM ne reçoit que
+    // les signaux de SES clients (Client.rmUserId, matrice A.3) ; le front n'a aucun filtre.
+    let signaux: any[] = r.signaux; let correlations: Record<string, string[]> = r.correlations;
+    if (ctx.role === "RM" || ctx.role === "ARM") {
+      const miens = new Set((await this.prisma.client.findMany({
+        where: { tenantId: ctx.tenantId, rmUserId: ctx.userId }, select: { id: true } })).map((c) => c.id));
+      signaux = signaux.filter((s) => miens.has(s.client));
+      correlations = Object.fromEntries(Object.entries(correlations ?? {}).filter(([client]) => miens.has(client)));
+    }
+    return { asOf: asOf ?? null, signaux,
+      alertes: signaux.filter((s: any) => s.statut === "ALERTE"),
+      nearMiss: signaux.filter((s: any) => s.statut === "NEAR_MISS"),
+      correlations };
   }
 
   // ── PC-14 (extension ratifiée 2026-07-27, P1) : timeline d'un client — PROJECTION du journal
@@ -260,9 +269,12 @@ export class CpsiService {
   }
 
   // ── CP-13 (R82) : rétroaction faux-positif (pénalité escaladante, tracée). ──
-  async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string }) {
+  async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string; motif?: string }) {
     if (!dto?.client || !dto?.scenario) throw new BadRequestException("client et scenario requis");
-    await this.muter(ctx, "cpsi.fp.declared", dto.client, { client: dto.client, scenario: dto.scenario, acteur: ctx.userId }, "reporting");
+    if (!dto?.motif?.trim())                                              // AW-06 (canon vague pilote) : la voie est TRACÉE
+      throw new BadRequestException("R7 : déclarer un faux positif exige un motif");
+    await this.muter(ctx, "cpsi.fp.declared", dto.client,
+      { client: dto.client, scenario: dto.scenario, acteur: ctx.userId, motif: dto.motif.trim() }, "reporting");
     return { client: dto.client, scenario: dto.scenario, declare: true };
   }
 

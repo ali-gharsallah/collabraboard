@@ -18,6 +18,7 @@ import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
 import { Home } from "./home/Home";
 import { Offboarding } from "./offboarding/Offboarding";
 import { Olivia } from "./olivia/Olivia";
+import { AmlWorkspace } from "./aml/AmlWorkspace";
 import { ClientsList } from "./clients/ClientsList";
 import { KycDetail } from "./kyc/KycDetail";
 import { TransfertsOrdres } from "./transactions/TransfertsOrdres";
@@ -472,5 +473,59 @@ describe("FE-HOME/HO-02 — la licence est SERVIE : module inactif = tuile ABSEN
     render(<Home/>);
     expect(await screen.findByText("Alertes AML scorées")).toBeInTheDocument();
     expect(screen.getByText("Propositions CPSI en attente")).toBeInTheDocument();
+  });
+});
+
+describe("FE-AMLWS — AML Investigation Workspace : un écran, 4 onglets, rien de calculé au front (AW-01/02/03/07, canon P1)", () => {
+  const ALERTS = { signaux: [
+    { client: "client-aaa", scenario: "SC_STRUCT", groupe: "PEP", impact: 6, frequence: 1.5, score_brut: 9, penalite_fp: -2, score: 7, seuil: 5, statut: "ALERTE" },
+    { client: "client-bbb", scenario: "SC_WIRES", groupe: "DEF", impact: 2, frequence: 1, score_brut: 2, penalite_fp: 0, score: 2, seuil: 5, statut: "NEAR_MISS" }],
+    alertes: [{ client: "client-aaa", scenario: "SC_STRUCT", groupe: "PEP", impact: 6, frequence: 1.5, score_brut: 9, penalite_fp: -2, score: 7, seuil: 5, statut: "ALERTE" }],
+    nearMiss: [], correlations: { "client-aaa": ["SC_STRUCT", "SC_WIRES"] } };
+  const handlers = () => [
+    http.get("*/v1/cpsi/alerts", () => HttpResponse.json(ALERTS)),
+    http.get("*/v1/riskcases", () => HttpResponse.json([
+      { id: "rc-111", clientId: "client-aaa", statut: "EN_ANALYSE", signalIds: ["s1"], slaSignale: true, createdAt: "2026-06-01" }])),
+    http.get("*/v1/screening/hits", () => HttpResponse.json([{ id: "hit-1", nom: "Doe John", liste: "SANCTIONS", statut: "A_QUALIFIER" }])),
+    http.get("*/v1/cpsi/volumetrie", () => HttpResponse.json({ total_signaux: 2, par_scenario: { SC_STRUCT: { signaux: 1, alertes: 1, near_miss: 0 } } })),
+    http.get("*/v1/cpsi/clients/client-aaa/timeline*", () => HttpResponse.json({ evenements: [
+      { type: "cpsi.client.registered", at: "2026-01-01" }, { type: "cpsi.signal.ingested", at: "2026-02-01" }] })),
+  ];
+
+  it("AW-01/02 : libellés ratifiés + compteurs = endpoints ; le hit sanctions ne vit QUE dans l'onglet Screening", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<AmlWorkspace/>);
+    expect(await screen.findByText(/Signaux scorés — 2 \(alertes : 1\)/)).toBeInTheDocument();  // compteur = réponse API
+    expect(screen.getByTestId("bandeau-r77")).toBeInTheDocument();                              // bandeau permanent R77
+    expect(screen.getByText("alerte scorée")).toBeInTheDocument();                              // libellés distincts
+    expect(screen.getByText("near-miss")).toBeInTheDocument();
+    expect(screen.queryByText("Doe John")).toBeNull();                                          // AW-02 : le hit N'est PAS dans Signaux
+    fireEvent.click(screen.getByRole("button", { name: /Screening \(listes\)/ }));
+    expect(await screen.findByText("Doe John")).toBeInTheDocument();                            // il vit dans SON onglet
+    expect(screen.queryByText("SC_STRUCT")).toBeNull();                                         // et l'alerte n'y est pas
+  });
+
+  it("AW-03/04 : le drill décompose le score (brut + pénalité = score) et REND la timeline servie", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<AmlWorkspace/>);
+    await screen.findByText("SC_STRUCT");
+    fireEvent.click(screen.getAllByRole("button", { name: "Drill" })[0]);
+    expect(await screen.findByText(/impact : 6 · fréquence : 1.5 · score brut : 9/)).toBeInTheDocument();
+    expect(screen.getByText(/pénalité FP \(R82\) : -2 → score = max\(0, 9 \+ -2\) =/)).toBeInTheDocument();  // la combinaison RECONSTITUE
+    expect(await screen.findByText(/cpsi\.signal\.ingested/)).toBeInTheDocument();              // timeline = projection servie (AW-04)
+    expect(screen.getByText(/SC_STRUCT · SC_WIRES/)).toBeInTheDocument();                       // graphe : correlations RENDUES (R81)
+    expect(screen.getByText(/rc-111/)).toBeInTheDocument();                                     // risk case lié affiché
+    expect(screen.getByRole("button", { name: /Rattacher au risk case/ })).toBeInTheDocument(); // action existante, pas de voie neuve
+  });
+
+  it("AW-07 : le SLA surligne et NOTIFIE — l'onglet Risk cases garde toutes les actions disponibles", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<AmlWorkspace/>);
+    fireEvent.click(await screen.findByRole("button", { name: /Risk cases — 1/ }));
+    expect(await screen.findByText(/au-delà du SLA — notifié, rien de bloqué \(R39\)/)).toBeInTheDocument();
+    expect(screen.getByText("EN_ANALYSE")).toBeInTheDocument();
   });
 });

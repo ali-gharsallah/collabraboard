@@ -362,7 +362,7 @@ describe("FAT OLIVIA — R254 propositions + capacités C3/C4 (OL-12, OL-15..20,
       cibleType: "ALERTE", cibleId: `${clientId}|SC_CADUC`, justification: "schéma récurrent bénin" })).body;
     // L'HUMAIN qualifie l'alerte AVANT la décision (voie CPSI réelle, R82)
     await request(http).post("/v1/cpsi/false-positives").set(bearer(T, CO1, "CO"))
-      .send({ client: clientId, scenario: "SC_CADUC" }).expect(201);
+      .send({ client: clientId, scenario: "SC_CADUC", motif: "qualification humaine : bénin" }).expect(201);
     const r1 = await request(http).post(`/v1/olivia/proposals/${p.id}/adopt`).set(bearer(T, COSR, "CO_SR"));
     expect(r1.status).toBe(409);
     expect(JSON.stringify(r1.body)).toContain("OLIVIA_PROPOSAL_DECIDEE");

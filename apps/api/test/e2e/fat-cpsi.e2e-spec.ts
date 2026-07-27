@@ -189,7 +189,7 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
   });
 
   it("CP-13 [R82] rétroaction faux-positif tracée", async () => {
-    const fp = await request(http).post(`/v1/cpsi/false-positives`).set(bearer(A, U, "CO")).send({ client: cid, scenario: "SC_SCORE" });
+    const fp = await request(http).post(`/v1/cpsi/false-positives`).set(bearer(A, U, "CO")).send({ client: cid, scenario: "SC_SCORE", motif: "récurrence bénigne vérifiée" });
     expect(fp.status).toBe(201);
     expect(fp.body.declare).toBe(true);
     console.log("CP-13 PASS — faux positif déclaré");
@@ -319,5 +319,80 @@ describe("FAT CPSI — extension P1 ratifiée : timeline + volumétrie (PC-13/14
     const avant = await request(http).get("/v1/cpsi/volumetrie?asOf=2026-01-10T00:00:00.000Z").set(bearer(T, U, "CO"));
     expect(avant.body.total_signaux).toBe(0);
     console.log("PC-13 PASS — volumétrie = comptage moteur, cohérente alerts, rejouable à date");
+  });
+});
+
+describe("FAT AML WORKSPACE — actions du drill (AW-05/06/08, canon vague pilote P1)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const CO = randomUUID(), RM1 = randomUUID(), RM2 = randomUUID();
+  let clientRm1 = "", clientRm2 = "";
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    clientRm1 = randomUUID(); clientRm2 = randomUUID();
+    await seedTenantClient(prisma, T, clientRm1);
+    await seedTenantClient(prisma, T, clientRm2);
+    await prisma.client.update({ where: { id: clientRm1 }, data: { rmUserId: RM1 } });
+    await prisma.client.update({ where: { id: clientRm2 }, data: { rmUserId: RM2 } });
+    for (const cid of [clientRm1, clientRm2]) {
+      await request(http).post("/v1/cpsi/clients").set(bearer(T, CO, "CO"))
+        .send({ clientId: cid, statique: { pep: true }, at: "2026-01-01T00:00:00.000Z" }).expect(201);
+      await request(http).post(`/v1/cpsi/clients/${cid}/signals`).set(bearer(T, CO, "CO"))
+        .send({ type: "hit_screening", severite: 2, at: "2026-02-01T00:00:00.000Z" }).expect(201);
+    }
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("AW-05 [R76/R135] rattacher est IDEMPOTENT : deux fois le même signal au même cas → un seul lien, 2e appel sans effet ni erreur", async () => {
+    const rc = (await request(http).post("/v1/riskcases").set(bearer(T, CO, "CO"))
+      .send({ clientId: clientRm1, signalIds: ["SIG-A"] })).body;
+    await request(http).post(`/v1/riskcases/${rc.caseId}/rattacher`).set(bearer(T, CO, "CO")).send({ signalId: "SIG-B" }).expect(201);
+    const deux = await request(http).post(`/v1/riskcases/${rc.caseId}/rattacher`).set(bearer(T, CO, "CO")).send({ signalId: "SIG-B" });
+    expect(deux.status).toBe(201);                                          // sans effet NI erreur
+    expect(deux.body.dejaRattache).toBe(true);
+    const c = await prisma.riskCase.findFirst({ where: { id: rc.caseId } });
+    expect((c!.signalIds as string[]).filter((s) => s === "SIG-B").length).toBe(1);  // UN seul lien
+    // Dans un AUTRE cas actif, le refus R135 tient toujours
+    const rc2 = (await request(http).post("/v1/riskcases").set(bearer(T, CO, "CO"))
+      .send({ clientId: clientRm2, signalIds: ["SIG-C"] })).body;
+    await request(http).post(`/v1/riskcases/${rc2.caseId}/rattacher`).set(bearer(T, CO, "CO")).send({ signalId: "SIG-B" }).expect(400);
+    console.log("AW-05 PASS — idempotent même cas, R135 intact entre cas");
+  });
+
+  it("AW-06 [R82/R7] le faux positif exige la voie TRACÉE : motif obligatoire, événement au journal, pénalité au recalcul", async () => {
+    await request(http).post("/v1/cpsi/groups").set(bearer(T, CO, "CO"))
+      .send({ gid: "PEP", label: "PEP", at: "2026-01-10T00:00:00.000Z",
+        predicat: { logique: "OU", conditions: [{ champ: "pep", op: "eq", val: true }] } }).expect(201);
+    await request(http).post("/v1/cpsi/scenarios").set(bearer(T, CO, "CO"))
+      .send({ sid: "SC_AW6", label: "AW6", champ: "score", groupesSeuils: { PEP: 1 }, at: "2026-01-15T00:00:00.000Z" }).expect(201);
+    const sans = await request(http).post("/v1/cpsi/false-positives").set(bearer(T, CO, "CO"))
+      .send({ client: clientRm1, scenario: "SC_AW6" });
+    expect(sans.status).toBe(400);
+    expect(JSON.stringify(sans.body)).toContain("motif");
+    const avant = (await request(http).get("/v1/cpsi/alerts").set(bearer(T, CO, "CO"))).body
+      .signaux.find((s: any) => s.client === clientRm1 && s.scenario === "SC_AW6");
+    await request(http).post("/v1/cpsi/false-positives").set(bearer(T, CO, "CO"))
+      .send({ client: clientRm1, scenario: "SC_AW6", motif: "schéma récurrent qualifié bénin" }).expect(201);
+    const ev = await prisma.cpsiEvent.findFirst({ where: { tenantId: T, clientId: clientRm1, type: "cpsi.fp.declared" } });
+    expect((ev!.payload as any).motif).toContain("bénin");                  // l'événement PORTE le motif
+    const apres = (await request(http).get("/v1/cpsi/alerts").set(bearer(T, CO, "CO"))).body
+      .signaux.find((s: any) => s.client === clientRm1 && s.scenario === "SC_AW6");
+    expect(apres.penalite_fp).toBeLessThan(avant.penalite_fp ?? 0 + 1);     // la pénalité R82 apparaît au recalcul
+    expect(apres.score).toBeLessThanOrEqual(avant.score);
+    console.log("AW-06 PASS — 400 sans motif, motif journalisé, pénalité", apres.penalite_fp);
+  });
+
+  it("AW-08 [matrice A.3] le SCOPE tient : le RM ne reçoit que SES clients, le CO le tenant — réponses backend, zéro filtre front", async () => {
+    const vueCo = (await request(http).get("/v1/cpsi/alerts").set(bearer(T, CO, "CO"))).body;
+    const clientsCo = new Set(vueCo.signaux.map((s: any) => s.client));
+    expect(clientsCo.has(clientRm1)).toBe(true);
+    expect(clientsCo.has(clientRm2)).toBe(true);                            // le CO voit le tenant
+    const vueRm1 = (await request(http).get("/v1/cpsi/alerts").set(bearer(T, RM1, "RM"))).body;
+    expect(vueRm1.signaux.length).toBeGreaterThan(0);
+    expect(vueRm1.signaux.every((s: any) => s.client === clientRm1)).toBe(true);   // RM1 : SES clients seulement
+    expect(Object.keys(vueRm1.correlations ?? {}).every((c: string) => c === clientRm1)).toBe(true);
+    console.log("AW-08 PASS — CO tenant entier, RM scopé serveur");
   });
 });

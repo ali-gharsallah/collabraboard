@@ -108,11 +108,14 @@ export class RiskCaseService {
     return ns.slice().sort((a: any, b: any) => new Date(a.at).getTime() - new Date(b.at).getTime());
   }
 
-  // ── R135 : rattacher / détacher — un signal, un cas actif ──
+  // ── R135 : rattacher / détacher — un signal, un cas actif. AW-05 (canon vague pilote, ratifié) :
+  //    rattacher un signal DÉJÀ dans CE cas est IDEMPOTENT — un seul lien, second appel sans effet
+  //    ni erreur (pattern R76) ; dans un AUTRE cas actif, le refus R135 tient. ──
   async rattacher(ctx: Ctx, caseId: string, signalId: string) {
     return this.prisma.$transaction(async (tx: any) => {
       const c = await this.cas(tx, ctx, caseId);
       if (!ACTIFS.includes(c.statut)) throw new BadRequestException("Cas non actif");
+      if ((c.signalIds ?? []).includes(signalId)) return { caseId: c.id, signalId, dejaRattache: true }; // AW-05
       await this.signalLibre(tx, ctx, signalId);
       await tx.riskCase.update({ where: { id: c.id }, data: { signalIds: [...c.signalIds, signalId] } });
       await this.emit(tx, ctx.tenantId, "riskcase.signal.rattache", c.id, { signalId, par: ctx.userId });
