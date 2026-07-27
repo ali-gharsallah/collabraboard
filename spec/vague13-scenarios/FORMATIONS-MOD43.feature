@@ -1,8 +1,8 @@
 # language: fr
-@proposed @R231-R238 @MOD-43 @gele-attente-validation-Ali
-Fonctionnalité: MOD-43 Formations & Certifications (R231..R238) — RÈGLES PROPOSÉES, code gelé
-  Statut: PROPOSÉ (SPEC-FRONT-CÂBLAGE v2, section 7.2). AUCUN code front ni back
-  tant qu'Ali n'a pas validé « OK pour R222..R238 ». Gherkin d'abord.
+@ratifie @R231-R238 @MOD-43 @implemente-vague13
+Fonctionnalité: MOD-43 Formations & Certifications (R231..R238) — RATIFIÉ, implémenté (Vague 13)
+  Statut: RATIFIÉ (« OK pour R222..R238 », Ali) — IMPLÉMENTÉ en Vague 13.
+
   Numérotation R231..R238 continue après R230 (Business Trip). Toute divergence en
   implémentation → nouvelle règle au catalogue, jamais de règle implicite.
 

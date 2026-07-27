@@ -26,7 +26,8 @@ DO $$ DECLARE t text; BEGIN
     'risk_case_notes',                                    -- R134 (l'instruction append-only)
     'aml_signals',                                        -- R189→R206 (le signal AML est un fait)
     'islamic_signals',                                    -- R207→R221 (le signal Shariah est un fait)
-    'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions' -- R211/R215/R218 (ledgers Shariah, append-only)
+    'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (ledgers Shariah, append-only)
+    'certifications', 'training_attestations'             -- R234 (MOD-43 : certifs & attestations append-only)
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -123,7 +124,8 @@ DO $$ DECLARE t text; BEGIN
     'crm_contacts',                                       -- R186→R188 (lot 40, CRM relation)
     'aml_signals',                                        -- R189→R206 (lot 48, surveillance AML)
     'islamic_signals',                                    -- R207→R221 (lot 49, couche Shariah)
-    'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions' -- R211/R215/R218 (lot 49b, ledgers Shariah)
+    'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (lot 49b, ledgers Shariah)
+    'training_assignments', 'certifications', 'training_attestations' -- R231→R238 (lot 50, MOD-43 formations)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

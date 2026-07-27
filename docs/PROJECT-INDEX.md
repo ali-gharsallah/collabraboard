@@ -18,7 +18,8 @@
 | `spec/vague7-scenarios/VAGUE7-ECRANS.feature` | Gherkin spec-first Vague 7 (PMS : mandats, adéquation, breaches) | 2026-07-26 |
 | `spec/vague8-scenarios/VAGUE8-ECRANS.feature` | Gherkin spec-first Vague 8 (Référentiel AML : scénarios & seuils) | 2026-07-26 |
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
-| `spec/proposed-R222-R238/` | Gherkin GELÉ (BT-01..10, FO-01..08) — R222..R238 PROPOSÉES (Business Trip / Formations), attente validation | 2026-07-26 |
+| `spec/vague13-scenarios/FORMATIONS-MOD43.feature` | Gherkin RATIFIÉ MOD-43 (FO-01..08) — implémenté Vague 13 | 2026-07-27 |
+| `spec/proposed-R222-R238/BUSINESS-TRIP-MOD75.feature` | Gherkin RATIFIÉ MOD-75 (BT-01..10) — à implémenter Vague 14 | 2026-07-27 |
 | `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 | 2026-07-26 |
 | `docs/MIGRATION-FRONT.md` | Journal des migrations d'écrans (boy-scout A1/D3) | 2026-07-26 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
@@ -40,6 +41,7 @@
 | `docs/tests/FAT/FAT-VAGUE9.md` | 2 FAT métier Vague 9 (Bac à sable AML : dry-run) + statuts |
 | `docs/tests/FAT/FAT-VAGUE10.md` | 2 FAT Ports (backend) + 5 tests FE-CORE (Vitest) + écarts front |
 | `docs/tests/FAT/FAT-VAGUE12.md` | 3 FAT Workflow Instances (projection KYC) + composant FE-WFI |
+| `docs/tests/FAT/FAT-VAGUE13.md` | 8 FAT MOD-43 Formations & Certifications (R231→R238) + FE-FORM |
 | `docs/tests/COUVERTURE-REGLES.md` | Matrice traçabilité exigences → FAT + tests (… · V6 3/3 · V7 4/4 · V8 2/2) |
 | `docs/tests/PREUVES/` | Sorties brutes horodatées (`fat-vague1..9-run.txt`, `e2e-complet.txt`) |
 | `docs/RUNBOOK-OPS.md` | Chaîne de vérification + notes par lot |
@@ -63,9 +65,9 @@
 ## Chiffres de référence (2026-07-22, prouvés)
 
 - **Règles moteur** : 425/425 (50 suites).
-- **e2e (Postgres réel)** : 50/50 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2 + V12 3). Front : 11/11 (Vitest — FE-CORE `api.ts` + composants FE-WFI/10/40 + FE-05).
+- **e2e (Postgres réel)** : 58/58 (kyc-rules 6 + … + V10 2 + V12 3 + V13 8). Front : 12/12 (Vitest — FE-CORE `api.ts` + composants FE-WFI/10/40 + FE-05).
 - **FAT recette** : V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 = **37/37 PASS (100 %)**. Bandeau démo front : 9/9.
-- **Écrans réels** : 33 (… V10 : Ports, NBA · **V12 : Workflow Instances réel** — projection KYC · Tâches reste FE-05 seed). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front + A1 : `docs/ECARTS-FRONT.md`.
+- **Écrans réels** : 34 (… V12 : Workflow Instances réel · **V13 : Formations & Certifications** · Tâches reste FE-05 seed). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front + A1 : `docs/ECARTS-FRONT.md`.
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **34 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.

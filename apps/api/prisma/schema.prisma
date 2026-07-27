@@ -879,3 +879,51 @@ model MudarabaDistribution {
   @@index([tenantId, clientId])
   @@map("mudaraba_distributions")
 }
+
+// ── MOD-43 Formations & Certifications (R231→R238, lot 50) ──────────────────
+// Le référentiel des formations est 100% tenant (registre `trainingCatalog`, R231).
+// L'assignation porte le cycle de vie (R232) ; la complétion est un événement
+// (TRAINING_COMPLETED) avec attestation GED. Mode de validation = paramètre tenant
+// (R235) : AUTO ou VALIDATED (visa uniforme R15, exclusion 4-yeux R13).
+model TrainingAssignment {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid          // le collaborateur
+  formationCode    String    @map("formation_code")
+  echeance         String                                      // ISO date (R232)
+  statut           String    @default("ASSIGNED")              // ASSIGNED|IN_PROGRESS|COMPLETED|EXPIRED (R232)
+  attestationDocId String?   @map("attestation_doc_id")        // pièce GED (R232)
+  visaStatut       String?   @map("visa_statut")               // R235 mode VALIDATED : PENDING|SIGNED (null = AUTO)
+  visePar          String?   @map("vise_par") @db.Uuid
+  viseAt           DateTime? @map("vise_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, userId])
+  @@map("training_assignments")
+}
+
+// Certification : date d'obtention + expiration. APPEND-ONLY (R234) : un renouvellement
+// est une NOUVELLE ligne, jamais un écrasement — le rejeu certifiant (R238) relit l'historique.
+model Certification {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  code      String                                          // ex. CROSS_BORDER_AE
+  obtenueLe String   @map("obtenue_le")                     // ISO date
+  expireLe  String   @map("expire_le")                      // ISO date
+  docId     String?  @map("doc_id")
+  at        DateTime @default(now())
+  @@index([tenantId, userId, code])
+  @@map("certifications")
+}
+
+// Attestation de complétion : APPEND-ONLY (R234) — l'historique complet est rejouable (R48).
+model TrainingAttestation {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  formationCode String   @map("formation_code")
+  docId         String   @map("doc_id")
+  at            DateTime @default(now())
+  @@index([tenantId, userId])
+  @@map("training_attestations")
+}

@@ -7,6 +7,7 @@ import { WorkflowInstances } from "./workflow/WorkflowInstances";
 import { Tasks } from "./tasks/Tasks";
 import { Ports } from "./ports/Ports";
 import { NextBestAction } from "./nba/NextBestAction";
+import { Formations } from "./formations/Formations";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -65,6 +66,22 @@ describe("FE-10 — Ports : refus gracieux, aucun secret", () => {
     expect(await screen.findByText(/Core banking/)).toBeInTheDocument();
     expect(screen.getAllByText(/Port non configuré/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("NOT_CONFIGURED").length).toBeGreaterThan(0);
+  });
+});
+
+describe("FE-FORM — Formations : catalogue + dossiers depuis l'API (MOD-43)", () => {
+  it("affiche le catalogue tenant et les assignations servies par l'API", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/formations/catalog", () => HttpResponse.json([{ code: "AML_ANNUELLE", libelle: "AML annuelle", validiteMois: 12 }])),
+      http.get("*/v1/formations/assignments", () => HttpResponse.json([
+        { id: "a1", userId: "u1", formationCode: "AML_ANNUELLE", echeance: "2026-12-31", statut: "ASSIGNED", visaStatut: null },
+      ])),
+    );
+    render(<Formations/>);
+    expect(await screen.findByText(/AML annuelle/)).toBeInTheDocument();       // catalogue tenant (R231)
+    expect(await screen.findByText("ASSIGNED")).toBeInTheDocument();           // dossier depuis l'API
+    expect(screen.getByRole("button", { name: /Déposer l'attestation/i })).toBeInTheDocument();
   });
 });
 

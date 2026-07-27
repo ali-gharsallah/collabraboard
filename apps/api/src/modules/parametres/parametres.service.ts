@@ -153,6 +153,18 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Familles de contrats à incertitude excessive (gharar)" },
   { cle: "islamicMaysirVolatilitePct", type: "int", defaut: 80, regle: "R209", requis: false,
     description: "Volatilité (%) au-delà de laquelle une plateforme relève de la spéculation maysir (blocage auto)" },
+  // ── Formations & Certifications — MOD-43 (R231→R238, lot 50). Le référentiel de formation,
+  //    les rappels et le mode de validation sont des règles : réglés par le registre (R7/R125). ──
+  { cle: "trainingCatalog", type: "json", defaut: [], regle: "R231", requis: false,
+    exemple: [{ code: "AML_ANNUELLE", libelle: "AML annuelle", validiteMois: 12, rolesCibles: ["RM", "CO"], periodicite: "ANNUELLE" }],
+    description: "Référentiel tenant des formations : code, libellé, validité (mois), rôles cibles, périodicité. Aucun type codé en dur (R231)." },
+  { cle: "trainingReminderDays", type: "json", defaut: [30, 7], regle: "R233", requis: false,
+    description: "Jours avant expiration où un rappel de certification est émis (informatif, R39)." },
+  { cle: "trainingCompletionValidation", type: "json", defaut: { mode: "AUTO" }, regle: "R235", requis: false,
+    exemple: { mode: "VALIDATED", role: "CF" },
+    description: "Mode de validation de complétion : { mode: AUTO } (attestation suffit) ou { mode: VALIDATED, role } (visa uniforme R15 ; l'auteur ne valide pas sa propre complétion, R13)." },
+  { cle: "trainingVisibiliteRoles", type: "json", defaut: ["CO", "CF", "ADMIN"], regle: "R236", requis: false,
+    description: "Rôles qui voient TOUS les dossiers formation du tenant (Compliance/RH). Les autres voient leur périmètre (soi + équipe si responsable — R236)." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>
