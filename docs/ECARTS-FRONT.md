@@ -75,3 +75,22 @@ FE-CORE (`api.ts`) livré en incrémental (JWT défaut, `/v1`). Détail de la re
 (`POST /nba/:id/decision`) ; ports **fx/custody/mobile** ; R222..R238 (Business Trip / Formations, **PROPOSÉES** —
 attente « OK pour R222..R238 ») ; zone canon manquant (Command Center, Investigation, SWIFT, Legal, Octopulse,
 CPSI-Nest, Olivia/BI, écrans IAM/SSO, Audit).
+
+## 5. AMENDEMENT A1 (ratifié) — application (Vague 11)
+
+A1 ratifie les 4 arbitrages (D1 portes minces / D2 JWT défaut / D3 incrémental / D4 `/v1`) et fournit le
+**scénario FE-05** : « écran sans service ratifié → seed lecture seule, aucun endpoint fictif ». Application :
+
+| Bloc | Service ratifié ? | Résolution A1 |
+|---|---|---|
+| **Ports** | oui (core R167 + config tenant) | Porte mince livrée (Vague 10). PT-01 ≡ FAT-PORT-01/02 (relaie/projette, ne décide pas). |
+| **Workflow Instances** | **non** — `workflow` = *définitions* R171-173, pas d'instances/events/visas | **FE-05** (écran seed lecture seule, `WorkflowInstances.tsx`). Aucune porte inventée. |
+| **Tâches** | **partiel** — `workload.reassigner` (R184) + lectures internes ; **pas** de service backlog list/complete | **FE-05** (`Tasks.tsx`) ; bouton « Compléter » **absent** (capacité non ratifiée, D1). |
+| **NBA** | oui (per-client `crm/gestes` R187) ; **pas** de route de décision | Lecture livrée (Vague 10) ; décision **désactivée** (D1 : capacité absente → action absente). |
+
+**Auth (D2)** : `authMode()` défaut `jwt` ; `isDevAuthMode()` pilote le bandeau « Mode dev — auth simulée » quand
+`OLIVE_AUTH_MODE='headers'` (dev/tests MSW). **Préfixe (D4)** : `/v1`, base = racine, un seul point de concat (FE-06).
+**Incrémental (D3)** : `theme/tokens.ts` créé ; Vitest+Testing Library+MSW installés ; boy-scout tracé dans
+`docs/MIGRATION-FRONT.md` (aucun écran existant migré à ce jour). **Aucune résolution silencieuse** : les FE-05
+ci-dessus appliquent la règle A1, ils n'inventent pas de canon ; un service backend WFI/Tasks/décision-NBA
+relève d'un futur amendement (A2).

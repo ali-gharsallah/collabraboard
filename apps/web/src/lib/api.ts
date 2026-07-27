@@ -27,11 +27,19 @@ export function isHistoricalView(): boolean {
   return !!currentAsOf();
 }
 
-// En-têtes de session. Mode par défaut = JWT (seul accepté par le backend ratifié : TenantMiddleware
-// RS256). `OLIVE_AUTH_MODE='headers'` émet x-tenant-id/x-user-id/x-user-role — transitoire (MOD-30),
-// inerte tant que le backend ne les accepte pas (401 attendu). Un seul point de vérité pour les deux.
+// Mode d'auth (A1/D2). Défaut = JWT RS256 (le TenantMiddleware ratifié fait foi ; tenant/user/rôle
+// dérivés du jeton côté serveur, jamais envoyés par le client). Mode `headers` = DEV LOCAL / tests MSW
+// uniquement (activation explicite) → bandeau « Mode dev — auth simulée ».
+export function authMode(): "jwt" | "headers" {
+  return (window as unknown as { OLIVE_AUTH_MODE?: "jwt" | "headers" }).OLIVE_AUTH_MODE ?? "jwt";
+}
+/** Vrai quand l'auth est simulée par en-têtes (dev/tests) — l'écran doit afficher le bandeau dev. */
+export function isDevAuthMode(): boolean {
+  return authMode() === "headers";
+}
+
 function sessionHeaders(): Record<string, string> {
-  const mode = (window as unknown as { OLIVE_AUTH_MODE?: "jwt" | "headers" }).OLIVE_AUTH_MODE ?? "jwt";
+  const mode = authMode();
   if (mode === "headers") {
     const s = oliveSession();
     const h: Record<string, string> = {};

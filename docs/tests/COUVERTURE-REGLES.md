@@ -134,7 +134,7 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47
-tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2) + **5 tests Vitest** (front FE-CORE). La couverture règle-par-règle complète est portée par les
+tests e2e** (Postgres réel : kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2) + **11 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

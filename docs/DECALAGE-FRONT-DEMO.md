@@ -10,7 +10,7 @@ Deux objets **différents** :
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo ont un équivalent React **réellement câblé** (Vague 10 a ajouté Ports — état des ports ratifiés, refus gracieux — et Next Best Action — gestes R187 en lecture, cadre R44). Écarts front v2 : `docs/ECARTS-FRONT.md`.
+Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câblés** au backend, + 2 écrans en **FE-05 seed lecture seule** (Workflow Instances, Tâches — services non ratifiés, Vague 11/A1). Vague 10 a ajouté Ports (ports ratifiés, refus gracieux) et Next Best Action (gestes R187, cadre R44). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
 
 ---
 
@@ -49,7 +49,7 @@ Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo ont un équivalent
 | ✅ **FAIT (Vague 9)** sbaml (Bac à sable AML) | `SandboxAml` (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | `POST /v1/aml/sandbox` |
 | ✅ **FAIT (Vague 10)** Ports (intégrations) | `Ports` (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | `GET /v1/ports`, `GET\|POST /v1/ports/:id/health` |
 | ✅ **FAIT (Vague 10)** NBA (Next Best Action) | `NextBestAction` (gestes R187 en lecture, cadre R44 ; décision non ratifiée → désactivée) | `GET /v1/crm/clients/:id/gestes` |
-| ⛔ **GELÉ (v2)** Workflow Instances, Tâches | aucun service ratifié (workflow=définitions ; pas de backlog tâches) — non codés, signalés | — |
+| ⚠️ **FE-05 (Vague 11/A1)** Workflow Instances, Tâches | aucun service ratifié (workflow=définitions ; pas de backlog tâches) → écrans **seed lecture seule** avec bandeau « service backend non ratifié ». Service à venir = amendement A2. | — |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
 ---

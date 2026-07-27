@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { apiGetSourced, apiPost, isDemoMode, isHistoricalView } from "./api";
+import { apiGetSourced, apiPost, isDemoMode, isHistoricalView, isDevAuthMode, authMode } from "./api";
 
 // FE-CORE — couche API et session (SPEC-FRONT-CÂBLAGE v2, scénarios FE-01..04 au niveau lib).
 // On exerce les comportements de src/lib/api.ts : mode démo, propagation d'en-têtes (jwt/headers),
@@ -66,5 +66,19 @@ describe("FE-CORE — couche API et session", () => {
     await expect(apiPost("/v1/kyc/K1/validate", {})).rejects.toMatchObject({
       code: "KYC_INCOMPLETE", status: 422, message: "Le dossier KYC est incomplet.",
     });
+  });
+
+  it("FE-02b (A1) Mode headers réservé au dev : isDevAuthMode signale le bandeau", () => {
+    expect(authMode()).toBe("jwt");           // défaut ratifié
+    expect(isDevAuthMode()).toBe(false);
+    w.OLIVE_AUTH_MODE = "headers";
+    expect(isDevAuthMode()).toBe(true);        // → l'écran doit afficher « Mode dev — auth simulée »
+  });
+
+  it("FE-06 (A1) Préfixe unique : base + chemin /v1, aucune URL construite ailleurs", async () => {
+    w.OLIVE_API_URL = "https://demo.olive.local";
+    const fn = mockFetch(200, []);
+    await apiGetSourced("/v1/tasks", []);
+    expect(fn.mock.calls[0][0]).toBe("https://demo.olive.local/v1/tasks");
   });
 });
