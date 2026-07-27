@@ -4,11 +4,13 @@
  * R267 : la clôture est un workflow tracé — jamais une suppression ; CLOTUREE = lecture
  * seule intégrale pour la rétention (LBA art. 7) ; l'annulation est tracée, pas effacée.
  */
+process.env.OLIVIA_FAKE_PORT = "1";                                       // port de test Olivia (OF-08)
 import * as request from "supertest";
 import { randomUUID } from "crypto";
 import { INestApplication } from "@nestjs/common";
 import { PrismaService } from "../../src/common/prisma.service";
 import { boot, bearer, seedTenantClient } from "./util";
+import { OliviaService } from "../../src/modules/olivia/olivia.module";
 
 describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)", () => {
   let app: INestApplication; let prisma: PrismaService; let http: any;
@@ -222,6 +224,83 @@ describe("FAT OFFBOARDING — R267 workflow + rétention (OF-01, OF-10, OF-12)",
     expect((ev!.payload as any).par).toBe(CO2);
     await request(http).post(`/v1/offboarding/${o.id}/transition`).set(bearer(T, CO, "CO")).send({ vers: "CLOTUREE" }).expect(201);
     console.log("OF-04+OF-06a PASS — 2 obstacles listés, puis 1 ; attestation motivée tracée, clôture");
+  });
+
+  it("OF-07 [R270] l'interdiction d'informer tient : RM = motif générique sans clé sensible ; CO_SR = détail + réf MROS ; la POLITIQUE SQL le prouve", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const mrosRef = randomUUID();
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "EXIT_COMPLIANCE", motif: "Soupçon de blanchiment — communication MROS n° 44-2026", mrosRef })).body;
+    // Le RM voit le motif GÉNÉRIQUE — la clé sensible est ABSENTE de la réponse réseau
+    const vueRm = (await request(http).get(`/v1/offboarding/${o.id}`).set(bearer(T, RM, "RM"))).body;
+    expect(vueRm.motif).toBe("Décision de l'établissement");
+    expect(JSON.stringify(vueRm)).not.toContain("blanchiment");
+    expect(vueRm).not.toHaveProperty("motifSensible");
+    expect(vueRm).not.toHaveProperty("mrosRef");
+    // Le CO_SR voit le motif détaillé + la référence MROS
+    const vueCoSr = (await request(http).get(`/v1/offboarding/${o.id}`).set(bearer(T, randomUUID(), "CO_SR"))).body;
+    expect(vueCoSr.motifSensible).toContain("blanchiment");
+    expect(vueCoSr.mrosRef).toBe(mrosRef);
+    // PREUVE SQL (critère 5.6-2) : la policy RESTRICTIVE refuse la ligne au rôle non habilité,
+    // au niveau de la BASE (SET ROLE olive_app + GUC), pas seulement au contrôleur.
+    const compteEnRole = async (role: string) => {
+      const rows: any[] = await prisma.$transaction(async (tx: any) => {
+        await tx.$executeRawUnsafe(`SET LOCAL ROLE olive_app`);
+        await tx.$executeRawUnsafe(`SELECT set_config('app.tenant_id', '${T}', true)`);
+        await tx.$executeRawUnsafe(`SELECT set_config('app.role', '${role}', true)`);
+        return tx.$queryRawUnsafe(`SELECT motif_sensible FROM offboarding_sensibles WHERE offboarding_id = '${o.id}'`);
+      });
+      return rows.length;
+    };
+    expect(await compteEnRole("RM")).toBe(0);                                // la base elle-même refuse
+    expect(await compteEnRole("CO")).toBe(0);
+    expect(await compteEnRole("CO_SR")).toBe(1);
+    expect(await compteEnRole("MLRO")).toBe(1);
+    console.log("OF-07 PASS — réponse réseau cloisonnée + policy SQL prouvée (RM/CO: 0 ligne, CO_SR/MLRO: 1)");
+  });
+
+  it("OF-08 [R270+R256] le cloisonnement tient AUSSI pour Olivia : le contexte du RM ne contient jamais le motif sensible", async () => {
+    await prisma.tenant.update({ where: { id: T },
+      data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5" } } });
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    await prisma.client.update({ where: { id: clientId }, data: { rmUserId: RM } });
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "EXIT_COMPLIANCE", motif: "Motif compliance ultra-sensible", mrosRef: randomUUID() })).body;
+    const demander = async (userId: string, role: string) => {
+      const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, userId, role)).send({ capacite: "C1" })).body;
+      return (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, userId, role))
+        .send({ texte: "Pourquoi ce client est-il en clôture ?", refs: [{ type: "OFFBOARDING", code: o.id }] })).body;
+    };
+    const vueRm = await demander(RM, "RM");                                  // le RM du client — accès à l'objet, PAS au sensible
+    expect(vueRm.contexteObjets.some((x: any) => x.type === "OFFBOARDING" && x.id === o.id)).toBe(true);
+    const vueCoSr = await demander(randomUUID(), "CO_SR");
+    expect(vueCoSr.contexteObjets.some((x: any) => x.type === "OFFBOARDING")).toBe(true);
+    // La preuve d'exclusion : le CONTENU du contexte construit (ce qui part dans le prompt) —
+    // même builder que la route (R255), appelé tel quel pour les deux rôles.
+    const svc: any = app.get(OliviaService);
+    const settings = ((await prisma.tenant.findFirst({ where: { id: T } }))!.settings as any) ?? {};
+    const cxRm = await svc.construireContexte({ tenantId: T, userId: RM, role: "RM" },
+      { capacite: "C1", ancrageId: null }, settings, [{ type: "OFFBOARDING", code: o.id }]);
+    expect(JSON.stringify(cxRm.contenu)).not.toContain("ultra-sensible");
+    expect(cxRm.contenu.clotures[0].motif).toBe("Décision de l'établissement");
+    const cxCoSr = await svc.construireContexte({ tenantId: T, userId: randomUUID(), role: "CO_SR" },
+      { capacite: "C1", ancrageId: null }, settings, [{ type: "OFFBOARDING", code: o.id }]);
+    expect(JSON.stringify(cxCoSr.contenu)).toContain("ultra-sensible");      // le CO_SR, lui, a le détail (R256+R270)
+    console.log("OF-08 PASS — OFFBOARDING au contexte des deux ; motif sensible exclu du contenu RM, présent pour CO_SR");
+  });
+
+  it("OF-09 [R270] le courrier client est PROPRE : aucune mention compliance/MROS pour un EXIT_COMPLIANCE", async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    const o = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "EXIT_COMPLIANCE", motif: "Communication MROS en cours, soupçon art. 305bis CP", mrosRef: randomUUID() })).body;
+    const c = (await request(http).get(`/v1/offboarding/${o.id}/courrier`).set(bearer(T, RM, "RM"))).body;
+    expect(c.texte).toContain("Décision de l'établissement");                // le motif générique, rien d'autre
+    for (const interdit of ["MROS", "soupçon", "compliance", "305bis", "blanchiment"])
+      expect(c.texte.toLowerCase()).not.toContain(interdit.toLowerCase());
+    console.log("OF-09 PASS — courrier généré sans aucune mention compliance");
   });
 });
 

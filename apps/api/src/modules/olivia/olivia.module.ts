@@ -143,6 +143,31 @@ export class OliviaService {
     }
     // 2-3) C1 : objets EXPLICITEMENT référencés — chacun re-vérifié individuellement (§3).
     for (const ref of refs) {
+      // R270/OF-08 : dossier de clôture référencé — le cloisonnement art. 10a s'applique AUSSI ici :
+      // motif_sensible/mros_ref n'entrent dans le contexte QUE pour les rôles habilités.
+      if (ref.type === "OFFBOARDING") {
+        const off = await this.prisma.offboardingFile.findFirst({ where: { id: ref.code, tenantId: ctx.tenantId } });
+        let refuseOff = !off;
+        if (off && (ctx.role === "RM" || ctx.role === "ARM")) {
+          const c = await this.prisma.client.findFirst({ where: { id: off.clientId, tenantId: ctx.tenantId } });
+          refuseOff = !c || c.rmUserId !== ctx.userId;
+        }
+        if (refuseOff) {
+          exclus++;
+          await this.prisma.$transaction(async (tx: any) =>
+            this.emit(tx, ctx.tenantId, "OLIVIA_CONTEXT_DENIED", ref.code, { qui: ctx.userId, quoi: ref.type, pourquoi: "hors périmètre ou inexistant" }));
+          continue;
+        }
+        objets.push({ type: "OFFBOARDING", id: off!.id, v: off!.statut });
+        const objetOff: any = { id: off!.id, type: off!.type, statut: off!.statut, motif: off!.motif };
+        const habilites: string[] = s.rolesMotifSensible ?? ["CO_SR", "MLRO"];
+        if (habilites.includes(ctx.role)) {
+          const sens = await this.prisma.offboardingSensible.findFirst({ where: { offboardingId: off!.id, tenantId: ctx.tenantId } });
+          if (sens) { objetOff.motifSensible = sens.motifSensible; objetOff.mrosRef = sens.mrosRef; }
+        }
+        (contenu.clotures ??= []).push(objetOff);
+        continue;
+      }
       if (ref.type !== "KYC_FILE") { exclus++; continue; }                 // type non pris en charge = exclu, tracé
       const file = await this.prisma.kycFile.findFirst({ where: { code: ref.code, tenantId: ctx.tenantId } });
       let refuse = !file;

@@ -97,10 +97,40 @@ export class OffboardingService {
   async detail(ctx: Ctx, id: string) {
     const o = await this.dossier(this.prisma, ctx, id);
     const obstacles = ACTIFS.includes(o.statut) ? await this.obstaclesR269(this.prisma, ctx, o) : []; // checklist R269 en direct
-    return { id: o.id, clientId: o.clientId, type: o.type, motif: o.motif, statut: o.statut, obstacles,
+    const base: any = { id: o.id, clientId: o.clientId, type: o.type, motif: o.motif, statut: o.statut, obstacles,
       initiateur: o.initiateur, documents: o.documents, visas: o.visas,
       attestationAvoirs: o.attestationAvoirs, motifAnnulation: o.motifAnnulation,
       clotureEffectiveAt: o.clotureEffectiveAt, retentionJusqua: o.retentionJusqua, createdAt: o.createdAt };
+    // R270 (LBA art. 10a) : le motif détaillé + la réf MROS ne sont SERVIS qu'aux rôles habilités —
+    // pour tout autre rôle, la clé est ABSENTE de la réponse réseau (OF-07), pas masquée à l'écran.
+    if (o.type === "EXIT_COMPLIANCE") {
+      const s = await this.settings(this.prisma, ctx.tenantId);
+      const habilites: string[] = s.rolesMotifSensible ?? ["CO_SR", "MLRO"];
+      if (habilites.includes(ctx.role)) {
+        const sens = await this.prisma.offboardingSensible.findFirst({
+          where: { offboardingId: o.id, tenantId: ctx.tenantId } });
+        if (sens) { base.motifSensible = sens.motifSensible; base.mrosRef = sens.mrosRef; }
+      }
+    }
+    return base;
+  }
+
+  // ── R270/OF-09 : le courrier client est PROPRE — jamais une mention compliance/MROS.
+  //    Le gabarit ne lit QUE la table principale (le motif y est générique pour EXIT_COMPLIANCE
+  //    par construction, dès la création) — le motif sensible ne PEUT pas fuir ici. ──
+  async courrier(ctx: Ctx, id: string) {
+    const o = await this.dossier(this.prisma, ctx, id);
+    const texte = [
+      "Objet : clôture de votre relation bancaire",
+      "",
+      "Madame, Monsieur,",
+      `Nous vous informons de la clôture de votre relation (référence ${o.id.slice(0, 8)}).`,
+      `Motif : ${o.motif}.`,
+      o.clotureEffectiveAt ? `La clôture est effective au ${new Date(o.clotureEffectiveAt).toISOString().slice(0, 10)}.` : "La clôture est en cours de traitement.",
+      "Vos avoirs seront transférés selon vos instructions.",
+      "Veuillez agréer nos salutations distinguées.",
+    ].join("\n");
+    return { texte };
   }
 
   // ── R268 : le type impose ses visas et ses documents — le refus liste TOUT ce qui manque ──
