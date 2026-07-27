@@ -2,8 +2,12 @@
 @propose @CPSI @porte-mince @R63-R83
 Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, aucun code
 
-  Statut: PROPOSÉ. AUCUN code (ni back Nest, ni serveur Python, ni front) tant qu'Ali
-  n'a pas ratifié « OK pour la porte CPSI ». Gherkin d'abord (spec-first strict).
+  Statut: RATIFIÉ « OK pour la porte CPSI ». SQUELETTE VERTICAL implémenté (Vague CPSI-1) :
+  CP-01 (score+drivers), CP-02 (rejeu à date), CP-11 (ingestion default-deny), CP-18 (isolation)
+  — e2e `test/e2e/fat-cpsi.e2e-spec.ts` verts contre le moteur Python réel (shell-out). Décisions
+  actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le moteur ;
+  Q3 = complète (frontière avec riskcases R133-136 documentée, aucune route existante touchée) ;
+  Q4 = shell-out `services/cpsi-server-py/bridge.py`. Les scénarios CP-03..17/19 restent À CÂBLER.
 
   Doctrine de la porte (pattern PT-01, comme workflow-instances / ports) :
     • La porte RELAIE / PROJETTE / CALCULE via le moteur ratifié `services/cpsi-server-py`

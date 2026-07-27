@@ -996,3 +996,21 @@ model NbaSuggestion {
   @@index([tenantId, subjectId])
   @@map("nba_suggestions")
 }
+
+// ── CPSI (Client Profiling & Segmentation Intelligence) — porte HTTP mince (CP-01..19) ──
+// Journal APPEND-ONLY tenant-scopé : source de vérité de l'état CPSI. La porte NE réimplémente
+// aucune règle (R63→R83) ; elle persiste les faits (client enregistré, signal ingéré, …) puis
+// REJOUE le journal du tenant vers le moteur Python ratifié (`services/cpsi-server-py`) pour
+// calculer (score, drivers, bande, segmentation…). Rejeu à date natif (R48/R49) via `at`.
+// L'auteur est TOUJOURS le jeton (payload.par = ctx.userId), jamais le corps.
+model CpsiEvent {
+  id        BigInt   @id @default(autoincrement())        // seq monotone (R49) — ordre de rejeu
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String                                        // cpsi.client.registered | cpsi.signal.ingested | …
+  clientId  String   @map("client_id")                    // sujet CPSI (référence applicative)
+  payload   Json                                          // charge de rejeu + par (acteur jeton)
+  at        String                                        // ISO — temps métier (date de calcul, R48)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId, id])
+  @@map("cpsi_events")
+}

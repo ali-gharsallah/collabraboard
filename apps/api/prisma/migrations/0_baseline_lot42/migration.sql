@@ -935,6 +935,19 @@ CREATE TABLE "nba_suggestions" (
     CONSTRAINT "nba_suggestions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "cpsi_events" (
+    "id" BIGSERIAL NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "client_id" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "at" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "cpsi_events_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -1138,6 +1151,9 @@ CREATE INDEX "trip_visas_tenant_id_trip_id_idx" ON "trip_visas"("tenant_id", "tr
 
 -- CreateIndex
 CREATE INDEX "nba_suggestions_tenant_id_subject_id_idx" ON "nba_suggestions"("tenant_id", "subject_id");
+
+-- CreateIndex
+CREATE INDEX "cpsi_events_tenant_id_id_idx" ON "cpsi_events"("tenant_id", "id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

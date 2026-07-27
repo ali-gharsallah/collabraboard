@@ -27,7 +27,8 @@ DO $$ DECLARE t text; BEGIN
     'aml_signals',                                        -- R189→R206 (le signal AML est un fait)
     'islamic_signals',                                    -- R207→R221 (le signal Shariah est un fait)
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (ledgers Shariah, append-only)
-    'certifications', 'training_attestations'             -- R234 (MOD-43 : certifs & attestations append-only)
+    'certifications', 'training_attestations',            -- R234 (MOD-43 : certifs & attestations append-only)
+    'cpsi_events'                                         -- CPSI porte (R63→R83 : journal append-only, source d'état)
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -127,7 +128,8 @@ DO $$ DECLARE t text; BEGIN
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (lot 49b, ledgers Shariah)
     'training_assignments', 'certifications', 'training_attestations', -- R231→R238 (lot 50, MOD-43 formations)
     'trips', 'trip_visas',                                -- R222→R230 (lot 51, MOD-75 business trip)
-    'nba_suggestions'                                     -- R243→R246 (lot 53, MOD décision NBA)
+    'nba_suggestions',                                    -- R243→R246 (lot 53, MOD décision NBA)
+    'cpsi_events'                                         -- CPSI porte (R63→R83, journal tenant-scopé)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
