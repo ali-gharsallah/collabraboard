@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import { execFile } from "child_process";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
@@ -158,6 +158,81 @@ export class CpsiService {
       nearMiss: r.signaux.filter((s: any) => s.statut === "NEAR_MISS"),
       correlations: r.correlations };
   }
+
+  // Écriture gouvernée : scelle le candidat, le VALIDE par rejeu (via une op de lecture qui renvoie
+  // l'entité résultante), et ne persiste QU'APRÈS succès. Toute CpsiError du moteur (habilitation,
+  // motif manquant, transition impossible…) devient un 4xx AVANT persistance — 403 si habilitation.
+  private async muter(ctx: Ctx, type: string, clientId: string, fields: any, readOp: string, readExtra: any = {}) {
+    const at = fields.at ?? new Date().toISOString();
+    const payload: any = { ...fields, par: ctx.userId }; delete payload.at;
+    const candidat = { type, at, ...payload };
+    const journal = [...(await this.journal(ctx.tenantId)), candidat];
+    const res = await runBridge({ config: await this.config(ctx.tenantId), journal, query: { op: readOp, at, ...readExtra } });
+    if (res.error) {
+      if (/habilit/i.test(res.error.message)) throw new ForbiddenException(res.error.message);
+      throw new BadRequestException(res.error.message);
+    }
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type, clientId, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, type.replace(/\./g, "_").toUpperCase(), clientId);
+    return res.ok;
+  }
+
+  // ── CP-09 (R70) : bac à sable — dry-run, AUCUNE écriture (le journal n'est pas touché). ──
+  async simuler(ctx: Ctx, changements: any) {
+    if (!changements || typeof changements !== "object") throw new BadRequestException("changements requis");
+    return this.lire(ctx, "sandbox_simulate", { changements, acteur: ctx.userId });
+  }
+
+  // ── CP-10 (R69) : l'IA/humain PROPOSE, un humain ADOPTE/REJETTE (motivation obligatoire au rejet). ──
+  async proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }) {
+    if (!dto?.chemin || dto?.valeur === undefined) throw new BadRequestException("chemin et valeur requis");
+    return this.muter(ctx, "cpsi.param.proposed", "PARAM",
+      { auteur: ctx.userId, chemin: dto.chemin, valeur: dto.valeur, justification: dto.justification ?? "" }, "propose_param");
+  }
+  async adopter(ctx: Ctx, pid: string) {
+    return this.muter(ctx, "cpsi.param.adopted", "PARAM", { pid, humain: ctx.userId }, "proposition", { id: pid });
+  }
+  async rejeter(ctx: Ctx, pid: string, motivation?: string) {
+    return this.muter(ctx, "cpsi.param.rejected", "PARAM", { pid, humain: ctx.userId, motivation: motivation ?? "" }, "proposition", { id: pid });
+  }
+
+  // ── CP-13 (R82) : rétroaction faux-positif (pénalité escaladante, tracée). ──
+  async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string }) {
+    if (!dto?.client || !dto?.scenario) throw new BadRequestException("client et scenario requis");
+    await this.muter(ctx, "cpsi.fp.declared", dto.client, { client: dto.client, scenario: dto.scenario, acteur: ctx.userId }, "reporting");
+    return { client: dto.client, scenario: dto.scenario, declare: true };
+  }
+
+  // ── CP-14 (R75) : marquage insider — habilitation par le RÔLE DU JETON, motif obligatoire. ──
+  async taguerInsider(ctx: Ctx, cid: string, dto: { motif?: string; instrument?: string }) {
+    return this.muter(ctx, "cpsi.insider.tagged", cid,
+      { client: cid, acteur: ctx.userId, role: ctx.role, motif: dto?.motif ?? "", instrument: dto?.instrument ?? null }, "insiders");
+  }
+  async leverInsider(ctx: Ctx, cid: string, dto: { motif?: string }) {
+    return this.muter(ctx, "cpsi.insider.lifted", cid,
+      { client: cid, acteur: ctx.userId, role: ctx.role, motif: dto?.motif ?? "" }, "insiders");
+  }
+
+  // ── CP-15 (R83/R81) : ouvrir un risk case depuis des alertes corrélées d'un même client. ──
+  async ouvrirRiskCase(ctx: Ctx, dto: { alertes: any[] }) {
+    if (!Array.isArray(dto?.alertes) || !dto.alertes.length) throw new BadRequestException("alertes requises");
+    return this.muter(ctx, "cpsi.riskcase.opened", dto.alertes[0]?.client ?? "—", { alertes: dto.alertes, acteur: ctx.userId }, "open_risk_case");
+  }
+  // ── CP-16 (R83/R7) : transition — motif obligatoire (clore/escalader/clarifier). ──
+  async transitionRiskCase(ctx: Ctx, id: string, dto: { action: string; motif?: string }) {
+    if (!dto?.action) throw new BadRequestException("action requise");
+    return this.muter(ctx, "cpsi.riskcase.transition", id, { case: id, action: dto.action, motif: dto.motif ?? null, acteur: ctx.userId }, "risk_case", { id });
+  }
+  async documenterRiskCase(ctx: Ctx, id: string, dto: { note?: string }) {
+    return this.muter(ctx, "cpsi.riskcase.note", id, { case: id, note: dto?.note ?? "", acteur: ctx.userId }, "risk_case", { id });
+  }
+  async riskCase(ctx: Ctx, id: string) {
+    return this.lire(ctx, "risk_case", { id });
+  }
+  // ── CP-17 (R39) : reporting SLA — mesure, ne bloque pas. ──
+  async reporting(ctx: Ctx, slaJours?: number) {
+    return this.lire(ctx, "reporting", slaJours != null ? { sla_jours: slaJours } : {});
+  }
 }
 
 @Controller("cpsi")
@@ -175,6 +250,18 @@ export class CpsiController {
   @Post("scenarios")               defScenario(@Req() r: any, @Body() b: any) { return this.svc.definirScenario(r.ctx, b); }                           // CP-06
   @Get("scenarios/:sid/evaluate")  evalScenario(@Req() r: any, @Param("sid") sid: string, @Query("asOf") asOf?: string) { return this.svc.evaluerScenario(r.ctx, sid, asOf); } // CP-06
   @Get("alerts")                   alertes(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.alertes(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // CP-12
+  @Post("sandbox/simulate")        simuler(@Req() r: any, @Body() b: any) { return this.svc.simuler(r.ctx, b?.changements); }                            // CP-09
+  @Post("params/proposals")        proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // CP-10
+  @Post("params/proposals/:pid/adopt")  adopter(@Req() r: any, @Param("pid") pid: string) { return this.svc.adopter(r.ctx, pid); }                     // CP-10
+  @Post("params/proposals/:pid/reject") rejeter(@Req() r: any, @Param("pid") pid: string, @Body() b: any) { return this.svc.rejeter(r.ctx, pid, b?.motivation); } // CP-10
+  @Post("false-positives")         fauxPositif(@Req() r: any, @Body() b: any) { return this.svc.declarerFauxPositif(r.ctx, b); }                        // CP-13
+  @Post("clients/:cid/insider")      insider(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.taguerInsider(r.ctx, cid, b); }     // CP-14
+  @Post("clients/:cid/insider/lift") insiderLift(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.leverInsider(r.ctx, cid, b); }   // CP-14
+  @Post("risk-cases")              ouvrirRc(@Req() r: any, @Body() b: any) { return this.svc.ouvrirRiskCase(r.ctx, b); }                                // CP-15
+  @Get("risk-cases/reporting")     reporting(@Req() r: any, @Query("slaJours") sla?: string) { return this.svc.reporting(r.ctx, sla != null ? Number(sla) : undefined); } // CP-17
+  @Post("risk-cases/:id/transition") transitionRc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.transitionRiskCase(r.ctx, id, b); } // CP-16
+  @Post("risk-cases/:id/notes")    noterRc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.documenterRiskCase(r.ctx, id, b); }   // CP-16
+  @Get("risk-cases/:id")           getRc(@Req() r: any, @Param("id") id: string) { return this.svc.riskCase(r.ctx, id); }                               // CP-15/16
 }
 
 @Module({

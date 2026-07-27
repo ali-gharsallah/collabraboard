@@ -12,12 +12,15 @@ Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, au
       CP-06 scénario ciblé (+ default-deny groupe inconnu), CP-12 signaux scorés / alertes /
       near-miss / corrélations. Écritures gouvernées `definir_groupe` / `definir_scenario_aml`
       VALIDÉES par rejeu avant persistance (opérateur/sens/groupe invalide → 4xx).
+    • Vague CPSI-4 (gouvernance & investigations) : CP-09 bac à sable (dry-run, 0 mutation +
+      default-deny), CP-10 IA propose / humain adopte / rejet à motivation obligatoire,
+      CP-13 faux-positif, CP-14 insider MAR (habilitation par le rôle du jeton, motif obligatoire),
+      CP-15/16/17 risk cases (ouverture, transitions à motif obligatoire R7, reporting SLA R39).
+  → PORTE COMPLÈTE : CP-01..18 câblés et verts (e2e 18 tests) ; CP-19 (la porte ne calcule rien)
+    = invariant tenu par construction (toute valeur vient d'un appel au moteur ratifié).
   Décisions actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le
   moteur ; Q3 = complète (frontière avec riskcases R133-136 documentée, aucune route existante
   touchée) ; Q4 = shell-out `services/cpsi-server-py/bridge.py`.
-  RESTENT À CÂBLER : CP-09/10 (bac à sable, IA propose/adopte/rejette), CP-13 (faux-positif),
-  CP-14 (insider MAR), CP-15/16/17 (risk cases & reporting SLA). CP-19 (la porte ne calcule rien)
-  = invariant vérifié par construction.
 
   Doctrine de la porte (pattern PT-01, comme workflow-instances / ports) :
     • La porte RELAIE / PROJETTE / CALCULE via le moteur ratifié `services/cpsi-server-py`

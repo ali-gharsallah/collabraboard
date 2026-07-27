@@ -39,6 +39,24 @@ def _replay(engine, journal):
         elif t == "cpsi.scenario.defined":
             engine.definir_scenario_aml(ev["sid"], ev["label"], ev["champ"], ev["groupes_seuils"],
                                         at, ev.get("sens", "gte"))
+        elif t == "cpsi.param.proposed":
+            engine.proposer_parametre(ev["auteur"], ev["chemin"], ev["valeur"], ev["justification"], at)
+        elif t == "cpsi.param.adopted":
+            engine.adopter_proposition(ev["pid"], ev["humain"], at)
+        elif t == "cpsi.param.rejected":
+            engine.rejeter_proposition(ev["pid"], ev["humain"], ev["motivation"], at)
+        elif t == "cpsi.fp.declared":
+            engine.declarer_faux_positif(ev["client"], ev["scenario"], ev["acteur"], at)
+        elif t == "cpsi.insider.tagged":
+            engine.taguer_insider(ev["client"], ev["acteur"], ev["role"], ev["motif"], at, ev.get("instrument"))
+        elif t == "cpsi.insider.lifted":
+            engine.lever_insider(ev["client"], ev["acteur"], ev["role"], ev["motif"], at)
+        elif t == "cpsi.riskcase.opened":
+            engine.ouvrir_risk_case(ev["alertes"], ev["acteur"], at)
+        elif t == "cpsi.riskcase.transition":
+            engine.transition_risk_case(ev["case"], ev["action"], ev["acteur"], at, ev.get("motif"))
+        elif t == "cpsi.riskcase.note":
+            engine.documenter_risk_case(ev["case"], ev["acteur"], ev["note"], at)
         else:
             raise CpsiError(f"type d'événement de rejeu inconnu : {t} (default-deny)")
 
@@ -96,10 +114,57 @@ def _alerts(engine, q):
     return {"signaux": engine.signaux(at, seuil), "correlations": engine.correlations(at, seuil)}
 
 
+# CP-09 (R70) : bac à sable — simulation d'impact, dry-run (aucune mutation persistée).
+def _sandbox_simulate(engine, q):
+    return engine.simuler_impact(q["changements"], _dt(q["at"]), q.get("acteur", "sandbox"))
+
+
+# CP-10 (R69) : dernière proposition émise (id déterministe PROP-N) / une proposition par id.
+def _propose_param(engine, q):
+    if not engine.propositions:
+        raise CpsiError("aucune proposition")
+    return engine.propositions[-1]
+
+
+def _proposition(engine, q):
+    p = next((p for p in engine.propositions if p["id"] == q["id"]), None)
+    if p is None:
+        raise CpsiError(f"proposition inconnue : {q['id']}")
+    return p
+
+
+# CP-14 (R75) : liste des initiés (MAR).
+def _insiders(engine, q):
+    return {"inities": engine.liste_inities()}
+
+
+# CP-15/16 (R83) : le dernier risk case ouvert (id déterministe RC-000N) / un case par id.
+def _open_risk_case(engine, q):
+    if not engine.risk_cases:
+        raise CpsiError("aucun risk case")
+    cid = max(engine.risk_cases, key=lambda k: int(k.split("-")[1]))
+    return engine.risk_cases[cid]
+
+
+def _risk_case(engine, q):
+    c = engine.risk_cases.get(q["id"])
+    if c is None:
+        raise CpsiError(f"risk case inconnu : {q['id']}")
+    return c
+
+
+# CP-17 (R39) : reporting SLA des cases (mesure, ne bloque pas).
+def _reporting(engine, q):
+    return engine.reporting_cases(q.get("sla_jours", 30))
+
+
 QUERIES = {"score": _score, "segmentation": _segmentation,
            "compliance_catalogue": _compliance_catalogue, "rules": _rules,
            "client_groups": _client_groups, "groups": _groups,
-           "evaluate_scenario": _evaluate_scenario, "alerts": _alerts}
+           "evaluate_scenario": _evaluate_scenario, "alerts": _alerts,
+           "sandbox_simulate": _sandbox_simulate, "propose_param": _propose_param,
+           "proposition": _proposition, "insiders": _insiders,
+           "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting}
 
 
 def main():

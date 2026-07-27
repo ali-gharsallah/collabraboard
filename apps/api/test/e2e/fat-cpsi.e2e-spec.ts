@@ -131,4 +131,82 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     expect(typeof mien.score).toBe("number");
     console.log("CP-12 PASS — signal", mien.statut, "score", mien.score);
   });
+
+  it("CP-09 [R70] bac à sable : simulation dry-run, rapport d'impact, AUCUNE mutation", async () => {
+    const nAvant = await prisma.cpsiEvent.count({ where: { tenantId: A } });
+    const sim = await request(http).post(`/v1/cpsi/sandbox/simulate`).set(bearer(A, U, "CO"))
+      .send({ changements: { half_life_jours: 90 } });
+    expect(sim.status).toBe(201);
+    expect(sim.body).toHaveProperty("delta_moyen");
+    expect(sim.body).toHaveProperty("franchissements");
+    const nApres = await prisma.cpsiEvent.count({ where: { tenantId: A } });
+    expect(nApres).toBe(nAvant);                                          // dry-run : rien persisté
+    const ko = await request(http).post(`/v1/cpsi/sandbox/simulate`).set(bearer(A, U, "CO")).send({ changements: { param_bidon: 1 } });
+    expect(ko.status).toBe(400);                                          // default-deny paramètre inconnu
+    console.log("CP-09 PASS — dry-run sans mutation, paramètre inconnu refusé");
+  });
+
+  let propId = "";
+  it("CP-10 [R69] IA propose, humain adopte ; rejet exige une motivation", async () => {
+    const prop = await request(http).post(`/v1/cpsi/params/proposals`).set(bearer(A, U, "CO"))
+      .send({ chemin: "half_life_jours", valeur: 90, justification: "réduire la mémoire des signaux" });
+    expect(prop.status).toBe(201);
+    expect(prop.body.statut).toBe("EN_ATTENTE");
+    propId = prop.body.id;
+    const adop = await request(http).post(`/v1/cpsi/params/proposals/${propId}/adopt`).set(bearer(A, U, "CO"));
+    expect(adop.body.statut).toBe("ADOPTEE");
+    // Une seconde proposition, rejetée SANS motivation → refus (R69)
+    const p2 = await request(http).post(`/v1/cpsi/params/proposals`).set(bearer(A, U, "CO")).send({ chemin: "half_life_jours", valeur: 120 });
+    const koRej = await request(http).post(`/v1/cpsi/params/proposals/${p2.body.id}/reject`).set(bearer(A, U, "CO")).send({});
+    expect(koRej.status).toBe(400);
+    const okRej = await request(http).post(`/v1/cpsi/params/proposals/${p2.body.id}/reject`).set(bearer(A, U, "CO")).send({ motivation: "hors politique" });
+    expect(okRej.body.statut).toBe("REJETEE");
+    console.log("CP-10 PASS — adopté", propId, "; rejet sans motivation refusé");
+  });
+
+  it("CP-13 [R82] rétroaction faux-positif tracée", async () => {
+    const fp = await request(http).post(`/v1/cpsi/false-positives`).set(bearer(A, U, "CO")).send({ client: cid, scenario: "SC_SCORE" });
+    expect(fp.status).toBe(201);
+    expect(fp.body.declare).toBe(true);
+    console.log("CP-13 PASS — faux positif déclaré");
+  });
+
+  it("CP-14 [R75] insider MAR : habilitation par rôle du jeton, motif obligatoire", async () => {
+    const ko = await request(http).post(`/v1/cpsi/clients/${cid}/insider`).set(bearer(A, U, "RM")).send({ motif: "test" });
+    expect(ko.status).toBe(403);                                          // RM hors roles_insider → refus
+    const koMotif = await request(http).post(`/v1/cpsi/clients/${cid}/insider`).set(bearer(A, U, "CO")).send({});
+    expect(koMotif.status).toBe(400);                                     // motif obligatoire
+    const ok = await request(http).post(`/v1/cpsi/clients/${cid}/insider`).set(bearer(A, U, "CO")).send({ motif: "figure sur liste MAR", instrument: "ACME" });
+    expect(ok.status).toBe(201);
+    expect(ok.body.inities).toContain(cid);
+    console.log("CP-14 PASS — RM refusé (403), CO habilité, motif obligatoire");
+  });
+
+  let rcId = "";
+  it("CP-15 [R83] ouvrir un risk case depuis des alertes d'un même client", async () => {
+    const rc = await request(http).post(`/v1/cpsi/risk-cases`).set(bearer(A, U, "CO"))
+      .send({ alertes: [{ client: cid, scenario: "SC_SCORE" }] });
+    expect(rc.status).toBe(201);
+    expect(rc.body.etat).toBe("NOUVELLE");
+    expect(rc.body.client).toBe(cid);
+    rcId = rc.body.id;
+    console.log("CP-15 PASS — case", rcId, "NOUVELLE");
+  });
+
+  it("CP-16 [R83/R7] transitions : motif obligatoire pour clore/escalader", async () => {
+    await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "prendre_en_charge" }).expect(201);
+    const koMotif = await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "clore" });
+    expect(koMotif.status).toBe(400);                                     // motif obligatoire (R7)
+    const ok = await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "clore", motif: "faux positif confirmé" });
+    expect(ok.body.etat).toBe("CLOTUREE");
+    console.log("CP-16 PASS — clôture refusée sans motif, acceptée avec");
+  });
+
+  it("CP-17 [R39] reporting SLA des cases : mesure sans bloquer", async () => {
+    const g = await request(http).get(`/v1/cpsi/risk-cases/reporting?slaJours=30`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    expect(g.body).toHaveProperty("par_etat");
+    expect(g.body.par_etat.CLOTUREE).toBeGreaterThanOrEqual(1);
+    console.log("CP-17 PASS — reporting par état", JSON.stringify(g.body.par_etat));
+  });
 });
