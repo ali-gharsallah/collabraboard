@@ -135,7 +135,8 @@ DO $$ DECLARE t text; BEGIN
     'olivia_conversations', 'olivia_messages', 'olivia_proposals', -- Olivia v1 (R253→R257)
     'offboarding_files', 'offboarding_sensibles',         -- Offboarding (R267→R271)
     'review_deadlines',                                   -- Échéances de review (R272→R275)
-    'coc_files', 'coc_config_versions'                    -- Cycle de vie CoC (R276→R278)
+    'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
+    'olivia_tools'                                        -- Olivia v2 R264 (registre d'outils)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -181,6 +182,12 @@ DO $$ BEGIN
      AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'motif_si_non_retenu') THEN
     ALTER TABLE coc_files ADD CONSTRAINT motif_si_non_retenu
       CHECK (statut <> 'NON_RETENU' OR motif_cloture IS NOT NULL);
+  END IF;
+  -- R264 (Olivia v2) : le contrat d'outil n'admet QUE GET|PROPOSE — au niveau SQL aussi.
+  IF to_regclass('olivia_tools') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'outil_methode_contrat') THEN
+    ALTER TABLE olivia_tools ADD CONSTRAINT outil_methode_contrat
+      CHECK (methode IN ('GET','PROPOSE'));
   END IF;
 END $$;
 

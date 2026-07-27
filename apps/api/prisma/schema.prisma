@@ -1193,3 +1193,16 @@ model CocFile {
   @@index([tenantId, clientId])
   @@map("coc_files")
 }
+
+model OliviaTool {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  code         String
+  endpointRef  String   @map("endpoint_ref")              // DOIT appartenir à la liste blanche livrée (R264)
+  methode      String                                     // GET | PROPOSE (CHECK SQL)
+  schemaEntree Json     @map("schema_entree")
+  schemaSortie Json     @map("schema_sortie")
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, code])
+  @@map("olivia_tools")
+}

@@ -86,6 +86,12 @@ jobs:
           ! grep -rn "api.anthropic.com" apps/web/src apps/web/index.html
           ! grep -rn --include="*.ts" --include="*.tsx" "Tu es Olivia" apps/api/src apps/web/src
 
+      # ── Olivia v2 R264 / B.7 critère 2 (BLOQUANT) : le build échoue si un outil livré
+      #    pointe hors de la liste blanche, ou si la liste admet autre chose que
+      #    LECTURE (GET) + PROPOSITION (création olivia_proposals, R254). ──
+      - name: "1c · R264 — liste blanche d'outils (build rouge hors liste)"
+        run: node apps/api/scripts/verifier-liste-blanche-outils.js
+
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
       # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans
       # le dépôt (`jest` sortirait en « No tests found »). La caractérisation des règles est
