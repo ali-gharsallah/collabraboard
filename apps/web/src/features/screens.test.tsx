@@ -193,6 +193,12 @@ describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), ale
           impact: { delta_moyen: -4, clients_evalues: 10, nouveaux_high: 0, charge_revues_induite: 1, franchissements: [] } }])),
       http.get("*/v1/cpsi/health", () => HttpResponse.json({ contractVersion: "1", profondeurJournal: 5, dernierRejeuMs: 3, rejeuHorsSeuil: false, configEnVigueur: "base" })),
       http.post("*/v1/cpsi/sandbox/simulate", () => HttpResponse.json({ delta_moyen: -2.1, clients_evalues: 10, nouveaux_high: 0, charge_revues_induite: 0, franchissements: [] })),
+      http.get("*/v1/cpsi/params/history", () => HttpResponse.json({ historique: [
+        { type: "cpsi.param.applied", at: "2026-07-20T00:00:00Z", chemin: "half_life_jours", ancienne: 180, nouvelle: 90,
+          par: "cosr-1", dateVigueur: "2026-07-27T00:00:00Z", motif: "calibrage" }] })),
+      http.get("*/v1/cpsi/groups", () => HttpResponse.json({ groupes: [
+        { id: "PEP", label: "Clients PEP", effectif: 12, bareme: { half_life_jours: 90 } },
+        { id: "STD", label: "Standard", effectif: 90, bareme: null }] })),
     );
     render(<CpsiParam/>);
     expect(await screen.findByText(/journal : 5 évts/)).toBeInTheDocument();                  // fetches stabilisés (santé mockée)
@@ -527,5 +533,60 @@ describe("FE-AMLWS — AML Investigation Workspace : un écran, 4 onglets, rien 
     fireEvent.click(await screen.findByRole("button", { name: /Risk cases — 1/ }));
     expect(await screen.findByText(/au-delà du SLA — notifié, rien de bloqué \(R39\)/)).toBeInTheDocument();
     expect(screen.getByText("EN_ANALYSE")).toBeInTheDocument();
+  });
+});
+
+describe("FE-CPSI-P2 — cpsiparam enrichi : historique du journal, application à date verrouillée, héritage des groupes (PA-01/03/04/06)", () => {
+  const handlers = () => [
+    http.get("*/v1/cpsi/rules", () => HttpResponse.json({ asOf: null, regles: ["Half-life : 180 jours (R64)."] })),
+    http.get("*/v1/cpsi/params/proposals", () => HttpResponse.json([
+      { id: "PROP-9", auteur: "olivia", chemin: "half_life_jours", valeur: 90, justification: "adoptée Olivia", statut: "EN_ATTENTE",
+        impact: { delta_moyen: -4, clients_evalues: 10, nouveaux_high: 0, charge_revues_induite: 1, franchissements: [] } }])),
+    http.get("*/v1/cpsi/health", () => HttpResponse.json({ contractVersion: "1", profondeurJournal: 7, dernierRejeuMs: 2, rejeuHorsSeuil: false, configEnVigueur: "base" })),
+    http.get("*/v1/cpsi/params/history", () => HttpResponse.json({ historique: [
+      { type: "cpsi.param.applied", at: "2026-07-20T00:00:00Z", chemin: "half_life_jours", ancienne: 180, nouvelle: 90,
+        par: "cosr-0001", dateVigueur: "2026-08-03T00:00:00Z", motif: "mémoire des signaux" }] })),
+    http.get("*/v1/cpsi/groups", () => HttpResponse.json({ groupes: [
+      { id: "PEP", label: "Clients PEP", effectif: 12, bareme: { half_life_jours: 90 } },
+      { id: "STD", label: "Standard", effectif: 88, bareme: null }] })),
+  ];
+
+  it("PA-03/PA-04 : l'historique du JOURNAL s'affiche (ancienne→nouvelle, vigueur, qui) et l'héritage de groupe est visible", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<CpsiParam/>);
+    expect(await screen.findByText(/journal : 7 évts/)).toBeInTheDocument();
+    expect((await screen.findAllByText((_, el) => el?.tagName === "TD" && (el.textContent ?? "").includes("180 → 90"))).length).toBeGreaterThanOrEqual(1); // ancienne → nouvelle
+    expect(screen.getByText("2026-08-03")).toBeInTheDocument();                          // date de VIGUEUR distincte
+    expect(screen.getAllByText(/hérite du global/).length).toBeGreaterThanOrEqual(2);   // surchargé ET non surchargé
+    expect(screen.getByText(/sauf/)).toBeInTheDocument();                                // surcharge PEP visible (R72)
+    expect(screen.getByText(/half_life_jours = 90/)).toBeInTheDocument();
+  });
+
+  it("PA-02bis/PA-06 : « Appliquer » subit le MÊME verrou R70 que « Proposer » ; la proposition pré-remplit le bac « à simuler »", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<CpsiParam/>);
+    await screen.findByText(/journal : 7 évts/);
+    expect(screen.getByRole("button", { name: /Appliquer \(R68, motivé\)/ })).toBeDisabled();     // verrouillé sans simulation
+    fireEvent.click(await screen.findByRole("button", { name: /Ouvrir dans le bac \(à simuler\)/ }));
+    expect((screen.getByPlaceholderText(/chemin/i) as HTMLInputElement).value).toBe("half_life_jours");  // PA-06 : pré-rempli
+    expect((screen.getByPlaceholderText(/valeur/i) as HTMLInputElement).value).toBe("90");
+    expect(screen.getAllByText(/à simuler/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("button", { name: /Appliquer \(R68, motivé\)/ })).toBeDisabled();     // TOUJOURS verrouillé (rien simulé)
+  });
+
+  it("PA-05 : cpsiguide reste en lecture seule STRICTE — l'export est l'écran lui-même, aucune requête non-GET", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/cpsi/rules", () => HttpResponse.json({ asOf: null, regles: ["Half-life : 180 jours."] })),
+      http.get("*/v1/cpsi/compliance-catalogue", () => HttpResponse.json({ asOf: null, catalogue: [] })),
+    );
+    // AUCUN handler non-GET : la moindre écriture ferait échouer MSW (onUnhandledRequest:error)
+    render(<CpsiGuide/>);
+    await screen.findByText(/Half-life : 180 jours/);
+    await new Promise((r) => setTimeout(r, 30));                                  // les 2 fetches stabilisés (re-render)
+    expect(screen.getByText(/Half-life : 180 jours/)).toBeInTheDocument();
+    expect(screen.getByText(/Exporter \(PDF\)/)).toBeInTheDocument();
   });
 });

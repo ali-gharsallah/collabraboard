@@ -268,6 +268,50 @@ export class CpsiService {
     return this.lire(ctx, "propositions", {});
   }
 
+  // ── PC-15 (extension ratifiée P2) : APPLIQUER un paramètre = un ÉVÉNEMENT du journal (R68/R249).
+  //    Date de vigueur immédiate ou FUTURE (PA-03) : l'événement est journalisé maintenant, sa prise
+  //    d'effet attend sa date — le rejeu à J+n l'applique, le rejeu d'aujourd'hui l'ignore. La voie
+  //    normale reste proposition→simulation→adoption (R69/R70) ; l'application directe est l'acte
+  //    R68 final, motivé, réservé (CO_SR/ADMIN). Validée par rejeu À LA DATE DE VIGUEUR avant persistance. ──
+  async appliquerParametre(ctx: Ctx, dto: { chemin?: string; valeur?: any; dateVigueur?: string; motif?: string }) {
+    if (!["CO_SR", "ADMIN"].includes(ctx.role))
+      throw new ForbiddenException("R68 : appliquer un paramètre est un acte CO_SR/ADMIN");
+    if (!dto?.chemin || dto?.valeur === undefined) throw new BadRequestException("chemin et valeur requis");
+    if (!dto?.motif?.trim()) throw new BadRequestException("R7 : appliquer un paramètre exige un motif");
+    const at = new Date().toISOString();
+    const vigueur = dto.dateVigueur ?? at;
+    const candidat = { type: "cpsi.param.applied", at, chemin: dto.chemin, valeur: dto.valeur,
+      date_vigueur: vigueur, par: ctx.userId, motif: dto.motif.trim() };
+    // Validation par rejeu À la date de vigueur (le candidat doit s'appliquer proprement)
+    const essai = await this.call(ctx, "rules", {}, { asOf: vigueur, candidat });
+    if (essai.erreur_typee) throw new UnprocessableEntityException(`CPSI_PARAM_INVALIDE: ${essai.erreur_typee.message}`);
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.param.applied",
+      clientId: "PARAM", at, payload: { chemin: dto.chemin, valeur: dto.valeur, date_vigueur: vigueur,
+        par: ctx.userId, motif: dto.motif.trim() } } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_PARAM_APPLIED", `${dto.chemin}@${vigueur}`);
+    return { chemin: dto.chemin, valeur: dto.valeur, dateVigueur: vigueur };
+  }
+
+  // ── 2.1-4 : l'HISTORIQUE des versions est la LECTURE du journal (qui, quand, ancienne→nouvelle,
+  //    date d'effet) — aucune table neuve, le journal append-only fait foi. ──
+  async historiqueParams(ctx: Ctx) {
+    const evs = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId,
+      type: { in: ["cpsi.param.proposed", "cpsi.param.adopted", "cpsi.param.rejected", "cpsi.param.applied"] } },
+      orderBy: { id: "asc" } });
+    const enVigueur: Record<string, any> = {};
+    const lignes = evs.map((e: any) => {
+      const p = e.payload as any;
+      const chemin = p.chemin ?? null;
+      const ancienne = chemin ? (enVigueur[chemin] ?? null) : null;
+      if (chemin && (e.type === "cpsi.param.applied" || e.type === "cpsi.param.adopted"))
+        enVigueur[chemin] = p.valeur;
+      return { type: e.type, at: e.at, chemin, ancienne, nouvelle: p.valeur ?? null,
+        par: p.par ?? p.humain ?? p.auteur ?? null, dateVigueur: p.date_vigueur ?? e.at,
+        motif: p.motif ?? p.justification ?? p.motivation ?? null };
+    });
+    return { historique: lignes.reverse() };
+  }
+
   // ── CP-13 (R82) : rétroaction faux-positif (pénalité escaladante, tracée). ──
   async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string; motif?: string }) {
     if (!dto?.client || !dto?.scenario) throw new BadRequestException("client et scenario requis");
@@ -345,6 +389,8 @@ export class CpsiController {
   @Post("params/proposals")        proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // CP-10
   @Post("params/proposals/:pid/adopt")  adopter(@Req() r: any, @Param("pid") pid: string) { return this.svc.adopter(r.ctx, pid); }                     // CP-10
   @Post("params/proposals/:pid/reject") rejeter(@Req() r: any, @Param("pid") pid: string, @Body() b: any) { return this.svc.rejeter(r.ctx, pid, b?.motivation); } // CP-10
+  @Post("params/apply")            appliquer(@Req() r: any, @Body() b: any) { return this.svc.appliquerParametre(r.ctx, b ?? {}); }       // PC-15 (P2)
+  @Get("params/history")           historique(@Req() r: any) { return this.svc.historiqueParams(r.ctx); }                                  // 2.1-4 (P2)
   @Post("false-positives")         fauxPositif(@Req() r: any, @Body() b: any) { return this.svc.declarerFauxPositif(r.ctx, b); }                        // CP-13
   @Post("clients/:cid/insider")      insider(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.taguerInsider(r.ctx, cid, b); }     // CP-14
   @Post("clients/:cid/insider/lift") insiderLift(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.leverInsider(r.ctx, cid, b); }   // CP-14

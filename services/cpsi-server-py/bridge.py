@@ -31,7 +31,9 @@ def _dt(iso):
 
 
 # Rejeu : chaque type d'événement → une méthode du moteur (mêmes arguments que le canon).
-def _replay(engine, journal):
+# `as_of` (PC-15/PA-03) : une application de paramètre à date de vigueur FUTURE n'affecte le
+# calcul qu'à partir d'elle — l'événement existe au journal, sa PRISE D'EFFET attend sa date.
+def _replay(engine, journal, as_of=None):
     for ev in journal:
         t = ev["type"]
         at = _dt(ev["at"])
@@ -65,6 +67,12 @@ def _replay(engine, journal):
             engine.documenter_risk_case(ev["case"], ev["acteur"], ev["note"], at)
         elif t == "cpsi.case_proposal.emitted":
             pass  # R252 : artefact d'émission vers riskcases (R133-R136) — aucun état moteur
+        elif t == "cpsi.param.applied":
+            # PC-15 (extension ratifiée P2) : l'application est un ÉVÉNEMENT du journal (R68/R249).
+            vigueur = _dt(ev["date_vigueur"])
+            if as_of is None or vigueur <= as_of:
+                engine.modifier_parametre(ev["chemin"], ev["valeur"], ev["par"], vigueur,
+                                          note=ev.get("motif") or "application R68 (PC-15)")
         else:
             raise CpsiError(f"type d'événement de rejeu inconnu : {t} (default-deny)")
 
@@ -225,7 +233,7 @@ def main():
         engine = OliveCpsiEngine(env.get("config") or {})
         journal = env.get("journal") or []
         t0 = time.perf_counter()
-        _replay(engine, journal)                                          # journal filtré ≤ as_of par la porte (R48)
+        _replay(engine, journal, _dt(env["as_of"]) if env.get("as_of") else None)  # journal filtré ≤ as_of par la porte (R48)
         engine._journal_porte = journal                                   # PC-14 : la timeline PROJETTE le journal rejoué
         duree_ms = round((time.perf_counter() - t0) * 1000, 3)           # R250 : jauge d'hydratation
         commande = env.get("commande")

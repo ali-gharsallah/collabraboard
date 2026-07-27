@@ -46,6 +46,8 @@ export function CpsiGuide() {
     </div>;
 
   return <div>
+    <button onClick={() => window.print()} style={{ float: "right", fontSize: 12, padding: "6px 12px" }}>
+      Exporter (PDF) — le document remis à l&apos;auditeur est exactement l&apos;écran</button>
     {isDemo && <DemoModeBanner/>}
     <h3>CPSI — Guide (règles en vigueur, vocabulaire, explicabilité)</h3>
     <p style={{ fontSize: tokens.font.sm, color: tokens.color.muted }}>Ce guide n'est pas une page figée : les règles et le

@@ -24,6 +24,18 @@ AW-08 (scope RM/ARM appliqué dans la porte CPSI — matrice A.3). Écarts : ong
 volumétrie PC-13 (délai hit→MROS chez riskcases, PC-12 — porte de lecture à ratifier) ;
 pré-analyse C3 exige un risk case ancré (écart d'ancrage consigné à l'étape 6 Olivia).
 
+**PARTIE 2 LIVRÉE (2026-07-27)** — **PC-15 implémenté** : `cpsi.param.applied` est un événement
+du journal `cpsi_events` (R68/R249) avec **date de vigueur** immédiate ou future — l'événement
+est journalisé maintenant, sa PRISE D'EFFET attend sa date (PA-03 e2e : rien aujourd'hui,
+appliqué au rejeu J+8) ; validé par rejeu À la date de vigueur avant persistance ; motivé R7,
+réservé CO_SR/ADMIN. **Historique 2.1-4** = la LECTURE du journal (`GET /params/history` :
+qui, quand, ancienne→nouvelle, date d'effet — aucune table neuve). Écran `CpsiParam` enrichi :
+« Appliquer (R68, motivé) » sous le MÊME verrou R70 que « Proposer », historique rendu, héritage
+des barèmes de groupe (« hérite du global sauf … », PA-04), proposition « Ouvrir dans le bac
+(à simuler) » (PA-06/OL-20). `CpsiGuide` : « Exporter (PDF) » = l'écran lui-même (window.print,
+zéro requête — PA-05 prouvé MSW). PA-01 : règles en clair (existant) + barème daté via
+l'historique — la formule PAR CHAMP reste portée par `rules` (le moteur décrit ses règles).
+
 **PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
 intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
 listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·

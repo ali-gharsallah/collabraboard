@@ -396,3 +396,49 @@ describe("FAT AML WORKSPACE — actions du drill (AW-05/06/08, canon vague pilot
     console.log("AW-08 PASS — CO tenant entier, RM scopé serveur");
   });
 });
+
+describe("FAT CPSI — PC-15 : l'application d'un paramètre est un ÉVÉNEMENT du journal (P2, PA-03)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const COSR = randomUUID(), CO = randomUUID();
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("PC-15 [R68/PA-03] application à date de vigueur : la config d'AUJOURD'HUI est inchangée, le rejeu à J+8 l'applique, l'historique la montre", async () => {
+    // Motif obligatoire (R7) et rôle réservé
+    await request(http).post("/v1/cpsi/params/apply").set(bearer(T, CO, "CO"))
+      .send({ chemin: "half_life_jours", valeur: 90, motif: "x" }).expect(403);
+    await request(http).post("/v1/cpsi/params/apply").set(bearer(T, COSR, "CO_SR"))
+      .send({ chemin: "half_life_jours", valeur: 90 }).expect(400);
+    // Application avec mise en vigueur J+7
+    const j7 = new Date(Date.now() + 7 * 86400000).toISOString();
+    await request(http).post("/v1/cpsi/params/apply").set(bearer(T, COSR, "CO_SR"))
+      .send({ chemin: "half_life_jours", valeur: 90, dateVigueur: j7, motif: "réduire la mémoire des signaux" }).expect(201);
+    // AUJOURD'HUI : la config courante est INCHANGÉE (l'événement existe, sa prise d'effet attend)
+    const now = (await request(http).get("/v1/cpsi/rules").set(bearer(T, COSR, "CO_SR"))).body;
+    expect(JSON.stringify(now.regles)).toContain("180");                     // half-life par défaut toujours servie
+    expect(JSON.stringify(now.regles)).not.toContain("90 jours");
+    // Le REJEU à J+8 utilise la NOUVELLE valeur (PA-03)
+    const j8 = new Date(Date.now() + 8 * 86400000).toISOString();
+    const futur = (await request(http).get(`/v1/cpsi/rules?asOf=${encodeURIComponent(j8)}`).set(bearer(T, COSR, "CO_SR"))).body;
+    expect(JSON.stringify(futur.regles)).toContain("90");
+    // L'historique = la LECTURE du journal : auteur, valeurs, date d'effet
+    const h = (await request(http).get("/v1/cpsi/params/history").set(bearer(T, COSR, "CO_SR"))).body;
+    const entree = h.historique.find((x: any) => x.type === "cpsi.param.applied" && x.chemin === "half_life_jours");
+    expect(entree.par).toBe(COSR);
+    expect(entree.nouvelle).toBe(90);
+    expect(entree.dateVigueur).toBe(j7);
+    expect(entree.motif).toContain("mémoire");
+    // Application IMMÉDIATE : prend effet tout de suite (ancienne → nouvelle tracée)
+    await request(http).post("/v1/cpsi/params/apply").set(bearer(T, COSR, "CO_SR"))
+      .send({ chemin: "poids_signaux.hit_screening", valeur: 9, motif: "calibrage pilote" }).expect(201);
+    const h2 = (await request(http).get("/v1/cpsi/params/history").set(bearer(T, COSR, "CO_SR"))).body;
+    expect(h2.historique[0].chemin).toBe("poids_signaux.hit_screening");
+    console.log("PC-15 PASS — vigueur J+7 : rien aujourd'hui, appliqué à J+8, historique complet");
+  });
+});
