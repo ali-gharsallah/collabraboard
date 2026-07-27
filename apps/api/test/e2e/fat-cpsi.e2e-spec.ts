@@ -223,4 +223,17 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     expect(g.body.par_etat.CLOTUREE).toBeGreaterThanOrEqual(1);
     console.log("CP-17 PASS — reporting par état", JSON.stringify(g.body.par_etat));
   });
+
+  it("PC-08 [R251] port optionnel : moteur absent ⇒ 503 typé, les autres routes intactes", async () => {
+    const sauve = process.env.CPSI_DIR;
+    process.env.CPSI_DIR = "/nonexistent-cpsi-dir";                       // simule le moteur indisponible
+    try {
+      const cpsi = await request(http).get(`/v1/cpsi/clients/${cid}/score`).set(bearer(A, U, "CO"));
+      expect(cpsi.status).toBe(503);                                     // refus gracieux typé
+      expect(JSON.stringify(cpsi.body)).toContain("CPSI_GATE_UNAVAILABLE");
+      const horsCpsi = await request(http).get(`/v1/tasks`).set(bearer(A, U, "CO"));
+      expect(horsCpsi.status).toBe(200);                                 // route non-CPSI intacte
+    } finally { process.env.CPSI_DIR = sauve; }
+    console.log("PC-08 PASS — CPSI 503 typé, route non-CPSI 200");
+  });
 });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
 import { execFile } from "child_process";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
@@ -18,17 +18,25 @@ import { AuditService } from "../../common/audit.service";
  */
 
 type Ctx = { tenantId: string; userId: string; role: string };
-const CPSI_DIR = process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
+const cpsiDir = () => process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
 const CONTRACT_VERSION = "1";                                             // R248 : version d'enveloppe
+
+// R251 : le pont est un PORT optionnel. Python absent / non exécutable / timeout ⇒ rejet (mappé en
+// 503 typé par la porte, jamais un 500 opaque). `GateUnavailable` distingue l'indisponibilité de la
+// porte d'une erreur métier typée du moteur.
+class GateUnavailable extends Error { constructor(public cause: string) { super(cause); } }
 
 // Invoque le pont Python en sous-processus avec l'ENVELOPPE VERSIONNÉE (R248). Retourne l'enveloppe
 // de réponse {contract_version, resultat | erreur_typee, meta}. Jamais d'état ici (lecture pure).
-function runBridge(env: any): Promise<any> {
+function runBridge(env: any, timeoutMs: number): Promise<any> {
   return new Promise((resolve, reject) => {
-    const child = execFile("python3", ["bridge.py"], { cwd: CPSI_DIR, maxBuffer: 16 * 1024 * 1024 },
-      (err, stdout) => {
-        if (err) return reject(err);
-        try { resolve(JSON.parse(stdout)); } catch (e) { reject(e); }
+    const child = execFile("python3", ["bridge.py"], { cwd: cpsiDir(), maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs },
+      (err: any, stdout) => {
+        if (err) {                                                       // ENOENT (python absent), timeout (killed), exit≠0
+          const cause = err.killed ? `timeout ${timeoutMs}ms` : (err.code === "ENOENT" ? "python3 introuvable" : `échec du moteur (${err.code ?? err.message})`);
+          return reject(new GateUnavailable(cause));
+        }
+        try { resolve(JSON.parse(stdout)); } catch { reject(new GateUnavailable("réponse illisible du moteur")); }
       });
     child.stdin!.end(JSON.stringify(env));
   });
@@ -57,8 +65,14 @@ export class CpsiService {
     const tousEvts = await this.journal(ctx.tenantId);
     const base = tousEvts.filter((e: any) => e.at <= effAt);             // R48 : rejeu STRICT jusqu'à l'instant de lecture
     const journal = opts.candidat ? [...base, opts.candidat] : base;
-    const rep = await runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt,
-      config: cfg, journal, commande, payload });
+    const timeout = cfg.cpsi_gate_timeout_ms ?? 5000;                     // R251 : timeout = paramètre tenant
+    let rep: any;
+    try {
+      rep = await runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt, config: cfg, journal, commande, payload }, timeout);
+    } catch (e) {
+      if (e instanceof GateUnavailable) throw new ServiceUnavailableException(`CPSI_GATE_UNAVAILABLE: ${e.cause}`);  // R251 : refus gracieux typé
+      throw e;
+    }
     // R250/R39 : le dépassement du seuil d'hydratation MESURE et NOTIFIE — jamais un blocage.
     const warn = cfg.cpsi_replay_warn_ms ?? 2000;
     if (rep?.meta?.duree_ms != null && rep.meta.duree_ms > warn)
