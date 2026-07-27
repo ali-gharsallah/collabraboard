@@ -1,0 +1,23 @@
+    BT-01 PASS — soumission DRAFT → PENDING_APPROVAL, événement TRIP_SUBMITTED
+    BT-02 PASS — avis SA sollicitation=INTERDITE attaché, statut inchangé
+    BT-03 PASS — signal KYC_NOT_APPROVED (INFORMATIF), approbation possible
+    BT-04 PASS — KYC non approuvé BLOQUANT → visa refusé (TRIP_KYC_NOT_APPROVED)
+    BT-05 PASS — 2 visas (SUPERIEUR+COMPLIANCE), APPROVED aux deux signatures
+    BT-06 PASS — le voyageur ne vise pas son propre voyage (R13)
+    BT-07 PASS — 2 reports manquants notifiés, rien n'est bloqué
+    BT-08 PASS — certification CROSS_BORDER_AE expirée au 2026-09-10 → signal
+    BT-09 PASS — rejeu au 2026-03-01 : avis V1 (SOUMISE_A_LICENCE), grandfathering respecté
+    BT-10 PASS — révision V2 chaînée (PENDING_APPROVAL), V1 reste APPROVED
+PASS test/e2e/fat-vague14.e2e-spec.ts (5.474 s)
+    ✓ BT-01 [R222] cycle de vie événementiel : DRAFT → PENDING_APPROVAL + TRIP_SUBMITTED (133 ms)
+    ✓ BT-02 [R223] pré-contrôle cross-border par destination ; l'avis ne décide pas (63 ms)
+    ✓ BT-03 [R224] client sans KYC approuvé — INFORMATIF : signal, approbation possible (71 ms)
+    ✓ BT-04 [R224] client sans KYC approuvé — BLOQUANT : le visa échoue (51 ms)
+    ✓ BT-05 [R225/R15] visa uniforme + matrice tenant : 2 visas, APPROVED quand les deux sont signés (66 ms)
+    ✓ BT-06 [R225/R13] auto-approbation interdite (35 ms)
+    ✓ BT-07 [R226/R39] contact reports mesurés, jamais coercés (36 ms)
+    ✓ BT-08 [R228/R237] certification expirée à la date du voyage (51 ms)
+    ✓ BT-09 [R229] rejeu avec grandfathering du référentiel (35 ms)
+    ✓ BT-10 [R230] révision chaînée après approbation ; V1 intacte (69 ms)
+Test Suites: 1 passed, 1 total
+Tests:       10 passed, 10 total

@@ -8,6 +8,7 @@ import { Tasks } from "./tasks/Tasks";
 import { Ports } from "./ports/Ports";
 import { NextBestAction } from "./nba/NextBestAction";
 import { Formations } from "./formations/Formations";
+import { BusinessTrip } from "./businesstrip/BusinessTrip";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -82,6 +83,26 @@ describe("FE-FORM — Formations : catalogue + dossiers depuis l'API (MOD-43)", 
     expect(await screen.findByText(/AML annuelle/)).toBeInTheDocument();       // catalogue tenant (R231)
     expect(await screen.findByText("ASSIGNED")).toBeInTheDocument();           // dossier depuis l'API
     expect(screen.getByRole("button", { name: /Déposer l'attestation/i })).toBeInTheDocument();
+  });
+});
+
+describe("FE-TRIP — Business Trip : liste → détail (avis INTERDITE affiché, l'approbateur décide)", () => {
+  it("affiche l'avis cross-border rouge sans bloquer le panneau visas", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/trips/:id", () => HttpResponse.json({
+        id: "t1", status: "PENDING_APPROVAL", dateStart: "2026-08-01", dateEnd: "2026-08-05", destinations: ["SA"], clients: [], revision: 1,
+        advisories: [{ jurisdiction: "SA", activite: "sollicitation", verdict: "INTERDITE", referentielVersion: "2026-01-01" }],
+        signals: [], visas: [{ role: "DIR", status: "PENDING", signedBy: null, signedAt: null }],
+      })),
+      http.get("*/v1/trips", () => HttpResponse.json([
+        { id: "t1", status: "PENDING_APPROVAL", dateStart: "2026-08-01", dateEnd: "2026-08-05", destinations: ["SA"], clients: [], revision: 1 },
+      ])),
+    );
+    render(<BusinessTrip/>);
+    fireEvent.click(await screen.findByText(/PENDING_APPROVAL/));
+    expect(await screen.findByText("INTERDITE")).toBeInTheDocument();          // avis affiché
+    expect(screen.getByText("DIR")).toBeInTheDocument();                       // panneau visas actif (la décision reste humaine)
   });
 });
 
