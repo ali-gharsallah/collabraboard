@@ -158,6 +158,22 @@ FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed le
 
 **Vague 12 : 3/3 FAT backend + composant FE-WFI. e2e 47 → 50, harnais 425/425, baseline en sync. Zéro invention — l'instance EST le dossier KYC ratifié.** WFI n'est plus FE-05 ; **Tâches** reste FE-05 (pas de service backlog).
 
+## Vague 13 — MOD-43 Formations & Certifications (R231→R238, ratifié « OK pour R222..R238 »)
+
+| Écran / domaine | ID test | Exigence | Ce qui est vérifié | Type | Résultat |
+|---|---|---|---|---|---|
+| Formations | **FO-01** | R231 | Catalogue 100% tenant (A voit, B non) | e2e/FAT | ✅ PASS |
+| Formations | **FO-02** | R232 | Complétion événementielle + attestation GED (AUTO → COMPLETED) | e2e/FAT | ✅ PASS |
+| Formations | **FO-03** | R233/R39 | Rappels J-30/J-7 informatifs, rien bloqué | e2e/FAT | ✅ PASS |
+| Formations | **FO-04** | R234 | Attestations append-only (UPDATE refusé) | e2e/FAT | ✅ PASS |
+| Formations | **FO-05** | R235/R15 | Validation par visa (mode VALIDATED) | e2e/FAT | ✅ PASS |
+| Formations | **FO-06** | R235/R13 | Auto-validation interdite (SELF_FORBIDDEN) | e2e/FAT | ✅ PASS |
+| Formations | **FO-07** | R236 | Visibilité soi/équipe/tout | e2e/FAT | ✅ PASS |
+| Formations | **FO-08** | R238 | Rejeu certifiant (asOf) | e2e/FAT | ✅ PASS |
+| Formations | **FE-FORM** | R231/R232 | Catalogue + dossiers depuis l'API, dépôt attestation | Vitest+RTL+MSW | ✅ PASS |
+
+**Vague 13 : 8/8 FAT backend + composant FE-FORM. e2e 50 → 58, harnais 425/425, baseline régénérée (RLS FORCE sur 3 tables), recette RLS 0 ligne sans GUC.** 3 modèles Prisma nouveaux (dont 2 append-only R234). MOD-75 (Business Trip) suit en Vague 14.
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

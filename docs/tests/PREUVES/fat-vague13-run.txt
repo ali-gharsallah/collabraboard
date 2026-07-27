@@ -1,0 +1,19 @@
+    FO-01 PASS — catalogue tenant : A voit AML_ANNUELLE, B ne le voit pas
+    FO-02 PASS — complétion AUTO → COMPLETED, événement training.completed { docId }
+    FO-03 PASS — rappels J-30 et J-7 émis (2 notifications), rien n'est bloqué
+    FO-04 PASS — 2 attestations conservées, UPDATE refusé (append-only R234)
+    FO-05 PASS — mode VALIDATED : dépôt → IN_PROGRESS/PENDING, visa CF → COMPLETED
+    FO-06 PASS — l'auteur ne valide pas sa propre formation (R13)
+    FO-07 PASS — RM voit le sien, BRM voit son équipe (RM1,RM2), CO voit tout
+    FO-08 PASS — au 2025-05-20 : NON certifié, historique (2 lignes) conservé
+PASS test/e2e/fat-vague13.e2e-spec.ts (5.514 s)
+    ✓ FO-01 [R231] le référentiel de formation est 100% tenant (aucun type en dur) (75 ms)
+    ✓ FO-02 [R232] complétion événementielle avec attestation (mode AUTO → COMPLETED) (70 ms)
+    ✓ FO-03 [R233/R39] rappels J-x informatifs, aucun blocage (54 ms)
+    ✓ FO-04 [R234] attestations append-only : deux présentes, UPDATE refusé (63 ms)
+    ✓ FO-05 [R235/R15] validation par visa (mode VALIDATED) (46 ms)
+    ✓ FO-06 [R235/R13] auto-validation interdite (42 ms)
+    ✓ FO-07 [R236] visibilité par profil : soi / équipe / tout (26 ms)
+    ✓ FO-08 [R238] rejeu certifiant depuis l'historique append-only (33 ms)
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total

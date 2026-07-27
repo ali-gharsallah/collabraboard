@@ -834,6 +834,49 @@ CREATE TABLE "mudaraba_distributions" (
     CONSTRAINT "mudaraba_distributions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "training_assignments" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "formation_code" TEXT NOT NULL,
+    "echeance" TEXT NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'ASSIGNED',
+    "attestation_doc_id" TEXT,
+    "visa_statut" TEXT,
+    "vise_par" UUID,
+    "vise_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "training_assignments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "certifications" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "obtenue_le" TEXT NOT NULL,
+    "expire_le" TEXT NOT NULL,
+    "doc_id" TEXT,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "certifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "training_attestations" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "formation_code" TEXT NOT NULL,
+    "doc_id" TEXT NOT NULL,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "training_attestations_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -1019,6 +1062,15 @@ CREATE INDEX "waqf_distributions_tenant_id_waqf_id_idx" ON "waqf_distributions"(
 
 -- CreateIndex
 CREATE INDEX "mudaraba_distributions_tenant_id_client_id_idx" ON "mudaraba_distributions"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE INDEX "training_assignments_tenant_id_user_id_idx" ON "training_assignments"("tenant_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "certifications_tenant_id_user_id_code_idx" ON "certifications"("tenant_id", "user_id", "code");
+
+-- CreateIndex
+CREATE INDEX "training_attestations_tenant_id_user_id_idx" ON "training_attestations"("tenant_id", "user_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -141,6 +141,21 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 12 : 3 / 3 (100 %).** FE-WFI n'est plus FE-05 (câblé au canon KYC).
 
+## Exigences Vague 13 — MOD-43 Formations & Certifications (R231→R238, couverture FAT)
+
+| # | Exigence (règle) | FAT | Test technique | Statut |
+|---|---|---|---|---|
+| 62 | R231 : référentiel de formation 100% tenant (aucun type en dur) | FO-01 | formations.catalog + e2e | ✅ |
+| 63 | R232 : complétion événementielle + attestation GED | FO-02 | e2e (training.completed { docId }) | ✅ |
+| 64 | R233/R39 : rappels J-x informatifs, aucun blocage | FO-03 | e2e (tick J-30/J-7) | ✅ |
+| 65 | R234 : attestations & certifications append-only | FO-04 | trigger audit_immutable + e2e (UPDATE refusé) | ✅ |
+| 66 | R235/R15 : validation par visa (mode VALIDATED) | FO-05 | e2e (dépôt → visa → COMPLETED) | ✅ |
+| 67 | R235/R13 : l'auteur ne valide pas sa propre complétion | FO-06 | e2e (TRAINING_SELF_VALIDATION_FORBIDDEN) | ✅ |
+| 68 | R236 : visibilité par profil (soi/équipe/tout) | FO-07 | e2e (RM/BRM/CO) | ✅ |
+| 69 | R238 : rejeu certifiant depuis l'historique append-only | FO-08 | e2e (asOf) | ✅ |
+
+**Couverture des exigences Vague 13 : 8 / 8 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47

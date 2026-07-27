@@ -50,6 +50,7 @@ Couverture actuelle : **~31 / 73 ≈ 42 %** des écrans démo **réellement câb
 | ✅ **FAIT (Vague 10)** Ports (intégrations) | `Ports` (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | `GET /v1/ports`, `GET\|POST /v1/ports/:id/health` |
 | ✅ **FAIT (Vague 10)** NBA (Next Best Action) | `NextBestAction` (gestes R187 en lecture, cadre R44 ; décision non ratifiée → désactivée) | `GET /v1/crm/clients/:id/gestes` |
 | ✅ **FAIT (Vague 12)** Workflow Instances | `WorkflowInstances` **réel** — projection du workflow gouverné KYC (steps + visas R15 + timeline). `<VisaBadge>` composant unique. | `GET /v1/workflow-instances`, `/:id`, `/:id/events` |
+| ✅ **FAIT (Vague 13)** Formations & Certifications (MOD-43) | `Formations` — catalogue tenant (R231), complétion événementielle + attestation GED (R232), visa (R235), rejeu certifiant (R238) | `GET/POST /v1/formations/*` |
 | ⚠️ **FE-05** Tâches | pas de service backlog ratifié (seul `workload.reassigner`) → écran **seed lecture seule**. Service à venir = amendement A2. | — |
 | txrisk (Transactions Risk Monitoring) | `TransfertsOrdres` (portail, verdict, file de revue) | Monitoring/tendances temps réel, tableaux de bord tx |
 
