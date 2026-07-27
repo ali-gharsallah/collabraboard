@@ -13,6 +13,7 @@ import { tokens } from "../../theme/tokens";
 // par /v1/olivia/* côté serveur — le navigateur ne parle JAMAIS au fournisseur (B.11.4, grep CI).
 
 type Reponse = { conversationId: string; messageId: string; seq: number; texte: string; estSource: boolean;
+  langue?: string; statutStream?: string | null; conforme?: boolean; personaVersion?: string;
   citations: { type: string; ref: string; assertion: string; valide?: boolean }[];
   contexteEmpreinte: string; contextePartiel: string | null; model: string };
 type Proposition = { id: string; type: string; cibleType: string; cibleId: string; statut: string;
@@ -113,11 +114,16 @@ export function Olivia() {
             ? <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "#E8F0DC", color: tokens.color.olive700, fontWeight: 700 }}>Sourcé</span>
             : <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "#FDF3F2", color: tokens.color.danger, fontWeight: 700 }}>Non sourcé — à vérifier</span>}
           {r.contextePartiel && <span style={{ marginLeft: 8, fontSize: 11, color: "#C9A227" }}>{r.contextePartiel}</span>}
+          {r.langue && <span style={{ marginLeft: 8, fontSize: 10, color: tokens.color.muted }}>{r.langue}{r.personaVersion ? ` · persona v${r.personaVersion}` : ""}</span>}
+          {r.statutStream === "INTERROMPU" && <span style={{ marginLeft: 8, fontSize: 11, padding: "2px 8px", borderRadius: 10,
+            background: "#FFF8E7", color: "#C9A227", fontWeight: 700 }}>interrompu — renvoyez votre question pour régénérer (nouveau tour, R257)</span>}
+          {r.conforme === false && <span style={{ marginLeft: 8, fontSize: 11, padding: "2px 8px", borderRadius: 10,
+            background: "#FDF3F2", color: tokens.color.danger, fontWeight: 700 }}>non conforme (R258) — non proposable</span>}
         </div>
         {(r.citations ?? []).length > 0 && <div style={{ marginTop: 6, fontSize: 11, color: tokens.color.muted }}>
           {r.citations.map((c, i) => <div key={i}>{c.valide ? "✓" : "✗"} {c.type}:{c.ref} — {c.assertion}</div>)}</div>}
         {/* B.6 : le bouton « Proposer » N'EXISTE PAS sur une sortie non sourcée */}
-        {(cap === "C3" || cap === "C4") && r.estSource && <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {(cap === "C3" || cap === "C4") && r.estSource && r.conforme !== false && <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
           <select value={typeProp} onChange={(e) => setTypeProp(e.target.value)} style={{ fontSize: 11 }}>
             {["QUALIF_ALERTE_FP", "AIGUILLAGE_EDD", "ALLEGEMENT_EDD", "AJUSTEMENT_PARAM"].map((t) => <option key={t}>{t}</option>)}</select>
           <input placeholder="cible (id / client|scenario / chemin)" value={cible} onChange={(e) => setCible(e.target.value)} style={{ fontSize: 11, width: 220 }}/>
