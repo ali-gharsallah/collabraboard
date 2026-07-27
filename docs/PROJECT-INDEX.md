@@ -22,6 +22,7 @@
 | `spec/vague14-scenarios/BUSINESS-TRIP-MOD75.feature` | Gherkin RATIFIÉ MOD-75 (BT-01..10) — implémenté Vague 14 | 2026-07-27 |
 | `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 | 2026-07-26 |
 | `docs/MIGRATION-FRONT.md` | Journal des migrations d'écrans (boy-scout A1/D3) | 2026-07-26 |
+| `docs/AUDIT-ARCHITECTURE.md` | Audit archi/scalabilité (lecture seule, behavior-preserving) — A1..A6 priorisés | 2026-07-27 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
 
 ## Recette & tests
