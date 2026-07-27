@@ -6,11 +6,11 @@ Deux objets **différents** :
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **48** écrans (comptés au routeur) |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **49** écrans (comptés au routeur, l'écran Bacs à sable couvrant 4 items de nav démo) |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **48 / 73 ≈ 66 %** — **plus aucun écran en FE-05 seed** : Workflow Instances (V12), Formations (V13), Business Trip (V14), Tâches (V16), NBA décidable (V17) sont réels, et le lot **CPSI** (2026-07-27) ajoute Profil & score, Segmentation, Alertes & propositions de case (porte mince R63-R83, amendement R248-R252). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
+Couverture actuelle : **52 / 73 ≈ 71 %** — **plus aucun écran en FE-05 seed** : Workflow Instances (V12), Formations (V13), Business Trip (V14), Tâches (V16), NBA décidable (V17) sont réels, et le lot **CPSI** (2026-07-27) ajoute Profil & score, Segmentation, Alertes & propositions de case (porte mince R63-R83, amendement R248-R252). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
 
 ---
 
@@ -92,7 +92,7 @@ pas sous ces noms dans cette version de la maquette.)*
 
 ## 5. Lecture honnête
 
-- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~66 % (48/73)**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**. Il reste **~35 écrans** : bacs à sable restants + sections & droits (backend ratifié, écrans à faire) ; `fx`/`custody`/`mobile`/`integrations` (ports externes) ; et les domaines jamais ouverts (§3c).
+- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~71 % (52/73)**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**. Il reste **~35 écrans** : bacs à sable restants + sections & droits (backend ratifié, écrans à faire) ; `fx`/`custody`/`mobile`/`integrations` (ports externes) ; et les domaines jamais ouverts (§3c).
 - La maquette reste la **vision cible** (73 écrans) ; la stratégie tenue est **incrémentale et prouvée** : chaque vague transforme un lot d'écrans-maquette en écrans React câblés + recette FAT.
 - Prochaines vagues « à fort levier & faible risque » = groupe **3.a** (backend déjà ratifié) : CRM/Contact Reports/Tâches, Workflow, Offboarding, Corroboration, Sandboxes de paramétrage.
 - Ne pas se laisser piéger par la maquette : **groupe 3.b = ports** (ne pas recoder un PMS/core), **groupe 4 = liste noire** (ignorer).

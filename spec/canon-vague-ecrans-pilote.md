@@ -45,6 +45,16 @@ annuaire du registre R-Q (SD-05 prouvé MSW — zéro écriture). `cocparam` : s
 (R276 étendu) rendu + éditeur versionné, SD-06 = refus typé SERVI. **`sdar`/`sdgar` REPORTÉS**
 (écart : aucun store de questionnaire de review). e2e fat-sd 4/4 (SD-01/02/03/06), Vitest.
 
+**PARTIE 3 LIVRÉE (2026-07-27, famille BS)** — 5 endpoints dry-run `/v1/sandbox/*` (patron
+SandboxAml, arbitrage « application de R70 ») : `kyc-droits` (BS-03, dossiers incomplets nommés +
+charge par rôle), `brm-seuils` (BS-04, reclassements NOMINATIFS avec score + Δ charge EDD, sur le
+riskScore stocké — écart moteur BRM consigné), `onb-aiguillage` (BS-05, quarantaine pour l'inconnu,
+default-deny sur le levier), `cf-exigences` (manquants par dossier, GED réelle), `wf-delais`
+(goulots + charge par rôle). **BS-01 exécuté sur LES 5** (comptages byte-identiques, événements
+compris). Écran `Sandboxes` (3 zones : leviers / projection SERVIE / rappel + pont) — BS-02
+(indisponible sans repli) et BS-06 (AUCUN « Appliquer », pont « à simuler ») prouvés Vitest.
+LA VAGUE ÉCRANS PILOTE EST LIVRÉE EN ENTIER (P5, P1, P2, P4 partielle arbitrée, P3).
+
 **PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
 intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
 listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·

@@ -22,6 +22,7 @@ import { AmlWorkspace } from "./aml/AmlWorkspace";
 import { SdKyc } from "./parametrage/SdKyc";
 import { ParamFields } from "./parametrage/ParamFields";
 import { CocParam } from "./coc/CocParam";
+import { Sandboxes } from "./parametrage/Sandboxes";
 import { ClientsList } from "./clients/ClientsList";
 import { KycDetail } from "./kyc/KycDetail";
 import { TransfertsOrdres } from "./transactions/TransfertsOrdres";
@@ -641,5 +642,34 @@ describe("FE-SD — partie 4 partielle : sdkyc rendu, paramfields annuaire (SD-0
     fireEvent.change(screen.getByPlaceholderText("libellé"), { target: { value: "Type X" } });
     fireEvent.click(screen.getByRole("button", { name: /Définir/ }));
     expect(await screen.findByTestId("msg-cocparam")).toHaveTextContent(/SD-06.*contrainte backend/);
+  });
+});
+
+describe("FE-BS — bacs à sable : projection backend seulement, indisponible sans repli, aucun Appliquer (BS-02/06)", () => {
+  it("BS-02 : endpoint dry-run coupé → « indisponible », AUCUN calcul de repli ; endpoint vivant → projection servie", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.post("*/v1/sandbox/brm-seuils", () => new HttpResponse(null, { status: 500 })),   // sbbrm COUPÉ
+      http.post("*/v1/sandbox/kyc-droits", () => HttpResponse.json({ ecriture: false,
+        dossiersEvalues: 3, dossiersImpactes: [{ code: "KYC-1", questionsVides: 2 }], chargeParRole: { CO: 6 } })),
+    );
+    render(<Sandboxes/>);
+    fireEvent.change(screen.getByPlaceholderText(/seuil EDD/), { target: { value: "40" } });
+    fireEvent.change(screen.getByPlaceholderText(/seuil CDD/), { target: { value: "20" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /Simuler \(dry-run\)/ })[1]);      // sbbrm
+    expect(await screen.findByTestId("indispo-sbbrm")).toHaveTextContent(/aucun calcul de repli/);
+    fireEvent.change(screen.getByPlaceholderText(/rôle \(ex\. CO\)/), { target: { value: "CO" } });
+    fireEvent.change(screen.getByPlaceholderText(/section \(ex\. AML\)/), { target: { value: "AML" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /Simuler \(dry-run\)/ })[0]);      // sbkyc
+    expect(await screen.findByTestId("projection-sbkyc")).toHaveTextContent(/KYC-1/);        // NOMINATIF, servi
+    expect(screen.getByTestId("projection-sbkyc")).toHaveTextContent(/"ecriture": false/);
+  });
+
+  it("BS-06 : AUCUN bouton « Appliquer » dans un bac — seul le pont vers le paramétrage (verrou R70 là-bas)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    render(<Sandboxes/>);
+    expect(screen.queryByRole("button", { name: /Appliquer/ })).toBeNull();                  // structurel, pas grisé
+    expect(screen.getAllByText(/Ouvrir dans le paramétrage/).length).toBe(5);                // le pont, sur les 5 bacs
+    expect(screen.getAllByText(/Aucune donnée n'est modifiée/).length).toBe(5);
   });
 });
