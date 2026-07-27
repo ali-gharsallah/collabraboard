@@ -77,9 +77,7 @@ export class PortsController {
 @Module({
   controllers: [PortsController],
   providers: [
-    PrismaService,
-    { provide: PortsService, useFactory: (p: PrismaService) => new PortsService(p), inject: [PrismaService] },
-  ],
+    { provide: PortsService, useFactory: (p: PrismaService) => new PortsService(p), inject: [PrismaService] }],
   exports: [PortsService],
 })
 export class PortsModule {}

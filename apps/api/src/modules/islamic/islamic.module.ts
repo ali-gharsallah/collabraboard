@@ -10,14 +10,11 @@ import { IslamicService } from "./islamic.service";
 @Module({
   controllers: [IslamicController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: IslamicService,
       useFactory: (p: PrismaService, a: AuditService) => new IslamicService(p, a),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [IslamicService],
 })
 export class IslamicModule {}

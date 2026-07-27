@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { WorkflowDefService } from "./workflow-def.service";
 
 /**
@@ -22,5 +20,5 @@ export class WorkflowController {
   @Get("resoudre")                resoudre(@Req() r: any, @Query("code") code: string, @Query("date") date: string) { return this.svc.resoudre(r.ctx, code, date); } // R172
 }
 
-@Module({ controllers: [WorkflowController], providers: [PrismaService, AuditService, WorkflowDefService], exports: [WorkflowDefService] })
+@Module({ controllers: [WorkflowController], providers: [ WorkflowDefService], exports: [WorkflowDefService] })
 export class WorkflowModule {}

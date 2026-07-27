@@ -5,6 +5,6 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 
 @Module({ controllers: [ParametresController],
-  providers: [PrismaService, AuditService,
+  providers: [
     { provide: ParametresService, useFactory: (p: PrismaService, a: AuditService) => new ParametresService(p, a), inject: [PrismaService, AuditService] }] })
 export class ParametresModule {}

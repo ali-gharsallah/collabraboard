@@ -100,9 +100,7 @@ export class WorkflowInstancesController {
   imports: [KycModule],                                                       // KycService (ratifié) pour le rejeu à date
   controllers: [WorkflowInstancesController],
   providers: [
-    PrismaService,
-    { provide: WorkflowInstancesService, useFactory: (p: PrismaService, k: KycService) => new WorkflowInstancesService(p, k), inject: [PrismaService, KycService] },
-  ],
+    { provide: WorkflowInstancesService, useFactory: (p: PrismaService, k: KycService) => new WorkflowInstancesService(p, k), inject: [PrismaService, KycService] }],
   exports: [WorkflowInstancesService],
 })
 export class WorkflowInstancesModule {}

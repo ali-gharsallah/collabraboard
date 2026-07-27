@@ -25,8 +25,6 @@ model Onboarding {
 // ═══ 2/3 — onboarding.controller-module.ts ═══════════════════════════════════
 /*
 import { Body, Controller, Get, Module, Param, Post, Req } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { KycService } from "../kyc/kyc.service";
 import { OnboardingService } from "./onboarding.service";
 
@@ -39,7 +37,7 @@ export class OnboardingController {
 }
 
 @Module({ controllers: [OnboardingController],
-  providers: [OnboardingService, KycService, PrismaService, AuditService] })
+  providers: [OnboardingService, KycService] })
 export class OnboardingModule {}
 
 // Câblages : app.module + OnboardingModule ; scheduler → svc.tickSla(ctx, new Date()) ;

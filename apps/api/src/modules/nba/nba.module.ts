@@ -105,9 +105,7 @@ export class NbaController {
   imports: [TasksModule],
   controllers: [NbaController],
   providers: [
-    PrismaService, AuditService,
-    { provide: NbaService, useFactory: (p: PrismaService, a: AuditService, t: TasksService) => new NbaService(p, a, t), inject: [PrismaService, AuditService, TasksService] },
-  ],
+    { provide: NbaService, useFactory: (p: PrismaService, a: AuditService, t: TasksService) => new NbaService(p, a, t), inject: [PrismaService, AuditService, TasksService] }],
   exports: [NbaService],
 })
 export class NbaModule {}

@@ -157,9 +157,7 @@ export class FormationsController {
 @Module({
   controllers: [FormationsController],
   providers: [
-    PrismaService, AuditService,
-    { provide: FormationsService, useFactory: (p: PrismaService, a: AuditService) => new FormationsService(p, a), inject: [PrismaService, AuditService] },
-  ],
+    { provide: FormationsService, useFactory: (p: PrismaService, a: AuditService) => new FormationsService(p, a), inject: [PrismaService, AuditService] }],
   exports: [FormationsService],
 })
 export class FormationsModule {}

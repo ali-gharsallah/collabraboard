@@ -8,6 +8,6 @@ import { AuditService } from "../../common/audit.service";
  * proprement, la saisie manuelle vit. Au déploiement avec ANTHROPIC_API_KEY :
  *   useFactory: (p, a) => new CrmService(p, a, { ia: claudeIaAdapter({ entretiens: <registre crmEntretiens> }) })  */
 @Module({ controllers: [CrmController],
-  providers: [PrismaService, AuditService,
+  providers: [
     { provide: CrmService, useFactory: (p: PrismaService, a: AuditService) => new CrmService(p, a, {}), inject: [PrismaService, AuditService] }] })
 export class CrmModule {}

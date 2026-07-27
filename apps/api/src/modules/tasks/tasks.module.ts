@@ -149,9 +149,7 @@ export class TasksController {
   imports: [WorkloadModule],
   controllers: [TasksController],
   providers: [
-    PrismaService, AuditService,
-    { provide: TasksService, useFactory: (p: PrismaService, a: AuditService, w: WorkloadService) => new TasksService(p, a, w), inject: [PrismaService, AuditService, WorkloadService] },
-  ],
+    { provide: TasksService, useFactory: (p: PrismaService, a: AuditService, w: WorkloadService) => new TasksService(p, a, w), inject: [PrismaService, AuditService, WorkloadService] }],
   exports: [TasksService],                 // R245/NB-05 : le service NBA fera naître des tâches d'un événement décidé
 })
 export class TasksModule {}

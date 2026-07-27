@@ -10,15 +10,13 @@ import { PreRevueService } from "../ia/prerevue.service";
 @Module({
   imports: [PreRevueModule],                                          // fournit PreRevueService (gate R123)
   controllers: [KycController],
-  providers: [
-    PrismaService, AuditService, KycLockService, QualifiedVisaService,
+  providers: [ KycLockService, QualifiedVisaService,
     // KycService reçoit le hook de pré-revue IA (R123) en 3e param optionnel.
     {
       provide: KycService,
       useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService) => new KycService(p, a, pr),
       inject: [PrismaService, AuditService, PreRevueService],
-    },
-  ],
+    }],
   exports: [KycService, KycLockService, QualifiedVisaService],   // KycService exporté pour OnboardingModule (R118)
 })
 export class KycModule {}

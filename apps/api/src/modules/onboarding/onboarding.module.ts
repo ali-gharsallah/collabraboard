@@ -29,15 +29,12 @@ export class OnboardingController {
   imports: [KycModule],                 // fournit KycService (exporté)
   controllers: [OnboardingController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: OnboardingService,
       useFactory: (prisma: PrismaService, audit: AuditService, kyc: KycService) =>
         new OnboardingService(prisma, audit, kyc),
       inject: [PrismaService, AuditService, KycService],
-    },
-  ],
+    }],
   exports: [OnboardingService],
 })
 export class OnboardingModule {}

@@ -21,13 +21,11 @@ export class CorebankingController {
 @Module({
   controllers: [CorebankingController],
   providers: [
-    PrismaService, AuditService,
     {
       provide: CoreSyncService,
       useFactory: (prisma: PrismaService, audit: AuditService) => new CoreSyncService(prisma, audit, {}),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [CoreSyncService],
 })
 export class CorebankingModule {}

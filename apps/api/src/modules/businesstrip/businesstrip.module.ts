@@ -181,9 +181,7 @@ export class BusinessTripController {
 @Module({
   controllers: [BusinessTripController],
   providers: [
-    PrismaService, AuditService,
-    { provide: BusinessTripService, useFactory: (p: PrismaService, a: AuditService) => new BusinessTripService(p, a), inject: [PrismaService, AuditService] },
-  ],
+    { provide: BusinessTripService, useFactory: (p: PrismaService, a: AuditService) => new BusinessTripService(p, a), inject: [PrismaService, AuditService] }],
   exports: [BusinessTripService],
 })
 export class BusinessTripModule {}
