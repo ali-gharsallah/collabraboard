@@ -92,9 +92,112 @@ describe("FAT OLIVIA — R253 port IA (OL-01..04, backend réel + port de test)"
     const m = await prisma.oliviaMessage.findFirst({ where: { conversationId: conv.id } });
     await expect(prisma.oliviaMessage.update({ where: { id: m!.id }, data: { texte: "altéré" } })).rejects.toThrow(/append-only/);
     await expect(prisma.oliviaMessage.delete({ where: { id: m!.id } })).rejects.toThrow(/append-only/);
-    const ko = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: randomUUID() });
+    const ko = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C3", ancrageType: "RISK_CASE", ancrageId: randomUUID() });
     expect(ko.status).toBe(400);
-    expect(JSON.stringify(ko.body)).toContain("OLIVIA_CAPACITE_NON_OUVERTE");
-    console.log("Socle PASS — UPDATE/DELETE rejetés par le trigger ; C2+ancrage refusés avant ContextBuilder");
+    expect(JSON.stringify(ko.body)).toContain("OLIVIA_CAPACITE_NON_OUVERTE");           // C3/C4 fermées jusqu'à l'étape 6
+    const koAncrage = await request(http).post("/v1/olivia/conversations").set(bearer(ON, U, "CO")).send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: randomUUID() });
+    expect(koAncrage.status).toBe(403);                                                 // ancrage inexistant = SCOPE_DENIED (ne révèle rien)
+    console.log("Socle PASS — trigger append-only ; C3 fermée ; ancrage inexistant refusé sans révéler");
+  });
+});
+
+describe("FAT OLIVIA — R255 ContextBuilder (OL-05..10)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(), T2 = randomUUID();
+  const RM1 = randomUUID(), RM2 = randomUUID(), CO1 = randomUUID();
+  let clientRm1 = "", clientRm2 = "", fileRm1: any = null, fileRm2: any = null;
+
+  const setS = (extra: any = {}) => prisma.tenant.update({ where: { id: T },
+    data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5", ...extra } } });
+  const creerKyc = async (clientId: string, rmId: string) =>
+    (await request(http).post("/v1/kyc").set(bearer(T, rmId, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId })).body;
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, (clientRm1 = randomUUID()));
+    await seedTenantClient(prisma, T, (clientRm2 = randomUUID()));
+    await seedTenantClient(prisma, T2, randomUUID());
+    await prisma.client.update({ where: { id: clientRm1 }, data: { rmUserId: RM1 } });
+    await prisma.client.update({ where: { id: clientRm2 }, data: { rmUserId: RM2 } });
+    await setS();
+    fileRm1 = await creerKyc(clientRm1, RM1);
+    fileRm2 = await creerKyc(clientRm2, RM2);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("OL-05 : l'ancrage hors scope est refusé À LA CRÉATION — 403, événement, AUCUNE conversation", async () => {
+    const r = await request(http).post("/v1/olivia/conversations").set(bearer(T, RM2, "RM"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: fileRm1.id });        // le dossier du client de RM1
+    expect(r.status).toBe(403);
+    expect(JSON.stringify(r.body)).toContain("OLIVIA_SCOPE_DENIED");
+    const ev = await prisma.domainEvent.count({ where: { tenantId: T, type: "OLIVIA_CONTEXT_DENIED", aggregateId: fileRm1.id } });
+    expect(ev).toBe(1);
+    const convs = await prisma.oliviaConversation.count({ where: { tenantId: T, userId: RM2 } });
+    expect(convs).toBe(0);                                                              // AUCUNE conversation créée
+    console.log("OL-05 PASS — 403 + OLIVIA_CONTEXT_DENIED, zéro conversation");
+  });
+
+  it("OL-06 : les questions HIDDEN pour le rôle n'entrent JAMAIS dans le contexte — RM exclu, CO inclus", async () => {
+    // Default-deny du canon : rôle absent des règles = HIDDEN. On retire la règle RM/ARM d'IDE-Q3.
+    const q3 = await prisma.kycQuestion.findFirst({ where: { code: "IDE-Q3", section: { kycFileId: fileRm1.id } } });
+    await prisma.kycAccessRule.deleteMany({ where: { questionId: q3!.id, role: { in: ["RM", "ARM"] as any } } });
+    const convRm = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: fileRm1.id })).body;
+    const outRm = (await request(http).post(`/v1/olivia/conversations/${convRm.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: "Synthèse du dossier" })).body;
+    expect(outRm.contexteObjets.some((o: any) => o.id === q3!.id)).toBe(false);         // HIDDEN ⇒ hors contexte
+    const convCo = (await request(http).post("/v1/olivia/conversations").set(bearer(T, CO1, "CO"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: fileRm1.id })).body;
+    const outCo = (await request(http).post(`/v1/olivia/conversations/${convCo.id}/messages`).set(bearer(T, CO1, "CO"))
+      .send({ texte: "Synthèse du dossier" })).body;
+    expect(outCo.contexteObjets.some((o: any) => o.id === q3!.id)).toBe(true);          // visible pour CO
+    console.log("OL-06 PASS — IDE-Q3 hors contexte RM, dans le contexte CO (même service, pas une copie)");
+  });
+
+  it("OL-07 : l'objet périphérique refusé = contexte partiel TRACÉ (mécanique §3, via refs C1)", async () => {
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM"))
+      .send({ capacite: "C1" })).body;
+    const r = await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: "Compare avec ce dossier", refs: [{ type: "KYC_FILE", code: fileRm2.code }] });   // hors périmètre RM1
+    expect(r.status).toBe(201);                                                          // la réponse EST produite
+    expect(r.body.contextePartiel).toContain("1 objet(s) exclu(s)");                     // le NOMBRE, pas la nature
+    const ev = await prisma.domainEvent.count({ where: { tenantId: T, type: "OLIVIA_CONTEXT_DENIED", aggregateId: fileRm2.code } });
+    expect(ev).toBe(1);
+    console.log("OL-07 PASS — réponse en contexte partiel, refus périphérique journalisé");
+  });
+
+  it("OL-08 : la borne ferme AVANT l'appel fournisseur — 422, zéro appel", async () => {
+    await setS({ oliviaScopeMaxObjets: 3 });                                             // paramètre tenant B.9
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: fileRm1.id })).body;
+    const avant = (globalThis as any).__oliviaFakeCalls ?? 0;
+    const r = await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: "Synthèse" });
+    expect(r.status).toBe(422);
+    expect(JSON.stringify(r.body)).toContain("OLIVIA_CONTEXT_OVERFLOW");
+    expect((globalThis as any).__oliviaFakeCalls ?? 0).toBe(avant);                      // AUCUN appel fournisseur émis
+    await setS();
+    console.log("OL-08 PASS — overflow 422, compteur fournisseur inchangé");
+  });
+
+  it("OL-09 : l'empreinte de contexte est REPRODUCTIBLE — même état, même HMAC ; état changé, HMAC changé", async () => {
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: fileRm1.id })).body;
+    const o1 = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM")).send({ texte: "Synthèse" })).body;
+    const o2 = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM")).send({ texte: "Encore" })).body;
+    expect(o1.contexteEmpreinte).toBe(o2.contexteEmpreinte);                             // même dossier ⇒ même empreinte
+    await request(http).patch(`/v1/kyc/${fileRm1.code}/questions/IDE-Q1`).set(bearer(T, RM1, "RM")).send({ answer: "Passeport vérifié" }).expect(200);
+    const o3 = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM")).send({ texte: "Après réponse" })).body;
+    expect(o3.contexteEmpreinte).not.toBe(o1.contexteEmpreinte);                         // le dossier a changé ⇒ l'empreinte change
+    console.log("OL-09 PASS — empreinte stable puis modifiée avec l'état (les deux rejouables)");
+  });
+
+  it("OL-10 : cross-tenant impossible — 404, rien ne fuit", async () => {
+    const conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM")).send({ capacite: "C1" })).body;
+    await prisma.tenant.update({ where: { id: T2 }, data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "m" } } });
+    await request(http).get(`/v1/olivia/conversations/${conv.id}`).set(bearer(T2, randomUUID(), "CO")).expect(404);
+    console.log("OL-10 PASS — l'id d'une conversation de T ne donne RIEN à T2");
   });
 });

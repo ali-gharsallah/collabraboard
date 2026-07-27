@@ -178,3 +178,10 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   bloquées par les DONNÉES** : aucun modèle ratifié d'échéance de review (T7) ni de cycle de vie/
   matérialité CoC (T8 — événements sans statut). Canon à ratifier pour les débloquer. HO-02
   (licence R177 surfacée au front) : PARTIEL — visibilité v1 par rôle.
+
+- **OL-07 (étape 4 Olivia)** : le scénario de la spec déclenche le refus périphérique via C3
+  (« risk case lié » à une alerte) — or **aucun lien alerte→risk case n'est ratifié** (la seule
+  passerelle est `case_proposal`, R252) et C3 n'ouvre qu'à l'étape 6. La MÉCANIQUE §3 (objet
+  périphérique refusé ⇒ exclu + `OLIVIA_CONTEXT_DENIED` + « contexte partiel », le nombre jamais
+  la nature) est implémentée et prouvée via les **références explicites C1** (chemin ratifié B.5-2).
+  À re-prouver sur C3 quand elle ouvrira.
