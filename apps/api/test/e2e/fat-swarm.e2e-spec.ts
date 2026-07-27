@@ -280,4 +280,70 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     expect(r.body.consomme.etapes).toBe(2);
     console.log("SW-08 PASS — surcharge haussière 422, baissière appliquée et figée");
   });
+
+  // ── Étape 5 : R261 — le swarm hérite du scope du COMMANDITAIRE, jamais plus (ContextBuilder v1) ──
+
+  const declarerMission = async (code: string, def: any) => {
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any) ?? {};
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s,
+      missionsActives: [...new Set([...(s.missionsActives ?? []), code])],
+      missionsDeclarees: { ...(s.missionsDeclarees ?? {}), [code]: def } } } });
+  };
+
+  it("SW-04 [R261] deux agents, UN SEUL scope : celui du commanditaire RM — empreinte identique, rien de HIDDEN dans contexte_objets, autre RM refusé sans run", async () => {
+    const RM = randomUUID(), clientRm = randomUUID();
+    await seedTenantClient(prisma, T, clientRm);
+    await prisma.client.update({ where: { id: clientRm }, data: { rmUserId: RM } });
+    const kyc = (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId: clientRm, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM })).body;
+    // Default-deny du canon : IDE-Q3 devient HIDDEN pour RM/ARM (même mécanique qu'OL-06)
+    const q3 = await prisma.kycQuestion.findFirst({ where: { code: "IDE-Q3", section: { kycFileId: kyc.id } } });
+    await prisma.kycAccessRule.deleteMany({ where: { questionId: q3!.id, role: { in: ["RM", "ARM"] as any } } });
+    await declarerMission("MISSION_SCOPE", { agents: ["agent-kyc", "agent-redacteur"], ancrage: "KYC_FILE", portes: [], roles: ["RM"] });
+
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, RM, "RM"))
+      .send({ missionCode: "MISSION_SCOPE", ancrageType: "KYC_FILE", ancrageId: kyc.id });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("TERMINE");
+    expect(r.body.roleCode).toBe("RM");                                   // scope hérité, FIGÉ au run
+    const etapes = (await eventsDe(r.body.id)).filter((e: any) => e.type === "ETAPE_AGENT");
+    expect(etapes.map((e: any) => e.agentCode)).toEqual(["agent-kyc", "agent-redacteur"]);
+    for (const e of etapes) {
+      expect(e.entreeEmpreinte).toHaveLength(64);                         // CHAQUE étape passe le ContextBuilder v1
+      const objets = e.contexteObjets as any[];
+      expect(objets.length).toBeGreaterThan(0);
+      expect(objets.some((o: any) => o.id === q3!.id)).toBe(false);       // HIDDEN RM hors contexte — sur TOUT le run
+    }
+    expect(etapes[0].entreeEmpreinte).toBe(etapes[1].entreeEmpreinte);    // deux agents, EXACTEMENT le même scope
+
+    // Le dossier d'un AUTRE RM : refus À LA CRÉATION (OL-05), sans révéler, AUCUN run créé
+    const avant = await prisma.oliviaRun.count({ where: { tenantId: T } });
+    const autre = await request(http).post("/v1/olivia/runs").set(bearer(T, randomUUID(), "RM"))
+      .send({ missionCode: "MISSION_SCOPE", ancrageType: "KYC_FILE", ancrageId: kyc.id });
+    expect(autre.status).toBe(403);
+    expect(JSON.stringify(autre.body)).toContain("SCOPE_DENIED");
+    expect(await prisma.oliviaRun.count({ where: { tenantId: T } })).toBe(avant);
+    console.log("SW-04 PASS — un seul scope pour tout le swarm, HIDDEN exclu du run entier, autre RM refusé net");
+  });
+
+  it("SW-05 [R261] le refus périphérique n'est PAS silencieux : événement SCOPE_DENIED au journal du run, livrable « contexte partiel »", async () => {
+    const clientC = randomUUID();
+    await seedTenantClient(prisma, T, clientC);
+    // Client NON enregistré à la porte CPSI → le périphérique CPSI_SCORE est refusé (même règle qu'OL-07/C3)
+    const rc = await prisma.riskCase.create({ data: { tenantId: T, clientId: clientC, statut: "EN_ANALYSE",
+      etatDepuis: new Date(), signalIds: [], ouvertPar: CO } });
+    await declarerMission("MISSION_CORREL_TEST", { agents: ["agent-redacteur"], ancrage: "RISK_CASE", portes: [], roles: ["CO"] });
+
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "MISSION_CORREL_TEST", ancrageType: "RISK_CASE", ancrageId: rc.id });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("TERMINE");                                // le run CONTINUE (périphérique, pas central)
+    const evts = await eventsDe(r.body.id);
+    expect(evts.some((e: any) => e.type === "SCOPE_DENIED")).toBe(true);  // le refus EST un événement du journal
+    const livrable = evts.find((e: any) => e.type === "LIVRABLE");
+    expect(JSON.stringify(livrable!.sortie)).toContain("contexte partiel");
+    chaineContigue(evts);
+    console.log("SW-05 PASS — SCOPE_DENIED journalisé, livrable en contexte partiel, chaîne intacte");
+  });
 });

@@ -160,7 +160,8 @@ export class OliviaService {
     return file;
   }
 
-  private async construireContexte(ctx: Ctx, conv: { capacite: string; ancrageId: string | null }, s: any,
+  // PUBLIC depuis v2 (R261) : le swarm importe LE MÊME ContextBuilder — même code, pas une copie.
+  async construireContexte(ctx: Ctx, conv: { capacite: string; ancrageId: string | null }, s: any,
     refs: { type: string; code: string }[] = []) {
     const objets: { type: string; id: string; v: string }[] = [];
     const contenu: any = {};

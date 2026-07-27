@@ -173,6 +173,8 @@ export class SwarmAgentsService {
  * supplémentaire) et ne tournent qu'ACTIVÉES (missions_actives, vide par défaut — B.5/SW-18).
  */
 import * as missionsLivrees from "./missions.default.json";
+import { OliviaModule } from "../olivia/olivia.module";
+import { OliviaService } from "../olivia/olivia.module";
 
 const shaSw = (s: string) => createHash("sha256").update(s).digest("hex");
 
@@ -193,9 +195,15 @@ function portSwarm(): { planifier: (missionCode: string) => any } | null {
   return null;                                                            // port réel à brancher — refus 503 typé sans lui
 }
 
+// R261 : la capacité v1 du ContextBuilder se déduit de l'ancrage de mission (B.4) — même
+// algorithme normatif B.5, même projection par rôle, mêmes refus : le swarm ne voit RIEN
+// de plus que son commanditaire.
+const CAPACITE_PAR_ANCRAGE: Record<string, string> = { KYC_FILE: "C2", RISK_CASE: "C3" };
+
 @Injectable()
 export class SwarmRunsService {
-  constructor(private prisma: PrismaService, private audit: AuditService, private agents: SwarmAgentsService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService,
+    private agents: SwarmAgentsService, private olivia: OliviaService) {}
 
   private async settings(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
@@ -256,6 +264,12 @@ export class SwarmRunsService {
         `R262 : la surcharge ne va qu'à la baisse — ${cle}=${v} dépasse le paramètre tenant (${plafond})`);
       budget[cle] = v;
     }
+    // R261/OL-05 : l'ancrage est vérifié AVEC LE SCOPE DU COMMANDITAIRE avant toute création —
+    // refus central = 403 SCOPE_DENIED, AUCUN run (le même ContextBuilder v1 décide, pas la porte).
+    const capacite = CAPACITE_PAR_ANCRAGE[def.ancrage ?? ""] ?? "C1";
+    if (def.ancrage)
+      await this.olivia.construireContexte(ctx, { capacite, ancrageId: dto.ancrageId! }, settings);
+
     const run = await this.prisma.oliviaRun.create({ data: { tenantId: ctx.tenantId,
       missionCode: dto.missionCode, commanditaireId: ctx.userId, roleCode: ctx.role,   // jeton, jamais le corps
       ancrageType: dto.ancrageType ?? null, ancrageId: dto.ancrageId ?? null, budget } });
@@ -281,7 +295,7 @@ export class SwarmRunsService {
       await this.transition(tx, run, "PLANIFIE", "EN_COURS");
     });
 
-    await this.executer(ctx, run, plan, versions);
+    await this.executer(ctx, run, plan, versions, capacite, settings);
     const fini = await this.prisma.oliviaRun.findFirst({ where: { id: run.id } });
     return this.vue(fini);
   }
@@ -289,11 +303,15 @@ export class SwarmRunsService {
   // ── R260 : l'exécuteur — une étape complète = un événement, AVANT que la suivante ne démarre.
   //    R262 : les trois compteurs sont décomptés à CHAQUE étape ; le premier épuisé FERME —
   //    livrable partiel avec mention explicite, l'étape suivante N'EXISTE PAS. ──
-  private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>) {
+  private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>,
+    capacite = "C1", settings: any = {}) {
     const debut = Date.now();
     const budget = run.budget as { maxEtapes: number; maxDureeS: number; maxCoutTokens: number };
     const consomme = { etapes: 0, duree_s: 0, tokens: 0 };
     let derniereSortie: any = null;
+    let exclusTotal = 0;
+    // R261 : le scope du run est FIGÉ — (commanditaire, rôle) du jeton d'origine, pas de l'appelant courant.
+    const scope: Ctx = { tenantId: run.tenantId, userId: run.commanditaireId, role: run.roleCode };
     for (const etape of plan.etapes ?? []) {
       // R262 : la porte se vérifie AVANT d'entamer l'étape — jamais de dépassement « pour finir ».
       // La durée se mesure EN DIRECT (l'étape précédente a coûté du temps réel, pas celui d'avant).
@@ -316,17 +334,39 @@ export class SwarmRunsService {
       // Simulation kill -9 (fixture SW-03) : le processus « meurt » — AUCUN rattrapage, AUCUNE
       // écriture : le journal s'arrête net après la dernière étape complète, le statut ne ment pas.
       if (etape.marqueur === "CRASH_TEST") throw new Error("SWARM_CRASH_TEST: processus tué entre deux étapes (simulation SW-03)");
+      // R261 : CHAQUE étape de CHAQUE agent repasse le ContextBuilder v1 (import, pas copie)
+      // avec le scope FIGÉ du commanditaire — deux agents du même run = exactement le même scope.
+      let cx: { objets: any[]; exclus: number; empreinte: string } | null = null;
+      try {
+        cx = await this.olivia.construireContexte(scope, { capacite, ancrageId: run.ancrageId ?? null }, settings);
+      } catch (e: any) {
+        // Objet CENTRAL devenu inaccessible en cours de run : SCOPE_DENIED + ECHOUE (R255 §3)
+        await this.prisma.$transaction(async (tx: Tx) => {
+          await this.appendEvent(tx, run, "SCOPE_DENIED", { sortie: { central: true, erreur: e?.message ?? String(e) } });
+          await this.transition(tx, run, "EN_COURS", "ECHOUE", { erreur: "objet central hors scope" });
+        });
+        throw e;
+      }
       derniereSortie = etape.sortie ?? {};
       consomme.etapes++;
       consomme.tokens += (etape.cout?.tokens ?? 0);
       await this.prisma.$transaction(async (tx: Tx) => {
+        if (cx!.exclus > 0) {                                             // SW-05 : le refus périphérique EST un événement
+          exclusTotal += cx!.exclus;
+          await this.appendEvent(tx, run, "SCOPE_DENIED", { sortie: { exclus: cx!.exclus, central: false } });
+        }
         await this.appendEvent(tx, run, "ETAPE_AGENT", { agentCode: etape.agent,
-          agentVersion: versions.get(etape.agent) ?? null as any, sortie: derniereSortie, cout: etape.cout ?? null });
+          agentVersion: versions.get(etape.agent) ?? null as any,
+          entreeEmpreinte: cx!.empreinte, contexteObjets: cx!.objets,
+          sortie: derniereSortie, cout: etape.cout ?? null });
         await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { ...consomme } } });
       });
     }
     await this.prisma.$transaction(async (tx: Tx) => {
-      await this.appendEvent(tx, run, "LIVRABLE", { sortie: derniereSortie ?? {} });
+      const sortie = exclusTotal > 0
+        ? { ...derniereSortie ?? {}, contextePartiel: `contexte partiel : ${exclusTotal} objet(s) exclu(s)` }
+        : derniereSortie ?? {};
+      await this.appendEvent(tx, run, "LIVRABLE", { sortie });
       await this.transition(tx, run, "EN_COURS", "TERMINE");
     });
     await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_TERMINE", run.id);
@@ -370,6 +410,7 @@ export class SwarmController {
 }
 
 @Module({
+  imports: [OliviaModule],                                                // R261 : le MÊME ContextBuilder v1
   controllers: [SwarmController],
   providers: [PrismaService, AuditService, SwarmToolsService, SwarmAgentsService, SwarmRunsService],
   exports: [SwarmToolsService, SwarmAgentsService, SwarmRunsService],

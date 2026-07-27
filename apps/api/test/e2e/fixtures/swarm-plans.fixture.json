@@ -14,6 +14,13 @@
     { "agent": "agent-redacteur", "sortie": { "rapport": "Synthèse : dossier propre" }, "cout": { "tokens": 90 } }
   ] },
   "MISSION_25_ETAPES": { "repete": { "agent": "agent-kyc", "sortie": { "constat": "exploration…" }, "cout": { "tokens": 10 }, "fois": 25 } },
+  "MISSION_SCOPE": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "complétude analysée" }, "cout": { "tokens": 70 } },
+    { "agent": "agent-redacteur", "sortie": { "rapport": "Synthèse du dossier" }, "cout": { "tokens": 90 } }
+  ] },
+  "MISSION_CORREL_TEST": { "etapes": [
+    { "agent": "agent-redacteur", "sortie": { "analyse": "corrélations examinées" }, "cout": { "tokens": 80 } }
+  ] },
   "MISSION_CRASH": { "etapes": [
     { "agent": "agent-kyc", "sortie": { "constat": "étape 1 complète" }, "cout": { "tokens": 50 } },
     { "agent": "agent-kyc", "sortie": { "constat": "étape 2 complète" }, "cout": { "tokens": 50 } },
