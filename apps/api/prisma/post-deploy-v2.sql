@@ -30,6 +30,7 @@ DO $$ DECLARE t text; BEGIN
     'certifications', 'training_attestations',            -- R234 (MOD-43 : certifs & attestations append-only)
     'cpsi_events',                                        -- CPSI porte (R63→R83 : journal append-only, source d'état)
     'olivia_messages',                                    -- Olivia R257 : le journal de conversation est append-only
+    'olivia_agents',                                      -- Olivia v2 R259 : modifier = nouvelle version, JAMAIS une mutation
     'coc_config_versions'                                 -- R276/R68 : la config CoC est un registre versionné, append-only
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
@@ -136,7 +137,7 @@ DO $$ DECLARE t text; BEGIN
     'offboarding_files', 'offboarding_sensibles',         -- Offboarding (R267→R271)
     'review_deadlines',                                   -- Échéances de review (R272→R275)
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
-    'olivia_tools'                                        -- Olivia v2 R264 (registre d'outils)
+    'olivia_tools', 'olivia_agents'                       -- Olivia v2 R264/R259 (registres)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -188,6 +189,12 @@ DO $$ BEGIN
      AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'outil_methode_contrat') THEN
     ALTER TABLE olivia_tools ADD CONSTRAINT outil_methode_contrat
       CHECK (methode IN ('GET','PROPOSE'));
+  END IF;
+  -- R259 (Olivia v2) : un agent est ACTIF ou RETIRE — rien d'autre (B.2).
+  IF to_regclass('olivia_agents') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'agent_statut_contrat') THEN
+    ALTER TABLE olivia_agents ADD CONSTRAINT agent_statut_contrat
+      CHECK (statut IN ('ACTIF','RETIRE'));
   END IF;
 END $$;
 

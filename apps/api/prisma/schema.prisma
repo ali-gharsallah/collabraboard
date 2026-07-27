@@ -1206,3 +1206,18 @@ model OliviaTool {
   @@unique([tenantId, code])
   @@map("olivia_tools")
 }
+
+model OliviaAgent {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  code            String
+  version         Int
+  capacite        String
+  outilsAutorises Json     @map("outils_autorises")       // [codes d'outils DÉCLARÉS au registre R264]
+  gabaritRef      String   @map("gabarit_ref")            // paramètre versionné R68
+  statut          String   @default("ACTIF")              // ACTIF | RETIRE (CHECK SQL)
+  effectifDepuis  DateTime @map("effectif_depuis")
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, code, version])
+  @@map("olivia_agents")
+}
