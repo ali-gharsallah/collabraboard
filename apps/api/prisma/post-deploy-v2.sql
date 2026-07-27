@@ -29,7 +29,8 @@ DO $$ DECLARE t text; BEGIN
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (ledgers Shariah, append-only)
     'certifications', 'training_attestations',            -- R234 (MOD-43 : certifs & attestations append-only)
     'cpsi_events',                                        -- CPSI porte (R63→R83 : journal append-only, source d'état)
-    'olivia_messages'                                     -- Olivia R257 : le journal de conversation est append-only
+    'olivia_messages',                                    -- Olivia R257 : le journal de conversation est append-only
+    'coc_config_versions'                                 -- R276/R68 : la config CoC est un registre versionné, append-only
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -133,7 +134,8 @@ DO $$ DECLARE t text; BEGIN
     'cpsi_events',                                        -- CPSI porte (R63→R83, journal tenant-scopé)
     'olivia_conversations', 'olivia_messages', 'olivia_proposals', -- Olivia v1 (R253→R257)
     'offboarding_files', 'offboarding_sensibles',         -- Offboarding (R267→R271)
-    'review_deadlines'                                    -- Échéances de review (R272→R275)
+    'review_deadlines',                                   -- Échéances de review (R272→R275)
+    'coc_files', 'coc_config_versions'                    -- Cycle de vie CoC (R276→R278)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -170,6 +172,15 @@ DO $$ BEGIN
   IF to_regclass('review_deadlines') IS NOT NULL THEN
     CREATE UNIQUE INDEX IF NOT EXISTS review_deadline_une_planifiee
       ON review_deadlines (tenant_id, client_id) WHERE statut = 'PLANIFIEE';
+  END IF;
+END $$;
+
+-- ── 2d. CC-07 : NON_RETENU exige un motif (contrainte SQL, pas seulement applicative) ────
+DO $$ BEGIN
+  IF to_regclass('coc_files') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'motif_si_non_retenu') THEN
+    ALTER TABLE coc_files ADD CONSTRAINT motif_si_non_retenu
+      CHECK (statut <> 'NON_RETENU' OR motif_cloture IS NOT NULL);
   END IF;
 END $$;
 

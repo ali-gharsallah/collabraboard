@@ -99,6 +99,14 @@ export function Home() {
         seed={{ profondeurJournal: 0, dernierRejeuMs: null }}
         rendre={(h: { profondeurJournal: number; dernierRejeuMs: number | null }) =>
           <div>journal : <strong>{h.profondeurJournal}</strong> évts · rejeu {h.dernierRejeuMs ?? "—"} ms</div>} clic="écran cpsiparam"/>}
+      {/* T8 (partie 2 débloquants, R276-R278) : CoC non traités — répartition par matérialité, HAUTE en rouge */}
+      {["RM", "CO"].includes(r) && <Tuile titre="CoC non traités" path="/v1/coc?statut=OUVERT,EN_TRAITEMENT"
+        seed={{ total: 1, parMaterialite: { HAUTE: 1 } }}
+        rendre={(c: { total: number; parMaterialite: Record<string, number> }) => <div>
+          {c.total ? <strong style={{ fontSize: 20 }}>{c.total}</strong> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>}
+          {Object.entries(c.parMaterialite ?? {}).map(([m, x]) => <div key={m}
+            style={{ color: m === "HAUTE" ? tokens.color.danger : tokens.color.muted }}>{m} : {x}</div>)}</div>}
+        clic="écran CoC"/>}
       {/* T7 (partie 1 débloquants, R272-R275) : reviews dues sous 30 j — EN_RETARD est un fait CALCULÉ servi */}
       {["RM", "ARM", "CO"].includes(r) && <Tuile titre="Reviews à échéance" path="/v1/reviews/deadlines?horizonJours=30"
         seed={[{ clientId: "c-demo", ddlLevel: "CDD", dueDate: "2026-08-01", enRetard: false, joursRetard: 0 }]}

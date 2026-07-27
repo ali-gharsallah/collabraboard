@@ -208,3 +208,29 @@ avec ses scénarios, avant implémentation.*
                 motif R7 + visa four-eyes d'un SECOND
                 (R13, l'initiateur ne vise pas).
   ------------- ----------------------------------------- ----------------------
+
+16. Paramètres tenant — cycle de vie CoC (R276-R278, canon débloquants Home partie 2, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R276**      Registre COC_CONFIG — types de CoC         CoC
+                versionnés à date (append-only,
+                `coc_config_versions` ; table LIVRÉE de
+                12 types en repli, éditable via
+                POST /v1/coc/config). HAUTE force
+                REVISION_KYC (contrainte backend, SD-06).
+
+  **R277**      `cocFourEyes` {HAUTE, MOYENNE, BASSE} —    CoC
+                visa d'un second au traitement (défauts
+                vrai / faux / faux ; l'initiateur ne
+                vise pas, R13).
+
+  **R278**      `cocSlaJours` {HAUTE, MOYENNE, BASSE} —    CoC
+                délais ouverture→traitement (défauts
+                10 / 30 / 90). MESURÉS au reporting,
+                jamais bloquants (R39).
+
+  **R273**      `cocReviewAnticipationJours` — un CoC      CoC/Reviews
+                HAUTE anticipe l'échéance de review à
+                J+n (défaut 30 ; déclencheur `coc_haute`
+                tracé — RV-04/CC-04).
+  ------------- ----------------------------------------- ----------------------

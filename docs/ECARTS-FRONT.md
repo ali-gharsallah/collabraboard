@@ -279,3 +279,15 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   livrée avec `declencheur` tracé, appelable par la partie 2 CoC ; le tick préavis/escalade est
   une route ops (`POST /v1/reviews/tick`), pattern tickSla existant.
 - Reste : **T8 ← partie 2** (CoC R276-R278 + création du store COC_CONFIG, ratifiée).
+
+## SOLDE — T8 (2026-07-27, canon débloquants Home partie 2 LIVRÉE — R276 ÉTENDU exécuté)
+
+- **T8 SOLDÉ** : le CoC est un DOSSIER (`coc_files`, OUVERT → EN_TRAITEMENT → {TRAITE|NON_RETENU}) ;
+  le store **COC_CONFIG est CRÉÉ** (`coc_config_versions`, versionné à date append-only + table
+  livrée de 12 types en repli — écart signalé : le canon citait ~40 types, l'extension est un acte
+  de paramétrage). `GET /v1/coc` sert la tuile T8 (compteur + répartition par matérialité,
+  périmètre serveur) ET l'écran CoC (qui consomme désormais coc_files). CC-01..08 e2e verts,
+  CC-04 prouve RV-04 depuis le CoC (déclencheur `coc_haute`). Signal CPSI `coc_sensible`
+  désormais ÉMIS et RATTACHÉ au dossier (l'échec est tracé COC_SIGNAL_NON_EMIS, jamais silencieux).
+- Les 3 écarts Home d'origine (T7, T8, HO-02) sont TOUS SOLDÉS — le canon débloquants est livré
+  (parties 3, 1, 2). Reste du canon : rien.

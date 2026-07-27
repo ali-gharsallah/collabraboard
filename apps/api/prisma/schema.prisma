@@ -1139,3 +1139,52 @@ model ReviewDeadline {
   @@index([tenantId, clientId])
   @@map("review_deadlines")
 }
+
+// ── Cycle de vie du CoC (R276-R278, canon débloquants Home partie 2, R276 ÉTENDU ratifié :
+// le canon CRÉE le store COC_CONFIG). Le CoC devient un DOSSIER : matérialité/action/rôle FIGÉS
+// à l'ouverture depuis la config EN VIGUEUR (grandfathering R29, CC-02) ; NON_RETENU exige un
+// motif (contrainte SQL au post-deploy, CC-07) ; la chaîne complète se rejoue (R278). ──
+model CocConfigVersion {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  typeCode     String   @map("type_code")
+  libelle      String
+  materialite  String                                     // HAUTE | MOYENNE | BASSE
+  actionRequise String  @map("action_requise")            // REVISION_KYC | MAJ_CIBLEE | PRISE_CONNAISSANCE
+  roleTraitant String   @map("role_traitant")
+  severiteCpsi Float?   @map("severite_cpsi")             // sévérité du signal coc_sensible émis
+  effetAt      DateTime @map("effet_at")                  // versionné à date (R68) — la config d'un CoC = la version ≤ ouverture
+  par          String   @map("par") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@index([tenantId, typeCode, effetAt])
+  @@map("coc_config_versions")
+}
+
+model CocFile {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  clientId        String    @map("client_id") @db.Uuid
+  typeCode        String    @map("type_code")
+  // ── Figé à l'ouverture (R276) ──
+  materialite     String
+  actionRequise   String    @map("action_requise")
+  roleTraitant    String    @map("role_traitant")
+  severiteCpsi    Float?    @map("severite_cpsi")
+  configVersionAt DateTime  @map("config_version_at")     // version COC_CONFIG appliquée (preuve)
+  // ── Cycle de vie ──
+  statut          String    @default("OUVERT")            // OUVERT | EN_TRAITEMENT | TRAITE | NON_RETENU
+  description     String
+  declarant       String    @db.Uuid
+  // ── Preuves de traitement (R277) ──
+  revisionKycId   String?   @map("revision_kyc_id") @db.Uuid
+  majRefs         Json?     @map("maj_refs")
+  sansMajMotif    String?   @map("sans_maj_motif")        // MOYENNE : décision motivée « aucune mise à jour requise »
+  traitementEnAttente Json? @map("traitement_en_attente") // four-eyes HAUTE : {par, at, preuves} — visa d'un second requis
+  traitePar       String?   @map("traite_par") @db.Uuid
+  traiteAt        DateTime? @map("traite_at")
+  motifCloture    String?   @map("motif_cloture")         // OBLIGATOIRE si NON_RETENU (CHECK SQL)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@index([tenantId, clientId])
+  @@map("coc_files")
+}

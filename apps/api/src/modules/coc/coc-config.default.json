@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "livreLe": "2026-07-27",
+  "commentaire": "Table COC_CONFIG LIVRÉE (R276, éditable par tenant via POST /v1/coc/config — versionnée à date R68). Écart signalé : le canon cite ~40 types ; ce livrable en porte 12 (le socle réglementaire) — l'extension est un acte de paramétrage tenant, pas un changement de code.",
+  "types": [
+    { "typeCode": "UBO_CHANGE", "libelle": "Changement d'ayant droit économique (UBO)", "materialite": "HAUTE", "actionRequise": "REVISION_KYC", "roleTraitant": "CO", "severiteCpsi": 3 },
+    { "typeCode": "PEP_STATUS", "libelle": "Acquisition/perte du statut PEP", "materialite": "HAUTE", "actionRequise": "REVISION_KYC", "roleTraitant": "CO_SR", "severiteCpsi": 3 },
+    { "typeCode": "SANCTION_EXPOSURE", "libelle": "Exposition sanctions/embargo", "materialite": "HAUTE", "actionRequise": "REVISION_KYC", "roleTraitant": "CO_SR", "severiteCpsi": 3 },
+    { "typeCode": "ACTIVITY_CHANGE", "libelle": "Changement d'activité économique", "materialite": "MOYENNE", "actionRequise": "MAJ_CIBLEE", "roleTraitant": "CO", "severiteCpsi": 2 },
+    { "typeCode": "RESIDENCE_CHANGE", "libelle": "Changement de résidence fiscale", "materialite": "MOYENNE", "actionRequise": "MAJ_CIBLEE", "roleTraitant": "CO", "severiteCpsi": 2 },
+    { "typeCode": "SOURCE_OF_WEALTH", "libelle": "Évolution de l'origine du patrimoine", "materialite": "MOYENNE", "actionRequise": "MAJ_CIBLEE", "roleTraitant": "CO", "severiteCpsi": 2 },
+    { "typeCode": "STRUCTURE_CHANGE", "libelle": "Restructuration juridique (A/K/S/T)", "materialite": "MOYENNE", "actionRequise": "MAJ_CIBLEE", "roleTraitant": "CO", "severiteCpsi": 2 },
+    { "typeCode": "MANDATE_CHANGE", "libelle": "Changement de mandataire/signataire", "materialite": "MOYENNE", "actionRequise": "MAJ_CIBLEE", "roleTraitant": "CO", "severiteCpsi": 1 },
+    { "typeCode": "ADDRESS_CHANGE", "libelle": "Changement d'adresse de correspondance", "materialite": "BASSE", "actionRequise": "PRISE_CONNAISSANCE", "roleTraitant": "RM", "severiteCpsi": 1 },
+    { "typeCode": "CONTACT_CHANGE", "libelle": "Changement de coordonnées", "materialite": "BASSE", "actionRequise": "PRISE_CONNAISSANCE", "roleTraitant": "RM", "severiteCpsi": 0 },
+    { "typeCode": "CIVIL_STATUS", "libelle": "Changement d'état civil", "materialite": "BASSE", "actionRequise": "PRISE_CONNAISSANCE", "roleTraitant": "RM", "severiteCpsi": 0 },
+    { "typeCode": "DOC_EXPIRY", "libelle": "Expiration de pièce d'identité", "materialite": "BASSE", "actionRequise": "PRISE_CONNAISSANCE", "roleTraitant": "RM", "severiteCpsi": 1 }
+  ]
+}
