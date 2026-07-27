@@ -21,6 +21,15 @@
   "MISSION_CORREL_TEST": { "etapes": [
     { "agent": "agent-redacteur", "sortie": { "analyse": "corrélations examinées" }, "cout": { "tokens": 80 } }
   ] },
+  "MISSION_PORTE_ADHOC": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "x" } },
+    { "porte": "porte_pirate" }
+  ] },
+  "MISSION_PORTE": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "analyse avant porte" }, "cout": { "tokens": 60 } },
+    { "porte": "revue_intermediaire" },
+    { "agent": "agent-redacteur", "sortie": { "rapport": "synthèse après décision humaine" }, "cout": { "tokens": 90 } }
+  ] },
   "MISSION_CRASH": { "etapes": [
     { "agent": "agent-kyc", "sortie": { "constat": "étape 1 complète" }, "cout": { "tokens": 50 } },
     { "agent": "agent-kyc", "sortie": { "constat": "étape 2 complète" }, "cout": { "tokens": 50 } },

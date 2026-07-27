@@ -346,4 +346,102 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     chaineContigue(evts);
     console.log("SW-05 PASS — SCOPE_DENIED journalisé, livrable en contexte partiel, chaîne intacte");
   });
+
+  // ── Étape 6 : R263 — les portes humaines sont OBLIGATOIRES : le swarm s'arrête, l'humain passe ──
+
+  const lancerPorte = async () => {
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_PORTE" });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("PAUSE_PORTE");
+    return r.body;
+  };
+
+  it("SW-09 [R263] la porte ARRÊTE tout : PAUSE_PORTE, notification au commanditaire, AUCUNE étape suivante avant décision", async () => {
+    await declarerMission("MISSION_PORTE", { agents: ["agent-kyc", "agent-redacteur"],
+      portes: [{ avant: "revue_intermediaire" }], roles: ["CO"] });
+    const run = await lancerPorte();
+    const evts = await eventsDe(run.id);
+    expect(evts.map((e: any) => e.type)).toEqual(["PLAN", "TRANSITION", "ETAPE_AGENT", "PORTE_OUVERTE", "TRANSITION"]);
+    expect(evts.filter((e: any) => e.type === "ETAPE_AGENT").length).toBe(1);   // l'étape d'après N'EXISTE PAS
+    const notif = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "olivia.run.porte", aggregateId: run.id } });
+    expect(notif.length).toBe(1);                                          // le commanditaire est NOTIFIÉ
+    expect(JSON.stringify(notif[0].payload)).toContain(CO);
+    chaineContigue(evts);
+    // Une porte NON DÉCLARÉE dans la mission ne s'exécute pas — jamais une porte ad hoc (R263)
+    await declarerMission("MISSION_PORTE_ADHOC", { agents: ["agent-kyc", "agent-redacteur"], portes: [], roles: ["CO"] });
+    const adhoc = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_PORTE_ADHOC" });
+    expect(adhoc.status).toBe(422);
+    expect(JSON.stringify(adhoc.body)).toContain("porte");
+    console.log("SW-09 PASS — PAUSE_PORTE, notification, étape suivante inexistante, porte ad hoc refusée");
+  });
+
+  it("SW-10 [R263] la décision de porte est TRACÉE et typée : CONTINUER reprend, REORIENTER {consigne} entre au contexte, ARRETER {motif} → INTERROMPU", async () => {
+    // CONTINUER — et seul le COMMANDITAIRE décide
+    const r1 = await lancerPorte();
+    await request(http).post(`/v1/olivia/runs/${r1.id}/gate-decision`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ decision: "CONTINUER" }).expect(403);                        // pas le commanditaire
+    const c1 = await request(http).post(`/v1/olivia/runs/${r1.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" });
+    expect(c1.status).toBe(201);
+    expect(c1.body.statut).toBe("TERMINE");
+    const e1 = await eventsDe(r1.id);
+    expect(e1.map((e: any) => e.type)).toEqual(["PLAN", "TRANSITION", "ETAPE_AGENT", "PORTE_OUVERTE", "TRANSITION",
+      "PORTE_DECISION", "TRANSITION", "ETAPE_AGENT", "LIVRABLE", "TRANSITION"]);
+    chaineContigue(e1);
+    // Rejouer une décision quand rien n'attend → 409 (RUN_PORTE_EN_ATTENTE ne vaut que PAUSE_PORTE)
+    await request(http).post(`/v1/olivia/runs/${r1.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" }).expect(409);
+
+    // REORIENTER — la consigne est OBLIGATOIRE, devient un événement, entre au contexte des étapes suivantes
+    const r2 = await lancerPorte();
+    await request(http).post(`/v1/olivia/runs/${r2.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "REORIENTER" }).expect(422);                       // consigne requise
+    const c2 = await request(http).post(`/v1/olivia/runs/${r2.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "REORIENTER", consigne: "concentre-toi sur l'origine des fonds" });
+    expect(c2.status).toBe(201);
+    expect(c2.body.statut).toBe("TERMINE");
+    const e2 = await eventsDe(r2.id);
+    const dec2 = e2.find((e: any) => e.type === "PORTE_DECISION");
+    expect(JSON.stringify(dec2!.sortie)).toContain("origine des fonds");   // la consigne EST un événement
+    const apres = e2.filter((e: any) => e.type === "ETAPE_AGENT")[1];
+    expect((apres.contexteObjets as any[]).some((o: any) => o.type === "CONSIGNE")).toBe(true);  // et entre au CONTEXTE
+
+    // ARRETER — motif OBLIGATOIRE (R7), INTERROMPU, jamais de reprise
+    const r3 = await lancerPorte();
+    await request(http).post(`/v1/olivia/runs/${r3.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "ARRETER" }).expect(422);                          // motif requis
+    const c3 = await request(http).post(`/v1/olivia/runs/${r3.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "ARRETER", motif: "analyse manuelle préférée" });
+    expect(c3.status).toBe(201);
+    expect(c3.body.statut).toBe("INTERROMPU");
+    const e3 = await eventsDe(r3.id);
+    expect(JSON.stringify(e3.find((e: any) => e.type === "PORTE_DECISION")!.sortie)).toContain("analyse manuelle");
+    await request(http).post(`/v1/olivia/runs/${r3.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" }).expect(409);                        // INTERROMPU ne se reprend JAMAIS
+    // Décision hors contrat → 422
+    const r4 = await lancerPorte();
+    await request(http).post(`/v1/olivia/runs/${r4.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "PEUT_ETRE" }).expect(422);
+    console.log("SW-10 PASS — CONTINUER/REORIENTER/ARRETER tracés, consigne au contexte, motifs obligatoires");
+  });
+
+  it("SW-11 [R263] la porte EXPIRE en arrêt, jamais en reprise : timeout → INTERROMPU (motif timeout porte), notification", async () => {
+    const run = await lancerPorte();
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any);
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s, porteTimeoutH: 0 } } });
+    const rep = await request(http).post("/v1/olivia/runs/reprise").set(bearer(T, ADMIN, "ADMIN"));
+    expect(rep.status).toBe(201);
+    expect(rep.body.portesExpirees).toContain(run.id);
+    const apres = await prisma.oliviaRun.findFirst({ where: { id: run.id } });
+    expect(apres!.statut).toBe("INTERROMPU");
+    const evts = await eventsDe(run.id);
+    expect(JSON.stringify(evts[evts.length - 1].sortie)).toContain("timeout porte");
+    const notifs = await prisma.domainEvent.count({ where: { tenantId: T, type: "olivia.run.porte.expiree", aggregateId: run.id } });
+    expect(notifs).toBe(1);
+    await request(http).post(`/v1/olivia/runs/${run.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" }).expect(409);                        // JAMAIS de reprise après expiration
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s, porteTimeoutH: 72 } } });
+    console.log("SW-11 PASS — timeout porte → INTERROMPU notifié, reprise refusée");
+  });
 });

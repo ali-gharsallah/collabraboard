@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, ForbiddenException, BadRequestException, ConflictException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
+import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, ForbiddenException, BadRequestException, ConflictException, NotFoundException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
 import { createHash } from "crypto";
 import { readFileSync } from "fs";
 import { PrismaService } from "../../common/prisma.service";
@@ -204,6 +204,9 @@ const CAPACITE_PAR_ANCRAGE: Record<string, string> = { KYC_FILE: "C2", RISK_CASE
 export class SwarmRunsService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private agents: SwarmAgentsService, private olivia: OliviaService) {}
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
+    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+  }
 
   private async settings(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
@@ -287,11 +290,20 @@ export class SwarmRunsService {
       }
     }
 
-    // Le plan vient du port ; PLAN est un événement AVANT toute exécution (write-ahead du run)
+    // Le plan vient du port ; PLAN est un événement AVANT toute exécution (write-ahead du run).
+    // R263 : toute porte du plan doit être DÉCLARÉE dans la mission — jamais une porte ad hoc.
     const plan = port.planifier(dto.missionCode);
+    const portesDeclarees = (def.portes ?? []).map((p: any) => p.avant);
+    const adhoc = (plan.etapes ?? []).find((e: any) => e.porte && !portesDeclarees.includes(e.porte));
+    if (adhoc) {
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.transition(tx, run, "PLANIFIE", "ECHOUE", { erreur: `porte « ${adhoc.porte} » non déclarée` });
+      });
+      throw new UnprocessableEntityException(`R263 : porte « ${adhoc.porte} » non déclarée dans la mission — jamais une porte ad hoc`);
+    }
     await this.prisma.$transaction(async (tx: Tx) => {
       await this.appendEvent(tx, run, "PLAN", { sortie: { mission: dto.missionCode,
-        agents: def.agents ?? [], nbEtapes: (plan.etapes ?? []).length } });
+        agents: def.agents ?? [], nbEtapes: (plan.etapes ?? []).length, etapes: plan.etapes ?? [] } });
       await this.transition(tx, run, "PLANIFIE", "EN_COURS");
     });
 
@@ -304,18 +316,34 @@ export class SwarmRunsService {
   //    R262 : les trois compteurs sont décomptés à CHAQUE étape ; le premier épuisé FERME —
   //    livrable partiel avec mention explicite, l'étape suivante N'EXISTE PAS. ──
   private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>,
-    capacite = "C1", settings: any = {}) {
+    capacite = "C1", settings: any = {}, opts: { depuis?: number; consigneSeq?: number } = {}) {
     const debut = Date.now();
     const budget = run.budget as { maxEtapes: number; maxDureeS: number; maxCoutTokens: number };
-    const consomme = { etapes: 0, duree_s: 0, tokens: 0 };
+    const consomme = { etapes: 0, duree_s: 0, tokens: 0, ...((run.consomme as any) ?? {}) };
+    const dureeBase = consomme.duree_s ?? 0;                              // reprise : le temps déjà consommé compte
     let derniereSortie: any = null;
     let exclusTotal = 0;
     // R261 : le scope du run est FIGÉ — (commanditaire, rôle) du jeton d'origine, pas de l'appelant courant.
     const scope: Ctx = { tenantId: run.tenantId, userId: run.commanditaireId, role: run.roleCode };
-    for (const etape of plan.etapes ?? []) {
-      // R262 : la porte se vérifie AVANT d'entamer l'étape — jamais de dépassement « pour finir ».
+    const etapesPlan = plan.etapes ?? [];
+    for (let i = opts.depuis ?? 0; i < etapesPlan.length; i++) {
+      const etape = etapesPlan[i];
+      // R263 : une PORTE déclarée arrête TOUT — événement, PAUSE_PORTE, notification au
+      // commanditaire ; aucune étape suivante avant décision humaine tracée (SW-09).
+      if (etape.porte) {
+        await this.prisma.$transaction(async (tx: Tx) => {
+          await this.appendEvent(tx, run, "PORTE_OUVERTE", { sortie: { porte: etape.porte,
+            position: i, notifie: run.commanditaireId } });
+          await this.transition(tx, run, "EN_COURS", "PAUSE_PORTE");
+          await this.emit(tx, run.tenantId, "olivia.run.porte", run.id,
+            { porte: etape.porte, commanditaire: run.commanditaireId });
+        });
+        await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_PORTE", `${run.id}:${etape.porte}`);
+        return;
+      }
+      // R262 : la porte budget se vérifie AVANT d'entamer l'étape — jamais de dépassement « pour finir ».
       // La durée se mesure EN DIRECT (l'étape précédente a coûté du temps réel, pas celui d'avant).
-      consomme.duree_s = (Date.now() - debut) / 1000;
+      consomme.duree_s = dureeBase + (Date.now() - debut) / 1000;
       const epuise = consomme.etapes >= budget.maxEtapes ? "etapes"
         : consomme.etapes > 0 && consomme.duree_s > budget.maxDureeS ? "duree_s"
         : consomme.tokens >= budget.maxCoutTokens && budget.maxCoutTokens > 0 ? "tokens" : null;
@@ -355,9 +383,13 @@ export class SwarmRunsService {
           exclusTotal += cx!.exclus;
           await this.appendEvent(tx, run, "SCOPE_DENIED", { sortie: { exclus: cx!.exclus, central: false } });
         }
+        // R263/SW-10 : après REORIENTER, la consigne (événement PORTE_DECISION) entre au
+        // contexte de CHAQUE étape suivante — référencée, pas recopiée.
+        const objets = opts.consigneSeq
+          ? [...cx!.objets, { type: "CONSIGNE", id: String(opts.consigneSeq) }] : cx!.objets;
         await this.appendEvent(tx, run, "ETAPE_AGENT", { agentCode: etape.agent,
           agentVersion: versions.get(etape.agent) ?? null as any,
-          entreeEmpreinte: cx!.empreinte, contexteObjets: cx!.objets,
+          entreeEmpreinte: cx!.empreinte, contexteObjets: objets,
           sortie: derniereSortie, cout: etape.cout ?? null });
         await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { ...consomme } } });
       });
@@ -372,7 +404,57 @@ export class SwarmRunsService {
     await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_TERMINE", run.id);
   }
 
-  // ── SW-03 : la REPRISE — un run EN_COURS orphelin passe INTERROMPU, jamais repris en douce ──
+  // ── R263/SW-10 : LA décision de porte — tracée, typée, réservée au COMMANDITAIRE ──
+  async gateDecision(ctx: Ctx, runId: string, dto: { decision?: string; consigne?: string; motif?: string }) {
+    const run = await this.prisma.oliviaRun.findFirst({ where: { id: runId, tenantId: ctx.tenantId } });
+    if (!run) throw new NotFoundException("Run introuvable");
+    if (run.statut !== "PAUSE_PORTE")
+      throw new ConflictException(`RUN_PORTE_EN_ATTENTE: aucune porte en attente — le run est ${run.statut}` +
+        (run.statut === "INTERROMPU" ? " (jamais de reprise implicite ni tardive, R263)" : ""));
+    if (ctx.userId !== run.commanditaireId)
+      throw new ForbiddenException("R263 : la décision de porte appartient au COMMANDITAIRE (B.3)");
+    const d = dto?.decision;
+    if (d !== "CONTINUER" && d !== "REORIENTER" && d !== "ARRETER")
+      throw new UnprocessableEntityException("R263 : décision hors contrat — CONTINUER | REORIENTER | ARRETER");
+    if (d === "REORIENTER" && !dto?.consigne?.trim())
+      throw new UnprocessableEntityException("R263 : REORIENTER exige une consigne");
+    if (d === "ARRETER" && !dto?.motif?.trim())
+      throw new UnprocessableEntityException("R7/R263 : ARRETER exige un motif");
+    if (d === "ARRETER") {
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.appendEvent(tx, run, "PORTE_DECISION", { sortie: { decision: d, motif: dto.motif!.trim(), par: ctx.userId } });
+        await this.transition(tx, run, "PAUSE_PORTE", "INTERROMPU", { motif: dto.motif!.trim() });
+      });
+      await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_GATE", `${run.id}:ARRETER`);
+      return this.vue(await this.prisma.oliviaRun.findFirst({ where: { id: run.id } }));
+    }
+    // CONTINUER / REORIENTER : l'événement de décision PRÉCÈDE la reprise (write-ahead)
+    let decisionSeq = 0;
+    await this.prisma.$transaction(async (tx: Tx) => {
+      const ev = await this.appendEvent(tx, run, "PORTE_DECISION",
+        { sortie: { decision: d, consigne: dto.consigne?.trim() ?? null, par: ctx.userId } });
+      decisionSeq = ev.seq;
+      await this.transition(tx, run, "PAUSE_PORTE", "EN_COURS");
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_GATE", `${run.id}:${d}`);
+    // Reprise depuis la position d'APRÈS la porte : le plan vit dans l'événement PLAN (R260),
+    // la position = entrées du plan déjà consommées (étapes complètes + portes ouvertes).
+    const planEv = await this.prisma.oliviaRunEvent.findFirst({ where: { runId: run.id, type: "PLAN" } });
+    const plan = { etapes: ((planEv?.sortie as any)?.etapes ?? []) };
+    const settings = await this.settings(ctx.tenantId);
+    const def = this.missionDef(settings, run.missionCode) ?? { agents: [] };
+    const versions = new Map<string, number>();
+    for (const code of def.agents ?? []) versions.set(code, (await this.agents.resoudre(ctx, code)).version);
+    const faits = await this.prisma.oliviaRunEvent.count({
+      where: { runId: run.id, type: { in: ["ETAPE_AGENT", "PORTE_OUVERTE"] } } });
+    const frais = await this.prisma.oliviaRun.findFirst({ where: { id: run.id } });
+    await this.executer(ctx, frais, plan, versions, CAPACITE_PAR_ANCRAGE[def.ancrage ?? ""] ?? "C1", settings,
+      { depuis: faits, consigneSeq: d === "REORIENTER" ? decisionSeq : undefined });
+    return this.vue(await this.prisma.oliviaRun.findFirst({ where: { id: run.id } }));
+  }
+
+  // ── SW-03/SW-11 : la REPRISE ops — l'orphelin passe INTERROMPU, la porte expirée AUSSI :
+  //    jamais de reprise implicite, l'expiration est un ARRÊT notifié (R263). ──
   async reprise(ctx: Ctx) {
     if (ctx.role !== "ADMIN") throw new ForbiddenException("R260 : la reprise est une route ops (ADMIN)");
     const orphelins = await this.prisma.oliviaRun.findMany({ where: { tenantId: ctx.tenantId, statut: "EN_COURS" } });
@@ -384,7 +466,24 @@ export class SwarmRunsService {
       interrompus.push(run.id);
       await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_INTERROMPU", run.id);
     }
-    return { interrompus };
+    const settings = await this.settings(ctx.tenantId);
+    const timeoutH = settings.porteTimeoutH ?? 72;                        // B.5 : porte_timeout_h, défaut 72
+    const pauses = await this.prisma.oliviaRun.findMany({ where: { tenantId: ctx.tenantId, statut: "PAUSE_PORTE" } });
+    const portesExpirees: string[] = [];
+    for (const run of pauses) {
+      const porte = await this.prisma.oliviaRunEvent.findFirst({
+        where: { runId: run.id, type: "PORTE_OUVERTE" }, orderBy: { seq: "desc" } });
+      if (!porte || Date.now() - new Date(porte.at).getTime() < timeoutH * 3600_000) continue;
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.transition(tx, run, "PAUSE_PORTE", "INTERROMPU",
+          { motif: "timeout porte (R263 — l'expiration est un arrêt, jamais une reprise)" });
+        await this.emit(tx, run.tenantId, "olivia.run.porte.expiree", run.id,
+          { commanditaire: run.commanditaireId, timeoutH });
+      });
+      portesExpirees.push(run.id);
+      await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_PORTE_EXPIREE", run.id);
+    }
+    return { interrompus, portesExpirees };
   }
 
   private vue(r: any) {
@@ -406,7 +505,9 @@ export class SwarmController {
   @Get("agents/:code/en-vigueur") resoudreAgent(@Req() r: any, @Param("code") code: string, @Query("asOf") asOf?: string) {
     return this.agents.resoudre(r.ctx, code, asOf); }                                            // SW-01/02 (résolution des runs)
   @Post("runs")         creerRun(@Req() r: any, @Body() b: any) { return this.runs.creer(r.ctx, b ?? {}); }  // R260 (matrice mission)
-  @Post("runs/reprise") reprise(@Req() r: any) { return this.runs.reprise(r.ctx); }              // SW-03 (ops, ADMIN)
+  @Post("runs/reprise") reprise(@Req() r: any) { return this.runs.reprise(r.ctx); }              // SW-03/SW-11 (ops, ADMIN)
+  @Post("runs/:id/gate-decision") gate(@Req() r: any, @Param("id") id: string, @Body() b: any) {
+    return this.runs.gateDecision(r.ctx, id, b ?? {}); }                                         // R263 (commanditaire)
 }
 
 @Module({
