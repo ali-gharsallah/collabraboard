@@ -31,7 +31,7 @@ export type Citation = { type: string; ref: string; assertion: string; valide?: 
 export type PortOlivia = { repondre(prompt: string): Promise<{ texte: string; modelVersion: string; citations?: Citation[] }> };
 // R256 : « REGLE doit exister au catalogue » — borne haute du catalogue ratifié (à incrémenter
 // avec chaque amendement ; R259-R266 = Olivia v2 ratifiée).
-const CATALOGUE_MAX_REGLE = 266;
+const CATALOGUE_MAX_REGLE = 271;   // R256 — borne du catalogue : R267-R271 (offboarding) ratifiés 2026-07-27
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const CONVERSER_C1 = ["RM", "ARM", "CO", "CO_SR", "BRM", "DIR"];          // matrice B.3 (Direction→DIR)

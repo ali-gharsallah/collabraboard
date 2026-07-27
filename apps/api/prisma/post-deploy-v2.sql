@@ -131,7 +131,8 @@ DO $$ DECLARE t text; BEGIN
     'trips', 'trip_visas',                                -- R222→R230 (lot 51, MOD-75 business trip)
     'nba_suggestions',                                    -- R243→R246 (lot 53, MOD décision NBA)
     'cpsi_events',                                        -- CPSI porte (R63→R83, journal tenant-scopé)
-    'olivia_conversations', 'olivia_messages', 'olivia_proposals'  -- Olivia v1 (R253→R257)
+    'olivia_conversations', 'olivia_messages', 'olivia_proposals', -- Olivia v1 (R253→R257)
+    'offboarding_files', 'offboarding_sensibles'          -- Offboarding (R267→R271)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c
@@ -145,6 +146,22 @@ DO $$ DECLARE t text; BEGIN
         WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid)$p$, t);
     END IF;
   END LOOP;
+END $$;
+
+-- ── 2b. R270 (LBA art. 10a) : cloisonnement SQL du motif sensible d'offboarding ─────
+-- Politique RESTRICTIVE en LECTURE sur offboarding_sensibles : outre l'isolation tenant,
+-- la ligne n'est SERVIE que si le rôle applicatif courant (GUC app.role) figure dans la
+-- liste habilitée (GUC app.roles_motif_sensible, posée par le service depuis le paramètre
+-- tenant `rolesMotifSensible` — défaut CO_SR,MLRO). Testée au niveau SQL (critère 5.6-2)
+-- via SET ROLE olive_app + set_config — pas seulement au contrôleur.
+DO $$ BEGIN
+  IF to_regclass('offboarding_sensibles') IS NOT NULL THEN
+    DROP POLICY IF EXISTS motif_sensible_roles ON offboarding_sensibles;
+    CREATE POLICY motif_sensible_roles ON offboarding_sensibles
+      AS RESTRICTIVE FOR SELECT
+      USING (current_setting('app.role', true) = ANY (string_to_array(
+        COALESCE(NULLIF(current_setting('app.roles_motif_sensible', true), ''), 'CO_SR,MLRO'), ',')));
+  END IF;
 END $$;
 
 -- ── 3. Rôle applicatif NON-propriétaire (le propriétaire bypasse la RLS) ────

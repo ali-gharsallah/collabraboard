@@ -9,6 +9,7 @@ import { NamedValidator } from "./rules/named-validator"; // R2/R4
 import { QualifiedVisaService, VisaError, Verdict } from "./rules/qualified-visa.service"; // R86
 import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
 import { KycHandoff, HandoffError, HandoffStatus } from "./rules/kyc-handoff"; // R85
+import { etatCloture } from "../offboarding/cloture.util"; // R267/OF-10 — lecture seule intégrale
 
 type Ctx = { tenantId: string; userId: string; role: string };
 
@@ -20,12 +21,21 @@ export class KycService {
   constructor(private prisma: PrismaService, private audit: AuditService,
               private prerevue?: { verifierTraitement(ctx: Ctx, kycFileId: string): Promise<{ bloquant: boolean; ouverts: any[] }> }) {}
 
+  // ── R267/OF-10 : client clôturé = LECTURE SEULE INTÉGRALE — toute écriture refuse typé.
+  //    La consultation et le rejeu à date restent ouverts (jamais d'amputation de l'audit). ──
+  private async verifierNonCloture(ctx: Ctx, clientId: string) {
+    const e = await etatCloture(this.prisma, ctx.tenantId, clientId);
+    if (e.cloture) throw new ConflictException(
+      `OFFBOARDING_LECTURE_SEULE : dossier clôturé le ${e.le?.slice(0, 10)} — rétention jusqu'au ${e.retentionJusqua} (R267)`);
+  }
+
   // ── Création : code atomique + scoring tracé + gabarit + visas ──
   async create(ctx: Ctx, dto: { clientId: string; legalStructure: string;
     accountType: string; countryCode: string; rmId: string }) {
     const client = await this.prisma.client.findFirst({
       where: { id: dto.clientId, tenantId: ctx.tenantId } });
     if (!client) throw new NotFoundException("Client introuvable dans ce tenant");
+    await this.verifierNonCloture(ctx, dto.clientId);    // OF-10 — le retour passe par l'onboarding (R271)
 
     const risk = computeRisk({ structure: dto.legalStructure,
       accountType: dto.accountType, countryCode: dto.countryCode });
@@ -88,8 +98,9 @@ export class KycService {
     const q = await this.prisma.kycQuestion.findFirst({
       where: { code: qCode, section: { kycFile: { code, tenantId: ctx.tenantId } } },
       include: { accessRules: true,
-        section: { include: { kycFile: { select: { id: true, status: true } } } } } });
+        section: { include: { kycFile: { select: { id: true, status: true, clientId: true } } } } } });
     if (!q) throw new NotFoundException("Question introuvable");
+    await this.verifierNonCloture(ctx, q.section.kycFile.clientId);   // OF-10
     if (q.section.kycFile.status === "VALIDATED")
       throw new ConflictException("Dossier validé — créer une révision (Rn+1)");
 
@@ -116,6 +127,7 @@ export class KycService {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
+    await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
     const visa = kyc.visas.find(v => v.sectionCode === sectionCode
       && v.requiredRole === ctx.role && v.status === "PENDING");
     if (!visa) throw new ForbiddenException(
@@ -163,6 +175,7 @@ export class KycService {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
+    await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
     if (kyc.status === "VALIDATED") throw new ConflictException("Déjà validé");
     if (kyc.createdBy === ctx.userId)
       throw new ConflictException("Four-eyes : le validateur doit différer du créateur");

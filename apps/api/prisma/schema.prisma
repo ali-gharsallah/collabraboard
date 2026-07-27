@@ -1074,3 +1074,41 @@ model OliviaProposal {
   @@index([tenantId, statut])
   @@map("olivia_proposals")
 }
+
+// ── Bloc OFFBOARDING (R267-R271, canon-vague-ecrans-pilote.md partie 5, ratifié 2026-07-27) ──
+// R267 : la clôture est un WORKFLOW tracé — jamais une suppression. Machine à états
+// CLOTURE_DEMANDEE → EN_CLOTURE → { CLOTUREE | CLOTURE_ANNULEE } ; CLOTUREE = lecture seule
+// intégrale pour la durée de rétention (LBA art. 7). ACTIVE = absence de clôture active.
+model OffboardingFile {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  clientId           String    @map("client_id") @db.Uuid
+  type               String                              // DEMANDE_CLIENT | DECISION_BANQUE | EXIT_COMPLIANCE | DECES_SUCCESSION | TRANSFERT_ETABLISSEMENT (R268)
+  motif              String                              // R270 : pour EXIT_COMPLIANCE, TOUJOURS le motif générique — le détail vit dans offboarding_sensibles
+  statut             String    @default("CLOTURE_DEMANDEE") // CLOTURE_DEMANDEE | EN_CLOTURE | CLOTUREE | CLOTURE_ANNULEE
+  initiateur         String    @db.Uuid                  // jeton (ctx.userId) — R13 : ne peut pas apposer le visa final
+  documents          Json      @default("[]")            // R268 : [{type, ref}] fournis
+  visas              Json      @default("[]")            // R268/R15 : [{role, statut, par, at}] — mécanisme uniforme, pas de table neuve
+  attestationAvoirs  Json?     @map("attestation_avoirs") // R269/OF-06 : {par, at, motif} — port core absent
+  motifAnnulation    String?   @map("motif_annulation")  // OF-12 : obligatoire si CLOTURE_ANNULEE (R7)
+  clotureEffectiveAt DateTime? @map("cloture_effective_at") // départ de la rétention (R267)
+  retentionJusqua    DateTime? @map("retention_jusqua") @db.Date
+  createdAt          DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@index([tenantId, clientId])
+  @@map("offboarding_files")
+}
+
+// R270 (LBA art. 10a) : motif détaillé + réf MROS d'un EXIT_COMPLIANCE, CLOISONNÉS dans une
+// table dédiée sous politique RLS restrictive par rôle (testable au niveau SQL — critère 5.6-2).
+// Écart d'implémentation signalé : le canon 5.2 les montre en COLONNES de offboarding_files ;
+// une politique d'accès PAR COLONNE n'existe pas en Postgres — la table dédiée réalise la même
+// sémantique (« colonne sous politique d'accès dédiée ») avec une vraie policy SQL.
+model OffboardingSensible {
+  offboardingId String  @id @map("offboarding_id") @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  motifSensible String? @map("motif_sensible")
+  mrosRef       String? @map("mros_ref") @db.Uuid
+  @@index([tenantId])
+  @@map("offboarding_sensibles")
+}
