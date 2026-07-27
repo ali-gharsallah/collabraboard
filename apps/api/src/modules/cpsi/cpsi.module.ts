@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException } from "@nestjs/common";
 import { execFile } from "child_process";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
@@ -19,16 +19,18 @@ import { AuditService } from "../../common/audit.service";
 
 type Ctx = { tenantId: string; userId: string; role: string };
 const CPSI_DIR = process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
+const CONTRACT_VERSION = "1";                                             // R248 : version d'enveloppe
 
-// Invoque le pont Python (lecture pure). Retourne {ok} | {error}. Jamais d'état ici.
-function runBridge(payload: any): Promise<any> {
+// Invoque le pont Python en sous-processus avec l'ENVELOPPE VERSIONNÉE (R248). Retourne l'enveloppe
+// de réponse {contract_version, resultat | erreur_typee, meta}. Jamais d'état ici (lecture pure).
+function runBridge(env: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const child = execFile("python3", ["bridge.py"], { cwd: CPSI_DIR, maxBuffer: 16 * 1024 * 1024 },
       (err, stdout) => {
         if (err) return reject(err);
         try { resolve(JSON.parse(stdout)); } catch (e) { reject(e); }
       });
-    child.stdin!.end(JSON.stringify(payload));
+    child.stdin!.end(JSON.stringify(env));
   });
 }
 
@@ -44,6 +46,18 @@ export class CpsiService {
   private async journal(tenantId: string) {
     const rows = await this.prisma.cpsiEvent.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
     return rows.map((e: any) => ({ type: e.type, at: e.at, ...(e.payload as any) }));
+  }
+
+  // R248 : invoque le moteur via l'enveloppe versionnée. Rejeu STRICT jusqu'à `as_of` (R48 : les
+  // événements > as_of n'existent pas encore) ; un `candidat` (écriture non encore persistée) est
+  // scellé en fin de journal pour la validation-par-rejeu. Retourne l'enveloppe de réponse brute.
+  private async call(ctx: Ctx, commande: string, payload: any = {}, opts: { asOf?: string; candidat?: any } = {}) {
+    const effAt = opts.asOf ?? new Date().toISOString();                  // instant de lecture effectif (as_of ou maintenant)
+    const tousEvts = await this.journal(ctx.tenantId);
+    const base = tousEvts.filter((e: any) => e.at <= effAt);             // R48 : rejeu STRICT jusqu'à l'instant de lecture
+    const journal = opts.candidat ? [...base, opts.candidat] : base;
+    return runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt,
+      config: await this.config(ctx.tenantId), journal, commande, payload });
   }
 
   // ── Enregistrement d'un client CPSI (prérequis au score) — un seul par (tenant, client). ──
@@ -64,30 +78,27 @@ export class CpsiService {
     const at = dto.at ?? new Date().toISOString();
     const nouvel = { type: "cpsi.signal.ingested", at, client: clientId, signal: dto.type, severite: dto.severite ?? 1, meta: dto.meta ?? null };
     // Validation par rejeu : on scelle le candidat et on demande un score ; toute CpsiError (type
-    // inconnu, client non enregistré) fait échouer AVANT toute écriture (default-deny préservé).
-    const journal = [...(await this.journal(ctx.tenantId)), nouvel];
-    const res = await runBridge({ config: await this.config(ctx.tenantId), journal, query: { op: "score", client: clientId, at } });
-    if (res.error) throw new BadRequestException(res.error.message);
+    // inconnu, client non enregistré) fait échouer AVANT toute écriture. PC-02 : default-deny → 422 typé.
+    const r = await this.call(ctx, "score", { client: clientId }, { candidat: nouvel });
+    if (r.erreur_typee) throw new UnprocessableEntityException(r.erreur_typee.message);
     await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.signal.ingested",
       clientId, at, payload: { client: clientId, signal: dto.type, severite: dto.severite ?? 1, meta: dto.meta ?? null, par: ctx.userId } } });
     await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SIGNAL_INGESTED", `${clientId}:${dto.type}`);
-    return { clientId, ...res.ok };                                       // renvoie l'état recalculé (score, bande, drivers)
+    return { clientId, contractVersion: r.contract_version, ...r.resultat };  // état recalculé (score, bande, drivers)
   }
 
   // ── CP-01/CP-02 : score perpétuel + drivers (R63/R67), rejeu à date (R48/R64/R68). ──
   async score(ctx: Ctx, clientId: string, asOf?: string) {
-    const at = asOf ?? new Date().toISOString();
-    const res = await runBridge({ config: await this.config(ctx.tenantId), journal: await this.journal(ctx.tenantId), query: { op: "score", client: clientId, at } });
-    if (res.error) throw new NotFoundException(res.error.message);        // client inconnu / non enregistré
-    return { clientId, asOf: asOf ?? null, ...res.ok };
+    const r = await this.call(ctx, "score", { client: clientId }, { asOf });
+    if (r.erreur_typee) throw new NotFoundException(r.erreur_typee.message);  // client inconnu / non enregistré
+    return { clientId, asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
   }
 
-  // Lecture générique : rejoue le journal du tenant et exécute une op de lecture du moteur.
-  private async lire(ctx: Ctx, op: string, extra: any = {}, asOf?: string) {
-    const at = asOf ?? new Date().toISOString();
-    const res = await runBridge({ config: await this.config(ctx.tenantId), journal: await this.journal(ctx.tenantId), query: { op, at, ...extra } });
-    if (res.error) throw new BadRequestException(res.error.message);
-    return res.ok;
+  // Lecture générique : rejeu (borné ≤ as_of) puis commande de lecture du moteur. Erreur typée → 4xx.
+  private async lire(ctx: Ctx, commande: string, payload: any = {}, asOf?: string) {
+    const r = await this.call(ctx, commande, payload, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return r.resultat;
   }
 
   // ── CP-03 (R65) : segmentation déterministe en groupes de pairs, rejeu à date. ──
@@ -108,9 +119,8 @@ export class CpsiService {
   // Écriture gouvernée VALIDÉE par rejeu avant persistance (default-deny : opérateur/groupe/sens
   // invalide fait échouer AVANT toute écriture). `candidat` est au format de rejeu du pont.
   private async valider(ctx: Ctx, candidat: any) {
-    const journal = [...(await this.journal(ctx.tenantId)), candidat];
-    const res = await runBridge({ config: await this.config(ctx.tenantId), journal, query: { op: "groups", at: candidat.at } });
-    if (res.error) throw new BadRequestException(res.error.message);
+    const r = await this.call(ctx, "groups", {}, { candidat });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
   }
 
   // ── CP-04/05 (R71/R72) : définir un groupe de population (prédicat composable). ──
@@ -166,15 +176,14 @@ export class CpsiService {
     const at = fields.at ?? new Date().toISOString();
     const payload: any = { ...fields, par: ctx.userId }; delete payload.at;
     const candidat = { type, at, ...payload };
-    const journal = [...(await this.journal(ctx.tenantId)), candidat];
-    const res = await runBridge({ config: await this.config(ctx.tenantId), journal, query: { op: readOp, at, ...readExtra } });
-    if (res.error) {
-      if (/habilit/i.test(res.error.message)) throw new ForbiddenException(res.error.message);
-      throw new BadRequestException(res.error.message);
+    const r = await this.call(ctx, readOp, readExtra, { candidat });
+    if (r.erreur_typee) {
+      if (/habilit/i.test(r.erreur_typee.message)) throw new ForbiddenException(r.erreur_typee.message);
+      throw new BadRequestException(r.erreur_typee.message);
     }
     await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type, clientId, at, payload } });
     await this.audit.log(ctx.tenantId, ctx.userId, type.replace(/\./g, "_").toUpperCase(), clientId);
-    return res.ok;
+    return r.resultat;
   }
 
   // ── CP-09 (R70) : bac à sable — dry-run, AUCUNE écriture (le journal n'est pas touché). ──

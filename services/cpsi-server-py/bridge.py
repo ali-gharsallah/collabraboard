@@ -5,12 +5,18 @@ AUCUNE règle : il reconstruit l'état d'un tenant en REJOUANT son journal appen
 la porte depuis Postgres) puis exécute une opération de LECTURE via le moteur ratifié
 `olive_cpsi.engine` (source de vérité unique, R63→R83). Aucune écriture, aucun état persistant ici.
 
-Protocole (stdin JSON) :
-  { "config": {...},                     # config CPSI du tenant (R68 ; défauts moteur sinon)
+Protocole d'ENVELOPPE VERSIONNÉE (R248, stdin JSON) :
+  { "contract_version": "1",             # version d'enveloppe (refus typé si non supportée)
+    "tenant_id": "...",                  # informatif (le rejeu est déjà borné au tenant côté porte)
+    "as_of": "ISO|null",                 # rejeu à date (R48) ; la porte filtre déjà le journal ≤ as_of
+    "config": {...},                     # config CPSI du tenant (R68 ; défauts moteur sinon)
     "journal": [ {"type": ..., ...}, ],  # événements append-only ordonnés (seq croissant, R49)
-    "query":   {"op": "score", ...} }    # l'opération de lecture demandée
-Réponse (stdout JSON) : {"ok": <résultat>} ou {"error": {"code","message"}}.
-Une erreur métier du moteur (`CpsiError`, default-deny) devient {"error"} — jamais avalée.
+    "commande": "score",                 # l'opération de lecture demandée
+    "payload": {...} }                   # arguments de la commande (client, seuil, changements…)
+Réponse (stdout JSON) :
+  { "contract_version": "1", "resultat": <...>, "meta": {"evenements_rejoues": N} }
+  ou { "contract_version": ..., "erreur_typee": {"type","code","message"} }.
+Une erreur métier du moteur (`CpsiError`, default-deny) devient `erreur_typee` — jamais avalée.
 """
 import sys, json
 from datetime import datetime
@@ -167,20 +173,37 @@ QUERIES = {"score": _score, "segmentation": _segmentation,
            "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting}
 
 
+# R248 : versions d'enveloppe supportées. Une version inconnue est refusée typée (pas de 500 opaque).
+SUPPORTED_CONTRACTS = {"1"}
+
+
 def main():
+    cv = None
     try:
-        req = json.load(sys.stdin)
-        engine = OliveCpsiEngine(req.get("config") or {})
-        _replay(engine, req.get("journal") or [])
-        q = req["query"]
-        op = q.get("op")
-        if op not in QUERIES:
-            raise CpsiError(f"opération de lecture inconnue : {op} (default-deny)")
-        print(json.dumps({"ok": QUERIES[op](engine, q)}))
-    except CpsiError as e:
-        print(json.dumps({"error": {"code": "CPSI_ERROR", "message": str(e)}}))
+        env = json.load(sys.stdin)
+        cv = str(env.get("contract_version"))
+        if cv not in SUPPORTED_CONTRACTS:
+            print(json.dumps({"contract_version": cv, "erreur_typee": {
+                "type": "UNSUPPORTED_CONTRACT", "code": "CPSI_CONTRACT",
+                "message": f"contract_version {cv} non supportée (supportées : {sorted(SUPPORTED_CONTRACTS)})"}}))
+            return
+        engine = OliveCpsiEngine(env.get("config") or {})
+        journal = env.get("journal") or []
+        _replay(engine, journal)                                          # journal filtré ≤ as_of par la porte (R48)
+        commande = env.get("commande")
+        payload = env.get("payload") or {}
+        q = {**payload, "op": commande, "at": env.get("as_of") or payload.get("at")}
+        if commande not in QUERIES:
+            raise CpsiError(f"commande inconnue : {commande} (default-deny)")
+        res = QUERIES[commande](engine, q)
+        print(json.dumps({"contract_version": cv, "resultat": res,
+                          "meta": {"evenements_rejoues": len(journal)}}))
+    except CpsiError as e:  # default-deny / règle métier du moteur → erreur TYPÉE (jamais avalée)
+        print(json.dumps({"contract_version": cv, "erreur_typee": {
+            "type": "DEFAULT_DENY", "code": "CPSI_ERROR", "message": str(e)}}))
     except Exception as e:  # garde-fou : jamais de trace brute vers la porte
-        print(json.dumps({"error": {"code": "CPSI_BRIDGE_ERROR", "message": str(e)}}))
+        print(json.dumps({"contract_version": cv, "erreur_typee": {
+            "type": "BRIDGE_ERROR", "code": "CPSI_BRIDGE_ERROR", "message": str(e)}}))
 
 
 if __name__ == "__main__":

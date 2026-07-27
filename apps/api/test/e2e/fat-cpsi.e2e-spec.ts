@@ -32,6 +32,7 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
   it("CP-01 [R63/R67] score perpétuel + drivers dont la somme reconstitue le score", async () => {
     const g = await request(http).get(`/v1/cpsi/clients/${cid}/score`).set(bearer(A, U, "CO"));
     expect(g.status).toBe(200);
+    expect(g.body.contractVersion).toBe("1");                             // PC-01/R248 : enveloppe versionnée
     expect(g.body.score).toBeGreaterThan(0);
     expect(["LOW", "MEDIUM", "HIGH"]).toContain(g.body.bande);
     const somme = g.body.drivers.reduce((s: number, d: any) => s + d.contribution, 0);
@@ -53,7 +54,7 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     const nAvant = await prisma.cpsiEvent.count({ where: { tenantId: A, clientId: cid } });
     const ko = await request(http).post(`/v1/cpsi/clients/${cid}/signals`).set(bearer(A, U, "CO"))
       .send({ type: "TYPE_INEXISTANT", severite: 1, at: "2026-02-15T00:00:00.000Z" });
-    expect(ko.status).toBe(400);
+    expect(ko.status).toBe(422);                                          // PC-02/R248 : default-deny typé → 422
     expect(JSON.stringify(ko.body)).toContain("default-deny");
     const nApres = await prisma.cpsiEvent.count({ where: { tenantId: A, clientId: cid } });
     expect(nApres).toBe(nAvant);                                          // aucune écriture (validation par rejeu)
