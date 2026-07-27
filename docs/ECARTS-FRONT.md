@@ -252,3 +252,18 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
   (écart : store de questionnaire de review inexistant) ; **`cocparam` séquencé APRÈS la PR CoC**
   du canon débloquants (R276 crée COC_CONFIG).
 - Ordre : partie 5 (LIVRÉE) → P1 → P2 → P4 partiel → P3 ; **Olivia étapes 6-8 en parallèle (go)**.
+
+## SOLDE — HO-02 (2026-07-27, canon débloquants Home partie 3 LIVRÉE)
+
+- **HO-02 SOLDÉ** : la licence est SERVIE (`GET /v1/modules/actifs`, source ratifiée =
+  `LicenseService`, licence par tenant signée vérifiable hors ligne) et APPLIQUÉE serveur
+  (garde `ModuleLicencie("cpsi")` → 403 `MODULE_INACTIF` ; LS-01..03 e2e verts). Home : tuile
+  d'un module inactif ABSENTE du DOM et AUCUN appel émis (Vitest, MSW onUnhandledRequest:error).
+- Écarts résiduels consignés : (1) **aucune licence chargée = mode socle** (tous modules actifs,
+  non-cassant — le défaut-refus strict R177 s'applique dès qu'une licence existe ; à re-durcir si
+  exigé) ; (2) **`VendorLicenseService` = doublon non branché** (écart, décision Ali : LicenseService
+  fait foi) ; (3) l'enforcement est branché sur le module **cpsi** (l'exemple du canon) — le
+  branchement des autres contrôleurs suit le même patron, à étendre par vagues ; (4) lecture
+  d'audit d'un module inactif : GET + ADMIN (écart SO connu).
+- T7 ← partie 1 (reviews R272-R275) et T8 ← partie 2 (CoC R276-R278, **R276 ÉTENDU ratifié :
+  le canon crée le store COC_CONFIG**) : à solder à leurs livraisons.

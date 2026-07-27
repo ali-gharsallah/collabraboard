@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException, UseGuards } from "@nestjs/common";
 import { execFile } from "child_process";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { LicenseModule, ModuleLicencie } from "../license/license.module"; // partie 3 débloquants : enforcement SERVEUR (LS-01)
 
 /**
  * Porte HTTP mince CPSI (spec `spec/cpsi-scenarios/CPSI-PORTE.feature`, CP-01..19). Squelette
@@ -308,6 +309,7 @@ export class CpsiService {
   }
 }
 
+@UseGuards(ModuleLicencie("cpsi"))            // LS-01 : module hors licence → 403 MODULE_INACTIF (l'enforcement est serveur)
 @Controller("cpsi")
 export class CpsiController {
   constructor(private svc: CpsiService) {}
@@ -341,6 +343,7 @@ export class CpsiController {
 }
 
 @Module({
+  imports: [LicenseModule],
   controllers: [CpsiController],
   providers: [
     PrismaService, AuditService,

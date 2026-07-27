@@ -49,6 +49,14 @@ d'anticipation sera un consommateur d'événement à câbler — signalé, pas i
 **Écarts T7/T8/HO-02 (ECARTS-FRONT)** : référence croisée posée vers ce canon — ils seront
 SOLDÉS à la livraison de chaque partie (T7 ← partie 1, T8 ← partie 2, HO-02 ← partie 3).
 
+**RATIFICATION (Ali, 2026-07-27)** : « ratifier le renommage et lancer la partie 3 ·
+License service · Étendre R276 : le canon CoC crée le store. »
+→ Famille **LS** ratifiée (LS-01..03, ex-LC de la partie 3). **Source de licence = `LicenseService`**
+(tenant, fichier signé vérifiable hors ligne) — `VendorLicenseService` reste consigné en écart de
+doublon (non branché). **R276 ÉTENDU** : la partie 2 CRÉE le store COC_CONFIG (le blocage saute).
+Partie 3 en exécution ; puis partie 1 (reviews), puis partie 2 (CoC). Livraison : branche unique
+`claude/olive-mvp-bootstrap-m02v1x` (PR #46) — pas d'autorisation de branches multiples à ce stade.
+
 ═══ FIN DU VERDICT ÉTAPE 0 — CANON REÇU CI-DESSOUS, VERBATIM ═══
 
 # O-Live — Canon des DÉBLOQUANTS HOME

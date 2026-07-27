@@ -249,6 +249,7 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
     ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO" };
     // MSW en onUnhandledRequest:error : tout POST/PUT (ou appel imprévu) ferait ÉCHOUER le test (HO-08).
     server.use(
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
       http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([{ kycCode: "K-1", section: "IDENTITY", requiredRole: "CO" }])),
       http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "UNDER_REVIEW" }, { code: "K-2", status: "UNDER_REVIEW" }, { code: "K-3", status: "IN_PROGRESS" }])),
       http.get("*/v1/tasks", () => HttpResponse.json([])),
@@ -266,6 +267,7 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
   it("HO-04 : une source en panne affiche « indisponible » (pas 0), les autres tuiles vivent", async () => {
     ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO" };
     server.use(
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
       http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([])),
       http.get("*/v1/kyc", () => HttpResponse.json([{ code: "K-1", status: "DRAFT" }])),
       http.get("*/v1/tasks", () => HttpResponse.json([])),
@@ -281,8 +283,9 @@ describe("FE-HOME — l'accueil est une projection par rôle (HO-01/04/06/08 cô
 
   it("HO-06 : ADMIN ne voit que Tâches + Santé CPSI — aucune tuile client, aucun appel client", async () => {
     ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "ADMIN" };
-    // SEULS ces deux handlers existent : un appel KYC/AML/clients déclencherait onUnhandledRequest:error.
+    // SEULS ces handlers existent : un appel KYC/AML/clients déclencherait onUnhandledRequest:error.
     server.use(
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
       http.get("*/v1/tasks", () => HttpResponse.json([])),
       http.get("*/v1/cpsi/health", () => HttpResponse.json({ profondeurJournal: 7, dernierRejeuMs: 4 })),
     );
@@ -422,5 +425,48 @@ describe("FE-OLIVIA — écran Olivia : badge sourcé, proposer verrouillé sans
     expect(await screen.findByText(/vérifié de bout en bout/)).toBeInTheDocument();
     expect(screen.getByText(/REJETEE/)).toBeInTheDocument();
     expect(screen.getByText(/analyse incomplète/)).toBeInTheDocument();
+  });
+});
+
+describe("FE-HOME/HO-02 — la licence est SERVIE : module inactif = tuile ABSENTE, aucun appel vers sa porte (partie 3 débloquants)", () => {
+  type WS = typeof globalThis & { OLIVE_API_URL?: string; OLIVE_SESSION?: { role?: string } };
+  const ws = globalThis as WS;
+  afterEach(() => { ws.OLIVE_SESSION = undefined; });
+
+  it("tenant SANS cpsi : T4/T6/T9 absentes du DOM — un appel CPSI ferait échouer MSW (onUnhandledRequest:error)", async () => {
+    ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO_SR" };
+    server.use(
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: true,
+        modules: [{ code: "kyc" }, { code: "aml" }] })),                       // PAS de cpsi
+      // AUCUN handler /v1/cpsi/* : tout appel CPSI = échec du test
+      http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([])),
+      http.get("*/v1/kyc", () => HttpResponse.json([])),
+      http.get("*/v1/tasks", () => HttpResponse.json([])),
+      http.get("*/v1/riskcases", () => HttpResponse.json([])),
+      http.get("*/v1/olivia/proposals", () => HttpResponse.json([])),
+    );
+    render(<Home/>);
+    expect(await screen.findByText("Tâches ouvertes")).toBeInTheDocument();
+    expect(screen.queryByText("Alertes AML scorées")).toBeNull();              // T4 ABSENTE (pas masquée)
+    expect(screen.queryByText("Propositions CPSI en attente")).toBeNull();     // T6 ABSENTE
+    expect(screen.queryByText("Santé de la porte CPSI")).toBeNull();           // T9 ABSENTE
+  });
+
+  it("tenant AVEC cpsi : les tuiles CPSI existent et appellent leur source", async () => {
+    ws.OLIVE_API_URL = "http://api.test"; ws.OLIVE_SESSION = { role: "CO_SR" };
+    server.use(
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: true,
+        modules: [{ code: "kyc" }, { code: "aml" }, { code: "cpsi" }] })),
+      http.get("*/v1/kyc/visas/pending", () => HttpResponse.json([])),
+      http.get("*/v1/kyc", () => HttpResponse.json([])),
+      http.get("*/v1/tasks", () => HttpResponse.json([])),
+      http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [{ client: "c1" }] })),
+      http.get("*/v1/cpsi/params/proposals", () => HttpResponse.json([])),
+      http.get("*/v1/riskcases", () => HttpResponse.json([])),
+      http.get("*/v1/olivia/proposals", () => HttpResponse.json([])),
+    );
+    render(<Home/>);
+    expect(await screen.findByText("Alertes AML scorées")).toBeInTheDocument();
+    expect(screen.getByText("Propositions CPSI en attente")).toBeInTheDocument();
   });
 });

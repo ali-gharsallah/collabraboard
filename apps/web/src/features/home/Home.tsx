@@ -10,8 +10,8 @@ import { tokens } from "../../theme/tokens";
 // zéro — un zéro est une donnée) ; vide réel = « Aucun élément ». Home n'émet AUCUNE requête
 // non-GET (HO-08). T2 (action personnelle) toujours en premier.
 // ⚠ Écarts consignés (ECARTS) : T7 (reviews à échéance) et T8 (CoC non traités) ABSENTES —
-// aucun modèle ratifié d'échéance de review ni de cycle de vie/matérialité CoC ; HO-02 (licence
-// R177 par module) partiel — la visibilité v1 est par RÔLE, la licence n'est pas surfacée au front.
+// débloquées par le canon débloquants Home (parties 1-2, à venir). HO-02 : COMPLET depuis la
+// partie 3 (licence servie par /v1/modules/actifs — tuile absente ET zéro appel si module inactif).
 
 type Session = { role?: string };
 const role = (): string => ((window as unknown as { OLIVE_SESSION?: Session }).OLIVE_SESSION?.role) ?? "CO";
@@ -43,11 +43,22 @@ function Tuile<T>({ titre, path, seed, rendre, clic }: {
 
 const n = (x: unknown[]) => x.length ? <strong style={{ fontSize: 20 }}>{x.length}</strong> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
 
+type ModulesActifs = { enforcement: boolean; modules: { code: string }[] | null };
+
 export function Home() {
   const r = role();
   const tous = r !== "ADMIN";
   const risque = ["CO", "CO_SR", "BRM", "DIR"].includes(r);
   const t1 = tous && r !== "BRM";                                          // matrice A.3 : BRM = tuiles risque + T2/T3
+  // HO-02 (COMPLET — partie 3 débloquants) : la licence est SERVIE (/v1/modules/actifs, LA source).
+  // Module inactif ⇒ la tuile est ABSENTE du DOM et AUCUN appel vers sa porte n'est émis — les
+  // tuiles ne montent qu'une fois le périmètre connu. Sans licence chargée : mode socle (tout actif).
+  const [mods, setMods] = useState<ModulesActifs | null>(null);
+  useEffect(() => { apiGetSourced<ModulesActifs>("/v1/modules/actifs", { enforcement: false, modules: null })
+    .then((x) => setMods(x.data)); }, []);
+  const actif = (code: string) => !!mods && (!mods.enforcement || (mods.modules ?? []).some((m) => m.code === code));
+  const cpsi = actif("cpsi");
+  if (mods === null) return <div><h3>Accueil</h3><div style={{ height: 18, borderRadius: 4, background: "#eee", maxWidth: 400 }}/></div>;
 
   return <div>
     {isDemoMode() && <DemoModeBanner/>}
@@ -71,7 +82,7 @@ export function Home() {
         seed={[{ id: "t", type: "REVUE_KYC" }]}
         rendre={(ts: { type: string }[]) => <div>{n(ts)}{ts.slice(0, 5).map((t, i) => <div key={i} style={{ color: tokens.color.muted }}>{t.type}</div>)}</div>}
         clic="écran Tâches"/>
-      {risque && <Tuile titre="Alertes AML scorées" path="/v1/cpsi/alerts"
+      {risque && cpsi && <Tuile titre="Alertes AML scorées" path="/v1/cpsi/alerts"
         seed={{ alertes: [{ client: "c", scenario: "SC" }] }}
         rendre={(a: { alertes: unknown[] }) => n(a.alertes ?? [])} clic="AML → Signaux scorés"/>}
       {["CO", "CO_SR", "DIR"].includes(r) && <Tuile titre="Risk cases" path="/v1/riskcases"
@@ -81,10 +92,10 @@ export function Home() {
           rc.forEach((c) => par.set(c.statut, (par.get(c.statut) ?? 0) + 1));
           return rc.length ? <div>{[...par.entries()].map(([s, c]) => <div key={s}>{s} : <strong>{c}</strong></div>)}</div> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
         }} clic="Risk case manager"/>}
-      {["CO_SR", "BRM", "DIR"].includes(r) && <Tuile titre="Propositions CPSI en attente" path="/v1/cpsi/params/proposals"
+      {["CO_SR", "BRM", "DIR"].includes(r) && cpsi && <Tuile titre="Propositions CPSI en attente" path="/v1/cpsi/params/proposals"
         seed={[{ id: "PROP-1", statut: "EN_ATTENTE" }]}
         rendre={(ps: { statut: string }[]) => n(ps.filter((p) => p.statut === "EN_ATTENTE"))} clic="écran propositions"/>}
-      {r === "ADMIN" && <Tuile titre="Santé de la porte CPSI" path="/v1/cpsi/health"
+      {r === "ADMIN" && cpsi && <Tuile titre="Santé de la porte CPSI" path="/v1/cpsi/health"
         seed={{ profondeurJournal: 0, dernierRejeuMs: null }}
         rendre={(h: { profondeurJournal: number; dernierRejeuMs: number | null }) =>
           <div>journal : <strong>{h.profondeurJournal}</strong> évts · rejeu {h.dernierRejeuMs ?? "—"} ms</div>} clic="écran cpsiparam"/>}
