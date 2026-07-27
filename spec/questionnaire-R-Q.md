@@ -93,3 +93,25 @@ avant le code correspondant. Le moteur est réputé conforme lorsque 100 %
 des scénarios passent en suite de tests. Toute nouvelle règle découverte
 en exploitation est ajoutée au catalogue selon la même numérotation,
 avec ses scénarios, avant implémentation.*
+
+12. Paramètres tenant — porte CPSI (amendement R248-R252, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R251**      `cpsi_gate_timeout_ms` — timeout du        Porte CPSI
+                sous-processus moteur (défaut 5000 ms).
+                Dépassé ⇒ 503 typé CPSI_GATE_UNAVAILABLE
+                (refus gracieux, jamais un 500 opaque).
+
+  **R250**      `cpsi_replay_warn_ms` — seuil de durée     Porte CPSI
+                d'hydratation (défaut 2000 ms). Dépassé ⇒
+                notification tracée (CPSI_REPLAY_SLOW),
+                JAMAIS un blocage (R39).
+
+  **R248**      `cpsi_contract_version` supportées —       Porte CPSI
+                versions d'enveloppe acceptées (défaut
+                ["1"]). Version inconnue ⇒ erreur typée
+                UNSUPPORTED_CONTRACT.
+  ------------- ----------------------------------------- ----------------------
+
+  Ces paramètres vivent sous `tenant.settings.cpsiConfig` (R68 : versionnés par
+  date de mise en vigueur ; le rejeu à date utilise la config d'alors).

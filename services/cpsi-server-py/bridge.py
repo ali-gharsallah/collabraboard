@@ -63,6 +63,8 @@ def _replay(engine, journal):
             engine.transition_risk_case(ev["case"], ev["action"], ev["acteur"], at, ev.get("motif"))
         elif t == "cpsi.riskcase.note":
             engine.documenter_risk_case(ev["case"], ev["acteur"], ev["note"], at)
+        elif t == "cpsi.case_proposal.emitted":
+            pass  # R252 : artefact d'émission vers riskcases (R133-R136) — aucun état moteur
         else:
             raise CpsiError(f"type d'événement de rejeu inconnu : {t} (default-deny)")
 

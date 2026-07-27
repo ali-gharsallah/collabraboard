@@ -255,25 +255,36 @@ export class CpsiService {
       { client: cid, acteur: ctx.userId, role: ctx.role, motif: dto?.motif ?? "" }, "insiders");
   }
 
-  // ── CP-15 (R83/R81) : ouvrir un risk case depuis des alertes corrélées d'un même client. ──
-  async ouvrirRiskCase(ctx: Ctx, dto: { alertes: any[] }) {
-    if (!Array.isArray(dto?.alertes) || !dto.alertes.length) throw new BadRequestException("alertes requises");
-    return this.muter(ctx, "cpsi.riskcase.opened", dto.alertes[0]?.client ?? "—", { alertes: dto.alertes, acteur: ctx.userId }, "open_risk_case");
+  // ── R252/PC-09 : le CPSI PROPOSE, riskcases (R133-R136) instruit. La corrélation R81 (≥2
+  // scénarios même client) devient un événement `case_proposal` append-only, consommable par le
+  // module riskcases — AUCUN état de riskcase muté ici (R66), aucune surface produit risk-case
+  // (les anciennes routes CP-15/16/17 sont SUPERSEDED — voir amendement R248-R252). ──
+  async emettreCaseProposals(ctx: Ctx) {
+    const r = await this.call(ctx, "alerts", {});
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    const correlations: Record<string, string[]> = r.resultat.correlations ?? {};
+    const dejaEmises = new Set((await this.prisma.cpsiEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted" } }))
+      .map((e: any) => (e.payload as any).cle));
+    const emises: any[] = [];
+    for (const [client, scenarios] of Object.entries(correlations)) {
+      const cle = `${client}|${[...scenarios].sort().join("+")}`;         // PC-10 : idempotence (pattern R76)
+      if (dejaEmises.has(cle)) continue;
+      const at = new Date().toISOString();
+      const payload = { client, scenarios, cle, par: ctx.userId };
+      await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted", clientId: client, at, payload } });
+      await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_CASE_PROPOSAL_EMITTED", cle);
+      emises.push({ client, scenarios, cle, at });
+    }
+    return { emises, dejaExistantes: dejaEmises.size, correlationsVues: Object.keys(correlations).length };
   }
-  // ── CP-16 (R83/R7) : transition — motif obligatoire (clore/escalader/clarifier). ──
-  async transitionRiskCase(ctx: Ctx, id: string, dto: { action: string; motif?: string }) {
-    if (!dto?.action) throw new BadRequestException("action requise");
-    return this.muter(ctx, "cpsi.riskcase.transition", id, { case: id, action: dto.action, motif: dto.motif ?? null, acteur: ctx.userId }, "risk_case", { id });
-  }
-  async documenterRiskCase(ctx: Ctx, id: string, dto: { note?: string }) {
-    return this.muter(ctx, "cpsi.riskcase.note", id, { case: id, note: dto?.note ?? "", acteur: ctx.userId }, "risk_case", { id });
-  }
-  async riskCase(ctx: Ctx, id: string) {
-    return this.lire(ctx, "risk_case", { id });
-  }
-  // ── CP-17 (R39) : reporting SLA — mesure, ne bloque pas. ──
-  async reporting(ctx: Ctx, slaJours?: number) {
-    return this.lire(ctx, "reporting", slaJours != null ? { sla_jours: slaJours } : {});
+
+  // Lecture des propositions émises — LA surface de consommation du module riskcases (R252).
+  async listerCaseProposals(ctx: Ctx) {
+    const rows = await this.prisma.cpsiEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted" }, orderBy: { id: "asc" } });
+    return rows.map((e: any) => { const p = e.payload as any;
+      return { client: p.client, scenarios: p.scenarios, cle: p.cle, emisePar: p.par, at: e.at }; });
   }
 }
 
@@ -300,11 +311,10 @@ export class CpsiController {
   @Post("false-positives")         fauxPositif(@Req() r: any, @Body() b: any) { return this.svc.declarerFauxPositif(r.ctx, b); }                        // CP-13
   @Post("clients/:cid/insider")      insider(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.taguerInsider(r.ctx, cid, b); }     // CP-14
   @Post("clients/:cid/insider/lift") insiderLift(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.leverInsider(r.ctx, cid, b); }   // CP-14
-  @Post("risk-cases")              ouvrirRc(@Req() r: any, @Body() b: any) { return this.svc.ouvrirRiskCase(r.ctx, b); }                                // CP-15
-  @Get("risk-cases/reporting")     reporting(@Req() r: any, @Query("slaJours") sla?: string) { return this.svc.reporting(r.ctx, sla != null ? Number(sla) : undefined); } // CP-17
-  @Post("risk-cases/:id/transition") transitionRc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.transitionRiskCase(r.ctx, id, b); } // CP-16
-  @Post("risk-cases/:id/notes")    noterRc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.documenterRiskCase(r.ctx, id, b); }   // CP-16
-  @Get("risk-cases/:id")           getRc(@Req() r: any, @Param("id") id: string) { return this.svc.riskCase(r.ctx, id); }                               // CP-15/16
+  // R252/PC-11 : AUCUNE surface produit risk-case sur la porte (CP-15/16/17 SUPERSEDED —
+  // l'instruction, les transitions et le reporting SLA relèvent de riskcases R133-R136).
+  @Post("case-proposals")          emettreCp(@Req() r: any) { return this.svc.emettreCaseProposals(r.ctx); }                              // PC-09/10
+  @Get("case-proposals")           listerCp(@Req() r: any) { return this.svc.listerCaseProposals(r.ctx); }                               // PC-09 (consommation riskcases)
 }
 
 @Module({

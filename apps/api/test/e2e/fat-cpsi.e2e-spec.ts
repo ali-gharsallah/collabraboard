@@ -196,32 +196,46 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     console.log("CP-14 PASS — RM refusé (403), CO habilité, motif obligatoire");
   });
 
-  let rcId = "";
-  it("CP-15 [R83] ouvrir un risk case depuis des alertes d'un même client", async () => {
-    const rc = await request(http).post(`/v1/cpsi/risk-cases`).set(bearer(A, U, "CO"))
-      .send({ alertes: [{ client: cid, scenario: "SC_SCORE" }] });
-    expect(rc.status).toBe(201);
-    expect(rc.body.etat).toBe("NOUVELLE");
-    expect(rc.body.client).toBe(cid);
-    rcId = rc.body.id;
-    console.log("CP-15 PASS — case", rcId, "NOUVELLE");
+  // CP-15/16/17 SUPERSEDED par R252 (amendement R248-R252) : le CPSI ÉMET des case_proposal ;
+  // l'instruction (ouverture/transitions/reporting) relève de riskcases R133-R136. Couverture → PC-09..12.
+  it("PC-09 [R252] la corrélation R81 émet un case_proposal append-only, consommable par riskcases", async () => {
+    // Un 2e scénario ciblant PEP ⇒ cid touché par ≥2 scénarios (corrélation R81).
+    await request(http).post(`/v1/cpsi/scenarios`).set(bearer(A, U, "CO"))
+      .send({ sid: "SC_SCORE2", label: "Score PEP seuil bas", champ: "score", groupesSeuils: { PEP: 5 }, sens: "gte" }).expect(201);
+    const em = await request(http).post(`/v1/cpsi/case-proposals`).set(bearer(A, U, "CO"));
+    expect(em.status).toBe(201);
+    const mienne = em.body.emises.find((p: any) => p.client === cid);
+    expect(mienne).toBeDefined();
+    expect(mienne.scenarios.sort()).toEqual(["SC_SCORE", "SC_SCORE2"]);
+    const evts = await prisma.cpsiEvent.count({ where: { tenantId: A, type: "cpsi.case_proposal.emitted" } });
+    expect(evts).toBe(em.body.emises.length);                             // événement append-only journalisé
+    const rcEvts = await prisma.cpsiEvent.count({ where: { tenantId: A, type: { startsWith: "cpsi.riskcase." } } });
+    expect(rcEvts).toBe(0);                                               // aucun état de riskcase muté par le CPSI (R66)
+    const liste = await request(http).get(`/v1/cpsi/case-proposals`).set(bearer(A, U, "CO"));
+    expect(liste.body.some((p: any) => p.cle === mienne.cle)).toBe(true); // consommable par riskcases
+    console.log("PC-09 PASS — proposition", mienne.cle, "émise et journalisée");
   });
 
-  it("CP-16 [R83/R7] transitions : motif obligatoire pour clore/escalader", async () => {
-    await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "prendre_en_charge" }).expect(201);
-    const koMotif = await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "clore" });
-    expect(koMotif.status).toBe(400);                                     // motif obligatoire (R7)
-    const ok = await request(http).post(`/v1/cpsi/risk-cases/${rcId}/transition`).set(bearer(A, U, "CO")).send({ action: "clore", motif: "faux positif confirmé" });
-    expect(ok.body.etat).toBe("CLOTUREE");
-    console.log("CP-16 PASS — clôture refusée sans motif, acceptée avec");
+  it("PC-10 [R252] idempotence : le même couple (client, corrélation) rejoué ⇒ UNE seule proposition", async () => {
+    const avant = await prisma.cpsiEvent.count({ where: { tenantId: A, type: "cpsi.case_proposal.emitted" } });
+    const re = await request(http).post(`/v1/cpsi/case-proposals`).set(bearer(A, U, "CO"));
+    expect(re.body.emises.length).toBe(0);                                // rien de nouveau
+    expect(re.body.dejaExistantes).toBeGreaterThanOrEqual(1);
+    const apres = await prisma.cpsiEvent.count({ where: { tenantId: A, type: "cpsi.case_proposal.emitted" } });
+    expect(apres).toBe(avant);                                            // pattern R76 : pas de doublon
+    console.log("PC-10 PASS — ré-émission sans doublon");
   });
 
-  it("CP-17 [R39] reporting SLA des cases : mesure sans bloquer", async () => {
-    const g = await request(http).get(`/v1/cpsi/risk-cases/reporting?slaJours=30`).set(bearer(A, U, "CO"));
-    expect(g.status).toBe(200);
-    expect(g.body).toHaveProperty("par_etat");
-    expect(g.body.par_etat.CLOTUREE).toBeGreaterThanOrEqual(1);
-    console.log("CP-17 PASS — reporting par état", JSON.stringify(g.body.par_etat));
+  it("PC-11 [R252] la porte n'expose AUCUNE surface produit risk-case (CP-15/16 superseded)", async () => {
+    await request(http).post(`/v1/cpsi/risk-cases`).set(bearer(A, U, "CO")).send({ alertes: [{ client: cid, scenario: "SC_SCORE" }] }).expect(404);
+    await request(http).post(`/v1/cpsi/risk-cases/RC-0001/transition`).set(bearer(A, U, "CO")).send({ action: "clore", motif: "x" }).expect(404);
+    await request(http).post(`/v1/cpsi/risk-cases/RC-0001/notes`).set(bearer(A, U, "CO")).send({ note: "x" }).expect(404);
+    console.log("PC-11 PASS — routes risk-case directes absentes (404)");
+  });
+
+  it("PC-12 [R252/R39] le reporting SLA reste chez riskcases — pas de route porte (CP-17 superseded)", async () => {
+    await request(http).get(`/v1/cpsi/risk-cases/reporting?slaJours=30`).set(bearer(A, U, "CO")).expect(404);
+    console.log("PC-12 PASS — reporting SLA hors porte CPSI (chez riskcases R133-R136)");
   });
 
   it("PC-08 [R251] port optionnel : moteur absent ⇒ 503 typé, les autres routes intactes", async () => {

@@ -156,18 +156,21 @@ describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), ale
     expect(screen.getByText("B-CALME")).toBeInTheDocument();
   });
 
-  it("CPSI Risk cases : affiche les alertes scorées + reporting SLA, propose d'ouvrir un case", async () => {
+  it("CPSI Risk cases : alertes scorées + émission de case_proposal (R252 — riskcases instruit)", async () => {
     w.OLIVE_API_URL = "http://api.test";
     server.use(
       http.get("*/v1/cpsi/alerts", () => HttpResponse.json({
         signaux: [{ client: "c-1", scenario: "SC_STRUCT", groupe: "PEP", score: 72, statut: "ALERTE" }],
-        alertes: [{ client: "c-1", scenario: "SC_STRUCT", groupe: "PEP", score: 72, statut: "ALERTE" }], nearMiss: [], correlations: {} })),
-      http.get("*/v1/cpsi/risk-cases/reporting", () => HttpResponse.json({ par_etat: { NOUVELLE: 1 }, sla_jours: 30, hors_sla: 0 })),
+        alertes: [{ client: "c-1", scenario: "SC_STRUCT", groupe: "PEP", score: 72, statut: "ALERTE" }], nearMiss: [],
+        correlations: { "c-1": ["SC_STRUCT", "SC_WIRES"] } })),
+      http.get("*/v1/cpsi/case-proposals", () => HttpResponse.json([
+        { client: "c-1", scenarios: ["SC_STRUCT", "SC_WIRES"], cle: "c-1|SC_STRUCT+SC_WIRES", emisePar: "u1", at: "2026-07-27" }])),
     );
     render(<CpsiRiskCases/>);
     expect(await screen.findByText("SC_STRUCT")).toBeInTheDocument();
     expect(screen.getByText("72")).toBeInTheDocument();                        // score du signal
-    expect(screen.getAllByText("ALERTE").length).toBeGreaterThanOrEqual(1);    // statut R80 (aussi cité dans le libellé)
-    expect(screen.getByRole("button", { name: /Ouvrir un case/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Émettre les propositions/i })).toBeEnabled();  // émission R252
+    expect(await screen.findByText(/SC_STRUCT \+ SC_WIRES/)).toBeInTheDocument();             // proposition listée
+    expect(screen.queryByRole("button", { name: /Ouvrir un case/i })).toBeNull();             // PC-11 : plus de surface directe
   });
 });

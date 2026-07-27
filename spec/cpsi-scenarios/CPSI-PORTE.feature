@@ -16,7 +16,10 @@ Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, au
       default-deny), CP-10 IA propose / humain adopte / rejet à motivation obligatoire,
       CP-13 faux-positif, CP-14 insider MAR (habilitation par le rôle du jeton, motif obligatoire),
       CP-15/16/17 risk cases (ouverture, transitions, reporting) — ⚠ SUPERSEDED par R252 (voir
-      amendement `catalogue-amendement-R248-R252-porte-cpsi.md`) : à débrancher vers émission `case_proposal`.
+      amendement `catalogue-amendement-R248-R252-porte-cpsi.md`) : DÉBRANCHÉS, remplacés par
+      l'émission `case_proposal` (PC-09/10) + invariants PC-11/12. Amendement R248-R252 IMPLÉMENTÉ
+      (PC-01..12 verts) : enveloppe versionnée + 422 typé (R248), jauge + santé (R250), 503 typé
+      port optionnel (R251), frontière directionnelle CPSI→riskcases (R252), paramètres au R-Q.
   → PORTE COMPLÈTE : CP-01..18 câblés et verts (e2e 18 tests) ; CP-19 (la porte ne calcule rien)
     = invariant tenu par construction (toute valeur vient d'un appel au moteur ratifié).
   Décisions actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le
