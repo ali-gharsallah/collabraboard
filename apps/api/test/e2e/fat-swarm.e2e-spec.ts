@@ -226,4 +226,58 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
       `UPDATE olivia_run_events SET sortie = '{}' WHERE run_id = '${run.id}'`)).rejects.toThrow();
     console.log("SW-03 PASS — write-ahead prouvé : journal net après kill, INTERROMPU à la reprise, chaîne intacte, append-only SQL");
   });
+
+  // ── Étape 4 : R262 — le budget est une PORTE dure, jamais dépassé « pour finir » ──
+
+  it("SW-06 [R262] le budget étapes FERME : 25 étapes demandées, max 20 → EPUISE à 20, livrable partiel avec mention, étape 21 inexistante", async () => {
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    const s = (t!.settings as any) ?? {};
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...s,
+      missionsActives: [...(s.missionsActives ?? []), "MISSION_25_ETAPES"],
+      missionsDeclarees: { ...(s.missionsDeclarees ?? {}),
+        MISSION_25_ETAPES: { agents: ["agent-kyc"], portes: [], roles: ["CO"] } } } } });
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_25_ETAPES" });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("EPUISE");
+    expect(r.body.consomme.etapes).toBe(20);                              // 20, PAS 21 — jamais « pour finir »
+    const evts = await eventsDe(r.body.id);
+    expect(evts.filter((e: any) => e.type === "ETAPE_AGENT").length).toBe(20);  // l'étape 21 N'EXISTE PAS
+    const tick = evts.find((e: any) => e.type === "BUDGET_TICK");
+    expect(JSON.stringify(tick!.sortie)).toContain("etapes");             // le compteur épuisé est NOMMÉ
+    const livrable = evts.find((e: any) => e.type === "LIVRABLE");
+    expect(JSON.stringify(livrable!.sortie)).toContain("exploration interrompue : budget étapes");
+    expect(evts[evts.length - 1].type).toBe("TRANSITION");                // → EPUISE, événement d'abord
+    chaineContigue(evts);
+    console.log("SW-06 PASS — EPUISE à 20, livrable partiel mentionné, étape 21 inexistante");
+  });
+
+  it("SW-07 [R262] le budget durée FERME : max_duree_s surchargé à 0 → EPUISE après la 1re étape, mention explicite", async () => {
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "MISSION_SIMPLE", budgetSurcharge: { maxDureeS: 0 } });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("EPUISE");
+    const evts = await eventsDe(r.body.id);
+    expect(evts.filter((e: any) => e.type === "ETAPE_AGENT").length).toBe(1);   // la porte ferme AVANT l'étape 2
+    expect(JSON.stringify(evts.find((e: any) => e.type === "LIVRABLE")!.sortie)).toContain("budget durée");
+    chaineContigue(evts);
+    console.log("SW-07 PASS — budget durée ferme, livrable partiel mentionné");
+  });
+
+  it("SW-08 [R262] la surcharge ne va qu'À LA BAISSE : au-dessus du paramètre tenant → 422 ; en dessous → appliquée", async () => {
+    // Au-dessus (tenant: max_etapes défaut 20) → 422, AUCUN run créé
+    const avant = await prisma.oliviaRun.count({ where: { tenantId: T } });
+    const trop = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "MISSION_SIMPLE", budgetSurcharge: { maxEtapes: 50 } });
+    expect(trop.status).toBe(422);
+    expect(JSON.stringify(trop.body)).toContain("baisse");
+    expect(await prisma.oliviaRun.count({ where: { tenantId: T } })).toBe(avant);
+    // En dessous → appliquée : MISSION_SIMPLE (3 étapes) plafonnée à 2 → EPUISE à 2
+    const r = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO"))
+      .send({ missionCode: "MISSION_SIMPLE", budgetSurcharge: { maxEtapes: 2 } });
+    expect(r.status).toBe(201);
+    expect(r.body.statut).toBe("EPUISE");
+    expect(r.body.budget.maxEtapes).toBe(2);                              // la surcharge est FIGÉE au run
+    expect(r.body.consomme.etapes).toBe(2);
+    console.log("SW-08 PASS — surcharge haussière 422, baissière appliquée et figée");
+  });
 });

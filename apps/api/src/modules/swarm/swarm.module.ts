@@ -185,6 +185,8 @@ function portSwarm(): { planifier: (missionCode: string) => any } | null {
       const plans = chemin ? JSON.parse(readFileSync(chemin, "utf8")) : {};
       const plan = plans[missionCode];
       if (!plan) throw new ServiceUnavailableException(`SWARM_GATE_UNAVAILABLE: aucune fixture de plan pour ${missionCode}`);
+      if (plan.repete)                                                    // fixture compacte (SW-06 : 25 étapes)
+        return { etapes: Array.from({ length: plan.repete.fois }, () => ({ ...plan.repete })) };
       return plan;
     } };
   }
@@ -241,9 +243,19 @@ export class SwarmRunsService {
     const port = portSwarm();
     if (!port) throw new ServiceUnavailableException("SWARM_GATE_UNAVAILABLE: port fournisseur non configuré (R251/R253 — refus gracieux typé)");
 
-    // Budget B.5 figé à la création (tenant-paramétré ; surcharge = étape 4/R262)
+    // R262 : budget B.5 tenant-paramétré, FIGÉ à la création ; la surcharge par mission ne va
+    // qu'À LA BAISSE (SW-08) — au-dessus du paramètre tenant : 422, aucun run créé.
     const budget = { maxEtapes: settings.runMaxEtapes ?? 20, maxDureeS: settings.runMaxDureeS ?? 300,
       maxCoutTokens: settings.runMaxCoutTokens ?? 200000 };
+    const sur = dto.budgetSurcharge ?? {};
+    for (const [cle, plafond] of Object.entries(budget) as [keyof typeof budget, number][]) {
+      const v = sur[cle];
+      if (v == null) continue;
+      if (typeof v !== "number" || v < 0) throw new BadRequestException(`R262 : surcharge ${cle} invalide`);
+      if (v > plafond) throw new UnprocessableEntityException(
+        `R262 : la surcharge ne va qu'à la baisse — ${cle}=${v} dépasse le paramètre tenant (${plafond})`);
+      budget[cle] = v;
+    }
     const run = await this.prisma.oliviaRun.create({ data: { tenantId: ctx.tenantId,
       missionCode: dto.missionCode, commanditaireId: ctx.userId, roleCode: ctx.role,   // jeton, jamais le corps
       ancrageType: dto.ancrageType ?? null, ancrageId: dto.ancrageId ?? null, budget } });
@@ -274,21 +286,43 @@ export class SwarmRunsService {
     return this.vue(fini);
   }
 
-  // ── R260 : l'exécuteur — une étape complète = un événement, AVANT que la suivante ne démarre ──
+  // ── R260 : l'exécuteur — une étape complète = un événement, AVANT que la suivante ne démarre.
+  //    R262 : les trois compteurs sont décomptés à CHAQUE étape ; le premier épuisé FERME —
+  //    livrable partiel avec mention explicite, l'étape suivante N'EXISTE PAS. ──
   private async executer(ctx: Ctx, run: any, plan: any, versions: Map<string, number>) {
-    let etapes = 0;
+    const debut = Date.now();
+    const budget = run.budget as { maxEtapes: number; maxDureeS: number; maxCoutTokens: number };
+    const consomme = { etapes: 0, duree_s: 0, tokens: 0 };
     let derniereSortie: any = null;
     for (const etape of plan.etapes ?? []) {
+      // R262 : la porte se vérifie AVANT d'entamer l'étape — jamais de dépassement « pour finir ».
+      // La durée se mesure EN DIRECT (l'étape précédente a coûté du temps réel, pas celui d'avant).
+      consomme.duree_s = (Date.now() - debut) / 1000;
+      const epuise = consomme.etapes >= budget.maxEtapes ? "etapes"
+        : consomme.etapes > 0 && consomme.duree_s > budget.maxDureeS ? "duree_s"
+        : consomme.tokens >= budget.maxCoutTokens && budget.maxCoutTokens > 0 ? "tokens" : null;
+      if (epuise) {
+        const libelle = epuise === "etapes" ? "budget étapes" : epuise === "duree_s" ? "budget durée" : "budget tokens";
+        await this.prisma.$transaction(async (tx: Tx) => {
+          await this.appendEvent(tx, run, "BUDGET_TICK", { sortie: { compteur: epuise,
+            valeur: (consomme as any)[epuise], plafond: (budget as any)[epuise === "etapes" ? "maxEtapes" : epuise === "duree_s" ? "maxDureeS" : "maxCoutTokens"] } });
+          await this.appendEvent(tx, run, "LIVRABLE", { sortie: { partiel: true,
+            mention: `exploration interrompue : ${libelle} (R262)`, contenu: derniereSortie ?? {} } });
+          await this.transition(tx, run, "EN_COURS", "EPUISE");
+        });
+        await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_EPUISE", `${run.id}:${epuise}`);
+        return;
+      }
       // Simulation kill -9 (fixture SW-03) : le processus « meurt » — AUCUN rattrapage, AUCUNE
       // écriture : le journal s'arrête net après la dernière étape complète, le statut ne ment pas.
       if (etape.marqueur === "CRASH_TEST") throw new Error("SWARM_CRASH_TEST: processus tué entre deux étapes (simulation SW-03)");
       derniereSortie = etape.sortie ?? {};
-      etapes++;
+      consomme.etapes++;
+      consomme.tokens += (etape.cout?.tokens ?? 0);
       await this.prisma.$transaction(async (tx: Tx) => {
         await this.appendEvent(tx, run, "ETAPE_AGENT", { agentCode: etape.agent,
           agentVersion: versions.get(etape.agent) ?? null as any, sortie: derniereSortie, cout: etape.cout ?? null });
-        await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { etapes,
-          duree_s: 0, tokens: 0 } } });                                   // décompte complet = étape 4 (R262)
+        await tx.oliviaRun.update({ where: { id: run.id }, data: { consomme: { ...consomme } } });
       });
     }
     await this.prisma.$transaction(async (tx: Tx) => {

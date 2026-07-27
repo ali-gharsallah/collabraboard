@@ -13,6 +13,7 @@
     { "agent": "agent-kyc", "sortie": { "constat": "aucune incohérence" }, "cout": { "tokens": 40 } },
     { "agent": "agent-redacteur", "sortie": { "rapport": "Synthèse : dossier propre" }, "cout": { "tokens": 90 } }
   ] },
+  "MISSION_25_ETAPES": { "repete": { "agent": "agent-kyc", "sortie": { "constat": "exploration…" }, "cout": { "tokens": 10 }, "fois": 25 } },
   "MISSION_CRASH": { "etapes": [
     { "agent": "agent-kyc", "sortie": { "constat": "étape 1 complète" }, "cout": { "tokens": 50 } },
     { "agent": "agent-kyc", "sortie": { "constat": "étape 2 complète" }, "cout": { "tokens": 50 } },
