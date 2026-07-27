@@ -201,3 +201,57 @@ describe("FAT OLIVIA — R255 ContextBuilder (OL-05..10)", () => {
     console.log("OL-10 PASS — l'id d'une conversation de T ne donne RIEN à T2");
   });
 });
+
+describe("FAT OLIVIA — R256 citations (OL-11/13/14 ; OL-12 à l'étape 6 avec la route proposition)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const RM1 = randomUUID();
+  let file: any = null, conv: any = null, questionId = "";
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    await prisma.client.update({ where: { id: clientId }, data: { rmUserId: RM1 } });
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { oliviaProviderRef: "anthropic", oliviaModel: "claude-sonnet-5" } } });
+    file = (await request(http).post("/v1/kyc").set(bearer(T, RM1, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM1 })).body;
+    const q = await prisma.kycQuestion.findFirst({ where: { code: "IDE-Q1", section: { kycFileId: file.id } } });
+    questionId = q!.id;
+    conv = (await request(http).post("/v1/olivia/conversations").set(bearer(T, RM1, "RM"))
+      .send({ capacite: "C2", ancrageType: "KYC_FILE", ancrageId: file.id })).body;
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("OL-13 : une citation vers un objet DU contexte est valide — est_source=true, ref existante en base", async () => {
+    const r = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: `Synthèse CITE_TEST:KYC_QUESTION:${questionId}` })).body;
+    expect(r.estSource).toBe(true);                                        // ≥1 citation valide
+    const c = r.citations.find((x: any) => x.ref === questionId);
+    expect(c.valide).toBe(true);
+    expect(await prisma.kycQuestion.findFirst({ where: { id: questionId } })).not.toBeNull();  // la ref existe
+    console.log("OL-13 PASS — citation du contexte valide, est_source=true");
+  });
+
+  it("OL-11 : citer un objet HORS contexte invalide la citation — plus aucune valide ⇒ est_source=false", async () => {
+    const horsContexte = randomUUID();                                     // jamais montré au modèle
+    const r = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: `Synthèse CITE_TEST:KYC_QUESTION:${horsContexte}` })).body;
+    expect(r.citations[0].valide).toBe(false);                             // le modèle ne cite pas ce qu'on ne lui a pas montré
+    expect(r.estSource).toBe(false);
+    const stocke = await prisma.oliviaMessage.findFirst({ where: { conversationId: conv.id, seq: r.seq } });
+    expect(stocke!.estSource).toBe(false);                                 // le verdict est JOURNALISÉ, pas seulement rendu
+    console.log("OL-11 PASS — citation hors contexte invalidée, sortie non sourcée");
+  });
+
+  it("OL-14 : une REGLE inexistante au catalogue est invalidée ; une règle réelle est valide", async () => {
+    const r = (await request(http).post(`/v1/olivia/conversations/${conv.id}/messages`).set(bearer(T, RM1, "RM"))
+      .send({ texte: "Synthèse CITE_TEST:REGLE:R999 CITE_TEST:REGLE:R15" })).body;
+    const r999 = r.citations.find((c: any) => c.ref === "R999");
+    const r15 = r.citations.find((c: any) => c.ref === "R15");
+    expect(r999.valide).toBe(false);                                       // R999 n'existe pas au catalogue
+    expect(r15.valide).toBe(true);                                         // R15 (visa uniforme) existe
+    expect(r.estSource).toBe(true);                                        // une valide suffit
+    console.log("OL-14 PASS — R999 invalidée, R15 valide");
+  });
+});

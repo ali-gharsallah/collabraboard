@@ -333,6 +333,12 @@ Entrées : (user, role, tenant, capacite, ancrage, question).
 
 ## B.6 R256 — Citations : format et vérification
 
+**LIVRÉ (étape 5, 2026-07-27)** — vérification serveur dans `envoyerMessage` : `ref` doit être
+dans `contexte_objets` (sauf `REGLE` : format `^R[1-9][0-9]{0,2}$` et ≤ `CATALOGUE_MAX_REGLE`) ;
+`valide` par citation + `est_source` calculés et **journalisés** sur le message OUT (dans le
+`record_hash`). e2e OL-11/13/14 (fat-olivia). **OL-12 (`OLIVIA_UNSOURCED_PROPOSAL` 422) reporté
+à l'étape 6** — il exige la route proposition (R254), non encore ouverte.
+
 Format d'une citation dans `citations` :
 ```json
 { "type": "KYC_QUESTION" | "EVENEMENT" | "REGLE" | "DOCUMENT" | "SCORE_DRIVER",

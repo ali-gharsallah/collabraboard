@@ -27,7 +27,11 @@ import { KycService } from "../kyc/kyc.service";
 type Ctx = { tenantId: string; userId: string; role: string };
 // Port fournisseur (R253) : l'unique voie vers l'extérieur. La version du modèle est celle
 // RENVOYÉE par le fournisseur, jamais supposée.
-export type PortOlivia = { repondre(prompt: string): Promise<{ texte: string; modelVersion: string }> };
+export type Citation = { type: string; ref: string; assertion: string; valide?: boolean };
+export type PortOlivia = { repondre(prompt: string): Promise<{ texte: string; modelVersion: string; citations?: Citation[] }> };
+// R256 : « REGLE doit exister au catalogue » — borne haute du catalogue ratifié (à incrémenter
+// avec chaque amendement ; R259-R266 = Olivia v2 ratifiée).
+const CATALOGUE_MAX_REGLE = 266;
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const CONVERSER_C1 = ["RM", "ARM", "CO", "CO_SR", "BRM", "DIR"];          // matrice B.3 (Direction→DIR)
@@ -41,7 +45,11 @@ function fakePort(): PortOlivia {
     async repondre(prompt: string) {
       (globalThis as any).__oliviaFakeCalls = ((globalThis as any).__oliviaFakeCalls ?? 0) + 1;   // compteur de test (OL-08)
       if (prompt.includes("TIMEOUT_TEST")) await new Promise((r) => setTimeout(r, 60_000).unref());
-      return { texte: `Réponse déterministe de test (${sha(prompt).slice(0, 8)})`, modelVersion: "fake-1.0" };
+      // Citations déterministes pilotées par le test : marqueurs CITE_TEST:<type>:<ref> dans la question.
+      const citations = [...prompt.matchAll(/CITE_TEST:([A-Z_]+):([\w-]+)/g)]
+        .map((m) => ({ type: m[1], ref: m[2], assertion: "assertion de test" }));
+      return { texte: `Réponse déterministe de test (${sha(prompt).slice(0, 8)})`, modelVersion: "fake-1.0",
+        ...(citations.length ? { citations } : {}) };
     },
   };
 }
@@ -220,7 +228,7 @@ export class OliviaService {
     const prompt = gabarit.replace("{contexte}", JSON.stringify(cx.contenu)).replace("{question}", dto.texte);
 
     const t0 = Date.now();
-    let sortie: { texte: string; modelVersion: string } | null = null; let echec: string | null = null;
+    let sortie: { texte: string; modelVersion: string; citations?: Citation[] } | null = null; let echec: string | null = null;
     try {
       sortie = await Promise.race([
         port.repondre(prompt),
@@ -229,13 +237,24 @@ export class OliviaService {
     } catch (e) { echec = (e as Error).message; }
     const latence = Date.now() - t0;
 
+    // R256 : vérification des citations sur la sortie COMPLÈTE — chaque ref doit exister DANS le
+    // contexte transmis (on ne cite pas ce qu'on n'a pas montré) ; REGLE doit exister au catalogue.
+    // ≥1 citation valide ⇒ est_source=true ; sinon « Non sourcé » (et jamais proposable, étape 6).
+    const idsContexte = new Set(cx.objets.map((o: any) => o.id));
+    const citations: Citation[] = (sortie?.citations ?? []).map((c) => ({ ...c,
+      valide: c.type === "REGLE"
+        ? /^R[1-9][0-9]{0,2}$/.test(c.ref) && Number(c.ref.slice(1)) <= CATALOGUE_MAX_REGLE
+        : idsContexte.has(c.ref) }));
+    const estSource = citations.some((c) => c.valide);
+
     // OUT journalisé dans TOUS les cas (OL-04 : « un OUT d'erreur est aussi un événement », seq consommé).
     const msgOut = await this.prisma.$transaction(async (tx: any) => {
       const { seq, hash } = await this.dernierHash(tx, conv.id);
       const texte = sortie ? sortie.texte : `ÉCHEC FOURNISSEUR: ${echec}`;
       const m = await tx.oliviaMessage.create({ data: { tenantId: ctx.tenantId, conversationId: conv.id,
         seq, direction: "OUT", texte, provider, model,
-        modelVersion: sortie?.modelVersion ?? null, latenceMs: latence, estSource: false,   // R256 : citations à l'étape 5
+        modelVersion: sortie?.modelVersion ?? null, latenceMs: latence,
+        estSource, citations: citations as any,                            // R256 : vérifiées, stockées avec leur verdict
         contexteEmpreinte: cx.empreinte, contexteObjets: cx.objets,        // R255 : la LISTE, prouvable + HMAC
         prevHash: hash, recordHash: this.chain(hash, { seq, direction: "OUT", texte, provider, model, empreinte: cx.empreinte }) } });
       await this.emit(tx, ctx.tenantId, "OLIVIA_MESSAGE_OUT", conv.id, { messageId: m.id, seq, provider, model, latenceMs: latence, echec, empreinte: cx.empreinte });
@@ -244,7 +263,8 @@ export class OliviaService {
     await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_MESSAGE", `${conv.id}:${msgIn.seq}/${msgOut.seq}`);
     if (echec) throw new BadGatewayException(`OLIVIA_PROVIDER_DOWN: ${echec}`);
     return { conversationId: conv.id, seq: msgOut.seq, texte: msgOut.texte,
-      provider, model, modelVersion: msgOut.modelVersion, latenceMs: latence, estSource: msgOut.estSource,
+      provider, model, modelVersion: msgOut.modelVersion, latenceMs: latence,
+      estSource, citations,
       contexteEmpreinte: cx.empreinte, contexteObjets: cx.objets,
       contextePartiel: cx.exclus > 0 ? `Réponse fondée sur un contexte partiel : ${cx.exclus} objet(s) exclu(s)` : null };
   }
