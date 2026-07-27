@@ -8,9 +8,9 @@ IA ratifié (R121–R124, AG-01..06 implémentés) → renommée **SW** (swarm),
 Ali. Décision Ali : l'écran **Home n'a PAS de numéro de règle propre** (pattern écrans vagues 1–9) —
 les 5 règles socle v1 = R253 (fournisseur/santé) · R254 (propositions) · R255 (scope) ·
 R256 (citations) · R257 (rejouabilité).
-Prérequis : bloc Olivia v1 (R253–R257) — spec `spec-fonctionnelle-home-olivia.md` À RECEVOIR
-(⚠ non encore présente au repo au 2026-07-27) ; cette spec ÉTEND, elle ne remplace rien.
-**AUCUN code v1/v1.1 tant que la spec v1 n'est pas au repo** (rien à étendre sinon).
+Prérequis : bloc Olivia v1 (R253–R257) — spec `spec-fonctionnelle-home-olivia.md` REÇUE et
+enregistrée (2026-07-27) ; cette spec ÉTEND, elle ne remplace rien. Compatibilité B.2 ↔ schéma v1
+vérifiée (mêmes tables `olivia_messages`/`olivia_proposals`). Ordre : v1 d'abord, puis v1.1.
 Séquencement produit : v1.1 se code dans le bloc courant ; **v2 se RATIFIE maintenant et
 se code post-pilote** (ou sur demande prospect) — la spec précède le code, pas l'inverse.
 Positionnement : « Agentic AI, replayable by design » — chaque pas d'agent est un

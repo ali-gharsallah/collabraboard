@@ -166,3 +166,13 @@ Reconnaissance faite moteur par moteur ; **seul `sbonb` était constructible san
   l'objet même de la simulation (defs R171-173 ? matrice ?) n'est pas défini. Canon à ratifier.
 
 Aucun de ces quatre n'a été construit — signalé, pas inventé.
+
+## Écarts — bloc Olivia v1 (étape 0, 2026-07-27)
+
+- **Rôle `SO` inexistant** : la spec Olivia (audit/santé/T9/mode audit SO) cite un rôle absent de
+  l'enum ratifiée (`RM ARM CO CO_SR MLRO CF BRM DIR ADMIN`). Mapping sans nouvelle règle :
+  Direction/Head PB/CEO → DIR, Central File → CF. **SO : aucun équivalent** — v1 se code avec ADMIN
+  là où la spec dit « ADMIN, SO » ; SO reste un rôle à ratifier (ajout à l'enum = migration + canon).
+- **4 tuiles Home sans endpoint source** (la spec exige « endpoints existants » + « zéro endpoint
+  nouveau ») : T1 `GET /v1/kyc` liste, T2 `GET /v1/kyc/visas/pending`, T7 account review, T8 liste
+  CoC — inexistants. T1/T2/T7/T8 bloquées jusqu'à arbitrage ; T3/T4/T5/T6/T9/T10 constructibles.
