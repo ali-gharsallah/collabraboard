@@ -1014,3 +1014,63 @@ model CpsiEvent {
   @@index([tenantId, id])
   @@map("cpsi_events")
 }
+
+// ── OLIVIA v1 (R253→R257, spec spec-fonctionnelle-home-olivia.md) — bloc B.1 ──
+// Conversations : le rôle est FIGÉ à la création (une conversation ne survit pas à son périmètre).
+model OliviaConversation {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  roleCode    String   @map("role_code")                  // rôle AU MOMENT de la création (figé)
+  capacite    String                                      // C1 | C2 | C3 | C4
+  ancrageType String?  @map("ancrage_type")               // KYC_FILE | RISK_CASE | ALERTE | PARAM
+  ancrageId   String?  @map("ancrage_id") @db.Uuid
+  statut      String   @default("OUVERTE")                // OUVERTE | FERMEE
+  createdAt   DateTime @default(now()) @map("created_at")
+  messages    OliviaMessage[]
+  @@index([tenantId, userId])
+  @@map("olivia_conversations")
+}
+
+// Messages : APPEND-ONLY (R257) — chaîné par hachage (pattern kyc_question_history).
+model OliviaMessage {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  conversationId     String   @map("conversation_id") @db.Uuid
+  conversation       OliviaConversation @relation(fields: [conversationId], references: [id])
+  seq                Int                                   // monotone par conversation
+  direction          String                                // IN | OUT
+  texte              String
+  provider           String?                               // R253 : déclaration (OUT)
+  model              String?
+  modelVersion       String?  @map("model_version")
+  citations          Json?                                 // R256 : [{type, ref, assertion}]
+  estSource          Boolean? @map("est_source")           // R256 : false = « non sourcé »
+  contexteEmpreinte  String?  @map("contexte_empreinte") @db.Char(64)  // R255 : HMAC du contexte
+  contexteObjets     Json?    @map("contexte_objets")      // R255 : [{type,id}] — la LISTE, prouvable
+  latenceMs          Int?     @map("latence_ms")
+  createdAt          DateTime @default(now()) @map("created_at")
+  recordHash         String   @map("record_hash") @db.Char(64)         // chaînage R257
+  prevHash           String?  @map("prev_hash") @db.Char(64)
+  @@unique([conversationId, seq])
+  @@map("olivia_messages")
+}
+
+// Propositions (R254) : cycle PENDING → ADOPTEE | REJETEE (motif obligatoire) | CADUQUE.
+model OliviaProposal {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  messageId     String    @map("message_id") @db.Uuid     // la sortie OUT qui la fonde
+  type          String                                     // QUALIF_ALERTE_* | AIGUILLAGE_EDD | ALLEGEMENT_EDD | AJUSTEMENT_PARAM
+  cibleType     String    @map("cible_type")               // ALERTE | KYC_FILE | PARAM
+  cibleId       String    @map("cible_id")
+  justification String                                     // obligatoire à la création
+  impactEstime  Json?     @map("impact_estime")            // C4 : sortie du bac à sable R70
+  statut        String    @default("PENDING")              // PENDING | ADOPTEE | REJETEE | CADUQUE
+  decidePar     String?   @map("decide_par") @db.Uuid
+  decideAt      DateTime? @map("decide_at")
+  motifRejet    String?   @map("motif_rejet")              // OBLIGATOIRE si REJETEE (R7)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@map("olivia_proposals")
+}

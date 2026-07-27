@@ -948,6 +948,63 @@ CREATE TABLE "cpsi_events" (
     CONSTRAINT "cpsi_events_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "olivia_conversations" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "role_code" TEXT NOT NULL,
+    "capacite" TEXT NOT NULL,
+    "ancrage_type" TEXT,
+    "ancrage_id" UUID,
+    "statut" TEXT NOT NULL DEFAULT 'OUVERTE',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_conversations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_messages" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "conversation_id" UUID NOT NULL,
+    "seq" INTEGER NOT NULL,
+    "direction" TEXT NOT NULL,
+    "texte" TEXT NOT NULL,
+    "provider" TEXT,
+    "model" TEXT,
+    "model_version" TEXT,
+    "citations" JSONB,
+    "est_source" BOOLEAN,
+    "contexte_empreinte" CHAR(64),
+    "contexte_objets" JSONB,
+    "latence_ms" INTEGER,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "record_hash" CHAR(64) NOT NULL,
+    "prev_hash" CHAR(64),
+
+    CONSTRAINT "olivia_messages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_proposals" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "message_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "cible_type" TEXT NOT NULL,
+    "cible_id" TEXT NOT NULL,
+    "justification" TEXT NOT NULL,
+    "impact_estime" JSONB,
+    "statut" TEXT NOT NULL DEFAULT 'PENDING',
+    "decide_par" UUID,
+    "decide_at" TIMESTAMP(3),
+    "motif_rejet" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_proposals_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -1155,6 +1212,15 @@ CREATE INDEX "nba_suggestions_tenant_id_subject_id_idx" ON "nba_suggestions"("te
 -- CreateIndex
 CREATE INDEX "cpsi_events_tenant_id_id_idx" ON "cpsi_events"("tenant_id", "id");
 
+-- CreateIndex
+CREATE INDEX "olivia_conversations_tenant_id_user_id_idx" ON "olivia_conversations"("tenant_id", "user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "olivia_messages_conversation_id_seq_key" ON "olivia_messages"("conversation_id", "seq");
+
+-- CreateIndex
+CREATE INDEX "olivia_proposals_tenant_id_statut_idx" ON "olivia_proposals"("tenant_id", "statut");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -1205,4 +1271,7 @@ ALTER TABLE "positions" ADD CONSTRAINT "positions_mandate_id_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_document_id_fkey" FOREIGN KEY ("document_id") REFERENCES "documents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "olivia_messages" ADD CONSTRAINT "olivia_messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "olivia_conversations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
