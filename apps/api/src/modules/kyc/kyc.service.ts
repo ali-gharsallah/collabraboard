@@ -272,6 +272,77 @@ export class KycService {
           right: accessRules.find(r => r.role === ctx.role)?.right ?? "VIEW" })) })) };
   }
 
+  // ════════ P4 vague pilote (arbitrage : « sdkyc rendu sur le modèle ACTUEL, SD-04 suspendu ») ════
+  // La matrice sections × rôles est DÉRIVÉE des KycAccessRule par question — aucune table neuve,
+  // aucun versionnage à date (écart SD-04 consigné). L'édition passe les GARDE-FOUS backend (SD-02) ;
+  // chaque modification est un événement (change tracker — le journal fait trace, pas une colonne).
+
+  async accessMatrix(ctx: Ctx, code: string) {
+    if (!["CO_SR", "ADMIN"].includes(ctx.role))
+      throw new ForbiddenException("La matrice de droits se consulte en CO_SR/ADMIN");
+    const kyc = await this.prisma.kycFile.findFirst({ where: { code, tenantId: ctx.tenantId },
+      include: { sections: { orderBy: { orderIndex: "asc" },
+        include: { questions: { include: { accessRules: true } } } }, visas: true } });
+    if (!kyc) throw new NotFoundException("Dossier introuvable");
+    const roles = ["RM", "ARM", "CO", "CO_SR", "MLRO", "CF", "BRM", "DIR", "ADMIN"];
+    return { code: kyc.code, sections: kyc.sections.map((sec) => ({
+      code: sec.code, label: sec.label,
+      visas: kyc.visas.filter((v) => v.sectionCode === sec.code).map((v) => v.requiredRole),
+      questions: sec.questions.map((q) => ({ code: q.code, label: q.label,
+        droits: Object.fromEntries(roles.map((r) => {
+          const rule = q.accessRules.find((ar) => ar.role === (r as any));
+          return [r, rule?.right ?? "HIDDEN"];                              // default-deny : absent = HIDDEN
+        })) })) })) };
+  }
+
+  // SD-01/02 : éditer UNE cellule — garde-fous BACKEND (refus typé), événement au change tracker.
+  async modifierAccess(ctx: Ctx, code: string, qCode: string, dto: { role?: string; right?: string }) {
+    if (!["CO_SR", "ADMIN"].includes(ctx.role))
+      throw new ForbiddenException("La matrice de droits s'édite en CO_SR/ADMIN");
+    if (!dto?.role || !dto?.right || !["HIDDEN", "VIEW", "EDIT", "REQUIRED"].includes(dto.right))
+      throw new BadRequestException("role et right (HIDDEN|VIEW|EDIT|REQUIRED) requis");
+    const q = await this.prisma.kycQuestion.findFirst({
+      where: { code: qCode, section: { kycFile: { code, tenantId: ctx.tenantId } } },
+      include: { accessRules: true, section: { include: { kycFile: { include: { visas: true } },
+        questions: { include: { accessRules: true } } } } } });
+    if (!q) throw new NotFoundException("Question introuvable");
+    const ancienne = q.accessRules.find((r) => r.role === (dto.role as any))?.right ?? "HIDDEN";
+    // Garde-fou SD-02a : une question doit garder AU MOINS un rôle éditeur (EDIT/REQUIRED)
+    const editeursApres = q.accessRules.filter((r) =>
+      (r.role === (dto.role as any) ? dto.right : r.right) === "EDIT"
+      || (r.role === (dto.role as any) ? dto.right : r.right) === "REQUIRED").length
+      + (q.accessRules.some((r) => r.role === (dto.role as any)) ? 0
+        : (["EDIT", "REQUIRED"].includes(dto.right) ? 1 : 0));
+    if (editeursApres === 0)
+      throw new BadRequestException("SD-02 : refus — la question n'aurait plus AUCUN rôle éditeur (section sans EDIT)");
+    // Garde-fou SD-02b : un rôle porteur d'un VISA de la section ne peut pas finir HIDDEN partout
+    const visasSection = q.section.kycFile.visas.filter((v) => v.sectionCode === q.section.code).map((v) => v.requiredRole);
+    if (dto.right === "HIDDEN" && visasSection.includes(dto.role as any)) {
+      const resteVisible = q.section.questions.some((autre) => autre.id !== q.id
+        && autre.accessRules.some((r) => r.role === (dto.role as any) && r.right !== "HIDDEN"));
+      if (!resteVisible)
+        throw new BadRequestException(`SD-02 : refus — le rôle ${dto.role} porte un VISA de la section et n'y verrait plus rien`);
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.kycAccessRule.upsert({
+        where: { questionId_role: { questionId: q.id, role: dto.role as any } },
+        create: { questionId: q.id, role: dto.role as any, right: dto.right as any },
+        update: { right: dto.right as any } });
+      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "kyc.access.modifie",
+        aggregateId: q.section.kycFile.id,
+        payload: { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId } as any } });
+      await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ACCESS_MODIFIE", `${code}/${qCode}:${dto.role}=${dto.right}`);
+    });
+    return { question: qCode, role: dto.role, ancienne, nouvelle: dto.right };
+  }
+
+  // SD-03 : « Voir comme » — la projection est SERVIE avec le rôle simulé (jamais un masquage front).
+  async voirComme(ctx: Ctx, code: string, roleSimule: string) {
+    if (!["CO_SR", "ADMIN"].includes(ctx.role))
+      throw new ForbiddenException("« Voir comme » est réservé aux rôles de paramétrage (CO_SR/ADMIN)");
+    return this.get({ ...ctx, role: roleSimule }, code);                    // MÊME projection HIDDEN, rôle substitué
+  }
+
   // ════════ R84 — Édition exclusive (« la main » / checkout), persistée + tracée ════════
   private async findKyc(ctx: Ctx, code: string) {
     const kyc = await this.prisma.kycFile.findFirst({ where: { code, tenantId: ctx.tenantId } });

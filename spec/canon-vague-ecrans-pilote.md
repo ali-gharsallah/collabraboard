@@ -36,6 +36,15 @@ des barèmes de groupe (« hérite du global sauf … », PA-04), proposition «
 zéro requête — PA-05 prouvé MSW). PA-01 : règles en clair (existant) + barème daté via
 l'historique — la formule PAR CHAMP reste portée par `rules` (le moteur décrit ses règles).
 
+**PARTIE 4 PARTIELLE LIVRÉE (2026-07-27, périmètre arbitré)** — `sdkyc` : matrice dérivée du
+modèle ACTUEL (`GET /:code/access-matrix`, édition cellule `PATCH .../access` avec GARDE-FOUS
+backend SD-02 — question sans éditeur refusée, rôle porteur de visa jamais aveugle — et événement
+`kyc.access.modifie` au change tracker), « Voir comme » = projection SERVIE avec rôle simulé
+(SD-03) ; **SD-04 SUSPENDU** (écart versionnage `kyc_access_rules` consigné). `paramfields` :
+annuaire du registre R-Q (SD-05 prouvé MSW — zéro écriture). `cocparam` : store COC_CONFIG
+(R276 étendu) rendu + éditeur versionné, SD-06 = refus typé SERVI. **`sdar`/`sdgar` REPORTÉS**
+(écart : aucun store de questionnaire de review). e2e fat-sd 4/4 (SD-01/02/03/06), Vitest.
+
 **PARTIE 5 LIVRÉE (2026-07-27)** — R267 (machine à états + rétention 10 ans + lecture seule
 intégrale) · R268 (visas/documents par type, refus listé, four-eyes R13) · R269 (obstacles TOUS
 listés : risk cases, gel SECO même ADMIN, MROS en délai, avoirs port-core/attestation visée) ·

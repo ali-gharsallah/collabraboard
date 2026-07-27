@@ -19,6 +19,9 @@ import { Home } from "./home/Home";
 import { Offboarding } from "./offboarding/Offboarding";
 import { Olivia } from "./olivia/Olivia";
 import { AmlWorkspace } from "./aml/AmlWorkspace";
+import { SdKyc } from "./parametrage/SdKyc";
+import { ParamFields } from "./parametrage/ParamFields";
+import { CocParam } from "./coc/CocParam";
 import { ClientsList } from "./clients/ClientsList";
 import { KycDetail } from "./kyc/KycDetail";
 import { TransfertsOrdres } from "./transactions/TransfertsOrdres";
@@ -588,5 +591,55 @@ describe("FE-CPSI-P2 — cpsiparam enrichi : historique du journal, application 
     await new Promise((r) => setTimeout(r, 30));                                  // les 2 fetches stabilisés (re-render)
     expect(screen.getByText(/Half-life : 180 jours/)).toBeInTheDocument();
     expect(screen.getByText(/Exporter \(PDF\)/)).toBeInTheDocument();
+  });
+});
+
+describe("FE-SD — partie 4 partielle : sdkyc rendu, paramfields annuaire (SD-05), cocparam SD-06 servi", () => {
+  it("sdkyc : la grille rend la matrice SERVIE ; « Voir comme » affiche la vue backend du rôle simulé", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/kyc/K-1/access-matrix", () => HttpResponse.json({ code: "K-1", sections: [
+        { code: "IDENTITY", label: "Identité", visas: ["CO"], questions: [
+          { code: "IDE-Q1", label: "Pièce d'identité", droits: { RM: "EDIT", ARM: "VIEW", CO: "REQUIRED", CO_SR: "VIEW", MLRO: "HIDDEN", CF: "HIDDEN", BRM: "HIDDEN", DIR: "VIEW" } }] }] })),
+      http.get("*/v1/kyc/K-1/voir-comme/RM", () => HttpResponse.json({ sections: [{ questions: [{ code: "IDE-Q1" }] }] })),
+    );
+    render(<SdKyc/>);
+    fireEvent.change(screen.getByPlaceholderText(/code du dossier/), { target: { value: "K-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Charger la matrice/ }));
+    expect(await screen.findByText("Pièce d'identité")).toBeInTheDocument();
+    expect(screen.getByText(/visa CO/)).toBeInTheDocument();                       // badge visa de section
+    fireEvent.click(screen.getByRole("button", { name: "RM" }));
+    expect(await screen.findByTestId("voir-comme")).toHaveTextContent("vue RM (servie backend) : 1 questions");
+  });
+
+  it("SD-05 : paramfields est un ANNUAIRE — recherche + renvoi, AUCUNE requête non-GET possible", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    // SEUL un handler GET existe : la moindre écriture ferait échouer MSW (onUnhandledRequest:error)
+    server.use(http.get("*/v1/parametres/registre", () => HttpResponse.json([
+      { cle: "cpsi_gate_timeout_ms", libelle: "Timeout du pont CPSI", valeur: 5000, regle: "R251", module: "cpsi" },
+      { cle: "riskCaseSlaJours", libelle: "SLA risk cases", valeur: { NOUVELLE: 2 }, regle: "R135", module: "riskcases" }])));
+    render(<ParamFields/>);
+    expect(await screen.findByText("cpsi_gate_timeout_ms")).toBeInTheDocument();
+    expect(screen.getByText("R251")).toBeInTheDocument();
+    expect(screen.getByText(/CPSI · Barèmes/)).toBeInTheDocument();                // RENVOI, pas édition
+    fireEvent.change(screen.getByPlaceholderText(/recherche/), { target: { value: "riskCase" } });
+    expect(screen.queryByText("cpsi_gate_timeout_ms")).toBeNull();                 // filtre local (affichage)
+    expect(screen.getByText("riskCaseSlaJours")).toBeInTheDocument();
+  });
+
+  it("SD-06 : cocparam AFFICHE le refus typé du backend (HAUTE force la révision) — sans le pré-calculer", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/coc/config", () => HttpResponse.json({ types: [
+        { typeCode: "UBO_CHANGE", libelle: "Changement d'UBO", materialite: "HAUTE", actionRequise: "REVISION_KYC", roleTraitant: "CO", severiteCpsi: 3, source: "livree" }] })),
+      http.post("*/v1/coc/config", () => HttpResponse.json(
+        { message: "SD-06 : la matérialité HAUTE force « REVISION_KYC » — contrainte backend, pas déclarative" }, { status: 400 })),
+    );
+    render(<CocParam/>);
+    expect(await screen.findByText("UBO_CHANGE")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("typeCode"), { target: { value: "X" } });
+    fireEvent.change(screen.getByPlaceholderText("libellé"), { target: { value: "Type X" } });
+    fireEvent.click(screen.getByRole("button", { name: /Définir/ }));
+    expect(await screen.findByTestId("msg-cocparam")).toHaveTextContent(/SD-06.*contrainte backend/);
   });
 });

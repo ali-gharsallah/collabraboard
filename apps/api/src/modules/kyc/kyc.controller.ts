@@ -33,6 +33,12 @@ export class KycController {
   get(@Req() req: any, @Param("code") code: string) { return this.svc.get(req.ctx, code); }
 
   // Rejeu KYC à date (Vague 1, esprit R127) — état reconstruit depuis le journal d'événements
+  @Get(":code/access-matrix")
+  matrix(@Req() r: any, @Param("code") code: string) { return this.svc.accessMatrix(r.ctx, code); }        // P4/sdkyc (SD-01)
+  @Patch(":code/questions/:qcode/access")
+  access(@Req() r: any, @Param("code") code: string, @Param("qcode") q: string, @Body() b: any) { return this.svc.modifierAccess(r.ctx, code, q, b ?? {}); } // SD-01/02
+  @Get(":code/voir-comme/:role")
+  voirComme(@Req() r: any, @Param("code") code: string, @Param("role") role: string) { return this.svc.voirComme(r.ctx, code, role); } // SD-03
   @Get(":code/a-date")
   etatADate(@Req() req: any, @Param("code") code: string, @Query("date") date?: string) {
     return this.svc.etatADate(req.ctx, code, date ? new Date(date) : new Date());

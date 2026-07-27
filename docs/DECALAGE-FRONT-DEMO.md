@@ -6,11 +6,11 @@ Deux objets **différents** :
 | | `olive-demo.html` | `apps/web` (React) |
 |---|---|---|
 | Nature | Maquette **statique**, données **seed** en dur | App réelle, **câblée au backend** (routes `/v1/…`) |
-| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **45** écrans (comptés au routeur) |
+| Écrans | **~73** navigables (81 items de nav, dont têtes/doublons/role-only) | **48** écrans (comptés au routeur) |
 | Backend | **Aucun** (0 appel réseau métier) | **Postgres réel** (fallback seed **signalé** par bandeau) |
 
 **La maquette montre la CIBLE produit ; le React livre le SOCLE vendable, écran par écran, câblé.**
-Couverture actuelle : **45 / 73 ≈ 62 %** — **plus aucun écran en FE-05 seed** : Workflow Instances (V12), Formations (V13), Business Trip (V14), Tâches (V16), NBA décidable (V17) sont réels, et le lot **CPSI** (2026-07-27) ajoute Profil & score, Segmentation, Alertes & propositions de case (porte mince R63-R83, amendement R248-R252). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
+Couverture actuelle : **48 / 73 ≈ 66 %** — **plus aucun écran en FE-05 seed** : Workflow Instances (V12), Formations (V13), Business Trip (V14), Tâches (V16), NBA décidable (V17) sont réels, et le lot **CPSI** (2026-07-27) ajoute Profil & score, Segmentation, Alertes & propositions de case (porte mince R63-R83, amendement R248-R252). Écarts + décisions A1 : `docs/ECARTS-FRONT.md`.
 
 ---
 
@@ -64,7 +64,7 @@ Couverture actuelle : **45 / 73 ≈ 62 %** — **plus aucun écran en FE-05 seed
 - ✅ **FAIT (Vague 5)** : `wfdesigner`/`wfengine` (Workflow Designer/Rules, porte `WorkflowModule`) · reste : `wfmanagement` (instances)
 - ✅ **FAIT (Vague 5)** : `corrob` (Corroboration KYC) · ✅ **`offboarding` FAIT (2026-07-27)** — canon partie 5 ratifié (R267-R271), backend + écran + bannières lecture seule (OF-01..12)
 - ✅ **PARTIEL (Vague 6/9)** : `sbowner` (gouvernance registre R-Q) via Registre de paramétrage + Config & Go-live · ✅ **`sbaml` FAIT (Vague 9)** — dry-run AML sur le moteur ratifié `evaluer` (R94/B-02, canon confirmé dans `spec/catalogue-amendements-R89-R99-ratifies.md`) · ✅ **`sbonb` FAIT (2026-07-27)** — dry-run SLA onboarding (`POST /v1/onboarding/sandbox`, `onboardingSlaJours`, impact nominatif, FAT-SBONB-01/02) · ⚠️ **DRY-RUN restants** (`sbkyc`/`sbbrm`/`sbcf`/`sbwf`) = **bloqués par le canon, pas par le code** — reconnaissance consignée dans `docs/ECARTS-FRONT.md` (barèmes KYC non gouvernés, moteurs BRM/CF non isolés, objet sbwf non défini) — R95 (stress test/courbe de réponse), R96 (propose≠applique), R97 (cumul de tension) non encore surfacés
-- Sections & droits (`sdkyc`, `sdar`, `sdgar`, `paramfields`, `cocparam`) → registre R-Q existe
+- ✅ **PARTIEL (2026-07-27, canon vague pilote P4)** Sections & droits : `sdkyc` FAIT (matrice servie + garde-fous backend SD-01/02, « Voir comme » servi SD-03 ; **SD-04 versionnage SUSPENDU, écart consigné**) · `paramfields` FAIT (annuaire SD-05, zéro écriture) · `cocparam` FAIT (store COC_CONFIG R276, SD-06 servi) · **`sdar`/`sdgar` REPORTÉS** (écart : store de questionnaire de review inexistant)
 
 **b) « Intégrer, pas refaire » — dépend d'un PORT externe, pas d'un moteur à recoder** :
 - ✅ **FAIT (Vague 7)** : `pms` (PMS — compliance sur positions, R105→R108, PAS un moteur recodé) · reste : `fx` · `custody` · `mobile` · `integrations`/`apidoc` (Core Banking)
@@ -92,7 +92,7 @@ pas sous ces noms dans cette version de la maquette.)*
 
 ## 5. Lecture honnête
 
-- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~62 % (45/73)**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**. Il reste **~35 écrans** : bacs à sable restants + sections & droits (backend ratifié, écrans à faire) ; `fx`/`custody`/`mobile`/`integrations` (ports externes) ; et les domaines jamais ouverts (§3c).
+- Le React **ne « suit » pas** la maquette écran pour écran : il en couvre **~66 % (48/73)**, mais **la partie câblée est réelle** (0 mock, Postgres, RLS, FAT prouvées) là où la maquette est **100 % seed**. Il reste **~35 écrans** : bacs à sable restants + sections & droits (backend ratifié, écrans à faire) ; `fx`/`custody`/`mobile`/`integrations` (ports externes) ; et les domaines jamais ouverts (§3c).
 - La maquette reste la **vision cible** (73 écrans) ; la stratégie tenue est **incrémentale et prouvée** : chaque vague transforme un lot d'écrans-maquette en écrans React câblés + recette FAT.
 - Prochaines vagues « à fort levier & faible risque » = groupe **3.a** (backend déjà ratifié) : CRM/Contact Reports/Tâches, Workflow, Offboarding, Corroboration, Sandboxes de paramétrage.
 - Ne pas se laisser piéger par la maquette : **groupe 3.b = ports** (ne pas recoder un PMS/core), **groupe 4 = liste noire** (ignorer).
