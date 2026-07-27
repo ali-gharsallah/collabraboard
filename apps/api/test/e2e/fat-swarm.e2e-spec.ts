@@ -571,4 +571,60 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
       `DELETE FROM olivia_run_events WHERE run_id = '${runPrerevue.id}'`)).rejects.toThrow();
     console.log("SW-16 PASS — replay intégral ordonné, chaîne vérifiée, à date, époque d'agent restituée");
   });
+
+  // ── Étape 9 : R266 — la supervision est un ÉCRAN de première classe : mesure, pas coercition ──
+
+  it("SW-17 [R266] STOP est PROPRE : rien de nouveau ne démarre, INTERROMPU, livrable partiel si du contenu existe", async () => {
+    // Un run EN_COURS orphelin (kill simulé) porte déjà 2 étapes de contenu
+    const crash = await request(http).post("/v1/olivia/runs").set(bearer(T, CO, "CO")).send({ missionCode: "MISSION_CRASH" });
+    expect(crash.status).toBe(500);
+    const run = (await prisma.oliviaRun.findMany({ where: { tenantId: T, missionCode: "MISSION_CRASH" },
+      orderBy: { createdAt: "desc" } }))[0];
+    expect(run.statut).toBe("EN_COURS");
+    // Un tiers (ni commanditaire ni ops) ne stoppe pas
+    await request(http).post(`/v1/olivia/runs/${run.id}/stop`).set(bearer(T, randomUUID(), "RM")).expect(403);
+    const stop = await request(http).post(`/v1/olivia/runs/${run.id}/stop`).set(bearer(T, CO, "CO"));
+    expect(stop.status).toBe(201);
+    expect(stop.body.statut).toBe("INTERROMPU");
+    const evts = await eventsDe(run.id);
+    const livrable = evts.find((e: any) => e.type === "LIVRABLE");
+    expect(JSON.stringify(livrable!.sortie)).toContain("partiel");        // du contenu existait → livrable PARTIEL
+    expect(evts[evts.length - 1].type).toBe("TRANSITION");                // l'arrêt est un événement
+    chaineContigue(evts);
+    // Rien de nouveau ne démarre : re-stop → 409, gate-decision → 409
+    await request(http).post(`/v1/olivia/runs/${run.id}/stop`).set(bearer(T, CO, "CO")).expect(409);
+    await request(http).post(`/v1/olivia/runs/${run.id}/gate-decision`).set(bearer(T, CO, "CO"))
+      .send({ decision: "CONTINUER" }).expect(409);
+    // Et l'ÉCRAN est servi : liste (portes en attente, budget), détail+timeline, agrégat tenant
+    const liste = await request(http).get("/v1/olivia/runs").set(bearer(T, CO, "CO"));
+    expect(liste.status).toBe(200);
+    expect(liste.body.find((x: any) => x.id === run.id).statut).toBe("INTERROMPU");
+    const detail = await request(http).get(`/v1/olivia/runs/${run.id}`).set(bearer(T, CO, "CO"));
+    expect(detail.status).toBe(200);
+    expect(detail.body.timeline.length).toBe(evts.length);                // la timeline EST le journal
+    // Un RM étranger ne voit NI la liste des autres NI ce détail
+    expect((await request(http).get("/v1/olivia/runs").set(bearer(T, randomUUID(), "RM"))).body.length).toBe(0);
+    await request(http).get(`/v1/olivia/runs/${run.id}`).set(bearer(T, randomUUID(), "RM")).expect(403);
+    const agregat = await request(http).get("/v1/olivia/runs/agregat").set(bearer(T, ADMIN, "CO_SR"));
+    expect(agregat.status).toBe(200);
+    expect(agregat.body.total).toBeGreaterThan(0);
+    expect(agregat.body.tauxAdoptionPropositions).toBeDefined();          // mesure, pas coercition (R39)
+    console.log("SW-17 PASS — stop propre tracé, livrable partiel, écran liste/détail/agrégat servi");
+  });
+
+  it("SW-18 [R266] v2 est ÉTEINTE par défaut : tenant sans missions_actives → refus typé, l'interrupteur menu est servi (pattern R177/HO-02)", async () => {
+    const T3 = randomUUID();
+    await seedTenantClient(prisma, T3, randomUUID());
+    const off = await request(http).post("/v1/olivia/runs").set(bearer(T3, randomUUID(), "CO"))
+      .send({ missionCode: "PREREVUE_DOSSIER" });
+    expect(off.status).toBe(403);                                         // refus TYPÉ, pas un 500
+    expect(JSON.stringify(off.body)).toContain("RUN_MISSION_INACTIVE");
+    // L'interrupteur que consomme le front (comme /v1/modules/actifs pour HO-02) : actives vide ⇒ pas d'écran au menu
+    const interrupteur = await request(http).get("/v1/olivia/missions").set(bearer(T3, randomUUID(), "CO"));
+    expect(interrupteur.status).toBe(200);
+    expect(interrupteur.body.actives).toEqual([]);
+    const chezT = (await request(http).get("/v1/olivia/missions").set(bearer(T, CO, "CO"))).body;
+    expect(chezT.actives).toContain("PREREVUE_DOSSIER");
+    console.log("SW-18 PASS — v2 éteinte par défaut, refus typé, interrupteur menu servi");
+  });
 });

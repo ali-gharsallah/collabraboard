@@ -18,6 +18,7 @@ import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
 import { Home } from "./home/Home";
 import { Offboarding } from "./offboarding/Offboarding";
 import { Olivia } from "./olivia/Olivia";
+import { Runs } from "./olivia/Runs";
 import { AmlWorkspace } from "./aml/AmlWorkspace";
 import { SdKyc } from "./parametrage/SdKyc";
 import { ParamFields } from "./parametrage/ParamFields";
@@ -671,5 +672,46 @@ describe("FE-BS — bacs à sable : projection backend seulement, indisponible s
     expect(screen.queryByRole("button", { name: /Appliquer/ })).toBeNull();                  // structurel, pas grisé
     expect(screen.getAllByText(/Ouvrir dans le paramétrage/).length).toBe(5);                // le pont, sur les 5 bacs
     expect(screen.getAllByText(/Aucune donnée n'est modifiée/).length).toBe(5);
+  });
+});
+
+describe("FE-RUNS — écran Runs Olivia v2 (R266, SW-17/18) : interrupteur, timeline, STOP", () => {
+  it("SW-18 front : v2 ÉTEINTE → bandeau, écran neutralisé — tout appel /runs ferait échouer MSW (onUnhandledRequest:error)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/olivia/missions", () => HttpResponse.json({ actives: [] })));
+    render(<Runs/>);
+    expect(await screen.findByTestId("v2-eteinte")).toHaveTextContent(/activation explicite/);
+    expect(screen.queryByText(/supervision/)).toBeNull();                 // AUCUNE liste montée
+  });
+
+  it("liste + timeline + STOP propre : porte en attente affichée, le journal EST la timeline, l'arrêt recharge INTERROMPU", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let stoppe = false;
+    server.use(
+      http.get("*/v1/olivia/missions", () => HttpResponse.json({ actives: ["PREREVUE_DOSSIER"] })),
+      http.get("*/v1/olivia/runs", () => HttpResponse.json([{
+        id: "RUN-1", missionCode: "PREREVUE_DOSSIER", statut: stoppe ? "INTERROMPU" : "PAUSE_PORTE",
+        roleCode: "CO", budget: { maxEtapes: 20, maxDureeS: 300, maxCoutTokens: 200000 },
+        consomme: { etapes: 4, duree_s: 2, tokens: 460 }, porteEnAttente: !stoppe, createdAt: "2026-07-27" }])),
+      http.get("*/v1/olivia/runs/RUN-1", () => HttpResponse.json({
+        id: "RUN-1", missionCode: "PREREVUE_DOSSIER", statut: "PAUSE_PORTE", roleCode: "CO",
+        budget: { maxEtapes: 20 }, consomme: { etapes: 4 }, createdAt: "2026-07-27",
+        timeline: [
+          { seq: 1, type: "PLAN", at: "t" },
+          { seq: 2, type: "ETAPE_OUTIL", agentCode: "agent-kyc", outilCode: "kyc.dossier", at: "t" },
+          { seq: 3, type: "ETAPE_AGENT", agentCode: "agent-kyc", entreeEmpreinte: "a".repeat(64), at: "t" },
+          { seq: 4, type: "PORTE_OUVERTE", at: "t" }] })),
+      http.post("*/v1/olivia/runs/RUN-1/stop", () => { stoppe = true; return HttpResponse.json({ id: "RUN-1", statut: "INTERROMPU" }); }),
+    );
+    render(<Runs/>);
+    expect(await screen.findByText("PREREVUE_DOSSIER")).toBeInTheDocument();
+    expect(screen.getByText(/porte en attente \(R263\)/)).toBeInTheDocument();
+    expect(screen.getByText(/4\/20 · 460\/200000/)).toBeInTheDocument();  // budget consommé/restant
+    fireEvent.click(screen.getByRole("button", { name: "Timeline" }));
+    expect(await screen.findByText("PORTE_OUVERTE")).toBeInTheDocument(); // la timeline EST le journal
+    expect(screen.getAllByText(/agent-kyc/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/empreinte aaaaaaaaaa/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "STOP" }));
+    expect(await screen.findByText("INTERROMPU")).toBeInTheDocument();    // rechargé depuis le serveur, pas simulé
   });
 });

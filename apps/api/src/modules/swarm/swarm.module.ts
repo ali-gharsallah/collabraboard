@@ -544,6 +544,86 @@ export class SwarmRunsService {
     return { interrompus, portesExpirees };
   }
 
+  // ── R266/SW-17..18 : la supervision est un ÉCRAN de première classe — mesure, pas coercition.
+  //    Liste/détail : commanditaire + audit (ADMIN/CO_SR — rôles SO/Direction absents du repo,
+  //    écart consigné). STOP : commanditaire + ops ; transport v1 SYNCHRONE ⇒ « l'étape en cours
+  //    se termine » est structurel — stop vaut pour un run EN_COURS orphelin ou en PAUSE_PORTE. ──
+  private peutVoir(ctx: Ctx, run: any) {
+    return run.commanditaireId === ctx.userId || ctx.role === "ADMIN" || ctx.role === "CO_SR";
+  }
+
+  async lister(ctx: Ctx) {
+    const where: any = { tenantId: ctx.tenantId };
+    if (ctx.role !== "ADMIN" && ctx.role !== "CO_SR") where.commanditaireId = ctx.userId;
+    const runs = await this.prisma.oliviaRun.findMany({ where, orderBy: { createdAt: "desc" } });
+    return runs.map((r: any) => ({ ...this.vue(r), porteEnAttente: r.statut === "PAUSE_PORTE" }));
+  }
+
+  async detail(ctx: Ctx, id: string) {
+    const run = await this.prisma.oliviaRun.findFirst({ where: { id, tenantId: ctx.tenantId } });
+    if (!run) throw new NotFoundException("Run introuvable");
+    if (!this.peutVoir(ctx, run)) throw new ForbiddenException("R266 : détail réservé au commanditaire et à l'audit (B.3)");
+    const evts = await this.prisma.oliviaRunEvent.findMany({ where: { runId: id }, orderBy: { seq: "asc" } });
+    return { ...this.vue(run), timeline: evts.map((e: any) => ({ seq: e.seq, type: e.type,
+      agentCode: e.agentCode, agentVersion: e.agentVersion, outilCode: e.outilCode,
+      entreeEmpreinte: e.entreeEmpreinte, contexteObjets: e.contexteObjets, sortie: e.sortie,
+      cout: e.cout, at: e.at })) };
+  }
+
+  // SW-17 : STOP propre — rien de nouveau ne démarre, l'arrêt est un ÉVÉNEMENT, livrable
+  // partiel si du contenu existe. Jamais de reprise ensuite (R263 s'applique aussi ici).
+  async stop(ctx: Ctx, id: string) {
+    const run = await this.prisma.oliviaRun.findFirst({ where: { id, tenantId: ctx.tenantId } });
+    if (!run) throw new NotFoundException("Run introuvable");
+    if (run.commanditaireId !== ctx.userId && ctx.role !== "ADMIN")
+      throw new ForbiddenException("R266 : STOP appartient au commanditaire (ou ops)");
+    if (run.statut !== "EN_COURS" && run.statut !== "PAUSE_PORTE")
+      throw new ConflictException(`R266 : rien à arrêter — le run est ${run.statut}`);
+    const contenu = await this.prisma.oliviaRunEvent.count({
+      where: { runId: id, type: { in: ["ETAPE_AGENT", "ETAPE_OUTIL"] } } });
+    const dejaLivre = await this.prisma.oliviaRunEvent.count({ where: { runId: id, type: "LIVRABLE" } });
+    await this.prisma.$transaction(async (tx: Tx) => {
+      if (contenu > 0 && dejaLivre === 0)
+        await this.appendEvent(tx, run, "LIVRABLE", { sortie: { partiel: true,
+          mention: `arrêt demandé — livrable partiel (${contenu} étape(s) accomplie(s), R266)` } });
+      await this.transition(tx, run, run.statut, "INTERROMPU", { motif: "STOP (commanditaire/ops, R266)", par: ctx.userId });
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_STOP", id);
+    return this.vue(await this.prisma.oliviaRun.findFirst({ where: { id } }));
+  }
+
+  // SW-18 : l'interrupteur que consomme le front (pattern R177/HO-02) — actives vide ⇒ v2 éteinte.
+  async missions(ctx: Ctx) {
+    const settings = await this.settings(ctx.tenantId);
+    const livrees = Object.keys(missionsLivrees as Record<string, any>).filter((k) => !["version", "livreLe", "commentaire", "default"].includes(k));
+    return { actives: settings.missionsActives ?? [],
+      declarees: [...new Set([...livrees, ...Object.keys(settings.missionsDeclarees ?? {})])] };
+  }
+
+  // R266 : la vue AGRÉGÉE tenant — runs/jour, coût, taux de portes, taux d'adoption des
+  // propositions issues de runs. Les dépassements NOTIFIENT côté écran, ne bloquent jamais (R39).
+  async agregat(ctx: Ctx) {
+    if (ctx.role !== "ADMIN" && ctx.role !== "CO_SR")
+      throw new ForbiddenException("R266 : vue agrégée réservée à l'audit");
+    const runs = await this.prisma.oliviaRun.findMany({ where: { tenantId: ctx.tenantId } });
+    const parJour: Record<string, number> = {};
+    let tokens = 0, portes = 0;
+    for (const r of runs) {
+      const j = new Date(r.createdAt).toISOString().slice(0, 10);
+      parJour[j] = (parJour[j] ?? 0) + 1;
+      tokens += ((r.consomme as any)?.tokens ?? 0);
+    }
+    portes = await this.prisma.oliviaRunEvent.count({
+      where: { tenantId: ctx.tenantId, type: "PORTE_OUVERTE" } });
+    const livrables = runs.map((r: any) => r.livrableMessageId).filter(Boolean) as string[];
+    const props = livrables.length ? await this.prisma.oliviaProposal.findMany({
+      where: { tenantId: ctx.tenantId, messageId: { in: livrables } } }) : [];
+    const adoptees = props.filter((p: any) => p.statut === "ADOPTEE").length;
+    return { total: runs.length, parJour, coutTokensTotal: tokens,
+      tauxPortes: runs.length ? portes / runs.length : 0,
+      tauxAdoptionPropositions: props.length ? adoptees / props.length : null };
+  }
+
   // ── R265/SW-16 : le run se REJOUE à date — plan, étapes, empreintes, portes, budget, dans
   //    l'ordre EXACT des seq ; chaînage vérifié de bout en bout (toute rupture = preuve
   //    d'altération) ; la définition d'agent restituée est celle de l'ÉPOQUE (R259/SW-02).
@@ -609,6 +689,11 @@ export class SwarmController {
     return this.runs.gateDecision(r.ctx, id, b ?? {}); }                                         // R263 (commanditaire)
   @Get("runs/:id/replay") replayRun(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) {
     return this.runs.replay(r.ctx, id, asOf); }                                                  // R265 (audit)
+  @Get("runs")            listerRuns(@Req() r: any) { return this.runs.lister(r.ctx); }          // R266 (liste)
+  @Get("runs/agregat")    agregat(@Req() r: any) { return this.runs.agregat(r.ctx); }            // R266 (vue agrégée)
+  @Get("runs/:id")        detailRun(@Req() r: any, @Param("id") id: string) { return this.runs.detail(r.ctx, id); } // R266
+  @Post("runs/:id/stop")  stopRun(@Req() r: any, @Param("id") id: string) { return this.runs.stop(r.ctx, id); }     // SW-17
+  @Get("missions")        missions(@Req() r: any) { return this.runs.missions(r.ctx); }          // SW-18 (interrupteur menu)
 }
 
 @Module({

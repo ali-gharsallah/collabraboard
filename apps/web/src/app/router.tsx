@@ -44,6 +44,7 @@ import { SandboxOnboarding } from "../features/onboarding/SandboxOnboarding";
 import { Home } from "../features/home/Home";
 import { Offboarding } from "../features/offboarding/Offboarding";
 import { Olivia } from "../features/olivia/Olivia";
+import { Runs } from "../features/olivia/Runs";
 import { AmlWorkspace } from "../features/aml/AmlWorkspace";
 import { SdKyc } from "../features/parametrage/SdKyc";
 import { ParamFields } from "../features/parametrage/ParamFields";
@@ -51,7 +52,7 @@ import { CocParam } from "../features/coc/CocParam";
 import { Sandboxes } from "../features/parametrage/Sandboxes";
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "paramfields" | "cocparam" | "sandboxes">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "paramfields" | "cocparam" | "sandboxes" | "oliviaruns">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const tab = (id: typeof screen, label: string) =>
     <button onClick={() => setScreen(id)} style={{ padding: "8px 16px", border: "none",
@@ -60,7 +61,7 @@ export function Router() {
       {label}</button>;
   return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
     <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-      {tab("home", "Accueil")}{tab("dashboard", "Dashboard")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("corroboration", "Corroboration")}{tab("parametrage", "Paramétrage")}{tab("golive", "Config & Go-live")}{tab("pms", "PMS")}{tab("amlref", "Référentiel AML")}{tab("sbaml", "Bac à sable AML")}{tab("sbonb", "Bac à sable Onboarding")}{tab("ports", "Ports")}{tab("nba", "Next Best Action")}{tab("wfi", "Workflow Instances")}{tab("tasks", "Tâches")}{tab("formations", "Formations")}{tab("trips", "Business Trip")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}{tab("cpsiProfil", "CPSI · Profil")}{tab("cpsiSeg", "CPSI · Segmentation")}{tab("cpsiCases", "CPSI · Risk cases")}{tab("cpsiParam", "CPSI · Barèmes")}{tab("cpsiGuide", "CPSI · Guide")}{tab("offboarding", "Offboarding")}{tab("olivia", "Olivia")}{tab("amlws", "AML Workspace")}{tab("sdkyc", "Sections & droits")}{tab("paramfields", "Registre paramètres")}{tab("cocparam", "Types de CoC")}{tab("sandboxes", "Bacs à sable")}
+      {tab("home", "Accueil")}{tab("dashboard", "Dashboard")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("corroboration", "Corroboration")}{tab("parametrage", "Paramétrage")}{tab("golive", "Config & Go-live")}{tab("pms", "PMS")}{tab("amlref", "Référentiel AML")}{tab("sbaml", "Bac à sable AML")}{tab("sbonb", "Bac à sable Onboarding")}{tab("ports", "Ports")}{tab("nba", "Next Best Action")}{tab("wfi", "Workflow Instances")}{tab("tasks", "Tâches")}{tab("formations", "Formations")}{tab("trips", "Business Trip")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}{tab("cpsiProfil", "CPSI · Profil")}{tab("cpsiSeg", "CPSI · Segmentation")}{tab("cpsiCases", "CPSI · Risk cases")}{tab("cpsiParam", "CPSI · Barèmes")}{tab("cpsiGuide", "CPSI · Guide")}{tab("offboarding", "Offboarding")}{tab("olivia", "Olivia")}{tab("oliviaruns", "Olivia · Runs")}{tab("amlws", "AML Workspace")}{tab("sdkyc", "Sections & droits")}{tab("paramfields", "Registre paramètres")}{tab("cocparam", "Types de CoC")}{tab("sandboxes", "Bacs à sable")}
     </div>
     {screen === "home" && <Home/>}
     {screen === "dashboard" && <Dashboard/>}
@@ -109,6 +110,7 @@ export function Router() {
     {screen === "sbonb" && <SandboxOnboarding/>}
     {screen === "offboarding" && <Offboarding/>}
     {screen === "olivia" && <Olivia/>}
+    {screen === "oliviaruns" && <Runs/>}
     {screen === "amlws" && <AmlWorkspace/>}
     {screen === "sdkyc" && <SdKyc/>}
     {screen === "paramfields" && <ParamFields/>}
