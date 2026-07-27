@@ -6,8 +6,11 @@
 > `services/cpsi-server-py/olive_cpsi/engine.py` (pur Python, déterministe).
 > **Statut d'intégration (vérifié 2026-07-27)** : moteur Python **autonome, 18/18 suites vertes**
 > (`services/cpsi-server-py/run_tests.py`). R84–R86 (KYC) portés dans `apps/api/src/modules/kyc/rules/`.
-> **Cœur CPSI R63–R83 NON intégré** à la plateforme (ni `apps/api`, ni `apps/web`) — enregistrement
-> documentaire seulement à ce stade. Étape suivante convenue : **porte HTTP mince** (Nest → Python).
+> **Cœur CPSI R63–R83 INTÉGRÉ via la porte HTTP mince** `apps/api/src/modules/cpsi` (CP-01..18,
+> e2e `test/e2e/fat-cpsi.e2e-spec.ts` verts contre le moteur réel) : journal append-only Postgres
+> tenant-scopé (`cpsi_events`, RLS) rejoué vers le moteur via `services/cpsi-server-py/bridge.py`
+> (shell-out). Aucune règle réimplémentée — le moteur reste la source de vérité (CP-19). Spec :
+> `spec/cpsi-scenarios/CPSI-PORTE.feature`.
 
 ⚠️ **Écart signalé : R78 n'existe nulle part** (ni spec, ni code) — gap de numérotation entre
 R77 (screening/AML) et R79 (catalogue de conformité). À ratifier ou documenter comme réservé.
@@ -115,9 +118,12 @@ jamais d'effet de bord sur un dossier (R66/R39).
 
 ---
 
-## Prochaine étape convenue (non faite ici)
+## Porte HTTP mince — LIVRÉE (ratifiée « OK pour la porte CPSI »)
 
-**Porte HTTP mince NestJS → moteur Python CPSI.** Relais des surfaces de lecture/calcul du moteur
-(score, drivers R67, segmentation R65, groupes R71, catalogue conformité R79, risk cases R83) sans
-réécrire de règle — le Python reste la source de vérité. À câbler spec-first quand ratifié
-(« OK pour la porte CPSI »), avec e2e contre le moteur réel. Aucune règle nouvelle.
+`apps/api/src/modules/cpsi` relaie les surfaces du moteur (score+drivers R67, segmentation R65,
+groupes & ciblage R71/R73, catalogue conformité R79, alertes R80/R81, bac à sable R70, propositions
+R69, insider R75, risk cases R83, reporting R39) SANS réécrire de règle. Journal append-only Postgres
+(`cpsi_events`, RLS) rejoué vers le moteur (`bridge.py`, shell-out). Écritures gouvernées validées par
+rejeu avant persistance ; auteur = jeton ; rejeu à date `?asOf=` (R48/R49). e2e : 18 scénarios verts
+contre le moteur réel. Frontière avec l'AML/riskcases R133-136 : **complète, aucune route existante
+touchée** (Q3). CP-19 (la porte ne calcule rien) tenu par construction.
