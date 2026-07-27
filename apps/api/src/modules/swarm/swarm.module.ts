@@ -544,6 +544,47 @@ export class SwarmRunsService {
     return { interrompus, portesExpirees };
   }
 
+  // ── R265/SW-16 : le run se REJOUE à date — plan, étapes, empreintes, portes, budget, dans
+  //    l'ordre EXACT des seq ; chaînage vérifié de bout en bout (toute rupture = preuve
+  //    d'altération) ; la définition d'agent restituée est celle de l'ÉPOQUE (R259/SW-02).
+  //    Même garde d'audit que le rejeu v1 (rôle SO absent du repo — écart déjà consigné). ──
+  async replay(ctx: Ctx, runId: string, asOf?: string) {
+    if (ctx.role !== "ADMIN" && !["CO", "CO_SR", "MLRO"].includes(ctx.role))
+      throw new ForbiddenException("OLIVIA_SCOPE_DENIED: rejeu réservé à l'audit (R265)");
+    const run = await this.prisma.oliviaRun.findFirst({ where: { id: runId, tenantId: ctx.tenantId } });
+    if (!run) throw new NotFoundException("Run introuvable");
+    let evts = await this.prisma.oliviaRunEvent.findMany({ where: { runId }, orderBy: { seq: "asc" } });
+    if (asOf) evts = evts.filter((e: any) => e.at <= new Date(asOf));
+    let prev: string | null = null;
+    for (const e of evts) {
+      if ((e.prevHash ?? null) !== prev) throw new BadRequestException(`OLIVIA_RUN_CHAIN_BROKEN: seq ${e.seq} — altération détectée`);
+      prev = e.recordHash;
+    }
+    const agentsEpoque: Record<string, any> = {};
+    for (const e of evts) {
+      if (!e.agentCode || e.agentVersion == null) continue;
+      const cle = `${e.agentCode}:${e.agentVersion}`;
+      if (agentsEpoque[cle]) continue;
+      const a = await this.prisma.oliviaAgent.findFirst({
+        where: { tenantId: ctx.tenantId, code: e.agentCode, version: e.agentVersion } });
+      if (a) agentsEpoque[cle] = { code: a.code, version: a.version, capacite: a.capacite,
+        gabaritRef: a.gabaritRef, statut: a.statut };
+    }
+    const propositions = !run.livrableMessageId ? [] :
+      (await this.prisma.oliviaProposal.findMany({ where: { tenantId: ctx.tenantId, messageId: run.livrableMessageId } }))
+        .filter((p: any) => !asOf || p.createdAt <= new Date(asOf))
+        .map((p: any) => ({ id: p.id, type: p.type, cibleType: p.cibleType, cibleId: p.cibleId,
+          statut: p.statut, decidePar: p.decidePar, decideAt: p.decideAt, motifRejet: p.motifRejet }));
+    await this.audit.log(ctx.tenantId, ctx.userId, "OLIVIA_RUN_REPLAY", runId);
+    return { runId, missionCode: run.missionCode, statut: run.statut, asOf: asOf ?? null,
+      chaineVerifiee: true, budget: run.budget, consomme: run.consomme, agentsEpoque,
+      evenements: evts.map((e: any) => ({ seq: e.seq, type: e.type, agentCode: e.agentCode,
+        agentVersion: e.agentVersion, outilCode: e.outilCode, entreeEmpreinte: e.entreeEmpreinte,
+        contexteObjets: e.contexteObjets, sortie: e.sortie, cout: e.cout, at: e.at,
+        recordHash: e.recordHash, prevHash: e.prevHash })),
+      propositions };
+  }
+
   private vue(r: any) {
     return { id: r.id, missionCode: r.missionCode, statut: r.statut, roleCode: r.roleCode,
       ancrageType: r.ancrageType, ancrageId: r.ancrageId, budget: r.budget, consomme: r.consomme,
@@ -566,6 +607,8 @@ export class SwarmController {
   @Post("runs/reprise") reprise(@Req() r: any) { return this.runs.reprise(r.ctx); }              // SW-03/SW-11 (ops, ADMIN)
   @Post("runs/:id/gate-decision") gate(@Req() r: any, @Param("id") id: string, @Body() b: any) {
     return this.runs.gateDecision(r.ctx, id, b ?? {}); }                                         // R263 (commanditaire)
+  @Get("runs/:id/replay") replayRun(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) {
+    return this.runs.replay(r.ctx, id, asOf); }                                                  // R265 (audit)
 }
 
 @Module({

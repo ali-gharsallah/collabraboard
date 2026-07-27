@@ -529,4 +529,46 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
     expect(tache).toBe(1);
     console.log("SW-15 PASS — 2 propositions PENDING via R254 v1, matrice/motifs/adoption voie normale");
   });
+
+  // ── Étape 8 : R265 — le run se REJOUE à date : livrable, pas promesse (la démo FINMA) ──
+
+  it("SW-16 [R265] le replay est INTÉGRAL et vérifié : plan, étapes, empreintes, portes, budget dans l'ordre des seq ; chaînage vérifié ; à date ; version d'agent d'époque", async () => {
+    // Le RM (hors audit) ne rejoue pas
+    await request(http).get(`/v1/olivia/runs/${runPrerevue.id}/replay`).set(bearer(T, randomUUID(), "RM")).expect(403);
+    // Depuis SW-15, agent-kyc a évolué : une NOUVELLE version existe — le replay doit restituer l'ÉPOQUE
+    await request(http).post("/v1/olivia/agents").set(bearer(T, ADMIN, "ADMIN")).send({
+      code: "agent-kyc", capacite: "completude_dossier", outilsAutorises: ["kyc.dossier"], gabaritRef: "agent-kyc.v9-posterieur" }).expect(201);
+
+    const r = await request(http).get(`/v1/olivia/runs/${runPrerevue.id}/replay`).set(bearer(T, ADMIN, "CO_SR"));
+    expect(r.status).toBe(200);
+    expect(r.body.chaineVerifiee).toBe(true);                             // chaînage vérifié de BOUT EN BOUT
+    const evts = r.body.evenements;
+    expect(evts.map((e: any) => e.seq)).toEqual(evts.map((_: any, i: number) => i + 1));  // l'ordre EXACT des seq
+    const types = evts.map((e: any) => e.type);
+    for (const t of ["PLAN", "ETAPE_OUTIL", "ETAPE_AGENT", "PORTE_OUVERTE", "PORTE_DECISION", "LIVRABLE", "TRANSITION"])
+      expect(types).toContain(t);                                         // plan, étapes, portes, livrable — TOUT
+    const etape = evts.find((e: any) => e.type === "ETAPE_AGENT");
+    expect(etape.entreeEmpreinte).toHaveLength(64);                       // les empreintes de contexte sont restituées
+    expect(r.body.budget.maxEtapes).toBeGreaterThan(0);                   // budget déclaré + consommé
+    expect(r.body.consomme.etapes).toBeGreaterThan(0);
+    // La définition d'agent de l'ÉPOQUE (SW-02) — pas la version postérieure
+    const cle = `${etape.agentCode}:${etape.agentVersion}`;
+    expect(r.body.agentsEpoque[cle].gabaritRef).not.toBe("agent-kyc.v9-posterieur");
+    // Les décisions rejouées : propositions avec leur sort (ADOPTEE + REJETEE de SW-15)
+    expect(r.body.propositions.map((p: any) => p.statut).sort()).toEqual(["ADOPTEE", "REJETEE"]);
+
+    // Rejeu À DATE : arrêté à la pause de porte → AUCUNE décision ni livrable dans la restitution
+    const pause = evts.find((e: any) => e.type === "TRANSITION" && JSON.stringify(e.sortie).includes("PAUSE_PORTE"));
+    const aDate = await request(http).get(`/v1/olivia/runs/${runPrerevue.id}/replay?as_of=${encodeURIComponent(pause.at)}`)
+      .set(bearer(T, ADMIN, "ADMIN"));
+    expect(aDate.status).toBe(200);
+    expect(aDate.body.chaineVerifiee).toBe(true);                         // le préfixe de chaîne est intègre
+    const typesADate = aDate.body.evenements.map((e: any) => e.type);
+    expect(typesADate).not.toContain("PORTE_DECISION");
+    expect(typesADate).not.toContain("LIVRABLE");
+    // Et l'histoire ne se réécrit pas : UPDATE/DELETE → exception (append-only SQL)
+    await expect(prisma.$executeRawUnsafe(
+      `DELETE FROM olivia_run_events WHERE run_id = '${runPrerevue.id}'`)).rejects.toThrow();
+    console.log("SW-16 PASS — replay intégral ordonné, chaîne vérifiée, à date, époque d'agent restituée");
+  });
 });
