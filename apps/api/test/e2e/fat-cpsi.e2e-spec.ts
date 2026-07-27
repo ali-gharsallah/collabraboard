@@ -92,4 +92,43 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     expect(txt).toMatch(/drivers.*reconstitue le score/);                 // R67 énoncé en clair
     console.log("CP-08 PASS — règles en clair,", g.body.regles.length, "lignes");
   });
+
+  it("CP-04/05 [R71/R72] groupe de population : appartenance, primaire, registre en clair", async () => {
+    await request(http).post(`/v1/cpsi/groups`).set(bearer(A, U, "CO"))
+      .send({ gid: "PEP", label: "Clients PEP", predicat: { logique: "OU", conditions: [{ champ: "pep", op: "eq", val: true }] } }).expect(201);
+    const mine = await request(http).get(`/v1/cpsi/clients/${cid}/groups`).set(bearer(A, U, "CO"));
+    expect(mine.body.primary).toBe("PEP");                                // client PEP → groupe primaire PEP
+    expect(mine.body.groups.some((g: any) => g.id === "PEP")).toBe(true);
+    const reg = await request(http).get(`/v1/cpsi/groups`).set(bearer(A, U, "CO"));
+    const pep = reg.body.groupes.find((g: any) => g.id === "PEP");
+    expect(pep.effectif).toBeGreaterThanOrEqual(1);                       // R74 : effectif en clair
+    console.log("CP-04/05 PASS — primaire PEP, effectif", pep.effectif);
+  });
+
+  it("CP-06 [R73] scénario ciblé : seuls les membres du groupe visé sont évalués", async () => {
+    await request(http).post(`/v1/cpsi/scenarios`).set(bearer(A, U, "CO"))
+      .send({ sid: "SC_SCORE", label: "Score élevé PEP", champ: "score", groupesSeuils: { PEP: 10 }, sens: "gte" }).expect(201);
+    const ev = await request(http).get(`/v1/cpsi/scenarios/SC_SCORE/evaluate`).set(bearer(A, U, "CO"));
+    expect(ev.body.hits.some((h: any) => h.client === cid && h.groupe === "PEP")).toBe(true);
+    expect(ev.body.evalues).toBeGreaterThanOrEqual(1);
+    console.log("CP-06 PASS — évalués", ev.body.evalues, "hits", ev.body.hits.length);
+  });
+
+  it("CP-06 [R73] default-deny : scénario visant un groupe inconnu est refusé", async () => {
+    const ko = await request(http).post(`/v1/cpsi/scenarios`).set(bearer(A, U, "CO"))
+      .send({ sid: "SC_KO", label: "x", champ: "score", groupesSeuils: { INCONNU: 10 } });
+    expect(ko.status).toBe(400);
+    expect(JSON.stringify(ko.body)).toContain("INCONNU");
+    console.log("CP-06 default-deny PASS — groupe cible inconnu refusé");
+  });
+
+  it("CP-12 [R80/R81] signaux scorés & alertes : dédup par (client,scénario), statut vs seuil X", async () => {
+    const g = await request(http).get(`/v1/cpsi/alerts`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    const mien = g.body.signaux.find((s: any) => s.client === cid && s.scenario === "SC_SCORE");
+    expect(mien).toBeDefined();
+    expect(["ALERTE", "NEAR_MISS", "ANALYSE"]).toContain(mien.statut);    // vocabulaire R80
+    expect(typeof mien.score).toBe("number");
+    console.log("CP-12 PASS — signal", mien.statut, "score", mien.score);
+  });
 });

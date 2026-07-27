@@ -104,6 +104,60 @@ export class CpsiService {
   async regles(ctx: Ctx, asOf?: string) {
     return { asOf: asOf ?? null, regles: await this.lire(ctx, "rules", {}, asOf) };
   }
+
+  // Écriture gouvernée VALIDÉE par rejeu avant persistance (default-deny : opérateur/groupe/sens
+  // invalide fait échouer AVANT toute écriture). `candidat` est au format de rejeu du pont.
+  private async valider(ctx: Ctx, candidat: any) {
+    const journal = [...(await this.journal(ctx.tenantId)), candidat];
+    const res = await runBridge({ config: await this.config(ctx.tenantId), journal, query: { op: "groups", at: candidat.at } });
+    if (res.error) throw new BadRequestException(res.error.message);
+  }
+
+  // ── CP-04/05 (R71/R72) : définir un groupe de population (prédicat composable). ──
+  async definirGroupe(ctx: Ctx, dto: { gid: string; label: string; predicat: any; priorite?: number; bareme?: any; at?: string }) {
+    if (!dto?.gid || !dto?.label || !dto?.predicat) throw new BadRequestException("gid, label, predicat requis");
+    const at = dto.at ?? new Date().toISOString();
+    const payload = { gid: dto.gid, label: dto.label, predicat: dto.predicat, priorite: dto.priorite ?? 100, bareme: dto.bareme ?? null, par: ctx.userId };
+    await this.valider(ctx, { type: "cpsi.group.defined", at, ...payload });
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.group.defined", clientId: dto.gid, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_GROUP_DEFINED", dto.gid);
+    return { gid: dto.gid, at };
+  }
+
+  // ── CP-06 (R73) : définir un scénario AML ciblé par groupe (seuil propre à chaque groupe). ──
+  async definirScenario(ctx: Ctx, dto: { sid: string; label: string; champ: string; groupesSeuils: any; sens?: string; at?: string }) {
+    if (!dto?.sid || !dto?.label || !dto?.champ || !dto?.groupesSeuils) throw new BadRequestException("sid, label, champ, groupesSeuils requis");
+    const at = dto.at ?? new Date().toISOString();
+    const payload = { sid: dto.sid, label: dto.label, champ: dto.champ, groupes_seuils: dto.groupesSeuils, sens: dto.sens ?? "gte", par: ctx.userId };
+    await this.valider(ctx, { type: "cpsi.scenario.defined", at, ...payload });
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.scenario.defined", clientId: dto.sid, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SCENARIO_DEFINED", dto.sid);
+    return { sid: dto.sid, at };
+  }
+
+  // ── CP-04 (R71/R72) : groupes d'un client + groupe primaire. ──
+  async groupesDe(ctx: Ctx, clientId: string, asOf?: string) {
+    return { clientId, asOf: asOf ?? null, ...(await this.lire(ctx, "client_groups", { client: clientId }, asOf)) };
+  }
+
+  // ── CP-05 (R74) : registre des groupes en clair. ──
+  async groupes(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, groupes: await this.lire(ctx, "groups", {}, asOf) };
+  }
+
+  // ── CP-06 (R73) : évaluer un scénario — seuls les membres des groupes ciblés. ──
+  async evaluerScenario(ctx: Ctx, sid: string, asOf?: string) {
+    return { asOf: asOf ?? null, ...(await this.lire(ctx, "evaluate_scenario", { scenario: sid }, asOf)) };
+  }
+
+  // ── CP-12 (R80/R81) : signaux scorés, alertes (≥X), near-miss, corrélations. ──
+  async alertes(ctx: Ctx, asOf?: string, seuil?: number) {
+    const r: any = await this.lire(ctx, "alerts", seuil != null ? { seuil } : {}, asOf);
+    return { asOf: asOf ?? null, signaux: r.signaux,
+      alertes: r.signaux.filter((s: any) => s.statut === "ALERTE"),
+      nearMiss: r.signaux.filter((s: any) => s.statut === "NEAR_MISS"),
+      correlations: r.correlations };
+  }
 }
 
 @Controller("cpsi")
@@ -115,6 +169,12 @@ export class CpsiController {
   @Get("segmentation")             segmentation(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.segmentation(r.ctx, asOf); }            // CP-03
   @Get("compliance-catalogue")     catalogue(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.catalogueConformite(r.ctx, asOf); }        // CP-07
   @Get("rules")                    regles(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.regles(r.ctx, asOf); }                        // CP-08
+  @Post("groups")                  defGroupe(@Req() r: any, @Body() b: any) { return this.svc.definirGroupe(r.ctx, b); }                              // CP-04/05
+  @Get("groups")                   groupes(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.groupes(r.ctx, asOf); }                     // CP-05
+  @Get("clients/:cid/groups")      groupesDe(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.groupesDe(r.ctx, cid, asOf); } // CP-04
+  @Post("scenarios")               defScenario(@Req() r: any, @Body() b: any) { return this.svc.definirScenario(r.ctx, b); }                           // CP-06
+  @Get("scenarios/:sid/evaluate")  evalScenario(@Req() r: any, @Param("sid") sid: string, @Query("asOf") asOf?: string) { return this.svc.evaluerScenario(r.ctx, sid, asOf); } // CP-06
+  @Get("alerts")                   alertes(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.alertes(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // CP-12
 }
 
 @Module({

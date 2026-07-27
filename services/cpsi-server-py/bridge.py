@@ -33,6 +33,12 @@ def _replay(engine, journal):
             engine.enregistrer_client(ev["client"], ev["statique"], at, ev.get("attributs"))
         elif t == "cpsi.signal.ingested":
             engine.ingester_signal(ev["client"], ev["signal"], ev["severite"], at, ev.get("meta"))
+        elif t == "cpsi.group.defined":
+            engine.definir_groupe(ev["gid"], ev["label"], ev["predicat"], at,
+                                  ev.get("priorite", 100), ev.get("bareme"))
+        elif t == "cpsi.scenario.defined":
+            engine.definir_scenario_aml(ev["sid"], ev["label"], ev["champ"], ev["groupes_seuils"],
+                                        at, ev.get("sens", "gte"))
         else:
             raise CpsiError(f"type d'événement de rejeu inconnu : {t} (default-deny)")
 
@@ -63,8 +69,37 @@ def _rules(engine, q):
     return engine.decrire_regles(_dt(q["at"]))
 
 
+# CP-04 (R71/R72) : groupes d'un client + groupe primaire (barème effectif).
+def _client_groups(engine, q):
+    at = _dt(q["at"])
+    return {
+        "groups": [{"id": g["id"], "label": g["label"], "priorite": g["priorite"]}
+                   for g in engine.groupes_de(q["client"], at)],
+        "primary": engine.groupe_primaire(q["client"], at),
+    }
+
+
+# CP-05 (R74) : registre des groupes en clair (prédicat, barème, effectif).
+def _groups(engine, q):
+    return engine.decrire_groupes(_dt(q["at"]))
+
+
+# CP-06 (R73) : évaluation d'un scénario ciblé — seuls les membres des groupes visés.
+def _evaluate_scenario(engine, q):
+    return engine.evaluer_scenario(q["scenario"], _dt(q["at"]))
+
+
+# CP-12 (R80/R81) : signaux scorés dédupliqués, alertes (score≥X), near-miss, corrélations.
+def _alerts(engine, q):
+    at = _dt(q["at"])
+    seuil = q.get("seuil")
+    return {"signaux": engine.signaux(at, seuil), "correlations": engine.correlations(at, seuil)}
+
+
 QUERIES = {"score": _score, "segmentation": _segmentation,
-           "compliance_catalogue": _compliance_catalogue, "rules": _rules}
+           "compliance_catalogue": _compliance_catalogue, "rules": _rules,
+           "client_groups": _client_groups, "groups": _groups,
+           "evaluate_scenario": _evaluate_scenario, "alerts": _alerts}
 
 
 def main():
