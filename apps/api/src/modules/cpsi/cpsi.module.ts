@@ -53,11 +53,30 @@ export class CpsiService {
   // scellé en fin de journal pour la validation-par-rejeu. Retourne l'enveloppe de réponse brute.
   private async call(ctx: Ctx, commande: string, payload: any = {}, opts: { asOf?: string; candidat?: any } = {}) {
     const effAt = opts.asOf ?? new Date().toISOString();                  // instant de lecture effectif (as_of ou maintenant)
+    const cfg = await this.config(ctx.tenantId);
     const tousEvts = await this.journal(ctx.tenantId);
     const base = tousEvts.filter((e: any) => e.at <= effAt);             // R48 : rejeu STRICT jusqu'à l'instant de lecture
     const journal = opts.candidat ? [...base, opts.candidat] : base;
-    return runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt,
-      config: await this.config(ctx.tenantId), journal, commande, payload });
+    const rep = await runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt,
+      config: cfg, journal, commande, payload });
+    // R250/R39 : le dépassement du seuil d'hydratation MESURE et NOTIFIE — jamais un blocage.
+    const warn = cfg.cpsi_replay_warn_ms ?? 2000;
+    if (rep?.meta?.duree_ms != null && rep.meta.duree_ms > warn)
+      await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_REPLAY_SLOW", `${rep.meta.duree_ms}ms>${warn}ms`);
+    return rep;
+  }
+
+  // ── R250 : santé de la porte — profondeur du journal, dernier rejeu, contrat, config en vigueur. ──
+  async sante(ctx: Ctx) {
+    const evts = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId }, orderBy: { id: "asc" } });
+    const cfg = await this.config(ctx.tenantId);
+    const r = await this.call(ctx, "rules", {});                          // lecture légère → mesure le dernier rejeu
+    const dernierRejeuMs = r?.meta?.duree_ms ?? null;
+    const warn = cfg.cpsi_replay_warn_ms ?? 2000;
+    const dernierParam = [...evts].reverse().find((e: any) => e.type === "cpsi.param.adopted");
+    return { contractVersion: CONTRACT_VERSION, profondeurJournal: evts.length, dernierRejeuMs,
+      rejeuWarnMs: warn, rejeuHorsSeuil: dernierRejeuMs != null && dernierRejeuMs > warn,
+      configEnVigueur: dernierParam ? dernierParam.at : "base" };         // R68 : version de config en vigueur
   }
 
   // ── Enregistrement d'un client CPSI (prérequis au score) — un seul par (tenant, client). ──
@@ -247,6 +266,7 @@ export class CpsiService {
 @Controller("cpsi")
 export class CpsiController {
   constructor(private svc: CpsiService) {}
+  @Get("health")                   sante(@Req() r: any) { return this.svc.sante(r.ctx); }                                                // R250
   @Post("clients")                 enregistrer(@Req() r: any, @Body() b: any) { return this.svc.enregistrerClient(r.ctx, b); }
   @Post("clients/:cid/signals")    ingerer(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.ingererSignal(r.ctx, cid, b); } // CP-11
   @Get("clients/:cid/score")       score(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.score(r.ctx, cid, asOf); } // CP-01/02

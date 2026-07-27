@@ -67,6 +67,19 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     console.log("CP-18 PASS — client de A invisible pour B");
   });
 
+  it("PC-07 [R250] jauge de rejeu : meta dans la réponse + endpoint santé", async () => {
+    const s = await request(http).get(`/v1/cpsi/clients/${cid}/score`).set(bearer(A, U, "CO"));
+    expect(s.body.meta).toBeDefined();
+    expect(typeof s.body.meta.evenements_rejoues).toBe("number");
+    expect(typeof s.body.meta.duree_ms).toBe("number");                  // durée d'hydratation mesurée
+    const h = await request(http).get(`/v1/cpsi/health`).set(bearer(A, U, "CO"));
+    expect(h.status).toBe(200);
+    expect(h.body.contractVersion).toBe("1");
+    expect(h.body.profondeurJournal).toBeGreaterThanOrEqual(2);          // registration + signal
+    expect(h.body).toHaveProperty("configEnVigueur");                    // R68 : version de config en vigueur
+    console.log("PC-07 PASS — meta", JSON.stringify(s.body.meta), "santé profondeur", h.body.profondeurJournal);
+  });
+
   it("CP-03 [R65] segmentation déterministe : le client porte un segment stable", async () => {
     const g = await request(http).get(`/v1/cpsi/segmentation`).set(bearer(A, U, "CO"));
     expect(g.status).toBe(200);

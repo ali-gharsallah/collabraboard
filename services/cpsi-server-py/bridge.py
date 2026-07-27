@@ -18,7 +18,7 @@ Réponse (stdout JSON) :
   ou { "contract_version": ..., "erreur_typee": {"type","code","message"} }.
 Une erreur métier du moteur (`CpsiError`, default-deny) devient `erreur_typee` — jamais avalée.
 """
-import sys, json
+import sys, json, time
 from datetime import datetime
 from olive_cpsi.engine import OliveCpsiEngine, CpsiError
 
@@ -189,7 +189,9 @@ def main():
             return
         engine = OliveCpsiEngine(env.get("config") or {})
         journal = env.get("journal") or []
+        t0 = time.perf_counter()
         _replay(engine, journal)                                          # journal filtré ≤ as_of par la porte (R48)
+        duree_ms = round((time.perf_counter() - t0) * 1000, 3)           # R250 : jauge d'hydratation
         commande = env.get("commande")
         payload = env.get("payload") or {}
         q = {**payload, "op": commande, "at": env.get("as_of") or payload.get("at")}
@@ -197,7 +199,7 @@ def main():
             raise CpsiError(f"commande inconnue : {commande} (default-deny)")
         res = QUERIES[commande](engine, q)
         print(json.dumps({"contract_version": cv, "resultat": res,
-                          "meta": {"evenements_rejoues": len(journal)}}))
+                          "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms}}))
     except CpsiError as e:  # default-deny / règle métier du moteur → erreur TYPÉE (jamais avalée)
         print(json.dumps({"contract_version": cv, "erreur_typee": {
             "type": "DEFAULT_DENY", "code": "CPSI_ERROR", "message": str(e)}}))
