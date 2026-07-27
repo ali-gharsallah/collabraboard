@@ -17,6 +17,7 @@ import { CpsiGuide } from "./cpsi/CpsiGuide";
 import { SandboxOnboarding } from "./onboarding/SandboxOnboarding";
 import { Home } from "./home/Home";
 import { Offboarding } from "./offboarding/Offboarding";
+import { Olivia } from "./olivia/Olivia";
 import { ClientsList } from "./clients/ClientsList";
 import { KycDetail } from "./kyc/KycDetail";
 import { TransfertsOrdres } from "./transactions/TransfertsOrdres";
@@ -357,5 +358,69 @@ describe("FE-OFFB — Offboarding : workflow rendu, obstacles servis, cloisonnem
     fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c1" } });
     expect(await screen.findByTestId("banniere-cloture")).toBeInTheDocument();
     expect(screen.getAllByText(/lecture seule/).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("FE-OLIVIA — écran Olivia : badge sourcé, proposer verrouillé sans source, audit rejoué (étape 8, B.8)", () => {
+  it("réponse SOURCÉE : badge « Sourcé », citations affichées, carte proposition disponible (C3)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/olivia/proposals*", () => HttpResponse.json([])),
+      http.post("*/v1/olivia/conversations/CONV-1/messages", () => HttpResponse.json({
+        conversationId: "CONV-1", messageId: "MSG-1", seq: 2, texte: "Le schéma est bénin.", estSource: true,
+        citations: [{ type: "RISK_CASE", ref: "rc-1", assertion: "cas ouvert", valide: true }],
+        contexteEmpreinte: "abc123", contextePartiel: null, model: "m" })),
+      http.post("*/v1/olivia/conversations", () => HttpResponse.json({ id: "CONV-1" })),
+    );
+    render(<Olivia/>);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "C3" } });
+    fireEvent.change(screen.getByPlaceholderText(/ancrage RISK_CASE/), { target: { value: "rc-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Ouvrir la conversation ancrée/ }));
+    expect(await screen.findByText(/Conversation CONV-1/)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("votre question"), { target: { value: "Qualifie" } });
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+    expect(await screen.findByText("Sourcé")).toBeInTheDocument();                  // badge R256 (vérité serveur)
+    expect(screen.getByText(/✓ RISK_CASE:rc-1/)).toBeInTheDocument();               // citation vérifiée
+    expect(screen.getByRole("button", { name: "Proposer" })).toBeInTheDocument();   // proposable (C3 sourcée)
+  });
+
+  it("réponse NON sourcée : badge d'alerte, bouton « Proposer » ABSENT du DOM (B.6)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/olivia/proposals*", () => HttpResponse.json([])),
+      http.post("*/v1/olivia/conversations/CONV-2/messages", () => HttpResponse.json({
+        conversationId: "CONV-2", messageId: "MSG-2", seq: 2, texte: "Affirmation sans source.", estSource: false,
+        citations: [], contexteEmpreinte: "e", contextePartiel: "Réponse fondée sur un contexte partiel : 1 objet(s) exclu(s)", model: "m" })),
+      http.post("*/v1/olivia/conversations", () => HttpResponse.json({ id: "CONV-2" })),
+    );
+    render(<Olivia/>);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "C3" } });
+    fireEvent.change(screen.getByPlaceholderText(/ancrage RISK_CASE/), { target: { value: "rc-2" } });
+    fireEvent.click(screen.getByRole("button", { name: /Ouvrir la conversation ancrée/ }));
+    await screen.findByText(/Conversation CONV-2/);
+    fireEvent.change(screen.getByPlaceholderText("votre question"), { target: { value: "Dis-moi" } });
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+    expect(await screen.findByText(/Non sourcé — à vérifier/)).toBeInTheDocument();
+    expect(screen.getByText(/contexte partiel/)).toBeInTheDocument();               // OL-07 rendu
+    expect(screen.queryByRole("button", { name: "Proposer" })).toBeNull();          // B.6 : ABSENT, pas grisé
+  });
+
+  it("mode audit : le rejeu affiche chaînage vérifié + décisions (R257)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/olivia/proposals*", () => HttpResponse.json([])),
+      http.post("*/v1/olivia/conversations", () => HttpResponse.json({ id: "CONV-3" })),
+      http.get("*/v1/olivia/conversations/CONV-3/replay*", () => HttpResponse.json({
+        conversationId: "CONV-3", chaineVerifiee: true,
+        messages: [{ seq: 1, direction: "IN", texte: "q" }, { seq: 2, direction: "OUT", texte: "r", contexteEmpreinte: "deadbeef01" }],
+        propositions: [{ id: "P1", type: "QUALIF_ALERTE_FP", statut: "REJETEE", motifRejet: "analyse incomplète" }] })),
+    );
+    render(<Olivia/>);
+    fireEvent.click(screen.getByRole("button", { name: /Ouvrir la conversation ancrée/ }));
+    await screen.findByText(/Conversation CONV-3/);
+    fireEvent.click(screen.getByRole("button", { name: "Rejouer" }));
+    expect(await screen.findByText(/vérifié de bout en bout/)).toBeInTheDocument();
+    expect(screen.getByText(/REJETEE/)).toBeInTheDocument();
+    expect(screen.getByText(/analyse incomplète/)).toBeInTheDocument();
   });
 });

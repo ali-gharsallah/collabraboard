@@ -5,6 +5,7 @@ import { AuditService } from "../../common/audit.service";
 import { KycModule } from "../kyc/kyc.module";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 import { KycService } from "../kyc/kyc.service";
+import * as GABARITS_LIVRES from "./olivia-gabarits.default.json"; // B.11.6 — gabarits C1..C4 livrés, versionnés
 
 /**
  * Module OLIVIA v1 — étape 3 du plan (spec `spec-fonctionnelle-home-olivia.md`) : R253 (port IA)
@@ -246,6 +247,10 @@ export class OliviaService {
     const cap = dto?.capacite;
     if (cap !== "C1" && cap !== "C2" && cap !== "C3" && cap !== "C4")
       throw new BadRequestException("OLIVIA_CAPACITE_NON_OUVERTE: capacité inconnue");
+    // B.9 : activation FINE par tenant (oliviaCapacitesActives, défaut : toutes)
+    const actives: string[] = (await this.settings(ctx.tenantId)).oliviaCapacitesActives ?? ["C1", "C2", "C3", "C4"];
+    if (!actives.includes(cap))
+      throw new BadRequestException(`OLIVIA_CAPACITE_NON_OUVERTE: ${cap} désactivée pour ce tenant`);
     const roles = cap === "C1" ? CONVERSER_C1 : cap === "C2" ? CONVERSER_C2 : cap === "C3" ? CONVERSER_C3 : CONVERSER_C4;
     if (!roles.includes(ctx.role)) throw new ForbiddenException("OLIVIA_SCOPE_DENIED: rôle non autorisé à converser (matrice B.3)");
     if (cap === "C2" && (dto?.ancrageType !== "KYC_FILE" || !dto?.ancrageId))
@@ -303,14 +308,10 @@ export class OliviaService {
 
     // R255 : le contexte objet est re-résolu à CHAQUE tour (B.5) — borne AVANT l'appel fournisseur.
     const cx = await this.construireContexte(ctx, { capacite: conv.capacite, ancrageId: conv.ancrageId }, s, (dto as any).refs ?? []);
-    // Gabarit versionné PAR CAPACITÉ (paramètre tenant R68 ; défaut livré — jamais de persona en dur ailleurs).
-    const defauts: Record<string, string> = {
-      C1: "Tu es Olivia, assistante compliance d'O-Live. Réponds sobrement, sans agir. Contexte: {contexte}. Question: {question}",
-      C2: "Tu es Olivia, assistante compliance d'O-Live. Synthèse structurée et sourcée du dossier, sans agir. Dossier: {contexte}. Demande: {question}",
-      C3: "Tu es Olivia, assistante compliance d'O-Live. Pré-analyse l'alerte/le risk case et propose une qualification SOURCÉE — tu proposes, l'humain décide (R44). Contexte: {contexte}. Question: {question}",
-      C4: "Tu es Olivia, assistante compliance d'O-Live. Analyse le paramètre visé et propose un ajustement justifié — toute application passera par le bac à sable (R70). Contexte: {contexte}. Question: {question}",
-    };
-    const gabarit = s.oliviaPromptTemplate?.[conv.capacite] ?? defauts[conv.capacite] ?? defauts.C1;
+    // Gabarit versionné PAR CAPACITÉ (paramètre tenant R68). Le défaut est l'artefact LIVRÉ
+    // `olivia-gabarits.default.json` (B.11.6 : zéro texte de persona en dur dans le code — grep CI).
+    const gabarit = s.oliviaPromptTemplate?.[conv.capacite]
+      ?? (GABARITS_LIVRES as Record<string, string>)[conv.capacite] ?? (GABARITS_LIVRES as any).C1;
     const prompt = gabarit.replace("{contexte}", JSON.stringify(cx.contenu)).replace("{question}", dto.texte);
 
     const t0 = Date.now();

@@ -150,3 +150,37 @@ avec ses scénarios, avant implémentation.*
 
   Ces paramètres vivent sous `tenant.settings` (R68) ; les valeurs appliquées à une
   clôture (visas, documents) sont figées dans le dossier au moment de l'acte.
+
+14. Paramètres tenant — module Olivia v1 (R253-R257, spec B.9, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R253**      `oliviaProviderRef` / `oliviaModel` —      Olivia
+                RÉFÉRENCES du fournisseur et du modèle
+                (jamais le secret — pattern R163 ; le
+                secret vit en env serveur/coffre).
+                Non configuré ⇒ 503 OLIVIA_PORT_OFF.
+
+  **R253**      `oliviaTimeoutMs` — timeout fournisseur    Olivia
+                (défaut 30000). Dépassé ⇒ 502
+                OLIVIA_PROVIDER_DOWN, échec JOURNALISÉ.
+
+  **R255**      `oliviaScopeMaxObjets` — borne du          Olivia
+                contexte (défaut 50). Dépassée ⇒ 422
+                OLIVIA_CONTEXT_OVERFLOW AVANT tout appel.
+
+  **R255/R68**  `oliviaPromptTemplate.{C1..C4}` —          Olivia
+                gabarits versionnés à date. Défauts =
+                artefact livré
+                `olivia-gabarits.default.json`
+                (B.11.6 : zéro persona en dur, grep CI).
+
+  **R257**      `oliviaRetentionConversationsMois` —       Olivia
+                rétention du journal (politique R170 du
+                tenant ; la purge est un processus
+                distinct, jamais implicite).
+
+  **B.9**       `oliviaCapacitesActives` — activation      Olivia
+                fine par tenant (défaut C1,C2,C3,C4).
+                Capacité absente ⇒ 400
+                OLIVIA_CAPACITE_NON_OUVERTE.
+  ------------- ----------------------------------------- ----------------------

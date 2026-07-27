@@ -480,6 +480,17 @@ feedback = ÉVÉNEMENT `OLIVIA_FEEDBACK`, diff de config vide (OL-22). e2e fat-o
 
 ## B.11 Critères d'acceptation Olivia
 
+**A.9/B.11 — POINTAGE FINAL v1 (étape 8, 2026-07-27)** :
+1. ✅ OL-01..22 verts (e2e Postgres réel, fat-olivia 23/23 — port de test OLIVIA_FAKE_PORT,
+   jamais en prod). 2. ✅ Suite plateforme 146/146 verte AVEC et SANS secret IA (prouvé aux
+   deux modes). 3. ✅ Zéro écriture métier (comptage kyc/clients/cases/cpsi, test OL-21).
+4. ✅ Aucun appel fournisseur côté navigateur — tout passe par `/v1/olivia/*` ; **garde grep
+   CI bloquante** (`api.anthropic.com` interdit dans apps/web). 5. ✅ Paramètres B.9 au
+   questionnaire R-Q (§14). 6. ✅ Gabarits C1..C4 = artefact livré versionné
+   `olivia-gabarits.default.json` + garde grep CI (« Tu es Olivia » interdit dans le code).
+Écran B.8 livré : panneau ancré, badge Sourcé/Non sourcé, cartes proposition décidables,
+mode audit (rejeu à date). Restent v1.1 (R258, OL-23..34) et v2 (R259-R266, CODE GELÉ).
+
 1. OL-01..22 verts (e2e Postgres réel ; OL-02/04 avec fournisseur mocké déterministe —
    le mock est un port de test, jamais utilisé en prod : pattern « pas de données
    simulées » côté produit).

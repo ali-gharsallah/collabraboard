@@ -76,6 +76,16 @@ jobs:
         working-directory: apps/api
         run: pnpm run lint && pnpm run typecheck
 
+      # ── Olivia B.11.4 + B.11.6 (gardes grep BLOQUANTES) ──────────────────────
+      # 4 : l'appel fournisseur IA ne vit QUE côté serveur — api.anthropic.com ne doit
+      #     JAMAIS réapparaître dans apps/web (la clé ne transite pas par le navigateur).
+      # 6 : zéro texte de persona en dur dans le code — les gabarits C1..C4 vivent dans
+      #     l'artefact livré olivia-gabarits.default.json (paramètre versionné R68).
+      - name: "1b · Gardes grep Olivia (B.11.4 front sans fournisseur · B.11.6 persona hors code)"
+        run: |
+          ! grep -rn "api.anthropic.com" apps/web/src apps/web/index.html
+          ! grep -rn --include="*.ts" --include="*.tsx" "Tu es Olivia" apps/api/src apps/web/src
+
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
       # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans
       # le dépôt (`jest` sortirait en « No tests found »). La caractérisation des règles est
