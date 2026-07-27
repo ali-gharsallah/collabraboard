@@ -15,7 +15,8 @@ Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, au
     • Vague CPSI-4 (gouvernance & investigations) : CP-09 bac à sable (dry-run, 0 mutation +
       default-deny), CP-10 IA propose / humain adopte / rejet à motivation obligatoire,
       CP-13 faux-positif, CP-14 insider MAR (habilitation par le rôle du jeton, motif obligatoire),
-      CP-15/16/17 risk cases (ouverture, transitions à motif obligatoire R7, reporting SLA R39).
+      CP-15/16/17 risk cases (ouverture, transitions, reporting) — ⚠ SUPERSEDED par R252 (voir
+      amendement `catalogue-amendement-R248-R252-porte-cpsi.md`) : à débrancher vers émission `case_proposal`.
   → PORTE COMPLÈTE : CP-01..18 câblés et verts (e2e 18 tests) ; CP-19 (la porte ne calcule rien)
     = invariant tenu par construction (toute valeur vient d'un appel au moteur ratifié).
   Décisions actées : Q1/Q2 = journal append-only Postgres (`cpsi_events`, RLS) rejoué vers le
@@ -143,20 +144,29 @@ Fonctionnalité: Porte HTTP mince CPSI (Nest → moteur Python) — PROPOSÉ, au
     Et le moteur REFUSE (habilitation) — la porte renvoie 403, motif obligatoire préservé
     Et la levée POST …/insider/lift exige elle aussi une motivation
 
-  # ── Risk cases animés par workflow (R83) ──
-  Scénario: CP-15 Ouverture d'un risk case depuis des alertes corrélées (R83/R81)
+  # ── Risk cases (R83) — SUPERSEDED par R252 (2026-07-27) ────────────────────────────────
+  # ⚠ SUPERSEDED (2026-07-27, amendement R248-R252 · R252). Motif : la frontière avec riskcases
+  # R133-R136 est DIRECTIONNELLE — le CPSI ÉMET des `case_proposal`, il n'expose plus de surface
+  # produit risk-case (ouverture/transitions/reporting relèvent de riskcases). Conservés pour
+  # traçabilité, JAMAIS supprimés. Intention retravaillée → PC-09/PC-10 (émission, idempotence) et
+  # couverture déplacée → PC-11 (aucune surface produit risk-case sur la porte) / PC-12 (reporting
+  # SLA chez riskcases). Le code CP-15/16/17 sera débranché à l'étape R252 (impact signalé d'abord).
+  @superseded @by-R252
+  Scénario: CP-15 [SUPERSEDED R252] Ouverture d'un risk case depuis des alertes corrélées (R83/R81)
     Quand la porte POST /v1/cpsi/risk-cases {alertes} est appelée
     Alors elle relaie `ouvrir_risk_case(alertes, acteur=U, now)` (statut NOUVELLE)
     Et le regroupement suit la corrélation (≥1 alerte d'un même client)
 
-  Scénario: CP-16 Transitions de risk case — motif obligatoire, humain décide (R83/R7/R44)
+  @superseded @by-R252
+  Scénario: CP-16 [SUPERSEDED R252] Transitions de risk case — motif obligatoire, humain décide (R83/R7/R44)
     Étant donné un risk case en EN_ANALYSE
     Quand la porte POST /v1/cpsi/risk-cases/{id}/transition {action, motif} est appelée
     Alors elle relaie `transition_risk_case(id, action, acteur=U, now, motif)`
     Et clore / escalader / clarifier EXIGE un motif (R7), sinon 4xx
     Et ESCALADEE oriente vers la voie MROS/SAR (terminal), append-only (R48/R49)
 
-  Scénario: CP-17 Reporting SLA des cases — mesure, jamais coercition (R39)
+  @superseded @by-R252
+  Scénario: CP-17 [SUPERSEDED R252] Reporting SLA des cases — mesure, jamais coercition (R39)
     Quand la porte GET /v1/cpsi/risk-cases/reporting?slaJours=30 est appelée
     Alors elle relaie `reporting_cases(30)` (délais, dépassements)
     Et le rapport MESURE et NOTIFIE sans rien bloquer (R39)

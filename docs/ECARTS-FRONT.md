@@ -137,3 +137,13 @@ Gap de numérotation entre **R77** (séparation Screening/AML) et **R79** (catal
 
 **Décision** : documenté comme **RÉSERVÉ** (ni inventé, ni comblé). À ratifier explicitement si un jour
 un besoin s'y loge. Référence : `docs/CPSI-CATALOGUE-R63-R86.md`. Aucun code ne présuppose R78.
+
+## Écart canon — réconciliation machines à états R83 (CPSI) ↔ R133–R136 (riskcases)
+
+**Enregistré 2026-07-27 (amendement R248–R252, critère d'acceptation 5).** Le moteur CPSI porte une
+machine à états de risk case (bloc 14, R83) : NOUVELLE → EN_ANALYSE → (CLARIFICATION ↔ EN_ANALYSE) →
+CLOTUREE | ESCALADEE. Le module plateforme `modules/riskcases` (R133–R136) porte sa PROPRE machine à
+états d'instruction. R252 tranche la **direction** (CPSI émet `case_proposal`, riskcases instruit) mais
+**la correspondance formelle des deux machines reste à ratifier** — divergence = écart de catalogue, pas
+un détail d'implémentation. Tant que non réconciliées : le CPSI n'expose aucune surface risk-case (PC-11),
+le `risk_cases` du moteur Python reste un outil de test (jamais produit), aucune route R133–R136 touchée.

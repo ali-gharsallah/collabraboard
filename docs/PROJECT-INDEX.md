@@ -20,6 +20,7 @@
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
 | `spec/vague13-scenarios/FORMATIONS-MOD43.feature` | Gherkin RATIFIÉ MOD-43 (FO-01..08) — implémenté Vague 13 | 2026-07-27 |
 | `spec/vague14-scenarios/BUSINESS-TRIP-MOD75.feature` | Gherkin RATIFIÉ MOD-75 (BT-01..10) — implémenté Vague 14 | 2026-07-27 |
+| `spec/catalogue-amendement-R248-R252-porte-cpsi.md` | Amendement **R248–R252** (durcissement porte CPSI : enveloppe versionnée, jauge de rejeu, refus gracieux 503, frontière `case_proposal` R252 — supersede CP-15/16/17). Numérotation ratifiée ; scénarios PC PROPOSÉS | 2026-07-27 |
 | `spec/cpsi-scenarios/CPSI-PORTE.feature` | Gherkin **PROPOSÉ** de la porte HTTP mince CPSI (CP-01..19) — relais du moteur `services/cpsi-server-py` (R63–R83), aucune règle nouvelle ; à ratifier « OK pour la porte CPSI » | 2026-07-27 |
 | `docs/CPSI-CATALOGUE-R63-R86.md` | Catalogue consolidé CPSI (R63–R86) : score perpétuel, segmentation, groupes de population, pipeline signaux scorés, risk cases, extension KYC. Moteur réf. `services/cpsi-server-py` (18/18 vert). Cœur R63–R83 **non intégré** (porte HTTP mince à venir) | 2026-07-27 |
 | `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 + écart R78 (réservé) | 2026-07-26 |
