@@ -315,3 +315,13 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
      (le périmètre T7 est décidé SERVEUR, le paramètre client est volontairement ignoré).
 - A6 (virtualisation des tables front) : ratifié « au fil des écrans » (valeur marginale, listes
   bornées) — inchangé.
+
+## CHANTIER #3 — transport CPSI persistant (2026-07-27, perf pont)
+
+- Le shell-out par appel (`execFile python3 bridge.py`) devient un **worker persistant NDJSON**
+  (`bridge.py --serve`, FIFO, respawn auto, timeout ⇒ kill). CONTRAT R248 INCHANGÉ : `traiter()`
+  reconstruit le moteur à chaque enveloppe (aucun état entre appels — le rejeu R48/R49 reste la
+  seule source d'état) ; le moteur `olive_cpsi/` n'est PAS touché. Mode one-shot conservé.
+- Mesure transport (30 appels, journal vide) : 32,3 ms → 0,2 ms/appel (×138) ; fat-cpsi 15,1 s → 13,4 s.
+- Prouvé iso-fonctionnel : Python 18/18, e2e 26 suites/190 (PC-08 : CPSI_DIR invalide ⇒ 503 typé,
+  worker invalidé/respawné), harnais 425/425, tsc 0, lint 0.

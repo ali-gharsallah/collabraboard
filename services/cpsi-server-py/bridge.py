@@ -220,16 +220,17 @@ QUERIES = {"score": _score, "segmentation": _segmentation,
 SUPPORTED_CONTRACTS = {"1"}
 
 
-def main():
+def traiter(env):
+    # Une enveloppe → une réponse. AUCUN état ne survit entre deux enveloppes : le moteur est
+    # reconstruit à chaque appel par rejeu du journal fourni (le mode --serve ne change QUE le
+    # transport, jamais la sémantique — chantier #3, contrat R248 inchangé).
     cv = None
     try:
-        env = json.load(sys.stdin)
         cv = str(env.get("contract_version"))
         if cv not in SUPPORTED_CONTRACTS:
-            print(json.dumps({"contract_version": cv, "erreur_typee": {
+            return {"contract_version": cv, "erreur_typee": {
                 "type": "UNSUPPORTED_CONTRACT", "code": "CPSI_CONTRACT",
-                "message": f"contract_version {cv} non supportée (supportées : {sorted(SUPPORTED_CONTRACTS)})"}}))
-            return
+                "message": f"contract_version {cv} non supportée (supportées : {sorted(SUPPORTED_CONTRACTS)})"}}
         engine = OliveCpsiEngine(env.get("config") or {})
         journal = env.get("journal") or []
         t0 = time.perf_counter()
@@ -242,15 +243,43 @@ def main():
         if commande not in QUERIES:
             raise CpsiError(f"commande inconnue : {commande} (default-deny)")
         res = QUERIES[commande](engine, q)
-        print(json.dumps({"contract_version": cv, "resultat": res,
-                          "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms}}))
+        return {"contract_version": cv, "resultat": res,
+                "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms}}
     except CpsiError as e:  # default-deny / règle métier du moteur → erreur TYPÉE (jamais avalée)
-        print(json.dumps({"contract_version": cv, "erreur_typee": {
-            "type": "DEFAULT_DENY", "code": "CPSI_ERROR", "message": str(e)}}))
+        return {"contract_version": cv, "erreur_typee": {
+            "type": "DEFAULT_DENY", "code": "CPSI_ERROR", "message": str(e)}}
     except Exception as e:  # garde-fou : jamais de trace brute vers la porte
-        print(json.dumps({"contract_version": cv, "erreur_typee": {
+        return {"contract_version": cv, "erreur_typee": {
+            "type": "BRIDGE_ERROR", "code": "CPSI_BRIDGE_ERROR", "message": str(e)}}
+
+
+def main():
+    # Mode one-shot historique (Q4) : une enveloppe sur stdin, une réponse sur stdout.
+    try:
+        env = json.load(sys.stdin)
+    except Exception as e:
+        print(json.dumps({"contract_version": None, "erreur_typee": {
             "type": "BRIDGE_ERROR", "code": "CPSI_BRIDGE_ERROR", "message": str(e)}}))
+        return
+    print(json.dumps(traiter(env)))
+
+
+def serve():
+    # Mode worker persistant (chantier #3) : NDJSON — une enveloppe par ligne, une réponse par
+    # ligne, flush immédiat. Même contrat, même sémantique (traiter() est sans état) ; seul le
+    # coût de démarrage Python est amorti. EOF (porte fermée) ⇒ sortie propre.
+    for ligne in sys.stdin:
+        ligne = ligne.strip()
+        if not ligne:
+            continue
+        try:
+            rep = traiter(json.loads(ligne))
+        except Exception as e:  # ligne illisible : réponse typée, le worker SURVIT
+            rep = {"contract_version": None, "erreur_typee": {
+                "type": "BRIDGE_ERROR", "code": "CPSI_BRIDGE_ERROR", "message": str(e)}}
+        sys.stdout.write(json.dumps(rep) + "\n")
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":
-    main()
+    serve() if "--serve" in sys.argv else main()

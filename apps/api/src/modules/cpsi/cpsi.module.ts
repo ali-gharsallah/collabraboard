@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException, UseGuards } from "@nestjs/common";
-import { execFile } from "child_process";
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException, UseGuards, OnApplicationShutdown } from "@nestjs/common";
+import { spawn, ChildProcess } from "child_process";
+import * as readline from "readline";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -15,7 +16,8 @@ import { LicenseModule, ModuleLicencie } from "../license/license.module"; // pa
  *   • Rejeu à date `?asOf=` (R48/R49) : le moteur est une fonction pure des faits ≤ date.
  *   • Default-deny préservé : un type de signal inconnu est refusé AVANT persistance (validation
  *     par rejeu) — la `CpsiError` du moteur devient un 4xx, jamais avalée.
- *   • Transport = shell-out (Q4) : sous-processus `python3 bridge.py`, échangeable sans toucher au contrat.
+ *   • Transport = worker persistant NDJSON (chantier #3, ex-shell-out Q4) : `python3 bridge.py --serve`,
+ *     échangé SANS toucher au contrat (enveloppe R248 inchangée, moteur reconstruit à chaque enveloppe).
  */
 
 type Ctx = { tenantId: string; userId: string; role: string };
@@ -27,25 +29,60 @@ const CONTRACT_VERSION = "1";                                             // R24
 // porte d'une erreur métier typée du moteur.
 class GateUnavailable extends Error { constructor(public cause: string) { super(cause); } }
 
-// Invoque le pont Python en sous-processus avec l'ENVELOPPE VERSIONNÉE (R248). Retourne l'enveloppe
-// de réponse {contract_version, resultat | erreur_typee, meta}. Jamais d'état ici (lecture pure).
+// Transport persistant (chantier #3, ex-Q4 shell-out — « échangeable sans toucher au contrat ») :
+// UN worker `python3 bridge.py --serve` (NDJSON : une enveloppe par ligne, une réponse par ligne),
+// spawné à la demande et respawné après mort/timeout. L'enveloppe R248 et la sémantique sont
+// STRICTEMENT inchangées : bridge.traiter() reconstruit le moteur à chaque enveloppe (aucun état
+// entre deux appels) — seul le coût de démarrage Python (~80 ms/appel) est amorti. Les appels sont
+// SÉRIALISÉS (FIFO) sur le worker : le rejeu est CPU-bound côté moteur, une file évite tout
+// entrelacement stdout ; un timeout TUE le worker (l'appel suivant repart propre). Un changement
+// de CPSI_DIR (PC-08) invalide le worker courant.
+let worker: { child: ChildProcess; rl: readline.Interface; dir: string } | null = null;
+let fifo: Promise<unknown> = Promise.resolve();
+
+export function tuerWorkerCpsi() { try { worker?.child.kill(); } catch { /* déjà mort */ } worker = null; }
+
+function obtenirWorker() {
+  const dir = cpsiDir();
+  if (worker && worker.dir === dir && worker.child.exitCode === null && !worker.child.killed) return worker;
+  tuerWorkerCpsi();
+  const child = spawn("python3", ["bridge.py", "--serve"], { cwd: dir, stdio: ["pipe", "pipe", "ignore"] });
+  // unref : le worker ne retient JAMAIS le processus Node (arrêt propre des suites de test).
+  child.unref(); (child.stdin as any).unref?.(); (child.stdout as any).unref?.();
+  const rl = readline.createInterface({ input: child.stdout! });
+  worker = { child, rl, dir };
+  return worker;
+}
+
 function runBridge(env: any, timeoutMs: number): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const child = execFile("python3", ["bridge.py"], { cwd: cpsiDir(), maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs },
-      (err: any, stdout) => {
-        if (err) {                                                       // ENOENT (python absent), timeout (killed), exit≠0
-          const cause = err.killed ? `timeout ${timeoutMs}ms` : (err.code === "ENOENT" ? "python3 introuvable" : `échec du moteur (${err.code ?? err.message})`);
-          return reject(new GateUnavailable(cause));
-        }
-        try { resolve(JSON.parse(stdout)); } catch { reject(new GateUnavailable("réponse illisible du moteur")); }
-      });
-    child.stdin!.end(JSON.stringify(env));
+  const exec = () => new Promise((resolve, reject) => {
+    const { child, rl } = obtenirWorker();
+    let fini = false;
+    const conclure = (fn: (v: any) => void, v: any) => { if (!fini) { fini = true; nettoyer(); fn(v); } };
+    const surLigne = (ligne: string) => {
+      try { conclure(resolve, JSON.parse(ligne)); }
+      catch { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("réponse illisible du moteur")); }
+    };
+    const surErreur = (err: any) => {                                     // ENOENT : python3 ou CPSI_DIR absent
+      tuerWorkerCpsi();
+      conclure(reject, new GateUnavailable(err?.code === "ENOENT" ? "python3 introuvable" : `échec du moteur (${err?.code ?? err?.message})`));
+    };
+    const surSortie = () => { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("échec du moteur (worker terminé)")); };
+    const minuterie = setTimeout(() => { tuerWorkerCpsi(); conclure(reject, new GateUnavailable(`timeout ${timeoutMs}ms`)); }, timeoutMs);
+    const nettoyer = () => { clearTimeout(minuterie); rl.off("line", surLigne); child.off("error", surErreur); child.off("exit", surSortie); };
+    rl.on("line", surLigne); child.on("error", surErreur); child.on("exit", surSortie);
+    try { child.stdin!.write(JSON.stringify(env) + "\n"); }
+    catch { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("échec du moteur (stdin)")); }
   });
+  const p = fifo.then(exec, exec);                                        // FIFO : jamais deux enveloppes en vol
+  fifo = p.catch(() => undefined);
+  return p;
 }
 
 @Injectable()
-export class CpsiService {
+export class CpsiService implements OnApplicationShutdown {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
+  onApplicationShutdown() { tuerWorkerCpsi(); }                           // hygiène : pas de worker orphelin
 
   private async config(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
