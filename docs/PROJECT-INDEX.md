@@ -19,7 +19,8 @@
 | `spec/vague8-scenarios/VAGUE8-ECRANS.feature` | Gherkin spec-first Vague 8 (Référentiel AML : scénarios & seuils) | 2026-07-26 |
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
 | `spec/proposed-R222-R238/` | Gherkin GELÉ (BT-01..10, FO-01..08) — R222..R238 PROPOSÉES (Business Trip / Formations), attente validation | 2026-07-26 |
-| `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées | 2026-07-26 |
+| `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 | 2026-07-26 |
+| `docs/MIGRATION-FRONT.md` | Journal des migrations d'écrans (boy-scout A1/D3) | 2026-07-26 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
 
 ## Recette & tests
@@ -61,9 +62,9 @@
 ## Chiffres de référence (2026-07-22, prouvés)
 
 - **Règles moteur** : 425/425 (50 suites).
-- **e2e (Postgres réel)** : 47/47 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2). Front FE-CORE : 5/5 (Vitest).
+- **e2e (Postgres réel)** : 47/47 (kyc-rules 6 + FAT V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 + V9 2 + V10 2). Front : 11/11 (Vitest — FE-CORE `api.ts` + composants FE-05/10/40).
 - **FAT recette** : V1 10 + V2 4 + V3 7 + V4 6 + V5 4 + V6 2 + V7 2 + V8 2 = **37/37 PASS (100 %)**. Bandeau démo front : 9/9.
-- **Écrans réels** : 31 (… V8 : Référentiel AML · V9 : Bac à sable AML · V10 : Ports, NBA). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front v2 : `docs/ECARTS-FRONT.md`.
+- **Écrans réels** : 33 (… V9 : Bac à sable AML · V10 : Ports, NBA · V11/A1 : Workflow Instances, Tâches en FE-05 seed). Gap vs maquette (73 écrans) : `docs/DECALAGE-FRONT-DEMO.md` ; écarts front + A1 : `docs/ECARTS-FRONT.md`.
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **34 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.

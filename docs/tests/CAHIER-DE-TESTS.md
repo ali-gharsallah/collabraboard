@@ -133,6 +133,20 @@ cd ../web && pnpm run test:demo-banner  # bandeau mode démo — 9/9
 **Vague 10 : 2/2 FAT backend + 5/5 Vitest FE-CORE. Non-régression : règles 425/425, e2e 47/47, baseline en sync.**
 **Écarts signalés (jamais inventés — `docs/ECARTS-FRONT.md`)** : FE-WFI et FE-TASK **gelés** (aucun service ratifié) ; décision NBA non ratifiée (écran en lecture) ; auth headers-mode inerte (backend en JWT). **R222..R238 gelées** (Gherkin seul, attente « OK »).
 
+## Vague 11 — Amendement A1 : harnais front + FE-05
+
+| Couche / écran | ID test | Exigence | Ce qui est vérifié | Type | Résultat |
+|---|---|---|---|---|---|
+| FE-CORE (api.ts) | **FE-02b** | auth dev | `OLIVE_AUTH_MODE='headers'` → `isDevAuthMode()` vrai (bandeau dev) ; défaut `jwt` | Vitest | ✅ PASS |
+| FE-CORE | **FE-06** | préfixe unique | base + `/v1/tasks` = URL finale ; aucune URL construite ailleurs | Vitest | ✅ PASS |
+| Workflow Instances | **FE-05** | service absent | Bandeau « Démonstration — service backend non ratifié » ; seed ; aucun fetch | Vitest+RTL | ✅ PASS |
+| Tâches | **FE-05** | service absent | Bandeau démonstration ; **pas de bouton Compléter** (capacité non ratifiée) | Vitest+RTL | ✅ PASS |
+| Ports | **FE-10** | refus gracieux | port NOT_CONFIGURED → « Port non configuré » ; aucun secret | Vitest+RTL+MSW | ✅ PASS |
+| NBA | **FE-40** | R44 décision humaine | gestes R187 lus ; actions Accepter/Ajuster/Rejeter **désactivées** (route non ratifiée) | Vitest+RTL+MSW | ✅ PASS |
+
+**Vague 11 : 11/11 Vitest (7 lib FE-01..06 + 4 composants). Backend intact : e2e 47/47, harnais 425/425, baseline en sync.**
+FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed lecture seule, jamais de porte inventée. Un service dédié = amendement A2.
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

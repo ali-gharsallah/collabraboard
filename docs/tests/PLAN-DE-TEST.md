@@ -76,7 +76,7 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
 | **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..10`) | **47 tests, 11 suites** |
 | **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..10.e2e-spec.ts` | **41 FAT (… + V9 2 + V10 2)** |
-| **Front (Vitest)** | Prouver la couche FE-CORE (`api.ts`) hors backend | `pnpm --filter web run test:unit` | **5 tests (FE-01..04)** |
+| **Front (Vitest + RTL + MSW)** | Prouver FE-CORE (`api.ts`) + composants (Ports/NBA/FE-05) hors backend | `pnpm --filter web run test:unit` | **11 tests (FE-01..06 + FE-05/10/40)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
 
 ## 3. Stratégie par niveau
@@ -119,7 +119,7 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 47 e2e + 5 Vitest verts.
+- **0 régression** : 425 règles + 47 e2e + 11 Vitest verts.
 - Toute exigence métier de Vagues 1 à 8 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies

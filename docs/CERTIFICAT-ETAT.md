@@ -66,7 +66,7 @@ Index maître : `docs/PROJECT-INDEX.md`.
 |---|---|---|---|---|
 | 26 | **PMS** | **`POST/GET /v1/pms/mandats`** · `/:id/valoriser` · `/:id/pre-trade` · `GET /clients/:id/adequation` · `GET /breaches` · `POST /breaches/:id/clore` (R105→R108) | **visible** | ✅ réel (nouveau) |
 
-## Écrans réels (frontend React `apps/web`) — Vague 10 (Front-câblage v2 : Ports, NBA)
+## Écrans réels (frontend React `apps/web`) — Vague 10/11 (Front-câblage v2 + A1)
 
 | # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
 |---|---|---|---|---|
@@ -74,6 +74,8 @@ Index maître : `docs/PROJECT-INDEX.md`.
 | 29 | **Bac à sable AML** | **`POST /v1/aml/sandbox`** (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | **visible** | ✅ réel |
 | 30 | **Ports** | **`GET /v1/ports`**, **`GET\|POST /v1/ports/:id/health`** (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | **visible** | ✅ réel (nouveau) |
 | 31 | **Next Best Action** | **`GET /v1/crm/clients/:id/gestes`** (R187, gestes proposés ; décision R44 en lecture — route de décision non ratifiée) | **visible** | ✅ réel (lecture) |
+| 32 | **Workflow Instances** | _aucun service ratifié_ (workflow = définitions R171-173) — **FE-05 seed lecture seule** (A1) | **seed (bandeau)** | ⚠️ démonstration |
+| 33 | **Tâches** | _aucun service backlog ratifié_ (seul `workload.reassigner`) — **FE-05 seed lecture seule** (A1) | **seed (bandeau)** | ⚠️ démonstration |
 
 **Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
 démonstration » (composant unique `DemoModeBanner`, test 9/9).
@@ -84,7 +86,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 |---|---|---|
 | Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
 | e2e Postgres réel (… + V8 2 + V9 2 + V10 2) | **47 / 47** | `pnpm --filter api run test:e2e` |
-| FE-CORE (front, Vitest — couche `api.ts`) | **5 / 5** | `pnpm --filter web run test:unit` |
+| Front (Vitest — FE-CORE `api.ts` 7 + composants FE-05/10/40 4) | **11 / 11** | `pnpm --filter web run test:unit` |
 | **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
 | **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
 | **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
@@ -114,7 +116,7 @@ démonstration » (composant unique `DemoModeBanner`, test 9/9).
 
 ## Périmètre & limites (honnête)
 
-- Backend : **~120 routes** (+ Ports Vague 10 : registre + health), **35 modules** en Postgres réel (0 mock). Frontend : **31 écrans** (… + V9 1 + V10 2 : Ports, NBA). Écarts front consignés : `docs/ECARTS-FRONT.md`.
+- Backend : **~120 routes** (+ Ports Vague 10 : registre + health), **35 modules** en Postgres réel (0 mock). Frontend : **33 écrans** (… V10 : Ports, NBA · V11/A1 : Workflow Instances, Tâches en **FE-05 seed lecture seule** — services non ratifiés). Écarts front + décisions A1 : `docs/ECARTS-FRONT.md` ; migrations : `docs/MIGRATION-FRONT.md`.
 - Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
   (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
   trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
