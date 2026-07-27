@@ -20,6 +20,7 @@
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
 | `spec/vague13-scenarios/FORMATIONS-MOD43.feature` | Gherkin RATIFIÉ MOD-43 (FO-01..08) — implémenté Vague 13 | 2026-07-27 |
 | `spec/vague14-scenarios/BUSINESS-TRIP-MOD75.feature` | Gherkin RATIFIÉ MOD-75 (BT-01..10) — implémenté Vague 14 | 2026-07-27 |
+| `spec/spec-olivia-v1.1-comportement-v2-agents.md` | Olivia **v1.1** (R258, comportement/UX, OL-23..34 — code BLOQUÉ par la spec v1 à recevoir) + **v2 agentique** (R259–R266, SW-01..18) **RATIFIÉE – CODE GELÉ**. Mapping ratifié : v1=R253–R257 (spec `spec-fonctionnelle-home-olivia.md` À RECEVOIR), Home sans R-number | 2026-07-27 |
 | `spec/catalogue-amendement-R248-R252-porte-cpsi.md` | Amendement **R248–R252** (durcissement porte CPSI : enveloppe versionnée, jauge de rejeu, refus gracieux 503, frontière `case_proposal` R252 — supersede CP-15/16/17). Numérotation ratifiée ; scénarios PC PROPOSÉS | 2026-07-27 |
 | `spec/cpsi-scenarios/CPSI-PORTE.feature` | Gherkin **PROPOSÉ** de la porte HTTP mince CPSI (CP-01..19) — relais du moteur `services/cpsi-server-py` (R63–R83), aucune règle nouvelle ; à ratifier « OK pour la porte CPSI » | 2026-07-27 |
 | `docs/CPSI-CATALOGUE-R63-R86.md` | Catalogue consolidé CPSI (R63–R86) : score perpétuel, segmentation, groupes de population, pipeline signaux scorés, risk cases, extension KYC. Moteur réf. `services/cpsi-server-py` (18/18 vert). Cœur R63–R83 **non intégré** (porte HTTP mince à venir) | 2026-07-27 |
