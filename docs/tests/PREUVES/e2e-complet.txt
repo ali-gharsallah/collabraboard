@@ -1,17 +1,18 @@
-PASS test/e2e/fat-vague12.e2e-spec.ts
-PASS test/e2e/fat-vague15.e2e-spec.ts
-PASS test/e2e/fat-vague14.e2e-spec.ts
+PASS test/e2e/fat-vague16.e2e-spec.ts
 PASS test/e2e/fat-vague3.e2e-spec.ts
+PASS test/e2e/fat-vague14.e2e-spec.ts
 PASS test/e2e/fat-vague1.e2e-spec.ts
-PASS test/e2e/fat-vague4.e2e-spec.ts
-PASS test/e2e/fat-vague9.e2e-spec.ts
-PASS test/e2e/kyc-rules.e2e-spec.ts
-PASS test/e2e/fat-vague6.e2e-spec.ts
 PASS test/e2e/fat-vague13.e2e-spec.ts
+PASS test/e2e/fat-vague4.e2e-spec.ts
+PASS test/e2e/kyc-rules.e2e-spec.ts
 PASS test/e2e/fat-vague5.e2e-spec.ts
-PASS test/e2e/fat-vague7.e2e-spec.ts
 PASS test/e2e/fat-vague2.e2e-spec.ts
-PASS test/e2e/fat-vague10.e2e-spec.ts
+PASS test/e2e/fat-vague7.e2e-spec.ts
 PASS test/e2e/fat-vague8.e2e-spec.ts
-Test Suites: 15 passed, 15 total
-Tests:       72 passed, 72 total
+PASS test/e2e/fat-vague15.e2e-spec.ts
+PASS test/e2e/fat-vague9.e2e-spec.ts
+PASS test/e2e/fat-vague6.e2e-spec.ts
+PASS test/e2e/fat-vague10.e2e-spec.ts
+PASS test/e2e/fat-vague12.e2e-spec.ts
+Test Suites: 16 passed, 16 total
+Tests:       78 passed, 78 total

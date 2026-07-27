@@ -736,6 +736,11 @@ CREATE TABLE "tasks" (
     "done_at" TEXT,
     "client_id" UUID,
     "due_at" TEXT,
+    "subject_type" TEXT,
+    "subject_id" TEXT,
+    "origine" TEXT,
+    "completed_by" UUID,
+    "complete_comment" TEXT,
 
     CONSTRAINT "tasks_pkey" PRIMARY KEY ("id")
 );

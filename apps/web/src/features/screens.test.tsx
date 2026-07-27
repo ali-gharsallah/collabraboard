@@ -23,11 +23,15 @@ afterEach(() => { server.resetHandlers(); cleanup(); w.OLIVE_API_URL = undefined
 afterAll(() => server.close());
 beforeEach(() => { w.OLIVE_API_URL = undefined; });
 
-describe("FE-05 — écran sans service ratifié : seed lecture seule (Tâches)", () => {
-  it("Tâches affiche le bandeau démonstration et n'a pas de bouton Compléter", () => {
+describe("FE-TASK — Tâches : liste scopée serveur + complétion (FE-30..32, MOD R239→R242)", () => {
+  it("affiche les tâches servies par l'API et propose Compléter sur une tâche OPEN", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/tasks", () => HttpResponse.json([
+      { id: "t1", type: "REVUE_KYC", assignee: "u1", subjectId: "kyc-1", echeance: "2026-08-01", statut: "OPEN", completedBy: null },
+    ])));
     render(<Tasks/>);
-    expect(screen.getByText(/Démonstration — service backend non ratifié/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Compléter/i })).toBeNull();   // capacité non ratifiée
+    expect(await screen.findByText("REVUE_KYC")).toBeInTheDocument();          // dossier depuis l'API
+    expect(screen.getByRole("button", { name: /Compléter/i })).toBeInTheDocument();
   });
 });
 
