@@ -191,6 +191,18 @@ FE-WFI / FE-TASK résolus en **FE-05** (A1) : services non ratifiés → seed le
 
 **Vague 14 : 10/10 FAT backend + FE-TRIP. e2e 58 → 68, harnais 425/425, baseline régénérée (RLS FORCE sur 2 tables), recette RLS OK.** **R222→R238 intégralement implémenté** (MOD-43 V13 + MOD-75 V14).
 
+## Vague 16 — MOD Tâches (R239→R242, ratifié « OK pour R239..R246 »)
+
+| Domaine | ID test | Exigence | Ce qui est vérifié | Type | Résultat |
+|---|---|---|---|---|---|
+| Tâches | **TA-01/02** | R239 | Naissance par événement (TASK_CREATED) ; création manuelle gouvernée | e2e/FAT | ✅ PASS |
+| Tâches | **TA-03** | R240 | Visibilité soi/équipe/tout ; périmètre **non élargissable** | e2e/FAT | ✅ PASS |
+| Tâches | **TA-04/05** | R241 | Complétion événementielle immuable (TASK_ALREADY_COMPLETED) + habilitation | e2e/FAT | ✅ PASS |
+| Tâches | **TA-06** | R242/R39 | SLA mesuré, jamais coercitif | e2e/FAT | ✅ PASS |
+| Tâches | **FE-TASK** | R240/R241 | Liste scopée + Compléter depuis l'API (sort de FE-05) | Vitest+RTL+MSW | ✅ PASS |
+
+**Vague 16 : 6/6 FAT backend + FE-TASK. e2e 72 → 78, harnais 425/425, baseline régénérée (Task étendu additivement).** Reassign = ratifié workload. **Reste (V17)** : Décision NBA (R243→R246).
+
 ## Socle technique (rappel)
 
 Les FAT s'appuient sur **425 tests de règles** (R1→R221) et **43 e2e** (Postgres réel : kyc-rules 6

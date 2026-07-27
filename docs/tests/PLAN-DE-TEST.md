@@ -81,7 +81,7 @@ documentés dans `docs/DECALAGE-FRONT-BACK.md` et `docs/ETAT-REEL-VERIFIE.md`.
 | Niveau | But | Où | Volume prouvé |
 |---|---|---|---|
 | **Unitaire / règles** | Prouver chaque règle moteur R1→R221 en isolation | Harnais offline (`test:rules`, faux Prisma en mémoire) | **425 tests, 50 suites** |
-| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..14`) | **68 tests, 14 suites** |
+| **Intégration (e2e)** | Prouver la pile réelle (NestFactory + **Postgres réel** + RLS) | `test:e2e` (`kyc-rules` + `fat-vague1..16` + A3) | **78 tests, 16 suites** |
 | **Acceptation fonctionnelle (FAT)** | Prouver les besoins **métier** par persona | `fat-vague1..14.e2e-spec.ts` | **62 FAT (… + V12 3 + V13 8 + V14 10)** |
 | **Front (Vitest + RTL + MSW)** | Prouver FE-CORE (`api.ts`) + composants hors backend | `pnpm --filter web run test:unit` | **13 tests (FE-01..06 + composants)** |
 | **Non-régression** | Garantir 0 régression à chaque lot | Rejeu intégral 1→4 en CI (`.github/workflows/ci.yml`) | Bloquant |
@@ -126,7 +126,7 @@ sortie ✓ ; preuve archivée dans `docs/tests/PREUVES/`.
 ## 7. Critères de réussite globaux
 
 - **100 % des FAT critiques PASS** (bloquant pour la recette).
-- **0 régression** : 425 règles + 68 e2e + 13 Vitest verts.
+- **0 régression** : 425 règles + 78 e2e + 13 Vitest verts.
 - Toute exigence métier de Vagues 1 à 8 tracée à ≥ 1 FAT (matrice §COUVERTURE-REGLES).
 
 ## 8. Gestion des anomalies

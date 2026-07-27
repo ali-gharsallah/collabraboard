@@ -116,3 +116,15 @@ les événements sont requêtables/ordonnés/typés/horodatés et l'acteur est *
 d'écriture sur les instances ; filtrage tenant + `asOf` dans la porte ; visas au format R15 exact ; l'acteur
 provient du payload moteur (`null` si absent). Le read model R247 (CAS B) **ne s'applique pas** : l'état est
 déjà persisté et requêtable, aucune projection dérivée n'est nécessaire.
+
+## A2 — Tâches & NBA (R239→R246, ratifié « OK pour R239..R246 »)
+
+Amendement A2 : canon backend pour les deux capacités restées en démonstration après A1.
+
+- **Tâches (R239→R242) — IMPLÉMENTÉ (Vague 16).** `TasksModule` ; l'écran `Tasks.tsx` **sort du mode FE-05**.
+  Réassignation = ratifié `WorkloadService.reassigner` (inchangé). **Écart de vocabulaire signalé** : le statut
+  R239 (OPEN|COMPLETED|CANCELLED) est mappé sur le vocabulaire ratifié `Task` (OUVERTE|FAITE|ANNULEE) — workload
+  R183 inchangé, mapping DTO, aucun canon changé. Gherkin : `spec/vague16-scenarios/TASKS-MOD.feature`.
+- **Décision NBA (R243→R246) — à implémenter (Vague 17).** NB-05 dépend de TA-01 (la tâche naît de l'événement
+  `NBA_DECIDED` consommé par le service Tâches). Jusque-là, l'écran NBA reste en **lecture** (gestes R187,
+  décision désactivée) — inchangé depuis A1.

@@ -1,0 +1,15 @@
+    TA-01 PASS — tâche OPEN née de l'événement KYC_SECTION_REJECTED, TASK_CREATED tracé
+    TA-02 PASS — création manuelle refusée (taskManualCreation=false)
+    TA-03 PASS — RM voit les siennes, BRM son équipe, CO tout ; périmètre non élargissable
+    TA-04 PASS — complétion TASK_COMPLETED { acteur }, re-complétion refusée (immuable)
+    TA-05 PASS — U2 refusé (TASK_COMPLETE_FORBIDDEN), CO habilité complète (acteur tracé ≠ assignee)
+    TA-06 PASS — 1 tâche(s) en retard notifiée(s), rien n'est bloqué
+PASS test/e2e/fat-vague16.e2e-spec.ts
+    ✓ TA-01 [R239] naissance par événement uniquement (TASK_CREATED) (68 ms)
+    ✓ TA-02 [R239] création manuelle désactivée par paramètre (14 ms)
+    ✓ TA-03 [R240] visibilité scopée serveur : soi / équipe / tout (79 ms)
+    ✓ TA-04 [R241] complétion événementielle immuable (46 ms)
+    ✓ TA-05 [R241] habilitation de complétion (assignee ou rôle paramétré) (37 ms)
+    ✓ TA-06 [R242/R39] SLA mesuré, jamais coercitif (29 ms)
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total

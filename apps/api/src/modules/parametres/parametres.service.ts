@@ -183,6 +183,14 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Certifications exigées par juridiction (résolues depuis MOD-43 à la date du voyage, R228/R237)." },
   { cle: "tripCertificationCheckSeverity", type: "string", defaut: "INFORMATIF", regle: "R228", requis: false,
     description: "Sévérité si une certification requise est absente/expirée à la date du voyage (R228)." },
+  // ── Service Tâches — MOD (R239→R242, lot 52). Création manuelle, visibilité et habilitation
+  //    de complétion sont des règles : réglées par le registre (R7/R125). ──
+  { cle: "taskManualCreation", type: "bool", defaut: false, regle: "R239", requis: false,
+    description: "La création manuelle de tâche est-elle autorisée ? (sinon une tâche naît uniquement d'un événement, R239)." },
+  { cle: "taskVisibiliteRoles", type: "json", defaut: ["CO", "CF", "ADMIN"], regle: "R240", requis: false,
+    description: "Rôles qui voient TOUTES les tâches du tenant. Les autres voient leur périmètre (soi + équipe si responsable — R240)." },
+  { cle: "taskCompleteRoles", type: "json", defaut: [], regle: "R241", requis: false,
+    description: "Rôles habilités à compléter une tâche EN PLUS de l'assignee (contrôle exclusivement serveur, R241)." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

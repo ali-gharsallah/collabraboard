@@ -172,10 +172,21 @@ son **test technique** (règle unitaire dans le harnais et/ou e2e).
 
 **Couverture des exigences Vague 14 : 9 / 9 (100 %).** R222→R238 intégralement couvert (MOD-43 V13 + MOD-75 V14).
 
+## Exigences Vague 16 — MOD Tâches (R239→R242, couverture FAT)
+
+| # | Exigence (règle) | FAT | Statut |
+|---|---|---|---|
+| 79 | R239 : naissance par événement + création manuelle gouvernée | TA-01/TA-02 | ✅ |
+| 80 | R240 : listage scopé serveur, périmètre non élargissable | TA-03 | ✅ |
+| 81 | R241 : complétion événementielle immuable + habilitée | TA-04/TA-05 | ✅ |
+| 82 | R242/R39 : SLA mesuré, jamais coercitif | TA-06 | ✅ |
+
+**Couverture des exigences Vague 16 : 6 / 6 (100 %).**
+
 ## Assise technique sous-jacente (non-FAT, prouvée par le harnais)
 
 Les FAT ci-dessus s'appuient sur un socle de **425 tests de règles** (R1→R221, 50 suites) + **47
-tests e2e** (Postgres réel : kyc-rules 6 + … + V10 2 + V12 3 + V13 8 + V14 10) + **13 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
+tests e2e** (Postgres réel : kyc-rules 6 + … + V13 8 + V14 10 + A3 4 + V16 6) + **13 tests Vitest** (front : FE-CORE `api.ts` FE-01..06 + composants FE-05/10/40). La couverture règle-par-règle complète est portée par les
 `*.wiring.spec.ts` de chaque module (cf. `docs/RUNBOOK-OPS.md` §2) ; cette matrice ne trace que
 les **exigences métier de Vague 1** exercées en recette d'acceptation.
 

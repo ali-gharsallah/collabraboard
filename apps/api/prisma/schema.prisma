@@ -775,6 +775,14 @@ model Task {
   // dueAt ajoutés en nullable (aucune donnée existante impactée). Cf. rapport lot 40.
   clientId   String?   @map("client_id") @db.Uuid          // R187 — tâche rattachée à un client
   dueAt      String?   @map("due_at")                      // R187 — échéance (ISO), « tâche en retard »
+  // ── MOD Tâches (R239→R242, lot 52) : extension ADDITIVE nullable. statut réutilise le
+  //    vocabulaire ratifié (OPEN↔OUVERTE, COMPLETED↔FAITE, CANCELLED↔ANNULEE) — workload R183
+  //    inchangé (mapping DTO, cf. ECARTS-FRONT). Le sujet est une référence d'agrégat générique. ──
+  subjectType     String? @map("subject_type")             // R239 : KYC | TRIP | INSTANCE | CLIENT…
+  subjectId       String? @map("subject_id")               // R239 : référence d'agrégat
+  origine         String? @map("origine")                  // R239 : type d'événement d'origine (jamais par effet de bord)
+  completedBy     String? @map("completed_by") @db.Uuid    // R241 : acteur de la complétion (distinct de l'assignee, tracé)
+  completeComment String? @map("complete_comment")         // R241 : commentaire de complétion
   @@index([tenantId, assigneeId])
   @@map("tasks")
 }
