@@ -178,6 +178,16 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     console.log("CP-10 PASS — adopté", propId, "; rejet sans motivation refusé");
   });
 
+  it("CP-10b [R69] la liste des propositions restitue les états (rejeu) — lecture gouvernance", async () => {
+    const g = await request(http).get(`/v1/cpsi/params/proposals`).set(bearer(A, U, "CO"));
+    expect(g.status).toBe(200);
+    const statuts = g.body.map((p: any) => p.statut);
+    expect(statuts).toContain("ADOPTEE");
+    expect(statuts).toContain("REJETEE");                                 // les décisions CP-10 sont restituées
+    expect(g.body.every((p: any) => p.impact && typeof p.impact.clients_evalues === "number")).toBe(true);  // R69 : impact simulé embarqué
+    console.log("CP-10b PASS — propositions listées :", statuts.join(", "));
+  });
+
   it("CP-13 [R82] rétroaction faux-positif tracée", async () => {
     const fp = await request(http).post(`/v1/cpsi/false-positives`).set(bearer(A, U, "CO")).send({ client: cid, scenario: "SC_SCORE" });
     expect(fp.status).toBe(201);

@@ -12,6 +12,7 @@ import { BusinessTrip } from "./businesstrip/BusinessTrip";
 import { CpsiProfiling } from "./cpsi/CpsiProfiling";
 import { CpsiSegmentation } from "./cpsi/CpsiSegmentation";
 import { CpsiRiskCases } from "./cpsi/CpsiRiskCases";
+import { CpsiParam } from "./cpsi/CpsiParam";
 
 // Tests de composants (A1/D3 : Testing Library + MSW) sur les blocs FE nouveaux.
 // FE-05 (écran sans service ratifié → seed lecture seule), FE-10 (Ports refus gracieux),
@@ -172,5 +173,30 @@ describe("FE-CPSI — porte CPSI : profil (drivers R67), segmentation (R65), ale
     expect(screen.getByRole("button", { name: /Émettre les propositions/i })).toBeEnabled();  // émission R252
     expect(await screen.findByText(/SC_STRUCT \+ SC_WIRES/)).toBeInTheDocument();             // proposition listée
     expect(screen.queryByRole("button", { name: /Ouvrir un case/i })).toBeNull();             // PC-11 : plus de surface directe
+  });
+
+  it("CPSI Barèmes : « Proposer » VERROUILLÉ tant que les valeurs saisies ne sont pas simulées (R70)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/cpsi/rules", () => HttpResponse.json({ asOf: null, regles: ["Half-life : 180 jours (R64)."] })),
+      http.get("*/v1/cpsi/params/proposals", () => HttpResponse.json([
+        { id: "PROP-1", auteur: "olivia", chemin: "half_life_jours", valeur: 90, justification: "test", statut: "EN_ATTENTE",
+          impact: { delta_moyen: -4, clients_evalues: 10, nouveaux_high: 0, charge_revues_induite: 1, franchissements: [] } }])),
+      http.get("*/v1/cpsi/health", () => HttpResponse.json({ contractVersion: "1", profondeurJournal: 5, dernierRejeuMs: 3, rejeuHorsSeuil: false, configEnVigueur: "base" })),
+      http.post("*/v1/cpsi/sandbox/simulate", () => HttpResponse.json({ delta_moyen: -2.1, clients_evalues: 10, nouveaux_high: 0, charge_revues_induite: 0, franchissements: [] })),
+    );
+    render(<CpsiParam/>);
+    expect(await screen.findByText(/journal : 5 évts/)).toBeInTheDocument();                  // fetches stabilisés (santé mockée)
+    expect(await screen.findByText(/Half-life : 180 jours/)).toBeInTheDocument();             // R68 : règles en clair
+    fireEvent.change(screen.getByPlaceholderText(/chemin/i), { target: { value: "half_life_jours" } });
+    fireEvent.change(screen.getByPlaceholderText(/valeur/i), { target: { value: "90" } });
+    expect(screen.getByRole("button", { name: "Proposer" })).toBeDisabled();                  // R70 : verrouillé avant simulation
+    fireEvent.click(screen.getByRole("button", { name: /Simuler l'impact/i }));
+    expect(await screen.findByText(/Rapport d'impact/)).toBeInTheDocument();                  // dry-run affiché
+    expect(screen.getByRole("button", { name: "Proposer" })).toBeEnabled();                   // déverrouillé pour CES valeurs
+    fireEvent.change(screen.getByPlaceholderText(/valeur/i), { target: { value: "120" } });
+    expect(screen.getByRole("button", { name: "Proposer" })).toBeDisabled();                  // re-verrouillé si valeurs modifiées
+    expect(screen.getByRole("button", { name: "Adopter" })).toBeEnabled();                    // R69 : décision humaine sur EN_ATTENTE
+    expect(screen.getByRole("button", { name: "Rejeter" })).toBeEnabled();
   });
 });

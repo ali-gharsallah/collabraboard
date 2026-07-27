@@ -141,6 +141,11 @@ def _proposition(engine, q):
     return p
 
 
+# CP-10 (R69) : toutes les propositions (état reconstruit par rejeu) — lecture pour l'écran gouvernance.
+def _propositions(engine, q):
+    return engine.propositions
+
+
 # CP-14 (R75) : liste des initiés (MAR).
 def _insiders(engine, q):
     return {"inities": engine.liste_inities()}
@@ -171,7 +176,7 @@ QUERIES = {"score": _score, "segmentation": _segmentation,
            "client_groups": _client_groups, "groups": _groups,
            "evaluate_scenario": _evaluate_scenario, "alerts": _alerts,
            "sandbox_simulate": _sandbox_simulate, "propose_param": _propose_param,
-           "proposition": _proposition, "insiders": _insiders,
+           "proposition": _proposition, "propositions": _propositions, "insiders": _insiders,
            "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting}
 
 

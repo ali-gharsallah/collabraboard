@@ -237,6 +237,10 @@ export class CpsiService {
   async rejeter(ctx: Ctx, pid: string, motivation?: string) {
     return this.muter(ctx, "cpsi.param.rejected", "PARAM", { pid, humain: ctx.userId, motivation: motivation ?? "" }, "proposition", { id: pid });
   }
+  // Lecture des propositions (R69) — état reconstruit par rejeu, pour l'écran de gouvernance.
+  async listerPropositions(ctx: Ctx) {
+    return this.lire(ctx, "propositions", {});
+  }
 
   // ── CP-13 (R82) : rétroaction faux-positif (pénalité escaladante, tracée). ──
   async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string }) {
@@ -305,6 +309,7 @@ export class CpsiController {
   @Get("scenarios/:sid/evaluate")  evalScenario(@Req() r: any, @Param("sid") sid: string, @Query("asOf") asOf?: string) { return this.svc.evaluerScenario(r.ctx, sid, asOf); } // CP-06
   @Get("alerts")                   alertes(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.alertes(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // CP-12
   @Post("sandbox/simulate")        simuler(@Req() r: any, @Body() b: any) { return this.svc.simuler(r.ctx, b?.changements); }                            // CP-09
+  @Get("params/proposals")         propositions(@Req() r: any) { return this.svc.listerPropositions(r.ctx); }                                          // CP-10 (lecture)
   @Post("params/proposals")        proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // CP-10
   @Post("params/proposals/:pid/adopt")  adopter(@Req() r: any, @Param("pid") pid: string) { return this.svc.adopter(r.ctx, pid); }                     // CP-10
   @Post("params/proposals/:pid/reject") rejeter(@Req() r: any, @Param("pid") pid: string, @Body() b: any) { return this.svc.rejeter(r.ctx, pid, b?.motivation); } // CP-10
