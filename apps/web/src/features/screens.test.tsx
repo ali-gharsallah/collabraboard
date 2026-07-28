@@ -22,6 +22,7 @@ import { Runs } from "./olivia/Runs";
 import { AmlWorkspace } from "./aml/AmlWorkspace";
 import { SdKyc } from "./parametrage/SdKyc";
 import { SdAr } from "./parametrage/SdAr";
+import { AuditEcran } from "./audit/AuditEcran";
 import { SdGar } from "./parametrage/SdGar";
 import { ParamFields } from "./parametrage/ParamFields";
 import { CocParam } from "./coc/CocParam";
@@ -789,5 +790,47 @@ describe("FE-AS — R287 : le flux côté écran (AS-06, idempotence par référ
     fermer();
     expect(recus).toEqual([1, 2]);                                   // seq 1 UNE seule fois à l'écran
     expect(lastEventId).toBe("0");                                   // le dernier point connu est TRANSMIS (journal, pas mémoire serveur)
+  });
+});
+
+describe("FE-AUD — écran Audit & transport (application R284/R286, aucun canon nouveau)", () => {
+  it("rend le journal des accès (R284), les dead-letters T9 (R286) et rejoue TRACÉ — seule écriture possible : le rejeu et l'export", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let rejouee = "";
+    server.use(
+      http.get("*/v1/audit/acces", () => HttpResponse.json([
+        { at: "2026-07-28T10:00:00Z", par: "u-so", role: "SO", chemin: "/v1/offboarding/abc", methode: "GET" }])),
+      http.get("*/v1/events/sante", () => HttpResponse.json({
+        enSouffrance: 1, plusAncien: "2026-07-28T09:00:00Z",
+        deadLetters: [{ id: 7, consumer: "worker-riskcases", seq: 42, erreur: "Proposition inconnue au journal CPSI", tentatives: 2, depuis: "2026-07-28T09:00:00Z" }],
+        consommateurs: [{ consumer: "golden-record", stream: "global", lastSeq: 120, enRetry: false, tentatives: 0 }] })),
+      http.post("*/v1/events/dead-letters/7/rejouer", ({ params: _p }) => {
+        rejouee = "7"; return HttpResponse.json({ rejoue: true, consumer: "worker-riskcases", seq: 42 }, { status: 201 });
+      }),
+    );
+    render(<AuditEcran/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText(/u-so/)).toBeInTheDocument();                       // QUI a consulté (R284)
+    expect(screen.getByText(/\/v1\/offboarding\/abc/)).toBeInTheDocument();            // QUOI
+    expect(screen.getByText(/1 en souffrance/)).toBeInTheDocument();                   // T9 : « N en souffrance, le plus ancien : X »
+    expect(screen.getByText(/worker-riskcases/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Rejouer/ }));                  // rejeu MANUEL — tracé côté serveur
+    await screen.findByTestId("msg-audit");
+    expect(rejouee).toBe("7");
+    expect(screen.getByTestId("msg-audit")).toHaveTextContent(/rejoué/i);
+  });
+
+  it("l'export d'audit est TRACÉ et le document est la réponse — l'écran n'écrit rien d'autre", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/audit/acces", () => HttpResponse.json([])),
+      http.get("*/v1/events/sante", () => HttpResponse.json({ enSouffrance: 0, plusAncien: null, deadLetters: [], consommateurs: [] })),
+      http.post("*/v1/audit/export", () => HttpResponse.json({ genereAt: "2026-07-28T11:00:00Z", n: 12, evenements: [] }, { status: 201 })),
+    );
+    render(<AuditEcran/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    await screen.findByText(/0 en souffrance/);
+    fireEvent.click(screen.getByRole("button", { name: /Exporter/ }));
+    expect(await screen.findByTestId("msg-audit")).toHaveTextContent(/12 événements/);
   });
 });
