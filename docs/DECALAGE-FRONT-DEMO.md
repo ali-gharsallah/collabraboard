@@ -130,3 +130,11 @@ pas sous ces noms dans cette version de la maquette.)*
   oil (≈ Islamic, couvert), compliance (Compliance Center), regwatch, apidoc,
   integrations, wfdesigner/wfengine (≈ workflow defs, partiel), sbowner, sandbox-live,
   wfaudit (≈ rejeu/audit, couvert en substance), auditit, admin, editorconsole.
+
+## Mise à jour 2026-07-28 (canon triage final soldé)
+
+Écrans ajoutés depuis la dernière passe : `compliance` (Compliance Center, R292),
+`auditit` (Audit IT, SO-07/08), `integrations`, `prospection` (applications sans règle),
+`crossborder` (R293-R295). Le login deux temps (R296) est un CONTRAT API (public, deux
+routes) — l'écran portail suivra le shell définitif (consigné). La passe de conformité
+visuelle vit dans docs/CONFORMITE-VISUELLE.md (grille rejouable, critère PR).

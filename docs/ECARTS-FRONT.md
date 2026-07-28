@@ -685,3 +685,23 @@ partie, pas avant.
   monté — elle ne matchait JAMAIS (aucun e2e ne couvrait /v1/auth/token) ; corrigée par
   `originalUrl` (même constat que garderSO), TM-07 harnais conservé (req.path en repli).
   Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 5).
+
+## SOLDE — SÉQUENCE 6 TRIAGE FINAL : PASSE DE CONFORMITÉ VISUELLE (2026-07-28)
+
+- **docs/CONFORMITE-VISUELLE.md créé** : grille 5 colonnes (nav & libellés I18N 4 langues /
+  structure / tokens palette olive / états HO-04-LC-01 / données servies) passée SUR PIÈCE
+  (demo/olive-demo.html) sur les 12 écrans livrés + 4 écarts globaux de shell. Hiérarchie
+  canon > maquette > goût ; chaque écart est une ligne, AUCUNE correction sans ligne.
+- **5 corrections de libellés appliquées** (chacune = sa ligne de grille) : AML Investigation
+  (AW-L1, canon P1 + maquette concordent), Dashboard central, Prochaines actions,
+  Corroboration KYC, Cross-Border. 1 libellé refusé motivé (NV-L6 : « Pièces (GED) »
+  distingue pièces/coffre que la maquette fusionne).
+- **Consignés sans correction** : shell tab-switcher plat vs sidebar groupée (chantier shell,
+  gelé) ; i18n 4 langues (aucune règle R ne ratifie la localisation — canon à écrire) ;
+  accents de palette par module (évolution tokens.ts, pas une retouche par écran) ;
+  sélecteur de persona maquette REFUSÉ (R89 : le rôle vient du jeton — le canon prime).
+- **.github/pull_request_template.md créé** : la grille devient un CRITÈRE D'ACCEPTATION
+  de chaque PR (ligne de grille obligatoire pour tout écran nouveau/modifié, interdit de
+  donnée de maquette migrée, frontière de vérification complète).
+  Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 6). LE CANON TRIAGE
+  FINAL EST SOLDÉ : DC-08/09, SO-07/08, XB-01..05, LG-01..05 tous verts + grille livrée.
