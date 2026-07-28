@@ -612,3 +612,18 @@ partie, pas avant.
 - **Catégorie B acté sur INVENTAIRE** (maquette olive-demo.html ABSENTE du repo — à fournir
   pour le diff sur pièce) ; **catégorie C** : gel SWIFT/Legal/BI confirmé ; **Octopulse non
   trié** (définition d'Ali requise). Référence : spec/canon-ecrans-html-triage.md.
+
+## SOLDE — R290/R291 (2026-07-28, ratifiés et LIVRÉS le jour même)
+
+- **R290 — ssoparam DÉBLOQUÉ (IM-01/03/04 verts)** : l'écart « 4 endpoints MOD-30
+  manquants » est SOLDÉ. Clés R-Q ssoOidc/sso_mode/sso_bascule_coupe_sessions ; état SSO
+  sans jamais un secret (booléen « configuré ») ; test dry-run tracé ; rotation JWKS
+  commandée motivée (grâce structurelle) ; bascule de mode four-eyes à date PAR le
+  registre (aujourd'hui jwt, à J+2 sso — R127 le restitue). Écran ssoparam = 57e onglet.
+  IM-01..05 : les 5 scénarios IAM du canon triage sont TOUS verts. Écart restant consigné :
+  le login OIDC effectif lit l'environnement (résolution per-tenant = extension future).
+- **R291 — Command Center COMPLET (DC-06/07 verts)** : l'agrégat /v1/kyc/visas/charge
+  (DIR/CO_SR) sert la tuile « Charge compliance » ; la matrice T9 s'étend à DIR en LECTURE
+  (le rejeu reste ADMIN/SO — piloter n'est pas opérer) et les dead-letters entrent dans
+  « Santé plateforme ». DC-01..07 : les 7 scénarios Command Center sont TOUS verts —
+  plus aucune tuile amputée. Référence : spec/proposition-R290-R291-extensions.md.
