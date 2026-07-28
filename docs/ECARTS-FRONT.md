@@ -595,3 +595,20 @@ partie, pas avant.
   d'époque se rejoue par le registre (R127, BS-09). La brique configuration & paramétrage n'a
   PLUS de trou documenté : configurer (gouverné), simuler (5 bacs, leviers complets), rejouer
   (à date). Référence : spec/proposition-R288-baremes-scoring.md · fat-canon-derniers (BS-07..09).
+
+## SOLDE — TRIAGE ÉCRANS HTML (2026-07-28, canon RATIFIÉ : R289 + volet IAM partiel LIVRÉS)
+
+- **R289 Command Center LIVRÉ (DC-01..05 verts, Vitest)** : 54e onglet, projection Direction
+  (DIR), patron de Tuile PARTAGÉ avec Home (extrait vers components/). v1 = les 7 tuiles aux
+  sources vérifiées (étape 0.c). ÉCARTS CONSIGNÉS (extensions à ratifier, jamais des endpoints
+  inventés) : (1) tuile « Charge compliance » — aucun agrégat visas/tâches par rôle ratifié ;
+  (2) dead-letters au Command Center — GET /v1/events/sante est T9 = ADMIN/SO, servir DIR =
+  étendre la matrice ratifiée. Nouvelle clé R-Q `command_seuils` (colore, ne bloque jamais).
+- **paramnav + iamguide LIVRÉS (IM-02, IM-05 verts, e2e + Vitest)** : garde backend
+  IAM_DERNIER_ADMIN (signalée 0.d) ; refus rendus tels quels ; route lecture seule
+  GET /v1/admin/iam/guide (signalée 0.d) ; export daté. **ssoparam DIFFÉRÉ** (décision Ali) —
+  4 endpoints d'extension MOD-30 restent à ratifier : config OIDC écrite, dry-run connexion
+  tracé, rotation JWKS commandée, bascule de mode four-eyes à date (IM-01/03/04 en attente).
+- **Catégorie B acté sur INVENTAIRE** (maquette olive-demo.html ABSENTE du repo — à fournir
+  pour le diff sur pièce) ; **catégorie C** : gel SWIFT/Legal/BI confirmé ; **Octopulse non
+  trié** (définition d'Ali requise). Référence : spec/canon-ecrans-html-triage.md.
