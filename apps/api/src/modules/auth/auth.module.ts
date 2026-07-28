@@ -7,6 +7,7 @@ import { ParametresModule } from "../parametres/parametres.module";   // R290 : 
 import { ParametresService } from "../parametres/parametres.service";
 import { MfaService } from "./mfa.service";
 import { OidcService, OidcConfig } from "./oidc.service";
+import { LoginService } from "./login.service";
 import { KeyStore } from "./key-store";
 import { RolesGuard } from "./roles.guard";
 import { Roles } from "./roles.decorator";
@@ -14,7 +15,8 @@ import { SecretBox } from "../../common/secret-box";
 
 @Controller("auth")
 class AuthController {
-  constructor(private readonly auth: AuthService, private readonly oidc: OidcService) {}
+  constructor(private readonly auth: AuthService, private readonly oidc: OidcService,
+    private readonly loginSvc: LoginService) {}
   @Post("token")
   token(@Body() b: any) {
     if (!b?.tenant_id || !b?.email || !b?.password) throw new BadRequestException("tenant_id, email et password requis");
@@ -25,6 +27,9 @@ class AuthController {
     if (!b?.tenant_id || !b?.id_token) throw new BadRequestException("tenant_id et id_token requis");
     return this.oidc.login(b.tenant_id, b.id_token);
   }
+  // ── R296 : le login DEUX TEMPS — le tenant n'est jamais envoyé, il est RÉSOLU (LG-01..05). ──
+  @Post("methode") methode(@Body() b: any) { return this.loginSvc.methode(b?.email); }
+  @Post("login")   login(@Body() b: any) { return this.loginSvc.login(b ?? {}); }
 }
 
 @Controller(".well-known")
@@ -199,7 +204,7 @@ function oidcConfigFromEnv(): OidcConfig {
   imports: [ParametresModule],   // R290
   controllers: [AuthController, JwksController, MfaController, UsersController, IamGuideController, SsoController],
   providers: [
-    AuthService, UsersService, MfaService, RolesGuard,
+    AuthService, UsersService, MfaService, RolesGuard, LoginService,
     // MfaService dépend de SecretBox (metadata décorateur → DI, la valeur par défaut du
     // constructeur ne suffit pas). Câblage documenté dans mfa.service.ts.
     { provide: SecretBox, useFactory: () => new SecretBox(process.env.MFA_ENC_KEY) },

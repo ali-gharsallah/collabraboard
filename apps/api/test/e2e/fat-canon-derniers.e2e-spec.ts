@@ -780,3 +780,123 @@ describe("FAT CANON DERNIERS — bloc Cross-Border R293-R295 (XB-01..05)", () =>
     console.log("XB-05 PASS — verdicts identiques voyage/relation sur SA, AE, JP");
   });
 });
+
+// ── R296 : LOGIN DEUX TEMPS — résolution tenant par domaine, indistinguable, bascule à date,
+// pas de repli silencieux, break-glass notifié (LG-01..05, canon triage final séquence 5) ──
+
+describe("FAT CANON DERNIERS — R296 login deux temps (LG-01..05)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const ADMIN = randomUUID(), ADMIN2 = randomUUID();
+  const DOMAINE = `gwb-${T.slice(0, 8)}.ch`;                 // domaine unique au test (résolution multi-tenant)
+  const EMAIL_RM = `rm@${DOMAINE}`, EMAIL_BG = `secours@${DOMAINE}`;
+  const MDP = "S3cret!par-defaut";
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, randomUUID());
+    // Le domaine du tenant s'ÉCRIT PAR LE REGISTRE (loginDomaines) — motivé, versionné (R7/R126)
+    await request(http).post("/v1/parametres/valeur/loginDomaines").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: [DOMAINE], motif: "R296 : domaines de login du tenant" }).expect(201);
+    // Un compte local avec MFA enrôlée (le break-glass l'exigera)
+    const { PasswordHasher } = require("../../src/modules/auth/password");
+    const { Totp } = require("../../src/modules/auth/totp");
+    const secret = Totp.base32Encode(Buffer.from("cle-totp-e2e-lg05!!"));
+    for (const [id, email, mfa] of [[randomUUID(), EMAIL_RM, false], [randomUUID(), EMAIL_BG, true]] as any[])
+      await prisma.user.create({ data: { id, tenantId: T, email, name: email.split("@")[0], role: "RM",
+        passwordHash: PasswordHasher.hash(MDP), active: true,
+        ...(mfa ? { mfaEnabled: true, mfaSecret: secret } : {}) } });
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("LG-01 [R296] TEMPS 1 — la méthode se résout par DOMAINE, l'inconnu est INDISTINGUABLE : même forme de réponse (pattern OL-34), jamais une existence révélée", async () => {
+    // Domaine connu, tenant en mode jwt → LOCAL
+    const connu = await request(http).post("/v1/auth/methode").send({ email: EMAIL_RM });
+    expect(connu.status).toBe(201);
+    expect(connu.body.methode).toBe("LOCAL");
+    // Domaine INCONNU → MÊME forme (LOCAL), mêmes clés — rien ne dit si la banque existe
+    const inconnu = await request(http).post("/v1/auth/methode").send({ email: "quelquun@banque-inexistante.example" });
+    expect(inconnu.status).toBe(201);
+    expect(Object.keys(inconnu.body).sort()).toEqual(Object.keys(connu.body).sort());
+    expect(inconnu.body.methode).toBe("LOCAL");
+    // Et un email SANS domaine → 400 (forme), pas une fuite
+    await request(http).post("/v1/auth/methode").send({ email: "pas-un-email" }).expect(400);
+    console.log("LG-01 PASS — méthode par domaine, inconnu indistinguable");
+  });
+
+  it("LG-02 [R296] TEMPS 2 — le login RÉSOUT le tenant ; l'échec est GÉNÉRIQUE et IDENTIQUE (domaine inconnu / user inconnu / mauvais mdp), timing du même ordre (smoke)", async () => {
+    // Succès : le tenant n'est PAS envoyé par le client — il est résolu du domaine
+    const ok = await request(http).post("/v1/auth/login").send({ email: EMAIL_RM, password: MDP });
+    expect(ok.status).toBe(201);
+    expect(ok.body.access_token).toBeTruthy();
+    expect(ok.body.role).toBe("RM");
+    // Trois échecs, UN message — byte-identique
+    const cas = [
+      { email: "x@banque-inexistante.example", password: MDP },              // domaine inconnu
+      { email: `fantome@${DOMAINE}`, password: MDP },                        // user inconnu
+      { email: EMAIL_RM, password: "mauvais-mdp" },                          // mauvais mot de passe
+    ];
+    const reponses = [];
+    for (const c of cas) {
+      const t0 = Date.now();
+      const r = await request(http).post("/v1/auth/login").send(c);
+      reponses.push({ status: r.status, message: r.body.message, ms: Date.now() - t0 });
+    }
+    for (const r of reponses) { expect(r.status).toBe(401); expect(r.message).toBe(reponses[0].message); }
+    // Timing SMOKE (généreux, consigné) : même ordre de grandeur — le leurre scrypt tourne partout
+    const ms = reponses.map((r) => r.ms);
+    expect(Math.max(...ms) - Math.min(...ms)).toBeLessThan(1500);
+    console.log(`LG-02 PASS — échec générique identique, timings ${ms.join("/")} ms (smoke)`);
+  });
+
+  it("LG-03 [R296/R290] la BASCULE À DATE est SUIVIE au login : IM-04 re-passé bout en bout — visée à effet immédiat, la méthode devient SSO avec redirect, sans jamais un secret", async () => {
+    // La config OIDC déclarée (registre — IM-01 : jamais de secret)
+    await request(http).post("/v1/parametres/valeur/ssoOidc").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: { issuer: `https://login.${DOMAINE}/realms/olive`, audience: "olive-app" },
+        motif: "R296 : fournisseur déclaré pour le login deux temps" }).expect(201);
+    // IM-04 bout en bout : ADMIN demande (effet immédiat), ADMIN2 vise (R13 re-testé au passage)
+    await request(http).post("/v1/admin/sso/mode").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ vers: "sso", effetAt: new Date(Date.now() - 1000).toISOString(), motif: "fédération IdP groupe" }).expect(201);
+    await request(http).post("/v1/admin/sso/mode/visa").set(bearer(T, ADMIN, "ADMIN")).expect(403);   // initiateur exclu
+    await request(http).post("/v1/admin/sso/mode/visa").set(bearer(T, ADMIN2, "ADMIN")).expect(201);
+    // La méthode SUIT la valeur EN VIGUEUR du registre
+    const m = await request(http).post("/v1/auth/methode").send({ email: EMAIL_RM });
+    expect(m.body.methode).toBe("SSO");
+    expect(m.body.redirect).toContain(`https://login.${DOMAINE}`);
+    expect(JSON.stringify(m.body)).not.toMatch(/secret/i);                   // IM-01 re-tenu au login
+    console.log("LG-03 PASS — bascule à date suivie, IM-04 re-passé, redirect servi");
+  });
+
+  it("LG-04 [R296] AUCUN repli silencieux : tenant SSO → le mot de passe est refusé TYPÉ (même correct), sso_fallback_local défaut FAUX", async () => {
+    // Le mot de passe CORRECT ne passe plus — refus TYPÉ, jamais un échec générique trompeur
+    const r = await request(http).post("/v1/auth/login").send({ email: EMAIL_RM, password: MDP });
+    expect(r.status).toBe(403);
+    expect(JSON.stringify(r.body)).toContain("SSO_REQUIS");
+    // Le défaut du registre est FAUX — le repli est un CHOIX gouverné, jamais un silence
+    const d = await request(http).get("/v1/parametres/valeur/sso_fallback_local").set(bearer(T, ADMIN, "ADMIN"));
+    expect(d.text.replace(/"/g, "")).toBe("false");
+    console.log("LG-04 PASS — refus typé SSO_REQUIS, fallback défaut faux");
+  });
+
+  it("LG-05 [R296] BREAK-GLASS : compte de secours déclaré au registre → login local possible MAIS MFA OBLIGATOIRE, AUDIT_ACCESS + notification SO/DIR", async () => {
+    const { Totp } = require("../../src/modules/auth/totp");
+    await request(http).post("/v1/parametres/valeur/breakGlassComptes").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: [EMAIL_BG], motif: "R296 : compte de secours IdP (break-glass)" }).expect(201);
+    // Sans MFA → refusé (le break-glass ne DÉGRADE pas la sécurité)
+    await request(http).post("/v1/auth/login").send({ email: EMAIL_BG, password: MDP }).expect(401);
+    // Avec TOTP valide → session émise, TRACÉE et NOTIFIÉE
+    const code = Totp.generate(Buffer.from("cle-totp-e2e-lg05!!"));
+    const ok = await request(http).post("/v1/auth/login").send({ email: EMAIL_BG, password: MDP, totp: code });
+    expect(ok.status).toBe(201);
+    expect(ok.body.access_token).toBeTruthy();
+    const audit = await prisma.auditLog.findFirst({ where: { tenantId: T, action: "BREAK_GLASS_LOGIN" }, orderBy: { id: "desc" } });
+    expect(audit).toBeTruthy();
+    const notif = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "auth.breakglass.utilise" }, orderBy: { id: "desc" } });
+    expect((notif!.payload as any).notifie).toEqual(expect.arrayContaining(["SO", "DIR"]));
+    // Un compte NON déclaré break-glass reste refusé SSO_REQUIS (LG-04 tient)
+    await request(http).post("/v1/auth/login").send({ email: EMAIL_RM, password: MDP }).expect(403);
+    console.log("LG-05 PASS — break-glass MFA obligatoire, audité, SO/DIR notifiés");
+  });
+});

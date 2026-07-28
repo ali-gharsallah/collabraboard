@@ -657,3 +657,31 @@ partie, pas avant.
   « au présent » (R286) au beforeAll de fat-swarm — le backlog inter-suites polluait la
   photo SW-14 (fuite d'ordonnancement jest, pas un bug produit).
   Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 4).
+
+## SOLDE — SÉQUENCE 5 TRIAGE FINAL : R296 LOGIN DEUX TEMPS (2026-07-28, LG-01..05 verts)
+
+- **Temps 1 — la méthode se résout par DOMAINE** : POST /v1/auth/methode {email} → LOCAL ou
+  SSO+redirect. Nouvelle clé R-Q `loginDomaines` (domaines du tenant). Un domaine INCONNU
+  répond la MÊME forme que LOCAL (indistinguable, pattern OL-34) — jamais une existence
+  révélée (LG-01). La méthode suit `sso_mode` EN VIGUEUR : la bascule four-eyes à date de
+  R290 s'applique au login SANS autre câblage — IM-04 re-passé bout en bout (LG-03).
+- **Temps 2 — le login RÉSOLVANT** : POST /v1/auth/login — le tenant n'est JAMAIS envoyé
+  par le client. Échec GÉNÉRIQUE byte-identique (domaine inconnu / user inconnu / mauvais
+  mdp), leurre scrypt sur tous les chemins (LG-02).
+- **AUCUN repli silencieux** : tenant SSO → mot de passe refusé TYPÉ (SSO_REQUIS), même
+  correct ; IdP non déclaré/joignable → SSO_IDP_INDISPONIBLE (503 typée). Clé R-Q
+  `sso_fallback_local` défaut FAUX (LG-04).
+- **Break-glass** : clé R-Q `breakGlassComptes` — login local possible en mode SSO, MFA
+  OBLIGATOIRE (compte non enrôlé = refus générique), usage AUDITÉ (BREAK_GLASS_LOGIN) +
+  notifié SO/DIR par événement (LG-05).
+- **ÉCARTS CONSIGNÉS** : (1) le test de timing est SMOKE (écart max < 1,5 s entre les trois
+  échecs — généreux, consigné : un test statistique fin serait flaky en CI) ; (2) le
+  four-eyes du CHANGEMENT de `sso_fallback_local` est différé v1 — le défaut est faux et
+  toute écriture registre est motivée/versionnée (R7/R126), l'extension à deux regards
+  suivra le patron IM-04 ; (3) le PORTAIL de login front est HORS périmètre du
+  tab-switcher de démonstration (pas d'écran de login dans le shell actuel) — le contrat
+  API est livré et testé, l'écran suivra le shell définitif ; (4) BUG PRÉEXISTANT corrigé :
+  l'allowlist publique du TenantMiddleware testait `req.path` qui vaut « / » en middleware
+  monté — elle ne matchait JAMAIS (aucun e2e ne couvrait /v1/auth/token) ; corrigée par
+  `originalUrl` (même constat que garderSO), TM-07 harnais conservé (req.path en repli).
+  Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 5).

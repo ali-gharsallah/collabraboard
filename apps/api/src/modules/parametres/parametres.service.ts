@@ -211,6 +211,15 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Login deux temps — R296 (canon triage final, ratifié 2026-07-28). ──
+  { cle: "loginDomaines", type: "json", defaut: [], regle: "R296", requis: false,
+    exemple: ["gwb.ch", "gwb-private.ch"],
+    description: "Domaines e-mail du tenant pour la résolution AU LOGIN (temps 1 : email → méthode). Un domaine inconnu répond la MÊME forme que LOCAL (indistinguable, pattern OL-34) — jamais une existence révélée." },
+  { cle: "sso_fallback_local", type: "bool", defaut: false, regle: "R296", requis: false,
+    description: "Repli mot de passe local quand l'IdP est indisponible ? Défaut FAUX : l'indisponibilité est une ERREUR TYPÉE, jamais un repli silencieux. Le changement se motive au registre (four-eyes du changement = extension consignée v1)." },
+  { cle: "breakGlassComptes", type: "json", defaut: [], regle: "R296", requis: false,
+    exemple: ["secours@gwb.ch"],
+    description: "Comptes de secours (break-glass) : login LOCAL possible même en mode SSO — MFA OBLIGATOIRE, chaque usage audité (BREAK_GLASS_LOGIN) et notifié SO/DIR. Jamais une dégradation de sécurité silencieuse." },
   // ── Command Center — R289 (canon triage écrans HTML, ratifié 2026-07-28). ──
   { cle: "command_seuils", type: "json", defaut: {}, regle: "R289", requis: false,
     exemple: { sla_en_retard: 5 },

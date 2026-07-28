@@ -53,8 +53,12 @@ export class TenantMiddleware implements NestMiddleware {
   }
 
   use(req: any, _res: any, next: () => void) {
-    if (req.path === "/v1/auth/token" || req.path === "/v1/auth/oidc/login"
-        || req.path === "/v1/.well-known/jwks.json") return next();   // routes publiques
+    // Middleware MONTÉ par route : req.path vaut « / » — le chemin réel est dans originalUrl
+    // (même constat que garderSO). L'ancien test sur req.path ne matchait jamais.
+    const cheminPublic = String(req.originalUrl ?? req.path ?? "").split("?")[0];   // harnais : req.path direct
+    if (["/v1/auth/token", "/v1/auth/oidc/login",
+         "/v1/auth/methode", "/v1/auth/login",                        // R296 : login deux temps
+         "/v1/.well-known/jwks.json"].includes(cheminPublic)) return next();   // routes publiques
     const raw = (req.headers.authorization ?? "").replace(/^Bearer /, "");
     try {
       const kid = (decode(raw, { complete: true }) as any)?.header?.kid;
