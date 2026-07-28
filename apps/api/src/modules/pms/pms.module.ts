@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { PmsService } from "./pms.service";
 
 /**
@@ -25,5 +23,5 @@ export class PmsController {
   @Post("breaches/:id/clore")      clore(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.cloreBreach(r.ctx, id, b?.motif); }                 // R7
 }
 
-@Module({ controllers: [PmsController], providers: [PrismaService, AuditService, PmsService], exports: [PmsService] })
+@Module({ controllers: [PmsController], providers: [ PmsService], exports: [PmsService] })
 export class PmsModule {}

@@ -25,14 +25,12 @@ export class TransactionsController {
 @Module({
   controllers: [TransactionsController],
   providers: [
-    PrismaService, AuditService,
     {
       provide: TransactionGateService,
       useFactory: (prisma: PrismaService, audit: AuditService) =>
         new TransactionGateService(prisma, audit, [gardeComportement()]),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [TransactionGateService],
 })
 export class TransactionsModule {}

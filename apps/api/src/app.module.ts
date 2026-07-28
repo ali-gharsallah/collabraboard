@@ -1,4 +1,5 @@
 import { Module, MiddlewareConsumer } from "@nestjs/common";
+import { CoreModule } from "./common/core.module";
 import { TenantMiddleware } from "./common/tenant.middleware";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ClientsModule } from "./modules/clients/clients.module";
@@ -27,7 +28,7 @@ import { NbaModule } from "./modules/nba/nba.module";
 import { WorkflowModule } from "./modules/workflow/workflow.module";
 import { PmsModule } from "./modules/pms/pms.module";
 
-@Module({ imports: [AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule] })
+@Module({ imports: [CoreModule, AuthModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }

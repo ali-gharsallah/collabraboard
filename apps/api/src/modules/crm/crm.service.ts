@@ -1,6 +1,8 @@
 import { Injectable, ForbiddenException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
+import { loadSettings } from "../../common/tenant-settings";
 
 /**
  * CRM Relation — R186→R188 (CR-01..05). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -23,11 +25,10 @@ export class CrmService {
     private ports: { ia?: IaPort } = {}) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tenantId: string) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
-    return ((t?.settings as any) ?? {});
+    return loadSettings(this.prisma, tenantId);
   }
   private async garde(ctx: Ctx, clientId: string) {
     const c = await this.prisma.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });

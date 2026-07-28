@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { MrosService } from "./mros.service";
 
 /**
@@ -22,5 +20,5 @@ export class MrosController {
   @Post(":id/gel/lever")      lever(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.leverGel(r.ctx, id, b?.motif); }     // R131
 }
 
-@Module({ controllers: [MrosController], providers: [PrismaService, AuditService, MrosService], exports: [MrosService] })
+@Module({ controllers: [MrosController], providers: [ MrosService], exports: [MrosService] })
 export class MrosModule {}

@@ -10,14 +10,11 @@ import { AmlService } from "./aml.service";
 @Module({
   controllers: [AmlController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: AmlService,
       useFactory: (p: PrismaService, a: AuditService) => new AmlService(p, a),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [AmlService],
 })
 export class AmlModule {}

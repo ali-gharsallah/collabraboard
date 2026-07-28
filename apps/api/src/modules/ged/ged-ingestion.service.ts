@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Capture & ingestion GED — R137→R139 (IG-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -26,7 +27,7 @@ export class GedIngestionService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cfg(tx: any, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

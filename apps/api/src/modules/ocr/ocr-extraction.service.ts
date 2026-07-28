@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * L'extraction comprend le document — R174→R176 (OC-01..06). Écrit APRÈS l'amendement,
@@ -27,7 +28,7 @@ export class OcrExtractionService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private sha(x: string) { return createHash("sha256").update(x).digest("hex"); }
 

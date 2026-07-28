@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
+import { loadSettings } from "../../common/tenant-settings";
+import { teamScope } from "../../common/visibility";
 
 /**
  * MOD-43 Formations & Certifications (R231→R238, lot 50). Écrit spec-first depuis le Gherkin
@@ -20,12 +23,10 @@ export class FormationsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(ctx: Ctx) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+    return loadSettings(this.prisma, ctx.tenantId, true);
   }
 
   // ── R231 : référentiel des formations, 100% tenant (aucun type en dur) ──
@@ -49,17 +50,9 @@ export class FormationsService {
     const s = await this.settings(ctx);
     const voitTout: string[] = s.trainingVisibiliteRoles ?? ["CO", "CF", "ADMIN"];
     const where: any = { tenantId: ctx.tenantId };
-    if (!voitTout.includes(ctx.role)) {
-      // périmètre restreint : soi + (si responsable) les collaborateurs de son/ses équipe(s)
-      const equipes = (s.workloadResponsables ?? [])
-        .filter((r: any) => r.responsableRole === ctx.role).map((r: any) => r.equipeRole);
-      const ids = new Set<string>([ctx.userId]);
-      if (equipes.length) {
-        const membres = await this.prisma.user.findMany({ where: { tenantId: ctx.tenantId, role: { in: equipes } } });
-        membres.forEach((m: any) => ids.add(m.id));
-      }
-      where.userId = { in: [...ids] };
-    }
+    // R236 : périmètre soi / équipe / tout — source unique (A2, common/visibility).
+    const scope = await teamScope(this.prisma, ctx.tenantId, ctx.role, ctx.userId, s, voitTout);
+    if (scope) where.userId = { in: [...scope] };
     if (filtre.userId) where.userId = filtre.userId;               // vue ciblée (dans le périmètre autorisé)
     return this.prisma.trainingAssignment.findMany({ where, orderBy: { createdAt: "desc" } });
   }
@@ -157,9 +150,7 @@ export class FormationsController {
 @Module({
   controllers: [FormationsController],
   providers: [
-    PrismaService, AuditService,
-    { provide: FormationsService, useFactory: (p: PrismaService, a: AuditService) => new FormationsService(p, a), inject: [PrismaService, AuditService] },
-  ],
+    { provide: FormationsService, useFactory: (p: PrismaService, a: AuditService) => new FormationsService(p, a), inject: [PrismaService, AuditService] }],
   exports: [FormationsService],
 })
 export class FormationsModule {}

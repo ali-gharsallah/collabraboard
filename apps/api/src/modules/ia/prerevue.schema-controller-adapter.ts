@@ -51,7 +51,7 @@ export class PreRevueController {
 }
 
 @Module({ controllers: [PreRevueController],
-  providers: [PrismaService, AuditService,
+  providers: [
     { provide: PreRevueService,
       useFactory: (p: PrismaService, a: AuditService) => new PreRevueService(p, a, { ia: claudeIaAdapter() }),
       inject: [PrismaService, AuditService] }] })

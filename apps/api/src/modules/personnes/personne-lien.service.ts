@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Personnes liées — le lien est un acte. R152→R155 (PL-01..04). Écrit APRÈS l'amendement,
@@ -52,7 +53,7 @@ export class PersonneLienService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cfg(tx: any, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

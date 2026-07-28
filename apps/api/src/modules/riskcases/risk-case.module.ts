@@ -1,6 +1,4 @@
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { RiskCaseController } from "./risk-case.controller";
 import { RiskCaseService } from "./risk-case.service";
 
@@ -8,7 +6,7 @@ import { RiskCaseService } from "./risk-case.service";
 // auto-résolu — pas de port optionnel. Exposé pour l'écran « File d'alertes » (décision).
 @Module({
   controllers: [RiskCaseController],
-  providers: [PrismaService, AuditService, RiskCaseService],
+  providers: [ RiskCaseService],
   exports: [RiskCaseService],
 })
 export class RiskCaseModule {}

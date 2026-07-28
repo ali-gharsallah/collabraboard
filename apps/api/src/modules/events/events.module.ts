@@ -1,8 +1,6 @@
 import { Module } from "@nestjs/common";
 import { OutboxWorker } from "./outbox.worker";
 import { GoldenRecordProjector } from "./golden-record.projector";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { OnboardingModule } from "../onboarding/onboarding.module";
 // R104 : OutboxWorker dépend de GoldenRecordProjector (→ AuditService). Le câblage
 // correct est celui documenté dans outbox.worker.ts ; il manquait ici, ce qui
@@ -11,6 +9,6 @@ import { OnboardingModule } from "../onboarding/onboarding.module";
 // (qui exporte OnboardingService).
 @Module({
   imports: [OnboardingModule],
-  providers: [OutboxWorker, GoldenRecordProjector, PrismaService, AuditService],
+  providers: [OutboxWorker, GoldenRecordProjector],
 })
 export class EventsModule {}

@@ -3,6 +3,11 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { WorkloadModule } from "../workload/workload.module";
 import { WorkloadService } from "../workload/workload.service";
+import { applyKeyset, PageParams } from "../../common/pagination";
+import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
+import { loadSettings } from "../../common/tenant-settings";
+import { teamScope } from "../../common/visibility";
 
 /**
  * MOD Tâches (R239→R242, lot 52). Écrit spec-first depuis le Gherkin TA-01..06, sur ratification
@@ -22,13 +27,11 @@ const AU_DTO: Record<string, string> = { OUVERTE: "OPEN", EN_COURS: "OPEN", FAIT
 export class TasksService {
   constructor(private prisma: PrismaService, private audit: AuditService, private workload: WorkloadService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(ctx: Ctx) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+    return loadSettings(this.prisma, ctx.tenantId, true);
   }
   private dto = (k: any, asOf?: string) => {
     const statutStock = asOf ? (k.doneAt && k.doneAt <= asOf ? "FAITE" : "OUVERTE") : k.statut;
@@ -41,7 +44,7 @@ export class TasksService {
   async creerDepuisEvenement(ctx: Ctx, dto: { origine: string; type: string; subjectType?: string; subjectId?: string; assignee: string; echeance?: string }) {
     if (!dto?.origine) throw new BadRequestException("R239 : origine (événement) requise");
     if (!dto?.assignee || !dto?.type) throw new BadRequestException("assignee et type requis");
-    const row = await this.prisma.$transaction(async (tx: any) => {
+    const row = await this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.create({ data: {
         tenantId: ctx.tenantId, assigneeId: dto.assignee, type: dto.type, statut: "OUVERTE",
         createdAt: new Date().toISOString(), dueAt: dto.echeance ?? null,
@@ -58,7 +61,7 @@ export class TasksService {
     const s = await this.settings(ctx);
     if (!s.taskManualCreation) throw new BadRequestException("TASK_MANUAL_CREATION_DISABLED");
     if (!dto?.type) throw new BadRequestException("type requis");
-    const row = await this.prisma.$transaction(async (tx: any) => {
+    const row = await this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.create({ data: {
         tenantId: ctx.tenantId, assigneeId: dto.assignee ?? ctx.userId, type: dto.type, statut: "OUVERTE",
         createdAt: new Date().toISOString(), dueAt: dto.echeance ?? null,
@@ -71,17 +74,13 @@ export class TasksService {
   }
 
   // ── R240 : listage SCOPÉ serveur (soi / équipe / tout). asOf = rejeu (R48). ──
-  async lister(ctx: Ctx, f: { status?: string; assignee?: string; dueBefore?: string; subjectId?: string; asOf?: string }) {
+  async lister(ctx: Ctx, f: { status?: string; assignee?: string; dueBefore?: string; subjectId?: string; asOf?: string } & PageParams) {
     const s = await this.settings(ctx);
     const voitTout: string[] = s.taskVisibiliteRoles ?? ["CO", "CF", "ADMIN"];
     const where: any = { tenantId: ctx.tenantId };
     // Périmètre SERVEUR : null = tout le tenant (voit-tout), sinon l'ensemble autorisé (soi + équipe).
-    let scope: Set<string> | null = null;
-    if (!voitTout.includes(ctx.role)) {
-      const equipes = (s.workloadResponsables ?? []).filter((r: any) => r.responsableRole === ctx.role).map((r: any) => r.equipeRole);
-      scope = new Set<string>([ctx.userId]);
-      if (equipes.length) (await this.prisma.user.findMany({ where: { tenantId: ctx.tenantId, role: { in: equipes } } })).forEach((m: any) => scope!.add(m.id));
-    }
+    // Source unique (A2, common/visibility) — même règle que MOD-43 Formations.
+    const scope = await teamScope(this.prisma, ctx.tenantId, ctx.role, ctx.userId, s, voitTout);
     // Le filtre `assignee` NARROW dans le périmètre — jamais l'élargir (R240) : hors périmètre ⇒ vide.
     if (f.assignee) {
       if (scope && !scope.has(f.assignee)) return [];
@@ -91,7 +90,8 @@ export class TasksService {
     }
     if (f.subjectId) where.subjectId = f.subjectId;
     if (f.dueBefore) where.dueAt = { lte: f.dueBefore };
-    let rows = await this.prisma.task.findMany({ where, orderBy: { createdAt: "desc" } });
+    const take = applyKeyset(where, f);                                       // A4 : défaut borné + curseur keyset
+    let rows = await this.prisma.task.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
     if (f.asOf) rows = rows.filter((k: any) => k.createdAt <= f.asOf!);       // R48 : n'existe pas avant sa création
     let out = rows.map((k: any) => this.dto(k, f.asOf));
     if (f.status) out = out.filter((t: any) => t.statut === f.status);
@@ -100,7 +100,7 @@ export class TasksService {
 
   // ── R241 : complétion ÉVÉNEMENTIELLE immuable + habilitée. ──
   async completer(ctx: Ctx, id: string, dto: { comment?: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const k = await tx.task.findFirst({ where: { id, tenantId: ctx.tenantId } });
       if (!k) throw new NotFoundException("Tâche introuvable");
       if (k.statut === "FAITE") throw new ConflictException("TASK_ALREADY_COMPLETED");
@@ -126,7 +126,7 @@ export class TasksService {
   async mesurerSla(ctx: Ctx, now: string) {
     const rows = await this.prisma.task.findMany({ where: { tenantId: ctx.tenantId, statut: { not: "FAITE" } } });
     const enRetard = rows.filter((k: any) => k.dueAt && k.dueAt < now);
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       for (const k of enRetard) await this.emit(tx, ctx.tenantId, "task.sla.retard", k.id, { dueAt: k.dueAt, assignee: k.assigneeId });
     });
     return { enRetard: enRetard.length, bloque: false };                     // R39 : signal, jamais coercition
@@ -136,8 +136,8 @@ export class TasksService {
 @Controller("tasks")
 export class TasksController {
   constructor(private svc: TasksService) {}
-  @Get()               lister(@Req() r: any, @Query("status") status?: string, @Query("assignee") assignee?: string, @Query("dueBefore") dueBefore?: string, @Query("subjectId") subjectId?: string, @Query("asOf") asOf?: string) {
-    return this.svc.lister(r.ctx, { status, assignee, dueBefore, subjectId, asOf }); }               // R240
+  @Get()               lister(@Req() r: any, @Query("status") status?: string, @Query("assignee") assignee?: string, @Query("dueBefore") dueBefore?: string, @Query("subjectId") subjectId?: string, @Query("asOf") asOf?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.svc.lister(r.ctx, { status, assignee, dueBefore, subjectId, asOf, limit, cursor }); }   // R240
   @Post()              creer(@Req() r: any, @Body() b: any) { return this.svc.creerManuel(r.ctx, b); }                 // R239 (gated)
   @Post("from-event")  fromEvent(@Req() r: any, @Body() b: any) { return this.svc.creerDepuisEvenement(r.ctx, b); }    // R239 : surface de consommation d'événement
   @Post(":id/complete") completer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.completer(r.ctx, id, b); } // R241
@@ -149,9 +149,7 @@ export class TasksController {
   imports: [WorkloadModule],
   controllers: [TasksController],
   providers: [
-    PrismaService, AuditService,
-    { provide: TasksService, useFactory: (p: PrismaService, a: AuditService, w: WorkloadService) => new TasksService(p, a, w), inject: [PrismaService, AuditService, WorkloadService] },
-  ],
+    { provide: TasksService, useFactory: (p: PrismaService, a: AuditService, w: WorkloadService) => new TasksService(p, a, w), inject: [PrismaService, AuditService, WorkloadService] }],
   exports: [TasksService],                 // R245/NB-05 : le service NBA fera naître des tâches d'un événement décidé
 })
 export class TasksModule {}

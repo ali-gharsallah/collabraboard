@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * Le workflow est un paramètre gouverné — R171→R173 (WF-01..05). Écrit APRÈS l'amendement,
@@ -23,7 +24,7 @@ export class WorkflowDefService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async roles(tx: any, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

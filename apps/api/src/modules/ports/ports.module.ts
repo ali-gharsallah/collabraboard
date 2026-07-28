@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Req, Module, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
+import { loadSettings } from "../../common/tenant-settings";
 
 /**
  * Porte HTTP « Ports » (SPEC-FRONT-CÂBLAGE v2, FE-PORT) — projection LISIBLE, en lecture seule,
@@ -38,9 +39,7 @@ export class PortsService {
   constructor(private prisma: PrismaService) {}
 
   private async settings(ctx: Ctx) {
-    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+    return loadSettings(this.prisma, ctx.tenantId, true);
   }
 
   // Registre des ports : [{ portId, label, status, regle, lastCheckAt }] — lecture pure.
@@ -77,9 +76,7 @@ export class PortsController {
 @Module({
   controllers: [PortsController],
   providers: [
-    PrismaService,
-    { provide: PortsService, useFactory: (p: PrismaService) => new PortsService(p), inject: [PrismaService] },
-  ],
+    { provide: PortsService, useFactory: (p: PrismaService) => new PortsService(p), inject: [PrismaService] }],
   exports: [PortsService],
 })
 export class PortsModule {}

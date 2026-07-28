@@ -1,6 +1,10 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { applyKeyset, PageParams } from "../../common/pagination";
+import { emitEvent } from "../../common/domain-event";
+import { loadSettings } from "../../common/tenant-settings";
+import { Tx } from "../../common/tx";
 
 /**
  * MOD-75 Business Trip (R222→R230, lot 51). Écrit spec-first depuis le Gherkin BT-01..10, sur
@@ -19,13 +23,11 @@ type RefEntry = { jurisdiction: string; activite: string; verdict: string; depui
 export class BusinessTripService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async settings(tx: any, ctx: Ctx) {
-    const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
-    if (!t) throw new NotFoundException("Tenant introuvable");
-    return (t.settings as any) ?? {};
+  private async settings(tx: Tx, ctx: Ctx) {
+    return loadSettings(tx, ctx.tenantId, true);
   }
 
   // ── R223/R229 : avis cross-border avec la version du référentiel en vigueur à `atDate` ──
@@ -49,22 +51,34 @@ export class BusinessTripService {
   }
 
   // Calcule avis + signaux + visas et passe le voyage en PENDING_APPROVAL (R223/R224/R228/R225).
-  private async instruire(tx: any, ctx: Ctx, trip: any) {
+  private async instruire(tx: Tx, ctx: Ctx, trip: any) {
     const s = await this.settings(tx, ctx);
     const destinations: string[] = trip.destinations ?? [];
     const clients: string[] = trip.clients ?? [];
     const advisories = this.avisA(s.tripCrossBorderReferentiel ?? [], destinations, new Date().toISOString().slice(0, 10));
     const signals: any[] = [];
-    // R224 : KYC des clients visités
+    // R224 : KYC des clients visités — un seul findMany batché (au lieu d'un findFirst par client, N+1).
+    const kycRows = clients.length
+      ? await tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, clientId: { in: clients } }, orderBy: { createdAt: "desc" } })
+      : [];
+    const kycLatest = new Map<string, any>();
+    for (const k of kycRows) if (!kycLatest.has(k.clientId)) kycLatest.set(k.clientId, k);   // desc ⇒ le premier vu = le plus récent
     for (const clientId of clients) {
-      const kyc = await tx.kycFile.findFirst({ where: { tenantId: ctx.tenantId, clientId }, orderBy: { createdAt: "desc" } });
+      const kyc = kycLatest.get(clientId);
       if (!kyc || kyc.status !== "VALIDATED")
         signals.push({ type: "KYC_NOT_APPROVED", severite: s.tripKycCheckSeverity ?? "INFORMATIF", detail: `client ${clientId} : KYC ${kyc?.status ?? "ABSENT"}` });
     }
-    // R228/R237 : certification requise, résolue depuis MOD-43 à la DATE DU VOYAGE
-    for (const req of (s.tripCertificationRequise ?? []) as { jurisdiction: string; code: string }[]) {
-      if (!destinations.includes(req.jurisdiction)) continue;
-      const certs = await tx.certification.findMany({ where: { tenantId: ctx.tenantId, userId: trip.travelerId, code: req.code } });
+    // R228/R237 : certification requise, résolue depuis MOD-43 à la DATE DU VOYAGE.
+    const reqsApplicables = ((s.tripCertificationRequise ?? []) as { jurisdiction: string; code: string }[])
+      .filter((req) => destinations.includes(req.jurisdiction));
+    const codes = [...new Set(reqsApplicables.map((r) => r.code))];
+    const certRows = codes.length
+      ? await tx.certification.findMany({ where: { tenantId: ctx.tenantId, userId: trip.travelerId, code: { in: codes } } })
+      : [];
+    const certsParCode = new Map<string, any[]>();
+    for (const c of certRows) (certsParCode.get(c.code) ?? certsParCode.set(c.code, []).get(c.code))!.push(c);
+    for (const req of reqsApplicables) {
+      const certs = certsParCode.get(req.code) ?? [];
       const couvre = certs.some((c: any) => c.obtenueLe <= trip.dateStart && c.expireLe > trip.dateStart);
       if (!couvre)
         signals.push({ type: "CERTIFICATION_EXPIRED_AT_TRIP_DATE", severite: s.tripCertificationCheckSeverity ?? "INFORMATIF", detail: `${req.code} requise en ${req.jurisdiction}, non couverte au ${trip.dateStart}` });
@@ -80,7 +94,7 @@ export class BusinessTripService {
 
   // ── R222 : soumission (DRAFT → PENDING_APPROVAL), acte tracé ──
   async soumettre(ctx: Ctx, tripId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "DRAFT") throw new BadRequestException("R222 : seul un DRAFT se soumet");
@@ -93,7 +107,7 @@ export class BusinessTripService {
   // ── R225/R13/R224 : viser (approbation) ──
   async viser(ctx: Ctx, tripId: string, role: string) {
     if (!role) throw new BadRequestException("role requis");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "PENDING_APPROVAL") throw new BadRequestException("Le voyage n'est pas en attente d'approbation");
@@ -115,7 +129,7 @@ export class BusinessTripService {
 
   // ── R230 : révision chaînée après approbation (V2 en PENDING_APPROVAL, V1 intacte) ──
   async reviser(ctx: Ctx, tripId: string, dto: { destinations?: string[]; clients?: string[] }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       if (trip.status !== "APPROVED") throw new BadRequestException("R230 : la révision suit une approbation");
@@ -133,7 +147,7 @@ export class BusinessTripService {
 
   // ── R226/R39 : mesurer les contact reports manquants (jamais de blocage) ──
   async mesurerContactReports(ctx: Ctx, tripId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
       const manquants: string[] = [];
@@ -142,7 +156,7 @@ export class BusinessTripService {
         if (n === 0) manquants.push(clientId);
       }
       if (manquants.length) await this.emit(tx, ctx.tenantId, "trip.contactreports.manquants", tripId, { manquants });
-      return { visites: (trip.clients ?? []).length, manquants, bloque: false };        // R39 : signal, pas coercition
+      return { visites: ((trip.clients ?? []) as string[]).length, manquants, bloque: false };  // R39 : signal, pas coercition
     });
   }
 
@@ -159,10 +173,11 @@ export class BusinessTripService {
     return { ...trip, visas };
   }
 
-  async lister(ctx: Ctx, filtre: { status?: string }) {
+  async lister(ctx: Ctx, filtre: { status?: string } & PageParams) {
     const where: any = { tenantId: ctx.tenantId };
     if (filtre.status) where.status = filtre.status;
-    return this.prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
+    const take = applyKeyset(where, filtre);                                       // A4 : défaut borné + curseur keyset
+    return this.prisma.trip.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
   }
 }
 
@@ -170,7 +185,7 @@ export class BusinessTripService {
 export class BusinessTripController {
   constructor(private svc: BusinessTripService) {}
   @Post()                    creer(@Req() r: any, @Body() b: any) { return this.svc.creer(r.ctx, b); }                                  // R222
-  @Get()                     lister(@Req() r: any, @Query("status") status?: string) { return this.svc.lister(r.ctx, { status }); }
+  @Get()                     lister(@Req() r: any, @Query("status") status?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) { return this.svc.lister(r.ctx, { status, limit, cursor }); }
   @Get(":id")                get(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.get(r.ctx, id, asOf); } // R229
   @Post(":id/submit")        soumettre(@Req() r: any, @Param("id") id: string) { return this.svc.soumettre(r.ctx, id); }                 // R222
   @Post(":id/visa")          viser(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.viser(r.ctx, id, b?.role); } // R225/R13
@@ -181,9 +196,7 @@ export class BusinessTripController {
 @Module({
   controllers: [BusinessTripController],
   providers: [
-    PrismaService, AuditService,
-    { provide: BusinessTripService, useFactory: (p: PrismaService, a: AuditService) => new BusinessTripService(p, a), inject: [PrismaService, AuditService] },
-  ],
+    { provide: BusinessTripService, useFactory: (p: PrismaService, a: AuditService) => new BusinessTripService(p, a), inject: [PrismaService, AuditService] }],
   exports: [BusinessTripService],
 })
 export class BusinessTripModule {}

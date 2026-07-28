@@ -21,8 +21,6 @@ export class PreRevueController {
 @Module({
   controllers: [PreRevueController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: PreRevueService,
       // Lot 45 (arbitrage Ali, option 1) : l'adaptateur ratifié JETTE sans ANTHROPIC_API_KEY
@@ -32,8 +30,7 @@ export class PreRevueController {
       useFactory: (p: PrismaService, a: AuditService) =>
         new PreRevueService(p, a, { ia: process.env.ANTHROPIC_API_KEY ? claudeIaAdapter() : undefined }),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [PreRevueService],
 })
 export class PreRevueModule {}

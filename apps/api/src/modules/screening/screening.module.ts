@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { ScreeningService } from "./screening.service";
 
 /**
@@ -20,5 +18,5 @@ export class ScreeningController {
   @Get("runs")               runs(@Req() r: any) { return this.svc.runs(r.ctx); }                                                     // R103 — preuve de fraîcheur
 }
 
-@Module({ controllers: [ScreeningController], providers: [PrismaService, AuditService, ScreeningService], exports: [ScreeningService] })
+@Module({ controllers: [ScreeningController], providers: [ ScreeningService], exports: [ScreeningService] })
 export class ScreeningModule {}
