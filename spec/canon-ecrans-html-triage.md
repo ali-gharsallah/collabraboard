@@ -2,8 +2,10 @@
 # Command Center (R289 après mapping) · Écrans IAM/SSO (rendu MOD-30) · Mapping Investigation & Olivia/BI
 # Gel confirmé : SWIFT · Legal · BI · Octopulse
 
-**Statut : PROPOSÉ — étape 0 EXÉCUTÉE (2026-07-28), STOP en cours : ratification des
-mappings et arbitrages ci-dessous par Ali.**
+**Statut : RATIFIÉ le 2026-07-28 (Ali) — Command Center = R289 · v1 = 7 tuiles vérifiées
+(« Charge compliance » retirée, dead-letters DIR consignés comme extensions à ratifier) ·
+volet IAM = paramnav + iamguide (ssoparam DIFFÉRÉ jusqu'à ratification de l'extension
+MOD-30) · livrable : branche unique PR #46, séquences de commits distinctes.**
 
 ## VERDICT ÉTAPE 0 (exécutée sur le repo réel)
 

@@ -834,3 +834,75 @@ describe("FE-AUD — écran Audit & transport (application R284/R286, aucun cano
     expect(await screen.findByTestId("msg-audit")).toHaveTextContent(/12 événements/);
   });
 });
+
+describe("FE-DC — R289 : Command Center, la projection Direction (DC-01..05)", () => {
+  const licence = () => http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null }));
+  const sourcesOk = () => [licence(),
+    http.get("*/v1/onboarding", () => HttpResponse.json([{ id: "o1", etape: "COLLECTE" }, { id: "o2", etape: "DECISION" }])),
+    http.get("*/v1/cpsi/segmentation", () => HttpResponse.json({ bandes: { LOW: 5, HIGH: 2 } })),
+    http.get("*/v1/cpsi/volumetrie", () => HttpResponse.json({ franchissements: [] })),
+    http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [{ client: "c1", severite: 3 }] })),
+    http.get("*/v1/cpsi/case-proposals", () => HttpResponse.json([])),
+    http.get("*/v1/riskcases", () => HttpResponse.json([{ id: "rc1", statut: "EN_ANALYSE", etatDepuis: "2026-07-01T00:00:00Z" }])),
+    http.get("*/v1/reviews/deadlines", () => HttpResponse.json([
+      { id: "d1", enRetard: true, dueDate: "2026-07-01", clientId: "c1" }, { id: "d2", enRetard: false, dueDate: "2026-09-01", clientId: "c2" }])),
+    http.get("*/v1/coc/reporting", () => HttpResponse.json({ parMaterialite: { HAUTE: { n: 1, delaiMoyenJours: 3 } }, slaJours: { HAUTE: 10 } })),
+    http.get("*/v1/cpsi/reporting/sla", () => HttpResponse.json({ maillons: [] })),
+    http.get("*/v1/offboarding", () => HttpResponse.json([{ id: "of1", statut: "EN_CLOTURE" }])),
+    http.get("*/v1/cpsi/health", () => HttpResponse.json({ dernierRejeuMs: 120, evenements: 42 })),
+    http.get("*/v1/olivia/runs/agregat", () => HttpResponse.json({ runsParJour: 2, tauxAdoption: 0.5 })),
+    http.get("*/v1/olivia/proposals", () => HttpResponse.json([{ id: "p1", statut: "PENDING", type: "NOTE" }])),
+    http.get("*/v1/parametres/valeur/command_seuils", () => HttpResponse.json({})),
+  ];
+
+  it("DC-01 : Direction-only — un CO n'obtient RIEN (refus rendu), la Direction voit le tenant entier ; DC-05 : aucune requête non-GET sur la session", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    (w as any).OLIVE_SESSION = { role: "CO" };
+    const { CommandCenter } = await import("./command/CommandCenter");
+    const { unmount } = render(<CommandCenter/>);
+    expect(screen.getByText(/réservé à la Direction/i)).toBeInTheDocument();   // DC-01 : refus RENDU côté écran
+    unmount();
+    (w as any).OLIVE_SESSION = { role: "DIR" };
+    server.use(...sourcesOk());                                                // DC-05 : SEULS des handlers GET existent —
+    render(<CommandCenter/>);                                                  // la moindre écriture ferait échouer MSW
+    expect(await screen.findByText(/Pipeline onboarding/)).toBeInTheDocument();
+    expect(await screen.findByText(/SLA réglementaires/)).toBeInTheDocument();
+    (w as any).OLIVE_SESSION = undefined;
+  });
+
+  it("DC-02 : chaque chiffre a sa PREUVE — la tuile SLA affiche le compte servi et le clic oriente vers l'écran opérationnel", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    (w as any).OLIVE_SESSION = { role: "DIR" };
+    server.use(...sourcesOk());
+    const { CommandCenter } = await import("./command/CommandCenter");
+    const cibles: string[] = [];
+    render(<CommandCenter onNaviguer={(ecran) => cibles.push(ecran)}/>);
+    expect(await screen.findByRole("button", { name: /reviews EN_RETARD : 1/ })).toBeInTheDocument(); // le compte SERVI (1 sur 2)
+    fireEvent.click(screen.getByRole("button", { name: /reviews EN_RETARD/ }));
+    expect(cibles).toContain("review");                                           // le drill ORIENTE — il n'agit pas
+    (w as any).OLIVE_SESSION = undefined;
+  });
+
+  it("DC-03 : le seuil COLORE (command_seuils) — jamais ne bloque ; DC-04 : panne ≠ zéro, module inactif = tuile absente", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    (w as any).OLIVE_SESSION = { role: "DIR" };
+    const handlers = sourcesOk().filter((h: any) => { const p = String(h.info?.path ?? ""); return !p.includes("riskcases") && !p.includes("command_seuils"); });
+    server.use(...handlers,
+      http.get("*/v1/parametres/valeur/command_seuils", () => HttpResponse.json({ sla_en_retard: 1 })), // seuil atteint (1 ≥ 1)
+      http.get("*/v1/riskcases", () => HttpResponse.json(null, { status: 500 })));                      // source EN PANNE
+    const { CommandCenter } = await import("./command/CommandCenter");
+    render(<CommandCenter/>);
+    const tuileSla = await screen.findByTestId("tuile-sla");
+    expect(tuileSla.getAttribute("data-alerte")).toBe("rouge");                   // DC-03 : coloré, rien de bloqué
+    expect((await screen.findAllByText(/indisponible/i)).length).toBeGreaterThan(0); // DC-04 : panne ≠ zéro
+    // Module CPSI INACTIF → tuile Risque ABSENTE du DOM (LC-01)
+    cleanup();
+    server.resetHandlers();
+    server.use(...sourcesOk().filter((h: any) => !String(h.info?.path ?? "").includes("modules")),
+      http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: true, modules: [{ code: "kyc" }] })));
+    render(<CommandCenter/>);
+    await screen.findByText(/Pipeline onboarding/);
+    expect(screen.queryByText(/^Risque$/)).toBeNull();
+    (w as any).OLIVE_SESSION = undefined;
+  });
+});

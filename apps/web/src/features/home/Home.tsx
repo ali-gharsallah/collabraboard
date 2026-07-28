@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { ouvrirFlux } from "../../lib/flux";
+import { Tuile } from "../../components/Tuile";   // patron partagé Home/Command Center (R289)
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { tokens } from "../../theme/tokens";
 
@@ -17,30 +18,6 @@ import { tokens } from "../../theme/tokens";
 type Session = { role?: string };
 const role = (): string => ((window as unknown as { OLIVE_SESSION?: Session }).OLIVE_SESSION?.role) ?? "CO";
 
-// Une tuile = une source, un état indépendant (chargement / indisponible / vide / données).
-function Tuile<T>({ titre, path, seed, rendre, clic, fluxVersion }: {
-  titre: string; path: string; seed: T; rendre: (data: T) => React.ReactNode; clic?: string; fluxVersion?: number;
-}) {
-  const [etat, setEtat] = useState<{ data: T | null; indisponible: boolean; charge: boolean }>({ data: null, indisponible: false, charge: false });
-  const charger = useCallback(async () => {
-    setEtat({ data: null, indisponible: false, charge: false });
-    const r = await apiGetSourced<T>(path, seed);
-    // API configurée mais appel retombé sur le seed ⇒ la SOURCE est indisponible (HO-04 : pas un zéro).
-    if (!isDemoMode() && r.isDemo) setEtat({ data: null, indisponible: true, charge: true });
-    else setEtat({ data: r.data, indisponible: false, charge: true });
-  }, [path]);
-  useEffect(() => { charger(); }, [charger, fluxVersion]);        // R287 : une référence du flux ⇒ la tuile REFETCHE sa source
-  return <div data-tuile={titre} style={{ flex: "1 1 240px", padding: 12, borderRadius: tokens.radius.lg,
-    background: tokens.color.surface, border: `1px solid ${tokens.color.border}`, minHeight: 90 }}>
-    <div style={{ fontWeight: 700, fontSize: 13, color: tokens.color.olive700 }}>{titre}</div>
-    {!etat.charge && <div style={{ marginTop: 8, height: 18, borderRadius: 4, background: "#eee" }}/>}
-    {etat.charge && etat.indisponible && <div style={{ marginTop: 8, fontSize: 12, color: tokens.color.danger }}>
-      indisponible <button onClick={charger} style={{ marginLeft: 6, fontSize: 11, padding: "2px 8px", borderRadius: 4,
-        border: `1px solid ${tokens.color.border}`, background: "#fff", cursor: "pointer" }}>réessayer</button></div>}
-    {etat.charge && !etat.indisponible && <div style={{ marginTop: 6, fontSize: 12 }}>{rendre(etat.data as T)}</div>}
-    {clic && <div style={{ marginTop: 6, fontSize: 11, color: tokens.color.muted }}>→ {clic}</div>}
-  </div>;
-}
 
 const n = (x: unknown[]) => x.length ? <strong style={{ fontSize: 20 }}>{x.length}</strong> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
 

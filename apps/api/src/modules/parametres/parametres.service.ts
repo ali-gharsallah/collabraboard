@@ -198,6 +198,10 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Command Center — R289 (canon triage écrans HTML, ratifié 2026-07-28). ──
+  { cle: "command_seuils", type: "json", defaut: {}, regle: "R289", requis: false,
+    exemple: { sla_en_retard: 5 },
+    description: "Seuils d'attention du Command Center, par indicateur : atteint = la tuile se COLORE (ambre/rouge) — jamais un blocage (R39). Les notifications restent celles des modules ratifiés." },
   // ── Barèmes de scoring KYC — R288 (ratifié 2026-07-28). ──
   { cle: "kycScoringBareme", type: "json", defaut: [], regle: "R288", requis: false,
     exemple: [{ depuisLe: "2026-08-01", structurePts: { PP: 0, HOLDING: 35 }, accountPts: { CURRENT: 0, ADVISORY: 5 },
