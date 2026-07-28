@@ -2,7 +2,7 @@
 # R290 : extension MOD-30 → `ssoparam` débloqué (IM-01/03/04) · R291 : compléments
 # Command Center (DC-06/07 — charge compliance + dead-letters Direction)
 
-**Statut : PROPOSÉ — en attente de ratification par Ali Gharsallah.**
+**Statut : RATIFIÉ le 2026-07-28 (Ali — « tel quel » ×2) — LIVRÉ le jour même (IM-01/03/04, DC-06/07 verts).**
 
 ## VERDICT ÉTAPE 0 (exécutée sur le repo réel, 2026-07-28)
 

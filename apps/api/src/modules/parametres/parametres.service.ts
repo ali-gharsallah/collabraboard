@@ -198,6 +198,14 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Extension MOD-30 / SSO — R290 (ratifié 2026-07-28). ──
+  { cle: "ssoOidc", type: "json", defaut: null, regle: "R290", requis: false,
+    exemple: { issuer: "https://login.banque.ch/realms/olive", audience: "olive-app", roleMapping: { "grp-co": "CO" }, defaultRole: "RM" },
+    description: "Config OIDC DÉCLARÉE du tenant (issuer, audience, mapping claims→rôles) — JAMAIS de secret ici : le client_secret vit au coffre/env, l'état ne dit que « configuré/absent » (IM-01)." },
+  { cle: "sso_mode", type: "string", defaut: "jwt", regle: "R290", requis: false,
+    description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
+  { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
+    description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
   // ── Command Center — R289 (canon triage écrans HTML, ratifié 2026-07-28). ──
   { cle: "command_seuils", type: "json", defaut: {}, regle: "R289", requis: false,
     exemple: { sla_en_retard: 5 },

@@ -1,7 +1,10 @@
-import { Global, Module, Controller, Post, Get, Body, Param, Req, BadRequestException, UseGuards } from "@nestjs/common";
+import { Global, Module, Controller, Post, Get, Body, Param, Req, BadRequestException, UseGuards, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuthService } from "./auth.service";
 import { UsersService } from "./users.service";
+import { AuditService } from "../../common/audit.service";
+import { ParametresModule } from "../parametres/parametres.module";   // R290 : sso_mode s'écrit PAR le registre
+import { ParametresService } from "../parametres/parametres.service";
 import { MfaService } from "./mfa.service";
 import { OidcService, OidcConfig } from "./oidc.service";
 import { KeyStore } from "./key-store";
@@ -46,6 +49,102 @@ class UsersController {
   @Post(":id/active")  active(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.users.setActive(r.ctx.tenantId, id, !!b?.active); }
   @Post(":id/role")    role(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.users.setRole(r.ctx.tenantId, id, b?.role, r.ctx.userId); }
   @Post(":id/reset-mfa") resetMfa(@Req() r: any, @Param("id") id: string) { return this.users.resetMfa(r.ctx.tenantId, id); }
+}
+
+// ═══ R290 (extension MOD-30, ratifiée 2026-07-28) — la porte d'entrée de la banque se PILOTE,
+// tracée. Config OIDC DÉCLARÉE = clé R-Q `ssoOidc` (JAMAIS de secret — IM-01) ; test de
+// connexion = DRY-RUN tracé (IM-03) ; rotation JWKS = COMMANDE motivée sur le trousseau
+// existant (KeyStore.rotate, grâce structurelle) ; bascule de mode = DEUX REGARDS (R13,
+// l'initiateur ne vise pas) à DATE D'EFFET — écrite PAR le registre (sso_mode, R68/R126),
+// sessions du jour grandfathérées (IM-04). Écart consigné : le login OIDC effectif lit
+// encore l'environnement (résolution per-tenant au login = extension future signalée).
+@Controller("admin/sso")
+@UseGuards(RolesGuard) @Roles("ADMIN")
+class SsoController {
+  constructor(private readonly prisma: PrismaService, private readonly keys: KeyStore,
+    private readonly parametres: ParametresService, private readonly audit: AuditService) {}
+
+  private async reglages(tenantId: string) {
+    const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
+    return ((t?.settings as any) ?? {});
+  }
+  private emit(tenantId: string, type: string, payload: any) {
+    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId: "sso",
+      payload, at: new Date().toISOString() } });
+  }
+
+  @Get("etat")
+  async etat(@Req() r: any) {
+    const s = await this.reglages(r.ctx.tenantId);
+    const declare = s.ssoOidc ?? { issuer: process.env.OIDC_ISSUER || null, audience: process.env.OIDC_AUDIENCE || null };
+    const derniere = await this.prisma.domainEvent.findFirst({
+      where: { tenantId: r.ctx.tenantId, type: "sso.jwks.rotation" }, orderBy: { id: "desc" } });
+    return {
+      oidc: { issuer: declare.issuer ?? null, audience: declare.audience ?? null,
+        roleMapping: declare.roleMapping ?? null,
+        secretConfigure: !!process.env.OIDC_CLIENT_SECRET },               // IM-01 : le FAIT, jamais la valeur
+      jwks: { kidCourant: this.keys.signingKey().kid, derniereRotation: derniere?.at ?? null },
+      mode: s.sso_mode ?? "jwt",
+      basculeEnAttente: s.ssoBasculeEnAttente ?? null,
+    };
+  }
+
+  // IM-03 : dry-run TRACÉ — valide la forme de la config déclarée + le trousseau, ne change RIEN.
+  @Post("test")
+  async test(@Req() r: any) {
+    const s = await this.reglages(r.ctx.tenantId);
+    const cfg = s.ssoOidc ?? { issuer: process.env.OIDC_ISSUER, audience: process.env.OIDC_AUDIENCE };
+    const manques: string[] = [];
+    if (!cfg?.issuer || !/^https:\/\//.test(String(cfg.issuer))) manques.push("issuer (https requis)");
+    if (!cfg?.audience) manques.push("audience");
+    if (!process.env.OIDC_CLIENT_SECRET) manques.push("client_secret (coffre/env)");
+    const resultat = manques.length ? `INCOMPLET : ${manques.join(", ")}` : "OK — config déclarée cohérente, trousseau actif";
+    await this.emit(r.ctx.tenantId, "sso.test", { par: r.ctx.userId, resultat, at: new Date().toISOString() });
+    await this.audit.log(r.ctx.tenantId, r.ctx.userId, "SSO_TEST", resultat);
+    return { resultat };
+  }
+
+  @Post("jwks/rotation")
+  async rotation(@Req() r: any, @Body() b: any) {
+    if (!b?.motif?.trim()) throw new BadRequestException("R7 : tourner la clé de la banque exige un motif");
+    const kidAvant = this.keys.signingKey().kid;
+    const kidApres = this.keys.rotate();                                   // les jetons émis restent vérifiables (grâce)
+    await this.emit(r.ctx.tenantId, "sso.jwks.rotation", { par: r.ctx.userId, kidAvant, kidApres, motif: b.motif.trim() });
+    await this.audit.log(r.ctx.tenantId, r.ctx.userId, "SSO_JWKS_ROTATION", `${kidAvant}->${kidApres}`);
+    return { kidAvant, kidApres };
+  }
+
+  // IM-04 : la bascule est DEMANDÉE par un premier regard…
+  @Post("mode")
+  async demanderBascule(@Req() r: any, @Body() b: any) {
+    if (!["jwt", "sso"].includes(b?.vers)) throw new BadRequestException("vers requis : jwt | sso");
+    if (!b?.motif?.trim()) throw new BadRequestException("R7 : basculer le mode d'authentification exige un motif");
+    const t = await this.prisma.tenant.findFirst({ where: { id: r.ctx.tenantId } });
+    const demande = { vers: b.vers, effetAt: b.effetAt ?? new Date().toISOString(),
+      motif: b.motif.trim(), par: r.ctx.userId, at: new Date().toISOString() };
+    await this.prisma.tenant.update({ where: { id: t!.id },
+      data: { settings: { ...((t!.settings as any) ?? {}), ssoBasculeEnAttente: demande } } });
+    await this.emit(r.ctx.tenantId, "sso.mode.bascule_demandee", demande);
+    return { enAttenteDeVisa: true, ...demande };
+  }
+
+  // …et VISÉE par un second (R13) — l'écriture passe PAR le registre : versionnée à date (R68/R126).
+  @Post("mode/visa")
+  async viserBascule(@Req() r: any) {
+    const t = await this.prisma.tenant.findFirst({ where: { id: r.ctx.tenantId } });
+    const d = ((t?.settings as any) ?? {}).ssoBasculeEnAttente;
+    if (!d) throw new NotFoundException("Aucune bascule de mode en attente");
+    if (d.par === r.ctx.userId)
+      throw new ForbiddenException("R13 : la bascule de mode exige un SECOND regard — l'initiateur ne vise pas");
+    await this.parametres.ecrire(r.ctx, "sso_mode", d.vers,
+      `bascule visée (demandée par ${d.par}) : ${d.motif}`, d.effetAt);
+    const { ssoBasculeEnAttente: _b, ...reste } = (t!.settings as any) ?? {};
+    await this.prisma.tenant.update({ where: { id: t!.id }, data: { settings: reste } });
+    await this.emit(r.ctx.tenantId, "sso.mode.bascule_visee",
+      { vers: d.vers, effetAt: d.effetAt, demandePar: d.par, visePar: r.ctx.userId });
+    await this.audit.log(r.ctx.tenantId, r.ctx.userId, "SSO_MODE_BASCULE", `${d.vers}@${d.effetAt}`);
+    return { vers: d.vers, effetAt: d.effetAt };
+  }
 }
 
 // ── IM-05 (canon triage écrans, ratifié 2026-07-28) : le guide IAM — route LECTURE SEULE
@@ -97,7 +196,8 @@ function oidcConfigFromEnv(): OidcConfig {
 
 @Global()
 @Module({
-  controllers: [AuthController, JwksController, MfaController, UsersController, IamGuideController],
+  imports: [ParametresModule],   // R290
+  controllers: [AuthController, JwksController, MfaController, UsersController, IamGuideController, SsoController],
   providers: [
     AuthService, UsersService, MfaService, RolesGuard,
     // MfaService dépend de SecretBox (metadata décorateur → DI, la valeur par défaut du
