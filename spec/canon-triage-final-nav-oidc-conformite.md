@@ -1,7 +1,7 @@
 # O-Live — Canon : TRIAGE FINAL DE LA NAV · OIDC PER-TENANT AU LOGIN · PASSE DE CONFORMITÉ VISUELLE
 
-**Statut : PROPOSÉ — étape 0 EXÉCUTÉE (2026-07-28), STOP en cours : ratification des
-mappings et verdicts ci-dessous par Ali.**
+**Statut : RATIFIÉ le 2026-07-28 (Ali) — mapping R292..R296 + DC-08/09 + SO-07/08 ratifié ·
+les 3 verdicts 0b ratifiés · livraison : les 6 séquences tel quel, branche unique PR #46.**
 
 ## VERDICT ÉTAPE 0 (exécutée sur le repo réel)
 

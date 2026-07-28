@@ -963,3 +963,57 @@ describe("FE-SSO — R290 : ssoparam rend l'état servi, jamais un secret (IM-01
     expect(teste).toBe(true);
   });
 });
+
+describe("FE-DC2 — R292 : le patron de projection se généralise (DC-08/09)", () => {
+  const sourcesCC = () => [
+    http.get("*/v1/modules/actifs", () => HttpResponse.json({ enforcement: false, modules: null })),
+    http.get("*/v1/parametres/valeur/command_seuils", () => HttpResponse.json({})),
+    http.get("*/v1/aml/referentiel", () => HttpResponse.json({ scenarios: [{ code: "R189" }, { code: "R190" }] })),
+    http.get("*/v1/cpsi/volumetrie", () => HttpResponse.json({ franchissements: [] })),
+    http.get("*/v1/olivia/proposals", () => HttpResponse.json([{ id: "p1", statut: "PENDING" }])),
+    http.get("*/v1/cpsi/params/proposals", () => HttpResponse.json([])),
+    http.get("*/v1/mros", () => HttpResponse.json([{ id: "m1", decision: "COMMUNIQUER" }])),
+    http.get("*/v1/cpsi/reporting/sla", () => HttpResponse.json({ maillons: [] })),
+    http.get("*/v1/reviews/deadlines", () => HttpResponse.json([{ id: "d1", enRetard: true }])),
+    http.get("*/v1/coc/reporting", () => HttpResponse.json({ parMaterialite: { HAUTE: { n: 2 } } })),
+  ];
+
+  it("DC-08 : le Compliance Center est le Command Center du CO — accès CO ; RM refusé rendu ; tuiles servies ; AUCUN non-GET", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    (w as any).OLIVE_SESSION = { role: "RM" };
+    const { ComplianceCenter } = await import("./command/ComplianceCenter");
+    const { unmount } = render(<ComplianceCenter/>);
+    expect(screen.getByText(/réservé à la Compliance/i)).toBeInTheDocument();     // refus RENDU (DC-01 re-passé rôle CO)
+    unmount();
+    (w as any).OLIVE_SESSION = { role: "CO" };
+    server.use(...sourcesCC());                                                    // SEULS des GET — DC-05 re-passé
+    render(<ComplianceCenter/>);
+    expect(await screen.findByText(/Règles AML/)).toBeInTheDocument();
+    expect(await screen.findByText(/scénarios actifs/)).toBeInTheDocument();
+    expect(screen.getByText(/l'acte vit là/)).toBeInTheDocument();                 // MROS : la liste — l'ACTE vit dans l'écran MROS
+    (w as any).OLIVE_SESSION = undefined;
+  });
+
+  it("DC-09 : UN SEUL patron de code — Command Center et Compliance Center rendent le MÊME composant Projection (vérifié à l'import)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...sourcesCC());
+    (w as any).OLIVE_SESSION = { role: "CO" };
+    const { ComplianceCenter } = await import("./command/ComplianceCenter");
+    render(<ComplianceCenter/>);
+    expect(await screen.findByTestId("projection-pilotage")).toBeInTheDocument();  // le patron R292
+    cleanup();
+    server.resetHandlers();
+    (w as any).OLIVE_SESSION = { role: "DIR" };
+    server.use(...sourcesCC(),
+      http.get("*/v1/onboarding", () => HttpResponse.json([])), http.get("*/v1/cpsi/segmentation", () => HttpResponse.json({ bandes: {} })),
+      http.get("*/v1/cpsi/alerts", () => HttpResponse.json({ alertes: [] })), http.get("*/v1/cpsi/case-proposals", () => HttpResponse.json([])),
+      http.get("*/v1/riskcases", () => HttpResponse.json([])), http.get("*/v1/offboarding", () => HttpResponse.json([])),
+      http.get("*/v1/cpsi/health", () => HttpResponse.json({ dernierRejeuMs: 10 })), http.get("*/v1/olivia/runs/agregat", () => HttpResponse.json({ runsParJour: 0 })),
+      http.get("*/v1/kyc/visas/charge", () => HttpResponse.json({ total: 0, parRole: {}, plusAncien: null })),
+      http.get("*/v1/events/sante", () => HttpResponse.json({ enSouffrance: 0, plusAncien: null, deadLetters: [], consommateurs: [] })));
+    const { CommandCenter } = await import("./command/CommandCenter");
+    render(<CommandCenter/>);
+    expect(await screen.findByTestId("projection-pilotage")).toBeInTheDocument();  // MÊME composant importé
+    (w as any).OLIVE_SESSION = undefined;
+  });
+});

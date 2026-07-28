@@ -1,55 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { apiGetSourced, isDemoMode } from "../../lib/api";
-import { DemoModeBanner } from "../../components/DemoModeBanner";
+import React from "react";
 import { Tuile } from "../../components/Tuile";
+import { Projection } from "./Projection";
 import { tokens } from "../../theme/tokens";
 
 /**
- * COMMAND CENTER — R289 (canon triage écrans HTML, ratifié 2026-07-28). Le poste de pilotage
- * Direction : une PROJECTION, aucun module — même nature que Home (« un patron, deux écrans »,
- * Tuile partagée). AUCUN état propre, AUCUN endpoint de calcul, AUCUN chiffre front : chaque
- * tuile déclare sa source RATIFIÉE et le drill ORIENTE vers l'écran opérationnel — le Command
- * Center n'agit jamais (aucun non-GET, DC-05). R291 (ratifié 2026-07-28) COMPLÈTE l'écran :
- * la tuile « Charge compliance » (agrégat SERVI /v1/kyc/visas/charge, DC-06) et les dead-letters
- * (matrice T9 étendue à DIR en LECTURE, DC-07) rejoignent les 7 tuiles v1. `command_seuils` (R-Q)
- * COLORE ambre/rouge — les notifications restent celles des modules ratifiés (R39, DC-03).
+ * COMMAND CENTER — R289 + R291 (canon triage écrans, ratifiés 2026-07-28) : le poste de
+ * pilotage DIRECTION. Depuis R292, l'écran est une INSTANCE du patron `Projection`
+ * (un patron, N projections de rôle — DC-09) : il ne fait que DÉCLARER ses tuiles.
+ * Sources ratifiées, drill qui ORIENTE, aucun non-GET (DC-05), seuils qui colorent (DC-03).
  */
-
-const role = (): string => ((window as unknown as { OLIVE_SESSION?: { role?: string } }).OLIVE_SESSION?.role) ?? "CO";
-type ModulesActifs = { enforcement: boolean; modules: { code: string }[] | null };
-type Seuils = Record<string, number>;
 
 const n = (x: unknown[]) => x.length ? <strong style={{ fontSize: 18 }}>{x.length}</strong> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
 
 export function CommandCenter({ onNaviguer }: { onNaviguer?: (ecran: string) => void } = {}) {
-  const r = role();
-  const [mods, setMods] = useState<ModulesActifs | null>(null);
-  const [seuils, setSeuils] = useState<Seuils>({});
-  useEffect(() => {
-    if (r !== "DIR") return;
-    apiGetSourced<ModulesActifs>("/v1/modules/actifs", { enforcement: false, modules: null }).then((x) => setMods(x.data));
-    apiGetSourced<Seuils>("/v1/parametres/valeur/command_seuils", {}).then((x) => setSeuils(x.data ?? {}));
-  }, [r]);
-  // DC-01 : Direction-only — le refus est RENDU (les sources appliquent en plus leur périmètre serveur).
-  if (r !== "DIR") return <div><h3>Command Center</h3>
-    <p style={{ fontSize: 13, color: tokens.color.danger }}>Écran réservé à la Direction (DIR — matrice A.3). Votre poste de travail est l&apos;Accueil.</p></div>;
-  if (mods === null) return <div><h3>Command Center</h3><div style={{ height: 18, borderRadius: 4, background: "#eee", maxWidth: 400 }}/></div>;
-  const cpsi = !mods.enforcement || (mods.modules ?? []).some((m) => m.code === "cpsi");
-  const drill = (ecran: string, libelle: string, compte: number) =>
-    <button onClick={() => onNaviguer?.(ecran)} style={{ display: "block", fontSize: 12, background: "none",
-      border: "none", padding: 0, cursor: "pointer", color: tokens.color.olive700, textAlign: "left" }}>
-      {libelle} : <strong>{compte}</strong> →</button>;   // DC-02 : le drill ORIENTE — l'acte vit dans l'écran métier
-
-  const groupe = (titre: string, contenu: React.ReactNode) =>
-    <div style={{ flex: "1 1 300px" }}><h4 style={{ margin: "10px 0 6px", fontSize: 13 }}>{titre}</h4>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{contenu}</div></div>;
-
-  return <div>
-    {isDemoMode() && <DemoModeBanner/>}
-    <h3>Command Center — où en est la banque (projection, lecture seule)</h3>
-    <p style={{ fontSize: 12, color: tokens.color.muted }}>Chaque chiffre vient de sa source ratifiée et se clique vers l&apos;écran qui le justifie.
-      Le Command Center oriente — il n&apos;agit jamais. Une source en panne se dit indisponible, jamais zéro.</p>
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+  return <Projection
+    titre="Command Center — où en est la banque (projection, lecture seule)"
+    description="Chaque chiffre vient de sa source ratifiée et se clique vers l'écran qui le justifie. Le Command Center oriente — il n'agit jamais. Une source en panne se dit indisponible, jamais zéro."
+    rolesAcces={["DIR"]}
+    refusTexte="Écran réservé à la Direction (DIR — matrice A.3). Votre poste de travail est l'Accueil."
+    onNaviguer={onNaviguer}
+    composer={({ cpsi, seuils, drill, groupe }) => <>
       {groupe("Pipeline onboarding", <Tuile titre="Dossiers en cours" path="/v1/onboarding" seed={[] as { etape?: string }[]}
         rendre={(os) => { const parEtape = new Map<string, number>();
           os.forEach((o) => parEtape.set(o.etape ?? "?", (parEtape.get(o.etape ?? "?") ?? 0) + 1));
@@ -75,9 +45,9 @@ export function CommandCenter({ onNaviguer }: { onNaviguer?: (ecran: string) => 
               {drill("dossiers", "dossiers de risque", cs.length)}</div>; }}/></>)}
       {groupe("Charge compliance", <Tuile titre="Visas en attente (par rôle)" path="/v1/kyc/visas/charge"
         seed={{ total: 0, parRole: {} as Record<string, number>, plusAncien: null as string | null }}
-        rendre={(c) => <div>{Object.entries(c.parRole ?? {}).map(([role, n]) => <div key={role}>{role} : <strong>{n as number}</strong></div>)}
+        rendre={(c) => <div>{Object.entries(c.parRole ?? {}).map(([role, x]) => <div key={role}>{role} : <strong>{x as number}</strong></div>)}
           {c.plusAncien && <div style={{ color: tokens.color.muted }}>le plus ancien : {String(c.plusAncien).slice(0, 10)}</div>}
-          {drill("kyc", "dossiers KYC", c.total ?? 0)}</div>}/>)}   {/* R291/DC-06 : agrégat SERVI */}
+          {drill("kyc", "dossiers KYC", c.total ?? 0)}</div>}/>)}
       {groupe("SLA réglementaires", <>
         <Tuile titre="Reviews à échéance" path="/v1/reviews/deadlines" seed={[] as { enRetard?: boolean }[]}
           testId="tuile-sla" alerte={(ds) => { const s = seuils.sla_en_retard;               // DC-03 : command_seuils COLORE —
@@ -109,6 +79,5 @@ export function CommandCenter({ onNaviguer }: { onNaviguer?: (ecran: string) => 
           ps.forEach((p) => parType.set(p.type ?? "?", (parType.get(p.type ?? "?") ?? 0) + 1));
           return <div>{n(ps)}{[...parType.entries()].map(([t, c]) => <div key={t} style={{ color: tokens.color.muted }}>{t} : {c}</div>)}
             {drill("olivia", "propositions", ps.length)}</div>; }}/>)}
-    </div>
-  </div>;
+    </>}/>;
 }
