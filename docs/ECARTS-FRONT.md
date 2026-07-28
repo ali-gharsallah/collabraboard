@@ -736,3 +736,23 @@ partie, pas avant.
   champs MX suit la demande, la quarantaine couvre le reste.
   3 écrans : txrisk, fx, swiftlab (66 onglets) — lignes de grille ajoutées.
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 1).
+
+## SOLDE — DÉGEL VAGUE 2 : CUSTODY & TRANSFER AGENT (2026-07-28, CY-01..06 verts)
+
+- **R301 [canon R298]** : positions custody = PORT (lues, jamais recopiées) ; refus
+  gracieux sans port, fixture TEST (CUSTODY_FAKE_PORT). **R302 [canon R299]** : le registre
+  nominatif = JOURNAL d'événements (souscription/transfert/nantissement/radiation) —
+  l'état à toute date se REJOUE (CY-02) ; correction = contre-passation motivée (R7),
+  l'UPDATE direct du journal lève (trigger) ; visas PAR TYPE (`ta_visas_par_type`),
+  initiateur exclu (R13), un mouvement non visé n'est PAS au registre (CY-06).
+  **R303 [canon R300]** : rapprochement = TOUS les écarts (R269), 3 types, chacun avec sa
+  VOIE ; résolution = événement motivé, le traité sort de la liste mais reste COMPTÉ.
+- **ÉCARTS CONSIGNÉS** : (1) livraison en UN commit pour les 3 règles — le spec-file CY
+  entrelace les surfaces (CY-01 teste port ET registre) ; les règles restent tracées une à
+  une dans les en-têtes de modules ; (2) le rapprochement agrège le registre PAR TITRE
+  (somme des titulaires) — le rapprochement par titulaire exige la position nominative du
+  dépositaire, hors contrat du port v1 (extension à ratifier avec un port réel) ;
+  (3) le NANTISSEMENT grève sans déplacer (quantité nette inchangée) — la projection des
+  gages est une lecture à ajouter à la demande ; (4) tokenisation HORS bloc (canon).
+  Écran custodyta (67e onglet) — ligne de grille ajoutée.
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 2).

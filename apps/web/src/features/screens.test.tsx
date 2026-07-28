@@ -1122,3 +1122,25 @@ describe("FE-SWL — R300 : le labo SWIFT rend l'extraction SERVIE et la quarant
     expect(await screen.findByText(/MT999 hors bibliothèque/)).toBeInTheDocument(); // motif TEL QUEL
   });
 });
+
+describe("FE-CY — R301-R303 : custody refus gracieux, registre rejoué, écarts avec voie", () => {
+  it("sans port : mention rendue, registre servi ; rapprochement liste les écarts typés", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/custody/positions", () => HttpResponse.json({ portConfigure: false, positions: [] })),
+      http.get("*/v1/ta/registre", () => HttpResponse.json({ asOf: "2026-07-28", contrepassations: ["SUB-1"],
+        positions: [{ titre: "ACT-GWB", titulaire: "aaaaaaaa-1111", quantite: -30 }] })),
+      http.get("*/v1/custody/rapprochement", () => HttpResponse.json({ depositaire: "DEP", resolus: 1,
+        ecarts: [{ cle: "DIVERGENCE|TIT-Y", type: "QUANTITES_DIVERGENTES", titre: "TIT-Y", custody: 50, registre: 40,
+          voie: "contre-passation partielle au registre ou correction côté dépositaire — attestation à l'appui" }] })));
+    const { CustodyTa } = await import("./custody/CustodyTa");
+    render(<CustodyTa/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText(/Aucun port custody/)).toBeInTheDocument();      // refus gracieux RENDU
+    expect(screen.getByText(/Contre-passations : SUB-1/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Rapprocher$/ }));
+    expect(await screen.findByText(/QUANTITES_DIVERGENTES/)).toBeInTheDocument();
+    expect(screen.getByText(/voie : contre-passation partielle/)).toBeInTheDocument(); // la VOIE, rendue
+    expect(screen.getByText(/1 résolu\(s\) compté\(s\)/)).toBeInTheDocument();
+  });
+});

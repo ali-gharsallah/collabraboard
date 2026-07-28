@@ -211,6 +211,10 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Dégel vague 2 — R302 registre nominatif (ratifié 2026-07-28). ──
+  { cle: "ta_visas_par_type", type: "json", defaut: {}, regle: "R302", requis: false,
+    exemple: { NANTISSEMENT: "CO", RADIATION: "CO_SR" },
+    description: "Visa exigé PAR TYPE de mouvement nominatif (rôle) : un mouvement en attente de visa n'est PAS au registre ; l'initiateur ne vise jamais (R13). Vide = aucun visa exigé." },
   // ── Login deux temps — R296 (canon triage final, ratifié 2026-07-28). ──
   { cle: "loginDomaines", type: "json", defaut: [], regle: "R296", requis: false,
     exemple: ["gwb.ch", "gwb-private.ch"],

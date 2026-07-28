@@ -46,6 +46,7 @@ Les cinq colonnes :
 | Transactions Risk Monitoring (txrisk) | « Transactions Risk Monitoring » = clé I18N ✓ | flux + live SSE + tendances + drill AML ✓ | ✓ | refus gracieux sans port (R167) rendu ✓ | journal/tendances servis, agrégats poussés AU moteur — zéro verdict front ✓ |
 | Multi-devise & FX (fx) | « Multi-devise & FX » = clé I18N ✓ | table d'exposition par devise ✓ | ✓ (franchissement = danger sémantique) | mention « jamais un taux inventé » rendue (R167) ✓ | exposition servie, seuil notifié SERVEUR — zéro calcul front ✓ |
 | Analyseur SWIFT/SEPA (swiftlab) | « Analyseur SWIFT/SEPA » = clé I18N ✓ | textarea → extraction + historique + quarantaine ✓ | ✓ (quarantaine = warn sémantique) | motifs de quarantaine rendus TELS QUELS (FE-04) ✓ | extraction SERVIE, champs sensibles surlignés — zéro parsing front ✓ |
+| Custody & TA (custodyta) | hors dictionnaire maquette (écran canon dégel V2) — consigné | positions port + registre rejoué à date + écarts avec voie ✓ | ✓ (négatif = danger) | refus gracieux sans port rendu (R167) ✓ | positions/registre/rapprochement SERVIS — zéro calcul front ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 
