@@ -883,3 +883,22 @@ partie, pas avant.
   d'écran, pas de ligne de grille (principe du périmètre) ; (3) le tick est
   manuel/apicallable — la planification suit l'infra (même consigne que legal/regwatch).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 8).
+
+## SOLDE — DÉGEL VAGUE 9 : OCTOPULSE OPRISK (2026-07-28, OP-01..05 verts — dégel COMPLET)
+
+- **R321** : incident = DOSSIER tracé (déclaration par tout collaborateur, classification
+  OBLIGATOIRE dans `oprisk_taxonomie` — défaut : 7 catégories Bâle niveau 1, default-deny) ;
+  DECLARE → EN_ANALYSE → CLOS en liste fermée, clôture motivée R7 (OP-01/02) ; un constat
+  SO-07 ouvre un incident RÉFÉRENCÉ (OP-04).
+- **R322** : heatmap CALCULÉE (fréquence × sévérité par catégorie), rejouée à date
+  byte-identique (OP-03) ; AUCUNE écriture de cellule — négatif structurel (source + base).
+- **R323** : plan d'action (owner, échéance, statut) ; retard = FAIT calculé (R274) —
+  owner notifié une fois, escalade DIR au-delà de `oprisk_escalade_jours` (défaut 7) ;
+  jamais bloquant (OP-05 : l'action en retard se complète).
+- **ÉCARTS CONSIGNÉS** : (1) la surface SO (R284, deux exceptions fermées) porte désormais
+  une TROISIÈME exception — `POST /v1/oprisk/incidents` — exigée par le canon R321 (SO-07
+  → incident) ; fermée à cette route, testée (tout autre POST SO refuse toujours) ;
+  (2) AMA quantitatif NON livré — le canon le dit « option à ratifier séparément » ;
+  (3) le tick est manuel/apicallable (même consigne que legal/regwatch/licence) ;
+  (4) état dérivé des événements, aucune table nouvelle. Écran oprisk (73e onglet).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 9).

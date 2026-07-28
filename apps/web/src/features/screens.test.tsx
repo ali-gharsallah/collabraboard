@@ -1257,3 +1257,29 @@ describe("FE-MB — R316/R318 : face banque du canal mobile — activation trac�
     expect(await screen.findByText(/Ressource introuvable/)).toBeInTheDocument();
   });
 });
+
+describe("FE-OP — R321/R322 : incidents servis, heatmap RENDUE (jamais peinte), refus de classification tel quel", () => {
+  it("charge incidents + heatmap calculée serveur ; déclaration hors taxonomie → refus R321 rendu", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/oprisk/incidents", () => HttpResponse.json({ incidents: [
+        { id: "i1", titre: "Virement exécuté deux fois", categorie: "EXECUTION_PROCESSUS", severite: 3, statut: "EN_ANALYSE" }] })),
+      http.get("*/v1/oprisk/heatmap", () => HttpResponse.json({ cellules: [
+        { categorie: "EXECUTION_PROCESSUS", frequence: 1, severiteMax: 3, score: 3 },
+        { categorie: "FRAUDE_EXTERNE", frequence: 2, severiteMax: 4, score: 8 }] })),
+      http.get("*/v1/oprisk/actions", () => HttpResponse.json({ actions: [
+        { id: "a1", titre: "Tester la restauration", owner: "u1", echeance: "2026-07-01", statut: "A_FAIRE", enRetard: true }] })),
+      http.post("*/v1/oprisk/incidents", () => HttpResponse.json(
+        { message: "R321 : classification OBLIGATOIRE dans la taxonomie Bâle du tenant — reçu « X »" }, { status: 400 })));
+    const { OpRisk } = await import("./oprisk/OpRisk");
+    render(<OpRisk/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText(/Virement exécuté deux fois/)).toBeInTheDocument();
+    expect(screen.getByText("FRAUDE_EXTERNE")).toBeInTheDocument();          // la heatmap est RENDUE, pas calculée ici
+    expect(screen.getByText("8")).toBeInTheDocument();                       // score servi
+    expect(screen.getByText(/EN RETARD/)).toBeInTheDocument();               // le fait calculé, rendu
+    fireEvent.change(screen.getByPlaceholderText("titre de l'incident"), { target: { value: "Essai" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Déclarer$/ }));
+    expect(await screen.findByText(/R321 : classification OBLIGATOIRE/)).toBeInTheDocument();  // FE-04
+  });
+});
