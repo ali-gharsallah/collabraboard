@@ -818,3 +818,21 @@ partie, pas avant.
   et testée ; (4) typeCode MEMO_LEGAL/CONTRAT non déclarés à gedDocTypes par défaut — le
   tenant les déclare (R110), le registre ne les impose pas. Écran legalreg (70e onglet).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 5).
+
+## SOLDE — DÉGEL VAGUE 6 : BI LIBRE (2026-07-28, BL-01..04 verts)
+
+- **R314** : les vues sont des PROJECTIONS déclarées (vues-bi.json — LA même vérité pour
+  le runtime ET le vérificateur CI scripts/verifier-vues-bi.js, câblé dans ci.yml : une
+  source hors projections autorisées = build rouge, pattern R264). Requête hors liste /
+  dimension non déclarée → refus typé (BL-01). ZÉRO SQL libre : Prisma typé + agrégation
+  mémoire, aucun raw, aucune écriture — revue automatisée BL-04.
+- **R315** : le scope s'applique AUX PROJECTIONS (RM = ses clients, backend — BL-02) ;
+  export ≥ `bi_seuil_export` = AUDIT_ACCESS (qui, quelle requête, combien) notifié SO,
+  l'export reste SERVI (BL-03, R39).
+- **ÉCARTS CONSIGNÉS** : (1) 3 vues au départ (clients/kyc/transactions) — chaque ajout
+  passe par vues-bi.json + le vérificateur (jamais un ajout silencieux) ; (2) l'agrégation
+  est en mémoire (volumes pilote) — la matérialisation SQL (vraies vues projetées) suivra
+  la stratégie de migration expand/contract (dette §8) SANS changer le contrat ;
+  (3) l'annuaire est servi par POST (client sans GET-avec-corps) — lecture pure malgré le
+  verbe, couvert par BL-04. Écran bi (71e onglet).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 6).

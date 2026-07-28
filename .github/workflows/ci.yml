@@ -91,6 +91,9 @@ jobs:
       #    LECTURE (GET) + PROPOSITION (création olivia_proposals, R254). ──
       - name: "1c · R264 — liste blanche d'outils (build rouge hors liste)"
         run: node apps/api/scripts/verifier-liste-blanche-outils.js
+      # R314 (dégel V6) : les vues BI sont des projections déclarées — hors liste = build rouge
+      - name: Vérifier la liste blanche des vues BI (R314)
+        run: node apps/api/scripts/verifier-vues-bi.js
 
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
       # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans

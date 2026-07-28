@@ -211,6 +211,9 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Dégel vague 6 — BI libre R314-R315 (ratifié 2026-07-28). ──
+  { cle: "bi_seuil_export", type: "int", defaut: 10000, regle: "R315", requis: false,
+    description: "Seuil de lignes au-delà duquel un export BI devient un ACTE D'AUDIT : AUDIT_ACCESS (qui, quelle requête, combien) notifié SO — l'export reste SERVI, jamais bloqué (R39)." },
   // ── Dégel vague 4 — Regwatch R309-R311 (ratifié 2026-07-28). ──
   { cle: "regwatch_sources", type: "json", defaut: [], regle: "R309", requis: false,
     exemple: [{ code: "FINMA", libelle: "Communications FINMA", credentials: true }],

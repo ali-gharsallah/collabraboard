@@ -1207,3 +1207,21 @@ describe("FE-LE — R312/R313 : le registre legal rend échéances calculées et
     expect(o).toHaveTextContent(/juridiction SA \(country manual R293\)/);   // la boucle, visible
   });
 });
+
+describe("FE-BI — R314/R315 : projections déclarées, résultat scopé backend, refus tel quel", () => {
+  it("annuaire servi → requête → lignes ; vue hors liste → message R314 rendu", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.post("*/v1/bi/annuaire", () => HttpResponse.json([
+        { code: "clients_par_pays", source: "clients", dimensions: ["country"], mesures: ["n"], sensibilite: "NORMALE" }])),
+      http.post("*/v1/bi/requete", () => HttpResponse.json({ vue: "clients_par_pays", sensibilite: "NORMALE",
+        source: 2, lignes: [{ country: "CH", n: 2 }] })));
+    const { BiReporting } = await import("./bi/BiReporting");
+    render(<BiReporting/>);
+    fireEvent.click(screen.getByRole("button", { name: /Charger l'annuaire/ }));
+    await screen.findByRole("button", { name: /^Interroger$/ });
+    fireEvent.click(screen.getByRole("button", { name: /^Interroger$/ }));
+    expect(await screen.findByText(/2 ligne\(s\) source \(scopées BACKEND\)/)).toBeInTheDocument();
+    expect(screen.getByText("CH")).toBeInTheDocument();
+  });
+});
