@@ -205,6 +205,8 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Base (secondes) du backoff exponentiel entre tentatives de consommation." },
   { cle: "dead_letter_alerte_seuil", type: "int", defaut: 1, regle: "R286", requis: false,
     description: "Nombre d'événements en souffrance à partir duquel l'alerte est émise (défaut 1 : notifié dès la première — R39, notifie sans jamais bloquer)." },
+  { cle: "cumul_so_admin_interdit", type: "bool", defaut: true, regle: "R284", requis: false,
+    description: "Refuser qu'un même utilisateur cumule SO (surveille les journaux) et ADMIN (paramètre) — séparation structurelle des regards. Une petite banque peut assouplir : le cumul devient accepté ET tracé (événement iam.cumul_so_admin.autorise)." },
   // ── Questionnaires de review — R283 (canon écarts anciens, ratifié 2026-07-28). ──
   { cle: "reviewProfiles", type: "json", defaut: [], regle: "R283", requis: false,
     exemple: [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],

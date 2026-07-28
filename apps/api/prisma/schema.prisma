@@ -49,6 +49,7 @@ enum Role {
   BRM
   DIR
   ADMIN
+  SO // R284 (ratifié 2026-07-28) : Security Officer — rôle d'AUDIT (journaux, jamais les dossiers)
 }
 
 model Client {

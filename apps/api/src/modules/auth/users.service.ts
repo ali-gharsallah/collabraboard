@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { PasswordHasher } from "./password";
 
@@ -35,8 +35,21 @@ export class UsersService {
     return strip(await this.prisma.user.update({ where: { id: userId }, data: { active } }));
   }
 
-  async setRole(tenantId: string, userId: string, role: string): Promise<Safe> {
-    await this.mustGet(tenantId, userId);
+  async setRole(tenantId: string, userId: string, role: string, par?: string): Promise<Safe> {
+    const u = await this.mustGet(tenantId, userId);
+    // R284/SO-05 : SO surveille, ADMIN paramètre — les deux regards ne se cumulent pas sur une
+    // même personne (séparation structurelle). Refus TYPÉ au défaut ; une petite banque
+    // assouplit par LE registre (cumul_so_admin_interdit=false, motivé) — accepté ET tracé.
+    const cumul = (u.role === "ADMIN" && role === "SO") || (u.role === "SO" && role === "ADMIN");
+    if (cumul) {
+      const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
+      const interdit = ((t?.settings as any) ?? {}).cumul_so_admin_interdit ?? true;
+      if (interdit) throw new BadRequestException(
+        "cumul_so_admin_interdit : SO surveille (journaux), ADMIN paramètre — un même utilisateur ne porte pas les deux regards (R284) ; assouplissable par le registre R-Q, tracé");
+      await this.prisma.domainEvent.create({ data: { tenantId, type: "iam.cumul_so_admin.autorise",
+        aggregateId: userId, payload: { de: u.role, vers: role, par: par ?? "system" },
+        at: new Date().toISOString() } });
+    }
     return strip(await this.prisma.user.update({ where: { id: userId }, data: { role: role as any } }));
   }
 

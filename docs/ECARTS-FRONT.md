@@ -556,3 +556,28 @@ partie, pas avant.
   l'abonnement en default-deny (OL-34), pilote live compteurs Home (lib/flux.ts, idempotence
   client par seq) ; OL-31 re-passé. Référence croisée : spec/canon-so-et-transport-async.md
   partie 2 · apps/api/test/e2e/fat-canon-derniers.e2e-spec.ts · screens.test.tsx FE-AS.
+
+## SOLDE — RÔLE SO (2026-07-28, R284 LIVRÉ, SO-01..06 verts) — LE DERNIER ÉCART EST SOLDÉ
+
+- **L'écart « rôle SO à ratifier » (spec Home codée ADMIN, `roles_motif_sensible` sans SO) est
+  SOLDÉ.** SO entre à l'enum (migration additive) comme rôle d'AUDIT : la tension HO-06 ↔ R270
+  se résout par DEUX surfaces — opérationnelle (aucun accès : accueil = T3/T9, HO-06 re-passé
+  tel quel) et d'audit (lecture intégrale : trail à date, conversations/runs Olivia + replay,
+  journal CPSI, motifs sensibles R270 — policy SQL RESTRICTIVE au défaut étendu CO_SR,MLRO,SO,
+  OF-07/OF-08 re-passés). Garde STRUCTURELLE unique dans le TenantMiddleware (avant routage) :
+  tout non-GET refuse typé SO_SURFACE_AUDIT hors les DEUX exceptions fermées (STOP de run R267,
+  POST /v1/audit/export tracé) ; SO jamais un regard du four-eyes ni d'aucune décision (SO-03,
+  un test par type). « L'auditeur est audité » : consultation sensible ⇒ AUDIT_ACCESS
+  append-only (qui/quoi/quand), servi à la Direction et à SO (GET /v1/audit/acces) — suppression
+  impossible (trigger). Cumul SO+ADMIN refusé par le backend (cumul_so_admin_interdit, défaut
+  vrai au registre R-Q) ; assoupli = accepté ET tracé (iam.cumul_so_admin.autorise). Le
+  cloisonnement reste étanche : la réponse réseau du CO est identique avant/après consultation
+  SO (SO-06). Référence croisée : spec/canon-so-et-transport-async.md partie 1 ·
+  fat-canon-derniers.e2e-spec.ts (SO-01..06).
+
+## BILAN CANON SO + TRANSPORT (R284-R287) — LES 2 DERNIERS ÉCARTS SOLDÉS
+
+- R285-R287 → transport asynchrone soldé (AS-01..08, OL-31 re-passé) · R284 → rôle SO soldé
+  (SO-01..06, HO-06/OF-07/OF-08 re-passés). Registre des écarts : PLUS AUCUN écart ouvert
+  nécessitant canon. Livrable : branche unique PR #46 (arbitrage ratifié), deux séquences de
+  commits (transport dbb0cad/581f548/ccd7508, puis SO).

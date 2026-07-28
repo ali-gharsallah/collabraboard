@@ -13,7 +13,7 @@ import { Tx } from "../../common/tx";
  * L'annulation (OF-12) est tracée avec motif obligatoire (R7) — le dossier redevient ACTIVE,
  * la demande et son annulation restent au trail.
  * Paramètres R-Q : retentionPostClotureAns (10) · visasParTypeCloture · documentsParTypeCloture ·
- * rolesMotifSensible (CO_SR,MLRO) · exExitComplianceForceEdd (true).
+ * rolesMotifSensible (CO_SR,MLRO,SO — R284) · exExitComplianceForceEdd (true).
  */
 
 type Ctx = { tenantId: string; userId: string; role: string };
@@ -106,7 +106,7 @@ export class OffboardingService {
     // pour tout autre rôle, la clé est ABSENTE de la réponse réseau (OF-07), pas masquée à l'écran.
     if (o.type === "EXIT_COMPLIANCE") {
       const s = await this.settings(this.prisma, ctx.tenantId);
-      const habilites: string[] = s.rolesMotifSensible ?? ["CO_SR", "MLRO"];
+      const habilites: string[] = s.rolesMotifSensible ?? ["CO_SR", "MLRO", "SO"];
       if (habilites.includes(ctx.role)) {
         const sens = await this.prisma.offboardingSensible.findFirst({
           where: { offboardingId: o.id, tenantId: ctx.tenantId } });

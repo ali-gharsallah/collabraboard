@@ -161,7 +161,7 @@ END $$;
 -- Politique RESTRICTIVE en LECTURE sur offboarding_sensibles : outre l'isolation tenant,
 -- la ligne n'est SERVIE que si le rôle applicatif courant (GUC app.role) figure dans la
 -- liste habilitée (GUC app.roles_motif_sensible, posée par le service depuis le paramètre
--- tenant `rolesMotifSensible` — défaut CO_SR,MLRO). Testée au niveau SQL (critère 5.6-2)
+-- tenant `rolesMotifSensible` — défaut CO_SR,MLRO,SO ; R284 : l'audit exige de voir le cloisonné). Testée au niveau SQL (critère 5.6-2)
 -- via SET ROLE olive_app + set_config — pas seulement au contrôleur.
 DO $$ BEGIN
   IF to_regclass('offboarding_sensibles') IS NOT NULL THEN
@@ -169,7 +169,7 @@ DO $$ BEGIN
     CREATE POLICY motif_sensible_roles ON offboarding_sensibles
       AS RESTRICTIVE FOR SELECT
       USING (current_setting('app.role', true) = ANY (string_to_array(
-        COALESCE(NULLIF(current_setting('app.roles_motif_sensible', true), ''), 'CO_SR,MLRO'), ',')));
+        COALESCE(NULLIF(current_setting('app.roles_motif_sensible', true), ''), 'CO_SR,MLRO,SO'), ',')));
   END IF;
 END $$;
 

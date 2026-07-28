@@ -44,7 +44,7 @@ class UsersController {
   @Get()               list(@Req() r: any) { return this.users.list(r.ctx.tenantId); }
   @Post()              create(@Req() r: any, @Body() b: any) { return this.users.create(r.ctx.tenantId, b); }
   @Post(":id/active")  active(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.users.setActive(r.ctx.tenantId, id, !!b?.active); }
-  @Post(":id/role")    role(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.users.setRole(r.ctx.tenantId, id, b?.role); }
+  @Post(":id/role")    role(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.users.setRole(r.ctx.tenantId, id, b?.role, r.ctx.userId); }
   @Post(":id/reset-mfa") resetMfa(@Req() r: any, @Param("id") id: string) { return this.users.resetMfa(r.ctx.tenantId, id); }
 }
 

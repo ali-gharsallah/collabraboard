@@ -262,3 +262,119 @@ describe("FAT CANON DERNIERS — R287 : hub SSE (AS-06..08)", () => {
     console.log("AS-08 PASS — scope appliqué à l'abonnement, default-deny sur la référence");
   });
 });
+
+// ── R284 : le rôle SO est un rôle d'AUDIT — journaux intégraux, jamais les dossiers (SO-01..06) ──
+
+describe("FAT CANON DERNIERS — R284 : rôle SO, surfaces d'audit (SO-01..06)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const SO = randomUUID(), DIR = randomUUID(), CO = randomUUID(), CO2 = randomUUID(), RM = randomUUID(), ADMIN = randomUUID();
+  const clientId = randomUUID();
+  const mrosRef = randomUUID();
+  let offId = "";
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientId);
+    // Un dossier EXIT_COMPLIANCE avec motif SENSIBLE (forme OF-07) — LE terrain du cloisonnement R270
+    offId = (await request(http).post("/v1/offboarding").set(bearer(T, CO, "CO"))
+      .send({ clientId, type: "EXIT_COMPLIANCE", motif: "Soupçon de blanchiment — communication MROS n° 45-2026", mrosRef })).body.id;
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("SO-01 [R284] SO ne voit PAS l'opérationnel : endpoints métier → 403 structurel ; l'accueil SO = T3 + T9 seulement (HO-06 tel quel)", async () => {
+    for (const chemin of ["/v1/kyc", "/v1/clients", "/v1/reviews/deadlines", "/v1/coc", "/v1/aml/signaux"]) {
+      const r = await request(http).get(chemin).set(bearer(T, SO, "SO"));
+      expect(r.status).toBe(403);
+      expect(JSON.stringify(r.body)).toContain("SO_SURFACE_AUDIT");          // refus TYPÉ, structurel
+    }
+    await request(http).get("/v1/tasks?status=OPEN").set(bearer(T, SO, "SO")).expect(200);   // T3 : ses tâches
+    await request(http).get("/v1/events/sante").set(bearer(T, SO, "SO")).expect(200);        // T9 : santé technique
+    console.log("SO-01 PASS — opérationnel refusé typé, accueil réduit à T3/T9");
+  });
+
+  it("SO-02 [R284/R270] SO voit TOUT en audit, en LECTURE : motif sensible intégral (policy SQL comprise) ; non-GET hors STOP/export → 403", async () => {
+    // La surface d'audit sert le motif sensible INTÉGRAL — auditer l'art. 10a exige de voir le cloisonné
+    const vue = (await request(http).get(`/v1/offboarding/${offId}`).set(bearer(T, SO, "SO"))).body;
+    expect(vue.motifSensible).toContain("blanchiment");
+    expect(vue.mrosRef).toBe(mrosRef);
+    // La PREUVE SQL : la policy RESTRICTIVE sert la ligne au rôle SO (défaut étendu CO_SR,MLRO,SO)
+    const rows: any[] = await prisma.$transaction(async (tx: any) => {
+      await tx.$executeRawUnsafe(`SET LOCAL ROLE olive_app`);
+      await tx.$executeRawUnsafe(`SELECT set_config('app.tenant_id', '${T}', true)`);
+      await tx.$executeRawUnsafe(`SELECT set_config('app.role', 'SO', true)`);
+      return tx.$queryRawUnsafe(`SELECT motif_sensible FROM offboarding_sensibles WHERE offboarding_id = '${offId}'`);
+    });
+    expect(rows.length).toBe(1);
+    // AUCUNE écriture métier : un non-GET hors exceptions fermées → 403 structurel
+    const ecriture = await request(http).post(`/v1/offboarding/${offId}/visa`).set(bearer(T, SO, "SO"));
+    expect(ecriture.status).toBe(403);
+    expect(JSON.stringify(ecriture.body)).toContain("SO_SURFACE_AUDIT");
+    // Les DEUX exceptions fermées passent la garde : STOP d'un run (R267) et export d'audit (tracé)
+    const stop = await request(http).post(`/v1/olivia/runs/${randomUUID()}/stop`).set(bearer(T, SO, "SO"));
+    expect(stop.status).not.toBe(403);                                       // la garde laisse passer (404 : run inexistant)
+    await request(http).post("/v1/audit/export").set(bearer(T, SO, "SO")).send({}).expect(201);
+    console.log("SO-02 PASS — audit intégral en lecture (SQL comprise), écriture bornée à STOP/export");
+  });
+
+  it("SO-03 [R284/R13] SO n'est JAMAIS un regard : visa, validation, adoption, CoC, porte de run → 403 structurel (un test par type de décision)", async () => {
+    const decisions: Array<[string, string]> = [
+      ["visa de section (R15)",        `/v1/kyc/K-X/visas/IDENTITY`],
+      ["validation finale (R13/R52)",  `/v1/kyc/K-X/validate`],
+      ["adoption de proposition (R255)", `/v1/olivia/proposals/${randomUUID()}/adopt`],
+      ["traitement de CoC (R277)",     `/v1/coc/${randomUUID()}/traiter`],
+      ["décision de porte de run (R263)", `/v1/olivia/runs/${randomUUID()}/gate-decision`],
+    ];
+    for (const [type, chemin] of decisions) {
+      const r = await request(http).post(chemin).set(bearer(T, SO, "SO")).send({});
+      expect([type, r.status]).toEqual([type, 403]);                         // structurel — pas un paramétrage
+      expect(JSON.stringify(r.body)).toContain("SO_SURFACE_AUDIT");
+    }
+    console.log("SO-03 PASS — exclu du four-eyes et de toute décision, par construction");
+  });
+
+  it("SO-04 [R284] l'AUDITEUR est AUDITÉ : la consultation sensible émet AUDIT_ACCESS append-only ; la Direction le voit", async () => {
+    // La consultation SO-02 (motif sensible) a été JOURNALISÉE — qui, quoi, quand
+    const acces = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "AUDIT_ACCESS" } });
+    expect(acces.length).toBeGreaterThanOrEqual(1);
+    const a: any = acces.find((e: any) => (e.payload as any).chemin?.includes(`/offboarding/${offId}`));
+    expect(a).toBeTruthy();
+    expect((a.payload as any).par).toBe(SO);                                 // QUI (jeton)
+    // La Direction consulte le journal des accès ; personne ne lit dans l'ombre — pas même l'auditeur
+    const vueDir = (await request(http).get("/v1/audit/acces").set(bearer(T, DIR, "DIR"))).body;
+    expect(vueDir.some((x: any) => x.par === SO)).toBe(true);
+    await request(http).get("/v1/audit/acces").set(bearer(T, RM, "RM")).expect(403);
+    // Le supprimer est IMPOSSIBLE (append-only, trigger SQL)
+    await expect(prisma.$executeRawUnsafe(`DELETE FROM domain_events WHERE id = ${a.id}`)).rejects.toThrow();
+    console.log("SO-04 PASS — AUDIT_ACCESS append-only, servi à la Direction et à SO");
+  });
+
+  it("SO-05 [R284] le cumul SO+ADMIN est REFUSÉ par le backend (défaut) ; assoupli par le registre → accepté ET tracé", async () => {
+    const cree = (await request(http).post("/v1/admin/users").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ email: "so-candidat@banque.ch", name: "Candidat", role: "ADMIN", password: "S3cret!s3cret" })).body;
+    // Affecter SO à un utilisateur déjà ADMIN → refus TYPÉ (paramètre au défaut : interdit)
+    const refus = await request(http).post(`/v1/admin/users/${cree.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "SO" });
+    expect(refus.status).toBe(400);
+    expect(JSON.stringify(refus.body)).toContain("cumul_so_admin_interdit");
+    // Une petite banque ASSOUPLIT — par LE registre (motivé), jamais un contournement
+    await request(http).post("/v1/parametres/valeur/cumul_so_admin_interdit").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: false, motif: "Équipe de 3 — cumul assumé, tracé (R284)" }).expect(201);
+    await request(http).post(`/v1/admin/users/${cree.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "SO" }).expect(201);
+    const trace = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "iam.cumul_so_admin.autorise" } });
+    expect(trace).toBeTruthy();                                              // accepté ET tracé
+    console.log("SO-05 PASS — cumul refusé typé au défaut, assoupli par registre = tracé");
+  });
+
+  it("SO-06 [R284/R270] le cloisonnement reste ÉTANCHE autour de SO : la vue du CO est IDENTIQUE avant/après consultation SO — aucune voie latérale", async () => {
+    const avant = (await request(http).get(`/v1/offboarding/${offId}`).set(bearer(T, CO2, "CO"))).body;
+    expect(avant.motif).toBe("Décision de l'établissement");                 // générique
+    expect(avant).not.toHaveProperty("motifSensible");
+    await request(http).get(`/v1/offboarding/${offId}`).set(bearer(T, SO, "SO")).expect(200);  // SO consulte (encore)
+    const apres = (await request(http).get(`/v1/offboarding/${offId}`).set(bearer(T, CO2, "CO"))).body;
+    expect(JSON.stringify(apres)).toBe(JSON.stringify(avant));               // la réponse RÉSEAU n'a pas bougé
+    expect(JSON.stringify(apres)).not.toContain("blanchiment");
+    console.log("SO-06 PASS — l'accès SO n'a créé aucune voie latérale, réponse CO inchangée");
+  });
+});
