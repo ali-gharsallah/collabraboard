@@ -436,3 +436,10 @@ l'état accepté du canon, aucun code à changer.
 - Règle tirée du solde : les fakes de harnais qui inventent des champs (`rmId`,
   `clientName`, `reponses`) masquent les anomalies — les trois fakes sont désormais
   alignés sur le schéma Prisma réel.
+
+## SOLDE — ÉCART DE BRANCHE PR #45 (2026-07-28, ordre Ali « merger PR 45 »)
+
+- PR #45 (audit A1-A6) MERGÉE dans master (1ed5314) puis master réconcilié dans la branche
+  pilote (merge 3815fb8, union sémantique — détail au message de merge). L'écart « audit
+  mergé nulle part » et la duplication de fondation tx.ts sont SOLDÉS ; A1 est étendu à nos
+  modules post-audit (un seul PrismaClient partout) ; A6 couvre les 51 écrans.
