@@ -756,3 +756,28 @@ partie, pas avant.
   gages est une lecture à ajouter à la demande ; (4) tokenisation HORS bloc (canon).
   Écran custodyta (67e onglet) — ligne de grille ajoutée.
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 2).
+
+## SOLDE — DÉGEL VAGUE 3 : LE BUILDER (2026-07-28, GO Ali, WB-01..10 verts)
+
+- **R304** : builder_artefacts (brouillons) + builder_versions (gravées, append-only,
+  datées) — WB-01. **R306** : cohérence backend, 7 familles de refus listées d'un coup
+  (WB-04). **R305** : verrou bac structurel (empreinte SHA du contenu simulé ; re-modifier
+  invalide), rapport d'impact au principe SB-03 JOINT à la version et à l'événement
+  (WB-03/10). **R307** : four-eyes (auteur ≠ publicateur), clé `roles_publication_builder`
+  (WB-05). **R308** : matérialisation vers les MOTEURS RATIFIÉS — workflow → atelier
+  R171-173 (résolu par date, dossier validé bout en bout sur le moteur R1-R51, WB-06) ;
+  section → gabarit à la création (grandfathering R29 par construction, matrice R282
+  maîtresse, WB-02/07) ; questionnaire → reviewProfiles (R283, voie R-Q). WB-08 : revue
+  d'architecture automatisée (zéro interpréteur). WB-09 : le brouillon d'auteur-agent ne
+  se publie JAMAIS lui-même (R13 structurel) — la chaîne humaine publie.
+- **ÉCARTS CONSIGNÉS** : (1) plan 6 commits → livré en 3 (la chaîne de publication est UN
+  acte ; découper aurait laissé un « publier » sans garde) ; (2) le canal de proposition
+  Olivia (TYPES/CIBLES B.7) est un registre ratifié FERMÉ — y ajouter ARTEFACT_BUILDER est
+  une extension du canon Olivia à ratifier ; WB-09 est couvert structurellement en
+  attendant (auteur-agent tracé, publication humaine exigée) ; (3) le timbre HTTP de la
+  chaîne KYC↔Workflow n'est pas exposé (état préexistant, harnais KW le couvre) — WB-06
+  prouve la résolution atelier + l'exécution moteur ; (4) `OliveError.refus` ajouté au
+  client front (les listes R269/R306 voyagent entières — rétro-compatible) ;
+  (5) GET /v1/builder/publications ajouté à la surface SO (l'acte de publication est un
+  JOURNAL — cohérent R284). Écran builder (68e onglet). 
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 3).

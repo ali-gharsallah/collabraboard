@@ -47,6 +47,7 @@ Les cinq colonnes :
 | Multi-devise & FX (fx) | « Multi-devise & FX » = clé I18N ✓ | table d'exposition par devise ✓ | ✓ (franchissement = danger sémantique) | mention « jamais un taux inventé » rendue (R167) ✓ | exposition servie, seuil notifié SERVEUR — zéro calcul front ✓ |
 | Analyseur SWIFT/SEPA (swiftlab) | « Analyseur SWIFT/SEPA » = clé I18N ✓ | textarea → extraction + historique + quarantaine ✓ | ✓ (quarantaine = warn sémantique) | motifs de quarantaine rendus TELS QUELS (FE-04) ✓ | extraction SERVIE, champs sensibles surlignés — zéro parsing front ✓ |
 | Custody & TA (custodyta) | hors dictionnaire maquette (écran canon dégel V2) — consigné | positions port + registre rejoué à date + écarts avec voie ✓ | ✓ (négatif = danger) | refus gracieux sans port rendu (R167) ✓ | positions/registre/rapprochement SERVIS — zéro calcul front ✓ |
+| Workflow Builder (builder) | « Workflow Builder » = clé I18N ✓ | brouillon → simuler → publier, brouillons/versions ✓ | ✓ (refus = danger) | refus R306 rendus EN LISTE tels quels (FE-04) ✓ | rapport d'impact SERVI, cohérence backend — zéro précalcul front ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 

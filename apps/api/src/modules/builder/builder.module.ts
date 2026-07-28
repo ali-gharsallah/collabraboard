@@ -181,6 +181,13 @@ export class BuilderService {
     return { id: v.id, type: v.type, code: v.code, version, depuisLe };
   }
 
+  // ── WB-10 : chaque publication, avec son rapport JOINT — la surface d'audit la lit. ──
+  async publications(ctx: Ctx) {
+    const evs = await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "builder.publication" }, orderBy: { id: "desc" } });
+    return evs.map((e) => ({ ...(e.payload as object), at: e.at }));
+  }
+
   // ── R308 : matérialisation vers les moteurs RATIFIÉS — le Builder n'exécute RIEN. ──
   // WORKFLOW → l'atelier gouverné R171-173 (le moteur R1-R51 reste intouchable) ;
   // SECTION → rien à écrire ICI : le gabarit des dossiers la lit à la CRÉATION
@@ -212,6 +219,7 @@ export class BuilderController {
   @Get("artefacts")              lister(@Req() r: any) { return this.svc.lister(r.ctx); }
   @Post("artefacts/:id/simuler") simuler(@Req() r: any, @Param("id") id: string) { return this.svc.simuler(r.ctx, id); }      // R305
   @Post("artefacts/:id/publier") publier(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.publier(r.ctx, id, b ?? {}); } // R304..R307
+  @Get("publications")           publications(@Req() r: any) { return this.svc.publications(r.ctx); }                          // WB-10 : l'acte + son rapport, consultables (SO)
 }
 
 @Module({ imports: [WorkflowModule, ParametresModule], controllers: [BuilderController], providers: [BuilderService], exports: [BuilderService] })

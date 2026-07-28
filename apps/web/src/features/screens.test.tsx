@@ -1144,3 +1144,25 @@ describe("FE-CY — R301-R303 : custody refus gracieux, registre rejoué, écart
     expect(screen.getByText(/1 résolu\(s\) compté\(s\)/)).toBeInTheDocument();
   });
 });
+
+describe("FE-WB — R306 : les refus de cohérence arrivent du BACKEND en liste et s'affichent tels quels", () => {
+  it("publier un artefact incohérent → la liste complète des refus est rendue", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/builder/artefacts", () => HttpResponse.json({ brouillons: [], versions: [] })),
+      http.post("*/v1/builder/artefacts", () => HttpResponse.json({ id: "a1" })),
+      http.post("*/v1/builder/artefacts/a1/publier", () => HttpResponse.json(
+        { message: "R306 : artefact incohérent — TOUT est listé, rien n'est tronqué",
+          refus: ["WORKFLOW_SANS_TERMINAL : aucun état terminal atteignable n'est déclaré",
+                  "ETAPE_SANS_OWNER : B n'a pas de rôle responsable"] }, { status: 400 })));
+    const { Builder } = await import("./builder/Builder");
+    render(<Builder/>);
+    fireEvent.change(screen.getByPlaceholderText("code"), { target: { value: "WF1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Enregistrer le brouillon/ }));
+    await screen.findByTestId("msg-builder");
+    fireEvent.click(screen.getByRole("button", { name: /^Publier/ }));
+    const refus = await screen.findByTestId("refus-builder");
+    expect(refus).toHaveTextContent(/WORKFLOW_SANS_TERMINAL/);
+    expect(refus).toHaveTextContent(/ETAPE_SANS_OWNER/);                    // TOUTE la liste, telle quelle
+  });
+});

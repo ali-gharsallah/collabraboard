@@ -13,8 +13,9 @@ export function isDemoMode(): boolean {
   return !apiBase();
 }
 
-/** Erreur normalisée — le `message` est celui du serveur, affiché TEL QUEL (FE-04, jamais reformulé). */
-export type OliveError = { code: string; status: number; message: string };
+/** Erreur normalisée — le `message` est celui du serveur, affiché TEL QUEL (FE-04, jamais reformulé).
+ *  `refus` (optionnel) : les listes de refus backend (R269/R306) voyagent ENTIÈRES — jamais tronquées. */
+export type OliveError = { code: string; status: number; message: string; refus?: string[] };
 
 type OliveSession = { tenantId?: string; userId?: string; role?: string };
 const oliveSession = (): OliveSession => (window as unknown as { OLIVE_SESSION?: OliveSession }).OLIVE_SESSION ?? {};
@@ -91,8 +92,9 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   });
   const payload = await r.json().catch(() => ({} as Record<string, unknown>));
   if (!r.ok) {
-    const p = payload as { code?: string; error?: string; message?: string };
-    throw { code: p.code ?? p.error ?? "ERROR", status: r.status, message: p.message ?? `Erreur ${r.status}` } as OliveError;
+    const p = payload as { code?: string; error?: string; message?: string; refus?: string[] };
+    throw { code: p.code ?? p.error ?? "ERROR", status: r.status, message: p.message ?? `Erreur ${r.status}`,
+      ...(Array.isArray(p.refus) ? { refus: p.refus } : {}) } as OliveError;
   }
   return payload as T;
 }

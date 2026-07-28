@@ -10,6 +10,7 @@ import { PrismaService } from "./prisma.service";
 const SO_GET = [
   /^\/v1\/audit(\/|$)/,                      // journal des accès, export, intégrité (SO-07/08)
   /^\/v1\/apidoc(\/|$)/,                     // doc générée (métadonnées techniques)
+  /^\/v1\/builder\/publications$/,           // WB-10 : les actes de publication du Builder + rapports (journal)
   /^\/v1\/olivia\/conversations/,            // conversations + replay + empreintes (mode audit OL)
   /^\/v1\/olivia\/runs/,                     // runs agentiques + replay (R266)
   /^\/v1\/olivia\/health/,                   // santé du port IA

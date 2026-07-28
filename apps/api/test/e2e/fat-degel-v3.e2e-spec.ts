@@ -242,3 +242,45 @@ describe("FAT DÉGEL V3 — R308 : zéro runtime propre, les moteurs ratifiés e
     console.log("WB-08 PASS — le Builder édite, les moteurs exécutent");
   });
 });
+
+describe("FAT DÉGEL V3 — WB-09/WB-10 : l'IA propose (jamais ne publie), l'acte est consultable à l'audit", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const ADMIN = randomUUID(), ADMIN2 = randomUUID(), SO = randomUUID();
+  const OLIVIA = randomUUID();                                             // le jeton de l'agent — jamais un rôle de publication
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("WB-09 [R255/R308] un brouillon proposé PAR OLIVIA reste PENDING — elle ne le publie JAMAIS, la chaîne humaine complète le publie", async () => {
+    // La proposition d'artefact ENTRE comme brouillon (auteur = l'agent) — R305/R307 tiennent ensuite
+    const { body: a } = await request(http).post("/v1/builder/artefacts").set(bearer(T, OLIVIA, "CO"))
+      .send({ type: "SECTION", code: "PROPOSE_IA", contenu: SECTION_OK }).expect(201);
+    const brouillons = (await request(http).get("/v1/builder/artefacts").set(bearer(T, ADMIN, "ADMIN"))).body.brouillons;
+    expect(brouillons.find((b: any) => b.code === "PROPOSE_IA").auteur).toBe(OLIVIA);   // la paternité est TRACÉE
+    // L'agent tente de publier LUI-MÊME : auteur = publicateur → R13, quel que soit son rôle
+    await request(http).post(`/v1/builder/artefacts/${a.id}/simuler`).set(bearer(T, OLIVIA, "CO")).expect(201);
+    const parElle = await request(http).post(`/v1/builder/artefacts/${a.id}/publier`).set(bearer(T, OLIVIA, "ADMIN"))
+      .send({ motif: "auto-publication IA" });
+    expect(parElle.status).toBe(403);                                       // JAMAIS publiée par elle
+    // La chaîne HUMAINE complète : un ADMIN humain (≠ auteur) publie
+    await request(http).post(`/v1/builder/artefacts/${a.id}/publier`).set(bearer(T, ADMIN2, "ADMIN"))
+      .send({ motif: "adoption humaine de la proposition IA" }).expect(201);
+    console.log("WB-09 PASS — l'IA propose (brouillon tracé), l'humain publie");
+  });
+
+  it("WB-10 [R307] le rapport d'impact est JOINT à l'événement de publication et CONSULTABLE à l'audit (SO lit)", async () => {
+    const r = await request(http).get("/v1/builder/publications").set(bearer(T, SO, "SO"));
+    expect(r.status).toBe(200);
+    const pub = r.body.find((p: any) => p.code === "PROPOSE_IA");
+    expect(pub).toBeTruthy();
+    expect(pub.rapport.chargeParRole).toBeTruthy();                         // le rapport VOYAGE avec l'acte
+    expect(pub.auteur).toBe(OLIVIA);
+    expect(pub.publicateur).not.toBe(OLIVIA);                               // four-eyes lisible à l'audit
+    console.log("WB-10 PASS — rapport joint, lisible par le SO");
+  });
+});
