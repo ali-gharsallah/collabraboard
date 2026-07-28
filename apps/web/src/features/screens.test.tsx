@@ -768,3 +768,26 @@ describe("FE-RW — R283 : sdar/sdgar rendent, ne dupliquent pas (RW-04)", () =>
     expect(screen.getByTestId("grille-matrice")).toBeInTheDocument();            // même composant, autre configuration
   });
 });
+
+describe("FE-AS — R287 : le flux côté écran (AS-06, idempotence par référence)", () => {
+  it("AS-06 front : une référence resservie (reconnexion) ne redéclenche RIEN — dédup par seq, watermark transmis", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let lastEventId = "";
+    // Le serveur resert seq 1 DEUX fois (rattrapage) + seq 2 — le flux ne porte que des références
+    server.use(http.get("*/v1/events/stream", ({ request }) => {
+      lastEventId = request.headers.get("last-event-id") ?? "";
+      return new HttpResponse(
+        'id: 1\nevent: reference\ndata: {"seq":1,"type":"kyc.created","aggregate_id":"A"}\n\n' +
+        'id: 1\nevent: reference\ndata: {"seq":1,"type":"kyc.created","aggregate_id":"A"}\n\n' +
+        'id: 2\nevent: reference\ndata: {"seq":2,"type":"riskcase.ouvert","aggregate_id":"B"}\n\n',
+        { headers: { "Content-Type": "text/event-stream" } });
+    }));
+    const { ouvrirFlux } = await import("../lib/flux");
+    const recus: number[] = [];
+    const fermer = ouvrirFlux((ref) => recus.push(ref.seq), { periodeMs: 60000 });
+    await new Promise((r) => setTimeout(r, 50));
+    fermer();
+    expect(recus).toEqual([1, 2]);                                   // seq 1 UNE seule fois à l'écran
+    expect(lastEventId).toBe("0");                                   // le dernier point connu est TRANSMIS (journal, pas mémoire serveur)
+  });
+});

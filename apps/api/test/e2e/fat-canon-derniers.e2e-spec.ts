@@ -190,3 +190,75 @@ describe("FAT CANON DERNIERS — R286 : watermarks, dead-letters, échec visible
     console.log("AS-05 PASS — ordre par agrégat tenu, ordre inter-agrégats jamais supposé");
   });
 });
+
+// ── R287 : SSE, projection éphémère — le flux DESCEND, la commande MONTE en HTTP (AS-06..08) ──
+
+describe("FAT CANON DERNIERS — R287 : hub SSE (AS-06..08)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), AUTRE_RM = randomUUID(), CO = randomUUID();
+  const clientRM = randomUUID(), clientAutre = randomUUID();
+
+  const maxSeq = async (): Promise<bigint> =>
+    BigInt(((await prisma.$queryRawUnsafe<any[]>(`SELECT COALESCE(MAX(id),0)::bigint m FROM domain_events`))[0].m));
+  const emettre = (clientId: string, type = "kyc.created") =>
+    prisma.domainEvent.create({ data: { tenantId: T, type, aggregateId: randomUUID(),
+      payload: { clientId, code: "K" }, at: new Date().toISOString() } });
+  // Le flux en mode rattrapage borné (attente=0) : backlog depuis Last-Event-ID, puis fin — parseable en test
+  const flux = async (user: string, role: string, depuis: bigint) => {
+    const r = await request(http).get("/v1/events/stream?attente=0")
+      .set(bearer(T, user, role)).set("Last-Event-ID", String(depuis));
+    expect(r.status).toBe(200);
+    expect(r.headers["content-type"]).toContain("text/event-stream");
+    const refs = [...r.text.matchAll(/^data: (.+)$/gm)].map((m) => JSON.parse(m[1]));
+    const ids = [...r.text.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
+    return { refs, ids, brut: r.text };
+  };
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientRM); await seedTenantClient(prisma, T, clientAutre);
+    await prisma.client.update({ where: { id: clientRM }, data: { rmUserId: RM } });        // le client DU RM
+    await prisma.client.update({ where: { id: clientAutre }, data: { rmUserId: AUTRE_RM } }); // hors scope RM
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("AS-06 [R287] la reconnexion ne perd NI ne double : coupure pendant 3 événements → Last-Event-ID les resert UNE fois, depuis le JOURNAL", async () => {
+    const avant = await maxSeq();                                            // « dernier point connu » du client SSE
+    await emettre(clientRM); await emettre(clientRM); await emettre(clientRM); // 3 événements PENDANT la coupure
+    const r1 = await flux(CO, "CO", avant);                                  // reconnexion : Last-Event-ID = watermark
+    expect(r1.refs.length).toBe(3);                                          // les 3 arrivent — rien de perdu
+    expect(new Set(r1.ids).size).toBe(r1.ids.length);                        // aucun doublon dans le flux
+    expect(r1.ids).toEqual([...r1.ids].sort((a, b) => a - b));               // ordre du journal (seq)
+    // Le message est une RÉFÉRENCE (forme R285) — jamais l'état de vérité
+    expect(Object.keys(r1.refs[0]).sort()).toEqual(["aggregate_id", "event_id", "occurred_at", "seq", "tenant_id", "type"]);
+    expect(r1.brut).not.toContain("Suzuki");                                 // aucun payload métier
+    // Re-reconnexion au NOUVEAU watermark : rien ne se resert — pas de doublon à l'écran
+    const r2 = await flux(CO, "CO", BigInt(r1.ids[r1.ids.length - 1]));
+    expect(r2.refs.length).toBe(0);
+    console.log("AS-06 PASS — rattrapage par le journal, une seule fois, références seules");
+  });
+
+  it("AS-07 [R287] RIEN ne monte par le flux : le canal est descente SEULE — toute action reste un POST HTTP audité", async () => {
+    await request(http).post("/v1/events/stream").set(bearer(T, CO, "CO")).send({ commande: "interdite" }).expect(404);
+    await request(http).put("/v1/events/stream").set(bearer(T, CO, "CO")).send({}).expect(404);
+    // La revue de code AS-01 garantit déjà : aucun WebSocket dans src/modules — le canal bidirectionnel n'existe pas
+    console.log("AS-07 PASS — descente seule, aucune commande entrante");
+  });
+
+  it("AS-08 [R287] le flux respecte le SCOPE : l'événement d'un client hors périmètre RM ne part JAMAIS (même la référence) ; le CO le reçoit", async () => {
+    const avant = await maxSeq();
+    const evRM = await emettre(clientRM);
+    const evAutre = await emettre(clientAutre);
+    const vuRM = await flux(RM, "RM", avant);
+    expect(vuRM.ids).toContain(Number(evRM.id));                             // SON client : reçu
+    expect(vuRM.ids).not.toContain(Number(evAutre.id));                      // hors scope : la référence N'EXISTE PAS (OL-34)
+    const vuCO = await flux(CO, "CO", avant);
+    expect(vuCO.ids).toEqual(expect.arrayContaining([Number(evRM.id), Number(evAutre.id)])); // voit-tout : les deux
+    // ADMIN : aucune donnée client, même en référence (matrice A.3)
+    await request(http).get("/v1/events/stream?attente=0").set(bearer(T, randomUUID(), "ADMIN")).expect(403);
+    console.log("AS-08 PASS — scope appliqué à l'abonnement, default-deny sur la référence");
+  });
+});

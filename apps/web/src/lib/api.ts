@@ -6,7 +6,7 @@
 // normalisées), asOf (rejeu à date R48/R49), OLIVE_AUTH_MODE (JWT par défaut ; headers-mode câblé
 // mais INERTE tant que le backend n'accepte pas les en-têtes — cf. docs/ECARTS-FRONT.md).
 
-const apiBase = (): string | undefined => (window as unknown as { OLIVE_API_URL?: string }).OLIVE_API_URL;
+export const apiBase = (): string | undefined => (window as unknown as { OLIVE_API_URL?: string }).OLIVE_API_URL;
 
 /** Vrai quand l'API n'est pas connectée (mode démo). Lisible par n'importe quel écran. */
 export function isDemoMode(): boolean {
@@ -51,6 +51,8 @@ function sessionHeaders(): Record<string, string> {
   const t = sessionStorage.getItem("olive_jwt");
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
+/** R287 : en-têtes d'auth du flux SSE (fetch porte les en-têtes, contrairement à EventSource). */
+export function fluxHeaders(): Record<string, string> { return sessionHeaders(); }
 
 // Ajoute ?asOf= si une vue historique est active (ou passée explicitement). Le backend ratifié
 // n'expose le rejeu que sur des routes dédiées (cf. ECARTS-FRONT) : le paramètre est inoffensif ailleurs.

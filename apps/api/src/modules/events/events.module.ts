@@ -3,6 +3,7 @@ import { OutboxWorker } from "./outbox.worker";
 import { GoldenRecordProjector } from "./golden-record.projector";
 import { CaseProposalConsumer } from "./case-proposal.consumer";
 import { EventsController } from "./events.controller";
+import { SseController } from "./sse.controller";
 import { OnboardingModule } from "../onboarding/onboarding.module";
 import { RiskCaseModule } from "../riskcases/risk-case.module";
 // R104 : OutboxWorker dépend de GoldenRecordProjector (→ AuditService). Le câblage
@@ -14,7 +15,7 @@ import { RiskCaseModule } from "../riskcases/risk-case.module";
 // RiskCaseModule ; contrôleur santé/rejeu (T9 étendu : dead-letters visibles, rejeu tracé).
 @Module({
   imports: [OnboardingModule, RiskCaseModule],
-  controllers: [EventsController],
+  controllers: [EventsController, SseController],       // R287 : hub SSE — descente seule
   providers: [OutboxWorker, GoldenRecordProjector, CaseProposalConsumer],
   exports: [OutboxWorker],
 })

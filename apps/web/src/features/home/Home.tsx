@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
+import { ouvrirFlux } from "../../lib/flux";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { tokens } from "../../theme/tokens";
 
@@ -17,8 +18,8 @@ type Session = { role?: string };
 const role = (): string => ((window as unknown as { OLIVE_SESSION?: Session }).OLIVE_SESSION?.role) ?? "CO";
 
 // Une tuile = une source, un état indépendant (chargement / indisponible / vide / données).
-function Tuile<T>({ titre, path, seed, rendre, clic }: {
-  titre: string; path: string; seed: T; rendre: (data: T) => React.ReactNode; clic?: string;
+function Tuile<T>({ titre, path, seed, rendre, clic, fluxVersion }: {
+  titre: string; path: string; seed: T; rendre: (data: T) => React.ReactNode; clic?: string; fluxVersion?: number;
 }) {
   const [etat, setEtat] = useState<{ data: T | null; indisponible: boolean; charge: boolean }>({ data: null, indisponible: false, charge: false });
   const charger = useCallback(async () => {
@@ -28,7 +29,7 @@ function Tuile<T>({ titre, path, seed, rendre, clic }: {
     if (!isDemoMode() && r.isDemo) setEtat({ data: null, indisponible: true, charge: true });
     else setEtat({ data: r.data, indisponible: false, charge: true });
   }, [path]);
-  useEffect(() => { charger(); }, [charger]);
+  useEffect(() => { charger(); }, [charger, fluxVersion]);        // R287 : une référence du flux ⇒ la tuile REFETCHE sa source
   return <div data-tuile={titre} style={{ flex: "1 1 240px", padding: 12, borderRadius: tokens.radius.lg,
     background: tokens.color.surface, border: `1px solid ${tokens.color.border}`, minHeight: 90 }}>
     <div style={{ fontWeight: 700, fontSize: 13, color: tokens.color.olive700 }}>{titre}</div>
@@ -58,6 +59,11 @@ export function Home() {
     .then((x) => setMods(x.data)); }, []);
   const actif = (code: string) => !!mods && (!mods.enforcement || (mods.modules ?? []).some((m) => m.code === code));
   const cpsi = actif("cpsi");
+  // R287 (pilote live) : le hub SSE notifie des RÉFÉRENCES — jamais la donnée. Chaque référence
+  // incrémente la version de flux ; les tuiles refetchent LEUR source (droits appliqués serveur).
+  // L'idempotence par seq (lib/flux) garantit qu'une reconnexion ne double rien à l'écran (AS-06).
+  const [fluxTick, setFluxTick] = useState(0);
+  useEffect(() => ouvrirFlux(() => setFluxTick((t) => t + 1)), []);
   if (mods === null) return <div><h3>Accueil</h3><div style={{ height: 18, borderRadius: 4, background: "#eee", maxWidth: 400 }}/></div>;
 
   return <div>
@@ -66,11 +72,11 @@ export function Home() {
     <p style={{ fontSize: tokens.font.sm, color: tokens.color.muted }}>Chaque chiffre vient de sa source réelle, dans le périmètre
       exact de votre rôle (appliqué serveur). Une source en panne se dit <strong>indisponible</strong> — jamais zéro.</p>
     <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-      {tous && <Tuile titre="Visas en attente de moi" path="/v1/kyc/visas/pending"
+      {tous && <Tuile fluxVersion={fluxTick} titre="Visas en attente de moi" path="/v1/kyc/visas/pending"
         seed={[{ kycCode: "K-DEMO", section: "IDENTITY", requiredRole: "CO" }]}
         rendre={(v: { kycCode: string; section: string }[]) => <div>{n(v)}{v.slice(0, 3).map((x, i) => <div key={i} style={{ color: tokens.color.muted }}>{x.kycCode} · {x.section}</div>)}</div>}
         clic="dossier concerné"/>}
-      {t1 && <Tuile titre="Mes dossiers KYC" path="/v1/kyc"
+      {t1 && <Tuile fluxVersion={fluxTick} titre="Mes dossiers KYC" path="/v1/kyc"
         seed={[{ code: "K-DEMO", status: "IN_PROGRESS" }]}
         rendre={(ks: { status: string }[]) => {
           const parStatut = new Map<string, number>();
@@ -78,29 +84,29 @@ export function Home() {
           return ks.length ? <div>{[...parStatut.entries()].map(([s, c]) => <div key={s}>{s} : <strong>{c}</strong></div>)}</div> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
         }} clic="liste KYC filtrée"/>}
       {/* T3 : tous les rôles, ADMIN compris (matrice A.3 : SO/ADMIN = T3+T9) */}
-      <Tuile titre="Tâches ouvertes" path="/v1/tasks?status=OPEN"
+      <Tuile fluxVersion={fluxTick} titre="Tâches ouvertes" path="/v1/tasks?status=OPEN"
         seed={[{ id: "t", type: "REVUE_KYC" }]}
         rendre={(ts: { type: string }[]) => <div>{n(ts)}{ts.slice(0, 5).map((t, i) => <div key={i} style={{ color: tokens.color.muted }}>{t.type}</div>)}</div>}
         clic="écran Tâches"/>
-      {risque && cpsi && <Tuile titre="Alertes AML scorées" path="/v1/cpsi/alerts"
+      {risque && cpsi && <Tuile fluxVersion={fluxTick} titre="Alertes AML scorées" path="/v1/cpsi/alerts"
         seed={{ alertes: [{ client: "c", scenario: "SC" }] }}
         rendre={(a: { alertes: unknown[] }) => n(a.alertes ?? [])} clic="AML → Signaux scorés"/>}
-      {["CO", "CO_SR", "DIR"].includes(r) && <Tuile titre="Risk cases" path="/v1/riskcases"
+      {["CO", "CO_SR", "DIR"].includes(r) && <Tuile fluxVersion={fluxTick} titre="Risk cases" path="/v1/riskcases"
         seed={[{ id: "rc", statut: "NOUVELLE" }]}
         rendre={(rc: { statut: string }[]) => {
           const par = new Map<string, number>();
           rc.forEach((c) => par.set(c.statut, (par.get(c.statut) ?? 0) + 1));
           return rc.length ? <div>{[...par.entries()].map(([s, c]) => <div key={s}>{s} : <strong>{c}</strong></div>)}</div> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>;
         }} clic="Risk case manager"/>}
-      {["CO_SR", "BRM", "DIR"].includes(r) && cpsi && <Tuile titre="Propositions CPSI en attente" path="/v1/cpsi/params/proposals"
+      {["CO_SR", "BRM", "DIR"].includes(r) && cpsi && <Tuile fluxVersion={fluxTick} titre="Propositions CPSI en attente" path="/v1/cpsi/params/proposals"
         seed={[{ id: "PROP-1", statut: "EN_ATTENTE" }]}
         rendre={(ps: { statut: string }[]) => n(ps.filter((p) => p.statut === "EN_ATTENTE"))} clic="écran propositions"/>}
-      {r === "ADMIN" && cpsi && <Tuile titre="Santé de la porte CPSI" path="/v1/cpsi/health"
+      {r === "ADMIN" && cpsi && <Tuile fluxVersion={fluxTick} titre="Santé de la porte CPSI" path="/v1/cpsi/health"
         seed={{ profondeurJournal: 0, dernierRejeuMs: null }}
         rendre={(h: { profondeurJournal: number; dernierRejeuMs: number | null }) =>
           <div>journal : <strong>{h.profondeurJournal}</strong> évts · rejeu {h.dernierRejeuMs ?? "—"} ms</div>} clic="écran cpsiparam"/>}
       {/* T8 (partie 2 débloquants, R276-R278) : CoC non traités — répartition par matérialité, HAUTE en rouge */}
-      {["RM", "CO"].includes(r) && <Tuile titre="CoC non traités" path="/v1/coc?statut=OUVERT,EN_TRAITEMENT"
+      {["RM", "CO"].includes(r) && <Tuile fluxVersion={fluxTick} titre="CoC non traités" path="/v1/coc?statut=OUVERT,EN_TRAITEMENT"
         seed={{ total: 1, parMaterialite: { HAUTE: 1 } }}
         rendre={(c: { total: number; parMaterialite: Record<string, number> }) => <div>
           {c.total ? <strong style={{ fontSize: 20 }}>{c.total}</strong> : <span style={{ color: tokens.color.muted }}>Aucun élément</span>}
@@ -108,13 +114,13 @@ export function Home() {
             style={{ color: m === "HAUTE" ? tokens.color.danger : tokens.color.muted }}>{m} : {x}</div>)}</div>}
         clic="écran CoC"/>}
       {/* T7 (partie 1 débloquants, R272-R275) : reviews dues sous 30 j — EN_RETARD est un fait CALCULÉ servi */}
-      {["RM", "ARM", "CO"].includes(r) && <Tuile titre="Reviews à échéance" path="/v1/reviews/deadlines?horizonJours=30"
+      {["RM", "ARM", "CO"].includes(r) && <Tuile fluxVersion={fluxTick} titre="Reviews à échéance" path="/v1/reviews/deadlines?horizonJours=30"
         seed={[{ clientId: "c-demo", ddlLevel: "CDD", dueDate: "2026-08-01", enRetard: false, joursRetard: 0 }]}
         rendre={(ds: { ddlLevel: string; dueDate: string; enRetard: boolean; joursRetard: number }[]) => <div>{n(ds)}
           {ds.slice(0, 3).map((x, i) => <div key={i} style={{ color: x.enRetard ? tokens.color.danger : tokens.color.muted }}>
             {x.ddlLevel} · {String(x.dueDate).slice(0, 10)}{x.enRetard ? ` · EN RETARD ${x.joursRetard} j` : ""}</div>)}</div>}
         clic="écran Review"/>}
-      {tous && <Tuile titre="Olivia — propositions en attente" path="/v1/olivia/proposals?statut=PENDING"
+      {tous && <Tuile fluxVersion={fluxTick} titre="Olivia — propositions en attente" path="/v1/olivia/proposals?statut=PENDING"
         seed={[]}
         rendre={(ps: unknown[]) => n(ps)} clic="écran Olivia"/>}
     </div>
