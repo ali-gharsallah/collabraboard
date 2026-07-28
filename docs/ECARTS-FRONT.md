@@ -528,3 +528,15 @@ partie, pas avant.
 - Mapping R280 : visa humain d'Ali CONFIRMÉ — consigné au canon comme décision non
   délégable ; toute évolution future du mapping moteur↔produit remonte pour visa
   (voir spec/canon-ecarts-anciens.md, « Ratification post-livraison »).
+
+## CANON REÇU (2026-07-28) — LES 2 DERNIERS ÉCARTS ONT LEUR CANON (R284-R287, RATIFIÉ)
+
+- Les deux écarts ouverts « nécessitant canon » sont désormais couverts par
+  spec/canon-so-et-transport-async.md : **rôle SO** → R284 (famille SO-01..06 après
+  mapping ratifié AU→SO — AU pris par l'IAM R89/R90) · **transport asynchrone
+  (outbox/file/SSE)** → R285-R287 (famille AS libre). Étape 0 exécutée sur le repo
+  réel : relais d'outbox existant et unique (rien à rabattre ; 2 violations latentes à
+  corriger : payload complet dans le corps webhook, catch silencieux du relais) ; SSE
+  inexistant (création) ; rôle SO absent de l'enum (ratification = migration additive).
+  Livrable : branche unique PR #46 (précédent ratifié). SOLDE de chaque écart à la fin
+  de sa partie, pas avant.
