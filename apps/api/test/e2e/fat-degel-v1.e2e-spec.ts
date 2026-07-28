@@ -193,3 +193,97 @@ describe("FAT DÉGEL V1 — R299 : exposition par devise, jamais un taux invent�
     console.log("TF-08 PASS — franchissement notifié, exposition servie");
   });
 });
+
+// ── R300 [canon R297] : SWIFT = LABORATOIRE d'analyse — parsing entrant, émission INTERDITE (TF-09..12) ──
+
+describe("FAT DÉGEL V1 — R300 : parsing MT/MX, quarantaine motivée, zéro émission (TF-09..12)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const RM = randomUUID(), CO = randomUUID();
+  const clientC = randomUUID();
+
+  const MT103 = `{1:F01BANKCHZZXXXX0000000000}{2:I103BANKGB2LXXXXN}{4:
+:20:FIX-002
+:23B:CRED
+:32A:260721CHF11800,
+:50K:/DE89370400440532013000
+TIERS PAYEUR GMBH
+:59:/CH9300010001
+Suzuki Ltd
+:71A:OUR
+-}`;
+
+  beforeAll(async () => {
+    process.env.TXFLUX_FAKE_PORT = "1";
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientC);
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...((t!.settings as any) ?? {}),
+      coreMapping: [{ compteCore: "CH93-0001", clientId: clientC, depuisLe: "2026-01-01T00:00:00.000Z" }] } } });
+    await request(http).post("/v1/txflux/importer").set(bearer(T, RM, "RM")).expect(201);
+  });
+  afterAll(async () => { delete process.env.TXFLUX_FAKE_PORT; await app.close(); });
+
+  it("TF-09 [R300] un MT103 de fixture → extraction STRUCTURÉE complète, RATTACHÉE à sa transaction par référence", async () => {
+    const r = await request(http).post("/v1/swift/analyser").set(bearer(T, CO, "CO")).send({ texte: MT103 });
+    expect(r.status).toBe(201);
+    expect(r.body.quarantaine).toBeFalsy();
+    const x = r.body.extraction;
+    expect(x.type).toBe("MT103");
+    expect(x.reference).toBe("FIX-002");
+    expect(x.devise).toBe("CHF");
+    expect(x.montant).toBe(11800);
+    expect(x.donneurOrdre).toContain("TIERS PAYEUR GMBH");                   // champ sensible SURLIGNÉ
+    expect(x.beneficiaire).toContain("Suzuki Ltd");
+    expect(r.body.transactionId).toBeTruthy();                               // rattaché à FIX-002 du journal R297
+    const liste = await request(http).get("/v1/swift/messages").set(bearer(T, CO, "CO"));
+    expect(liste.body.some((m: any) => m.reference === "FIX-002")).toBe(true);
+    console.log("TF-09 PASS — extraction structurée, rattachement par référence");
+  });
+
+  it("TF-10 [R300/R169] message INCONNU → quarantaine VISIBLE avec motif — jamais deviné", async () => {
+    const r = await request(http).post("/v1/swift/analyser").set(bearer(T, CO, "CO"))
+      .send({ texte: "{2:I999XXX}\n:20:REF-MYSTERE\ngarbage" });
+    expect(r.status).toBe(201);
+    expect(r.body.quarantaine).toBe(true);
+    expect(r.body.motif).toBeTruthy();
+    const q = await request(http).get("/v1/swift/quarantaine").set(bearer(T, CO, "CO"));
+    expect(q.status).toBe(200);
+    expect(q.body.length).toBeGreaterThanOrEqual(1);
+    expect(q.body[0].motif).toMatch(/bibliothèque|parsable/i);               // le POURQUOI, listé
+    console.log("TF-10 PASS — quarantaine motivée, visible");
+  });
+
+  it("TF-11 [R300] AUCUN endpoint d'émission SWIFT n'existe — structurellement (inventaire des routes vivantes)", async () => {
+    await request(http).post("/v1/swift/emettre").set(bearer(T, CO, "CO")).send({}).expect(404);
+    await request(http).post("/v1/swift/envoyer").set(bearer(T, CO, "CO")).send({}).expect(404);
+    const doc = await request(http).get("/v1/apidoc").set(bearer(T, CO, "CO"));
+    const routesSwift: { methode: string; chemin: string }[] = doc.body.parModule?.swift ?? [];
+    for (const route of routesSwift)
+      expect(`${route.methode} ${route.chemin}`).not.toMatch(/emettre|envoyer|send|emit/i); // le routeur VIVANT fait foi
+    expect(routesSwift.length).toBeGreaterThanOrEqual(1);                    // le labo, lui, existe
+    console.log(`TF-11 PASS — ${routesSwift.length} routes swift, zéro émission`);
+  });
+
+  it("TF-12 [R300/R298/R79] les champs de contrepartie ALIMENTENT le registre R79 : wires_third_party déclaré (formule en français), nourri par l'extraction", async () => {
+    // L'agrégation pousse l'attribut au moteur (le donneur d'ordre ≠ titulaire vu au TF-09)
+    const al = await request(http).post("/v1/txrisk/alimenter").set(bearer(T, CO, "CO"));
+    expect(al.status).toBe(201);
+    const evCpsi = await prisma.cpsiEvent.findFirst({
+      where: { tenantId: T, clientId: clientC, type: "cpsi.client.registered" } });
+    expect(((evCpsi!.payload as any).attributs).wires_third_party).toBeGreaterThanOrEqual(1);
+    // La DÉCLARATION vit au registre R79 — formule en FRANÇAIS servie par le catalogue
+    await request(http).post("/v1/cpsi/groups").set(bearer(T, CO, "CO"))
+      .send({ gid: "CH_TOUS", label: "Domiciliés CH", at: "2026-01-02T00:00:00.000Z",
+        predicat: { logique: "OU", conditions: [{ champ: "countryCode", op: "eq", val: "CH" }] } }).expect(201);
+    await request(http).post("/v1/cpsi/scenarios").set(bearer(T, CO, "CO"))
+      .send({ sid: "SC_TIERS_PAYEUR", label: "Virements de tiers", champ: "wires_third_party",
+        groupesSeuils: { CH_TOUS: 1 }, sens: "gte" }).expect(201);
+    const cat = await request(http).get("/v1/cpsi/compliance-catalogue").set(bearer(T, CO, "CO"));
+    const entree = cat.body.catalogue.find((c: any) => c.champ === "wires_third_party");
+    expect(entree).toBeTruthy();
+    expect(entree.champ_formule).toMatch(/tiers/i);                          // la formule française du registre R79
+    console.log("TF-12 PASS — attribut déclaré au registre R79, nourri par l'extraction");
+  });
+});

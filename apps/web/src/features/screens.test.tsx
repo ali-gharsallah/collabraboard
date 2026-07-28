@@ -1101,3 +1101,24 @@ describe("FE-FX — R299 : l'exposition est SERVIE, la mention « pas de taux in
     expect(screen.getAllByText(/devise d'origine/).length).toBeGreaterThanOrEqual(2);   // la mention ET la cellule
   });
 });
+
+describe("FE-SWL — R300 : le labo SWIFT rend l'extraction SERVIE et la quarantaine motivée", () => {
+  it("analyse → extraction avec champs sensibles surlignés ; quarantaine → motif tel quel", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.post("*/v1/swift/analyser", () => HttpResponse.json({ quarantaine: false, transactionId: "t1",
+        extraction: { type: "MT103", reference: "FIX-002", devise: "CHF", montant: 11800,
+          donneurOrdre: "TIERS PAYEUR GMBH", beneficiaire: "Suzuki Ltd" } })),
+      http.get("*/v1/swift/messages", () => HttpResponse.json([])),
+      http.get("*/v1/swift/quarantaine", () => HttpResponse.json([{ motif: "type MT999 hors bibliothèque déclarée", apercu: "…", at: "2026-07-28" }])));
+    const { SwiftLab } = await import("./swift/SwiftLab");
+    render(<SwiftLab/>);
+    fireEvent.change(screen.getByPlaceholderText(/Coller un message/), { target: { value: "{2:I103}..." } });
+    fireEvent.click(screen.getByRole("button", { name: /^Analyser$/ }));
+    const x = await screen.findByTestId("swift-extraction");
+    expect(x).toHaveTextContent(/MT103/);
+    expect(x).toHaveTextContent(/TIERS PAYEUR GMBH/);                        // champ sensible SURLIGNÉ
+    expect(x).toHaveTextContent(/rattaché au journal/);
+    expect(await screen.findByText(/MT999 hors bibliothèque/)).toBeInTheDocument(); // motif TEL QUEL
+  });
+});

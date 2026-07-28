@@ -50,6 +50,24 @@ export function agregatsTransactionnels(txs: { dateValeur: string; montant: any;
 export class TxRiskService {
   constructor(private prisma: PrismaService, private audit: AuditService, private cpsi: CpsiService) {}
 
+  // TF-12 : les champs de contrepartie extraits par le labo SWIFT (R300) nourrissent
+  // l'attribut R79 `wires_third_party` — un COMPTE de messages dont le donneur d'ordre
+  // n'est pas le titulaire (troisième main), par client. Une mesure, rien de plus.
+  private async tiersParClient(tenantId: string): Promise<Map<string, number>> {
+    const evs = await this.prisma.domainEvent.findMany({
+      where: { tenantId, type: "swift.message.parse" } });
+    const n = new Map<string, number>();
+    for (const e of evs) {
+      const p: any = e.payload;
+      if (!p.clientId || !p.extraction?.donneurOrdre) continue;
+      const fiche = await this.prisma.client.findFirst({ where: { id: p.clientId, tenantId } });
+      const donneur = String(p.extraction.donneurOrdre).toUpperCase();
+      if (fiche && !donneur.includes(String(fiche.name).toUpperCase()))
+        n.set(p.clientId, (n.get(p.clientId) ?? 0) + 1);
+    }
+    return n;
+  }
+
   // ── TF-04 : ALIMENTER le moteur — les attributs partent, aucune conclusion ne se prend ici. ──
   async alimenter(ctx: Ctx) {
     const txs = await this.prisma.transaction.findMany({
@@ -57,10 +75,12 @@ export class TxRiskService {
     const parClient = new Map<string, typeof txs>();
     for (const t of txs) parClient.set(t.clientId!, [...(parClient.get(t.clientId!) ?? []), t]);
     const now = new Date().toISOString();
+    const tiers = await this.tiersParClient(ctx.tenantId);
     let clients = 0, dejaEnregistres = 0;
     for (const [clientId, liste] of parClient) {
       const fiche = await this.prisma.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });
-      const attributs = agregatsTransactionnels(liste as any, now);
+      const attributs = { ...agregatsTransactionnels(liste as any, now),
+        wires_third_party: tiers.get(clientId) ?? 0 };
       try {
         await this.cpsi.enregistrerClient(ctx, { clientId, at: now,
           statique: { countryCode: fiche?.country ?? "CH", type: (fiche?.structure ?? "pp").toLowerCase() },

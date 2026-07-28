@@ -45,6 +45,7 @@ Les cinq colonnes :
 | Audit & transport (+ Audit IT) | hors dictionnaire maquette (écran canon R284) ✓ | journaux + santé transport + rejeu ✓ | ✓ | SO/ADMIN/DIR selon route ✓ | SO-01..08 servis ✓ |
 | Transactions Risk Monitoring (txrisk) | « Transactions Risk Monitoring » = clé I18N ✓ | flux + live SSE + tendances + drill AML ✓ | ✓ | refus gracieux sans port (R167) rendu ✓ | journal/tendances servis, agrégats poussés AU moteur — zéro verdict front ✓ |
 | Multi-devise & FX (fx) | « Multi-devise & FX » = clé I18N ✓ | table d'exposition par devise ✓ | ✓ (franchissement = danger sémantique) | mention « jamais un taux inventé » rendue (R167) ✓ | exposition servie, seuil notifié SERVEUR — zéro calcul front ✓ |
+| Analyseur SWIFT/SEPA (swiftlab) | « Analyseur SWIFT/SEPA » = clé I18N ✓ | textarea → extraction + historique + quarantaine ✓ | ✓ (quarantaine = warn sémantique) | motifs de quarantaine rendus TELS QUELS (FE-04) ✓ | extraction SERVIE, champs sensibles surlignés — zéro parsing front ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 
@@ -59,8 +60,9 @@ Les cinq colonnes :
 
 ## Ce que la grille NE couvre PAS (périmètre)
 
-- Les écrans de la maquette NON livrés (SWIFT/SEPA, Multi-devise & FX, Legal — Contrats,
-  Octopulse OpRisk, BI, Mobile Banking, Veille réglementaire) restent GELÉS (catégorie C
-  du triage) — aucune ligne de grille ne peut exister pour un écran sans canon.
+- Dégel PO 2026-07-28 : les domaines ex-catégorie C ont désormais leur canon
+  (spec/canon-degel-complet-vagues-1-9.md) — chaque écran livré par vague ajoute SA ligne
+  ici (SWIFT/SEPA, Multi-devise & FX livrés en vague 1 ; Legal, BI, Mobile, Octopulse
+  OpRisk suivront leur vague). Un écran encore sans livraison n'a pas de ligne.
 - La passe est REJOUABLE : tout nouvel écran livré ajoute SA ligne aux deux tableaux ;
   le template PR (.github/pull_request_template.md) en fait un critère d'acceptation.

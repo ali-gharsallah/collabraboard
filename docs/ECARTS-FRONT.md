@@ -705,3 +705,34 @@ partie, pas avant.
   donnée de maquette migrée, frontière de vérification complète).
   Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 6). LE CANON TRIAGE
   FINAL EST SOLDÉ : DC-08/09, SO-07/08, XB-01..05, LG-01..05 tous verts + grille livrée.
+
+## SOLDE — DÉGEL VAGUE 1 : FLUX / TXRISK / FX / SWIFT (2026-07-28, TF-01..12 verts)
+
+- **R297 [canon R294]** : table `transactions` append-only (trigger + RLS), alimentée
+  par le port core banking seul — refus gracieux typé sans port, fixture en TEST
+  uniquement (TXFLUX_FAKE_PORT), idempotence (source, ref_externe), rattachement par
+  coreMapping (R169), enrichissement tracé (IBAN → pays, hash jamais l'IBAN).
+- **R298 [canon R295]** : txrisk = SURFACE — agrège le journal en attributs R79
+  (tx_par_mois, volume_tx_mensuel_chf, rapidite_in_out, ratio_cross_border,
+  wires_third_party) et les pousse au moteur ; le scénario vit au catalogue CPSI et
+  détecte via le moteur (TF-04, revue d'architecture automatisée : aucune comparaison
+  dans le module) ; live SSE par références (TF-05) ; tendances rejouées à date (TF-06).
+- **R299 [canon R296]** : GET /v1/fx/exposition — aucune route d'écriture ; sans port FX,
+  devise d'origine + mention (jamais un taux inventé) ; `fx_seuils_exposition` notifie
+  (fx.seuil.franchi), rien bloqué.
+- **R300 [canon R297]** : labo SWIFT — parserSwift déterministe (MT103/MT202/pacs.008 via
+  `swift_types_actifs`), extraction rattachée par :20 ↔ ref_externe, hors bibliothèque /
+  non parsable = quarantaine motivée visible ; ZÉRO route d'émission (TF-11 vérifie le
+  routeur vivant via /v1/apidoc) ; champs sensibles → wires_third_party (TF-12, formule
+  française du registre R79 servie par le catalogue).
+- **ÉCARTS CONSIGNÉS** : (1) le rafraîchissement des attributs d'un client DÉJÀ enregistré
+  au moteur CPSI est une extension à ratifier (événement moteur nouveau) — compté
+  `dejaEnregistres`, jamais silencieux ; (2) ATTR_DEFS (engine.py) est INTOUCHABLE : la
+  vague n'ajoute AUCUN attribut nouveau — elle NOURRIT des attributs déjà déclarés
+  (wires_third_party, rapidite_in_out…) ; un attribut réellement nouveau se déclarerait
+  dans bridge.py (hors zone intouchable), à ratifier le moment venu ; (3) le port FX réel
+  et la conversion sont branchables sans changer le contrat (interface `taux` livrée,
+  aucun taux par défaut) ; (4) pacs.008 : extraction minimale (MsgId) — l'extension des
+  champs MX suit la demande, la quarantaine couvre le reste.
+  3 écrans : txrisk, fx, swiftlab (66 onglets) — lignes de grille ajoutées.
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 1).
