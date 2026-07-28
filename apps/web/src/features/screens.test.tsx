@@ -1017,3 +1017,56 @@ describe("FE-DC2 — R292 : le patron de projection se généralise (DC-08/09)",
     (w as any).OLIVE_SESSION = undefined;
   });
 });
+
+describe("FE-XB — R293-R295 : le country manual rendu, le check servi, rien de calculé au front", () => {
+  const MANUAL = [
+    { jurisdiction: "SA", activite: "prospection", verdict: "INTERDITE", depuisLe: "2024-01-01", source: "mémo Legal 2024-003" },
+    { jurisdiction: "AE", activite: "prospection", verdict: "SOUMISE_A_LICENCE", licence: "DFSA", depuisLe: "2024-01-01" },
+  ];
+
+  it("XB-front-01 : le manual est RENDU depuis le registre (clé existante), le check affiche le verdict SERVI — y compris NON DÉTERMINÉ", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let corps: any = null;
+    server.use(
+      http.get("*/v1/parametres/valeur/tripCrossBorderReferentiel", () => HttpResponse.json(MANUAL)),
+      http.get("*/v1/crossborder/reporting", () => HttpResponse.json({ parPays: { SA: { total: 3, reverseSolicitation: 2 } } })),
+      http.post("*/v1/crossborder/check", async ({ request }) => {
+        corps = await request.json();                                              // le front ENVOIE, le moteur est serveur
+        return HttpResponse.json({ verdict: "NON_DETERMINE", manualAt: "2026-07-28T00:00:00Z",
+          note: "analyse Legal requise — la banque n'a pas de position pour cette entrée",
+          parActivite: [{ activite: "prospection", verdict: "NON_DETERMINE", detail: "juridiction/activité hors manual — analyse Legal requise" }] });
+      }));
+    const { CrossBorder } = await import("./crossborder/CrossBorder");
+    render(<CrossBorder/>);
+    fireEvent.click(screen.getByRole("button", { name: /Charger/ }));
+    expect(await screen.findByText(/mémo Legal 2024-003/)).toBeInTheDocument();    // la SOURCE de la position, rendue
+    expect(screen.getByText(/licence DFSA/)).toBeInTheDocument();
+    expect(screen.getByText(/dont 2 en reverse solicitation/)).toBeInTheDocument(); // R295 : mesuré, jamais bloqué
+    fireEvent.change(screen.getByPlaceholderText(/juridiction \(ISO2\)/), { target: { value: "JP" } });
+    fireEvent.click(screen.getByRole("button", { name: /Évaluer/ }));
+    const verdict = await screen.findByTestId("verdict-xb");
+    expect(verdict).toHaveTextContent(/NON_DETERMINE/);                            // default-deny AFFICHÉ tel quel
+    expect(verdict).toHaveTextContent(/analyse Legal requise/);
+    expect(corps.juridiction).toBe("JP");                                          // rien de calculé au front
+  });
+
+  it("XB-front-02 : dérogation demandée puis visa — le refus R13 du backend s'affiche TEL QUEL (FE-04)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/parametres/valeur/tripCrossBorderReferentiel", () => HttpResponse.json(MANUAL)),
+      http.get("*/v1/crossborder/reporting", () => HttpResponse.json({ parPays: {} })),
+      http.post("*/v1/crossborder/derogations", () => HttpResponse.json({ id: "d1d1d1d1-0000-0000-0000-000000000000", enAttenteDeVisa: true })),
+      http.post("*/v1/crossborder/derogations/:id/visa", () => HttpResponse.json(
+        { message: "R13 : le visa de dérogation exige un SECOND regard — l'initiateur ne vise pas" }, { status: 403 })));
+    const { CrossBorder } = await import("./crossborder/CrossBorder");
+    render(<CrossBorder/>);
+    fireEvent.click(screen.getByRole("button", { name: /Charger/ }));
+    await screen.findByText(/mémo Legal 2024-003/);
+    fireEvent.change(screen.getByPlaceholderText("voyageId"), { target: { value: "v1" } });
+    fireEvent.change(screen.getByPlaceholderText(/motif \(R7\)/), { target: { value: "réunion existante" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Demander$/ }));
+    expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/en attente du visa d'un second/);
+    fireEvent.click(screen.getByRole("button", { name: /Viser \(second regard\)/ }));
+    expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/R13 : le visa de dérogation exige un SECOND regard/);
+  });
+});

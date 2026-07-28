@@ -627,3 +627,33 @@ partie, pas avant.
   (le rejeu reste ADMIN/SO — piloter n'est pas opérer) et les dead-letters entrent dans
   « Santé plateforme ». DC-01..07 : les 7 scénarios Command Center sont TOUS verts —
   plus aucune tuile amputée. Référence : spec/proposition-R290-R291-extensions.md.
+
+## SOLDE — SÉQUENCE 4 TRIAGE FINAL : CROSS-BORDER R293-R295 (2026-07-28, XB-01..05 verts)
+
+- **R293 — le country manual = la clé EXISTANTE `tripCrossBorderReferentiel` ENRICHIE**
+  (source, licence, dateAvis), JAMAIS un second référentiel — la collision détectée à
+  l'étape 0 (le canon parlait d'un « nouveau » manual, R223 en portait déjà un) se résout
+  par enrichissement, ratifié. O-Live STRUCTURE la position de la banque (référence du mémo
+  juridique) — l'INTERDIT « avis juridique généré » est tenu : aucun texte d'avis produit.
+  Juridiction absente = NON DÉTERMINÉ (default-deny R169) ; versionné par depuisLe, rejoué
+  des deux côtés de la date (XB-01/02).
+- **R294 — UN moteur (`evaluerXb` pur), DEUX surfaces** : check pré-voyage (contexte
+  voyageId) et check à la relation (contexte kycCode) — verdicts IDENTIQUES prouvés sur
+  3 juridictions (XB-05). Le résultat est un ÉVÉNEMENT (entrée + version du manual +
+  verdict) ; conformité DÉRIVÉE du journal, rien de bloqué (R39), dérogation motivée +
+  visa d'un second (R13) — XB-03. État dérivé des événements, AUCUNE table nouvelle.
+- **R295 — reverse solicitation documentée ou refusée** : pays restreint sans qualification
+  « à l'initiative du client » → 422 XB_QUALIFICATION_REQUISE ; preuve GED obligatoire en
+  EDD ou si `preuve_reverse_solicitation=preuve` → 422 XB_PREUVE_REQUISE ; reporting par
+  pays MESURE (XB-04). Écran `crossborder` = 63e onglet (manual rendu, check servi,
+  dérogations, reporting — FE-XB verts, rien de calculé au front).
+- **ÉCARTS CONSIGNÉS** : (1) le canon donnait le visa de dérogation à LEGAL — rôle ABSENT
+  du RBAC tenant ; mappé sur la clé R-Q `visa_derogation_xb` (défaut DIR), un tenant avec
+  un rôle Legal l'y postera ; (2) le canon voulait une « section 10 » au gabarit KYC — les
+  SECTIONS_BY_WORKFLOW sont un paramètre gouverné (R30) : le check à la relation vit comme
+  ÉVÉNEMENT rattaché au dossier (contexte kycCode), pas comme section de gabarit imposée ;
+  (3) l'`avisA` interne des trips (R223) reste l'avis ratifié du module voyage — le manual
+  ne le remplace pas, les deux lisent la MÊME clé ; (4) hygiène de test : watermark posé
+  « au présent » (R286) au beforeAll de fat-swarm — le backlog inter-suites polluait la
+  photo SW-14 (fuite d'ordonnancement jest, pas un bug produit).
+  Référence : spec/canon-triage-final-nav-oidc-conformite.md (séquence 4).

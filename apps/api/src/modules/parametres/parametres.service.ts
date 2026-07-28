@@ -171,7 +171,7 @@ export const REGISTRE_RQ: Entree[] = [
   //    d'approbation et les sévérités sont des règles : réglés par le registre (R7/R125). ──
   { cle: "tripCrossBorderReferentiel", type: "json", defaut: [], regle: "R223", requis: false,
     exemple: [{ jurisdiction: "SA", activite: "sollicitation", verdict: "INTERDITE", depuisLe: "2026-01-01" }],
-    description: "Référentiel cross-border versionné (par date d'effet, R229) : verdict AUTORISEE|INTERDITE|SOUMISE_A_LICENCE par (juridiction, activité). L'avis ne décide pas — l'approbation reste humaine (R223)." },
+    description: "LE country manual (R293 : enrichi — jamais un second référentiel) : verdict AUTORISEE|INTERDITE|SOUMISE_A_LICENCE par (juridiction, activité), versionné par date d'effet (R229), avec licence/source/dateAvis (référence du mémo juridique — la banque assume sa position, O-Live la structure). Juridiction absente = NON DÉTERMINÉ (default-deny). L'avis ne décide pas — l'approbation reste humaine (R223)." },
   { cle: "tripKycCheckSeverity", type: "string", defaut: "INFORMATIF", regle: "R224", requis: false,
     description: "Sévérité si un client visité n'a pas de KYC approuvé : INFORMATIF ou BLOQUANT_APPROBATION (R224)." },
   { cle: "tripApprovalMatrix", type: "json", defaut: ["DIR"], regle: "R225", requis: false,
@@ -198,6 +198,11 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Cross-border — R293-R295 (canon triage final, ratifié 2026-07-28). ──
+  { cle: "visa_derogation_xb", type: "string", defaut: "DIR", regle: "R294", requis: false,
+    description: "Rôle qui vise une dérogation cross-border (R13 : l'initiateur exclu). Le canon dit LEGAL — rôle absent du RBAC tenant : mappé DIR (consigné)." },
+  { cle: "preuve_reverse_solicitation", type: "string", defaut: "declaration", regle: "R295", requis: false,
+    description: "Exigence de preuve pour la reverse solicitation : declaration (tracée, suffit) ou preuve (référence GED toujours obligatoire). En EDD, la preuve est TOUJOURS exigée." },
   // ── Extension MOD-30 / SSO — R290 (ratifié 2026-07-28). ──
   { cle: "ssoOidc", type: "json", defaut: null, regle: "R290", requis: false,
     exemple: { issuer: "https://login.banque.ch/realms/olive", audience: "olive-app", roleMapping: { "grp-co": "CO" }, defaultRole: "RM" },

@@ -667,3 +667,116 @@ describe("FAT CANON DERNIERS — apidoc : la doc est GÉNÉRÉE du routeur vivan
     console.log(`apidoc PASS — ${d.total} routes générées, contrat de porte 1.1`);
   });
 });
+
+// ── R293-R295 : CROSS-BORDER — country manual versionné, check tracé, reverse solicitation (XB-01..05) ──
+
+describe("FAT CANON DERNIERS — bloc Cross-Border R293-R295 (XB-01..05)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), ADMIN = randomUUID(), DIR = randomUUID();
+  const clientId = randomUUID();
+  const voyageId = randomUUID();
+
+  const MANUAL_V1 = [
+    { jurisdiction: "SA", activite: "prospection", verdict: "INTERDITE", depuisLe: "2020-01-01", source: "mémo juridique 2020-14" },
+    { jurisdiction: "AE", activite: "prospection", verdict: "SOUMISE_A_LICENCE", depuisLe: "2020-01-01", licence: "DFSA", source: "mémo 2021-03" },
+    { jurisdiction: "GB", activite: "prospection", verdict: "AUTORISEE", depuisLe: "2020-01-01", source: "mémo 2019-01" },
+    { jurisdiction: "GB", activite: "reception_ordres", verdict: "INTERDITE", depuisLe: "2020-01-01", source: "mémo 2019-01" },
+  ];
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientId);
+    // R293 : LE country manual = la clé EXISTANTE tripCrossBorderReferentiel (R223/R229) ENRICHIE
+    // (source/licence) — jamais un second référentiel. Écrit par LE registre (motivé).
+    await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM }).expect(201); // XB-05 : la surface « relation »
+    await request(http).post("/v1/parametres/valeur/tripCrossBorderReferentiel").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: MANUAL_V1, motif: "R293 : country manual initial (mémos juridiques référencés)" }).expect(201);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("XB-01 [R293] l'ABSENT est NON DÉTERMINÉ : juridiction hors manual → « analyse Legal requise », jamais « autorisé » — évaluation tracée avec la version du manual", async () => {
+    const r = await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+      .send({ juridiction: "JP", activites: ["prospection"] });
+    expect(r.status).toBe(201);
+    expect(r.body.verdict).toBe("NON_DETERMINE");                           // default-deny (pattern R169)
+    expect(JSON.stringify(r.body)).toContain("analyse Legal requise");
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "xb.check" }, orderBy: { id: "desc" } });
+    expect((ev!.payload as any).juridiction).toBe("JP");
+    expect((ev!.payload as any).manualAt).toBeTruthy();                     // la VERSION du manual évaluée, tracée
+    console.log("XB-01 PASS — non déterminé par défaut, évaluation tracée");
+  });
+
+  it("XB-02 [R293/R68/R48] le manual SE REJOUE : position durcie à J+1 → l'évaluation d'aujourd'hui applique l'ancienne, celle de J+2 la nouvelle", async () => {
+    const demain = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    await request(http).post("/v1/parametres/valeur/tripCrossBorderReferentiel").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: [...MANUAL_V1, { jurisdiction: "GB", activite: "prospection", verdict: "INTERDITE", depuisLe: demain, source: "mémo 2026-31 (durcissement)" }],
+        motif: "R293 : GB durcie à effet J+1" }).expect(201);
+    const auj = await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+      .send({ juridiction: "GB", activites: ["prospection"] });
+    expect(auj.body.verdict).toBe("AUTORISE");                              // aujourd'hui : l'ancienne position
+    const apres = await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+      .send({ juridiction: "GB", activites: ["prospection"], at: new Date(Date.now() + 2 * 86400000).toISOString() });
+    expect(apres.body.verdict).toBe("RESTREINT");                           // à J+2 : la nouvelle (depuisLe)
+    console.log("XB-02 PASS — versionné par date d'effet, rejoué des deux côtés");
+  });
+
+  it("XB-03 [R294/R13/R39] la DÉROGATION se paie en VISA : verdict restrictif → non conforme VISIBLE (rien de bloqué) ; initiateur exclu ; visée → conforme AVEC dérogation", async () => {
+    await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+      .send({ juridiction: "SA", activites: ["prospection"], contexte: { voyageId } }).expect(201);
+    const avant = (await request(http).get(`/v1/crossborder/voyages/${voyageId}/conformite`).set(bearer(T, RM, "RM"))).body;
+    expect(avant.conforme).toBe(false);                                     // NON CONFORME — visible, jamais silencieux
+    expect(avant.verdict).toBe("RESTREINT");
+    // La dérogation est demandée par un DIR (qui DÉTIENT le rôle de visa) — R13 s'exerce alors :
+    const DIR1 = randomUUID();
+    const d = (await request(http).post("/v1/crossborder/derogations").set(bearer(T, DIR1, "DIR"))
+      .send({ voyageId, juridiction: "SA", motif: "rencontre passive à l'initiative du client, aucun démarchage" })).body;
+    const horsRole = await request(http).post(`/v1/crossborder/derogations/${d.id}/visa`).set(bearer(T, RM, "RM"));
+    expect(horsRole.status).toBe(403);                                      // le rôle d'abord (visa_derogation_xb)
+    const refus = await request(http).post(`/v1/crossborder/derogations/${d.id}/visa`).set(bearer(T, DIR1, "DIR"));
+    expect(refus.status).toBe(403);
+    expect(JSON.stringify(refus.body)).toContain("R13");                    // l'INITIATEUR ne vise pas
+    await request(http).post(`/v1/crossborder/derogations/${d.id}/visa`).set(bearer(T, DIR, "DIR")).expect(201); // un SECOND DIR vise
+    const apres = (await request(http).get(`/v1/crossborder/voyages/${voyageId}/conformite`).set(bearer(T, RM, "RM"))).body;
+    expect(apres.conforme).toBe(true);
+    expect(apres.derogation.visePar).toBe(DIR);                             // la chaîne VISIBLE au dossier
+    console.log("XB-03 PASS — non conforme visible, dérogation four-eyes, conforme AVEC dérogation");
+  });
+
+  it("XB-04 [R295] la REVERSE SOLICITATION se documente : sans qualification → refus typé ; qualifiée → enregistrée ; EDD → preuve GED obligatoire ; reporting par pays", async () => {
+    const sans = await request(http).post("/v1/crossborder/ordres").set(bearer(T, RM, "RM"))
+      .send({ clientId, pays: "GB" });
+    expect(sans.status).toBe(422);
+    expect(JSON.stringify(sans.body)).toContain("XB_QUALIFICATION_REQUISE");
+    await request(http).post("/v1/crossborder/ordres").set(bearer(T, RM, "RM"))
+      .send({ clientId, pays: "GB", qualificationInitiativeClient: true }).expect(201);
+    // Client EDD : la preuve devient OBLIGATOIRE (TRUST + LOMBARD = 50 → EDD)
+    const cEdd = randomUUID(); await seedTenantClient(prisma, T, cEdd);
+    await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId: cEdd, legalStructure: "TRUST", accountType: "LOMBARD", countryCode: "CH", rmId: RM }).expect(201);
+    const sansPreuve = await request(http).post("/v1/crossborder/ordres").set(bearer(T, RM, "RM"))
+      .send({ clientId: cEdd, pays: "GB", qualificationInitiativeClient: true });
+    expect(sansPreuve.status).toBe(422);
+    expect(JSON.stringify(sansPreuve.body)).toContain("XB_PREUVE_REQUISE");
+    await request(http).post("/v1/crossborder/ordres").set(bearer(T, RM, "RM"))
+      .send({ clientId: cEdd, pays: "GB", qualificationInitiativeClient: true, preuveRef: "GED-DOC-4711" }).expect(201);
+    const rep = (await request(http).get("/v1/crossborder/reporting").set(bearer(T, DIR, "DIR"))).body;
+    expect(rep.parPays.GB.total).toBeGreaterThanOrEqual(2);                 // mesuré, notifié — jamais bloquant (R39)
+    console.log("XB-04 PASS — refus typé, qualification tracée, preuve EDD, reporting par pays");
+  });
+
+  it("XB-05 [R294] UN moteur, DEUX surfaces : le check pré-voyage et le check à la relation donnent LE MÊME verdict pour la même entrée (3 juridictions)", async () => {
+    const kyc = await prisma.kycFile.findFirst({ where: { tenantId: T, clientId } });
+    for (const juridiction of ["SA", "AE", "JP"]) {
+      const voyage = (await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+        .send({ juridiction, activites: ["prospection"], contexte: { voyageId: randomUUID() } })).body;
+      const relation = (await request(http).post("/v1/crossborder/check").set(bearer(T, RM, "RM"))
+        .send({ juridiction, activites: ["prospection"], contexte: { kycCode: kyc!.code } })).body;
+      expect([juridiction, relation.verdict]).toEqual([juridiction, voyage.verdict]);   // MÊME moteur
+    }
+    console.log("XB-05 PASS — verdicts identiques voyage/relation sur SA, AE, JP");
+  });
+});

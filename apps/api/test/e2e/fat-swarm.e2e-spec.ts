@@ -30,6 +30,11 @@ describe("FAT SWARM — Olivia v2 Partie B (R259–R266, SW-01..18)", () => {
   beforeAll(async () => {
     ({ app, prisma } = await boot());
     http = app.getHttpServer();
+    // Hygiène R286 (« un consommateur naît au présent ») : les suites précédentes stoppent LEUR
+    // worker, leur backlog resterait sous le watermark — le tick de CETTE app le consommerait en
+    // plein SW-14 (photo byte-identique). On pose les watermarks au présent avant de commencer.
+    await prisma.$executeRaw`UPDATE event_consumers SET last_seq = (SELECT COALESCE(MAX(id), 0) FROM domain_events),
+      blocage_seq = NULL, tentatives = 0, prochaine_tentative_at = NULL`;
     await seedTenantClient(prisma, T, randomUUID());
   });
   afterAll(async () => { await app.close(); });
