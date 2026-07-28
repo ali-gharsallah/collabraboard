@@ -5,6 +5,7 @@ import { sign } from "jsonwebtoken";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { KeyStore } from "../auth/key-store";
+import { LoginRateLimiter, LIMITES } from "../auth/login-rate";
 import { ParametresService } from "../parametres/parametres.service";
 import { ParametresModule } from "../parametres/parametres.module";
 import { CocService } from "../coc/coc.module";
@@ -41,7 +42,8 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 @Injectable()
 export class MobileService {
   constructor(private prisma: PrismaService, private audit: AuditService,
-    private keys: KeyStore, private parametres: ParametresService, private coc: CocService) {}
+    private keys: KeyStore, private parametres: ParametresService, private coc: CocService,
+    private limiteur: LoginRateLimiter) {}
 
   private emit(type: string, tenantId: string, aggregateId: string, payload: any) {
     return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId, payload,
@@ -150,6 +152,7 @@ export class MobileService {
   // ── MB-02 : activation avec le code hors bande — puis le MFA est OBLIGATOIRE. ──
   async authActiver(dto: { identite?: string; code?: string }) {
     if (!dto?.identite || !dto?.code) throw new UnauthorizedException("identite et code requis");
+    this.limiteur.garder(`mobile-activer|${dto.identite}`, LIMITES.login);  // R296 (§7) — même garde que le login
     const idt = await this.prisma.mobileIdentite.findUnique({ where: { id: dto.identite } });
     if (!idt) throw new UnauthorizedException("Activation refusée");        // rien n'est révélé
     await this.actifOu404(idt.tenantId);
@@ -165,6 +168,9 @@ export class MobileService {
 
   async authLogin(dto: { identite?: string; mfa?: string }) {
     if (!dto?.identite) throw new UnauthorizedException("identite requise");
+    // R296 (§7) : la porte mobile se protège comme la porte interne — 429 typé par identité,
+    // identique que l'identité existe ou non (jamais un oracle, pattern OL-34).
+    this.limiteur.garder(`mobile-login|${dto.identite}`, LIMITES.login);
     const idt = await this.prisma.mobileIdentite.findUnique({ where: { id: dto.identite } });
     if (!idt || idt.statut !== "ACTIVE" || !idt.mfaSecret) throw new UnauthorizedException("Connexion refusée");
     await this.actifOu404(idt.tenantId);

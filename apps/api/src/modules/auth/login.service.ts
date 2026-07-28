@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { ParametresService } from "../parametres/parametres.service";
 import { AuthService } from "./auth.service";
 import { PasswordHasher } from "./password";
+import { LoginRateLimiter, LIMITES } from "./login-rate";
 
 /**
  * R296 — LOGIN DEUX TEMPS (canon triage final, ratifié 2026-07-28, LG-01..05).
@@ -25,7 +26,8 @@ const DUMMY = PasswordHasher.hash("__domaine_ou_compte_inconnu__");     // anti-
 @Injectable()
 export class LoginService {
   constructor(private prisma: PrismaService, private auth: AuthService,
-    private parametres: ParametresService, private audit: AuditService) {}
+    private parametres: ParametresService, private audit: AuditService,
+    private limiteur: LoginRateLimiter) {}
 
   private domaineDe(email?: string): string {
     const m = /^[^@\s]+@([^@\s]+\.[^@\s]+)$/.exec(String(email ?? "").trim().toLowerCase());
@@ -52,6 +54,8 @@ export class LoginService {
   // ── TEMPS 1 — LG-01/03 : {email} → {methode} ; l'inconnu est INDISTINGUABLE d'un tenant LOCAL. ──
   async methode(email?: string) {
     const domaine = this.domaineDe(email);
+    // R296 (§7) : la résolution se protège AUSSI — l'énumération de domaines se paie (429 typé)
+    this.limiteur.garder(`methode|${String(email).trim().toLowerCase()}`, LIMITES.methode);
     const tenantId = await this.resoudreTenant(domaine);
     if (!tenantId) return { methode: "LOCAL" };                            // même forme — rien de révélé (OL-34)
     if ((await this.modeEnVigueur(tenantId)) !== "sso") return { methode: "LOCAL" };
@@ -67,6 +71,9 @@ export class LoginService {
   async login(dto: { email?: string; password?: string; totp?: string }) {
     const domaine = this.domaineDe(dto?.email);
     const email = String(dto!.email).trim().toLowerCase();
+    // R296 (§7) : fenêtre glissante PAR identifiant, AVANT toute résolution — le 429 est
+    // identique que l'email existe ou non (jamais un oracle), aucune punition collective.
+    this.limiteur.garder(`login|${email}`, LIMITES.login);
     const tenantId = await this.resoudreTenant(domaine);
     if (!tenantId || !dto?.password) {
       PasswordHasher.verify(dto?.password ?? "", DUMMY);                   // leurre : même coût que la voie réelle
