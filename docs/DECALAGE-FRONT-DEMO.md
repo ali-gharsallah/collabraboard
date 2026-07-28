@@ -112,3 +112,20 @@ pas sous ces noms dans cette version de la maquette.)*
   vérification du 27.07 la lisait en local). Le présent document est donc la seule
   référence d'inventaire ; le diff élément-par-élément (Investigation ↔ AW, Olivia/BI ↔
   R253-R258/R267) attend que le fichier soit fourni.
+
+## MAJ 2026-07-28 (bis) — LA MAQUETTE EST DANS LE REPO, mapping VÉRIFIÉ SUR PIÈCE
+
+- `demo/olive-demo.html` FOURNIE par Ali et commitée (3,4 Mo, 81 items de nav) — ce
+  document n'est plus la seule référence : le diff se fait désormais sur pièce.
+- **Verdicts sur pièce** (détail : spec/canon-ecrans-html-triage.md, 0e) : AML
+  Investigation ⊆ AW confirmé · Olivia (AI Core) ⊆ R253-R258 confirmé · Dashboard
+  Exécutif ↔ R289 Command Center (livré) · Investigation financière : cœur couvert
+  (corrélation R252 + risk cases), 3 éléments non couverts LISTÉS (vue 360 par cas,
+  synthèse IA du cas, export CSV) — extensions à canon si souhaitées · **Octopulse
+  OppRisk = connecteur externe de risque opérationnel (port R167/R177)** — triage
+  proposé : catégorie C (gelé, déclencheur connecteur signé + bloc spec).
+- **Items de nav HORS périmètre du canon triage** (jamais triés à ce jour — zéro code) :
+  prospection, crossborder, txrisk (≈ transactions+AML, à mapper), fx, mobile, custody,
+  oil (≈ Islamic, couvert), compliance (Compliance Center), regwatch, apidoc,
+  integrations, wfdesigner/wfengine (≈ workflow defs, partiel), sbowner, sandbox-live,
+  wfaudit (≈ rejeu/audit, couvert en substance), auditit, admin, editorconsole.

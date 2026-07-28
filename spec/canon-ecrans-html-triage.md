@@ -41,12 +41,34 @@ MOD-30) · livrable : branche unique PR #46, séquences de commits distinctes.**
     date R68, four-eyes R13, `sso_bascule_coupe_sessions`). Pas de création silencieuse.
   - `iamguide` : aucune route « règles IAM + matrice effective » — route LECTURE SEULE
     à créer (pattern `GET /v1/cpsi/rules`) = signalée ici.
-- **0e Mapping Investigation / Olivia-BI : LA MAQUETTE N'EST PAS DANS LE REPO.**
-  `demo/olive-demo.html` n'a JAMAIS été commitée (le DECALAGE du 27.07 la lisait en
-  local). Le diff élément-par-élément est IMPOSSIBLE sur pièce ; seul l'inventaire
-  secondaire (DECALAGE-FRONT-DEMO.md, ~73 écrans) est disponible. **Écart : fournir le
-  fichier pour la vérification fine** — d'ici là, le mapping « Investigation ⊆ AW-01..08 »
-  et « Olivia/BI ⊆ R253-R258 + R267-agrégat » est ACTÉ SUR L'INVENTAIRE, pas sur pièce.
+- **0e Mapping Investigation / Olivia-BI : VÉRIFIÉ SUR PIÈCE (2026-07-28)** — la maquette
+  a été FOURNIE par Ali et commitée (`demo/olive-demo.html`, 3,4 Mo, 81 items de nav).
+  Verdict du diff élément-par-élément :
+  · **AML Investigation (`aml`) ⊆ AW-01..08 : CONFIRMÉ** — onglets maquette inbox/
+    scenarios/dashboard + Screening Intelligence Layer ↔ nos AW signaux/cases/screening/
+    reporting + écrans alertes/amlref ; la sémantique CLEARED/ESCALATED vit dans la
+    qualification screening + risk cases. Sous-ensemble tenu.
+  · **Investigation financière (`invest`) : ÉCRAN DISTINCT, PARTIELLEMENT couvert** — le
+    cœur (« un cas = ≥2 alertes reliées au même client ») EST notre corrélation CPSI
+    case_proposal (R252) + risk cases (R133-136). TROIS ÉLÉMENTS NON COUVERTS, listés,
+    jamais implémentés en silence : (1) vue 360 agrégée PAR CAS (AUM par segment,
+    corridors transactionnels, millésimes KYC) ; (2) « Synthèse IA du cas » (serait une
+    proposition Olivia R255 câblée aux risk cases — non câblée) ; (3) export CSV du
+    portefeuille de cas. = extensions à canon si souhaitées.
+  · **Olivia (AI Core) (`olivia`) ⊆ R253-R258 : CONFIRMÉ** — console Q&A par client +
+    question générale + charte système visible ↔ conversation R253-257, scope R256,
+    agents versionnés R259 (lecture) ; les 8 questions pré-formatées = UX, pas une règle.
+  · **Dashboard Exécutif (`execdash`) ↔ R289 Command Center : MAPPÉ** (livré ce jour).
+  · **Octopulse (`opprisk`) : DÉFINITION TROUVÉE SUR PIÈCE** — connecteur vers une
+    plateforme EXTERNE de risque opérationnel « Octopulse OppRisk » (config url + apiKey,
+    état de connexion, synchronisation manuelle des incidents, audit du paramétrage).
+    C'est un PORT (pattern R167/R177). **Triage proposé : catégorie C** — gelé,
+    déclencheur « connecteur réel signé + bloc spec » (même famille que SWIFT) —
+    à confirmer par Ali.
+  · **Inventaire complet** : la nav maquette porte aussi des items HORS périmètre de ce
+    canon (prospection, crossborder, txrisk, fx, mobile, custody, compliance-center,
+    regwatch, apidoc, integrations, wfdesigner/wfengine, sbowner, wfaudit, auditit,
+    editorconsole…) — consignés au DECALAGE, à trier dans un canon ultérieur si souhaité.
 - **0f Gel (catégorie C) mis à jour** dans DECALAGE-FRONT-DEMO.md ; **Octopulse NON
   TRIÉ** — objet inconnu de toute spec ratifiée : définition d'une ligne requise d'Ali.
 - **Livrable « 3 PRs »** → précédent ratifié 2× : branche unique PR #46, trois
