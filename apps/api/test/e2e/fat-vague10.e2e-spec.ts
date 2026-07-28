@@ -11,6 +11,10 @@ import { INestApplication } from "@nestjs/common";
 import { PrismaService } from "../../src/common/prisma.service";
 import { boot, bearer, seedTenantClient } from "./util";
 
+// Port IA de TEST déterministe (doctrine du port Olivia v1) — couvre e2e le chemin
+// demander() de la pré-revue R121, jamais couvert avant le solde de l'anomalie A3.
+process.env.OLIVIA_FAKE_PORT = "1";
+
 describe("FAT Vague 10 — Ports (backend réel)", () => {
   let app: INestApplication; let prisma: PrismaService; let http: any;
   const TID = randomUUID(); const ADMIN = randomUUID();
@@ -56,5 +60,31 @@ describe("FAT Vague 10 — Ports (backend réel)", () => {
     const nf = await request(http).get("/v1/ports/fx/health").set(bearer(TID, ADMIN, "ADMIN"));
     expect(nf.status).toBe(404);
     console.log(`FAT-PORT-02 PASS — core-banking déclaré au registre → CONFIGURED ; health OK ; port inconnu 'fx' → 404 (jamais inventé)`);
+  });
+
+  it("FAT-IA-01 [R121-R124] la pré-revue TOURNE sur Prisma réel (solde anomalie A3) : sections/questions réels, points servis, dossier INTACT", async () => {
+    // L'anomalie latente A3 : demander() interrogeait kyc_sections avec un tenantId inexistant
+    // et lisait des champs fantômes — Prisma réel aurait levé, le chemin n'était couvert QUE
+    // sur harnais/fake. Ce test le joue de bout en bout sur Postgres.
+    const RM = randomUUID(), CO = randomUUID(), clientId = randomUUID();
+    await seedTenantClient(prisma, TID, clientId);
+    const kyc = (await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM })).body;
+    const avant = JSON.stringify(await prisma.kycQuestion.findMany({
+      where: { section: { kycFileId: kyc.id } }, orderBy: { code: "asc" } }));
+
+    const r = await request(http).post(`/v1/ia/prerevue/kyc/${kyc.id}`).set(bearer(TID, CO, "CO"));
+    expect(r.status).toBe(201);                                          // plus AUCUN crash Prisma
+    expect(r.body.points.length).toBeGreaterThan(0);                     // les réponses manquantes RÉELLES du dossier
+    expect(JSON.stringify(r.body.points)).toContain("réponse manquante");
+    // R122 : relecture telle quelle, snapshot minimisé (pseudonymisé par défaut — R124)
+    const relu = await request(http).get(`/v1/ia/prerevue/${r.body.prerevueId}`).set(bearer(TID, CO, "CO"));
+    expect(relu.status).toBe(200);
+    expect(relu.body.modele).toBe("fake-prerevue-1.0");
+    expect(relu.body.points.length).toBe(r.body.points.length);
+    // R121/R44 : AUCUNE écriture sur le dossier — questions byte-identiques
+    expect(JSON.stringify(await prisma.kycQuestion.findMany({
+      where: { section: { kycFileId: kyc.id } }, orderBy: { code: "asc" } }))).toBe(avant);
+    console.log("FAT-IA-01 PASS — pré-revue e2e sur Prisma réel, points servis, dossier intact (anomalie A3 soldée)");
   });
 });

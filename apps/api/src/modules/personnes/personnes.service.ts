@@ -39,7 +39,15 @@ export class PersonnesService {
   private async dossiersDe(tx: Tx, ctx: Ctx, personId: string) {
     const roles = await tx.personRole.findMany({ where: { tenantId: ctx.tenantId, personId } });
     const ids = [...new Set(roles.map((r: any) => r.kycFileId))];
-    return ids.length ? tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, id: { in: ids } } }) : [];
+    const dossiers: any[] = ids.length
+      ? await tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, id: { in: ids } } }) : [];
+    // Anomalie A3 SOLDÉE (2026-07-28) : le RM vit sur le CLIENT (Client.rmUserId, matrice A.3),
+    // jamais sur le dossier — l'ancien d.rmId fantôme rendait TOUTES ces notifications muettes.
+    const clientIds = [...new Set(dossiers.map((d) => d.clientId))];
+    const clients: any[] = clientIds.length
+      ? await tx.client.findMany({ where: { tenantId: ctx.tenantId, id: { in: clientIds } } }) : [];
+    const rmParClient = new Map(clients.map((c) => [c.id, c.rmUserId]));
+    return dossiers.map((d) => ({ ...d, rmUserId: rmParClient.get(d.clientId) ?? null }));
   }
 
   // ── R30 : objet unique du référentiel ──
@@ -112,8 +120,8 @@ export class PersonnesService {
       if (document) await this.emit(tx, ctx.tenantId, "tache.maj_ged", personId, { document });
       for (const d of await this.dossiersDe(tx, ctx, personId)) {
         await this.emit(tx, ctx.tenantId, "personne.coc.propage", personId, { dossier: d.id, champ });
-        if (d.rmId) await this.notify(tx, ctx.tenantId, personId,
-          d.rmId, `CoC ${personId} (${champ}) impacte votre dossier ${d.code ?? d.id}`);
+        if (d.rmUserId) await this.notify(tx, ctx.tenantId, personId,
+          d.rmUserId, `CoC ${personId} (${champ}) impacte votre dossier ${d.code ?? d.id}`);
       }
       if (IDENTITE.has(champ))                                                  // R42
         await this.emit(tx, ctx.tenantId, "personne.rescreening.declenche", personId, { cause: `coc:${champ}` });
@@ -130,8 +138,8 @@ export class PersonnesService {
       for (const d of await this.dossiersDe(tx, ctx, personId)) {
         await this.emit(tx, ctx.tenantId, "tache.reevaluation_pep", personId, { dossier: d.id });
         await this.emit(tx, ctx.tenantId, "personne.pep.propage", personId, { dossier: d.id });
-        if (d.rmId) await this.notify(tx, ctx.tenantId, personId,
-          d.rmId, `${personId} déclaré PEP : réévaluation ${d.code ?? d.id}`);
+        if (d.rmUserId) await this.notify(tx, ctx.tenantId, personId,
+          d.rmUserId, `${personId} déclaré PEP : réévaluation ${d.code ?? d.id}`);
       }
     });
   }
@@ -200,11 +208,13 @@ export class PersonnesService {
       await this.emit(tx, ctx.tenantId, "central_file.dossier.ouvert", personId,
         { champ, constats });
       for (const kycFileId of Object.keys(constats)) {
+        // Anomalie A3 SOLDÉE (ratification 2026-07-28) : le RM se résout depuis le CLIENT du
+        // dossier (matrice A.3, Client.rmUserId) — kycFile.rmId n'a jamais existé et
+        // l'événement ne partait jamais.
         const d = await tx.kycFile.findFirst({ where: { id: kycFileId, tenantId: ctx.tenantId } });
-        // ÉCART A3 (signalé) : KycFile n'a pas de champ rmId (Client.rmUserId existe) — ce
-        // `if` ne s'est jamais déclenché ; cast iso-runtime, correction à ratifier.
-        if ((d as any)?.rmId) await this.emit(tx, ctx.tenantId, "tache.corroboration", personId,
-          { dossier: kycFileId, rm: (d as any).rmId });
+        const c = d ? await tx.client.findFirst({ where: { id: d.clientId, tenantId: ctx.tenantId } }) : null;
+        if (c?.rmUserId) await this.emit(tx, ctx.tenantId, "tache.corroboration", personId,
+          { dossier: kycFileId, rm: c.rmUserId });
       }
       await this.audit.log(ctx.tenantId, ctx.userId, "IDENTITY_DIVERGENCE", `${personId}:${champ}`);
     });

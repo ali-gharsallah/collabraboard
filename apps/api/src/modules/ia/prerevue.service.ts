@@ -46,16 +46,21 @@ export class PreRevueService {
     return this.prisma.$transaction(async (tx: Tx) => {
       const kyc = await tx.kycFile.findFirst({ where: { id: kycFileId, tenantId: ctx.tenantId } });
       if (!kyc) throw new NotFoundException("Dossier KYC introuvable");
-      // ÉCART A3 (signalé) : KycSection n'a PAS de colonne tenant_id ni de champ `reponses` —
-      // ce chemin (non couvert e2e) échouerait sur Prisma réel ; cast posé pour rester iso-runtime.
-      const sections = await tx.kycSection.findMany({ where: { tenantId: ctx.tenantId, kycFileId } as any });
+      // Anomalie A3 SOLDÉE (ratification 2026-07-28) : les sections se lisent par kycFileId
+      // (le tenant est déjà prouvé par le dossier ci-dessus — kyc_sections n'a pas de colonne
+      // tenant) et les « réponses » sont les QUESTIONS réelles du schéma — l'ancien code
+      // (tenantId inconnu + champs fantômes) crashait sur Prisma réel, chemin jamais couvert.
+      const sections = await tx.kycSection.findMany({ where: { kycFileId }, include: { questions: true } });
       const cfg = await this.settings(tx, ctx.tenantId);
       // Minimisation (R124) : le dossier concerné, rien d'autre ; nom pseudonymisé par défaut
       const alias = "CLIENT-" + sha(ctx.tenantId + ":" + kycFileId).slice(0, 8);   // alias STABLE
+      const clientRow = cfg.pseudonymise ? null
+        : await tx.client.findFirst({ where: { id: kyc.clientId, tenantId: ctx.tenantId } });
       const snapshot = {
-        client: cfg.pseudonymise ? alias : (kyc as any).clientName,
+        client: cfg.pseudonymise ? alias : (clientRow?.name ?? alias),
         statut: kyc.status, risque: kyc.riskLevel,
-        sections: sections.map((s: any) => ({ code: s.code, reponses: s.reponses })),
+        sections: sections.map((s: any) => ({ code: s.code,
+          reponses: (s.questions ?? []).map((q: any) => ({ code: q.code, valeur: q.answer ?? null })) })),
       };
       const prompt = await this.promptCourant(tx, ctx.tenantId);
       const t0 = Date.now();

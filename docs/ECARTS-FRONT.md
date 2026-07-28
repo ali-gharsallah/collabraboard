@@ -392,3 +392,23 @@ l'état accepté du canon, aucun code à changer.
 5. **Empreinte C3 volatile** : l'égalité BYTE des empreintes prouvée sur C2 (SW-04) et
    l'égalité de PÉRIMÈTRE (type+id) sur C3 (mission 2) sont RATIFIÉES comme preuves
    suffisantes — la stabilisation du hachage v1 n'est pas requise. SOLDÉ.
+
+## SOLDE — LES 3 ANOMALIES LATENTES DU SWEEP A3 (2026-07-28, « Next » après ratification)
+
+- **1. `prerevue.demander` (R121-R124) SOLDÉE** : sections lues par kycFileId (tenant prouvé
+  par le dossier), « réponses » = les QUESTIONS réelles, nom client via Client.name (si
+  pseudonymisation désactivée). Port IA de TEST déterministe ajouté (OLIVIA_FAKE_PORT=1,
+  doctrine du port Olivia v1) ; couverture e2e NOUVELLE : FAT-IA-01 (fat-vague10) — la
+  pré-revue tourne sur Postgres réel, dossier byte-intact.
+- **2. `personne-lien` (R152-R155) SOLDÉE À SCHÉMA** : délégué `person` réel, création
+  minimale conforme R30/R35 (etat ACTIVE, type/complétion/auteur dans `donnees`). Le service
+  reste DORMANT (aucune route — écart de dormance inchangé, chaîne exploitable =
+  PersonnesService) ; harnais PL-01..04 aligné sur le schéma réel.
+- **3. Notifications RM (R30/R32/R36) SOLDÉES — l'anomalie était TRIPLE** : le harnais
+  aligné a révélé que corroboration (R36) ET propagation CoC (R30) ET réévaluation PEP (R32)
+  notifiaient un `kycFile.rmId` fantôme — TOUTES muettes depuis toujours. Le RM se résout
+  désormais du CLIENT (Client.rmUserId, matrice A.3) ; couverture e2e NOUVELLE :
+  FAT-CORROB-02 ; harnais P-01/P-08 prouvent CoC + corroboration vers les VRAIS RM.
+- Règle tirée du solde : les fakes de harnais qui inventent des champs (`rmId`,
+  `clientName`, `reponses`) masquent les anomalies — les trois fakes sont désormais
+  alignés sur le schéma Prisma réel.

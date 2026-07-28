@@ -96,4 +96,21 @@ describe("FAT Vague 5 — CRM & Workflow (backend réel)", () => {
     expect(ouvert.length).toBeGreaterThanOrEqual(1);      // R36 : Central File ouvert
     console.log(`FAT-CORROB-01 PASS — divergence → dossier Central File ouvert (R36), aucune donnée modifiée avant décision`);
   });
+
+  it("FAT-CORROB-02 [R36] la corroboration NOTIFIE le RM du dossier : tache.corroboration porte le rmUserId du CLIENT (solde anomalie A3)", async () => {
+    // L'anomalie latente A3 : le code lisait kycFile.rmId (inexistant) — l'événement ne
+    // partait JAMAIS. Le RM se résout depuis le CLIENT (matrice A.3, Client.rmUserId).
+    await prisma.client.update({ where: { id: CLIENT }, data: { rmUserId: RM } });
+    const kyc = await request(http).post("/v1/kyc").set(bearer(TID, RM, "RM"))
+      .send({ clientId: CLIENT, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM });
+    const p = await request(http).post("/v1/personnes").set(bearer(TID, CO, "CO")).send({ nom: "Corrob RM Test" });
+    await request(http).post(`/v1/personnes/${p.body.id}/corroboration`).set(bearer(TID, CO, "CO"))
+      .send({ champ: "domicile", constats: { [kyc.body.id]: "CH vs LI" } }).expect(201);
+    const taches = await prisma.domainEvent.findMany({
+      where: { tenantId: TID, type: "tache.corroboration", aggregateId: p.body.id } });
+    expect(taches.length).toBe(1);                                        // l'événement PART désormais
+    expect((taches[0].payload as any).rm).toBe(RM);                       // vers LE RM du client
+    expect((taches[0].payload as any).dossier).toBe(kyc.body.id);
+    console.log("FAT-CORROB-02 PASS — tache.corroboration émise vers le RM du client (anomalie A3 soldée)");
+  });
 });

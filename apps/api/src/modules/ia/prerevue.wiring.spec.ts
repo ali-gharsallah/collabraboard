@@ -25,7 +25,7 @@ const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 function fakePrisma(seed: any = {}) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
   const db = { tenants: seed.tenants ?? [], kycs: seed.kycs ?? [], sections: seed.sections ?? [],
-    prerevues: [] as any[], prompts: [] as any[], events: [] as any[] };
+    clients: seed.clients ?? [], prerevues: [] as any[], prompts: [] as any[], events: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (v === null) return row[k] == null;
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -47,6 +47,7 @@ function fakePrisma(seed: any = {}) {
   });
   const p: any = { _db: db,
     tenant: table(db.tenants, 'T'), kycFile: table(db.kycs, 'K'), kycSection: table(db.sections, 'S'),
+    client: table(db.clients, 'C'),
     iaPrerevue: table(db.prerevues, 'PR'), iaPromptVersion: table(db.prompts, 'PV'),
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; },
       findMany: async ({ where }: any = {}) => db.events.filter((e) => match(e, where)) } };
@@ -74,10 +75,15 @@ function fakeIa() {
 const mk = (opts: any = {}) => {
   const p = fakePrisma({
     tenants: [{ id: 't1', name: 'GWB', settings: opts.settings ?? {} }],
-    kycs: [{ id: 'k1', tenantId: 't1', clientName: 'Dupont Holding SA', status: 'UNDER_REVIEW', riskLevel: 'MEDIUM' }],
+    // Schéma RÉEL (solde A3, 2026-07-28) : le nom vit sur le CLIENT (Client.name), les
+    // réponses sur les QUESTIONS des sections — les champs fantômes masquaient l'anomalie.
+    kycs: [{ id: 'k1', tenantId: 't1', clientId: 'c1', status: 'UNDER_REVIEW', riskLevel: 'MEDIUM' }],
+    clients: [{ id: 'c1', tenantId: 't1', name: 'Dupont Holding SA' }],
     sections: [
-      { id: 's1', tenantId: 't1', kycFileId: 'k1', code: 'SOURCE_FONDS', reponses: { origine: 'héritage' } },
-      { id: 's2', tenantId: 't1', kycFileId: 'k1', code: 'ACTIVITE', reponses: { ca: '80M CHF' } }],
+      { id: 's1', tenantId: 't1', kycFileId: 'k1', code: 'SOURCE_FONDS',
+        questions: [{ code: 'SF-Q1', answer: 'héritage' }] },
+      { id: 's2', tenantId: 't1', kycFileId: 'k1', code: 'ACTIVITE',
+        questions: [{ code: 'AC-Q1', answer: '80M CHF' }] }],
   });
   const ia = opts.sansPort ? undefined : fakeIa();
   return { p, ia, s: new PreRevueService(p, fakeAudit(), { ia }) };

@@ -88,9 +88,10 @@ export class PersonneLienService {
           { par: ctx.userId, role: ctx.role, typeCode: dto.typeCode });
         throw new ForbiddenException(`R152 : rôle ${ctx.role} non habilité à poser un lien ${typ.categorie}`);
       }
-      // ÉCART A3 (signalé) : le délégué `personne` n'existe pas (modèle Person, champs différents) —
-      // chemins non couverts e2e, échoueraient à l'exécution ; casts iso-runtime, correction à ratifier.
-      const pers = await (tx as any).personne.findFirst({ where: { id: dto.personneId, tenantId: ctx.tenantId } });
+      // Anomalie A3 SOLDÉE (ratification 2026-07-28) : le référentiel est le modèle `Person`
+      // (R30) — le délégué fantôme `personne` crashait à l'exécution. Le service reste DORMANT
+      // (écart de dormance inchangé) mais désormais conforme au schéma réel.
+      const pers = await tx.person.findFirst({ where: { id: dto.personneId, tenantId: ctx.tenantId } });
       if (!pers) throw new NotFoundException("Personne introuvable");
       const doublon = await tx.personneLien.findFirst({ where: { tenantId: ctx.tenantId,
         personneId: dto.personneId, typeCode: dto.typeCode, cibleType: dto.cibleType, cibleId: dto.cibleId } });
@@ -140,14 +141,16 @@ export class PersonneLienService {
       let pers;
       if (!dto.creer) {
         // Le popup a SÉLECTIONNÉ une existante : on lie, on ne crée pas.
-        pers = await (tx as any).personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
+        pers = await tx.person.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
         if (!pers)
           throw new NotFoundException(`R155 : « ${dto.nom} » introuvable — repasser avec creer:true pour créer une fiche minimale`);
       } else {
         // L'humain a cliqué « Créer » : on crée — l'homonymie SIGNALE, elle n'empêche pas (R39).
-        const homonyme = await (tx as any).personne.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
-        pers = await (tx as any).personne.create({ data: { tenantId: ctx.tenantId, nom: dto.nom,
-          type: dto.type, statut: "A_COMPLETER", creePar: ctx.userId, creeAt: new Date().toISOString() } });
+        const homonyme = await tx.person.findFirst({ where: { tenantId: ctx.tenantId, nom: dto.nom } });
+        // R30 : la donnée vit dans `donnees` ; R35 : etat ACTIVE — la complétion se trace en donnée.
+        pers = await tx.person.create({ data: { tenantId: ctx.tenantId, nom: dto.nom,
+          donnees: { type: dto.type ?? null, statutCompletion: "A_COMPLETER",
+            creePar: ctx.userId, creeAt: new Date().toISOString() } } });
         await this.emit(tx, ctx.tenantId, "personne.creee.minimale", pers.id, { nom: dto.nom, par: ctx.userId });
         await this.emit(tx, ctx.tenantId, "tache.personne.completion", pers.id, { nom: dto.nom });
         if (homonyme)

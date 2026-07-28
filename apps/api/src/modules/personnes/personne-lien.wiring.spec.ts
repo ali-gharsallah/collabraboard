@@ -39,7 +39,7 @@ function fakePrisma(seed: any = {}) {
       const n = rows.length - keep.length; rows.length = 0; rows.push(...keep); return { count: n }; },
   });
   const p: any = { _db: db, tenant: table(db.tenants, 'T'),
-    personne: table(db.personnes, 'P'), personneLien: table(db.liens, 'L'),
+    person: table(db.personnes, 'P'), personneLien: table(db.liens, 'L'),
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; },
       findMany: async ({ where }: any = {}) => db.events.filter((e) => match(e, where)) } };
   p.$transaction = async (fn: any) => fn(p);

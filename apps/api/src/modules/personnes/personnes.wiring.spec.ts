@@ -23,10 +23,10 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 }
 
 // ── Faux Prisma : tables mémoire, deleteMany inclus, filtres tenant appliqués ──
-function fakePrisma(seed: { tenants?: any[]; kycs?: any[] } = {}) {
+function fakePrisma(seed: { tenants?: any[]; kycs?: any[]; clients?: any[] } = {}) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
   const db = { tenants: seed.tenants ?? [], persons: [] as any[], roles: [] as any[],
-    relations: [] as any[], kycs: seed.kycs ?? [], events: [] as any[] };
+    relations: [] as any[], kycs: seed.kycs ?? [], clients: seed.clients ?? [], events: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'OR') return v.some((w: any) => match(row, w));
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -44,7 +44,7 @@ function fakePrisma(seed: { tenants?: any[]; kycs?: any[] } = {}) {
   const p: any = { _db: db,
     tenant: table(db.tenants, 'T'), person: table(db.persons, 'P'),
     personRole: table(db.roles, 'R'), personRelation: table(db.relations, 'REL'),
-    kycFile: table(db.kycs, 'K'),
+    kycFile: table(db.kycs, 'K'), client: table(db.clients, 'C'),
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -55,11 +55,15 @@ const evts = (p: any, type: string) => p._db.events.filter((e: any) => e.type ==
 
 const CTX = { tenantId: 't1', userId: 'central.file', role: 'CO' };
 const TENANT = (settings: any = {}) => ({ id: 't1', name: 'GWB', settings });
+// Schéma RÉEL (solde A3, 2026-07-28) : le RM vit sur le CLIENT (Client.rmUserId, matrice A.3),
+// le dossier ne porte que clientId — l'ancien faux champ kycFile.rmId masquait l'anomalie.
 const KYCS5 = ['k1', 'k2', 'k3', 'k4', 'k5'].map((kid, i) =>
-  ({ id: kid, tenantId: 't1', code: `KYC-${kid}`, rmId: `rm${i + 1}`, riskLevel: 'MEDIUM' }));
+  ({ id: kid, tenantId: 't1', code: `KYC-${kid}`, clientId: `c${i + 1}`, riskLevel: 'MEDIUM' }));
+const CLIENTS5 = ['c1', 'c2', 'c3', 'c4', 'c5'].map((cid, i) =>
+  ({ id: cid, tenantId: 't1', rmUserId: `rm${i + 1}` }));
 
 async function personneDans5Dossiers(settings: any = {}) {
-  const p = fakePrisma({ tenants: [TENANT(settings)], kycs: KYCS5.map((k) => ({ ...k })) });
+  const p = fakePrisma({ tenants: [TENANT(settings)], kycs: KYCS5.map((k) => ({ ...k })), clients: CLIENTS5.map((c) => ({ ...c })) });
   const s = new PersonnesService(p, fakeAudit());
   const dupont: any = await s.creer(CTX, { nom: 'M. Dupont', donnees: { passeport: 'X-111' } });
   for (const k of KYCS5) await s.lier(CTX, k.id, dupont.id, 'titulaire');
@@ -181,7 +185,7 @@ async function personneDans5Dossiers(settings: any = {}) {
 
   // ── P-08 (R36) — divergence d'identité arbitrée par le Central File ──
   await it('P-08 divergence de naissance → dossier Central File + corroboration RM, données intactes', async () => {
-    const p = fakePrisma({ tenants: [TENANT()], kycs: [{ ...KYCS5[0] }, { ...KYCS5[1] }] });
+    const p = fakePrisma({ tenants: [TENANT()], kycs: [{ ...KYCS5[0] }, { ...KYCS5[1] }], clients: [{ ...CLIENTS5[0] }, { ...CLIENTS5[1] }] });
     const s = new PersonnesService(p, fakeAudit());
     const x: any = await s.creer(CTX, { nom: 'M. Dupont', donnees: { naissance: '12.03.1965' } });
     await s.lier(CTX, 'k1', x.id, 'titulaire'); await s.lier(CTX, 'k2', x.id, 'titulaire');
