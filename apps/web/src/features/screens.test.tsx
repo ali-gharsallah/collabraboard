@@ -499,6 +499,9 @@ describe("FE-AMLWS — AML Investigation Workspace : un écran, 4 onglets, rien 
       { id: "rc-111", clientId: "client-aaa", statut: "EN_ANALYSE", signalIds: ["s1"], slaSignale: true, createdAt: "2026-06-01" }])),
     http.get("*/v1/screening/hits", () => HttpResponse.json([{ id: "hit-1", nom: "Doe John", liste: "SANCTIONS", statut: "A_QUALIFIER" }])),
     http.get("*/v1/cpsi/volumetrie", () => HttpResponse.json({ total_signaux: 2, par_scenario: { SC_STRUCT: { signaux: 1, alertes: 1, near_miss: 0 } } })),
+      http.get("*/v1/cpsi/reporting/sla", () => HttpResponse.json({ seuils: { hitEscaladeJours: 30, escaladeMrosJours: 5 },
+        chaine: [{ cle: "c1|SC_A+SC_B", t0: "2026-06-01", t1: "2026-06-20", t2: null, maillonManquant: "sans MROS",
+          enAttenteMrosJours: 38, joursHitEscalade: 19, depassementHitEscalade: false }] })),
     http.get("*/v1/cpsi/clients/client-aaa/timeline*", () => HttpResponse.json({ evenements: [
       { type: "cpsi.client.registered", at: "2026-01-01" }, { type: "cpsi.signal.ingested", at: "2026-02-01" }] })),
   ];
@@ -529,6 +532,16 @@ describe("FE-AMLWS — AML Investigation Workspace : un écran, 4 onglets, rien 
     expect(screen.getByText(/SC_STRUCT · SC_WIRES/)).toBeInTheDocument();                       // graphe : correlations RENDUES (R81)
     expect(screen.getByText(/rc-111/)).toBeInTheDocument();                                     // risk case lié affiché
     expect(screen.getByRole("button", { name: /Rattacher au risk case/ })).toBeInTheDocument(); // action existante, pas de voie neuve
+  });
+
+  it("R281 front : l'onglet Reporting REND la chaîne hit→MROS servie — l'absence de maillon se lit « en attente MROS : N jours »", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(...handlers());
+    render(<AmlWorkspace/>);
+    fireEvent.click(await screen.findByRole("button", { name: "Reporting" }));
+    expect(await screen.findByText(/en attente MROS : 38 jours/)).toBeInTheDocument();  // l'ABSENCE est une donnée (R281)
+    expect(screen.getByText(/seuils 30 j \/ 5 j/)).toBeInTheDocument();
+    expect(screen.getByText("c1|SC_A+SC_B")).toBeInTheDocument();
   });
 
   it("AW-07 : le SLA surligne et NOTIFIE — l'onglet Risk cases garde toutes les actions disponibles", async () => {

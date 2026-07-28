@@ -217,7 +217,33 @@ QUERIES = {"score": _score, "segmentation": _segmentation,
 
 
 # R248 : versions d'enveloppe supportées. Une version inconnue est refusée typée (pas de 500 opaque).
-SUPPORTED_CONTRACTS = {"1"}
+SUPPORTED_CONTRACTS = {"1", "1.1"}
+
+# ── Contrat 1.1 (R281, canon écarts anciens ratifié 2026-07-28) — EXTENSION par ALIAS :
+# les noms canon délèguent aux commandes livrées (zéro duplication) ; reporting_sla est la
+# seule commande neuve (jalons t0 par rejeu). Une commande 1.1 dans une enveloppe 1.0 est
+# refusée TYPÉE (PC-17) ; la 1.0 reste servie telle quelle (compatibilité). ──
+ALIAS_1_1 = {"timeline_client": "timeline", "reporting_volumetrie": "volumetrie"}
+COMMANDES_1_1 = {"timeline_client", "reporting_volumetrie", "reporting_sla"}
+
+
+def _reporting_sla(engine, q):
+    # t0 (R281) : le PREMIER signal ingéré du client — l'alerte naît du rejeu de ces signaux
+    # (R249) ; jalon par case_proposal émise (clé R252). t1/t2 vivent aux journaux riskcases/
+    # MROS : la PORTE (Nest) les assemble — ici, la part CPSI de la chaîne, par rejeu pur.
+    journal = getattr(engine, "_journal_porte", [])
+    premiers = {}
+    for e in journal:
+        if e.get("type") == "cpsi.signal.ingested" and e.get("client") not in premiers:
+            premiers[e.get("client")] = e.get("at")
+    jalons = []
+    for e in journal:
+        if e.get("type") == "cpsi.case_proposal.emitted":
+            jalons.append({"cle": e.get("cle"), "client": e.get("client"),
+                           "scenarios": e.get("scenarios") or [],
+                           "t0": premiers.get(e.get("client"), e.get("at")),
+                           "proposalAt": e.get("at")})
+    return {"jalons": jalons}
 
 
 def traiter(env):
@@ -238,11 +264,19 @@ def traiter(env):
         engine._journal_porte = journal                                   # PC-14 : la timeline PROJETTE le journal rejoué
         duree_ms = round((time.perf_counter() - t0) * 1000, 3)           # R250 : jauge d'hydratation
         commande = env.get("commande")
+        if commande in COMMANDES_1_1 and cv != "1.1":                     # PC-17 : erreur TYPÉE « version »
+            return {"contract_version": cv, "erreur_typee": {
+                "type": "UNSUPPORTED_VERSION", "code": "CPSI_CONTRACT_VERSION",
+                "message": f"commande {commande} exige contract_version 1.1 (enveloppe reçue : {cv})"}}
+        commande_effective = "reporting_sla" if commande == "reporting_sla" else ALIAS_1_1.get(commande, commande)
         payload = env.get("payload") or {}
-        q = {**payload, "op": commande, "at": env.get("as_of") or payload.get("at")}
-        if commande not in QUERIES:
+        q = {**payload, "op": commande_effective, "at": env.get("as_of") or payload.get("at")}
+        if commande_effective == "reporting_sla":
+            res = _reporting_sla(engine, q)
+        elif commande_effective not in QUERIES:
             raise CpsiError(f"commande inconnue : {commande} (default-deny)")
-        res = QUERIES[commande](engine, q)
+        else:
+            res = QUERIES[commande_effective](engine, q)
         return {"contract_version": cv, "resultat": res,
                 "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms}}
     except CpsiError as e:  # default-deny / règle métier du moteur → erreur TYPÉE (jamais avalée)

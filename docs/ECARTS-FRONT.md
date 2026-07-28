@@ -462,3 +462,16 @@ partie, pas avant.
   test de conformité permanent (un orphelin = rouge) ; UC-01 = porte d'entrée case_proposal →
   NOUVELLE, référencée, idempotente ; UC-03 = un seul jeu de transitions. Moteur Python et
   routes R133-R136 INTOUCHÉS (Python 18/18). L'écart « double canon en sursis » est SOLDÉ.
+
+## SOLDE — TIMELINE & SLA HIT→MROS VIA LA PORTE (2026-07-28, partie 2 du canon écarts anciens LIVRÉE)
+
+- **R281 LIVRÉ (PC-16..19 verts)** : contrat d'enveloppe **1.1** (la 1.0 reste servie — PC-17 ;
+  commande 1.1 en enveloppe 1.0 = erreur TYPÉE version) ; noms canon `timeline_client` /
+  `reporting_volumetrie` = ALIAS des commandes livrées (ratifié — zéro duplication) ;
+  `reporting_sla` NEUVE : t0 par rejeu CPSI (bridge), t1/t2 assemblés des journaux Nest
+  riskcases/MROS — AUCUNE table SLA matérialisée, l'absence de maillon est une DONNÉE
+  (« en attente MROS : N jours ») ; seuils tenant slaHitEscaladeJours/slaEscaladeMrosJours,
+  tick idempotent qui NOTIFIE (R39). **PC-12 v1 AMENDÉ comme ratifié** (invariant conservé :
+  zéro écriture riskcases via la porte) ; PC-01..03 re-passent en 1.1. Front : onglet
+  Reporting du workspace rend la chaîne (AW-04 re-passé via PC-16). L'écart « porte de
+  lecture riskcases / délai hit→MROS » est SOLDÉ.

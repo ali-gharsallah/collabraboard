@@ -22,7 +22,7 @@ import { LicenseModule, ModuleLicencie } from "../license/license.module"; // pa
 
 type Ctx = { tenantId: string; userId: string; role: string };
 const cpsiDir = () => process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
-const CONTRACT_VERSION = "1";                                             // R248 : version d'enveloppe
+const CONTRACT_VERSION = "1.1";                                           // R248/R281 : enveloppe 1.1 (la 1.0 reste servie — PC-17)
 
 // R251 : le pont est un PORT optionnel. Python absent / non exécutable / timeout ⇒ rejet (mappé en
 // 503 typé par la porte, jamais un 500 opaque). `GateUnavailable` distingue l'indisponibilité de la
@@ -252,7 +252,7 @@ export class CpsiService implements OnApplicationShutdown {
   // ── PC-14 (extension ratifiée 2026-07-27, P1) : timeline d'un client — PROJECTION du journal
   //    rejoué ≤ as_of, servie par la porte. Rejouer à la même date redonne l'identique (R48). ──
   async timeline(ctx: Ctx, clientId: string, asOf?: string) {
-    const r: any = await this.call(ctx, "timeline", { client: clientId }, { asOf });
+    const r: any = await this.call(ctx, "timeline_client", { client: clientId }, { asOf });  // alias canon 1.1 (R281)
     if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
     return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
   }
@@ -260,7 +260,7 @@ export class CpsiService implements OnApplicationShutdown {
   // ── PC-13 (extension ratifiée 2026-07-27, P1) : volumétrie par scénario — comptages du moteur
   //    à date (onglet Reporting du workspace AML). Le délai hit→MROS reste chez riskcases (PC-12). ──
   async volumetrie(ctx: Ctx, asOf?: string, seuil?: number) {
-    const r: any = await this.call(ctx, "volumetrie", seuil != null ? { seuil } : {}, { asOf });
+    const r: any = await this.call(ctx, "reporting_volumetrie", seuil != null ? { seuil } : {}, { asOf });
     if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
     return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
   }
@@ -373,6 +373,66 @@ export class CpsiService implements OnApplicationShutdown {
   // scénarios même client) devient un événement `case_proposal` append-only, consommable par le
   // module riskcases — AUCUN état de riskcase muté ici (R66), aucune surface produit risk-case
   // (les anciennes routes CP-15/16/17 sont SUPERSEDED — voir amendement R248-R252). ──
+  // ── R281/PC-18..19 : la chaîne hit→MROS — t0 par la porte (rejeu CPSI), t1/t2 assemblés
+  //    depuis les journaux Nest (riskcases/MROS, append-only). AUCUNE table SLA matérialisée :
+  //    un délai est un fait CALCULÉ (pattern EN_RETARD/R274). Invariant PC-12 conservé :
+  //    la porte ne porte AUCUNE écriture riskcases — lectures de journaux uniquement. ──
+  async reportingSla(ctx: Ctx, asOf?: string) {
+    const r: any = await this.call(ctx, "reporting_sla", {}, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+    const st = ((t?.settings as any) ?? {});
+    const seuils = { hitEscaladeJours: st.slaHitEscaladeJours ?? 30, escaladeMrosJours: st.slaEscaladeMrosJours ?? 5 };
+    const ouverts = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "riskcase.ouvert" } });
+    const casParCle = new Map<string, string>();
+    for (const e of ouverts) { const cle = (e.payload as any)?.depuisProposition; if (cle) casParCle.set(cle, e.aggregateId); }
+    const jours = (a?: string | null, b?: string | null) =>
+      a && b ? Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000) : null;
+    const maintenant = asOf ?? new Date().toISOString();
+    const chaine: any[] = [];
+    for (const j of (r.resultat.jalons ?? [])) {
+      const caseId = casParCle.get(j.cle) ?? null;
+      let t1: string | null = null, t2: string | null = null;
+      if (caseId) {
+        const trans = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "riskcase.transition", aggregateId: caseId } });
+        t1 = (trans.find((e: any) => (e.payload as any)?.vers === "ESCALADEE") as any)?.at ?? null;
+        const mros = await this.prisma.mrosCommunication.findFirst({ where: { tenantId: ctx.tenantId, riskCaseId: caseId } });
+        t2 = mros ? new Date(mros.decideAt).toISOString() : null;
+      }
+      chaine.push({ cle: j.cle, client: j.client, scenarios: j.scenarios, caseId,
+        t0: j.t0, t1, t2,
+        joursHitEscalade: jours(j.t0, t1), joursEscaladeMros: jours(t1, t2),
+        // R281 : l'ABSENCE est une donnée, pas un trou — le maillon manquant se voit.
+        maillonManquant: !caseId ? "sans riskcase" : !t1 ? "sans escalade" : !t2 ? "sans MROS" : null,
+        enAttenteMrosJours: t1 && !t2 ? jours(t1, maintenant) : null,
+        depassementHitEscalade: jours(j.t0, t1 ?? maintenant)! > seuils.hitEscaladeJours,
+        depassementEscaladeMros: t1 && !t2 && jours(t1, maintenant)! > seuils.escaladeMrosJours });
+    }
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, seuils, chaine };
+  }
+
+  // R281/R39 : le dépassement NOTIFIE, n'empêche jamais — route ops au pattern tick (R274),
+  // idempotente par (clé, jalon) : une notification par fait, jamais de spam.
+  async tickSla(ctx: Ctx) {
+    if (!["ADMIN", "CO", "CO_SR"].includes(ctx.role)) throw new ForbiddenException("R281 : tick réservé ops/compliance");
+    const rep = await this.reportingSla(ctx);
+    const deja = new Set((await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.sla.depassement" } }))
+      .map((e: any) => `${(e.payload as any)?.cle}|${(e.payload as any)?.jalon}`));
+    const notifies: any[] = [];
+    for (const c of rep.chaine) {
+      const cas: [string, boolean][] = [["hit_escalade", c.depassementHitEscalade], ["escalade_mros", c.depassementEscaladeMros]];
+      for (const [jalon, depasse] of cas) {
+        if (!depasse || deja.has(`${c.cle}|${jalon}`)) continue;
+        await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.sla.depassement",
+          aggregateId: c.caseId ?? c.cle, payload: { cle: c.cle, jalon, enAttenteMrosJours: c.enAttenteMrosJours ?? null, par: ctx.userId }, at: new Date().toISOString() } });
+        notifies.push({ cle: c.cle, jalon });
+      }
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SLA_TICK", `${notifies.length}`);
+    return { notifies };
+  }
+
   async emettreCaseProposals(ctx: Ctx) {
     const r = await this.call(ctx, "alerts", {});
     if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
@@ -433,6 +493,8 @@ export class CpsiController {
   @Post("clients/:cid/insider/lift") insiderLift(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.leverInsider(r.ctx, cid, b); }   // CP-14
   // R252/PC-11 : AUCUNE surface produit risk-case sur la porte (CP-15/16/17 SUPERSEDED —
   // l'instruction, les transitions et le reporting SLA relèvent de riskcases R133-R136).
+  @Get("reporting/sla")            reportingSla(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.reportingSla(r.ctx, asOf); } // PC-18 (R281)
+  @Post("reporting/sla/tick")      tickSla(@Req() r: any) { return this.svc.tickSla(r.ctx); }                                             // PC-19 (R281/R39)
   @Post("case-proposals")          emettreCp(@Req() r: any) { return this.svc.emettreCaseProposals(r.ctx); }                              // PC-09/10
   @Get("case-proposals")           listerCp(@Req() r: any) { return this.svc.listerCaseProposals(r.ctx); }                               // PC-09 (consommation riskcases)
 }

@@ -32,7 +32,7 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
   it("CP-01 [R63/R67] score perpétuel + drivers dont la somme reconstitue le score", async () => {
     const g = await request(http).get(`/v1/cpsi/clients/${cid}/score`).set(bearer(A, U, "CO"));
     expect(g.status).toBe(200);
-    expect(g.body.contractVersion).toBe("1");                             // PC-01/R248 : enveloppe versionnée
+    expect(g.body.contractVersion).toBe("1.1");                           // PC-01/R248/R281 : PC-01..03 re-passent en 1.1 (PC-17)
     expect(g.body.score).toBeGreaterThan(0);
     expect(["LOW", "MEDIUM", "HIGH"]).toContain(g.body.bande);
     const somme = g.body.drivers.reduce((s: number, d: any) => s + d.contribution, 0);
@@ -74,7 +74,7 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     expect(typeof s.body.meta.duree_ms).toBe("number");                  // durée d'hydratation mesurée
     const h = await request(http).get(`/v1/cpsi/health`).set(bearer(A, U, "CO"));
     expect(h.status).toBe(200);
-    expect(h.body.contractVersion).toBe("1");
+    expect(h.body.contractVersion).toBe("1.1");
     expect(h.body.profondeurJournal).toBeGreaterThanOrEqual(2);          // registration + signal
     expect(h.body).toHaveProperty("configEnVigueur");                    // R68 : version de config en vigueur
     console.log("PC-07 PASS — meta", JSON.stringify(s.body.meta), "santé profondeur", h.body.profondeurJournal);
@@ -243,9 +243,15 @@ describe("FAT CPSI — porte mince (backend + moteur Python réels)", () => {
     console.log("PC-11 PASS — routes risk-case directes absentes (404)");
   });
 
-  it("PC-12 [R252/R39] le reporting SLA reste chez riskcases — pas de route porte (CP-17 superseded)", async () => {
-    await request(http).get(`/v1/cpsi/risk-cases/reporting?slaJours=30`).set(bearer(A, U, "CO")).expect(404);
-    console.log("PC-12 PASS — reporting SLA hors porte CPSI (chez riskcases R133-R136)");
+  it("PC-12 [R252/R281] AMENDÉ (canon écarts anciens, 2026-07-28) : l'invariant conservé — AUCUNE écriture riskcases via la porte ; la LECTURE SLA vit désormais au contrat 1.1 (PC-18)", async () => {
+    // L'ancienne assertion « reporting SLA hors porte » est SUPERSÉDÉE par R281 (ratifié) :
+    // la porte sert reporting_sla en LECTURE par rejeu. Ce qui reste interdit — et testé —
+    // c'est toute surface d'ÉCRITURE risk-case côté porte (PC-11 + ici).
+    await request(http).get(`/v1/cpsi/risk-cases/reporting?slaJours=30`).set(bearer(A, U, "CO")).expect(404); // l'ancienne route CP-17 reste morte
+    await request(http).post(`/v1/cpsi/reporting/sla`).set(bearer(A, U, "CO")).send({}).expect(404);          // pas d'écriture du reporting
+    const lecture = await request(http).get(`/v1/cpsi/reporting/sla`).set(bearer(A, U, "CO"));
+    expect(lecture.status).toBe(200);                                     // la LECTURE R281, elle, est servie
+    console.log("PC-12 PASS (amendé R281) — zéro écriture riskcases via la porte, lecture SLA 1.1 servie");
   });
 
   it("PC-08 [R251] port optionnel : moteur absent ⇒ 503 typé, les autres routes intactes", async () => {
@@ -286,7 +292,7 @@ describe("FAT CPSI — extension P1 ratifiée : timeline + volumétrie (PC-13/14
   it("PC-14 [AW-04/R48] la timeline d'un client est un REJEU : ses événements seuls, as_of strict, rejouable identique", async () => {
     const g = await request(http).get(`/v1/cpsi/clients/${c1}/timeline`).set(bearer(T, U, "CO"));
     expect(g.status).toBe(200);
-    expect(g.body.contractVersion).toBe("1");                               // enveloppe R248
+    expect(g.body.contractVersion).toBe("1.1");                             // enveloppe R248 (1.1, R281)
     const types = g.body.evenements.map((e: any) => e.type);
     expect(types).toContain("cpsi.client.registered");
     expect(types).toContain("cpsi.signal.ingested");

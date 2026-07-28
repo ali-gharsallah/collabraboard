@@ -37,6 +37,14 @@ export function AmlWorkspace() {
   const { data: hits } = useApiOrSeed<Hit[]>("/v1/screening/hits", [{ id: "h-demo", nom: "Doe", liste: "SANCTIONS" }]);
   const { data: vol } = useApiOrSeed<{ total_signaux: number; par_scenario: Record<string, { signaux: number; alertes: number; near_miss: number }> }>(
     "/v1/cpsi/volumetrie", { total_signaux: 1, par_scenario: { SC_DEMO: { signaux: 1, alertes: 1, near_miss: 0 } } });
+  // R281 (canon écarts anciens) : la chaîne hit→MROS traverse désormais LA PORTE (PC-18/19) —
+  // l'écart PC-12 est soldé ; l'absence de maillon est une DONNÉE affichée, jamais un trou.
+  type MaillonSla = { cle: string; t0?: string; t1?: string; t2?: string; maillonManquant: string | null;
+    enAttenteMrosJours: number | null; joursHitEscalade: number | null; depassementHitEscalade: boolean };
+  const { data: sla } = useApiOrSeed<{ seuils: { hitEscaladeJours: number; escaladeMrosJours: number }; chaine: MaillonSla[] }>(
+    "/v1/cpsi/reporting/sla", { seuils: { hitEscaladeJours: 30, escaladeMrosJours: 5 },
+      chaine: [{ cle: "demo|SC_A+SC_B", t0: "2026-07-01", t1: "2026-07-10", t2: undefined,
+        maillonManquant: "sans MROS", enAttenteMrosJours: 12, joursHitEscalade: 9, depassementHitEscalade: false }] });
 
   const [drill, setDrill] = useState<Signal | null>(null);
   const [timeline, setTimeline] = useState<{ type: string; at: string }[] | null>(null);
@@ -166,12 +174,24 @@ export function AmlWorkspace() {
     </div>}
 
     {onglet === "reporting" && <div>
-      <p style={{ fontSize: 12, color: tokens.color.muted }}>Volumétrie servie par la porte (PC-13) — le délai hit→MROS reste chez riskcases (PC-12, écart ouvert).</p>
+      <p style={{ fontSize: 12, color: tokens.color.muted }}>Volumétrie servie par la porte (PC-13) ; chaîne hit→MROS servie par la porte (R281, PC-18 — le dépassement notifie, ne bloque jamais).</p>
       <div style={{ fontSize: 13 }}>Total signaux : <strong>{vol.total_signaux}</strong></div>
       <table cellPadding={5} style={{ fontSize: 12 }}><thead><tr>
         <th align="left">Scénario</th><th>Signaux</th><th>Alertes</th><th>Near-miss</th></tr></thead>
         <tbody>{Object.entries(vol.par_scenario ?? {}).map(([sc, v]) => <tr key={sc}>
           <td>{sc}</td><td align="center">{v.signaux}</td><td align="center">{v.alertes}</td><td align="center">{v.near_miss}</td></tr>)}</tbody></table>
+      <h4 style={{ margin: "12px 0 4px" }}>Délai hit→MROS (R281 — seuils {sla.seuils.hitEscaladeJours} j / {sla.seuils.escaladeMrosJours} j)</h4>
+      <table cellPadding={5} style={{ fontSize: 12 }}><thead><tr>
+        <th align="left">Chaîne</th><th>t0 signal</th><th>t1 escalade</th><th>t2 MROS</th><th>État</th></tr></thead>
+        <tbody>{sla.chaine.map((m) => <tr key={m.cle}>
+          <td>{m.cle}</td>
+          <td align="center">{m.t0 ? String(m.t0).slice(0, 10) : "—"}</td>
+          <td align="center">{m.t1 ? String(m.t1).slice(0, 10) : "—"}</td>
+          <td align="center">{m.t2 ? String(m.t2).slice(0, 10) : "—"}</td>
+          <td>{m.maillonManquant === "sans MROS" && m.enAttenteMrosJours != null
+            ? `en attente MROS : ${m.enAttenteMrosJours} jours`
+            : m.maillonManquant ?? `complète (${m.joursHitEscalade ?? "?"} j)`}
+            {m.depassementHitEscalade && " · dépassement notifié"}</td></tr>)}</tbody></table>
     </div>}
   </div>;
 }
