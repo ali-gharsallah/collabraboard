@@ -62,15 +62,14 @@ MOD-30) · livrable : branche unique PR #46, séquences de commits distinctes.**
   · **Octopulse (`opprisk`) : DÉFINITION TROUVÉE SUR PIÈCE** — connecteur vers une
     plateforme EXTERNE de risque opérationnel « Octopulse OppRisk » (config url + apiKey,
     état de connexion, synchronisation manuelle des incidents, audit du paramétrage).
-    C'est un PORT (pattern R167/R177). **Triage proposé : catégorie C** — gelé,
-    déclencheur « connecteur réel signé + bloc spec » (même famille que SWIFT) —
-    à confirmer par Ali.
+    C'est un PORT (pattern R167/R177). **Triage RATIFIÉ (Ali, 2026-07-28) : catégorie C**
+    — gelé, déclencheur « connecteur réel signé + bloc spec » (même famille que SWIFT).
   · **Inventaire complet** : la nav maquette porte aussi des items HORS périmètre de ce
     canon (prospection, crossborder, txrisk, fx, mobile, custody, compliance-center,
     regwatch, apidoc, integrations, wfdesigner/wfengine, sbowner, wfaudit, auditit,
     editorconsole…) — consignés au DECALAGE, à trier dans un canon ultérieur si souhaité.
-- **0f Gel (catégorie C) mis à jour** dans DECALAGE-FRONT-DEMO.md ; **Octopulse NON
-  TRIÉ** — objet inconnu de toute spec ratifiée : définition d'une ligne requise d'Ali.
+- **0f Gel (catégorie C) mis à jour** dans DECALAGE-FRONT-DEMO.md ; **Octopulse TRIÉ
+  (2026-07-28, sur pièce + ratification Ali)** — catégorie C, voir 0e.
 - **Livrable « 3 PRs »** → précédent ratifié 2× : branche unique PR #46, trois
   séquences de commits — sauf contre-ordre.
 
@@ -115,8 +114,9 @@ R267-agrégat ; la part analytics au-delà = BI général → catégorie C.
 
 ## Catégorie C — GEL confirmé
 SWIFT (`swiftlab`) : connecteur réel signé + bloc spec. Legal : client pilote + bloc
-spec. BI : demande client — ne JAMAIS re-créer en BI ce que R289 sert. **Octopulse :
-non trié — définition d'Ali requise.**
+spec. BI : demande client — ne JAMAIS re-créer en BI ce que R289 sert. **Octopulse OppRisk :
+TRIÉ (2026-07-28) — connecteur externe de risque opérationnel (port), catégorie C : gelé,
+déclencheur connecteur réel signé + bloc spec.**
 
 # INTERDITS : nouvelle règle hors R289 ; endpoint créé sans signalement ; secret en
 # clair ; action depuis le Command Center ; élément de maquette non mappé implémenté ;

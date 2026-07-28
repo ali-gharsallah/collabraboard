@@ -123,7 +123,8 @@ pas sous ces noms dans cette version de la maquette.)*
   (corrélation R252 + risk cases), 3 éléments non couverts LISTÉS (vue 360 par cas,
   synthèse IA du cas, export CSV) — extensions à canon si souhaitées · **Octopulse
   OppRisk = connecteur externe de risque opérationnel (port R167/R177)** — triage
-  proposé : catégorie C (gelé, déclencheur connecteur signé + bloc spec).
+  RATIFIÉ (Ali, 2026-07-28) : catégorie C (gelé, déclencheur connecteur signé + bloc spec).
+  Investigation financière : décision Ali — les 3 écarts restent CONSIGNÉS, pas de canon.
 - **Items de nav HORS périmètre du canon triage** (jamais triés à ce jour — zéro code) :
   prospection, crossborder, txrisk (≈ transactions+AML, à mapper), fx, mobile, custody,
   oil (≈ Islamic, couvert), compliance (Compliance Center), regwatch, apidoc,
