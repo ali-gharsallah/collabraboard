@@ -51,6 +51,7 @@ Les cinq colonnes :
 | Veille réglementaire (veille) | « Veille réglementaire » = clé I18N ✓ | sources → items → qualification, proposition IA distincte (violet data/IA maquette) ✓ | ✓ | port éteint AFFICHÉ (R167), NON_TRAITE tant que l'humain n'a pas décidé ✓ | items/propositions SERVIS, citations Rn validées serveur ✓ |
 | Legal — Contrats (legalreg) | « Legal — Contrats » = clé I18N ✓ | échéances + ouverture par référence (boucle R293) ✓ | ✓ (retard = danger, préavis = warn) | statuts CALCULÉS rendus, refus R312 tel quel ✓ | échéances/pièces SERVIES, version résolue à date — zéro calcul front ✓ |
 | BI — Reporting sur mesure (bi) | « BI — Reporting sur mesure » = clé I18N ✓ | annuaire → dimensions cochées → table ✓ | ✓ | refus R314 rendus tels quels ✓ | annuaire/résultats SERVIS, scope BACKEND (mention rendue) — zéro agrégation front ✓ |
+| Mobile Banking (mobileadmin) | « Mobile Banking » = clé I18N (la maquette nomme le module client ; l'écran livré est la FACE BANQUE — l'app cliente est un rendu, consigné) | activation RM → code hors bande → marquage partagé → messagerie/CoC ✓ | ✓ | refus rendus tels quels (FE-04), 404 neutre du canal inactif affiché ✓ | activation/messages SERVIS ; code hors bande affiché UNE fois, jamais re-servi ; mention « rien par défaut » (R318) ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 

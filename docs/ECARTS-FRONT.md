@@ -836,3 +836,28 @@ partie, pas avant.
   (3) l'annuaire est servi par POST (client sans GET-avec-corps) — lecture pure malgré le
   verbe, couvert par BL-04. Écran bi (71e onglet).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 6).
+
+## SOLDE — DÉGEL VAGUE 7 : MOBILE BANKING (2026-07-28, MB-01..05 verts — plan visé, GO Ali)
+
+- **R316** : population IAM DISTINCTE — table `mobile_identites` SANS colonne de rôle
+  (MB-01 est une impossibilité de schéma, prouvée par information_schema) ; DEUX portes
+  étanches dans les deux sens (mobile.gate exige `pop=MOBILE` sans rôle ; la porte
+  interne rejette tout `pop`) ; activation par le RM du client + code hors bande (sha256
+  stocké, jamais en clair ni en événement — MB-02) ; MFA TOTP OBLIGATOIRE au login.
+- **R317** : v1 = LECTURE + MESSAGERIE ; exclusions v1 = routes INEXISTANTES → 404
+  naturel, jamais 403 (MB-04, + revue automatisée du source) ; « changer mon adresse »
+  = message → le RM ouvre le CoC par la voie R276 réelle (CC-01 rejoué, MB-05).
+- **R318** : QUE le partagé (marquage explicite tracé `mobile.partage.marque`,
+  `mobile_partage_defaut` = rien) ; le non-partagé est ABSENT de la RÉPONSE réseau ;
+  projection minimale id/nom/date — aucune donnée compliance, pas même l'existence
+  (OL-34/R270) ; `mobile_actif` OFF par défaut → toute la surface répond 404.
+- **ÉCARTS CONSIGNÉS** : (1) commits A (R316) et B (R317/R318) du plan livrés FUSIONNÉS —
+  une porte sans surface n'a pas de preuve e2e (précédent V2/V3) ; (2) l'app cliente
+  n'existe pas en v1 (le canon dit « l'app est un rendu ») — l'écran livré est la FACE
+  BANQUE (mobileadmin) ; la surface client est l'API `/v1/mobile/client/*` testée e2e ;
+  (3) le marquage d'un COMPTE porte son clientId dans le DTO (un compte n'est pas une
+  pièce GED — la pièce résout son client, le compte non) ; (4) les positions du compte
+  partagé viendront du port custody/PMS quand un port par compte existera — v1 sert les
+  références de comptes partagés (R167 : jamais un chiffre inventé). Écran mobileadmin
+  (72e onglet).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 7).

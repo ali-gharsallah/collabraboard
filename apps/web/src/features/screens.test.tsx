@@ -1225,3 +1225,35 @@ describe("FE-BI — R314/R315 : projections déclarées, résultat scopé backen
     expect(screen.getByText("CH")).toBeInTheDocument();
   });
 });
+
+describe("FE-MB — R316/R318 : face banque du canal mobile — activation tracée, partagé explicite, CoC depuis un message", () => {
+  it("activation → code hors bande affiché UNE fois ; messagerie → message CLIENT → « Ouvrir un CoC » ; refus rendu tel quel", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.post("*/v1/mobile/activer", () => HttpResponse.json({ identite: "aaaabbbb-0000-0000-0000-000000000000", code: "A1B2C3D4" })),
+      http.get("*/v1/mobile/messages", () => HttpResponse.json({ messages: [
+        { id: "m1", de: "CLIENT", texte: "Merci de changer mon adresse" }] })),
+      http.post("*/v1/mobile/messages/m1/ouvrir-coc", () => HttpResponse.json({ id: "cccc0000-0000-0000-0000-000000000000" })));
+    const { MobileAdmin } = await import("./mobile/MobileAdmin");
+    render(<MobileAdmin/>);
+    fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    expect(await screen.findByText(/code hors bande/)).toBeInTheDocument();
+    expect(screen.getByText("A1B2C3D4")).toBeInTheDocument();          // remis UNE fois — jamais stocké
+    fireEvent.click(screen.getByRole("button", { name: /^Messagerie$/ }));
+    expect(await screen.findByText(/Merci de changer mon adresse/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Ouvrir un CoC/ }));
+    expect(await screen.findByText(/CoC ouvert \(cccc0000\)/)).toBeInTheDocument();  // la voie R276
+  });
+
+  it("le refus backend s'affiche TEL QUEL (FE-04) — ici un canal mobile inactif (404 neutre)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.post("*/v1/mobile/activer", () =>
+      HttpResponse.json({ message: "Ressource introuvable" }, { status: 404 })));
+    const { MobileAdmin } = await import("./mobile/MobileAdmin");
+    render(<MobileAdmin/>);
+    fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    expect(await screen.findByText(/Ressource introuvable/)).toBeInTheDocument();
+  });
+});
