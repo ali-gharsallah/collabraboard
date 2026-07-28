@@ -902,3 +902,24 @@ partie, pas avant.
   (3) le tick est manuel/apicallable (même consigne que legal/regwatch/licence) ;
   (4) état dérivé des événements, aucune table nouvelle. Écran oprisk (73e onglet).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 9).
+
+## POINT D'ÉTAPE FINAL — DÉGEL COMPLET (2026-07-28) + DETTE D'INTÉGRATION §1-3
+
+Les NEUF vagues du canon du dégel (spec/canon-degel-complet-vagues-1-9.md, mapping +3
+ratifié) sont livrées, testées et poussées : V1 flux/txrisk/fx/swift (TF-01..12) ·
+V2 custody & TA (CY-01..06) · V3 Builder (WB-01..10, GO Ali) · V4 regwatch (VR-01..05) ·
+V5 legal (LE-01..04) · V6 BI (BL-01..04) · V7 mobile (MB-01..05, GO Ali) · V8 console
+éditeur (VE-01..03) · V9 OpRisk (OP-01..05). Chaque vague porte son solde ci-dessus ;
+chaque écran livré a sa ligne de grille (CONFORMITE-VISUELLE.md — 73 onglets).
+
+Dette d'intégration du canon (§1-3, « en parallèle ») — CONSTATS :
+- **§1 JWT sur toutes les routes** : DÉJÀ RÉGLÉ — aucun `x-tenant-id` dans apps/api/src
+  (grep vide) ; le mode headers ne survit que côté MSW/dev front. Les surfaces nouvelles
+  (mobile R316) ont leur porte propre, également JWT (RS256, trousseau JWKS).
+- **§2 extinction appel Anthropic navigateur** : DÉJÀ RÉGLÉ — le grep CI B.11.4
+  (`! grep -rn "api.anthropic.com" apps/web/src apps/web/index.html`) est l'étape 4 de
+  .github/workflows/ci.yml, bloquante.
+- **§3 provisionnement Exoscale Zurich** : NON SCRIPTABLE depuis cette session (aucun
+  accès au compte cloud) — reste un acte d'infra humain : VMs, Postgres managé, backups
+  avec RESTAURATION TESTÉE. Consigné, pas simulé.
+Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchangés au canon.
