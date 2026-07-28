@@ -8,7 +8,8 @@ import { PrismaService } from "./prisma.service";
 // des DEUX exceptions fermées (STOP d'un run R267, export d'audit), TOUT refuse typé — avant
 // même le routage. Pas une convention par contrôleur : UNE porte, ici (SO-01..03).
 const SO_GET = [
-  /^\/v1\/audit(\/|$)/,                      // journal des accès, export
+  /^\/v1\/audit(\/|$)/,                      // journal des accès, export, intégrité (SO-07/08)
+  /^\/v1\/apidoc(\/|$)/,                     // doc générée (métadonnées techniques)
   /^\/v1\/olivia\/conversations/,            // conversations + replay + empreintes (mode audit OL)
   /^\/v1\/olivia\/runs/,                     // runs agentiques + replay (R266)
   /^\/v1\/olivia\/health/,                   // santé du port IA

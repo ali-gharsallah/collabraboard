@@ -648,3 +648,22 @@ describe("FAT CANON DERNIERS — auditit : intégrité des journaux + paramétra
     console.log("SO-08 PASS — paramétrages transversaux servis d'une seule source (domain_events)");
   });
 });
+
+// ── Applications du triage final : apidoc GÉNÉRÉ (aucune règle nouvelle) ──
+
+describe("FAT CANON DERNIERS — apidoc : la doc est GÉNÉRÉE du routeur vivant", () => {
+  let app: INestApplication; let http: any;
+  const T = randomUUID();
+  beforeAll(async () => { ({ app } = await boot()); http = app.getHttpServer(); });
+  afterAll(async () => { await app.close(); });
+
+  it("l'inventaire vient du ROUTEUR (rien de rédigé à la main) : les routes réelles y figurent, le contrat de porte expose sa version ; SO y lit", async () => {
+    const d = (await request(http).get("/v1/apidoc").set(bearer(T, randomUUID(), "CO"))).body;
+    expect(d.total).toBeGreaterThan(100);                                   // le routeur vivant, pas une liste manuelle
+    expect(JSON.stringify(d.parModule.kyc)).toContain("/v1/kyc/:code/validate");
+    expect(JSON.stringify(d.parModule.audit)).toContain("/v1/audit/integrite");
+    expect(d.porteCpsi.contractVersion).toBe("1.1");                        // R248/R281
+    await request(http).get("/v1/apidoc").set(bearer(T, randomUUID(), "SO")).expect(200);  // surface SO (métadonnées)
+    console.log(`apidoc PASS — ${d.total} routes générées, contrat de porte 1.1`);
+  });
+});

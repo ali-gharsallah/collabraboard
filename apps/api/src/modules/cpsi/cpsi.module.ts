@@ -22,7 +22,7 @@ import { LicenseModule, ModuleLicencie } from "../license/license.module"; // pa
 
 type Ctx = { tenantId: string; userId: string; role: string };
 const cpsiDir = () => process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
-const CONTRACT_VERSION = "1.1";                                           // R248/R281 : enveloppe 1.1 (la 1.0 reste servie — PC-17)
+export const CONTRACT_VERSION = "1.1";                                           // R248/R281 : enveloppe 1.1 (la 1.0 reste servie — PC-17)
 
 // R251 : le pont est un PORT optionnel. Python absent / non exécutable / timeout ⇒ rejet (mappé en
 // 503 typé par la porte, jamais un 500 opaque). `GateUnavailable` distingue l'indisponibilité de la
