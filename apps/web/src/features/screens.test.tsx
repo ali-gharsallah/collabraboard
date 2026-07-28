@@ -1185,3 +1185,25 @@ describe("FE-VR — R309/R310 : la veille rend le port éteint et la proposition
     expect(screen.getByRole("button", { name: /^Pertinent$/ })).toBeInTheDocument();
   });
 });
+
+describe("FE-LE — R312/R313 : le registre legal rend échéances calculées et pièce résolue à date", () => {
+  it("échéances avec statuts calculés ; par-référence → pièce + version en vigueur", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/legal/echeances", () => HttpResponse.json([
+        { reference: "CTR-PREAVIS", type: "CONTRAT", dateFin: "2026-08-27", tacite: true, statut: "PREAVIS_OUVERT" },
+        { reference: "CTR-ECHU", type: "CONTRAT", dateFin: "2026-07-27", statut: "EN_RETARD" }])),
+      http.get("*/v1/legal/par-reference", () => HttpResponse.json({ reference: "mémo Legal 2024-003", type: "MEMO",
+        documentId: "d0c00000-0000", versionEnVigueur: { numero: 2 }, rattachements: { juridiction: "SA" } })));
+    const { LegalRegistre } = await import("./legal/LegalRegistre");
+    render(<LegalRegistre/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText("PREAVIS_OUVERT")).toBeInTheDocument();   // fait CALCULÉ, rendu
+    expect(screen.getByText("EN_RETARD")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/référence/), { target: { value: "mémo Legal 2024-003" } });
+    fireEvent.click(screen.getByRole("button", { name: /Ouvrir par référence/ }));
+    const o = await screen.findByTestId("objet-legal");
+    expect(o).toHaveTextContent(/version en vigueur v2/);
+    expect(o).toHaveTextContent(/juridiction SA \(country manual R293\)/);   // la boucle, visible
+  });
+});

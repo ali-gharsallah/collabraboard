@@ -49,6 +49,7 @@ Les cinq colonnes :
 | Custody & TA (custodyta) | hors dictionnaire maquette (écran canon dégel V2) — consigné | positions port + registre rejoué à date + écarts avec voie ✓ | ✓ (négatif = danger) | refus gracieux sans port rendu (R167) ✓ | positions/registre/rapprochement SERVIS — zéro calcul front ✓ |
 | Workflow Builder (builder) | « Workflow Builder » = clé I18N ✓ | brouillon → simuler → publier, brouillons/versions ✓ | ✓ (refus = danger) | refus R306 rendus EN LISTE tels quels (FE-04) ✓ | rapport d'impact SERVI, cohérence backend — zéro précalcul front ✓ |
 | Veille réglementaire (veille) | « Veille réglementaire » = clé I18N ✓ | sources → items → qualification, proposition IA distincte (violet data/IA maquette) ✓ | ✓ | port éteint AFFICHÉ (R167), NON_TRAITE tant que l'humain n'a pas décidé ✓ | items/propositions SERVIS, citations Rn validées serveur ✓ |
+| Legal — Contrats (legalreg) | « Legal — Contrats » = clé I18N ✓ | échéances + ouverture par référence (boucle R293) ✓ | ✓ (retard = danger, préavis = warn) | statuts CALCULÉS rendus, refus R312 tel quel ✓ | échéances/pièces SERVIES, version résolue à date — zéro calcul front ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 

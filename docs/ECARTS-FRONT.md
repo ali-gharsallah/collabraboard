@@ -800,3 +800,21 @@ partie, pas avant.
   suivra l'infra (dette §5) ; (4) RN_MAX=323 est une constante de validation — le
   catalogue vivant la fait évoluer par amendement. Écran veille (69e onglet).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 4).
+
+## SOLDE — DÉGEL VAGUE 5 : LEGAL (2026-07-28, LE-01..04 verts)
+
+- **R312** : le registre vit SUR LA GED — création refusée sans documentId réel du tenant
+  (LE-01) ; rattachements client/juridiction/fournisseur ; la boucle cross-border est
+  FERMÉE dans les deux sens : la source du country manual (R293) ouvre le mémo par
+  référence, la juridiction liste ses mémos (LE-03) ; la version de la pièce se résout À
+  DATE (LE-04, R48 — l'évaluation XB antérieure lit la v1, la nouvelle la v2).
+- **R313** : échéances = FAITS calculés des dates (COURANT/PREAVIS_OUVERT/EN_RETARD) ;
+  tick R274 : tâche + notification au préavis, escalade au dépassement, UNE fois par
+  état — rien n'est jamais bloqué (LE-02) ; modification de dates = événement motivé.
+- **ÉCARTS CONSIGNÉS** : (1) état dérivé des événements (aucune table legal) — pattern
+  XB/TA ; (2) le tick est manuel/apicallable — la planification suit l'infra (dette §5,
+  même consigne que regwatch) ; (3) le lien cliquable manual→mémo DANS l'écran
+  cross-border est un enrichissement d'écran à venir — l'API bidirectionnelle est livrée
+  et testée ; (4) typeCode MEMO_LEGAL/CONTRAT non déclarés à gedDocTypes par défaut — le
+  tenant les déclare (R110), le registre ne les impose pas. Écran legalreg (70e onglet).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 5).
