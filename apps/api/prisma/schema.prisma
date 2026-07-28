@@ -1006,6 +1006,38 @@ model NbaSuggestion {
 // Journal APPEND-ONLY tenant-scopé : source de vérité de l'état CPSI. La porte NE réimplémente
 // aucune règle (R63→R83) ; elle persiste les faits (client enregistré, signal ingéré, …) puis
 // REJOUE le journal du tenant vers le moteur Python ratifié (`services/cpsi-server-py`) pour
+// ── R286 (canon SO + transport async, ratifié 2026-07-28) : livraison AT-LEAST-ONCE. ──
+// Le watermark d'un consommateur est PERSISTÉ (dernier seq traité par flux) ; la tête de flux
+// en échec porte son compteur de tentatives et son backoff — l'échec définitif devient une
+// dead-letter TRACÉE (jamais un log silencieux), rejouable manuellement (qui, quand).
+// `event_consumers` est une table d'INFRASTRUCTURE (sans tenant — les flux traversent) ;
+// `event_dead_letters` est tenantée (RLS).
+model EventConsumer {
+  consumer             String
+  stream               String                                       // flux ('global' MVP ; par agrégat/type en évolution)
+  lastSeq              BigInt    @map("last_seq")
+  blocageSeq           BigInt?   @map("blocage_seq")                // tête de flux en échec (retry en cours)
+  tentatives           Int       @default(0)
+  prochaineTentativeAt DateTime? @map("prochaine_tentative_at")     // backoff borné (R286)
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  @@id([consumer, stream])
+  @@map("event_consumers")
+}
+
+model EventDeadLetter {
+  id         BigInt    @id @default(autoincrement())
+  tenantId   String    @map("tenant_id") @db.Uuid
+  consumer   String
+  eventId    BigInt    @map("event_id")                             // réf domain_events — jamais le payload
+  erreur     String
+  tentatives Int
+  rejouePar  String?   @map("rejoue_par") @db.Uuid                  // rejeu MANUEL tracé (jeton)
+  rejoueAt   DateTime? @map("rejoue_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, consumer])
+  @@map("event_dead_letters")
+}
+
 // calculer (score, drivers, bande, segmentation…). Rejeu à date natif (R48/R49) via `at`.
 // L'auteur est TOUJOURS le jeton (payload.par = ctx.userId), jamais le corps.
 model CpsiEvent {

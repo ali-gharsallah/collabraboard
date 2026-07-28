@@ -139,7 +139,9 @@ DO $$ DECLARE t text; BEGIN
     'review_deadlines',                                   -- Échéances de review (R272→R275)
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
     'olivia_tools', 'olivia_agents',                      -- Olivia v2 R264/R259 (registres)
-    'olivia_runs', 'olivia_run_events'                    -- Olivia v2 R260 (runs + journal)
+    'olivia_runs', 'olivia_run_events',                   -- Olivia v2 R260 (runs + journal)
+    'event_dead_letters'                                  -- R286 (transport : échec visible, tenanté ;
+                                                          --  event_consumers = infra SANS tenant — hors RLS, documenté)
   ] LOOP
     IF to_regclass(t) IS NOT NULL
        AND EXISTS (SELECT 1 FROM information_schema.columns c

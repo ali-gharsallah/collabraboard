@@ -198,6 +198,13 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Transport asynchrone — R286 (canon SO + transport async, ratifié 2026-07-28). ──
+  { cle: "retry_max", type: "int", defaut: 5, regle: "R286", requis: false,
+    description: "Tentatives de consommation d'un événement avant dead-letter (retry borné — jamais un exactly-once prétendu)." },
+  { cle: "backoff_base_s", type: "int", defaut: 10, regle: "R286", requis: false,
+    description: "Base (secondes) du backoff exponentiel entre tentatives de consommation." },
+  { cle: "dead_letter_alerte_seuil", type: "int", defaut: 1, regle: "R286", requis: false,
+    description: "Nombre d'événements en souffrance à partir duquel l'alerte est émise (défaut 1 : notifié dès la première — R39, notifie sans jamais bloquer)." },
   // ── Questionnaires de review — R283 (canon écarts anciens, ratifié 2026-07-28). ──
   { cle: "reviewProfiles", type: "json", defaut: [], regle: "R283", requis: false,
     exemple: [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],

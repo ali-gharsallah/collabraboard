@@ -446,7 +446,14 @@ export class CpsiService implements OnApplicationShutdown {
       if (dejaEmises.has(cle)) continue;
       const at = new Date().toISOString();
       const payload = { client, scenarios, cle, par: ctx.userId };
-      await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted", clientId: client, at, payload } });
+      // R285/R286 : le journal CPSI reste LA source ; le MIROIR outbox (référence : la clé,
+      // jamais la corrélation) part dans la MÊME transaction — le worker-riskcases le
+      // consommera par la porte d'entrée canonique (UC-01, idempotent par depuisProposition).
+      await this.prisma.$transaction(async (tx) => {
+        await tx.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted", clientId: client, at, payload } });
+        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted",
+          aggregateId: client, payload: { cle, par: ctx.userId }, at } });
+      });
       await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_CASE_PROPOSAL_EMITTED", cle);
       emises.push({ client, scenarios, cle, at });
     }

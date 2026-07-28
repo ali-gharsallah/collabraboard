@@ -38,7 +38,8 @@ export async function seedTenantClient(prisma: PrismaService, tid: string, clien
 // SEULES écritures licites d'un run (B.0/R264) : olivia_* (journal, registres, messages,
 // propositions) + domain_events + audit_log. Toute autre table qui bouge = mutation métier. ──
 export async function photoTablesMetier(prisma: PrismaService): Promise<string> {
-  const exclues = (t: string) => t.startsWith("olivia_") || t === "domain_events" || t === "audit_log" || t.startsWith("_");
+  const exclues = (t: string) => t.startsWith("olivia_") || t === "domain_events" || t === "audit_log" || t.startsWith("_")
+    || t.startsWith("event_");                            // R286 : watermarks/dead-letters = infra transport, pas du métier
   const tables = await prisma.$queryRawUnsafe<{ tablename: string }[]>(
     `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`);
   const photo: Record<string, unknown> = {};

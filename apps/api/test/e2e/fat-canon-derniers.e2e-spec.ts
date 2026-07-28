@@ -82,3 +82,111 @@ describe("FAT CANON DERNIERS — R285 : rien ne part qui ne soit d'abord ÉCRIT 
     console.log("AS-02 PASS — références seules au transport, relecture sous RBAC/RLS");
   });
 });
+
+// ── R286 : livraison at-least-once, consommateur idempotent, échec VISIBLE (AS-03..05) ──
+
+describe("FAT CANON DERNIERS — R286 : watermarks, dead-letters, échec visible (AS-03..05)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any; let worker: OutboxWorker;
+  const T = randomUUID();
+  const ADMIN = randomUUID(), CO = randomUUID();
+  const clientA = randomUUID(), clientB = randomUUID();
+
+  // Une proposition RÉELLE : journal CPSI (source de vérité) + événement outbox MIROIR (référence : la clé)
+  const proposer = async (client: string, cle: string) => {
+    await prisma.cpsiEvent.create({ data: { tenantId: T, type: "cpsi.case_proposal.emitted",
+      clientId: client, at: new Date().toISOString(), payload: { client, scenarios: ["SC_A"], cle, par: CO } } });
+    return prisma.domainEvent.create({ data: { tenantId: T, type: "cpsi.case_proposal.emitted",
+      aggregateId: client, payload: { cle, par: CO }, at: new Date().toISOString() } });
+  };
+  const poserWatermark = async (consumer: string, seq: bigint) =>
+    prisma.eventConsumer.upsert({ where: { consumer_stream: { consumer, stream: "global" } },
+      update: { lastSeq: seq, blocageSeq: null, tentatives: 0, prochaineTentativeAt: null },
+      create: { consumer, stream: "global", lastSeq: seq } });
+  const maxSeq = async (): Promise<bigint> =>
+    BigInt(((await prisma.$queryRawUnsafe<any[]>(`SELECT COALESCE(MAX(id),0)::bigint m FROM domain_events`))[0].m));
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    worker = app.get(OutboxWorker);
+    worker.onModuleDestroy();                                                // le TEST contrôle les ticks
+    await seedTenantClient(prisma, T, clientA); await seedTenantClient(prisma, T, clientB);
+    // Hygiène : consommateurs AU PRÉSENT (le rattrapage historique est un rejeu EXPLICITE, jamais implicite)
+    const m = await maxSeq();
+    await poserWatermark("worker-riskcases", m); await poserWatermark("golden-record", m);
+    // AS-04 : paramètres tenant par LE registre — retry borné court, backoff nul (test)
+    for (const [cle, valeur] of [["retry_max", 2], ["backoff_base_s", 0]] as const)
+      await request(http).post(`/v1/parametres/valeur/${cle}`).set(bearer(T, ADMIN, "ADMIN"))
+        .send({ valeur, motif: "R286 : bornes de retry du transport (test AS-04)" }).expect(201);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("AS-03 [R286] la redélivrance est INOFFENSIVE : le même événement livré deux fois au worker case_proposal → UN seul riskcase", async () => {
+    const cle = `${clientA}|SC_A`;
+    const ev = await proposer(clientA, cle);
+    await worker.tick();                                                     // 1re livraison
+    const w1 = await prisma.eventConsumer.findUnique({ where: { consumer_stream: { consumer: "worker-riskcases", stream: "global" } } });
+    expect(w1!.lastSeq >= ev.id).toBe(true);                                 // watermark avancé
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: clientA } })).toBe(1);
+    await poserWatermark("worker-riskcases", ev.id - BigInt(1));             // REDÉLIVRANCE simulée (normale, pas une anomalie)
+    await worker.tick();                                                     // 2e livraison du MÊME événement
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: clientA } })).toBe(1);  // IDEMPOTENT (UC-01/PC-10)
+    console.log("AS-03 PASS — at-least-once assumé, un seul riskcase à travers le transport");
+  });
+
+  it("AS-04 [R286] l'échec finit en DEAD-LETTER visible, le flux ne se bloque JAMAIS, le rejeu manuel est tracé", async () => {
+    const clePoison = `${clientB}|SC_FANTOME`;
+    // ÉVÉNEMENT POISON : référence sans source (le journal CPSI ne connaît pas cette clé) → le consommateur échoue
+    const poison = await prisma.domainEvent.create({ data: { tenantId: T, type: "cpsi.case_proposal.emitted",
+      aggregateId: clientB, payload: { cle: clePoison, par: CO }, at: new Date().toISOString() } });
+    const cleValide = `${clientB}|SC_B`;
+    await proposer(clientB, cleValide);                                      // un événement VALIDE derrière le poison
+    await worker.tick();                                                     // tentative 1 (échec, tête bloquée)
+    await worker.tick();                                                     // tentative 2 = retry_max → dead-letter + le flux REPART
+    await worker.tick();                                                     // draine la suite
+    const dl = await prisma.eventDeadLetter.findFirst({ where: { tenantId: T, consumer: "worker-riskcases", eventId: poison.id } });
+    expect(dl).toBeTruthy();                                                 // TRACÉE — jamais un log silencieux
+    expect(dl!.tentatives).toBe(2);
+    expect(dl!.rejoueAt).toBeNull();
+    // Le flux n'est PAS bloqué : l'événement valide DERRIÈRE le poison est consommé
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: clientB } })).toBe(1);
+    // VISIBLE en T9 : compteur + le plus ancien
+    const sante = (await request(http).get("/v1/events/sante").set(bearer(T, ADMIN, "ADMIN"))).body;
+    expect(sante.enSouffrance).toBe(1);
+    expect(sante.plusAncien).toBeTruthy();
+    // L'alerte est un ÉVÉNEMENT (R39 : notifie, ne bloque jamais)
+    expect(await prisma.domainEvent.count({ where: { tenantId: T, type: "transport.deadletter" } })).toBeGreaterThanOrEqual(1);
+    // RÉPARATION puis REJEU MANUEL tracé : la source manquante arrive, le rejeu est sûr (idempotence)
+    await prisma.cpsiEvent.create({ data: { tenantId: T, type: "cpsi.case_proposal.emitted",
+      clientId: clientB, at: new Date().toISOString(), payload: { client: clientB, scenarios: ["SC_F"], cle: clePoison, par: CO } } });
+    const rejeu = await request(http).post(`/v1/events/dead-letters/${dl!.id}/rejouer`).set(bearer(T, ADMIN, "ADMIN"));
+    expect(rejeu.status).toBe(201);
+    const apres = await prisma.eventDeadLetter.findFirst({ where: { id: dl!.id } });
+    expect(apres!.rejouePar).toBe(ADMIN);                                    // qui (jeton, jamais le body)
+    expect(apres!.rejoueAt).toBeTruthy();                                    // quand
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: clientB } })).toBe(2);  // traité au rejeu
+    expect((await request(http).get("/v1/events/sante").set(bearer(T, ADMIN, "ADMIN"))).body.enSouffrance).toBe(0);
+    console.log("AS-04 PASS — dead-letter visible (T9), flux jamais bloqué, rejeu manuel tracé qui/quand");
+  });
+
+  it("AS-05 [R286] l'ordre tient PAR AGRÉGAT — l'ordre inter-agrégats mélangé ne suppose rien", async () => {
+    const cA = randomUUID(), cB = randomUUID();
+    await seedTenantClient(prisma, T, cA); await seedTenantClient(prisma, T, cB);
+    // Ordre MÉLANGÉ inter-agrégats : A1, B1, A2 — seq croissants
+    const a1 = await proposer(cA, `${cA}|SC_1`);
+    await proposer(cB, `${cB}|SC_1`);
+    const a2 = await proposer(cA, `${cA}|SC_2`);
+    await worker.tick();
+    // Tout est consommé — aucun consommateur n'a supposé d'ordre croisé
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: cA } })).toBe(2);
+    expect(await prisma.riskCase.count({ where: { tenantId: T, clientId: cB } })).toBe(1);
+    expect(await prisma.eventDeadLetter.count({ where: { tenantId: T, eventId: { in: [a1.id, a2.id] } } })).toBe(0);
+    // L'ordre PAR AGRÉGAT est celui des seq : les deux ouvertures de cA se suivent dans l'ordre des sources
+    const ouverts = (await prisma.domainEvent.findMany({ where: { tenantId: T, type: "riskcase.ouvert" }, orderBy: { id: "asc" } }))
+      .map((e: any) => e.payload.depuisProposition).filter((k: string) => k.startsWith(cA));
+    expect(ouverts).toEqual([`${cA}|SC_1`, `${cA}|SC_2`]);                   // jamais SC_2 avant SC_1
+    const w = await prisma.eventConsumer.findUnique({ where: { consumer_stream: { consumer: "worker-riskcases", stream: "global" } } });
+    expect(w!.lastSeq >= a2.id).toBe(true);
+    console.log("AS-05 PASS — ordre par agrégat tenu, ordre inter-agrégats jamais supposé");
+  });
+});
