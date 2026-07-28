@@ -781,3 +781,22 @@ partie, pas avant.
   (5) GET /v1/builder/publications ajouté à la surface SO (l'acte de publication est un
   JOURNAL — cohérent R284). Écran builder (68e onglet). 
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 3).
+
+## SOLDE — DÉGEL VAGUE 4 : REGWATCH (2026-07-28, VR-01..05 verts)
+
+- **R309** : sources = ports (`regwatch_sources`, credentials au coffre) — l'éteint est
+  AFFICHÉ, la collecte vit ; item = événement dédupliqué par empreinte, fetch tracé.
+- **R310** : qualification HUMAINE motivée (R7) ; Olivia PROPOSE — citation d'un Rn
+  INEXISTANT refusée 422 (R257, jamais une référence inventée) ; l'item reste NON_TRAITE
+  jusqu'à la décision humaine, la filiation IA→humain est tracée (surProposition).
+- **R311** : PERTINENT exige les Rn impactés + ouvre la tâche d'analyse (événement) ;
+  VR-05 vérifie par revue automatisée que le module n'écrit JAMAIS une règle (aucun
+  ecrire/PATCH/PUT/DELETE) — la voie normale (amendement/R68/bac) fait le changement.
+- **ÉCARTS CONSIGNÉS** : (1) la tâche d'analyse est un ÉVÉNEMENT (pattern
+  tache.core.resolution R169) — le rattachement au module Tasks (T3) est une extension
+  d'affichage à brancher ; (2) la proposition arrive par une route regwatch dédiée — même
+  consigne que WB-09 : l'entrée au canal Olivia B.7 (TYPES fermés) est une extension à
+  ratifier ; (3) le digest est servi + notifié par événement — la planification (cron)
+  suivra l'infra (dette §5) ; (4) RN_MAX=323 est une constante de validation — le
+  catalogue vivant la fait évoluer par amendement. Écran veille (69e onglet).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 4).

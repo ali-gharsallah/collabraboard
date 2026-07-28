@@ -1166,3 +1166,22 @@ describe("FE-WB — R306 : les refus de cohérence arrivent du BACKEND en liste 
     expect(refus).toHaveTextContent(/ETAPE_SANS_OWNER/);                    // TOUTE la liste, telle quelle
   });
 });
+
+describe("FE-VR — R309/R310 : la veille rend le port éteint et la proposition IA sans décider", () => {
+  it("source éteinte affichée ; proposition Olivia visible, l'item reste NON_TRAITE", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.post("*/v1/regwatch/collecter", () => HttpResponse.json({ sources: [
+        { code: "FINMA", etat: "ACTIF", items: 2 }, { code: "SECO", etat: "ETEINT", items: 0 }] })),
+      http.get("*/v1/regwatch/items", () => HttpResponse.json([
+        { empreinte: "e1", source: "FINMA", titre: "Circulaire cross-border", date: "2026-07-22", statut: "NON_TRAITE",
+          proposition: { statut: "PERTINENT", regles: ["R293"], justification: "touche le country manual" } }])));
+    const { Regwatch } = await import("./regwatch/Regwatch");
+    render(<Regwatch/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Collecter$/ }));
+    expect(await screen.findByText(/port éteint \(credentials absents/)).toBeInTheDocument();
+    expect(await screen.findByText(/Olivia propose : PERTINENT \(R293\)/)).toBeInTheDocument();
+    expect(screen.getByText("NON_TRAITE")).toBeInTheDocument();              // l'IA n'a RIEN décidé
+    expect(screen.getByRole("button", { name: /^Pertinent$/ })).toBeInTheDocument();
+  });
+});

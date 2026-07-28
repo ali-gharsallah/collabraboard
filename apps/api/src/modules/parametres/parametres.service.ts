@@ -211,6 +211,10 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Dégel vague 4 — Regwatch R309-R311 (ratifié 2026-07-28). ──
+  { cle: "regwatch_sources", type: "json", defaut: [], regle: "R309", requis: false,
+    exemple: [{ code: "FINMA", libelle: "Communications FINMA", credentials: true }],
+    description: "Sources de veille réglementaire (PORTS déclarés) : sans credentials (coffre), la source est ÉTEINTE — affichée, jamais cassée (R167). Chaque item collecté est un événement dédupliqué par empreinte." },
   // ── Dégel vague 3 — Builder R304-R308 (GO Ali 2026-07-28). ──
   { cle: "roles_publication_builder", type: "json", defaut: ["ADMIN", "CO_SR"], regle: "R307", requis: false,
     description: "Rôles habilités à PUBLIER un artefact du Builder (section, questionnaire, workflow). L'auteur du brouillon ne publie jamais le sien (R13) ; la publication exige la simulation du contenu exact (R305) et grave une version datée (R304)." },
