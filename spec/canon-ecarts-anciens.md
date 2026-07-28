@@ -2,8 +2,10 @@
 # Réconciliation R83↔R133–R136 (R280) · Timeline & SLA hit→MROS via la porte (R281) ·
 # Versionnage de la matrice de droits (R282) · Questionnaires de review (R283)
 
-**Statut : ENREGISTRÉ le 2026-07-28 — ÉTAPE 0 EXÉCUTÉE, STOP en attente de ratification
-des points ci-dessous (aucun code des parties 1-4 avant visa).**
+**Statut : RATIFIÉ le 2026-07-28 (Ali) — mapping RS→RW + PC-16..19 ratifié · mapping R280
+ratifié (resserrement CLARIFICATION→CLOTUREE côté produit, extension ESCALADEE→CLOTUREE
+consignée hors modèle de référence) · contrat 1.1 par ALIAS ratifié (PC-12 v1 amendé, son
+invariant conservé : aucune écriture riskcases via la porte).**
 
 ## VERDICT ÉTAPE 0 (exécutée sur le repo réel)
 

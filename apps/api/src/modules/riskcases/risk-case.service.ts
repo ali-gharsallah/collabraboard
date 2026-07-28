@@ -15,7 +15,9 @@ import { Tx } from "../../common/tx";
  */
 
 type Ctx = { tenantId: string; userId: string; role: string };
-const TRANSITIONS: Record<string, string[]> = {
+// EXPORTÉE depuis R280 (canon écarts anciens, ratifié 2026-07-28) : LA machine canonique —
+// le modèle de référence R83 du moteur s'y mappe via la table ratifiée, testée par UC-02.
+export const TRANSITIONS: Record<string, string[]> = {
   NOUVELLE: ["EN_ANALYSE"],
   EN_ANALYSE: ["CLARIFICATION", "CLOTUREE", "ESCALADEE"],
   CLARIFICATION: ["EN_ANALYSE"],
@@ -61,6 +63,32 @@ export class RiskCaseService {
   }
 
   // ── Lecture : la file des dossiers de risque (Vague 1, écran « File d'alertes »), tenant-scopée ──
+  // ── R280/UC-01 : LA porte d'entrée depuis le CPSI — un case_proposal (R252) consommé crée
+  //    le riskcase dans l'état d'ENTRÉE canonique (NOUVELLE), référencé, idempotent côté
+  //    consommateur (PC-10 re-vérifié). AUCUNE mutation du journal CPSI (lecture seule). ──
+  async consommerProposition(ctx: Ctx, cle: string) {
+    if (!cle?.trim()) throw new BadRequestException("cle requise (client|scenarios, R252)");
+    const prop = (await this.prisma.cpsiEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted" } }))
+      .find((e: any) => (e.payload as any)?.cle === cle);
+    if (!prop) throw new NotFoundException("Proposition inconnue au journal CPSI");
+    // Idempotence consommateur : une proposition déjà consommée renvoie SON cas, n'en crée jamais deux
+    const deja = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "riskcase.ouvert" } }))
+      .find((e: any) => (e.payload as any)?.depuisProposition === cle);
+    if (deja) return { caseId: deja.aggregateId, statut: "NOUVELLE", dejaConsommee: true };
+    const p: any = prop.payload;
+    return this.prisma.$transaction(async (tx: Tx) => {
+      const c = await tx.riskCase.create({ data: { tenantId: ctx.tenantId, clientId: p.client,
+        statut: "NOUVELLE", etatDepuis: new Date().toISOString(), slaSignale: false,
+        signalIds: [], ouvertPar: ctx.userId } });
+      await this.emit(tx, ctx.tenantId, "riskcase.ouvert", c.id,
+        { depuisProposition: cle, scenarios: p.scenarios ?? [], par: ctx.userId });
+      await this.audit.log(ctx.tenantId, ctx.userId, "RISKCASE_FROM_PROPOSAL", `${c.id}:${cle}`);
+      return { caseId: c.id, statut: c.statut, dejaConsommee: false };
+    });
+  }
+
   async liste(ctx: Ctx, statut?: string) {
     const cases = await this.prisma.riskCase.findMany({
       where: { tenantId: ctx.tenantId, ...(statut ? { statut } : {}) } });

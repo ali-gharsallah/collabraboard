@@ -453,3 +453,12 @@ questionnaires de review → R283 (famille RW après mapping). STOP en cours : r
 de la numérotation (RS→RW, PC-16..19), du mapping des 2 transitions R280, et de la
 supersession partielle du test PC-12 v1. Chaque entrée sera SOLDÉE à la livraison de sa
 partie, pas avant.
+
+## SOLDE — RÉCONCILIATION R83↔R133-R136 (2026-07-28, partie 1 du canon écarts anciens LIVRÉE)
+
+- **R280 LIVRÉ (UC-01..03 verts)** : la machine R133-R136 (produit) est LA canonique ; le
+  modèle R83 du moteur s'y mappe via la table RATIFIÉE (5 états 1:1 + 2 deltas consignés :
+  resserrement CLARIFICATION→CLOTUREE, extension ESCALADEE→CLOTUREE post-MROS). UC-02 est le
+  test de conformité permanent (un orphelin = rouge) ; UC-01 = porte d'entrée case_proposal →
+  NOUVELLE, référencée, idempotente ; UC-03 = un seul jeu de transitions. Moteur Python et
+  routes R133-R136 INTOUCHÉS (Python 18/18). L'écart « double canon en sursis » est SOLDÉ.
