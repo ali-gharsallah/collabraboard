@@ -406,10 +406,11 @@ réutilisation, pas concurrence. Toute divergence entre le run v2 et la pré-rev
 5. ✅ Paramètres B.5 au questionnaire R-Q (§17) ; missions_actives vide par défaut
    partout (SW-18 : refus typé + écran neutralisé, pattern R177/HO-02).
 
-Écarts signalés (ECARTS) : rôles SO/Direction absents du repo (gardes = ADMIN/CO_SR) ·
-type CLARIFICATION absent du catalogue R254 (types existants en attendant l'amendement) ·
-file d'attente de saturation impossible en transport synchrone v1 (notifiée, R39) ·
-FK users(id) non posée (pattern uniforme du repo) · empreinte C3 volatile (mesure CPSI).
+Écarts signalés (ECARTS) — **les 5 RATIFIÉS par Ali le 2026-07-28 (SOLDÉS)** : gardes
+ADMIN/CO_SR = canon (rôle SO à créer plus tard) · propositions de clarification via les
+types R254 existants · saturation notifiée jamais bloquante (R39, file = transport
+asynchrone) · uuid sans FK users (pattern repo) · empreintes : byte-égalité prouvée C2,
+périmètre-égalité C3.
 
 ---
 

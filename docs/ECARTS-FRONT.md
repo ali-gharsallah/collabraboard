@@ -374,3 +374,21 @@ Aucun de ces quatre n'a été construit — signalé, pas inventé.
      (duree_ms) → l'égalité BYTE des empreintes entre agents est prouvée sur C2 (SW-04),
      l'égalité de PÉRIMÈTRE (type+id) sur C3 (mission 2). Stabiliser = retirer la mesure
      du hachage côté v1 (changement v1 à ratifier).
+
+## OLIVIA v2 — ÉCARTS RATIFIÉS (décision Ali, 2026-07-28) — SOLDE
+
+Les 5 écarts de la Partie B sont RATIFIÉS tels que consignés : la déviation devient
+l'état accepté du canon, aucun code à changer.
+1. **Rôles SO/Direction** : gardes ADMIN/CO_SR = CANON jusqu'à création du rôle SO
+   (replay R265, liste/détail R266, vue agrégée). SOLDÉ.
+2. **Type CLARIFICATION** : les propositions de clarification de la pré-revue restent
+   rendues via les types EXISTANTS du catalogue R254 (AIGUILLAGE_EDD/ALLEGEMENT_EDD).
+   L'amendement du catalogue reste possible plus tard — non requis. SOLDÉ.
+3. **File d'attente de saturation** : en transport synchrone v1, le dépassement de
+   runs_actifs_max_par_tenant NOTIFIE (olivia.runs.saturation) et ne bloque jamais
+   (R39) — comportement RATIFIÉ ; la file arrivera avec le transport asynchrone. SOLDÉ.
+4. **FK users(id) non posée** (B.2) : le pattern uniforme du repo (uuid sans FK, RLS)
+   est RATIFIÉ. SOLDÉ.
+5. **Empreinte C3 volatile** : l'égalité BYTE des empreintes prouvée sur C2 (SW-04) et
+   l'égalité de PÉRIMÈTRE (type+id) sur C3 (mission 2) sont RATIFIÉES comme preuves
+   suffisantes — la stabilisation du hachage v1 n'est pas requise. SOLDÉ.
