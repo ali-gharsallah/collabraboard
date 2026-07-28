@@ -10,6 +10,7 @@ import { ApidocModule } from "./modules/apidoc/apidoc.module"; // triage final :
 import { XbModule } from "./modules/crossborder/xb.module"; // R293-R295 : cross-border
 import { TxFluxModule } from "./modules/txflux/txflux.module"; // R297 : journal transactionnel (dégel V1)
 import { TxRiskModule } from "./modules/txflux/txrisk.module"; // R298 : txrisk, surface du moteur CPSI
+import { FxModule } from "./modules/txflux/fx.module"; // R299 : FX, lecture d'exposition
 import { OnboardingModule } from "./modules/onboarding/onboarding.module";
 import { PreRevueModule } from "./modules/ia/prerevue.module";
 import { GedModule } from "./modules/ged/ged.module";
@@ -41,7 +42,7 @@ import { CocModule } from "./modules/coc/coc.module";
 import { SandboxModule } from "./modules/sandbox/sandbox.module";
 import { SwarmModule } from "./modules/swarm/swarm.module";
 
-@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
+@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }

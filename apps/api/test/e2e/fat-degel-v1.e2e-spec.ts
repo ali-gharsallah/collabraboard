@@ -152,3 +152,44 @@ describe("FAT DÉGEL V1 — R298 : la détection vit AU MOTEUR, txrisk alimente 
     console.log("TF-06 PASS — tendances rejouées à date depuis le journal");
   });
 });
+
+// ── R299 [canon R296] : FX = LECTURE d'exposition — seuils qui notifient, zéro exécution (TF-07/08) ──
+
+describe("FAT DÉGEL V1 — R299 : exposition par devise, jamais un taux inventé (TF-07/08)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const RM = randomUUID(), ADMIN = randomUUID(), DIR = randomUUID();
+
+  beforeAll(async () => {
+    process.env.TXFLUX_FAKE_PORT = "1";                  // le flux existe ; le port FX, LUI, est absent
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, randomUUID());
+    await request(http).post("/v1/txflux/importer").set(bearer(T, RM, "RM")).expect(201);
+  });
+  afterAll(async () => { delete process.env.TXFLUX_FAKE_PORT; await app.close(); });
+
+  it("TF-07 [R299/R167] pas de port FX → montants en DEVISE D'ORIGINE + mention — jamais un taux par défaut", async () => {
+    const r = await request(http).get("/v1/fx/exposition").set(bearer(T, DIR, "DIR"));
+    expect(r.status).toBe(200);
+    expect(r.body.parDevise.CHF).toBeTruthy();
+    expect(r.body.parDevise.USD).toBeTruthy();           // la fixture USD reste en USD
+    expect(r.body.parDevise.USD.enChf).toBeNull();       // AUCUNE conversion inventée
+    expect(r.body.conversion).toMatch(/aucun port FX/i); // la mention, rendue à l'écran
+    expect(JSON.stringify(r.body)).not.toMatch(/"taux":\s*[0-9]/); // zéro taux par défaut
+    console.log("TF-07 PASS — devise d'origine + mention, pas de taux inventé");
+  });
+
+  it("TF-08 [R299/R39] seuil d'exposition franchi → NOTIFICATION (événement), rien bloqué — le seuil est un paramètre tenant", async () => {
+    await request(http).post("/v1/parametres/valeur/fx_seuils_exposition").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: { USD: 5000 }, motif: "R299 : seuil d'attention exposition USD" }).expect(201);
+    const r = await request(http).get("/v1/fx/exposition").set(bearer(T, DIR, "DIR"));
+    expect(r.status).toBe(200);                          // servi — JAMAIS bloqué (R39)
+    expect(r.body.parDevise.USD.seuilFranchi).toBe(true);
+    const ev = await prisma.domainEvent.findFirst({
+      where: { tenantId: T, type: "fx.seuil.franchi" }, orderBy: { id: "desc" } });
+    expect(ev).toBeTruthy();
+    expect((ev!.payload as any).devise).toBe("USD");
+    console.log("TF-08 PASS — franchissement notifié, exposition servie");
+  });
+});

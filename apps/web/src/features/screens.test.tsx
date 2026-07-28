@@ -1086,3 +1086,18 @@ describe("FE-TXR — R298 : txrisk rend le flux servi, refus gracieux sans port,
     expect(screen.getByText(/rejouées du journal/)).toBeInTheDocument();
   });
 });
+
+describe("FE-FX — R299 : l'exposition est SERVIE, la mention « pas de taux inventé » rendue", () => {
+  it("sans port FX : devise d'origine + mention ; seuil franchi coloré (déjà notifié serveur)", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/fx/exposition", () => HttpResponse.json({
+      conversion: "aucun port FX configuré — montants en devise d'origine, jamais un taux inventé (R167)",
+      parDevise: { USD: { entrees: 9500, sorties: 0, exposition: 9500, enChf: null, seuilFranchi: true } } })));
+    const { FxExposition } = await import("./fx/FxExposition");
+    render(<FxExposition/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText(/jamais un taux inventé/)).toBeInTheDocument();
+    expect(screen.getByText(/seuil franchi \(notifié\)/)).toBeInTheDocument();
+    expect(screen.getAllByText(/devise d'origine/).length).toBeGreaterThanOrEqual(2);   // la mention ET la cellule
+  });
+});

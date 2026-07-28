@@ -217,6 +217,12 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Domaines e-mail du tenant pour la résolution AU LOGIN (temps 1 : email → méthode). Un domaine inconnu répond la MÊME forme que LOCAL (indistinguable, pattern OL-34) — jamais une existence révélée." },
   { cle: "sso_fallback_local", type: "bool", defaut: false, regle: "R296", requis: false,
     description: "Repli mot de passe local quand l'IdP est indisponible ? Défaut FAUX : l'indisponibilité est une ERREUR TYPÉE, jamais un repli silencieux. Le changement se motive au registre (four-eyes du changement = extension consignée v1)." },
+  // ── Dégel vague 1 — R299 FX / R300 SWIFT (ratifiés 2026-07-28). ──
+  { cle: "fx_seuils_exposition", type: "json", defaut: {}, regle: "R299", requis: false,
+    exemple: { USD: 1000000, EUR: 2000000 },
+    description: "Seuils d'attention d'exposition PAR DEVISE : franchi = événement fx.seuil.franchi NOTIFIÉ (R39) — l'exposition reste servie, rien n'est jamais bloqué. Aucune opération de change n'existe." },
+  { cle: "swift_types_actifs", type: "json", defaut: ["MT103", "MT202", "pacs.008"], regle: "R300", requis: false,
+    description: "Bibliothèque de types de messages SWIFT que le laboratoire PARSE (MT/MX). Un type hors liste part en quarantaine motivée (pattern R169) — jamais deviné. L'émission n'existe pas, structurellement." },
   { cle: "breakGlassComptes", type: "json", defaut: [], regle: "R296", requis: false,
     exemple: ["secours@gwb.ch"],
     description: "Comptes de secours (break-glass) : login LOCAL possible même en mode SSO — MFA OBLIGATOIRE, chaque usage audité (BREAK_GLASS_LOGIN) et notifié SO/DIR. Jamais une dégradation de sécurité silencieuse." },
