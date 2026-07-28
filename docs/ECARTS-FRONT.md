@@ -540,3 +540,19 @@ partie, pas avant.
   inexistant (création) ; rôle SO absent de l'enum (ratification = migration additive).
   Livrable : branche unique PR #46 (précédent ratifié). SOLDE de chaque écart à la fin
   de sa partie, pas avant.
+
+## SOLDE — TRANSPORT ASYNCHRONE (2026-07-28, R285-R287 LIVRÉS, AS-01..08 verts)
+
+- **L'écart « transport asynchrone (SSE + file de saturation) » est SOLDÉ.** R285 : le relais
+  d'outbox est L'UNIQUE voie d'émission (revue de code automatisée AS-01) et le message de
+  transport porte des RÉFÉRENCES seules (les 2 violations latentes corrigées : payload complet
+  du corps webhook, catch silencieux du tick). R286 : watermarks persistés par consommateur
+  (naissance AU PRÉSENT), retry + backoff bornés par le registre R-Q (retry_max,
+  backoff_base_s, dead_letter_alerte_seuil), dead-letters TRACÉES et visibles (T9 étendu :
+  GET /v1/events/sante), rejeu manuel tracé qui/quand, consommateur worker-riskcases par la
+  porte canonique UC-01 (miroir outbox émis dans la transaction d'emettreCaseProposals),
+  ordre par agrégat sans supposition croisée. R287 : hub SSE descente seule
+  (GET /v1/events/stream), rattrapage par le journal (Last-Event-ID), scope figé à
+  l'abonnement en default-deny (OL-34), pilote live compteurs Home (lib/flux.ts, idempotence
+  client par seq) ; OL-31 re-passé. Référence croisée : spec/canon-so-et-transport-async.md
+  partie 2 · apps/api/test/e2e/fat-canon-derniers.e2e-spec.ts · screens.test.tsx FE-AS.
