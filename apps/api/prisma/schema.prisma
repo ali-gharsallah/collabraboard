@@ -1359,3 +1359,21 @@ model BuilderVersion {
   @@unique([tenantId, type, code, version])
   @@map("builder_versions")
 }
+
+// ═══ Mobile Banking — R316 (dégel V7, GO Ali 2026-07-28) : POPULATION IAM DISTINCTE ═══
+// La contrainte MB-01 est STRUCTURELLE : cette table n'a AUCUNE colonne de rôle — un client
+// final ne peut pas détenir un rôle interne parce que le schéma ne sait pas l'exprimer.
+// Le code hors bande n'est JAMAIS stocké en clair ; le secret MFA est obligatoire (R316).
+model MobileIdentite {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  clientId   String    @map("client_id") @db.Uuid
+  statut     String    @default("EN_ATTENTE")           // EN_ATTENTE | ACTIVE | SUSPENDUE
+  codeHash   String    @map("code_hash")                // sha256 du code hors bande — jamais en clair
+  mfaSecret  String?   @map("mfa_secret")               // posé à l'activation — MFA obligatoire ensuite
+  activeePar String    @map("activee_par")              // le RM qui active (tracé, MB-02)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  activeAt   DateTime? @map("active_at")
+  @@unique([tenantId, clientId])
+  @@map("mobile_identites")
+}

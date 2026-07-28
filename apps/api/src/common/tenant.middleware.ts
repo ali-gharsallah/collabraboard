@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware, UnauthorizedException, ForbiddenException }
 import { verify, decode } from "jsonwebtoken";
 import { KeyStore } from "../modules/auth/key-store";
 import { PrismaService } from "./prisma.service";
+import { garderMobile, SURFACE_MOBILE } from "../modules/mobile/mobile.gate";
 
 // ═══ R284 (canon SO + transport async, ratifié 2026-07-28) — la garde STRUCTURELLE du rôle SO.
 // SO audite les JOURNAUX, jamais les dossiers : hors de sa surface d'audit (lecture seule) et
@@ -60,14 +61,20 @@ export class TenantMiddleware implements NestMiddleware {
     if (["/v1/auth/token", "/v1/auth/oidc/login",
          "/v1/auth/methode", "/v1/auth/login",                        // R296 : login deux temps
          "/v1/.well-known/jwks.json"].includes(cheminPublic)) return next();   // routes publiques
+    // R316 (dégel V7) : la surface mobile est une AUTRE porte — population IAM distincte,
+    // jamais le RBAC interne. L'étanchéité vaut dans les deux sens (cf. rejet `pop` plus bas).
+    if (SURFACE_MOBILE.test(cheminPublic)) return garderMobile(req, cheminPublic, this.keys, next);
     const raw = (req.headers.authorization ?? "").replace(/^Bearer /, "");
+    let claims: any;
     try {
       const kid = (decode(raw, { complete: true }) as any)?.header?.kid;
       if (!kid) throw new Error("kid absent");
       const pub = this.keys.verificationKey(kid);          // lève si kid inconnu/expiré
-      const claims = verify(raw, pub, { algorithms: ["RS256"] }) as any;
-      req.ctx = { tenantId: claims.tid, userId: claims.sub, role: claims.role };
+      claims = verify(raw, pub, { algorithms: ["RS256"] });
     } catch { throw new UnauthorizedException("Jeton invalide ou expiré"); }
+    if (claims.pop === "MOBILE") throw new UnauthorizedException(
+      "R316 : population MOBILE — jamais la surface interne (deux portes, zéro partage)");
+    req.ctx = { tenantId: claims.tid, userId: claims.sub, role: claims.role };
     if (req.ctx.role === "SO") this.garderSO(req);      // R284 — APRÈS l'authentification, AVANT le routage
     next();
   }

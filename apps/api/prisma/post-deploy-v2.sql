@@ -144,6 +144,7 @@ DO $$ DECLARE t text; BEGIN
     'olivia_runs', 'olivia_run_events',                   -- Olivia v2 R260 (runs + journal)
     'transactions',                                       -- R297 (dégel V1, journal transactionnel tenanté)
     'builder_artefacts', 'builder_versions',              -- R304 (dégel V3, Builder tenanté)
+    'mobile_identites',                                   -- R316 (dégel V7, population mobile tenantée)
     'event_dead_letters'                                  -- R286 (transport : échec visible, tenanté ;
                                                           --  event_consumers = infra SANS tenant — hors RLS, documenté)
   ] LOOP
