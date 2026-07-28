@@ -1300,3 +1300,30 @@ model OliviaRunEvent {
   @@unique([runId, seq])
   @@map("olivia_run_events")
 }
+
+// ═══ R297 [canon R294] — LE journal transactionnel canonique (dégel vague 1, TF-01..03).
+// Append-only (trigger post-deploy), alimenté EXCLUSIVEMENT par le port core banking —
+// jamais inventé. Idempotence par (tenant, source, ref_externe). L'enrichissement est
+// calculé À l'insertion et tracé dans `enrichi` — jamais un écrasement (le trigger l'interdit).
+model Transaction {
+  id                   String   @id @default(uuid()) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  clientId             String?  @map("client_id") @db.Uuid       // via coreMapping (R169) ; inconnu = quarantaine
+  compte               String
+  dateValeur           String   @map("date_valeur")              // ISO date — la donnée du port
+  dateComptable        String   @map("date_comptable")
+  montant              Decimal
+  devise               String
+  sens                 String                                    // CREDIT | DEBIT
+  contrepartieNom      String?  @map("contrepartie_nom")
+  contrepartiePays     String?  @map("contrepartie_pays")
+  contrepartieIbanHash String?  @map("contrepartie_iban_hash")   // jamais l'IBAN en clair
+  type                 String
+  refExterne           String   @map("ref_externe")
+  source               String
+  enrichi              Json?                                     // colonnes calculées TRACÉES {champ:{valeur,regle}}
+  createdAt            DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, source, refExterne])
+  @@index([tenantId, clientId])
+  @@map("transactions")
+}

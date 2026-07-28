@@ -32,7 +32,8 @@ DO $$ DECLARE t text; BEGIN
     'olivia_messages',                                    -- Olivia R257 : le journal de conversation est append-only
     'olivia_agents',                                      -- Olivia v2 R259 : modifier = nouvelle version, JAMAIS une mutation
     'olivia_run_events',                                  -- Olivia v2 R260/R265 : LE journal du run — append-only
-    'coc_config_versions'                                 -- R276/R68 : la config CoC est un registre versionné, append-only
+    'coc_config_versions',                                 -- R276/R68 : la config CoC est un registre versionné, append-only
+    'transactions'                                        -- R297 (dégel V1) : LE journal transactionnel canonique, append-only
   ] LOOP
     IF to_regclass(t) IS NOT NULL THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I_no_update ON %I', t, t);
@@ -140,6 +141,7 @@ DO $$ DECLARE t text; BEGIN
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
     'olivia_tools', 'olivia_agents',                      -- Olivia v2 R264/R259 (registres)
     'olivia_runs', 'olivia_run_events',                   -- Olivia v2 R260 (runs + journal)
+    'transactions',                                       -- R297 (dégel V1, journal transactionnel tenanté)
     'event_dead_letters'                                  -- R286 (transport : échec visible, tenanté ;
                                                           --  event_consumers = infra SANS tenant — hors RLS, documenté)
   ] LOOP
