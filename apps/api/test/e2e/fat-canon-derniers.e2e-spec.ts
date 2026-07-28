@@ -378,3 +378,74 @@ describe("FAT CANON DERNIERS — R284 : rôle SO, surfaces d'audit (SO-01..06)",
     console.log("SO-06 PASS — l'accès SO n'a créé aucune voie latérale, réponse CO inchangée");
   });
 });
+
+// ── R288 (ratifié 2026-07-28) : le barème de scoring est une RÈGLE — gouverné, versionné, rejouable ──
+
+describe("FAT CANON DERNIERS — R288 : barèmes de scoring gouvernés (BS-07..09)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), ADMIN = randomUUID();
+
+  const creerKyc = async (clientId: string) =>
+    (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "HOLDING", accountType: "ADVISORY", countryCode: "CH", rmId: RM })).body; // défaut : 20+5=25 → CDD
+  // Barème v2 : HOLDING monte à 35 pts (35+5=40) et le seuil EDD descend à 40 → le même profil devient EDD
+  const V2 = { depuisLe: "", structurePts: { PP: 0, SA: 10, SARL: 10, HOLDING: 35, DOMICILE: 30, TRUST: 35, FOUNDATION: 25, FUND: 15 },
+    accountPts: { CURRENT: 0, ADVISORY: 5, DISCRETIONARY: 5, LOMBARD: 15 },
+    paysRisque: ["IR", "KP", "SY"], paysRisquePts: 40, seuilEdd: 40, seuilCdd: 25 };
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("BS-07 [R288/R29] le barème se change par le REGISTRE, jamais par le code : l'ancien dossier garde son score, le nouveau est scoré sous v2 (tracé)", async () => {
+    const c1 = randomUUID(), c2 = randomUUID();
+    await seedTenantClient(prisma, T, c1); await seedTenantClient(prisma, T, c2);
+    const avant = await creerKyc(c1);                                        // scoré sous le barème DÉFAUT (25 → CDD)
+    expect(avant.workflow).toBe("CDD");
+    expect(avant.riskScore).toBe(25);
+    // v2 par LE registre — motivé, daté (R125/R7) ; le code ne bouge pas
+    V2.depuisLe = new Date().toISOString();
+    await request(http).post("/v1/parametres/valeur/kycScoringBareme").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: [V2], motif: "R288 : holdings re-pondérées (décision comité risques)" }).expect(201);
+    const apres = await creerKyc(c2);                                        // scoré sous v2 : 35+5=40 ≥ seuilEdd 40 → EDD
+    expect(apres.riskScore).toBe(40);
+    expect(apres.workflow).toBe("EDD");
+    expect(JSON.stringify(apres.riskTrace)).toContain(V2.depuisLe);          // la trace MENTIONNE le barème appliqué
+    // R29 : le dossier d'avant n'a PAS bougé — il garde à vie le score de SON barème
+    const relu = await prisma.kycFile.findFirst({ where: { tenantId: T, clientId: c1 } });
+    expect(relu!.workflow).toBe("CDD");
+    expect(relu!.riskScore).toBe(25);
+    console.log("BS-07 PASS — barème par le registre, nouveau scoré v2 (tracé), ancien grandfathéré");
+  });
+
+  it("BS-08 [R288/BS-01] sbbrm RE-SCORE sous barème hypothétique : reclassements NOMINATIFS ancien→nouveau score — zéro écriture, le barème réel n'a pas bougé", async () => {
+    // Levier hypothétique DIFFÉRENT du réel : TRUST à 50 pts, seuil EDD à 45
+    const r = await request(http).post("/v1/sandbox/brm-seuils").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ seuilEdd: 41, seuilCdd: 25, structurePts: { HOLDING: 36 } });
+    expect(r.status).toBe(201);
+    expect(r.body.ecriture).toBe(false);                                     // BS-01 : un bac ne mute RIEN
+    // Le dossier c1 (score stocké 25, HOLDING/ADVISORY) est RE-SCORÉ : 36+5=41 ≥ 41 → EDD — nominatif, avec les DEUX scores
+    const rec = (r.body.reclassements as any[]).find((x) => x.avant === "CDD" && x.apres === "EDD" && x.scoreAvant === 25);
+    expect(rec).toBeTruthy();
+    expect(rec.scoreApres).toBe(41);                                         // re-score par le MOTEUR pur, pas le score stocké
+    // Le barème RÉEL n'a pas bougé : un nouveau dossier est toujours scoré sous v2 (40/EDD), pas sous l'hypothèse
+    const c3 = randomUUID(); await seedTenantClient(prisma, T, c3);
+    expect((await creerKyc(c3)).riskScore).toBe(40);
+    console.log("BS-08 PASS — re-scoring hypothétique nominatif (deux scores), zéro écriture");
+  });
+
+  it("BS-09 [R288/R127] le barème d'époque se REJOUE : la valeur effective entre v1 et v2 restitue le défaut", async () => {
+    const t0 = new Date(Date.now() - 3600_000).toISOString();                // avant l'écriture v2
+    const avant = (await request(http).get(`/v1/parametres/valeur/kycScoringBareme?date=${encodeURIComponent(t0)}`)
+      .set(bearer(T, ADMIN, "ADMIN"))).body;
+    expect(avant).toEqual([]);                                               // l'époque : défaut moteur (aucune version écrite)
+    const maintenant = (await request(http).get("/v1/parametres/valeur/kycScoringBareme").set(bearer(T, ADMIN, "ADMIN"))).body;
+    expect(Array.isArray(maintenant)).toBe(true);
+    expect(maintenant[0].structurePts.HOLDING).toBe(35);                     // aujourd'hui : v2
+    console.log("BS-09 PASS — R127 : le barème d'époque restitué par le registre");
+  });
+});

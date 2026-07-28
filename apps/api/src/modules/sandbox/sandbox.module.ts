@@ -1,5 +1,6 @@
 import { Body, Controller, Module, Post, Req, Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
+import { computeRisk, BAREME_DEFAUT, Bareme } from "../kyc/risk-engine"; // R288 : LE moteur pur — jamais un second
 
 /**
  * LES 5 BACS À SABLE — canon vague pilote partie 3 (BS-01..06, famille BS ratifiée), arbitrage :
@@ -49,17 +50,42 @@ export class SandboxService {
 
   // ── sbbrm (BS-04) : levier = seuils de la grille SDD/CDD/EDD → reclassements NOMINATIFS
   //    (qui monte, qui descend, avec son score) + Δ charge EDD. Sur le riskScore stocké. ──
-  async brmSeuils(ctx: Ctx, dto: { seuilEdd?: number; seuilCdd?: number }) {
-    const seuilEdd = dto?.seuilEdd ?? 50; const seuilCdd = dto?.seuilCdd ?? 25;   // grille actuelle : 50/25
-    if (seuilCdd >= seuilEdd) throw new BadRequestException("seuilCdd doit être < seuilEdd");
+  // R288/BS-08 ÉTENDU : les leviers couvrent désormais le BARÈME entier (points structure/compte,
+  // pays, seuils) — le bac RE-SCORE par le moteur PUR (computeRisk, barème hypothétique injecté),
+  // en re-dérivant les intrants de la TRACE stockée (kyc.created.riskTrace — conçue pour rejouer).
+  // Un dossier sans trace retombe sur son score STOCKÉ (seuils seuls — comportement BS-04 d'origine).
+  async brmSeuils(ctx: Ctx, dto: { seuilEdd?: number; seuilCdd?: number;
+    structurePts?: Record<string, number>; accountPts?: Record<string, number>;
+    paysRisque?: string[]; paysRisquePts?: number }) {
+    const hypothese: Bareme = { ...BAREME_DEFAUT,
+      ...(dto?.structurePts ? { structurePts: { ...BAREME_DEFAUT.structurePts, ...dto.structurePts } } : {}),
+      ...(dto?.accountPts ? { accountPts: { ...BAREME_DEFAUT.accountPts, ...dto.accountPts } } : {}),
+      ...(dto?.paysRisque ? { paysRisque: dto.paysRisque } : {}),
+      ...(dto?.paysRisquePts != null ? { paysRisquePts: dto.paysRisquePts } : {}),
+      seuilEdd: dto?.seuilEdd ?? 50, seuilCdd: dto?.seuilCdd ?? 25 };
+    if (hypothese.seuilCdd >= hypothese.seuilEdd) throw new BadRequestException("seuilCdd doit être < seuilEdd");
     const dossiers = await this.prisma.kycFile.findMany({ where: { tenantId: ctx.tenantId },
-      select: { code: true, clientId: true, riskScore: true, workflow: true } });
-    const classe = (score: number) => (score >= seuilEdd ? "EDD" : score >= seuilCdd ? "CDD" : "SDD");
-    const reclassements = dossiers
-      .map((d) => ({ code: d.code, clientId: d.clientId, score: d.riskScore, avant: d.workflow, apres: classe(d.riskScore) }))
-      .filter((d) => d.avant !== d.apres);                                  // NOMINATIF (BS-04)
-    const eddAvant = dossiers.filter((d) => d.workflow === "EDD").length;
-    const eddApres = dossiers.filter((d) => classe(d.riskScore) === "EDD").length;
+      select: { id: true, code: true, clientId: true, riskScore: true, workflow: true } });
+    // Les intrants d'époque, re-dérivés de la trace (STRUCTURE/ACCOUNT_TYPE/COUNTRY en detail)
+    const traces = await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "kyc.created", aggregateId: { in: dossiers.map((d) => d.id) } } });
+    const intrants = new Map<string, { structure: string; accountType: string; countryCode: string }>();
+    for (const ev of traces) {
+      const t: any[] = (ev.payload as any)?.riskTrace ?? [];
+      const ligne = (rule: string) => t.find((l) => l.rule === rule)?.detail;
+      const structure = ligne("STRUCTURE"), accountType = ligne("ACCOUNT_TYPE"), countryCode = ligne("COUNTRY");
+      if (structure && accountType && countryCode) intrants.set(ev.aggregateId, { structure, accountType, countryCode });
+    }
+    const classe = (score: number) => (score >= hypothese.seuilEdd ? "EDD" : score >= hypothese.seuilCdd ? "CDD" : "SDD");
+    const projetes = dossiers.map((d) => {
+      const inp = intrants.get(d.id);
+      const scoreApres = inp ? computeRisk(inp, hypothese).score : d.riskScore;   // re-score MOTEUR, sinon score stocké
+      return { code: d.code, clientId: d.clientId, score: d.riskScore,     // `score` : contrat BS-04 d'origine conservé
+        scoreAvant: d.riskScore, scoreApres, avant: d.workflow, apres: classe(scoreApres), reScore: !!inp };
+    });
+    const reclassements = projetes.filter((d) => d.avant !== d.apres);      // NOMINATIF (BS-04/BS-08)
+    const eddAvant = projetes.filter((d) => d.avant === "EDD").length;
+    const eddApres = projetes.filter((d) => d.apres === "EDD").length;
     return { ecriture: false, dossiersEvalues: dossiers.length, reclassements,
       deltaChargeEdd: eddApres - eddAvant };
   }

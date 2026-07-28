@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, ForbiddenException, ConflictException,
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
-import { computeRisk } from "./risk-engine";
+import { computeRisk, baremeEnVigueur } from "./risk-engine";
 import { SECTIONS_BY_WORKFLOW, VISAS_BY_WORKFLOW } from "./kyc.templates";
 import { SectionFourEyes } from "./rules/section-four-eyes"; // R13/R52
 import { NamedValidator } from "./rules/named-validator"; // R2/R4
@@ -11,6 +11,7 @@ import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
 import { KycHandoff, HandoffError, HandoffStatus } from "./rules/kyc-handoff"; // R85
 import { etatCloture } from "../offboarding/cloture.util"; // R267/OF-10 — lecture seule intégrale
 import { Tx } from "../../common/tx";
+import { loadSettings } from "../../common/tenant-settings"; // R288 : barème gouverné
 
 type Ctx = { tenantId: string; userId: string; role: string };
 
@@ -49,8 +50,12 @@ export class KycService {
     if (cloture.cloture && !opts.viaOnboarding) throw new ConflictException(
       `OFFBOARDING_LECTURE_SEULE : dossier clôturé le ${cloture.le?.slice(0, 10)} — le retour passe par un nouvel onboarding (R271)`);
 
+    // R288 : le dossier est scoré sous le barème EN VIGUEUR à sa création (registre R-Q,
+    // versionné par date d'effet — R29 : il le garde à vie, score + trace stockés).
+    const reglagesScoring = await loadSettings(this.prisma, ctx.tenantId).catch(() => ({} as any));
     let risk = computeRisk({ structure: dto.legalStructure,
-      accountType: dto.accountType, countryCode: dto.countryCode });
+      accountType: dto.accountType, countryCode: dto.countryCode },
+      baremeEnVigueur(reglagesScoring.kycScoringBareme, new Date()));
     let previousKycId: string | null = null;
     let revision = 1;
     if (cloture.cloture && opts.viaOnboarding) {          // R271 : réonboarding chaîné

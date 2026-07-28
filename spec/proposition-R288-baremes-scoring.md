@@ -1,7 +1,7 @@
 # O-Live — PROPOSITION R288 : les barèmes de scoring KYC sont des RÈGLES gouvernées
 # (complète la brique configuration & paramétrage — dernier trou identifié)
 
-**Statut : PROPOSÉ — en attente de ratification par Ali Gharsallah.**
+**Statut : RATIFIÉ le 2026-07-28 (Ali — « Ratifier R288 tel quel ») — LIVRÉ le jour même (BS-07..09 verts).**
 
 ## VERDICT ÉTAPE 0 (exécutée sur le repo réel, 2026-07-28)
 

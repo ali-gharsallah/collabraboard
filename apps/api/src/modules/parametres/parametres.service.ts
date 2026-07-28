@@ -198,6 +198,11 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Barèmes de scoring KYC — R288 (ratifié 2026-07-28). ──
+  { cle: "kycScoringBareme", type: "json", defaut: [], regle: "R288", requis: false,
+    exemple: [{ depuisLe: "2026-08-01", structurePts: { PP: 0, HOLDING: 35 }, accountPts: { CURRENT: 0, ADVISORY: 5 },
+      paysRisque: ["IR", "KP"], paysRisquePts: 40, seuilEdd: 40, seuilCdd: 25 }],
+    description: "Barème de scoring KYC versionné par date d'effet (pattern workloadBareme) : points par structure/compte, pays à risque, seuils EDD/CDD. Vide = barème par défaut du moteur. Un dossier garde à vie le score du barème de SA création (R29) — jamais rétroactif ; le bac sbbrm simule un barème hypothétique sans rien écrire (BS-08)." },
   // ── Transport asynchrone — R286 (canon SO + transport async, ratifié 2026-07-28). ──
   { cle: "retry_max", type: "int", defaut: 5, regle: "R286", requis: false,
     description: "Tentatives de consommation d'un événement avant dead-letter (retry borné — jamais un exactly-once prétendu)." },

@@ -581,3 +581,17 @@ partie, pas avant.
   (SO-01..06, HO-06/OF-07/OF-08 re-passés). Registre des écarts : PLUS AUCUN écart ouvert
   nécessitant canon. Livrable : branche unique PR #46 (arbitrage ratifié), deux séquences de
   commits (transport dbb0cad/581f548/ccd7508, puis SO).
+
+## SOLDE — BARÈMES DE SCORING KYC (2026-07-28, R288 RATIFIÉ ET LIVRÉ, BS-07..09 verts)
+
+- **L'écart « barèmes computeRisk codés en dur, non gouvernés » (reconnaissance sbbrm) est
+  SOLDÉ.** R288 : clé R-Q `kycScoringBareme` versionnée par date d'effet (pattern
+  workloadBareme, défaut [] = barème historique du moteur — zéro changement de comportement) ;
+  `computeRisk` reste PUR, le barème s'injecte (`baremeEnVigueur` résout PAR DATES — rien de
+  recopié sur les dossiers) ; un dossier garde à vie le score du barème de SA création (R29,
+  BS-07 — la trace mentionne la date d'effet du barème gouverné) ; le bac sbbrm RE-SCORE sous
+  barème hypothétique par LE moteur (intrants re-dérivés de la trace stockée kyc.created —
+  nominatif, scoreAvant→scoreApres, zéro écriture, BS-08 ; contrat BS-04 conservé) ; le barème
+  d'époque se rejoue par le registre (R127, BS-09). La brique configuration & paramétrage n'a
+  PLUS de trou documenté : configurer (gouverné), simuler (5 bacs, leviers complets), rejouer
+  (à date). Référence : spec/proposition-R288-baremes-scoring.md · fat-canon-derniers (BS-07..09).
