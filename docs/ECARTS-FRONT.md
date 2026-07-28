@@ -861,3 +861,25 @@ partie, pas avant.
   références de comptes partagés (R167 : jamais un chiffre inventé). Écran mobileadmin
   (72e onglet).
   Référence : spec/canon-degel-complet-vagues-1-9.md (vague 7).
+
+## SOLDE — DÉGEL VAGUE 8 : CONSOLE ÉDITEUR (2026-07-28, VE-01..03 verts)
+
+- **R319** : EDITOR n'existe pas sur l'instance tenant — TRIPLE preuve permanente (VE-01) :
+  l'enum Postgres `Role` est fermé (pg_enum interrogé), la création/le changement de rôle
+  refusent TYPÉ (`R319 : rôle inconnu du RBAC tenant`, liste fermée miroir de l'enum —
+  jamais un 500), et la revue automatisée du source (users.service, roles.guard, schema)
+  est vierge.
+- **R320** : la licence descend SIGNÉE et la clé publique fait foi — altération → refus
+  net, état en vigueur INTACT (VE-02, LC-02 rejoué) ; signature et expiration sont DEUX
+  constats : expirée = état TYPÉ (`expiree: true`), modules inactifs (403 usage), lecture
+  d'audit préservée (LC-03 : GET + rôle d'audit passent), AUCUNE donnée coupée ;
+  tick d'échéance J-60/J-30/expiration notifié ADMIN/DIR UNE fois par état et par
+  échéance (pattern R274) — VE-03 avec une licence qui expire RÉELLEMENT pendant le test.
+- **ÉCARTS CONSIGNÉS** : (1) la console vendor elle-même (registre des instances clientes :
+  version, modules, échéances, canal) est une INSTANCE SÉPARÉE — hors de ce dépôt par
+  construction (R319) ; `VendorLicenseService` (déjà consigné non-branché) reste la graine
+  côté éditeur ; (2) AUCUN écran tenant nouveau : l'état licence (dont `expiree` + note)
+  est servi par `GET /v1/modules/actifs`, déjà consommé par Home (HO-02/LC-01) — pas
+  d'écran, pas de ligne de grille (principe du périmètre) ; (3) le tick est
+  manuel/apicallable — la planification suit l'infra (même consigne que legal/regwatch).
+  Référence : spec/canon-degel-complet-vagues-1-9.md (vague 8).

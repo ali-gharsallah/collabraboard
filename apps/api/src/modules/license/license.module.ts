@@ -27,14 +27,15 @@ type Ctx = { tenantId: string; userId: string; role: string };
 export class ModulesActifsService {
   constructor(private prisma: PrismaService, private audit: AuditService, private lic: LicenseService) {}
 
-  private async licenceCourante(tenantId: string): Promise<OliveLicense | null> {
+  // R320 (dégel V8) : signature RE-vérifiée à chaque lecture (R178) ; l'EXPIRATION est un
+  // ÉTAT typé, pas une exception — les modules s'éteignent, l'audit reste lisible (LC-03).
+  private async licenceCourante(tenantId: string): Promise<{ lic: OliveLicense; expiree: boolean } | null> {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
     const raw = ((t?.settings as any) ?? {}).licence as OliveLicense | undefined;
     if (!raw) return null;
     if (!process.env.OLIVE_LICENSE_PUBKEY)
       throw new ForbiddenException("R177 : clé publique de licence absente — licence invérifiable, refus");
-    this.lic.load(raw);                                   // signature + expiration RE-vérifiées à chaque lecture (R178)
-    return raw;
+    return { lic: raw, expiree: this.lic.verifier(raw).expiree };
   }
 
   // ── Acte vendor/ADMIN : charger la licence signée — vérifiée, persistée, JOURNALISÉE à date ──
@@ -59,17 +60,46 @@ export class ModulesActifsService {
 
   // ── HO-02 : LA source des menus/tuiles — code, actif_depuis, ou mode socle (aucune licence) ──
   async actifs(ctx: Ctx) {
-    const lic = await this.licenceCourante(ctx.tenantId);
-    if (!lic) return { enforcement: false, modules: null,
+    const c = await this.licenceCourante(ctx.tenantId);
+    if (!c) return { enforcement: false, modules: null,
       note: "aucune licence chargée — socle complet (écart consigné : défaut-refus R177 dès qu'une licence existe)" };
-    return { enforcement: true, expiresAt: lic.expiresAt,
-      modules: lic.modules.map((code) => ({ code, actifDepuis: lic.issuedAt })) };
+    if (c.expiree) return { enforcement: true, expiree: true, expiresAt: c.lic.expiresAt, modules: [],
+      note: "R320 : licence EXPIRÉE — modules inactifs, lecture d'audit préservée (LC-03), aucune donnée coupée" };
+    return { enforcement: true, expiresAt: c.lic.expiresAt,
+      modules: c.lic.modules.map((code) => ({ code, actifDepuis: c.lic.issuedAt })) };
   }
 
   // ── L'enforcement SERVEUR (garde) — jamais supposé, jamais seulement front ──
   async actif(tenantId: string, module: string): Promise<boolean> {
-    const lic = await this.licenceCourante(tenantId);
-    return !lic || lic.modules.includes(module);
+    const c = await this.licenceCourante(tenantId);
+    return !c || (!c.expiree && c.lic.modules.includes(module));
+  }
+
+  // ── R320/VE-03 : le TICK d'échéance — J-60, J-30, expiration : notifié UNE fois par état
+  //    (pattern R274), mesuré, jamais bloquant. La console vendor n'entre jamais ici : la
+  //    licence DESCEND signée, l'instance constate seule ses échéances. ──
+  async tick(ctx: Ctx) {
+    const c = await this.licenceCourante(ctx.tenantId);
+    if (!c) return { notifies: [] };
+    const resteJours = (new Date(c.lic.expiresAt).getTime() - Date.now()) / 86400000;
+    const etats: { type: string; quand: boolean }[] = [
+      { type: "licence.expiration.j60", quand: resteJours <= 60 && resteJours > 0 },
+      { type: "licence.expiration.j30", quand: resteJours <= 30 && resteJours > 0 },
+      { type: "licence.expiree", quand: c.expiree },
+    ];
+    const notifies: string[] = [];
+    for (const e of etats) {
+      if (!e.quand) continue;
+      // Une notification PAR ÉTAT et PAR ÉCHÉANCE (la même expiresAt ne notifie pas deux fois)
+      const deja = await this.prisma.domainEvent.findFirst({ where: { tenantId: ctx.tenantId,
+        type: e.type, aggregateId: c.lic.expiresAt } });
+      if (deja) continue;
+      await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: e.type,
+        aggregateId: c.lic.expiresAt, at: new Date().toISOString(),
+        payload: { expiresAt: c.lic.expiresAt, modules: c.lic.modules, notifie: ["ADMIN", "DIR"], par: ctx.userId } } });
+      notifies.push(e.type);
+    }
+    return { notifies, expiree: c.expiree };
   }
 }
 
@@ -97,6 +127,7 @@ export class ModulesController {
   constructor(private svc: ModulesActifsService) {}
   @Get("actifs")    actifs(@Req() r: any) { return this.svc.actifs(r.ctx); }                      // HO-02 / LS-01
   @Post("licence")  charger(@Req() r: any, @Body() b: any) { return this.svc.charger(r.ctx, b); } // LS-02 (ADMIN)
+  @Post("licence/tick") tick(@Req() r: any) { return this.svc.tick(r.ctx); }                      // R320 / VE-03
 }
 
 @Module({
