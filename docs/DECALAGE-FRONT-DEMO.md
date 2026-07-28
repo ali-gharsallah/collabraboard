@@ -96,3 +96,19 @@ pas sous ces noms dans cette version de la maquette.)*
 - La maquette reste la **vision cible** (73 écrans) ; la stratégie tenue est **incrémentale et prouvée** : chaque vague transforme un lot d'écrans-maquette en écrans React câblés + recette FAT.
 - Prochaines vagues « à fort levier & faible risque » = groupe **3.a** (backend déjà ratifié) : CRM/Contact Reports/Tâches, Workflow, Offboarding, Corroboration, Sandboxes de paramétrage.
 - Ne pas se laisser piéger par la maquette : **groupe 3.b = ports** (ne pas recoder un PMS/core), **groupe 4 = liste noire** (ignorer).
+
+---
+
+## MAJ 2026-07-28 — triage des écrans restants (spec/canon-ecrans-html-triage.md, étape 0 exécutée)
+
+- **Écrans livrés depuis la dernière vérification** : sdar, sdgar (R283), Olivia · Runs
+  (R266), Audit & transport (R284/R286) → **53 onglets réels** au routeur.
+- **Note de gel (catégorie C, confirmée)** : SWIFT (`swiftlab`) — gelé, déclencheur :
+  connecteur/flux réel signé + bloc spec · Legal — gelé, déclencheur : client pilote +
+  bloc spec · BI libre — gelé, le pilotage ratifié vivra dans le Command Center (R289
+  proposé) ; ne jamais re-créer en BI ce que R289 sert · **Octopulse — NON TRIÉ : objet
+  inconnu de toute spec ratifiée, définition d'une ligne requise d'Ali avant tout triage.**
+- **⚠ La maquette `demo/olive-demo.html` n'est PAS dans le repo** (jamais commitée — la
+  vérification du 27.07 la lisait en local). Le présent document est donc la seule
+  référence d'inventaire ; le diff élément-par-élément (Investigation ↔ AW, Olivia/BI ↔
+  R253-R258/R267) attend que le fichier soit fourni.
