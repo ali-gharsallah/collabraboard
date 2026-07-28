@@ -136,6 +136,16 @@ jobs:
           out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
           echo "$out" | grep -q "### 18/18 suites vertes ###"
 
+      # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
+      # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
+      # se mesure (gzip réel) — dépassement = build ROUGE (verifier-budget-bundle.js).
+      - name: "6 · Front — vitest + vite build + budget bundle (§4)"
+        working-directory: apps/web
+        run: |
+          npx vitest run
+          npx vite build
+          node scripts/verifier-budget-bundle.js
+
       # ── RUNBOOK §2 · 6 — Démo (73 écrans) ────────────────────────────────────
       # Step RETIRÉ (chantier B) : la démo exige Playwright + navigateurs, hors scope CI
       # actuel. Même doctrine que test:unit : un step non exécutable ne traîne pas en

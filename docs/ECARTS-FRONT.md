@@ -923,3 +923,28 @@ Dette d'intégration du canon (§1-3, « en parallèle ») — CONSTATS :
   accès au compte cloud) — reste un acte d'infra humain : VMs, Postgres managé, backups
   avec RESTAURATION TESTÉE. Consigné, pas simulé.
 Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchangés au canon.
+
+## SOLDE — DETTE QUALITÉ §4-§8 + PRODUIT §10 (2026-07-28)
+
+- **§4 perf front** : budget bundle BLOQUANT en CI (verifier-budget-bundle.js — gzip réel :
+  total ≤ 220 kB, chunk ≤ 80 kB ; état gravé : 158.9 kB / pire 50.2 kB, 73 onglets lazy).
+  La frontière web (vitest + build) entre en CI — elle n'était que locale. Virtualisation/
+  mémoïsation : consignées EN ATTENTE de volumes réels (aucune liste > centaines de lignes
+  au pilote — optimiser sans jauge serait contraire à la doctrine R250).
+- **§6 charge** : livré (fat-charge-cpsi) — mesure canon : 10 001 événements = 159.4 s de
+  rejeu, QUADRATIQUE (score_comportemental recalculé à chaque ingestion, profilé cProfile).
+  Le moteur est INTOUCHABLE : l'optimisation du rejeu est un chantier à RATIFIER PO —
+  la jauge R250 (CPSI_REPLAY_SLOW) notifie en attendant, rien ne bloque (R39).
+- **§7 sécurité** : rate limiting login LIVRÉ (RL-01..03) — 429 typé R296 par identifiant,
+  jamais un oracle ; portes internes ET mobile. Écarts : seuils constants v1 (8/min login,
+  30/min methode) + mémoire d'instance — clé R-Q et store partagé avec l'infra multi-
+  instances ; OWASP/pentest = acte humain (hors dépôt) ; rotation secrets : JWKS livré
+  (KeyStore.rotate), rotation des secrets d'env = infra §3.
+- **§8 migrations** : stratégie expand/contract au RUNBOOK-OPS §8 (trois temps, interdits
+  append-only, cas enum/renommage) — opposable à toute migration future.
+- **§5 observabilité** : PARTIEL consigné — dead-letters + santé transport + AUDIT_ACCESS
+  déjà servis (R284/R286, écran audit) ; logs structurés JSON et alerting sur CANAL RÉEL
+  (mail/chat ops) exigent l'infra §3 (Exoscale) — consignés, pas simulés.
+- **§10 i18n 4 langues** : NON commencé — écart déjà consigné (G2) : aucune règle R ne
+  ratifie la localisation ; les libellés FR livrés SONT les clés du dictionnaire maquette,
+  la bascule viendra sans réécriture. Chantier à part entière, canon à écrire (PO).
