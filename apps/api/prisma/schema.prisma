@@ -1327,3 +1327,35 @@ model Transaction {
   @@index([tenantId, clientId])
   @@map("transactions")
 }
+
+// ═══ R304 [canon R301] — LE BUILDER (dégel V3, WB-01..10). Brouillons MUTABLES,
+// versions publiées APPEND-ONLY (trigger post-deploy) datées — grandfathering R29 :
+// les dossiers en cours restent sur LEUR version, les nouveaux prennent celle en vigueur.
+model BuilderArtefact {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String                                     // SECTION | QUESTIONNAIRE | WORKFLOW
+  code      String
+  contenu   Json
+  auteur    String                                     // le DERNIER éditeur du brouillon (R307 : ne publie pas)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([tenantId, type, code])
+  @@map("builder_artefacts")
+}
+
+model BuilderVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  type       String
+  code       String
+  version    Int
+  contenu    Json
+  depuisLe   String   @map("depuis_le")                // R29/R68 — date de mise en vigueur
+  auteur     String
+  publiePar  String   @map("publie_par")               // ≠ auteur (R13)
+  motif      String                                    // R7
+  rapport    Json?                                     // R305 — le rapport d'impact JOINT
+  publieAt   DateTime @default(now()) @map("publie_at")
+  @@unique([tenantId, type, code, version])
+  @@map("builder_versions")
+}
