@@ -154,3 +154,91 @@ describe("FAT DÉGEL V3 — R305/R306/R307 : la chaîne de publication est GARD�
     console.log("WB-05 PASS — four-eyes + rôles habilités");
   });
 });
+
+// ── R308 : les artefacts s'exécutent sur les MOTEURS EXISTANTS (WB-02/06/07/08) ──
+
+describe("FAT DÉGEL V3 — R308 : zéro runtime propre, les moteurs ratifiés exécutent (WB-02/06/07/08)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const ADMIN = randomUUID(), ADMIN2 = randomUUID(), RM = randomUUID(), COC = randomUUID();
+
+  const publierArtefact = async (type: string, code: string, contenu: any, motif: string) => {
+    const { body: a } = await request(http).post("/v1/builder/artefacts").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ type, code, contenu }).expect(201);
+    await request(http).post(`/v1/builder/artefacts/${a.id}/simuler`).set(bearer(T, ADMIN, "ADMIN")).expect(201);
+    const r = await request(http).post(`/v1/builder/artefacts/${a.id}/publier`).set(bearer(T, ADMIN2, "ADMIN"))
+      .send({ motif });
+    expect(r.status).toBe(201);
+    return r.body;
+  };
+  const creerKyc = async () => {
+    const clientId = randomUUID();
+    await seedTenantClient(prisma, T, clientId);
+    return (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "HOLDING", accountType: "ADVISORY", countryCode: "CH", rmId: RM })).body; // CDD
+  };
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("WB-02/WB-07 [R304/R308/R282] section publiée v1 → le dossier A la porte ; v2 publiée → A reste sur v1, le NOUVEAU prend v2 ; la matrice R282 s'applique", async () => {
+    await publierArtefact("SECTION", "CRYPTO", SECTION_OK, "section crypto v1");
+    const A = await creerKyc();
+    const secA = A.sections.find((s: any) => s.code === "CRYPTO");
+    expect(secA).toBeTruthy();
+    expect(secA.questions.map((q: any) => q.code).sort()).toEqual(["CRY-Q1", "CRY-Q2"]);   // v1
+    await publierArtefact("SECTION", "CRYPTO", { ...SECTION_OK,
+      questions: [...SECTION_OK.questions, { code: "CRY-Q3", label: "Wallets auto-hébergés",
+        requise: false, rights: { RM: "EDIT", ADMIN: "EDIT" } }] }, "crypto v2 : wallets");
+    const B = await creerKyc();
+    expect(B.sections.find((s: any) => s.code === "CRYPTO").questions.length).toBe(3);      // v2 pour le NOUVEAU
+    const relu = (await request(http).get(`/v1/kyc/${A.code}`).set(bearer(T, RM, "RM"))).body;
+    expect(relu.sections.find((s: any) => s.code === "CRYPTO").questions.length).toBe(2);   // A reste sur SA version (R29)
+    // WB-07 : la matrice R282 gouverne la section née du Builder — HIDDEN à portée matrice
+    const chg = await request(http).patch(`/v1/kyc/${B.code}/questions/CRY-Q1/access`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ role: "RM", right: "HIDDEN", portee: "matrice" });
+    expect(chg.status).toBe(200);
+    const vuRM = (await request(http).get(`/v1/kyc/${B.code}`).set(bearer(T, RM, "RM"))).body;
+    expect(vuRM.sections.find((s: any) => s.code === "CRYPTO").questions.some((q: any) => q.code === "CRY-Q1")).toBe(false);
+    console.log("WB-02/07 PASS — grandfathering par construction, matrice R282 maîtresse");
+  });
+
+  it("WB-06 [R308/R171-173] un WORKFLOW publié au Builder vit dans L'ATELIER (résolu par date) ; un dossier s'exécute BOUT EN BOUT sur le moteur R1-R51", async () => {
+    const WF = { etapes: [
+      { code: "COLLECTE", owner: "RM", transitions: ["REVUE"] },
+      { code: "REVUE", owner: "CO", transitions: ["FIN", "COLLECTE"] },
+      { code: "FIN", owner: "CO_SR", transitions: [] } ], terminaux: ["FIN"] };
+    await publierArtefact("WORKFLOW", "WF_CRYPTO", WF, "workflow crypto onboarding");
+    // L'atelier R171-173 le RÉSOUT — la définition vit chez le moteur, pas au Builder
+    const res = await request(http).get(`/v1/workflow/resoudre?code=WF_CRYPTO&date=${encodeURIComponent(new Date().toISOString())}`)
+      .set(bearer(T, ADMIN, "ADMIN"));
+    expect(res.status).toBe(200);
+    expect((res.body.contenu.etapes ?? []).length).toBe(3);
+    // Bout en bout : un dossier réel traverse le moteur R1-R51 jusqu'à VALIDATED
+    const kyc = await creerKyc();
+    for (const s of kyc.sections)
+      for (const q of s.questions) {
+        const role = ["IDE-Q3", "UBO-Q2", "SOF-Q2", "AML-Q1"].includes(q.code) ? "CO" : "RM";
+        await request(http).patch(`/v1/kyc/${kyc.code}/questions/${q.code}`).set(bearer(T, role === "CO" ? COC : RM, role))
+          .send({ answer: "renseigné" });
+      }
+    for (const v of kyc.visas)
+      await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({});
+    const val = await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, randomUUID(), "CO_SR")).send({});
+    expect([200, 201]).toContain(val.status);
+    console.log("WB-06 PASS — atelier résout la def Builder, dossier validé sur le moteur");
+  });
+
+  it("WB-08 [R308] ZÉRO interprète dans le module builder — revue d'architecture automatisée", async () => {
+    const src = fs.readFileSync(path.join(__dirname, "../../src/modules/builder/builder.module.ts"), "utf8");
+    expect(src).not.toMatch(/\beval\b|new Function|vm\.|interpret|execute\(/i);       // aucun runtime propre
+    expect(src).toMatch(/WorkflowDefService/);                                        // il DÉLÈGUE aux moteurs
+    expect(src).toMatch(/ParametresService/);
+    expect(src).not.toMatch(/from "..\/..\/..\/services/);                            // jamais le moteur CPSI en direct
+    console.log("WB-08 PASS — le Builder édite, les moteurs exécutent");
+  });
+});

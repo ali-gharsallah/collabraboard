@@ -88,7 +88,22 @@ export class KycService {
     const retenues = opts.review
       ? new Set([...(opts.review.profil.sectionsActives ?? []), ...(opts.review.profil.sectionsReconfirmation ?? [])])
       : null;
-    const gabarit = SECTIONS_BY_WORKFLOW[risk.workflow].filter((s) => !retenues || retenues.has(s.code));
+    // R308 (Builder, dégel V3) : les SECTIONS publiées au Builder enrichissent le gabarit À LA
+    // CRÉATION — dernière version EN VIGUEUR (depuisLe ≤ now) par code, pour les workflows
+    // déclarés. Le dossier COPIE ses sections : les dossiers antérieurs gardent les leurs (R29).
+    const nowIso = new Date().toISOString();
+    const versionsBuilder = await this.prisma.builderVersion.findMany({
+      where: { tenantId: ctx.tenantId, type: "SECTION", depuisLe: { lte: nowIso } },
+      orderBy: { version: "asc" } });
+    const derniereParCode = new Map<string, any>();
+    for (const v of versionsBuilder) derniereParCode.set(v.code, v);
+    const sectionsBuilder = [...derniereParCode.values()]
+      .filter((v) => ((v.contenu as any).workflows ?? []).includes(risk.workflow))
+      .map((v) => ({ code: v.code, label: (v.contenu as any).label ?? v.code,
+        questions: ((v.contenu as any).questions ?? []).map((q: any) => ({
+          code: q.code, label: q.label, rights: q.rights ?? {} })) }));
+    const gabarit = [...SECTIONS_BY_WORKFLOW[risk.workflow], ...sectionsBuilder]
+      .filter((s) => !retenues || retenues.has(s.code));
     const requises = new Set(opts.review?.profil.questionsRequises ?? []);
 
     // R282 : un dossier NAÎT sous la matrice COURANTE du tenant — le gabarit fournit le socle,

@@ -3,6 +3,10 @@ import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
+import { WorkflowModule } from "../workflow/workflow.module";
+import { WorkflowDefService } from "../workflow/workflow-def.service";
+import { ParametresModule } from "../parametres/parametres.module";
+import { ParametresService } from "../parametres/parametres.service";
 
 /**
  * LE BUILDER — dégel V3 (GO Ali 2026-07-28), R304-R308, WB-01..10.
@@ -27,7 +31,8 @@ const empreinteDe = (contenu: any) => createHash("sha256").update(JSON.stringify
 
 @Injectable()
 export class BuilderService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService,
+    private wfDefs: WorkflowDefService, private parametres: ParametresService) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
@@ -171,14 +176,32 @@ export class BuilderService {
       return creee;
     });
     await this.audit.log(ctx.tenantId, ctx.userId, "BUILDER_PUBLISH", `${a.type}:${a.code}:v${version}`);
-    await this.materialiser(ctx, v);                                         // R308 — les moteurs existants
+    await this.materialiser(ctx, { type: v.type, code: v.code, contenu: v.contenu, version,
+      depuisLe, motif: dto.motif!.trim() });                                 // R308 — les moteurs existants
     return { id: v.id, type: v.type, code: v.code, version, depuisLe };
   }
 
   // ── R308 : matérialisation vers les moteurs RATIFIÉS — le Builder n'exécute RIEN. ──
-  private async materialiser(_ctx: Ctx, _v: { type: string; code: string; contenu: any }) {
-    // Livré au commit R308 (plan V3 validé) : WORKFLOW → atelier R171-173 ; SECTION →
-    // gabarit à la création (R282) ; QUESTIONNAIRE → reviewProfiles (R283).
+  // WORKFLOW → l'atelier gouverné R171-173 (le moteur R1-R51 reste intouchable) ;
+  // SECTION → rien à écrire ICI : le gabarit des dossiers la lit à la CRÉATION
+  // (kyc.service, versionsSectionsBuilder — grandfathering R29 par construction) ;
+  // QUESTIONNAIRE → un profil du registre reviewProfiles (R283), écrit par la voie R-Q.
+  private async materialiser(ctx: Ctx, v: { type: string; code: string; contenu: any; version: number;
+    depuisLe: string; motif: string }) {
+    const c: any = v.contenu;
+    if (v.type === "WORKFLOW") {
+      const d: any = await this.wfDefs.creerBrouillon(ctx, { code: v.code, contenu: c });
+      await this.wfDefs.publier(ctx, d.id, { depuisLe: v.depuisLe,
+        motif: `Builder ${v.code} v${v.version} — ${v.motif}` });
+    }
+    if (v.type === "QUESTIONNAIRE") {
+      const profils: any[] = (await this.parametres.valeurEffective(ctx, "reviewProfiles", new Date())) ?? [];
+      const autres = profils.filter((p) => !(p.type === c.type && p.niveau === c.niveau));
+      await this.parametres.ecrire(ctx, "reviewProfiles",
+        [...autres, { type: c.type, niveau: c.niveau, sectionsActives: c.sectionsActives ?? [],
+          questionsRequises: c.questionsRequises ?? [], sectionsReconfirmation: c.sectionsReconfirmation ?? [] }],
+        `Builder ${v.code} v${v.version} — ${v.motif}`, v.depuisLe);
+    }
   }
 }
 
@@ -191,5 +214,5 @@ export class BuilderController {
   @Post("artefacts/:id/publier") publier(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.publier(r.ctx, id, b ?? {}); } // R304..R307
 }
 
-@Module({ controllers: [BuilderController], providers: [BuilderService], exports: [BuilderService] })
+@Module({ imports: [WorkflowModule, ParametresModule], controllers: [BuilderController], providers: [BuilderService], exports: [BuilderService] })
 export class BuilderModule {}
