@@ -14,14 +14,20 @@ import { Tx } from "../../common/tx";
 export class EventsController {
   constructor(private prisma: PrismaService, private audit: AuditService, private worker: OutboxWorker) {}
 
-  private garde(ctx: { role: string }) {
+  // R291/DC-07 : matrice T9 ÉTENDUE en LECTURE — la Direction PILOTE (elle lit la santé),
+  // elle n'OPÈRE pas (le rejeu reste ADMIN/SO).
+  private gardeLecture(ctx: { role: string }) {
+    if (!["ADMIN", "SO", "DIR"].includes(ctx.role))
+      throw new ForbiddenException("T9 : la santé du transport se consulte en ADMIN/SO (R284) ou DIRECTION (R291, lecture)");
+  }
+  private gardeEcriture(ctx: { role: string }) {
     if (!["ADMIN", "SO"].includes(ctx.role))
-      throw new ForbiddenException("T9 : la santé du transport se consulte en ADMIN (SO — R284)");
+      throw new ForbiddenException("R291 : le REJEU d'une dead-letter est un acte d'exploitation — ADMIN/SO seulement (piloter n'est pas opérer)");
   }
 
   @Get("sante")
   async sante(@Req() r: any) {
-    this.garde(r.ctx);
+    this.gardeLecture(r.ctx);
     const enSouffrance = await this.prisma.eventDeadLetter.findMany({
       where: { tenantId: r.ctx.tenantId, rejoueAt: null }, orderBy: { createdAt: "asc" } });
     const consommateurs = await this.prisma.eventConsumer.findMany();
@@ -37,7 +43,7 @@ export class EventsController {
 
   @Post("dead-letters/:id/rejouer")
   async rejouer(@Req() r: any, @Param("id") id: string) {
-    this.garde(r.ctx);
+    this.gardeEcriture(r.ctx);
     const dl = await this.prisma.eventDeadLetter.findFirst({
       where: { id: BigInt(id), tenantId: r.ctx.tenantId } });
     if (!dl) throw new NotFoundException("Dead-letter introuvable");

@@ -9,9 +9,9 @@ import { tokens } from "../../theme/tokens";
  * Direction : une PROJECTION, aucun module — même nature que Home (« un patron, deux écrans »,
  * Tuile partagée). AUCUN état propre, AUCUN endpoint de calcul, AUCUN chiffre front : chaque
  * tuile déclare sa source RATIFIÉE et le drill ORIENTE vers l'écran opérationnel — le Command
- * Center n'agit jamais (aucun non-GET, DC-05). v1 = LES 7 TUILES VÉRIFIÉES à l'étape 0.c —
- * « Charge compliance » RETIRÉE (aucun agrégat visas-par-rôle ratifié) et dead-letters ABSENTS
- * (T9 = ADMIN/SO) : extensions consignées, jamais un endpoint inventé. `command_seuils` (R-Q)
+ * Center n'agit jamais (aucun non-GET, DC-05). R291 (ratifié 2026-07-28) COMPLÈTE l'écran :
+ * la tuile « Charge compliance » (agrégat SERVI /v1/kyc/visas/charge, DC-06) et les dead-letters
+ * (matrice T9 étendue à DIR en LECTURE, DC-07) rejoignent les 7 tuiles v1. `command_seuils` (R-Q)
  * COLORE ambre/rouge — les notifications restent celles des modules ratifiés (R39, DC-03).
  */
 
@@ -73,6 +73,11 @@ export function CommandCenter({ onNaviguer }: { onNaviguer?: (ecran: string) => 
             return <div>{[...parEtat.entries()].map(([e, c]) => <div key={e}>{e} : <strong>{c}</strong></div>)}
               {plusAncien?.etatDepuis && <div style={{ color: tokens.color.muted }}>le plus ancien : {String(plusAncien.etatDepuis).slice(0, 10)}</div>}
               {drill("dossiers", "dossiers de risque", cs.length)}</div>; }}/></>)}
+      {groupe("Charge compliance", <Tuile titre="Visas en attente (par rôle)" path="/v1/kyc/visas/charge"
+        seed={{ total: 0, parRole: {} as Record<string, number>, plusAncien: null as string | null }}
+        rendre={(c) => <div>{Object.entries(c.parRole ?? {}).map(([role, n]) => <div key={role}>{role} : <strong>{n as number}</strong></div>)}
+          {c.plusAncien && <div style={{ color: tokens.color.muted }}>le plus ancien : {String(c.plusAncien).slice(0, 10)}</div>}
+          {drill("kyc", "dossiers KYC", c.total ?? 0)}</div>}/>)}   {/* R291/DC-06 : agrégat SERVI */}
       {groupe("SLA réglementaires", <>
         <Tuile titre="Reviews à échéance" path="/v1/reviews/deadlines" seed={[] as { enRetard?: boolean }[]}
           testId="tuile-sla" alerte={(ds) => { const s = seuils.sla_en_retard;               // DC-03 : command_seuils COLORE —
@@ -93,7 +98,12 @@ export function CommandCenter({ onNaviguer }: { onNaviguer?: (ecran: string) => 
           rendre={(h) => <div>dernier rejeu : <strong>{h.dernierRejeuMs ?? "—"} ms</strong>{drill("cpsiParam", "santé de la porte", 1)}</div>}/>}
         <Tuile titre="Runs agentiques" path="/v1/olivia/runs/agregat" seed={{ runsParJour: 0, tauxAdoption: 0 }}
           rendre={(a: any) => <div>runs/jour : <strong>{a.runsParJour ?? 0}</strong>{drill("oliviaruns", "runs Olivia", a.runsParJour ?? 0)}</div>}/>
-        {/* dead-letters (T9) : RÉSERVÉS ADMIN/SO — composant retiré v1 (extension DIR à ratifier, verdict 0c) */}</>)}
+        <Tuile titre="Transport (dead-letters)" path="/v1/events/sante"
+          seed={{ enSouffrance: 0, plusAncien: null as string | null }}
+          alerte={(x) => { const seuil = seuils.dead_letters; return seuil != null && (x.enSouffrance ?? 0) >= seuil ? "rouge" : null; }}
+          rendre={(x) => <div><strong>{x.enSouffrance}</strong> en souffrance
+            {x.plusAncien && <div style={{ color: tokens.color.muted }}>le plus ancien : {String(x.plusAncien).slice(0, 10)}</div>}
+            {drill("audit", "audit & transport", x.enSouffrance ?? 0)}</div>}/></>)}   {/* R291/DC-07 : T9 étendu à DIR (lecture) */}
       {groupe("Olivia", <Tuile titre="Propositions en attente" path="/v1/olivia/proposals?statut=PENDING" seed={[] as { type?: string }[]}
         rendre={(ps) => { const parType = new Map<string, number>();
           ps.forEach((p) => parType.set(p.type ?? "?", (parType.get(p.type ?? "?") ?? 0) + 1));

@@ -333,6 +333,23 @@ export class KycService {
     return visas.map((v: any) => ({ kycCode: v.kycFile.code, section: v.sectionCode, requiredRole: v.requiredRole }));
   }
 
+  // R291/DC-06 : l'agrégat de CHARGE — visas PENDING par rôle, TENANT ENTIER. Servi au
+  // Command Center (le backend agrège, jamais l'écran) — Direction/CO_SR seulement.
+  async visasCharge(ctx: Ctx) {
+    if (!["DIR", "CO_SR"].includes(ctx.role))
+      throw new ForbiddenException("R291 : la charge compliance agrégée se consulte en DIRECTION/CO_SR");
+    const visas = await this.prisma.kycVisa.findMany({
+      where: { status: "PENDING", kycFile: { tenantId: ctx.tenantId } },
+      include: { kycFile: { select: { createdAt: true } } } });
+    const parRole: Record<string, number> = {};
+    let plusAncien: Date | null = null;
+    for (const v of visas as any[]) {
+      parRole[v.requiredRole] = (parRole[v.requiredRole] ?? 0) + 1;
+      if (!plusAncien || v.kycFile.createdAt < plusAncien) plusAncien = v.kycFile.createdAt;
+    }
+    return { total: visas.length, parRole, plusAncien };
+  }
+
   async get(ctx: Ctx, code: string) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId },

@@ -498,3 +498,94 @@ describe("FAT CANON DERNIERS — IAM rendu : garde dernier ADMIN (IM-02) + guide
     console.log("IM-05 PASS — guide daté, matrice servie, ADMIN-only");
   });
 });
+
+// ── R290 : extension MOD-30 — ssoparam débloqué (IM-01/03/04) · R291 : compléments Command Center (DC-06/07) ──
+
+describe("FAT CANON DERNIERS — R290 extension SSO (IM-01/03/04) + R291 compléments Command (DC-06/07)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const ADMIN = randomUUID(), ADMIN2 = randomUUID(), DIR = randomUUID(), RM = randomUUID();
+  const clientId = randomUUID();
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientId);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("IM-01 [R290] le SECRET ne descend JAMAIS : l'état SSO dit « configuré », la réponse réseau ne contient aucune valeur de secret", async () => {
+    process.env.OIDC_CLIENT_SECRET = "VALEUR_SECRETE_QUI_NE_DOIT_JAMAIS_DESCENDRE";
+    const etat = await request(http).get("/v1/admin/sso/etat").set(bearer(T, ADMIN, "ADMIN"));
+    expect(etat.status).toBe(200);
+    expect(etat.body.oidc.secretConfigure).toBe(true);                      // « configuré » — le FAIT, pas la valeur
+    expect(JSON.stringify(etat.body)).not.toContain("VALEUR_SECRETE");      // inspection réseau : rien ne fuit
+    expect(etat.body.jwks.kidCourant).toBeTruthy();
+    expect(etat.body.mode).toBe("jwt");                                     // défaut
+    await request(http).get("/v1/admin/sso/etat").set(bearer(T, RM, "RM")).expect(403);  // ADMIN-only
+    delete process.env.OIDC_CLIENT_SECRET;
+    console.log("IM-01 PASS — secretConfigure booléen, zéro fuite, ADMIN-only");
+  });
+
+  it("IM-03 [R290] le test de connexion est un DRY-RUN tracé : rien ne change, l'événement dit qui a testé quoi, quand", async () => {
+    const avant = (await request(http).get("/v1/admin/sso/etat").set(bearer(T, ADMIN, "ADMIN"))).body;
+    const r = await request(http).post("/v1/admin/sso/test").set(bearer(T, ADMIN, "ADMIN")).send({});
+    expect(r.status).toBe(201);
+    expect(typeof r.body.resultat).toBe("string");
+    const apres = (await request(http).get("/v1/admin/sso/etat").set(bearer(T, ADMIN, "ADMIN"))).body;
+    expect(JSON.stringify(apres.oidc)).toBe(JSON.stringify(avant.oidc));    // la config n'a PAS bougé
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "sso.test" }, orderBy: { id: "desc" } });
+    expect((ev!.payload as any).par).toBe(ADMIN);                           // QUI (jeton), le résultat, QUAND
+    console.log("IM-03 PASS — dry-run tracé, config intacte");
+  });
+
+  it("IM-04 [R290/R13/R68] la BASCULE de mode est à DEUX REGARDS et à DATE : l'initiateur ne vise pas, l'effet est différé, les sessions du jour continuent", async () => {
+    // Rotation JWKS d'abord : motivée, tracée — et les jetons déjà émis restent vérifiables (grâce)
+    await request(http).post("/v1/admin/sso/jwks/rotation").set(bearer(T, ADMIN, "ADMIN")).send({}).expect(400); // R7 : motif requis
+    const rot = await request(http).post("/v1/admin/sso/jwks/rotation").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ motif: "rotation trimestrielle planifiée" });
+    expect(rot.status).toBe(201);
+    expect(rot.body.kidApres).not.toBe(rot.body.kidAvant);
+    // Bascule jwt→sso à J+1 : demandée par ADMIN…
+    const effetAt = new Date(Date.now() + 86400000).toISOString();
+    await request(http).post("/v1/admin/sso/mode").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ vers: "sso", effetAt, motif: "fédération IdP groupe" }).expect(201);
+    // …l'INITIATEUR ne vise pas (R13)…
+    const refus = await request(http).post("/v1/admin/sso/mode/visa").set(bearer(T, ADMIN, "ADMIN"));
+    expect(refus.status).toBe(403);
+    expect(JSON.stringify(refus.body)).toContain("R13");
+    // …un SECOND ADMIN vise → la bascule est enregistrée À SA DATE (R68/R126, registre R-Q)
+    await request(http).post("/v1/admin/sso/mode/visa").set(bearer(T, ADMIN2, "ADMIN")).expect(201);
+    const rAuj = await request(http).get("/v1/parametres/valeur/sso_mode").set(bearer(T, ADMIN, "ADMIN"));
+    expect(rAuj.text.replace(/"/g, "")).toBe("jwt");                        // Nest sert la string en texte                                                // AUJOURD'HUI : rien ne change (sessions grandfathérées)
+    const rDemain = await request(http).get(`/v1/parametres/valeur/sso_mode?date=${encodeURIComponent(new Date(Date.now() + 2 * 86400000).toISOString())}`)
+      .set(bearer(T, ADMIN, "ADMIN"));
+    expect(rDemain.text.replace(/"/g, "")).toBe("sso");                                             // À J+2 : la règle s'applique (R127 la restitue)
+    // Et LE jeton de ce test (émis avant rotation + bascule) fonctionne toujours — structurel
+    await request(http).get("/v1/admin/sso/etat").set(bearer(T, ADMIN, "ADMIN")).expect(200);
+    console.log("IM-04 PASS — four-eyes, effet à date par le registre, grâce JWKS structurelle");
+  });
+
+  it("DC-06 [R291] la charge compliance est un AGRÉGAT SERVI : visas PENDING par rôle, tenant entier — Direction/CO_SR seulement", async () => {
+    // Un dossier CDD → des visas PENDING réels (IDENTITY/CO, AML/CO_SR)
+    await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "HOLDING", accountType: "ADVISORY", countryCode: "CH", rmId: RM }).expect(201);
+    const charge = await request(http).get("/v1/kyc/visas/charge").set(bearer(T, DIR, "DIR"));
+    expect(charge.status).toBe(200);
+    expect(charge.body.parRole.CO).toBeGreaterThanOrEqual(1);               // agrégé PAR LE BACKEND — aucun chiffre front
+    expect(charge.body.parRole.CO_SR).toBeGreaterThanOrEqual(1);
+    expect(charge.body.plusAncien).toBeTruthy();
+    await request(http).get("/v1/kyc/visas/charge").set(bearer(T, RM, "RM")).expect(403);  // pas un écran contributeur
+    console.log("DC-06 PASS — agrégat servi par rôle, DIR/CO_SR only");
+  });
+
+  it("DC-07 [R291] la Direction LIT la santé du transport (matrice T9 étendue) — mais le REJEU lui reste refusé : piloter n'est pas opérer", async () => {
+    const sante = await request(http).get("/v1/events/sante").set(bearer(T, DIR, "DIR"));
+    expect(sante.status).toBe(200);                                         // T9 étendu : ADMIN, SO, DIR (lecture)
+    expect(typeof sante.body.enSouffrance).toBe("number");
+    const rejeu = await request(http).post("/v1/events/dead-letters/999999/rejouer").set(bearer(T, DIR, "DIR"));
+    expect(rejeu.status).toBe(403);                                         // écrire n'est PAS piloter
+    console.log("DC-07 PASS — DIR lit la santé, le rejeu reste ADMIN/SO");
+  });
+});

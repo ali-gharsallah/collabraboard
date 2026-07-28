@@ -853,6 +853,8 @@ describe("FE-DC — R289 : Command Center, la projection Direction (DC-01..05)",
     http.get("*/v1/olivia/runs/agregat", () => HttpResponse.json({ runsParJour: 2, tauxAdoption: 0.5 })),
     http.get("*/v1/olivia/proposals", () => HttpResponse.json([{ id: "p1", statut: "PENDING", type: "NOTE" }])),
     http.get("*/v1/parametres/valeur/command_seuils", () => HttpResponse.json({})),
+    http.get("*/v1/kyc/visas/charge", () => HttpResponse.json({ total: 2, parRole: { CO: 1, CO_SR: 1 }, plusAncien: "2026-07-01T00:00:00Z" })),  // R291/DC-06
+    http.get("*/v1/events/sante", () => HttpResponse.json({ enSouffrance: 0, plusAncien: null, deadLetters: [], consommateurs: [] })),           // R291/DC-07
   ];
 
   it("DC-01 : Direction-only — un CO n'obtient RIEN (refus rendu), la Direction voit le tenant entier ; DC-05 : aucune requête non-GET sur la session", async () => {
@@ -939,5 +941,25 @@ describe("FE-IM — écrans IAM : paramnav (IM-02 rendu) + iamguide (IM-05)", ()
     expect(screen.getByText(/surface d'audit/)).toBeInTheDocument();                     // la matrice effective (SO compris)
     expect(screen.getByText(/2026-07-28/)).toBeInTheDocument();                          // DATÉ (IM-05)
     expect(screen.getByRole("button", { name: /Exporter \(PDF\)/ })).toBeInTheDocument(); // l'export EST l'écran (pattern cpsiguide)
+  });
+});
+
+describe("FE-SSO — R290 : ssoparam rend l'état servi, jamais un secret (IM-01/03 front)", () => {
+  it("IM-01 front : « secret : configuré (coffre) » — la valeur n'existe nulle part ; « Tester » = dry-run tracé rendu", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let teste = false;
+    server.use(
+      http.get("*/v1/admin/sso/etat", () => HttpResponse.json({
+        oidc: { issuer: "https://login.banque.ch", audience: "olive-app", roleMapping: null, secretConfigure: true },
+        jwks: { kidCourant: "abcd1234-kid", derniereRotation: null }, mode: "jwt", basculeEnAttente: null })),
+      http.post("*/v1/admin/sso/test", () => { teste = true; return HttpResponse.json({ resultat: "OK — config déclarée cohérente, trousseau actif" }, { status: 201 }); }),
+    );
+    const { SsoParam } = await import("./iam/SsoParam");
+    render(<SsoParam/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText(/configuré \(coffre\)/)).toBeInTheDocument();   // le FAIT, jamais la valeur
+    fireEvent.click(screen.getByRole("button", { name: /Tester la connexion/ }));
+    expect(await screen.findByTestId("msg-ssoparam")).toHaveTextContent(/dry-run tracé.*OK/);
+    expect(teste).toBe(true);
   });
 });

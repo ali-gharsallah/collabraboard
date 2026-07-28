@@ -28,6 +28,9 @@ export class KycController {
   // T2 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de mon périmètre (HO-05).
   @Get("visas/pending")
   visasPending(@Req() req: any) { return this.svc.visasPending(req.ctx); }
+  // R291/DC-06 : l'AGRÉGAT de charge — visas PENDING par rôle, tenant entier (Direction/CO_SR).
+  @Get("visas/charge")
+  visasCharge(@Req() req: any) { return this.svc.visasCharge(req.ctx); }
 
   @Get(":code")
   get(@Req() req: any, @Param("code") code: string) { return this.svc.get(req.ctx, code); }
