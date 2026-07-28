@@ -55,7 +55,7 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
 }
 
 /* Câblage module (events.module.ts) :
-   providers: [OutboxWorker, GoldenRecordProjector, PrismaService, AuditService]
+   providers: [OutboxWorker, GoldenRecordProjector]
    Harnais  (run-rule-tests.sh) :
    + compiler  src/modules/events/golden-record.projector.ts
                src/modules/events/golden-record.projector.spec.ts

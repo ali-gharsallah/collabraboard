@@ -441,7 +441,6 @@ export class CpsiController {
   imports: [LicenseModule],
   controllers: [CpsiController],
   providers: [
-    PrismaService, AuditService,
     { provide: CpsiService, useFactory: (p: PrismaService, a: AuditService) => new CpsiService(p, a), inject: [PrismaService, AuditService] },
   ],
   exports: [CpsiService],

@@ -12,15 +12,13 @@ import { ReviewsService } from "../reviews/reviews.module";
 @Module({
   imports: [PreRevueModule, ReviewsModule],                           // PreRevueService (R123) + ReviewsService (R272)
   controllers: [KycController],
-  providers: [
-    PrismaService, AuditService, KycLockService, QualifiedVisaService,
+  providers: [ KycLockService, QualifiedVisaService,
     // KycService reçoit le hook de pré-revue IA (R123) en 3e param optionnel.
     {
       provide: KycService,
       useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService, rv: ReviewsService) => new KycService(p, a, pr, rv),
       inject: [PrismaService, AuditService, PreRevueService, ReviewsService],
-    },
-  ],
+    }],
   exports: [KycService, KycLockService, QualifiedVisaService],   // KycService exporté pour OnboardingModule (R118)
 })
 export class KycModule {}

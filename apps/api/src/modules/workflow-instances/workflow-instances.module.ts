@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, Req, Module, Injectable, NotFoundExcepti
 import { PrismaService } from "../../common/prisma.service";
 import { KycModule } from "../kyc/kyc.module";
 import { KycService } from "../kyc/kyc.service";
+import { applyKeyset, PageParams } from "../../common/pagination";
 
 /**
  * Porte HTTP « Workflow Instances » (SPEC-FRONT-CÂBLAGE v2, FE-WFI · A1/D1 · A3.2). Projection LISIBLE,
@@ -35,12 +36,13 @@ export class WorkflowInstancesService {
     signePar: v.signedBy, signeAt: v.signedAt, verdict: v.verdict, assigne: v.validateur });
 
   // GET /v1/workflow-instances?status=&type=&subjectId= — liste (dossiers KYC), filtres, sans rejouer d'événements (Q2).
-  async lister(ctx: Ctx, f: { status?: string; type?: string; subjectId?: string }) {
+  async lister(ctx: Ctx, f: { status?: string; type?: string; subjectId?: string } & PageParams) {
     const where: any = { tenantId: ctx.tenantId };
     if (f.status) where.status = f.status;
     if (f.type) where.workflow = f.type.replace(/^KYC:/, "");                 // type = "KYC:CDD" ou "CDD"
     if (f.subjectId) where.clientId = f.subjectId;                            // subjectRef = clientId
-    const rows = await this.prisma.kycFile.findMany({ where, include: { visas: true }, orderBy: { createdAt: "desc" } });
+    const take = applyKeyset(where, f);                                       // A4 : défaut borné + curseur keyset
+    const rows = await this.prisma.kycFile.findMany({ where, include: { visas: true }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
     return rows.map((k: any) => {
       const visas = k.visas ?? [];
       return {
@@ -90,8 +92,8 @@ export class WorkflowInstancesService {
 @Controller("workflow-instances")
 export class WorkflowInstancesController {
   constructor(private svc: WorkflowInstancesService) {}
-  @Get()            lister(@Req() r: any, @Query("status") status?: string, @Query("type") type?: string, @Query("subjectId") subjectId?: string) {
-    return this.svc.lister(r.ctx, { status, type, subjectId }); }
+  @Get()            lister(@Req() r: any, @Query("status") status?: string, @Query("type") type?: string, @Query("subjectId") subjectId?: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.svc.lister(r.ctx, { status, type, subjectId, limit, cursor }); }
   @Get(":id")       detail(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.detail(r.ctx, id, asOf); }
   @Get(":id/events") events(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.events(r.ctx, id, asOf); }
 }
@@ -100,9 +102,7 @@ export class WorkflowInstancesController {
   imports: [KycModule],                                                       // KycService (ratifié) pour le rejeu à date
   controllers: [WorkflowInstancesController],
   providers: [
-    PrismaService,
-    { provide: WorkflowInstancesService, useFactory: (p: PrismaService, k: KycService) => new WorkflowInstancesService(p, k), inject: [PrismaService, KycService] },
-  ],
+    { provide: WorkflowInstancesService, useFactory: (p: PrismaService, k: KycService) => new WorkflowInstancesService(p, k), inject: [PrismaService, KycService] }],
   exports: [WorkflowInstancesService],
 })
 export class WorkflowInstancesModule {}

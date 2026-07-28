@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
@@ -35,7 +36,7 @@ export class CoffreService {
     private ports: { storage?: StoragePort } = {}) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private port(): StoragePort {
     if (!this.ports.storage)

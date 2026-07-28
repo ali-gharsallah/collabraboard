@@ -102,7 +102,6 @@ export class ModulesController {
 @Module({
   controllers: [ModulesController],
   providers: [
-    PrismaService, AuditService,
     { provide: LicenseService, useFactory: () => new LicenseService(process.env.OLIVE_LICENSE_PUBKEY ?? "") },
     ModulesActifsService,
   ],

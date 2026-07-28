@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
@@ -29,7 +30,7 @@ export class RiskCaseService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cas(tx: Tx, ctx: Ctx, id: string) {
     const c = await tx.riskCase.findFirst({ where: { id, tenantId: ctx.tenantId } });

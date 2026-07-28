@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { ContexteAml, SignalAml, evaluer, paramsDepuisSettings, REFERENTIEL_AML } from "./aml-scoring.engine";
 import { REGISTRE_RQ } from "../parametres/parametres.service";
+import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
@@ -22,7 +23,7 @@ export class AmlService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── Évaluation : moteur → signaux persistés → état de blocage ──

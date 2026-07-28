@@ -264,7 +264,6 @@ export class CocController {
   imports: [CpsiModule, ReviewsModule],
   controllers: [CocController],
   providers: [
-    PrismaService, AuditService,
     { provide: CocService,
       useFactory: (p: PrismaService, a: AuditService, c: CpsiService, rv: ReviewsService) => new CocService(p, a, c, rv),
       inject: [PrismaService, AuditService, CpsiService, ReviewsService] }],

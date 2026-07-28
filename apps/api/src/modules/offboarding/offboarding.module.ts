@@ -33,7 +33,6 @@ function fakeCorePort(): CoreBankingPort | undefined {
 @Module({
   controllers: [OffboardingController],
   providers: [
-    PrismaService, AuditService,
     {
       provide: OffboardingService,
       useFactory: (prisma: PrismaService, audit: AuditService) =>

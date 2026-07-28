@@ -21,8 +21,6 @@ export class PreRevueController {
 @Module({
   controllers: [PreRevueController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: PreRevueService,
       // Lot 45 (arbitrage Ali, option 1) : l'adaptateur ratifié JETTE sans ANTHROPIC_API_KEY
@@ -41,8 +39,7 @@ export class PreRevueController {
                   .map((q: any) => ({ constat: `réponse manquante : ${q.code}`, section: s.code, question: q.code }))) }),
             } : undefined }),
       inject: [PrismaService, AuditService],
-    },
-  ],
+    }],
   exports: [PreRevueService],
 })
 export class PreRevueModule {}

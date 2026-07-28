@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
@@ -28,7 +29,7 @@ export class PreRevueService {
               private ports: { ia?: PortIa } = {}) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

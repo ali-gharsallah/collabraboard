@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, BadRequestException, NotFoundException 
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
@@ -35,7 +36,7 @@ export class VendorLicenseService {
       .digest("hex");
   }
   private emit(tx: Tx, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId: null, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, null, type, aggregateId, payload);
   }
   private async courante(tx: Tx, instanceId: string) {
     const ls = (await tx.vendorLicense.findMany({ where: { instanceId } }))

@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../../common/prisma.service";
-import { AuditService } from "../../common/audit.service";
 import { PersonnesService } from "./personnes.service";
 
 /**
@@ -25,5 +23,5 @@ export class PersonnesController {
   @Post(":id/corroboration") corrob(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.signalerDivergence(r.ctx, id, b?.champ, b?.constats ?? {}); }         // R36 (Vague 5)
 }
 
-@Module({ controllers: [PersonnesController], providers: [PrismaService, AuditService, PersonnesService], exports: [PersonnesService] })
+@Module({ controllers: [PersonnesController], providers: [ PersonnesService], exports: [PersonnesService] })
 export class PersonnesModule {}

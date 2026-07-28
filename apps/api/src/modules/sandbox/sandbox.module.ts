@@ -138,5 +138,5 @@ export class SandboxController {
   @Post("wf-delais")       wf(@Req() r: any, @Body() b: any) { return this.svc.wfDelais(r.ctx, b ?? {}); }          // sbwf
 }
 
-@Module({ controllers: [SandboxController], providers: [PrismaService, SandboxService], exports: [SandboxService] })
+@Module({ controllers: [SandboxController], providers: [SandboxService], exports: [SandboxService] })
 export class SandboxModule {}

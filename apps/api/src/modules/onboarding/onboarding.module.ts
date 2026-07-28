@@ -31,8 +31,6 @@ export class OnboardingController {
   imports: [KycModule],                 // fournit KycService (exporté)
   controllers: [OnboardingController],
   providers: [
-    PrismaService,
-    AuditService,
     {
       provide: OnboardingService,
       useFactory: (prisma: PrismaService, audit: AuditService, kyc: KycService) =>
@@ -42,8 +40,7 @@ export class OnboardingController {
         new OnboardingService(prisma, audit,
           { create: (ctx: any, dto: any) => kyc.create(ctx, dto, { viaOnboarding: true }) }),
       inject: [PrismaService, AuditService, KycService],
-    },
-  ],
+    }],
   exports: [OnboardingService],
 })
 export class OnboardingModule {}

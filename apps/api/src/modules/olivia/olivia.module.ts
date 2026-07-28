@@ -658,7 +658,6 @@ export class OliviaController {
   imports: [KycModule, CpsiModule],                                        // R255 : l'ancrage se résout VIA les services existants (C3/C4 : porte CPSI)
   controllers: [OliviaController],
   providers: [
-    PrismaService, AuditService,
     { provide: OliviaService, useFactory: (p: PrismaService, a: AuditService, k: KycService, c: CpsiService) => new OliviaService(p, a, k, c), inject: [PrismaService, AuditService, KycService, CpsiService] }],
   exports: [OliviaService],
 })

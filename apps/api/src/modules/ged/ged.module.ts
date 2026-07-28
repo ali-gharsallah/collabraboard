@@ -24,7 +24,6 @@ const simple = (C: any) => ({ provide: C, useFactory: (p: PrismaService, a: Audi
 @Module({
   controllers: [GedController],
   providers: [
-    PrismaService, AuditService,
     simple(GedIngestionService),
     simple(GedAvanceService),
     simple(VuesService),

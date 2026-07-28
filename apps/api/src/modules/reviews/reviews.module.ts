@@ -218,7 +218,7 @@ export class ReviewsController {
 
 @Module({
   controllers: [ReviewsController],
-  providers: [PrismaService, AuditService, ReviewsService],
+  providers: [ReviewsService],
   exports: [ReviewsService],
 })
 export class ReviewsModule {}

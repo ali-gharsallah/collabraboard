@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { WorkflowDefService } from "./workflow-def.service";
+import { emitEvent } from "../../common/domain-event";
 
 /**
  * KYC ↔ Workflow gouverné — le composeur. KW-01..05. AUCUNE RÈGLE NOUVELLE : ce service
@@ -23,7 +24,7 @@ export class KycWorkflowChaine {
   constructor(private kyc: KycPort, private wfDefs: WorkflowDefService, private prisma: any) {}
 
   private emit(tenantId: string, type: string, aggregateId: string, payload: any) {
-    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(this.prisma, tenantId, type, aggregateId, payload);
   }
   private async timbre(ctx: Ctx, dossierCode: string) {
     const evs = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "kyc.dossier.workflow", aggregateId: dossierCode } });

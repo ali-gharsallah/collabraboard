@@ -129,6 +129,30 @@ Amendement A2 : canon backend pour les deux capacités restées en démonstratio
   `NBA_DECIDED` consommé par le service Tâches). Jusque-là, l'écran NBA reste en **lecture** (gestes R187,
   décision désactivée) — inchangé depuis A1.
 
+## Audit architecture — écarts perf/pagination (A4)
+
+Fixes de l'audit `docs/AUDIT-ARCHITECTURE.md`, appliqués behavior-preserving (suite verte = équivalence).
+
+- **A4 — pagination keyset (`common/pagination.ts`).** Les portes de LISTE récentes (tasks, trips, nba,
+  workflow-instances) sont bornées par défaut (`DEFAULT_PAGE=200`, > toute fixture ⇒ aucune liste testée
+  tronquée) et exposent `?limit=&cursor=` (keyset `createdAt desc, id desc`), ADDITIF.
+  **Écart signalé** : pour les `createdAt` de type DateTime (trips, kycFile) le curseur est à granularité
+  MILLISECONDE — l'ORM restitue la Date JS (ms), le µs Postgres est perdu. Ces agrégats étant créés à cadence
+  humaine (jamais deux dans la même ms d'un tenant), le keyset est exact en pratique ; pour tasks/nba
+  (`createdAt` String) il est exact par construction. La borne par défaut, elle, est exacte en toutes circonstances.
+
+- **A6 — code-splitting front (`app/router.tsx`).** Les 35 imports eager du routeur passent en
+  `React.lazy` + `<Suspense>` : le chunk initial `index-*.js` tombe de **252 KB → 152 KB** (gzip 49 KB),
+  chaque écran devient un chunk 1–5 KB chargé à l'ouverture. Comportement identique (mêmes écrans, même
+  aiguillage ; Vitest 13/13). **Reste à faire (suivi)** : virtualisation des tables (react-window) au-delà
+  d'un seuil de lignes — valeur marginale désormais faible, les listes serveur étant bornées par A4
+  (défaut 200) ; sera fait au fil des écrans touchés (règle boy-scout, comme la migration `theme/tokens`).
+
+- **A3 — typage `tx` (`common/tx.ts`).** Alias cible `Tx = Prisma.TransactionClient` / `DbClient =
+  TransactionClient | PrismaService`. Appliqué aux 4 helpers partagés (A2) et aux 3 modules de la session
+  (businesstrip, tasks, nba) : `$transaction(async (tx: Tx) => …)`. Un seul cast nécessaire (champ Json
+  `trip.clients`). **Reste (suivi, ratifié incrémental)** : propager `Tx` aux ~30 autres services, fichier
+  par fichier, sans toucher la logique. Comportement identique — la suite verte le prouve.
 ## Écart canon — R78 réservé / inexistant (CPSI)
 
 **Constat vérifié (2026-07-27)** : `R78` n'existe **nulle part** — ni dans `spec/`, ni dans

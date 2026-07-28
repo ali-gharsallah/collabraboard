@@ -29,6 +29,7 @@
 | `docs/CPSI-CATALOGUE-R63-R86.md` | Catalogue consolidé CPSI (R63–R86) : score perpétuel, segmentation, groupes de population, pipeline signaux scorés, risk cases, extension KYC. Moteur réf. `services/cpsi-server-py` (18/18 vert). Cœur R63–R83 **non intégré** (porte HTTP mince à venir) | 2026-07-27 |
 | `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 + écart R78 (réservé) | 2026-07-26 |
 | `docs/MIGRATION-FRONT.md` | Journal des migrations d'écrans (boy-scout A1/D3) | 2026-07-26 |
+| `docs/AUDIT-ARCHITECTURE.md` | Audit archi/scalabilité (lecture seule, behavior-preserving) — A1..A6 priorisés | 2026-07-27 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
 
 ## Recette & tests

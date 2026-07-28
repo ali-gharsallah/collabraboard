@@ -720,7 +720,7 @@ export class SwarmController {
 @Module({
   imports: [OliviaModule],                                                // R261 : le MÊME ContextBuilder v1
   controllers: [SwarmController],
-  providers: [PrismaService, AuditService, SwarmToolsService, SwarmAgentsService, SwarmRunsService],
+  providers: [SwarmToolsService, SwarmAgentsService, SwarmRunsService],
   exports: [SwarmToolsService, SwarmAgentsService, SwarmRunsService],
 })
 export class SwarmModule {}
