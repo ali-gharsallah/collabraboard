@@ -443,3 +443,13 @@ l'état accepté du canon, aucun code à changer.
   pilote (merge 3815fb8, union sémantique — détail au message de merge). L'écart « audit
   mergé nulle part » et la duplication de fondation tx.ts sont SOLDÉS ; A1 est étendu à nos
   modules post-audit (un seul PrismaClient partout) ; A6 couvre les 51 écrans.
+
+## CANON ÉCARTS ANCIENS REÇU (2026-07-28) — spec/canon-ecarts-anciens.md, étape 0 exécutée
+
+Les 4 écarts « nécessitant canon » ont désormais leur canon (R280-R283, PROPOSÉ) :
+réconciliation R83↔R133-R136 → R280 · porte timeline/reporting/SLA hit→MROS → R281
+(PC-16..19 après mapping) · versionnage kyc_access_rules / SD-04 → R282 · sdar/sdgar /
+questionnaires de review → R283 (famille RW après mapping). STOP en cours : ratification
+de la numérotation (RS→RW, PC-16..19), du mapping des 2 transitions R280, et de la
+supersession partielle du test PC-12 v1. Chaque entrée sera SOLDÉE à la livraison de sa
+partie, pas avant.

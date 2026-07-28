@@ -83,3 +83,4 @@
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **34 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.
+- spec/canon-ecarts-anciens.md — canon écarts anciens R280-R283 (PROPOSÉ, étape 0 exécutée 2026-07-28)
