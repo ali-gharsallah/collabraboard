@@ -36,7 +36,10 @@ export class KycService {
   // ── Création : code atomique + scoring tracé + gabarit + visas ──
   async create(ctx: Ctx, dto: { clientId: string; legalStructure: string;
     accountType: string; countryCode: string; rmId: string },
-    opts: { viaOnboarding?: boolean } = {}) {
+    opts: { viaOnboarding?: boolean;
+      // R283 : une review est un KYC Rn+1 (R275) FILTRÉ par un profil — jamais un modèle à part.
+      review?: { type: string; niveau: string; deadlineId: string;
+        profil: { sectionsActives?: string[]; questionsRequises?: string[]; sectionsReconfirmation?: string[] } } } = {}) {
     const client = await this.prisma.client.findFirst({
       where: { id: dto.clientId, tenantId: ctx.tenantId } });
     if (!client) throw new NotFoundException("Client introuvable dans ce tenant");
@@ -61,13 +64,33 @@ export class KycService {
         risk = { ...risk, workflow: "EDD", level: "HIGH",
           trace: [...(risk.trace ?? []), "R271 : ex-EXIT_COMPLIANCE — workflow EDD imposé (exExitComplianceForceEdd)"] } as any;
     }
+    if (opts.review) {                                    // R283 : review = Rn+1 chaîné SANS clôture (client actif)
+      const dernier = await this.prisma.kycFile.findFirst({
+        where: { tenantId: ctx.tenantId, clientId: dto.clientId }, orderBy: { createdAt: "desc" } });
+      if (!dernier) throw new ConflictException("R283 : une review révise un dossier existant — aucun KYC à réviser");
+      previousKycId = dernier.id;
+      revision = (dernier.revision ?? 0) + 1;
+      // Le NIVEAU de la review est celui de l'ÉCHÉANCE (figé R272 — le recalcul RV-03 est LA voie
+      // de changement de niveau, jamais un re-scoring silencieux au lancement).
+      risk = { ...risk, workflow: opts.review.niveau,
+        score: dernier.riskScore, level: dernier.riskLevel,
+        trace: [...(risk.trace ?? []),
+          `R283 : review ${opts.review.type} — niveau ${opts.review.niveau} de l'échéance (figé R272)`] } as any;
+    }
     const year = new Date().getFullYear();
+
+    // R283 : le profil SÉLECTIONNE dans le gabarit — sections actives ∪ re-confirmation, rien d'autre.
+    const retenues = opts.review
+      ? new Set([...(opts.review.profil.sectionsActives ?? []), ...(opts.review.profil.sectionsReconfirmation ?? [])])
+      : null;
+    const gabarit = SECTIONS_BY_WORKFLOW[risk.workflow].filter((s) => !retenues || retenues.has(s.code));
+    const requises = new Set(opts.review?.profil.questionsRequises ?? []);
 
     // R282 : un dossier NAÎT sous la matrice COURANTE du tenant — le gabarit fournit le socle,
     // les changements en vigueur (portée « matrice ») le surchargent à la création. La cellule la
     // plus RÉCEMMENT effective fait foi (les changements de portée matrice s'appliquent partout ;
     // un override de portée dossier postérieur peut primer — documenté).
-    const codesQuestions = SECTIONS_BY_WORKFLOW[risk.workflow].flatMap((sec) => sec.questions.map((q) => q.code));
+    const codesQuestions = gabarit.flatMap((sec) => sec.questions.map((q) => q.code));
     const reglesCourantes = await this.prisma.kycAccessRule.findMany({
       where: { effectiveTo: null, question: { code: { in: codesQuestions },
         section: { kycFile: { tenantId: ctx.tenantId } } } },
@@ -95,15 +118,22 @@ export class KycService {
         countryCode: dto.countryCode, sequence, workflow: risk.workflow,
         revision, previousKycId,                                  // R271 : Rn+1 chaîné
         riskScore: risk.score, riskLevel: risk.level, createdBy: ctx.userId,
-        sections: { create: SECTIONS_BY_WORKFLOW[risk.workflow].map((s, i) => ({
+        sections: { create: gabarit.map((s, i) => ({
           code: s.code, label: s.label, orderIndex: i,
-          questions: { create: s.questions.map(q => ({
-            code: q.code, label: q.label,
-            accessRules: { create: Object.entries({ ...(q.rights ?? {}),
-              ...Object.fromEntries(matriceCourante.get(q.code) ?? []) }).map(([role, right]) => ({
-              role: role as any, right: right as any })) } })) } })) },
-        visas: { create: VISAS_BY_WORKFLOW[risk.workflow].map(v => ({
-          sectionCode: v.sectionCode, requiredRole: v.role })) },
+          questions: { create: s.questions.map(q => {
+            const droits: Record<string, string> = { ...(q.rights ?? {}),
+              ...Object.fromEntries(matriceCourante.get(q.code) ?? []) };
+            // R283 : une question REQUISE du profil passe par la matrice R282 — les rôles
+            // éditeurs deviennent REQUIRED sur CE dossier (aucune matrice parallèle).
+            if (requises.has(q.code))
+              for (const [role, right] of Object.entries(droits)) if (right === "EDIT") droits[role] = "REQUIRED";
+            return { code: q.code, label: q.label,
+              accessRules: { create: Object.entries(droits).map(([role, right]) => ({
+                role: role as any, right: right as any })) } };
+          }) } })) },
+        visas: { create: VISAS_BY_WORKFLOW[risk.workflow]
+          .filter((v) => !retenues || retenues.has(v.sectionCode))         // R283/R15 : les visas suivent les sections retenues
+          .map(v => ({ sectionCode: v.sectionCode, requiredRole: v.role })) },
       }, include: { sections: { include: { questions: true } }, visas: true } });
 
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,

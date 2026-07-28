@@ -198,6 +198,11 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Questionnaires de review — R283 (canon écarts anciens, ratifié 2026-07-28). ──
+  { cle: "reviewProfiles", type: "json", defaut: [], regle: "R283", requis: false,
+    exemple: [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],
+      questionsRequises: ["SOF-Q2"], sectionsReconfirmation: ["IDENTITY"] }],
+    description: "Profils de review (AR|GAR × SDD|CDD|EDD) : la review N'A PAS son propre questionnaire — elle SÉLECTIONNE dans le gabarit KYC (sections actives, questions requises ajoutées, sections en re-confirmation simple). Versionné par le registre, figé au lancement (R29) ; droits = matrice R282, jamais une matrice parallèle." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

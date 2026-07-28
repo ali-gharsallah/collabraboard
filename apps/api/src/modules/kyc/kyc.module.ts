@@ -16,7 +16,11 @@ import { ReviewsService } from "../reviews/reviews.module";
     // KycService reçoit le hook de pré-revue IA (R123) en 3e param optionnel.
     {
       provide: KycService,
-      useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService, rv: ReviewsService) => new KycService(p, a, pr, rv),
+      useFactory: (p: PrismaService, a: AuditService, pr: PreRevueService, rv: ReviewsService) => {
+        const svc = new KycService(p, a, pr, rv);
+        rv.brancherKyc(svc);            // R283 : branchement tardif — lancer une review crée LE KYC Rn+1 (pas de cycle de modules)
+        return svc;
+      },
       inject: [PrismaService, AuditService, PreRevueService, ReviewsService],
     }],
   exports: [KycService, KycLockService, QualifiedVisaService],   // KycService exporté pour OnboardingModule (R118)

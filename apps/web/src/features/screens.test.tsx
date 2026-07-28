@@ -21,6 +21,8 @@ import { Olivia } from "./olivia/Olivia";
 import { Runs } from "./olivia/Runs";
 import { AmlWorkspace } from "./aml/AmlWorkspace";
 import { SdKyc } from "./parametrage/SdKyc";
+import { SdAr } from "./parametrage/SdAr";
+import { SdGar } from "./parametrage/SdGar";
 import { ParamFields } from "./parametrage/ParamFields";
 import { CocParam } from "./coc/CocParam";
 import { Sandboxes } from "./parametrage/Sandboxes";
@@ -726,5 +728,43 @@ describe("FE-RUNS — écran Runs Olivia v2 (R266, SW-17/18) : interrupteur, tim
     expect(screen.getByText(/empreinte aaaaaaaaaa/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "STOP" }));
     expect(await screen.findByText("INTERROMPU")).toBeInTheDocument();    // rechargé depuis le serveur, pas simulé
+  });
+});
+
+describe("FE-RW — R283 : sdar/sdgar rendent, ne dupliquent pas (RW-04)", () => {
+  const gabaritServi = { gabarits: { SDD: [], EDD: [], CDD: [
+    { code: "IDENTITY", label: "Identité & relation", questions: [{ code: "IDE-Q1", label: "Identité vérifiée" }] },
+    { code: "AML", label: "Conformité LBA", questions: [{ code: "AML-Q1", label: "Screening exécuté" }] }] }, profils: [] };
+
+  it("RW-04 : sdar sur le composant de grille COMMUN — l'écran n'écrit QUE reviewProfiles, par le registre R-Q motivé", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    let ecrit: { valeur?: unknown; motif?: string } | null = null;
+    server.use(
+      http.get("*/v1/reviews/profils", () => HttpResponse.json(gabaritServi)),   // gabarit SERVI — jamais recopié front
+      // SEULE écriture tolérée : le paramètre versionné — toute autre requête ferait échouer MSW (onUnhandledRequest:error)
+      http.post("*/v1/parametres/valeur/reviewProfiles", async ({ request }) => {
+        ecrit = await request.json() as typeof ecrit; return HttpResponse.json({}, { status: 201 });
+      }),
+    );
+    render(<SdAr/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText("Identité & relation")).toBeInTheDocument();
+    expect(screen.getByTestId("grille-matrice")).toBeInTheDocument();            // LE composant commun (sdkyc/sdar/sdgar)
+    fireEvent.click(screen.getByLabelText("requise AML-Q1"));                    // sélection : question REQUISE
+    fireEvent.click(screen.getByTestId("enregistrer"));
+    await screen.findByTestId("msg-sdar");
+    const valeur = (ecrit as unknown as { valeur: { type: string; niveau: string; questionsRequises: string[] }[] }).valeur;
+    const profil = valeur.find((p) => p.type === "AR" && p.niveau === "CDD");
+    expect(profil?.questionsRequises).toEqual(["AML-Q1"]);                       // la sélection, RIEN d'autre
+    expect((ecrit as unknown as { motif: string }).motif).toContain("R283");     // R7 : écriture MOTIVÉE au registre
+  });
+
+  it("RW-04 : sdgar est la MÊME grille, configurée GAR — profil plus large, aucune particularité de modèle", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.get("*/v1/reviews/profils", () => HttpResponse.json(gabaritServi)));
+    render(<SdGar/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText(/Profils de review GAR/)).toBeInTheDocument();
+    expect(screen.getByTestId("grille-matrice")).toBeInTheDocument();            // même composant, autre configuration
   });
 });

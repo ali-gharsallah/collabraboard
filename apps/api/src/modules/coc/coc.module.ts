@@ -265,7 +265,11 @@ export class CocController {
   controllers: [CocController],
   providers: [
     { provide: CocService,
-      useFactory: (p: PrismaService, a: AuditService, c: CpsiService, rv: ReviewsService) => new CocService(p, a, c, rv),
+      useFactory: (p: PrismaService, a: AuditService, c: CpsiService, rv: ReviewsService) => {
+        const svc = new CocService(p, a, c, rv);
+        rv.brancherCoc(svc);            // R283 : « Signaler un changement » en review ouvre LE CoC R276 (pas de cycle de modules)
+        return svc;
+      },
       inject: [PrismaService, AuditService, CpsiService, ReviewsService] }],
   exports: [CocService],
 })

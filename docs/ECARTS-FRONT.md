@@ -488,3 +488,35 @@ partie, pas avant.
   création : gabarit ⊕ règles en vigueur, la plus récente fait foi). Lecture d'époque
   `?asOf=` (VD-03) ; événement kyc.access.modifie ÉTENDU (dateEffet, portée, dossiersTouches
   — VD-04, change tracker SD-01). Résolution PAR DATES, aucun champ version sur les dossiers.
+
+## SOLDE — SDAR/SDGAR / QUESTIONNAIRES DE REVIEW (2026-07-28, partie 4 du canon écarts anciens LIVRÉE)
+
+- **R283 LIVRÉ (RW-01..05 verts) — l'écart « sdar/sdgar reportés » est SOLDÉ** : la review
+  N'A PAS son propre questionnaire — elle SÉLECTIONNE dans le KYC. `reviewProfiles` est un
+  paramètre du registre R-Q (typé json, motivé, append-only — versionné comme toute règle) :
+  profils {AR|GAR} × {SDD|CDD|EDD} = {sections actives, questions REQUISES ajoutées, sections
+  en re-confirmation simple}. Lancer une review (`POST /v1/reviews/deadlines/:id/lancer`) crée
+  LE KYC Rn+1 (R275) chaîné SANS clôture, FILTRÉ par le profil en vigueur — profil FIGÉ dans
+  l'événement `review.lancee` (grandfathering R29, RW-03) ; niveau = celui de l'échéance (figé
+  R272, le recalcul RV-03 reste LA voie de changement). Les REQUISES passent par la matrice
+  R282 (les rôles éditeurs deviennent REQUIRED sur le dossier — AUCUNE matrice parallèle) ;
+  les visas suivent les sections retenues (R15). Re-confirmation : « Confirmer » = LE visa de
+  la section signé + événement tracé ; « Signaler un changement » ouvre LE CoC R276 (CC-01)
+  qui suit son cycle — branchements tardifs KycModule/CocModule → ReviewsService (pas de cycle
+  de modules). AUCUNE table parallèle (vérifié par RW-01 : `pg_tables LIKE 'review%'` =
+  `review_deadlines` seule). RW-05 : chaîne complète lancer → instruire → valider → échéance
+  REALISEE + suivante PLANIFIEE depuis le Rn+1 (RV-07 re-traversé). Front : `sdar`/`sdgar` =
+  écrans de SÉLECTION sur le composant de grille commun extrait de `sdkyc` (`GrilleMatrice` —
+  un composant, trois configurations, RW-04 vérifié à l'import et par MSW : la SEULE écriture
+  est `POST /v1/parametres/valeur/reviewProfiles`, jamais `kyc_access_rules`). Gabarit servi
+  par `GET /v1/reviews/profils` (source unique `kyc.templates`, jamais recopié front).
+  Référence croisée : spec/canon-ecarts-anciens.md partie 4 · tests
+  apps/api/test/e2e/fat-canon-anciens.e2e-spec.ts (Partie 4) + apps/web screens.test.tsx FE-RW.
+
+## BILAN CANON ÉCARTS ANCIENS (R280-R283) — LES 4 PARTIES LIVRÉES, LES 4 ÉCARTS SOLDÉS
+
+- R280 → écart « double machine risk cases » soldé (UC-01..03) · R281 → écart « porte de
+  lecture riskcases / délai hit→MROS » soldé (PC-16..19, AW-04 re-passé) · R282 → écart
+  « versionnage kyc_access_rules » soldé, SD-04 levé (VD-01..04) · R283 → écart « sdar/sdgar
+  reportés » soldé (RW-01..05, RW-05 en chaîne avec RV-07). Livrable : branche pilote unique
+  PR #46 (arbitrage ratifié — « rester sur PR #46 » — en lieu des 4 PRs du canon).

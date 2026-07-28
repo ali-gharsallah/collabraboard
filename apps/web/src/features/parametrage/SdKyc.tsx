@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { tokens } from "../../theme/tokens";
+import { GrilleMatrice } from "./GrilleMatrice";                    // R283/RW-04 : LE composant commun (sdkyc/sdar/sdgar)
 
 // `sdkyc` (canon vague pilote partie 4 PARTIELLE — arbitrage : « rendu sur le modèle ACTUEL,
 // SD-04 suspendu, écart versionnage kyc_access_rules consigné »). La grille RENDE la matrice
@@ -60,19 +61,14 @@ export function SdKyc() {
         {voirComme && <span data-testid="voir-comme" style={{ fontSize: 12, color: tokens.color.olive700 }}>
           vue {voirComme.role} (servie backend) : <strong>{voirComme.questions}</strong> questions visibles</span>}
       </div>
-      {matrice.sections.map((s) => <div key={s.code} style={{ marginBottom: 12 }}>
-        <h4 style={{ margin: "6px 0 2px" }}>{s.label} {s.visas.map((v) => <span key={v} style={{ marginLeft: 6, fontSize: 10,
-          padding: "1px 8px", borderRadius: 999, background: tokens.color.gold, color: "#fff" }}>visa {v}</span>)}</h4>
-        <table cellPadding={3} style={{ fontSize: 11, borderCollapse: "collapse" }}><thead><tr>
-          <th align="left" style={{ minWidth: 220 }}>Question</th>{ROLES.map((r) => <th key={r}>{r}</th>)}</tr></thead>
-          <tbody>{s.questions.map((q) => <tr key={q.code}>
-            <td>{q.label}</td>
-            {ROLES.map((r) => <td key={r} style={{ background: COULEUR[q.droits[r]] ?? "#eee", textAlign: "center" }}>
-              <select value={q.droits[r]} onChange={(e) => changer(q.code, r, e.target.value)}
-                disabled={isDemoMode()} style={{ fontSize: 10, border: "none", background: "transparent" }}>
-                {DROITS.map((d) => <option key={d}>{d}</option>)}</select></td>)}
-          </tr>)}</tbody></table>
-      </div>)}
+      <GrilleMatrice sections={matrice.sections} colonnes={ROLES}
+        celluleStyle={(q, r) => ({ background: COULEUR[(q as { droits?: Record<string, string> }).droits?.[r] ?? ""] ?? "#eee" })}
+        cellule={(q, r) => {
+          const droits = (q as { droits?: Record<string, string> }).droits ?? {};
+          return <select value={droits[r]} onChange={(e) => changer(q.code, r, e.target.value)}
+            disabled={isDemoMode()} style={{ fontSize: 10, border: "none", background: "transparent" }}>
+            {DROITS.map((d) => <option key={d}>{d}</option>)}</select>;
+        }}/>
     </>}
   </div>;
 }

@@ -312,3 +312,155 @@ describe("FAT CANON ANCIENS — Partie 3 : R282 matrice de droits versionnée (V
     console.log("VD-04 PASS — événement complet (auteur, avant/après, date d'effet, portée)");
   });
 });
+
+// ── Partie 4 : R283 — la review N'A PAS son propre questionnaire : elle SÉLECTIONNE dans le KYC ──
+
+describe("FAT CANON ANCIENS — Partie 4 : R283 questionnaires de review, UN SEUL modèle (RW-01..03, RW-05)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), COSR = randomUUID(), ADMIN = randomUUID(), COC = randomUUID(), CO1 = randomUUID();
+
+  const creerKyc = async (clientId: string) =>
+    (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "HOLDING", accountType: "ADVISORY", countryCode: "CH", rmId: RM })).body; // 25 → CDD
+  // Répond tout (rôles réels), signe les visas, VALIDE — l'échéance de review naît ici (RV-01).
+  const validerCycle = async (kyc: any) => {
+    for (const s of kyc.sections)
+      for (const q of s.questions) {
+        const co = ["IDE-Q3", "UBO-Q2", "SOF-Q2", "AML-Q1"].includes(q.code);
+        await request(http).patch(`/v1/kyc/${kyc.code}/questions/${q.code}`)
+          .set(bearer(T, co ? COC : RM, co ? "CO" : "RM")).send({ answer: "renseigné" }).expect(200);
+      }
+    for (const v of kyc.visas)
+      await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({}).expect(201);
+    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    return (await prisma.reviewDeadline.findFirst({ where: { tenantId: T, clientId: kyc.clientId, statut: "PLANIFIEE" } }))!;
+  };
+  const ecrireProfils = (valeur: any[], motif: string) =>
+    request(http).post("/v1/parametres/valeur/reviewProfiles").set(bearer(T, ADMIN, "ADMIN")).send({ valeur, motif });
+
+  // Profil v1 — AR×CDD : UBO ABSENT de la review, SOF-Q2 devient REQUISE, IDENTITY en re-confirmation simple.
+  const PROFIL_V1 = [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],
+    questionsRequises: ["SOF-Q2"], sectionsReconfirmation: ["IDENTITY"] }];
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("RW-01 [R283] le profil SÉLECTIONNE, le modèle est UNIQUE : review = KYC Rn+1 filtré — aucune table parallèle", async () => {
+    await ecrireProfils(PROFIL_V1, "R283 : profils de review AR (v1)").expect(201);
+    const c1 = randomUUID(); await seedTenantClient(prisma, T, c1);
+    const r1 = await creerKyc(c1);
+    const echeance = await validerCycle(r1);
+    // Sans profil GAR×CDD au registre : default-deny typé
+    const refus = await request(http).post(`/v1/reviews/deadlines/${echeance.id}/lancer`).set(bearer(T, RM, "RM")).send({ type: "GAR" });
+    expect(refus.status).toBe(400);
+    expect(JSON.stringify(refus.body)).toContain("GAR");
+    // Lancement AR : le Rn+1 chaîné naît FILTRÉ par le profil
+    const lance = await request(http).post(`/v1/reviews/deadlines/${echeance.id}/lancer`).set(bearer(T, RM, "RM")).send({ type: "AR" });
+    expect(lance.status).toBe(201);
+    const review = await prisma.kycFile.findFirst({ where: { tenantId: T, code: lance.body.kycCode }, include: { sections: { include: { questions: { include: { accessRules: true } } } }, visas: true } });
+    expect(review!.revision).toBe(2);                                      // Rn+1 (R275)
+    expect(review!.previousKycId).toBe(r1.id);                             // CHAÎNÉ au dossier révisé
+    expect(review!.code.endsWith("-R2")).toBe(true);
+    // Le gabarit CDD compte 4 sections — la review n'en porte que les sélectionnées : actives ∪ re-confirmation
+    expect(review!.sections.map((s: any) => s.code).sort()).toEqual(["AML", "IDENTITY", "SOF"]);
+    // Les questions requises AJOUTÉES passent par la matrice R282 (aucune matrice parallèle)
+    const sofQ2 = review!.sections.flatMap((s: any) => s.questions).find((q: any) => q.code === "SOF-Q2");
+    expect(sofQ2!.accessRules.some((a: any) => a.right === "REQUIRED" && !a.effectiveTo)).toBe(true);
+    // Les visas suivent les sections retenues (R15 — jamais un jeu de visas parallèle)
+    expect(review!.visas.map((v: any) => v.sectionCode).sort()).toEqual(["AML", "IDENTITY"]);
+    // AUCUNE table de questionnaire de review : le seul objet `review*` du schéma reste l'échéance
+    const tables = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'review%'`);
+    expect(tables.map((t) => t.tablename)).toEqual(["review_deadlines"]);
+    // Le lancement est un ÉVÉNEMENT qui FIGE le profil appliqué (grandfathering R29)
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "review.lancee", aggregateId: review!.id } });
+    expect((ev!.payload as any).profil.sectionsActives).toEqual(["SOF", "AML"]);
+    expect((ev!.payload as any).deadlineId).toBe(echeance.id);
+    console.log("RW-01 PASS — Rn+1 chaîné, sections/visas filtrés par profil, REQUIRED via R282, zéro table parallèle");
+  });
+
+  it("RW-02 [R283/R276] la re-confirmation ouvre le BON circuit : « Confirmer » = visa tracé ; « Signaler un changement » = CoC OUVERT (CC-01)", async () => {
+    const review = (await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "review.lancee" } }))!.payload as any;
+    // Une section ACTIVE ne se « re-confirme » pas — elle se re-répond (refus typé)
+    const horsListe = await request(http).post(`/v1/reviews/kyc/${review.kycCode}/reconfirmer/SOF`).set(bearer(T, CO1, "CO"));
+    expect(horsListe.status).toBe(400);
+    expect(JSON.stringify(horsListe.body)).toContain("re-confirmation");
+    // « Confirmer » IDENTITY : événement tracé + LE visa de la section signé (R15 — pas un flag parallèle)
+    const conf = await request(http).post(`/v1/reviews/kyc/${review.kycCode}/reconfirmer/IDENTITY`).set(bearer(T, CO1, "CO"));
+    expect(conf.status).toBe(201);
+    expect(conf.body.visaSigne).toBe(true);
+    const visa = await prisma.kycVisa.findFirst({ where: { sectionCode: "IDENTITY", kycFile: { code: review.kycCode, tenantId: T } } });
+    expect(visa!.status).toBe("SIGNED");
+    expect(visa!.signedBy).toBe(CO1);                                      // l'auteur = le jeton, jamais le body
+    const evc = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "review.section.confirmee" } });
+    expect(evc.some((e: any) => e.payload.section === "IDENTITY" && e.payload.par === CO1)).toBe(true);
+    // « Signaler un changement » : le CoC R276 s'ouvre et SUIT SON CYCLE — la review ne le court-circuite pas
+    const sig = await request(http).post(`/v1/reviews/kyc/${review.kycCode}/signaler-changement`).set(bearer(T, RM, "RM"))
+      .send({ typeCode: "RESIDENCE_CHANGE", description: "le client déclare une nouvelle résidence fiscale" });
+    expect(sig.status).toBe(201);
+    expect(sig.body.statut).toBe("OUVERT");                                // CC-01 : le cycle CoC démarre
+    const coc = await prisma.cocFile.findFirst({ where: { id: sig.body.cocId } });
+    expect(coc!.typeCode).toBe("RESIDENCE_CHANGE");
+    expect(coc!.statut).toBe("OUVERT");
+    console.log("RW-02 PASS — confirmer = visa tracé (R15), signaler = CoC OUVERT (R276), hors-liste refusé");
+  });
+
+  it("RW-03 [R283/R29] le profil est VERSIONNÉ et GRANDFATHÉRÉ : la review lancée garde son profil, la suivante prend le nouveau", async () => {
+    // v2 : AR×CDD s'élargit (UBO entre, plus de re-confirmation) — append-only au registre R-Q
+    const V2 = [{ type: "AR", niveau: "CDD", sectionsActives: ["IDENTITY", "UBO", "SOF", "AML"],
+      questionsRequises: ["UBO-Q1"], sectionsReconfirmation: [] }];
+    await ecrireProfils(V2, "R283 : élargissement du profil AR (v2)").expect(201);
+    const versions = await prisma.tenantParamChange.findMany({ where: { tenantId: T, cle: "reviewProfiles" } });
+    expect(versions.length).toBeGreaterThanOrEqual(2);                     // la VÉRITÉ append-only (R126)
+    // La review lancée sous v1 N'A PAS bougé : ses sections sont MATÉRIALISÉES, son profil FIGÉ dans l'événement
+    const ev1 = (await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "review.lancee" } }))!.payload as any;
+    const ancienne = await prisma.kycFile.findFirst({ where: { tenantId: T, code: ev1.kycCode }, include: { sections: true } });
+    expect(ancienne!.sections.map((s: any) => s.code).sort()).toEqual(["AML", "IDENTITY", "SOF"]);   // toujours v1
+    // Une NOUVELLE review (autre client) prend v2
+    const c2 = randomUUID(); await seedTenantClient(prisma, T, c2);
+    const kyc2 = await creerKyc(c2);
+    const echeance2 = await validerCycle(kyc2);
+    const lance2 = await request(http).post(`/v1/reviews/deadlines/${echeance2.id}/lancer`).set(bearer(T, RM, "RM")).send({ type: "AR" });
+    expect(lance2.status).toBe(201);
+    const review2 = await prisma.kycFile.findFirst({ where: { tenantId: T, code: lance2.body.kycCode }, include: { sections: true } });
+    expect(review2!.sections.map((s: any) => s.code).sort()).toEqual(["AML", "IDENTITY", "SOF", "UBO"]); // v2
+    console.log("RW-03 PASS — versions append-only, review v1 intacte (R29), nouvelle review sous v2");
+  });
+
+  it("RW-05 [R283/R275/R272] la validation de review REFERME LA BOUCLE : lancer → instruire → valider → échéance REALISEE, la suivante repart (RV-07)", async () => {
+    // La review v2 de RW-03 (client c2) : toutes sections actives, UBO-Q1 REQUISE
+    const evs = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "review.lancee" } });
+    const ev = evs[evs.length - 1].payload as any;
+    const review = await prisma.kycFile.findFirst({ where: { tenantId: T, code: ev.kycCode }, include: { sections: { include: { questions: true } }, visas: true } });
+    const echeanceLancee = await prisma.reviewDeadline.findFirst({ where: { id: ev.deadlineId } });
+    expect(echeanceLancee!.statut).toBe("PLANIFIEE");                      // lancer n'a PAS clos l'échéance — la VALIDATION le fera
+    // Instruction (rôles réels) — la REQUISE ajoutée par le profil doit être servie : sans elle, refus listé
+    for (const s of review!.sections)
+      for (const q of s.questions) {
+        if (q.code === "UBO-Q1") continue;
+        const co = ["IDE-Q3", "UBO-Q2", "SOF-Q2", "AML-Q1"].includes(q.code);
+        await request(http).patch(`/v1/kyc/${review!.code}/questions/${q.code}`)
+          .set(bearer(T, co ? COC : RM, co ? "CO" : "RM")).send({ answer: "révisé" }).expect(200);
+      }
+    for (const v of review!.visas)
+      await request(http).post(`/v1/kyc/${review!.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({}).expect(201);
+    const refus = await request(http).post(`/v1/kyc/${review!.code}/validate`).set(bearer(T, COSR, "CO_SR"));
+    expect(refus.status).toBe(400);
+    expect(JSON.stringify(refus.body)).toContain("UBO-Q1");               // R282 : la complétude LISTE ce qui manque
+    await request(http).patch(`/v1/kyc/${review!.code}/questions/UBO-Q1`).set(bearer(T, RM, "RM")).send({ answer: "formulaire A re-signé" }).expect(200);
+    // Validation → RV-07 : l'échéance lancée passe REALISEE (référence au Rn+1), la SUIVANTE repart
+    await request(http).post(`/v1/kyc/${review!.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    const realisee = await prisma.reviewDeadline.findFirst({ where: { id: ev.deadlineId } });
+    expect(realisee!.statut).toBe("REALISEE");
+    expect(realisee!.realiseeKycId).toBe(review!.id);
+    const suivante = await prisma.reviewDeadline.findFirst({ where: { tenantId: T, clientId: review!.clientId, statut: "PLANIFIEE" } });
+    expect(suivante).toBeTruthy();
+    expect(suivante!.sourceKycId).toBe(review!.id);                       // la boucle repart DU Rn+1
+    console.log("RW-05 PASS — chaîne complète R283→R275→R272 : REALISEE + suivante PLANIFIEE depuis le Rn+1");
+  });
+});
