@@ -948,3 +948,18 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
 - **§10 i18n 4 langues** : NON commencé — écart déjà consigné (G2) : aucune règle R ne
   ratifie la localisation ; les libellés FR livrés SONT les clés du dictionnaire maquette,
   la bascule viendra sans réécriture. Chantier à part entière, canon à écrire (PO).
+
+## SOLDE — DETTE PRODUIT §11 : SEED DÉMO GWB (2026-07-28)
+
+- **§11 livré** : `OLIVE_SEED_DEMO=1 npm run seed:demo` — le tenant démo GWB se sème
+  BOUT-EN-BOUT par les VRAIES routes (6 rôles, domaine login R296, 3 clients zod,
+  1 dossier KYC servi par le moteur de règles, client CPSI + signal + score jauge R250,
+  type CoC + dossier CC-01, incident OpRisk R321) ; preuve comptée en sortie.
+- **ÉCARTS CONSIGNÉS** : (1) DEUX actes hors routes assumés — l'INSERT du tenant et le
+  jeton ADMIN d'amorçage (création de tenant et premier ADMIN = actes d'ops, aucune route
+  par construction) ; (2) gardes : OLIVE_SEED_DEMO=1 obligatoire + refus de double semis —
+  jamais une donnée de démo par accident (R167), jamais en production ; (3) la purge de
+  recette contourne les triggers append-only (session_replication_role) — documentée
+  RUNBOOK §9 et INTERDITE en production : on ne purge pas un journal ; (4) le seed
+  s'exécute par la machinerie ts-jest (config jest-seed dédiée, périmètre disjoint de
+  l'e2e) — pas de ts-node au dépôt, pas de dépendance ajoutée pour un outil de démo.

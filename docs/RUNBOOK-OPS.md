@@ -220,3 +220,18 @@ Cas particuliers O-Live :
 - **Renommage** : traité comme expand (nouvelle) + migrate (copie) + contract (retrait) —
   `@map` Prisma peut différer la contraction physique (précédent : Document.nom → name).
 - Chaque temps passe la chaîne §2 COMPLÈTE (rules, e2e, RLS) avant le suivant.
+
+## 9. Seed tenant démo GWB (dette §11, 2026-07-28)
+
+`OLIVE_SEED_DEMO=1 npm run seed:demo` (apps/api) — sème le tenant démo `GWB Demo`
+(id fixe `9b1de001-0000-4000-8000-00000000006b`) par les VRAIES routes HTTP : 6 rôles,
+domaine de login, 3 clients, 1 dossier KYC, client CPSI + signal (score lisible avec
+jauge R250), type CoC + dossier, incident OpRisk. Preuve comptée en sortie (SEED GWB OK).
+- GARDES : sans `OLIVE_SEED_DEMO=1` → refus ; tenant déjà présent → refus (pas de double
+  semis). JAMAIS sur une base de production (R167 — le seed est un outil de démo/recette).
+- Deux actes hors routes, assumés : l'INSERT du tenant et le jeton ADMIN d'amorçage
+  (création de tenant et premier ADMIN = actes d'ops, pas de route par construction).
+- PURGE (base de démo/recette UNIQUEMENT) : les journaux sont append-only (triggers R48) —
+  la purge passe par `BEGIN; SET LOCAL session_replication_role = replica; DELETE … ;
+  COMMIT;` en superuser/owner, tables enfants d'abord (boucle pg_tables sur tenant_id,
+  puis tenants). Cette manœuvre est INTERDITE en production : on ne purge pas un journal.
