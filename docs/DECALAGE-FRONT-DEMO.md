@@ -138,3 +138,12 @@ pas sous ces noms dans cette version de la maquette.)*
 `crossborder` (R293-R295). Le login deux temps (R296) est un CONTRAT API (public, deux
 routes) — l'écran portail suivra le shell définitif (consigné). La passe de conformité
 visuelle vit dans docs/CONFORMITE-VISUELLE.md (grille rejouable, critère PR).
+
+## DÉGEL COMPLET (décision PO, 2026-07-28)
+
+Le gel est LEVÉ sur les 11 domaines par décision PO du 2026-07-28 — la spec est
+fournie et RATIFIÉE : spec/canon-degel-complet-vagues-1-9.md (mapping +3 : R297–R323 ;
+familles TF/CY/WB/VR/LE/BL/MB/VE/OP ; 4 cross-réfs remappées). Les notes de gel
+ci-dessus (SWIFT, Legal, BI, Octopulse catégorie C) sont CADUQUES : chaque domaine a
+désormais son bloc de règles et sa vague d'exécution (1→9, visa Ali avant code pour
+les vagues 3 Builder et 7 Mobile).
