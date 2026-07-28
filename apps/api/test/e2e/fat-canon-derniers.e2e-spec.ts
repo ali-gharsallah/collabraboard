@@ -589,3 +589,62 @@ describe("FAT CANON DERNIERS — R290 extension SSO (IM-01/03/04) + R291 complé
     console.log("DC-07 PASS — DIR lit la santé, le rejeu reste ADMIN/SO");
   });
 });
+
+// ── Extension R284 : écran auditit — vérification d'intégrité + journal des paramétrages (SO-07/08) ──
+
+describe("FAT CANON DERNIERS — auditit : intégrité des journaux + paramétrages transversaux (SO-07/08)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), ADMIN = randomUUID(), DIR = randomUUID(), SO = randomUUID();
+  const clientId = randomUUID();
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientId);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("SO-07 [R284] la vérification de chaîne est un ACTE TRACÉ : chaîne saine → OK ; maillon corrompu (fixture) → ROMPU et LOCALISÉ ; AUDIT_ACCESS émis", async () => {
+    // Une chaîne RÉELLE : un dossier, deux réponses successives sur la même question (HMAC chaîné)
+    const kyc = (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: RM })).body;
+    await request(http).patch(`/v1/kyc/${kyc.code}/questions/IDE-Q1`).set(bearer(T, RM, "RM")).send({ answer: "v1" }).expect(200);
+    await request(http).patch(`/v1/kyc/${kyc.code}/questions/IDE-Q1`).set(bearer(T, RM, "RM")).send({ answer: "v2" }).expect(200);
+    const sain = (await request(http).get("/v1/audit/integrite").set(bearer(T, SO, "SO"))).body;
+    const kqh = sain.journaux.find((j: any) => j.journal === "kyc_question_history");
+    expect(kqh.statut).toBe("OK");
+    expect(kqh.controles).toBeGreaterThanOrEqual(2);
+    // FIXTURE CORROMPUE : un maillon APPEND (l'append-only interdit l'UPDATE — on injecte un faux maillon)
+    const q = await prisma.kycQuestion.findFirst({ where: { code: "IDE-Q1", section: { kycFile: { id: kyc.id } } } });
+    await prisma.kycQuestionHistory.create({ data: { questionId: q!.id, previousValue: "v2", newValue: "v3-frauduleux",
+      changedBy: RM, changedAt: new Date(), hash: "HASH_CORROMPU_QUI_NE_CHAINE_PAS" } });
+    const casse = (await request(http).get("/v1/audit/integrite").set(bearer(T, SO, "SO"))).body;
+    const kqh2 = casse.journaux.find((j: any) => j.journal === "kyc_question_history");
+    expect(kqh2.statut).toBe("ROMPU");
+    expect(kqh2.rompu.detail).toContain(q!.id);                             // LOCALISÉ : la question du premier maillon rompu
+    // L'auditeur est audité : la vérification est ELLE-MÊME un AUDIT_ACCESS (qui, quoi, quand)
+    const ev = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "AUDIT_ACCESS" }, orderBy: { id: "desc" } });
+    expect((ev!.payload as any).chemin).toContain("integrite");
+    // Accès : SO et DIRECTION lisent ; RM refusé
+    await request(http).get("/v1/audit/integrite").set(bearer(T, DIR, "DIR")).expect(200);
+    await request(http).get("/v1/audit/integrite").set(bearer(T, RM, "RM")).expect(403);
+    console.log("SO-07 PASS — chaîne saine OK, maillon corrompu localisé, vérification tracée");
+  });
+
+  it("SO-08 [R284/R68] le journal des paramétrages est TRANSVERSAL : registre R-Q et matrice R282 dans UNE liste — même source, aucun agrégat parallèle", async () => {
+    // Deux actes de config de MODULES DIFFÉRENTS
+    await request(http).post("/v1/parametres/valeur/screeningSeuil").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ valeur: 90, motif: "SO-08 : resserrement du seuil" }).expect(201);
+    const kyc = await prisma.kycFile.findFirst({ where: { tenantId: T, clientId } });
+    await request(http).patch(`/v1/kyc/${kyc!.code}/questions/IDE-Q2/access`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ role: "RM", right: "VIEW" }).expect(200);
+    const j = (await request(http).get("/v1/audit/parametrages").set(bearer(T, SO, "SO"))).body;
+    const types = j.map((x: any) => x.type);
+    expect(types).toContain("param.change");                                // registre R-Q (R125)
+    expect(types).toContain("kyc.access.modifie");                          // matrice R282 — MÊME liste
+    expect(j.find((x: any) => x.type === "param.change").payload.motif).toContain("SO-08");
+    console.log("SO-08 PASS — paramétrages transversaux servis d'une seule source (domain_events)");
+  });
+});
