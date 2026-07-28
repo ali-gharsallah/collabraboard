@@ -358,9 +358,13 @@ describe("FAT CANON DERNIERS — R284 : rôle SO, surfaces d'audit (SO-01..06)",
     const refus = await request(http).post(`/v1/admin/users/${cree.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "SO" });
     expect(refus.status).toBe(400);
     expect(JSON.stringify(refus.body)).toContain("cumul_so_admin_interdit");
-    // Une petite banque ASSOUPLIT — par LE registre (motivé), jamais un contournement
+    // Une petite banque ASSOUPLIT — par LE registre (motivé), jamais un contournement.
+    // AMENDEMENT IM-02 (canon triage, ratifié après SO-05) : le dernier ADMIN actif ne se retire
+    // pas — un SECOND ADMIN est nommé avant la bascule (la garde IAM_DERNIER_ADMIN reste active).
     await request(http).post("/v1/parametres/valeur/cumul_so_admin_interdit").set(bearer(T, ADMIN, "ADMIN"))
       .send({ valeur: false, motif: "Équipe de 3 — cumul assumé, tracé (R284)" }).expect(201);
+    await request(http).post("/v1/admin/users").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ email: "second-admin@banque.ch", name: "Second", role: "ADMIN", password: "S3cret!s3cret" }).expect(201);
     await request(http).post(`/v1/admin/users/${cree.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "SO" }).expect(201);
     const trace = await prisma.domainEvent.findFirst({ where: { tenantId: T, type: "iam.cumul_so_admin.autorise" } });
     expect(trace).toBeTruthy();                                              // accepté ET tracé
@@ -447,5 +451,50 @@ describe("FAT CANON DERNIERS — R288 : barèmes de scoring gouvernés (BS-07..0
     expect(Array.isArray(maintenant)).toBe(true);
     expect(maintenant[0].structurePts.HOLDING).toBe(35);                     // aujourd'hui : v2
     console.log("BS-09 PASS — R127 : le barème d'époque restitué par le registre");
+  });
+});
+
+// ── Volet IAM du canon triage (ratifié : paramnav + iamguide ; ssoparam différé) ──
+
+describe("FAT CANON DERNIERS — IAM rendu : garde dernier ADMIN (IM-02) + guide lecture seule (IM-05)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const ADMIN = randomUUID();
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("IM-02 [backend] retirer le DERNIER ADMIN est refusé typé — rôle comme désactivation ; un second ADMIN lève la garde", async () => {
+    const a = (await request(http).post("/v1/admin/users").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ email: "a1@banque.ch", name: "Admin 1", role: "ADMIN", password: "S3cret!s3cret" })).body;
+    // Seul ADMIN actif du tenant : le rétrograder OU le désactiver verrouillerait la banque → refus TYPÉ
+    const r1 = await request(http).post(`/v1/admin/users/${a.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "CO" });
+    expect(r1.status).toBe(400);
+    expect(JSON.stringify(r1.body)).toContain("IAM_DERNIER_ADMIN");
+    const r2 = await request(http).post(`/v1/admin/users/${a.id}/active`).set(bearer(T, ADMIN, "ADMIN")).send({ active: false });
+    expect(r2.status).toBe(400);
+    expect(JSON.stringify(r2.body)).toContain("IAM_DERNIER_ADMIN");
+    // Un SECOND ADMIN actif lève la garde — la rétrogradation du premier passe
+    await request(http).post("/v1/admin/users").set(bearer(T, ADMIN, "ADMIN"))
+      .send({ email: "a2@banque.ch", name: "Admin 2", role: "ADMIN", password: "S3cret!s3cret" }).expect(201);
+    await request(http).post(`/v1/admin/users/${a.id}/role`).set(bearer(T, ADMIN, "ADMIN")).send({ role: "CO" }).expect(201);
+    console.log("IM-02 PASS — dernier ADMIN protégé (rôle + désactivation), garde levée par un second");
+  });
+
+  it("IM-05 [backend] le guide IAM est SERVI, lecture seule, daté — matrice effective + règles ratifiées ; ADMIN-only", async () => {
+    const g = (await request(http).get("/v1/admin/iam/guide").set(bearer(T, ADMIN, "ADMIN"))).body;
+    expect(g.genereAt).toBeTruthy();                                        // DATÉ — l'export reflète la matrice en vigueur
+    expect(JSON.stringify(g.regles)).toContain("R89");                      // les règles IAM ratifiées, rendues
+    expect(JSON.stringify(g.regles)).toContain("R13");
+    expect(g.matrice.SO).toContain("audit");                                // la matrice rôles×surfaces effective (R284 comprise)
+    expect(g.matrice.ADMIN).toBeTruthy();
+    expect(typeof g.utilisateurs.parRole).toBe("object");                   // l'état RÉEL du tenant (comptes, MFA)
+    await request(http).get("/v1/admin/iam/guide").set(bearer(T, randomUUID(), "RM")).expect(403);  // ADMIN-only
+    console.log("IM-05 PASS — guide daté, matrice servie, ADMIN-only");
   });
 });

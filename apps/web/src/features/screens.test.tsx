@@ -906,3 +906,38 @@ describe("FE-DC — R289 : Command Center, la projection Direction (DC-01..05)",
     (w as any).OLIVE_SESSION = undefined;
   });
 });
+
+describe("FE-IM — écrans IAM : paramnav (IM-02 rendu) + iamguide (IM-05)", () => {
+  it("IM-02 front : les garde-fous sont RENDUS, pas inventés — refus backend (dernier ADMIN, cumul SO/ADMIN) affichés tels quels", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/admin/users", () => HttpResponse.json([
+        { id: "u1", email: "a1@banque.ch", name: "Admin 1", role: "ADMIN", active: true, mfaEnabled: true }])),
+      http.post("*/v1/admin/users/u1/role", () => HttpResponse.json(
+        { message: "IAM_DERNIER_ADMIN : dernier ADMIN actif du tenant — nommer un second ADMIN avant de retirer celui-ci" }, { status: 400 })),
+    );
+    const { ParamNav } = await import("./iam/ParamNav");
+    render(<ParamNav/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText("a1@banque.ch")).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId("role-u1"), { target: { value: "CO" } });        // rétrograder le dernier ADMIN
+    expect(await screen.findByTestId("msg-paramnav")).toHaveTextContent(/IAM_DERNIER_ADMIN/); // le refus TEL QUEL
+  });
+
+  it("IM-05 front : iamguide est LECTURE SEULE — matrice effective datée, export = l'écran ; aucune écriture possible", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    // SEUL un handler GET existe : le moindre non-GET ferait échouer MSW (onUnhandledRequest:error)
+    server.use(http.get("*/v1/admin/iam/guide", () => HttpResponse.json({
+      genereAt: "2026-07-28T12:00:00Z", modeAuth: "JWT RS256",
+      regles: [{ code: "R89", texte: "Le rôle n'est pas falsifiable." }],
+      matrice: { SO: "surface d'audit (journaux, lecture seule)", ADMIN: "paramétrage — aucune donnée client" },
+      utilisateurs: { total: 4, parRole: { ADMIN: 1, SO: 1 }, mfaActifs: 3 } })));
+    const { IamGuide } = await import("./iam/IamGuide");
+    render(<IamGuide/>);
+    fireEvent.click(screen.getByRole("button", { name: "Charger" }));
+    expect(await screen.findByText(/R89/)).toBeInTheDocument();                          // les règles ratifiées, rendues
+    expect(screen.getByText(/surface d'audit/)).toBeInTheDocument();                     // la matrice effective (SO compris)
+    expect(screen.getByText(/2026-07-28/)).toBeInTheDocument();                          // DATÉ (IM-05)
+    expect(screen.getByRole("button", { name: /Exporter \(PDF\)/ })).toBeInTheDocument(); // l'export EST l'écran (pattern cpsiguide)
+  });
+});

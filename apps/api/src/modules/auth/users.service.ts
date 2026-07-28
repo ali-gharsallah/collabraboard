@@ -30,8 +30,19 @@ export class UsersService {
     return u;
   }
 
+  // ── IM-02 (canon triage écrans, ratifié 2026-07-28) : la banque ne se verrouille pas elle-même —
+  //    retirer le DERNIER ADMIN actif (rétrogradation OU désactivation) refuse typé. ──
+  private async garderDernierAdmin(tenantId: string, userId: string) {
+    const autres = await this.prisma.user.count({
+      where: { tenantId, role: "ADMIN" as any, active: true, id: { not: userId } } });
+    if (autres === 0) throw new BadRequestException(
+      "IAM_DERNIER_ADMIN : dernier ADMIN actif du tenant — nommer un second ADMIN avant de retirer celui-ci");
+  }
+
   async setActive(tenantId: string, userId: string, active: boolean): Promise<Safe> {
-    await this.mustGet(tenantId, userId);
+    const u = await this.mustGet(tenantId, userId);
+    if (!active && u.role === ("ADMIN" as any) && u.active)
+      await this.garderDernierAdmin(tenantId, userId);                       // IM-02
     return strip(await this.prisma.user.update({ where: { id: userId }, data: { active } }));
   }
 
@@ -50,6 +61,8 @@ export class UsersService {
         aggregateId: userId, payload: { de: u.role, vers: role, par: par ?? "system" },
         at: new Date().toISOString() } });
     }
+    if (u.role === ("ADMIN" as any) && role !== "ADMIN" && u.active)
+      await this.garderDernierAdmin(tenantId, userId);                       // IM-02 — APRÈS la règle de paire SO-05
     return strip(await this.prisma.user.update({ where: { id: userId }, data: { role: role as any } }));
   }
 
