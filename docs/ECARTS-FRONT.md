@@ -520,3 +520,11 @@ partie, pas avant.
   « versionnage kyc_access_rules » soldé, SD-04 levé (VD-01..04) · R283 → écart « sdar/sdgar
   reportés » soldé (RW-01..05, RW-05 en chaîne avec RV-07). Livrable : branche pilote unique
   PR #46 (arbitrage ratifié — « rester sur PR #46 » — en lieu des 4 PRs du canon).
+
+## RATIFICATION POST-LIVRAISON (2026-07-28, Ali) — canon écarts anciens
+
+- Livraison des 4 parties RATIFIÉE. Dépendance partie 4 → R276 : lecture « satisfaite en
+  substance sur la branche unique #46 » ratifiée (chaîne prouvée par RW-02, CoC OUVERT).
+- Mapping R280 : visa humain d'Ali CONFIRMÉ — consigné au canon comme décision non
+  délégable ; toute évolution future du mapping moteur↔produit remonte pour visa
+  (voir spec/canon-ecarts-anciens.md, « Ratification post-livraison »).

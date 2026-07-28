@@ -50,6 +50,21 @@ invariant conservé : aucune écriture riskcases via la porte).**
   2×) : la dépendance de la partie 4 est satisfaite EN SUBSTANCE. « Livrable : 4 PRs »
   → même arbitrage : branche unique #46, sauf contre-ordre explicite.
 
+## RATIFICATION POST-LIVRAISON (2026-07-28, Ali — après livraison des 4 parties)
+
+- **Dépendance partie 4 → R276 : lecture « satisfaite en substance » RATIFIÉE.** Le canon
+  exigeait « PR CoC R276 mergée sinon STOP » ; R276-R278 vivent sur la branche unique #46
+  (arbitrage branche unique) et la chaîne réelle est PROUVÉE par RW-02 : « Signaler un
+  changement » ouvre un CoC OUVERT (CC-01) qui suit son cycle. Aucun STOP requis.
+- **Mapping R280 : VISA HUMAIN d'Ali — consigné comme LA décision non délégable.** Les deux
+  transitions non bijectives (resserrement CLARIFICATION→CLOTUREE côté produit ; extension
+  ESCALADEE→CLOTUREE hors modèle de référence) ont été ratifiées par Ali en séance
+  (AskUserQuestion « Ratifier les 2 », 2026-07-28) et le visa est CONFIRMÉ ce jour. Point
+  d'attention permanent : toute évolution future de ce mapping (nouvel état, nouvelle
+  transition, divergence moteur↔produit) REMONTE pour visa humain — Claude Code ne tranche
+  jamais seul une réconciliation de machines à états ; il dresse le mapping, STOP, et
+  attend la ratification (précédent : ce document, section 0c).
+
 ---
 
 # TEXTE DU CANON (tel que proposé — les numéros de scénarios porte se lisent PC-16..19,
