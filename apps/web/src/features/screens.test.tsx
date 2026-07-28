@@ -1070,3 +1070,19 @@ describe("FE-XB — R293-R295 : le country manual rendu, le check servi, rien de
     expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/R13 : le visa de dérogation exige un SECOND regard/);
   });
 });
+
+describe("FE-TXR — R298 : txrisk rend le flux servi, refus gracieux sans port, zéro calcul", () => {
+  it("le journal et les tendances sont SERVIS ; sans port → mention R167 rendue", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/txflux/etat", () => HttpResponse.json({ portConfigure: false, transactions: 0 })),
+      http.get("*/v1/txflux", () => HttpResponse.json([])),
+      http.get("*/v1/txrisk/tendances", () => HttpResponse.json({ asOf: "2026-07-28", parMois: {} })),
+      http.get("*/v1/events/stream", () => new HttpResponse("", { headers: { "Content-Type": "text/event-stream" } })));
+    const { TxRisk } = await import("./txrisk/TxRisk");
+    render(<TxRisk/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText(/Aucun port core banking configuré/)).toBeInTheDocument();  // refus gracieux RENDU
+    expect(screen.getByText(/rejouées du journal/)).toBeInTheDocument();
+  });
+});

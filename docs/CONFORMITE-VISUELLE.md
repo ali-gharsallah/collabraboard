@@ -43,6 +43,7 @@ Les cinq colonnes :
 | Olivia (+ Runs) | « Olivia (AI Core) » en maquette, onglets « Olivia » / « Olivia · Runs » — consigné (le suffixe maquette est marketing, le canon B.x ne nomme pas) | badge sourcé, proposer verrouillé sans source ✓ | ✓ | interrupteur v2 servi (SW-18) ✓ | runs/journal servis ✓ |
 | IAM (paramnav, iamguide, ssoparam) | « Utilisateurs & rôles » / « Guide IAM » / « SSO / Fédération » — la maquette dit « Administration » (groupe) : libellés React plus précis, consigné | liste + garde dernier ADMIN ✓ | ✓ | IM-01..05 : refus rendus tels quels ✓ | ✓ |
 | Audit & transport (+ Audit IT) | hors dictionnaire maquette (écran canon R284) ✓ | journaux + santé transport + rejeu ✓ | ✓ | SO/ADMIN/DIR selon route ✓ | SO-01..08 servis ✓ |
+| Transactions Risk Monitoring (txrisk) | « Transactions Risk Monitoring » = clé I18N ✓ | flux + live SSE + tendances + drill AML ✓ | ✓ | refus gracieux sans port (R167) rendu ✓ | journal/tendances servis, agrégats poussés AU moteur — zéro verdict front ✓ |
 
 ## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
 

@@ -9,6 +9,8 @@
  */
 import * as request from "supertest";
 import { randomUUID } from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 import { INestApplication } from "@nestjs/common";
 import { PrismaService } from "../../src/common/prisma.service";
 import { boot, bearer, seedTenantClient } from "./util";
@@ -75,5 +77,78 @@ describe("FAT DÉGEL V1 — R297 : journal canonique, idempotent, IMMUABLE (TF-0
     await expect(prisma.$executeRawUnsafe(
       `DELETE FROM transactions WHERE id = '${tx!.id}'`)).rejects.toThrow(/append-only/);
     console.log("TF-03 PASS — UPDATE/DELETE interdits par trigger");
+  });
+});
+
+// ── R298 [canon R295] : txrisk = SURFACE du moteur CPSI — jamais un second moteur (TF-04..06) ──
+
+describe("FAT DÉGEL V1 — R298 : la détection vit AU MOTEUR, txrisk alimente et projette (TF-04..06)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID(); const RM = randomUUID(), CO = randomUUID();
+  const clientC = randomUUID();
+
+  const maxSeq = async (): Promise<bigint> =>
+    BigInt(((await prisma.$queryRawUnsafe<any[]>(`SELECT COALESCE(MAX(id),0)::bigint m FROM domain_events`))[0].m));
+
+  beforeAll(async () => {
+    process.env.TXFLUX_FAKE_PORT = "1";
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    (app.get(OutboxWorker) as OutboxWorker).onModuleDestroy();
+    await seedTenantClient(prisma, T, clientC);
+    // Le compte de la fixture est rattaché au client (mapping R169, daté)
+    const t = await prisma.tenant.findFirst({ where: { id: T } });
+    await prisma.tenant.update({ where: { id: T }, data: { settings: { ...((t!.settings as any) ?? {}),
+      coreMapping: [{ compteCore: "CH93-0001", clientId: clientC, depuisLe: "2026-01-01T00:00:00.000Z" }] } } });
+  });
+  afterAll(async () => { delete process.env.TXFLUX_FAKE_PORT; await app.close(); });
+
+  it("TF-04 [R298] un scénario CPSI sur un attribut TRANSACTIONNEL détecte sur le flux réel — via LE moteur ; zéro logique de détection dans txrisk", async () => {
+    await request(http).post("/v1/txflux/importer").set(bearer(T, RM, "RM")).expect(201);
+    // txrisk ALIMENTE : attributs transactionnels calculés du journal, poussés AU moteur (rien décidé ici)
+    const al = await request(http).post("/v1/txrisk/alimenter").set(bearer(T, CO, "CO"));
+    expect(al.status).toBe(201);
+    expect(al.body.clients).toBeGreaterThanOrEqual(1);
+    expect(JSON.stringify(al.body)).not.toMatch(/alerte|verdict|hit/i);      // aucun verdict côté txrisk
+    // Le scénario vit AU CATALOGUE CPSI (voie normale R69/R70) — groupe + scénario sur rapidite_in_out
+    await request(http).post("/v1/cpsi/groups").set(bearer(T, CO, "CO"))
+      .send({ gid: "CH_TOUS", label: "Domiciliés CH", at: "2026-01-02T00:00:00.000Z",
+        predicat: { logique: "OU", conditions: [{ champ: "countryCode", op: "eq", val: "CH" }] } }).expect(201);
+    await request(http).post("/v1/cpsi/scenarios").set(bearer(T, CO, "CO"))
+      .send({ sid: "SC_VELOCITE_TX", label: "Vélocité in/out sur flux réel", champ: "rapidite_in_out",
+        groupesSeuils: { CH_TOUS: 50 }, sens: "gte" }).expect(201);
+    const ev = await request(http).get("/v1/cpsi/scenarios/SC_VELOCITE_TX/evaluate").set(bearer(T, CO, "CO"));
+    expect(ev.status).toBe(200);
+    expect(ev.body.hits.some((h: any) => h.client === clientC)).toBe(true);  // détecté PAR LE MOTEUR
+    // Revue d'architecture : le module txrisk ne compare RIEN — aucun seuil, aucune alerte
+    const src = fs.readFileSync(path.join(__dirname, "../../src/modules/txflux/txrisk.module.ts"), "utf8");
+    expect(src).not.toMatch(/seuil|alerte|>=|detect/i);
+    console.log("TF-04 PASS — détection au moteur CPSI, txrisk n'est qu'une surface");
+  });
+
+  it("TF-05 [R298/R287] l'écran txrisk en LIVE : les événements du flux descendent par SSE (AS-06 rejoué sur tx.flux.importee)", async () => {
+    const avant = await maxSeq();
+    // Un événement de flux arrive « pendant la coupure » (même patron qu'AS-06)
+    await prisma.domainEvent.create({ data: { tenantId: T, type: "tx.flux.importee",
+      aggregateId: randomUUID(), payload: { refExterne: "FIX-LIVE", source: "FAKE-CORE test" },
+      at: new Date().toISOString() } });
+    const r = await request(http).get("/v1/events/stream?attente=0")
+      .set(bearer(T, CO, "CO")).set("Last-Event-ID", String(avant));
+    expect(r.status).toBe(200);
+    const refs = [...r.text.matchAll(/^data: (.+)$/gm)].map((m) => JSON.parse(m[1]));
+    expect(refs.some((x: any) => x.type === "tx.flux.importee")).toBe(true); // le flux DESCEND
+    expect(r.text).not.toContain("FIX-LIVE");                                // référence seule, jamais le payload (R285)
+    console.log("TF-05 PASS — live SSE par références, AS-06 rejoué sur le flux");
+  });
+
+  it("TF-06 [R298/R48] les tendances = VOLUMÉTRIE PAR REJEU À DATE — la tendance d'hier se reconstruit du journal", async () => {
+    const hier = await request(http).get("/v1/txrisk/tendances?asOf=2026-07-21T23:59:59.000Z").set(bearer(T, CO, "CO"));
+    expect(hier.status).toBe(200);
+    const nHier = Object.values(hier.body.parMois as Record<string, any>).reduce((s: number, m: any) => s + m.n, 0);
+    const auj = await request(http).get("/v1/txrisk/tendances").set(bearer(T, CO, "CO"));
+    const nAuj = Object.values(auj.body.parMois as Record<string, any>).reduce((s: number, m: any) => s + m.n, 0);
+    expect(nHier).toBe(2);                                                   // au 21/07 : FIX-001 + FIX-002 seulement
+    expect(nAuj).toBe(3);                                                    // aujourd'hui : FIX-003 aussi
+    console.log("TF-06 PASS — tendances rejouées à date depuis le journal");
   });
 });
