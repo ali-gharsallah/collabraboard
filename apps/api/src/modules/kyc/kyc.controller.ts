@@ -34,7 +34,7 @@ export class KycController {
 
   // Rejeu KYC à date (Vague 1, esprit R127) — état reconstruit depuis le journal d'événements
   @Get(":code/access-matrix")
-  matrix(@Req() r: any, @Param("code") code: string) { return this.svc.accessMatrix(r.ctx, code); }        // P4/sdkyc (SD-01)
+  matrix(@Req() r: any, @Param("code") code: string, @Query("asOf") asOf?: string) { return this.svc.accessMatrix(r.ctx, code, asOf); } // SD-01 + VD-03 (matrice d'époque, R282)
   @Patch(":code/questions/:qcode/access")
   access(@Req() r: any, @Param("code") code: string, @Param("qcode") q: string, @Body() b: any) { return this.svc.modifierAccess(r.ctx, code, q, b ?? {}); } // SD-01/02
   @Get(":code/voir-comme/:role")

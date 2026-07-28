@@ -63,6 +63,22 @@ export class KycService {
     }
     const year = new Date().getFullYear();
 
+    // R282 : un dossier NAÎT sous la matrice COURANTE du tenant — le gabarit fournit le socle,
+    // les changements en vigueur (portée « matrice ») le surchargent à la création. La cellule la
+    // plus RÉCEMMENT effective fait foi (les changements de portée matrice s'appliquent partout ;
+    // un override de portée dossier postérieur peut primer — documenté).
+    const codesQuestions = SECTIONS_BY_WORKFLOW[risk.workflow].flatMap((sec) => sec.questions.map((q) => q.code));
+    const reglesCourantes = await this.prisma.kycAccessRule.findMany({
+      where: { effectiveTo: null, question: { code: { in: codesQuestions },
+        section: { kycFile: { tenantId: ctx.tenantId } } } },
+      include: { question: { select: { code: true } } }, orderBy: { effectiveFrom: "desc" } });
+    const matriceCourante = new Map<string, Map<string, string>>();
+    for (const r of reglesCourantes) {
+      const parRole = matriceCourante.get(r.question.code) ?? new Map<string, string>();
+      if (!parRole.has(r.role)) parRole.set(r.role, r.right);             // desc ⇒ premier vu = le plus récent
+      matriceCourante.set(r.question.code, parRole);
+    }
+
     return this.prisma.$transaction(async (tx) => {
       // Verrou consultatif : la séquence par (tenant, année, pays) est atomique
       // même avec N instances d'API — aucun code en double possible.
@@ -83,7 +99,8 @@ export class KycService {
           code: s.code, label: s.label, orderIndex: i,
           questions: { create: s.questions.map(q => ({
             code: q.code, label: q.label,
-            accessRules: { create: Object.entries(q.rights ?? {}).map(([role, right]) => ({
+            accessRules: { create: Object.entries({ ...(q.rights ?? {}),
+              ...Object.fromEntries(matriceCourante.get(q.code) ?? []) }).map(([role, right]) => ({
               role: role as any, right: right as any })) } })) } })) },
         visas: { create: VISAS_BY_WORKFLOW[risk.workflow].map(v => ({
           sectionCode: v.sectionCode, requiredRole: v.role })) },
@@ -117,6 +134,19 @@ export class KycService {
   }
 
   // ── Réponse : default-deny + change tracker HMAC chaîné ──
+  // ═══ R282 (canon écarts anciens, ratifié 2026-07-28) — la matrice est VERSIONNÉE à date.
+  // DEUX faces, DEUX points d'évaluation distincts :
+  //   • SÉCURITÉ (HIDDEN/VIEW/EDIT) : la matrice EN VIGUEUR au moment de l'accès — jamais
+  //     grandfathérée (un droit retiré vaut aussi pour les dossiers anciens) ;
+  //   • COMPLÉTUDE (REQUIRED) : la matrice en vigueur À LA CRÉATION du dossier (R29) —
+  //     résolue par dates, aucun champ version recopié sur le dossier (le rejeu R48 fait le reste).
+  private enVigueur<T extends { effectiveTo: Date | null }>(rules: T[]): T[] {
+    return rules.filter((r) => !r.effectiveTo);
+  }
+  private aDate<T extends { effectiveFrom: Date; effectiveTo: Date | null }>(rules: T[], at: Date): T[] {
+    return rules.filter((r) => r.effectiveFrom <= at && (!r.effectiveTo || r.effectiveTo > at));
+  }
+
   async answer(ctx: Ctx, code: string, qCode: string, answer: string) {
     const q = await this.prisma.kycQuestion.findFirst({
       where: { code: qCode, section: { kycFile: { code, tenantId: ctx.tenantId } } },
@@ -127,7 +157,7 @@ export class KycService {
     if (q.section.kycFile.status === "VALIDATED")
       throw new ConflictException("Dossier validé — créer une révision (Rn+1)");
 
-    const rule = q.accessRules.find(r => r.role === ctx.role);
+    const rule = this.enVigueur(q.accessRules).find(r => r.role === ctx.role);   // R282 : sécurité = matrice COURANTE
     if (!rule || (rule.right !== "EDIT" && rule.right !== "REQUIRED"))
       throw new ForbiddenException(`Rôle ${ctx.role} : pas de droit d'édition (default-deny)`);
 
@@ -213,6 +243,15 @@ export class KycService {
     const pending = kyc.visas.filter(v => v.status !== "SIGNED");
     if (pending.length) throw new BadRequestException(
       `Visas manquants : ${pending.map(v => v.sectionCode + "/" + v.requiredRole).join(", ")}`);
+    // R282/VD-02 : la COMPLÉTUDE suit la matrice de LA CRÉATION du dossier (R29, grandfathering) —
+    // une question REQUIRED (pour au moins un rôle, à cette date) doit porter une réponse.
+    const toutes = await this.prisma.kycQuestion.findMany({
+      where: { section: { kycFileId: kyc.id } }, include: { accessRules: true } });
+    const requisesManquantes = toutes
+      .filter((q) => this.aDate(q.accessRules, kyc.createdAt).some((r) => r.right === "REQUIRED") && !q.answer)
+      .map((q) => q.code);
+    if (requisesManquantes.length) throw new BadRequestException(
+      `R282 : contributions REQUISES manquantes (matrice à la création du dossier) : ${requisesManquantes.join(", ")}`);
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.kycFile.update({ where: { id: kyc.id },
@@ -268,17 +307,18 @@ export class KycService {
     // Projection par rôle : les questions HIDDEN n'atteignent JAMAIS le client.
     return { ...kyc, sections: kyc.sections.map(s => ({ ...s,
       questions: s.questions
-        .filter(q => q.accessRules.some(r => r.role === ctx.role && r.right !== "HIDDEN"))
+        .filter(q => this.enVigueur(q.accessRules).some(r => r.role === ctx.role && r.right !== "HIDDEN"))  // R282 : jamais grandfathérée
         .map(({ accessRules, ...q }) => ({ ...q,
-          right: accessRules.find(r => r.role === ctx.role)?.right ?? "VIEW" })) })) };
+          right: this.enVigueur(accessRules).find(r => r.role === ctx.role)?.right ?? "VIEW" })) })) };
   }
 
   // ════════ P4 vague pilote (arbitrage : « sdkyc rendu sur le modèle ACTUEL, SD-04 suspendu ») ════
-  // La matrice sections × rôles est DÉRIVÉE des KycAccessRule par question — aucune table neuve,
-  // aucun versionnage à date (écart SD-04 consigné). L'édition passe les GARDE-FOUS backend (SD-02) ;
-  // chaque modification est un événement (change tracker — le journal fait trace, pas une colonne).
+  // La matrice sections × rôles est DÉRIVÉE des KycAccessRule par question — aucune table neuve.
+  // SD-04 LEVÉ par R282 (2026-07-28) : versionnage à date effective_from/effective_to, versions
+  // closes immuables (trigger SQL), lecture d'époque via ?asOf=. L'édition passe les GARDE-FOUS
+  // backend (SD-02) ; chaque modification est un événement daté (change tracker).
 
-  async accessMatrix(ctx: Ctx, code: string) {
+  async accessMatrix(ctx: Ctx, code: string, asOf?: string) {
     if (!["CO_SR", "ADMIN"].includes(ctx.role))
       throw new ForbiddenException("La matrice de droits se consulte en CO_SR/ADMIN");
     const kyc = await this.prisma.kycFile.findFirst({ where: { code, tenantId: ctx.tenantId },
@@ -291,13 +331,15 @@ export class KycService {
       visas: kyc.visas.filter((v) => v.sectionCode === sec.code).map((v) => v.requiredRole),
       questions: sec.questions.map((q) => ({ code: q.code, label: q.label,
         droits: Object.fromEntries(roles.map((r) => {
-          const rule = q.accessRules.find((ar) => ar.role === (r as any));
+          // VD-03 : « quelle était la matrice du 15.03 ? » — résolution par dates d'effet (R48)
+          const jeu = asOf ? this.aDate(q.accessRules, new Date(asOf)) : this.enVigueur(q.accessRules);
+          const rule = jeu.find((ar) => ar.role === (r as any));
           return [r, rule?.right ?? "HIDDEN"];                              // default-deny : absent = HIDDEN
         })) })) })) };
   }
 
   // SD-01/02 : éditer UNE cellule — garde-fous BACKEND (refus typé), événement au change tracker.
-  async modifierAccess(ctx: Ctx, code: string, qCode: string, dto: { role?: string; right?: string }) {
+  async modifierAccess(ctx: Ctx, code: string, qCode: string, dto: { role?: string; right?: string; portee?: string }) {
     if (!["CO_SR", "ADMIN"].includes(ctx.role))
       throw new ForbiddenException("La matrice de droits s'édite en CO_SR/ADMIN");
     if (!dto?.role || !dto?.right || !["HIDDEN", "VIEW", "EDIT", "REQUIRED"].includes(dto.right))
@@ -307,12 +349,13 @@ export class KycService {
       include: { accessRules: true, section: { include: { kycFile: { include: { visas: true } },
         questions: { include: { accessRules: true } } } } } });
     if (!q) throw new NotFoundException("Question introuvable");
-    const ancienne = q.accessRules.find((r) => r.role === (dto.role as any))?.right ?? "HIDDEN";
+    const reglesVigueur = this.enVigueur(q.accessRules);
+    const ancienne = reglesVigueur.find((r) => r.role === (dto.role as any))?.right ?? "HIDDEN";
     // Garde-fou SD-02a : une question doit garder AU MOINS un rôle éditeur (EDIT/REQUIRED)
-    const editeursApres = q.accessRules.filter((r) =>
+    const editeursApres = reglesVigueur.filter((r) =>
       (r.role === (dto.role as any) ? dto.right : r.right) === "EDIT"
       || (r.role === (dto.role as any) ? dto.right : r.right) === "REQUIRED").length
-      + (q.accessRules.some((r) => r.role === (dto.role as any)) ? 0
+      + (reglesVigueur.some((r) => r.role === (dto.role as any)) ? 0
         : (["EDIT", "REQUIRED"].includes(dto.right) ? 1 : 0));
     if (editeursApres === 0)
       throw new BadRequestException("SD-02 : refus — la question n'aurait plus AUCUN rôle éditeur (section sans EDIT)");
@@ -320,21 +363,34 @@ export class KycService {
     const visasSection = q.section.kycFile.visas.filter((v) => v.sectionCode === q.section.code).map((v) => v.requiredRole);
     if (dto.right === "HIDDEN" && visasSection.includes(dto.role as any)) {
       const resteVisible = q.section.questions.some((autre) => autre.id !== q.id
-        && autre.accessRules.some((r) => r.role === (dto.role as any) && r.right !== "HIDDEN"));
+        && this.enVigueur(autre.accessRules).some((r) => r.role === (dto.role as any) && r.right !== "HIDDEN"));
       if (!resteVisible)
         throw new BadRequestException(`SD-02 : refus — le rôle ${dto.role} porte un VISA de la section et n'y verrait plus rien`);
     }
+    // R282 : la portée « matrice » applique le changement à TOUS les dossiers du tenant (la
+    // sécurité ne se grandfathère pas — VD-01) ; « dossier » (défaut) reste l'acte SD-02.
+    const portee = dto.portee === "matrice" ? "matrice" : "dossier";
+    const cibles = portee === "matrice"
+      ? await this.prisma.kycQuestion.findMany({
+          where: { code: qCode, section: { kycFile: { tenantId: ctx.tenantId } } }, select: { id: true } })
+      : [{ id: q.id }];
+    const dateEffet = new Date();
     await this.prisma.$transaction(async (tx) => {
-      await tx.kycAccessRule.upsert({
-        where: { questionId_role: { questionId: q.id, role: dto.role as any } },
-        create: { questionId: q.id, role: dto.role as any, right: dto.right as any },
-        update: { right: dto.right as any } });
+      for (const cible of cibles) {
+        // R282 : modifier = CLORE la version courante (elle devient immuable) + INSÉRER la nouvelle.
+        await tx.kycAccessRule.updateMany({
+          where: { questionId: cible.id, role: dto.role as any, effectiveTo: null },
+          data: { effectiveTo: dateEffet } });
+        await tx.kycAccessRule.create({ data: { questionId: cible.id, role: dto.role as any,
+          right: dto.right as any, effectiveFrom: dateEffet } });
+      }
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "kyc.access.modifie",
         aggregateId: q.section.kycFile.id,
-        payload: { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId } as any } });
-      await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ACCESS_MODIFIE", `${code}/${qCode}:${dto.role}=${dto.right}`);
+        payload: { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId,
+          dateEffet: dateEffet.toISOString(), portee, dossiersTouches: cibles.length } as any } });
+      await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ACCESS_MODIFIE", `${code}/${qCode}:${dto.role}=${dto.right}:${portee}`);
     });
-    return { question: qCode, role: dto.role, ancienne, nouvelle: dto.right };
+    return { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, portee, dateEffet: dateEffet.toISOString() };
   }
 
   // SD-03 : « Voir comme » — la projection est SERVIE avec le rôle simulé (jamais un masquage front).

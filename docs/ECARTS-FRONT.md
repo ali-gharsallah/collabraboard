@@ -475,3 +475,16 @@ partie, pas avant.
   zéro écriture riskcases via la porte) ; PC-01..03 re-passent en 1.1. Front : onglet
   Reporting du workspace rend la chaîne (AW-04 re-passé via PC-16). L'écart « porte de
   lecture riskcases / délai hit→MROS » est SOLDÉ.
+
+## SOLDE — SD-04 / VERSIONNAGE kyc_access_rules (2026-07-28, partie 3 du canon écarts anciens LIVRÉE)
+
+- **R282 LIVRÉ (VD-01..04 verts) — SD-04 LEVÉ** : `kyc_access_rules` versionnée à date
+  (effective_from/effective_to, index partiel « une version en vigueur par question×rôle »,
+  versions closes IMMUABLES par trigger SQL). Double règle de lecture : SÉCURITÉ = matrice
+  COURANTE (jamais grandfathérée — HIDDEN immédiat sur tous les dossiers, portée « matrice »
+  livrée sur PATCH access) ; COMPLÉTUDE = matrice À LA CRÉATION du dossier (R29 — REQUIRED
+  ajouté n'atteint que les dossiers nés après sa date d'effet ; le refus de validation LISTE
+  les contributions manquantes). Un dossier NAÎT sous la matrice courante (héritage à la
+  création : gabarit ⊕ règles en vigueur, la plus récente fait foi). Lecture d'époque
+  `?asOf=` (VD-03) ; événement kyc.access.modifie ÉTENDU (dateEffet, portée, dossiersTouches
+  — VD-04, change tracker SD-01). Résolution PAR DATES, aucun champ version sur les dossiers.

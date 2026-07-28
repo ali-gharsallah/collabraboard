@@ -206,3 +206,109 @@ describe("FAT CANON ANCIENS — Partie 2 : R281 contrat 1.1 + chaîne hit→MROS
     console.log("PC-19 PASS — dépassements notifiés (idempotent), absence visible, zéro coercition");
   });
 });
+
+// ── Partie 3 : R282 — l'ACCÈS suit la matrice COURANTE, la COMPLÉTUDE celle du dossier (VD-01..04) ──
+
+describe("FAT CANON ANCIENS — Partie 3 : R282 matrice de droits versionnée (VD-01..04, lève SD-04)", () => {
+  let app: INestApplication; let prisma: PrismaService; let http: any;
+  const T = randomUUID();
+  const RM = randomUUID(), COSR = randomUUID(), ADMIN = randomUUID(), COC = randomUUID(); // COC : contributeur CO ≠ validateur (R52)
+
+  const creerKyc = async (clientId: string) =>
+    (await request(http).post("/v1/kyc").set(bearer(T, RM, "RM"))
+      .send({ clientId, legalStructure: "HOLDING", accountType: "ADVISORY", countryCode: "CH", rmId: RM })).body;  // 20+5 = 25 → CDD (section AML présente)
+  // Répond TOUT sauf `sauf`, signe les visas — la validation reste à l'appelant.
+  const preparer = async (kyc: any, sauf: string[] = []) => {
+    for (const s of kyc.sections)
+      for (const q of s.questions) {
+        if (sauf.includes(q.code)) continue;
+        const role = ["IDE-Q3", "UBO-Q2", "SOF-Q2", "AML-Q1"].includes(q.code) ? "CO" : "RM";
+        await request(http).patch(`/v1/kyc/${kyc.code}/questions/${q.code}`).set(bearer(T, role === "CO" ? COC : RM, role))
+          .send({ answer: "renseigné" });
+      }
+    for (const v of kyc.visas)
+      await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({});
+  };
+
+  beforeAll(async () => {
+    ({ app, prisma } = await boot());
+    http = app.getHttpServer();
+    await seedTenantClient(prisma, T, randomUUID());
+  });
+  afterAll(async () => { await app.close(); });
+
+  it("VD-01 [R282] la SÉCURITÉ est immédiate : AML×RM → HIDDEN à portée MATRICE — le RM perd la section sur TOUS les dossiers, y compris anciens (SD-03 re-vérifié)", async () => {
+    const c1 = randomUUID(), c2 = randomUUID();
+    await seedTenantClient(prisma, T, c1); await seedTenantClient(prisma, T, c2);
+    const ancien = await creerKyc(c1);                                     // créé AVANT le changement
+    const recent = await creerKyc(c2);
+    const avant = (await request(http).get(`/v1/kyc/${ancien.code}`).set(bearer(T, RM, "RM"))).body;
+    expect(avant.sections.find((s: any) => s.code === "AML").questions.length).toBeGreaterThan(0);
+    // Changement à portée MATRICE (R282) — un seul acte, TOUS les dossiers
+    const chg = await request(http).patch(`/v1/kyc/${recent.code}/questions/AML-Q1/access`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ role: "RM", right: "HIDDEN", portee: "matrice" });
+    expect(chg.status).toBe(200);
+    for (const k of [ancien, recent]) {                                    // la sécurité ne se grandfathère PAS
+      const vue = (await request(http).get(`/v1/kyc/${k.code}`).set(bearer(T, RM, "RM"))).body;
+      expect(vue.sections.find((s: any) => s.code === "AML").questions.length).toBe(0);  // plus RIEN de servi (SD-03)
+    }
+    const coVue = (await request(http).get(`/v1/kyc/${ancien.code}`).set(bearer(T, COSR, "CO_SR"))).body;
+    expect(coVue.sections.find((s: any) => s.code === "AML").questions.length).toBeGreaterThan(0); // CO intact
+    console.log("VD-01 PASS — HIDDEN immédiat à portée matrice, dossiers anciens compris, projection serveur");
+  });
+
+  it("VD-02 [R282/R29] la COMPLÉTUDE est grandfathérée : REQUIRED ajouté à effet J — J-10 se valide sans, J+1 l'exige (refus LISTÉ)", async () => {
+    const c1 = randomUUID(), c2 = randomUUID();
+    await seedTenantClient(prisma, T, c1); await seedTenantClient(prisma, T, c2);
+    const avant = await creerKyc(c1);                                      // dossier créé AVANT l'effet
+    await new Promise((r) => setTimeout(r, 25));
+    await request(http).patch(`/v1/kyc/${avant.code}/questions/IDE-Q2/access`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ role: "RM", right: "REQUIRED", portee: "matrice" }).expect(200);
+    await new Promise((r) => setTimeout(r, 25));
+    const apres = await creerKyc(c2);                                      // dossier créé APRÈS l'effet
+    // Les deux dossiers laissent IDE-Q2 SANS réponse
+    await preparer(avant, ["IDE-Q2"]);
+    await preparer(apres, ["IDE-Q2"]);
+    // J-10 : la matrice de SA création ne portait pas ce REQUIRED → se valide (R29)
+    await request(http).post(`/v1/kyc/${avant.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    // J+1 : l'exige — le refus LISTE la contribution manquante
+    const refus = await request(http).post(`/v1/kyc/${apres.code}/validate`).set(bearer(T, COSR, "CO_SR"));
+    expect(refus.status).toBe(400);
+    expect(JSON.stringify(refus.body)).toContain("IDE-Q2");
+    console.log("VD-02 PASS — grandfathering R29 : l'ancien se valide, le nouveau exige (listé)");
+  });
+
+  it("VD-03 [R282/R48] l'HISTORIQUE se rejoue par dates d'effet ; une version close est IMMUABLE (trigger SQL)", async () => {
+    const c = randomUUID();
+    await seedTenantClient(prisma, T, c);
+    const kyc = await creerKyc(c);
+    const t0 = new Date().toISOString();
+    await new Promise((r) => setTimeout(r, 25));
+    await request(http).patch(`/v1/kyc/${kyc.code}/questions/SOF-Q1/access`).set(bearer(T, ADMIN, "ADMIN"))
+      .send({ role: "RM", right: "VIEW" }).expect(200);                    // portée dossier (défaut SD-02 inchangé)
+    // « Quelle était la matrice du t0 ? » — résolution par dates, restitution EXACTE
+    const historique = (await request(http).get(`/v1/kyc/${kyc.code}/access-matrix?asOf=${encodeURIComponent(t0)}`).set(bearer(T, ADMIN, "ADMIN"))).body;
+    const courante = (await request(http).get(`/v1/kyc/${kyc.code}/access-matrix`).set(bearer(T, ADMIN, "ADMIN"))).body;
+    const cell = (m: any) => JSON.stringify(m);
+    expect(cell(historique)).toContain("EDIT");                            // l'époque : RM éditait SOF-Q1
+    expect(cell(historique)).not.toBe(cell(courante));                     // la courante a bougé
+    // La version CLOSE ne se réécrit pas — trigger SQL
+    const close = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT id FROM kyc_access_rules WHERE effective_to IS NOT NULL LIMIT 1`);
+    await expect(prisma.$executeRawUnsafe(
+      `UPDATE kyc_access_rules SET "right" = 'EDIT' WHERE id = '${close[0].id}'`)).rejects.toThrow();
+    console.log("VD-03 PASS — matrice d'époque restituée, versions closes immuables");
+  });
+
+  it("VD-04 [R282] le changement est un ÉVÉNEMENT visé : auteur, avant/après, date d'effet — servi au change tracker (SD-01 étendu)", async () => {
+    const evts = await prisma.domainEvent.findMany({ where: { tenantId: T, type: "kyc.access.modifie" } });
+    expect(evts.length).toBeGreaterThanOrEqual(3);
+    const e: any = evts[evts.length - 1].payload;
+    expect(e.par).toBeTruthy();                                            // auteur (jeton)
+    expect(e.ancienne).toBeTruthy();
+    expect(e.nouvelle).toBeTruthy();                                       // avant/après
+    expect(e.dateEffet).toBeTruthy();                                      // date d'effet (R282)
+    expect(e.portee).toBeTruthy();                                         // dossier | matrice
+    console.log("VD-04 PASS — événement complet (auteur, avant/après, date d'effet, portée)");
+  });
+});

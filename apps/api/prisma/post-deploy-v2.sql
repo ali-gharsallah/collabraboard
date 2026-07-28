@@ -198,6 +198,23 @@ DO $$ BEGIN
     ALTER TABLE olivia_agents ADD CONSTRAINT agent_statut_contrat
       CHECK (statut IN ('ACTIF','RETIRE'));
   END IF;
+  -- R282 (écarts anciens) : versions de la matrice de droits — la ligne CLOSE est immuable,
+  -- et une seule version EN VIGUEUR par (question, rôle).
+  IF to_regclass('kyc_access_rules') IS NOT NULL THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS kyc_access_rule_en_vigueur
+      ON kyc_access_rules (question_id, role) WHERE effective_to IS NULL;
+    CREATE OR REPLACE FUNCTION kar_version_close_immuable() RETURNS trigger AS $kar$
+    BEGIN
+      IF OLD.effective_to IS NOT NULL THEN
+        RAISE EXCEPTION 'R282 : version close de la matrice — immuable (append-only des versions)';
+      END IF;
+      RETURN NEW;
+    END $kar$ LANGUAGE plpgsql;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'kar_version_immuable') THEN
+      CREATE TRIGGER kar_version_immuable BEFORE UPDATE ON kyc_access_rules
+        FOR EACH ROW EXECUTE FUNCTION kar_version_close_immuable();
+    END IF;
+  END IF;
   -- R260 (Olivia v2) : la machine à états du run — au niveau SQL aussi (B.2).
   IF to_regclass('olivia_runs') IS NOT NULL
      AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'run_statut_machine') THEN

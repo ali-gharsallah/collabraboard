@@ -135,12 +135,17 @@ model KycQuestion {
 }
 
 model KycAccessRule {
-  id         String      @id @default(uuid()) @db.Uuid
-  questionId String      @map("question_id") @db.Uuid
-  question   KycQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  role       Role
-  right      AccessRight
-  @@unique([questionId, role])
+  id            String      @id @default(uuid()) @db.Uuid
+  questionId    String      @map("question_id") @db.Uuid
+  question      KycQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  role          Role
+  right         AccessRight
+  // R282 (canon écarts anciens, 2026-07-28) : la matrice est VERSIONNÉE à date — modifier =
+  // clore la ligne courante + insérer la nouvelle ; les versions closes sont immuables (trigger).
+  // Unicité « en vigueur » = index partiel SQL (question_id, role) WHERE effective_to IS NULL.
+  effectiveFrom DateTime    @default(now()) @map("effective_from")
+  effectiveTo   DateTime?   @map("effective_to")
+  @@index([questionId, role])
   @@map("kyc_access_rules")
 }
 
