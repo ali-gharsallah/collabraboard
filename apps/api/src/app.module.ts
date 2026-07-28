@@ -19,6 +19,7 @@ import { RegwatchModule } from "./modules/regwatch/regwatch.module"; // R309-R31
 import { LegalModule } from "./modules/legal/legal.module"; // R312-R313 : legal (dégel V5)
 import { BiModule } from "./modules/bi/bi.module"; // R314-R315 : BI libre (dégel V6)
 import { MobileModule } from "./modules/mobile/mobile.module"; // R316-R318 : mobile banking (dégel V7)
+import { OpRiskModule } from "./modules/oprisk/oprisk.module"; // R321-R323 : Octopulse OpRisk (dégel V9)
 import { OnboardingModule } from "./modules/onboarding/onboarding.module";
 import { PreRevueModule } from "./modules/ia/prerevue.module";
 import { GedModule } from "./modules/ged/ged.module";
@@ -50,7 +51,7 @@ import { CocModule } from "./modules/coc/coc.module";
 import { SandboxModule } from "./modules/sandbox/sandbox.module";
 import { SwarmModule } from "./modules/swarm/swarm.module";
 
-@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
+@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
 }

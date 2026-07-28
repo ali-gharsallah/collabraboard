@@ -211,6 +211,13 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Dégel vague 9 — Octopulse OpRisk R321-R323 (ratifié 2026-07-28). ──
+  { cle: "oprisk_taxonomie", type: "json", regle: "R321", requis: false,
+    defaut: ["FRAUDE_INTERNE", "FRAUDE_EXTERNE", "PRATIQUES_EMPLOI", "CLIENTS_PRODUITS_PRATIQUES",
+      "DOMMAGES_ACTIFS", "INTERRUPTION_SYSTEMES", "EXECUTION_PROCESSUS"],
+    description: "Taxonomie Bâle des incidents opérationnels (paramètre TENANT — défaut : les 7 catégories de niveau 1). La classification est OBLIGATOIRE à la déclaration ; hors taxonomie = refus typé (default-deny). La heatmap R322 se calcule PAR catégorie de cette liste." },
+  { cle: "oprisk_escalade_jours", type: "int", defaut: 7, regle: "R323", requis: false,
+    description: "Jours de retard d'une action du plan au-delà desquels la notification owner (R274) s'ESCALADE à DIR. Le retard est un fait calculé — mesuré, notifié, jamais bloquant (R39)." },
   // ── Dégel vague 7 — Mobile Banking R316-R318 (GO Ali 2026-07-28). ──
   { cle: "mobile_actif", type: "bool", defaut: false, regle: "R316", requis: false,
     description: "Le canal mobile du tenant. OFF par défaut : TOUTE la surface mobile répond 404 (existence cachée — jamais un 403). L'activation d'un client reste un acte du RM + code hors bande, tracé (MB-02)." },

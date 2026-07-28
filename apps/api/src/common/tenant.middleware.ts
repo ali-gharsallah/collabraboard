@@ -21,7 +21,8 @@ const SO_GET = [
   /^\/v1\/tasks(\/|$)/,                      // T3 : ses tâches (accueil SO = T3 + T9, HO-06)
 ];
 const SO_TRAIL = [/\/a-date/, /\/replay/, /\/access-matrix/];   // le trail : rejeu à date, tous modules (R48/R49)
-const SO_POST = [/^\/v1\/olivia\/runs\/[^/]+\/stop$/, /^\/v1\/audit\/export$/]; // les DEUX exceptions fermées
+const SO_POST = [/^\/v1\/olivia\/runs\/[^/]+\/stop$/, /^\/v1\/audit\/export$/,
+  /^\/v1\/oprisk\/incidents$/];   // R321/OP-04 (dégel V9, canon) : un constat SO-07 OUVRE un incident OpRisk référencé — TROISIÈME exception, fermée à cette route
 const SO_SENSIBLE = [/^\/v1\/offboarding\//, /^\/v1\/olivia\/conversations/, /\/replay/]; // l'auditeur est audité (SO-04)
 
 /**
