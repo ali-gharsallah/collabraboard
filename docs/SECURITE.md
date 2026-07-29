@@ -49,6 +49,18 @@ profondeur. Mesuré le **2026-07-29** sur corpus versionné :
 - **RLS en SQL direct** : recette CI 4b (olive_app, 0 ligne sans GUC) — pas seulement via l'API.
 - **En-têtes** : SEC-01 (200 ET 401).
 
+## Avis d'audit ignorés (justifiés, revus)
+
+La porte CI `pnpm audit --audit-level critical` reste **bloquante sur tous les criticals**. Un
+seul avis est explicitement ignoré (`pnpm.auditConfig.ignoreGhsas`, package.json racine), avec
+justification :
+
+- **GHSA-5xrq-8626-4rwp** — *Vitest UI server: arbitrary file read/execute* (`vitest <3.2.6`).
+  **Non exploitable ici** : le serveur UI de Vitest (`vitest --ui`) n'est JAMAIS lancé (CI =
+  `vitest run` sans UI) ; `vitest` est une **devDependency**, jamais livrée en prod. Levée à la
+  source = upgrade majeur 2→3 (risque sur la suite front juste avant le pilote) : différée, non
+  bloquante pour le pilote. À reconsidérer au prochain lot de mise à jour des dépendances front.
+
 ## Procédure secrets (§3.7)
 Coffre SOPS+age (premier temps) puis Vault : AUDIT_HMAC_SECRET, MFA_ENC_KEY, OIDC
 client_secret, clés de licence (R320), clés API Exoscale par environnement. Le grep CI
