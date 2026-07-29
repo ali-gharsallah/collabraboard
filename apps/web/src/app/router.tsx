@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense } from "react";
+import { traduire, langue, setLangue, LANGUES, Langue } from "../lib/i18n";
 
 // A6 (audit-architecture, PR #45 mergée) : code-splitting par écran — React.lazy + un
 // <Suspense> unique ; patron conservé à l'IDENTIQUE lors de la réconciliation avec la
@@ -81,12 +82,23 @@ const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ def
 export function Router() {
   const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
+  const [lang, setLang] = useState<Langue>(langue());
+  // i18n §10 (ratifié) : le libellé FR EST la clé du dictionnaire maquette — la traduction
+  // s'applique en UN point ; une clé absente reste rendue en FR (écart par clé, lib/i18n).
+  const t = traduire(lang);
   const tab = (id: typeof screen, label: string) =>
     <button onClick={() => setScreen(id)} style={{ padding: "8px 16px", border: "none",
       borderRadius: 8, cursor: "pointer", fontWeight: screen === id ? 700 : 400,
       background: screen === id ? "#4A6B28" : "#eee", color: screen === id ? "#fff" : "#333" }}>
-      {label}</button>;
+      {t(label)}</button>;
   return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", marginBottom: 6 }}>
+      {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`}
+        onClick={() => { setLangue(l); setLang(l); }}
+        style={{ fontSize: 11, padding: "2px 8px", border: "none", borderRadius: 6, cursor: "pointer",
+          fontWeight: lang === l ? 700 : 400, background: lang === l ? "#4A6B28" : "#eee",
+          color: lang === l ? "#fff" : "#333" }}>{l}</button>)}
+    </div>
     <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
       {tab("home", "Accueil")}{tab("command", "Command Center")}{tab("compliance", "Compliance Center")}{tab("dashboard", "Dashboard central")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("prospection", "Pré-prospection")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("txrisk", "Transactions Risk Monitoring")}{tab("fx", "Multi-devise & FX")}{tab("swiftlab", "Analyseur SWIFT/SEPA")}{tab("custodyta", "Custody & TA")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("builder", "Workflow Builder")}{tab("corroboration", "Corroboration KYC")}{tab("parametrage", "Paramétrage")}{tab("golive", "Config & Go-live")}{tab("pms", "PMS")}{tab("amlref", "Référentiel AML")}{tab("sbaml", "Bac à sable AML")}{tab("sbonb", "Bac à sable Onboarding")}{tab("ports", "Ports")}{tab("integrations", "Intégrations")}{tab("nba", "Prochaines actions")}{tab("wfi", "Workflow Instances")}{tab("tasks", "Tâches")}{tab("formations", "Formations")}{tab("veille", "Veille réglementaire")}{tab("legalreg", "Legal — Contrats")}{tab("bi", "BI — Reporting sur mesure")}{tab("mobileadmin", "Mobile Banking")}{tab("oprisk", "Octopulse OpRisk")}{tab("trips", "Business Trip")}{tab("crossborder", "Cross-Border")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}{tab("cpsiProfil", "CPSI · Profil")}{tab("cpsiSeg", "CPSI · Segmentation")}{tab("cpsiCases", "CPSI · Risk cases")}{tab("cpsiParam", "CPSI · Barèmes")}{tab("cpsiGuide", "CPSI · Guide")}{tab("offboarding", "Offboarding")}{tab("olivia", "Olivia")}{tab("oliviaruns", "Olivia · Runs")}{tab("amlws", "AML Investigation")}{tab("sdkyc", "Sections & droits")}{tab("sdar", "Profils AR")}{tab("sdgar", "Profils GAR")}{tab("paramfields", "Registre paramètres")}{tab("cocparam", "Types de CoC")}{tab("sandboxes", "Bacs à sable")}{tab("audit", "Audit & transport")}{tab("auditit", "Audit IT")}{tab("paramnav", "Utilisateurs & rôles")}{tab("iamguide", "Guide IAM")}{tab("ssoparam", "SSO / Fédération")}
     </div>

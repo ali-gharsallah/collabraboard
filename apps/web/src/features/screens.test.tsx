@@ -1283,3 +1283,26 @@ describe("FE-OP — R321/R322 : incidents servis, heatmap RENDUE (jamais peinte)
     expect(await screen.findByText(/R321 : classification OBLIGATOIRE/)).toBeInTheDocument();  // FE-04
   });
 });
+
+describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart par clé, bascule sans réécriture", () => {
+  it("traduire() : clé du dictionnaire → traduction ; clé absente → FR tel quel (jamais un trou)", async () => {
+    const { traduire } = await import("../lib/i18n");
+    expect(traduire("EN")("Accueil")).toBe("Home");
+    expect(traduire("DE")("Veille réglementaire")).toBe("Regulatorische Beobachtung");
+    expect(traduire("IT")("Legal — Contrats")).toBe("Legal — Contratti");
+    expect(traduire("FR")("Accueil")).toBe("Accueil");
+    expect(traduire("EN")("CPSI · Barèmes")).toBe("CPSI · Barèmes");        // écart par clé — le FR reste
+  });
+
+  it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
+    window.localStorage.removeItem("OLIVE_LANG");
+    const { Router } = await import("../app/router");
+    render(<Router/>);
+    expect((await screen.findAllByRole("button", { name: "Accueil" })).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "langue EN" }));
+    expect((await screen.findAllByRole("button", { name: "Home" })).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Accueil" })).toBeNull();
+    expect(window.localStorage.getItem("OLIVE_LANG")).toBe("EN");           // le choix persiste
+    window.localStorage.removeItem("OLIVE_LANG");
+  });
+});

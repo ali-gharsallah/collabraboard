@@ -980,3 +980,20 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
 - **Écart consigné** : le diff moteur est MINIMAL (un drapeau + un court-circuit de
   `_recalculer`) — aucune règle, aucun barème, aucun arrondi touché ; le mode lourd reste
   le défaut et la seule voie des tests de caractérisation du moteur.
+
+## SOLDE — DETTE PRODUIT §10 : I18N 4 LANGUES (2026-07-28, RATIFIÉE « tout ratifié »)
+
+- **Livré** : `lib/i18n.ts` — le dictionnaire I18N de la maquette recopié VERBATIM
+  (FR = clé, EN/DE/IT — zéro traduction inventée) ; sélecteur de langue au shell
+  (localStorage OLIVE_LANG, persisté) ; la traduction s'applique en UN point (le helper
+  `tab` du routeur) — la promesse G2 « bascule sans réécriture » est tenue. Tests FE-I18N :
+  traductions exactes, repli FR, bascule live du shell, persistance.
+- **ÉCARTS CONSIGNÉS (écart par clé — la doctrine du chantier)** : (1) les onglets hors
+  dictionnaire maquette (écrans canon post-maquette : CPSI · Barèmes, Custody & TA,
+  Audit & transport, …) restent FR — chaque clé se comble par un AJOUT au dictionnaire,
+  jamais une invention ; (2) les CONTENUS d'écrans (titres internes, colonnes) restent FR —
+  même mécanique `t()`, à dérouler écran par écran (chantier continu, comme la grille) ;
+  (3) la maquette porte la clé « Octopulse OppRisk » (sic, double p) — l'onglet canon dit
+  « Octopulse OpRisk » : repli FR jusqu'à correction de la clé maquette (la maquette cède
+  au canon, G-hiérarchie) ; (4) AUCUNE donnée métier n'est traduite — ce qui vient du
+  backend s'affiche tel quel (FE-04), la langue est un choix d'affichage.
