@@ -278,6 +278,20 @@ model AuditLog {
   @@map("audit_log")
 }
 
+// Bloc B robustesse (R337/IDM) — idempotence des commandes. Le command_id (généré client) est
+// consommé UNE fois ; le rejeu retourne la réponse snapshotée (aucun nouvel effet). Écrit dans
+// la MÊME transaction que la commande (atomicité : un échec ne consomme pas la clé).
+model ProcessedCommand {
+  commandId        String   @id @map("command_id") @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  aggregateId      String   @map("aggregate_id")
+  resultHash       String   @map("result_hash") @db.Char(64)     // sha256(payload) — détecte la réutilisation de clé
+  responseSnapshot Json     @map("response_snapshot")
+  createdAt        DateTime @default(now()) @map("created_at")
+  @@index([tenantId, createdAt])
+  @@map("processed_commands")
+}
+
 
 // ═══ v2 (19.07.2026) — R100→R116 ═══
 
