@@ -22,7 +22,14 @@ for (const langue of ["EN", "DE", "IT"]) {
     for (const m of bloc[1].matchAll(/"((?:[^"\\]|\\.)+)":/g)) cles.add(m[1]);
   dicts[langue] = cles;
 }
-const utilisees = [...routeur.matchAll(/tab\("[^"]+", "((?:[^"\\]|\\.)+)"\)/g)].map((m) => m[1]);
+// Libellés de nav utilisés par le shell (sidebar groupée) : items du haut navItem("id","Label",…),
+// items de groupe ["id","Label","icône"], et en-têtes de groupe label:"Label", icon:.
+const labels = new Set();
+for (const m of routeur.matchAll(/navItem\("[^"]+",\s*"((?:[^"\\]|\\.)+)"/g)) labels.add(m[1]);
+// 3e élément = icône (emoji, non-ASCII) → distingue un tuple de nav d'un simple tableau d'ids.
+for (const m of routeur.matchAll(/\["[a-z][a-zA-Z]*",\s*"((?:[^"\\]|\\.)+)",\s*"[^\x00-\x7F]/g)) labels.add(m[1]);
+for (const m of routeur.matchAll(/label:\s*"((?:[^"\\]|\\.)+)",\s*icon:/g)) labels.add(m[1]);
+const utilisees = [...labels];
 let total = 0;
 for (const langue of ["EN", "DE", "IT"]) {
   const manquantes = utilisees.filter((c) => !dicts[langue].has(c));

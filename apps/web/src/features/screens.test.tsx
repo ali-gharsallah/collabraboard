@@ -1416,7 +1416,8 @@ describe("FE-SB-NAV — 4 onglets deep-link vers le hub Bacs à sable (71/72, d�
     window.localStorage.removeItem("OLIVE_LANG");
     const { Router } = await import("../app/router");
     render(<Router/>);
-    fireEvent.click(screen.getByRole("button", { name: "Bac à sable BRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bacs à sable" }));       // ouvre le GROUPE (sidebar)
+    fireEvent.click(screen.getByRole("button", { name: "Bac à sable BRM" }));    // puis l'item deep-link
     // le hub s'affiche, le bac sbbrm est ancré et mis en évidence
     const bac = await screen.findByText("sbbrm");
     expect(bac).toBeInTheDocument();

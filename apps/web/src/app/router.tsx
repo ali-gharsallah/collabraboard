@@ -98,12 +98,101 @@ export function Router() {
   // i18n §10 (ratifié) : le libellé FR EST la clé du dictionnaire maquette — la traduction
   // s'applique en UN point ; une clé absente reste rendue en FR (écart par clé, lib/i18n).
   const t = traduire(lang);
-  const tab = (id: typeof screen, label: string) =>
-    <button onClick={() => setScreen(id)} style={{ padding: "8px 16px", border: "none",
-      borderRadius: 8, cursor: "pointer", fontWeight: screen === id ? 700 : 400,
-      background: screen === id ? "#4A6B28" : "#eee", color: screen === id ? "#fff" : "#333" }}>
-      {t(label)}</button>;
-  return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+  const [groupeOuvert, setGroupeOuvert] = useState<string | null>(null);
+
+  // Menu latéral GROUPÉ — arborescence reprise de la maquette (`demo/olive-demo.html`, NAV) :
+  // chaque écran câblé est rangé dans son domaine du cycle de vie. Item = [id d'écran, libellé, icône].
+  type Item = [typeof screen, string, string];
+  const GROUPES: { id: string; label: string; icon: string; items: Item[] }[] = [
+    { id: "g_clients", label: "Clients & Relations", icon: "👥", items: [
+      ["clients", "Clients", "◑"], ["kyc", "KYC", "◎"], ["ubo", "Personnes / UBO", "☺"],
+      ["review", "Account Review", "↻"], ["coc", "Chgt circonstances", "⇆"],
+      ["onboarding", "Onboarding", "🌱"], ["offboarding", "Offboarding", "🚪"]] },
+    { id: "g_front", label: "Front & Croissance", icon: "✦", items: [
+      ["prospection", "Pré-prospection", "🧲"], ["crm", "CRM Banque", "🗂"],
+      ["contactreports", "Contact Reports", "📇"], ["nba", "Prochaines actions", "✦"],
+      ["tasks", "Tâches", "✓"], ["trips", "Business Trip", "✈"], ["crossborder", "Cross-Border", "🌐"]] },
+    { id: "g_comp", label: "Compliance & Risque", icon: "🛡", items: [
+      ["compliance", "Compliance Center", "🛡"], ["screening", "Screening", "⌖"],
+      ["screeningadv", "Screening avancé", "⌖"], ["alertes", "File d'alertes", "▤"],
+      ["dossiers", "Dossiers de risque", "▤"], ["amlws", "AML Investigation", "◬"],
+      ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["mros", "Reporting MROS", "📄"],
+      ["corroboration", "Corroboration KYC", "⚖"], ["legalreg", "Legal — Contrats", "§"],
+      ["oprisk", "Octopulse OpRisk", "🐙"], ["formations", "Formations", "🎓"],
+      ["veille", "Veille réglementaire", "📡"], ["registrelba", "Registre LBA", "📖"]] },
+    { id: "g_cpsi", label: "Profilage CPSI", icon: "◉", items: [
+      ["cpsiProfil", "CPSI · Profil", "◉"], ["cpsiSeg", "CPSI · Segmentation", "▦"],
+      ["cpsiCases", "CPSI · Risk cases", "▲"], ["cpsiParam", "CPSI · Barèmes", "⚖"],
+      ["cpsiGuide", "CPSI · Guide", "📘"]] },
+    { id: "g_tx", label: "Transactions & Marchés", icon: "⇄", items: [
+      ["transactions", "Transferts & ordres", "➢"], ["txrisk", "Transactions Risk Monitoring", "⇄"],
+      ["settlement", "Settlement", "⛓"], ["swiftlab", "Analyseur SWIFT/SEPA", "🔬"],
+      ["custodyta", "Custody & TA", "📒"], ["fx", "Multi-devise & FX", "💱"], ["pms", "PMS", "▦"],
+      ["mobileadmin", "Mobile Banking", "📱"], ["islamic", "Finance Islamique", "☪"]] },
+    { id: "g_data", label: "Data & Intelligence", icon: "🫒", items: [
+      ["olivia", "Olivia", "🫒"], ["oliviaruns", "Olivia · Runs", "▶"],
+      ["bi", "BI — Reporting sur mesure", "▥"], ["ged", "Pièces (GED)", "🗄"],
+      ["gedcoffre", "GED / coffre", "🗄"], ["integrations", "Intégrations", "⇌"], ["ports", "Ports", "⇌"]] },
+    { id: "g_wf", label: "Workflow", icon: "⎇", items: [
+      ["workflow", "Workflow", "⎇"], ["builder", "Workflow Builder", "✎"], ["wfi", "Workflow Instances", "▶"]] },
+    { id: "g_sb", label: "Bacs à sable", icon: "🧪", items: [
+      ["sandboxes", "Bacs à sable", "🧪"], ["sbaml", "Bac à sable AML", "◬"], ["sbkyc", "Bac à sable KYC", "◎"],
+      ["sbbrm", "Bac à sable BRM", "▲"], ["sbonb", "Bac à sable Onboarding", "🌱"],
+      ["sbcf", "Bac à sable Central File", "📄"], ["sbwf", "Bac à sable Workflow", "⎇"]] },
+    { id: "g_audit", label: "Audit", icon: "🔍", items: [
+      ["audit", "Audit & transport", "🔍"], ["auditit", "Audit IT", "🖥"]] },
+    { id: "g_param", label: "Paramétrage", icon: "⚙", items: [
+      ["parametrage", "Paramétrage", "⚙"], ["golive", "Config & Go-live", "🚦"],
+      ["sdkyc", "Sections & droits", "◎"], ["sdar", "Profils AR", "↻"], ["sdgar", "Profils GAR", "▦"],
+      ["paramfields", "Registre paramètres", "▤"], ["cocparam", "Types de CoC", "⇆"],
+      ["rejeu", "Rejeu KYC à date", "⏱"], ["bat", "Recette client (BAT)", "✅"],
+      ["paramnav", "Utilisateurs & rôles", "👤"], ["iamguide", "Guide IAM", "📘"],
+      ["ssoparam", "SSO / Fédération", "🔑"]] },
+  ];
+  const navItem = (id: typeof screen, label: string, icon: string, indent = false) =>
+    <button key={id} onClick={() => setScreen(id)} style={{ display: "flex", alignItems: "center", gap: 9,
+      width: "100%", textAlign: "left", padding: indent ? "7px 10px 7px 30px" : "8px 10px", marginBottom: 2,
+      border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: screen === id ? 700 : 500,
+      background: screen === id ? "#4A6B28" : "transparent", color: screen === id ? "#fff" : "#41492f" }}>
+      <span aria-hidden style={{ width: 16, textAlign: "center", opacity: 0.85 }}>{icon}</span>
+      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(label)}</span></button>;
+  const groupeActif = GROUPES.find((g) => g.items.some(([id]) => id === screen))?.id ?? null;
+  const ouvert = groupeOuvert ?? groupeActif;
+  const renderGroupe = (g: typeof GROUPES[number]) => {
+    const open = ouvert === g.id; const actif = g.items.some(([id]) => id === screen);
+    return <div key={g.id} style={{ marginTop: 3 }}>
+      <button onClick={() => setGroupeOuvert(open ? "" : g.id)} style={{ display: "flex", alignItems: "center",
+        gap: 9, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: 8,
+        cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase",
+        color: actif ? "#3B5323" : "#8A9578", background: "transparent" }}>
+        <span aria-hidden style={{ width: 16, textAlign: "center" }}>{g.icon}</span>
+        <span style={{ flex: 1 }}>{t(g.label)}</span>
+        <span aria-hidden style={{ fontSize: 9, opacity: 0.6 }}>{open ? "▾" : "▸"}</span></button>
+      {open && <div>{g.items.map(([id, label, icon]) => navItem(id, label, icon, true))}</div>}
+    </div>;
+  };
+  return <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", background: "#FAFBF7", color: "#2B331F" }}>
+    <aside style={{ width: 238, flexShrink: 0, height: "100vh", position: "sticky", top: 0, overflowY: "auto",
+      background: "#FFFFFF", borderRight: "1px solid #E7EBDD", padding: "16px 10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 12px" }}>
+        <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(150deg,#3B5323,#6B8E4E)",
+          display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 16 }}>🫒</div>
+        <div><div style={{ fontWeight: 800, fontSize: 15, color: "#3B5323", lineHeight: 1.1 }}>O-Live</div>
+          <div style={{ fontSize: 10, color: "#8A9578" }}>Client Lifecycle Intelligence</div></div>
+      </div>
+      <div style={{ display: "flex", gap: 3, padding: "0 6px 10px" }}>
+        {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`} onClick={() => { setLangue(l); setLang(l); }}
+          style={{ fontSize: 11, padding: "3px 9px", border: "1px solid " + (lang === l ? "#4A6B28" : "#E7EBDD"),
+            borderRadius: 6, cursor: "pointer", fontWeight: lang === l ? 700 : 400,
+            background: lang === l ? "#EEF3E4" : "#fff", color: lang === l ? "#3B5323" : "#5b6650" }}>{l}</button>)}
+      </div>
+      {navItem("home", "Accueil", "⌂")}
+      {navItem("command", "Command Center", "⌁")}
+      {navItem("dashboard", "Dashboard central", "▦")}
+      <div style={{ height: 1, background: "#EEF1E7", margin: "8px 6px" }}/>
+      {GROUPES.map(renderGroupe)}
+    </aside>
+    <main style={{ flex: 1, minWidth: 0, maxWidth: 1180, padding: "22px 28px", overflowX: "hidden" }}>
     {sessionExpiree && <div role="alert" style={{ background: "#FBEAE5", border: "1px solid #8C4A3C",
       borderRadius: 8, padding: 12, marginBottom: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
       <strong style={{ fontSize: 13 }}>{t("Session expirée — reconnectez-vous (votre brouillon en cours est conservé).")}</strong>
@@ -123,16 +212,6 @@ export function Router() {
       }}>{t("Se reconnecter")}</button>
       {loginErreur && <span style={{ fontSize: 12, color: "#8C4A3C" }}>{loginErreur}</span>}
     </div>}
-    <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", marginBottom: 6 }}>
-      {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`}
-        onClick={() => { setLangue(l); setLang(l); }}
-        style={{ fontSize: 11, padding: "2px 8px", border: "none", borderRadius: 6, cursor: "pointer",
-          fontWeight: lang === l ? 700 : 400, background: lang === l ? "#4A6B28" : "#eee",
-          color: lang === l ? "#fff" : "#333" }}>{l}</button>)}
-    </div>
-    <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-      {tab("home", "Accueil")}{tab("command", "Command Center")}{tab("compliance", "Compliance Center")}{tab("dashboard", "Dashboard central")}{tab("clients", "Clients")}{tab("onboarding", "Onboarding")}{tab("prospection", "Pré-prospection")}{tab("kyc", "KYC")}{tab("screening", "Screening")}{tab("screeningadv", "Screening avancé")}{tab("alertes", "File d'alertes")}{tab("dossiers", "Dossiers de risque")}{tab("review", "Account Review")}{tab("ubo", "Personnes / UBO")}{tab("coc", "Chgt circonstances")}{tab("transactions", "Transferts & ordres")}{tab("txrisk", "Transactions Risk Monitoring")}{tab("fx", "Multi-devise & FX")}{tab("swiftlab", "Analyseur SWIFT/SEPA")}{tab("custodyta", "Custody & TA")}{tab("settlement", "Settlement")}{tab("mros", "Reporting MROS")}{tab("ged", "Pièces (GED)")}{tab("gedcoffre", "GED / coffre")}{tab("registrelba", "Registre LBA")}{tab("crm", "CRM Banque")}{tab("contactreports", "Contact Reports")}{tab("workflow", "Workflow")}{tab("builder", "Workflow Builder")}{tab("corroboration", "Corroboration KYC")}{tab("parametrage", "Paramétrage")}{tab("golive", "Config & Go-live")}{tab("pms", "PMS")}{tab("amlref", "Référentiel AML")}{tab("sbaml", "Bac à sable AML")}{tab("sbonb", "Bac à sable Onboarding")}{tab("ports", "Ports")}{tab("integrations", "Intégrations")}{tab("nba", "Prochaines actions")}{tab("wfi", "Workflow Instances")}{tab("tasks", "Tâches")}{tab("formations", "Formations")}{tab("veille", "Veille réglementaire")}{tab("legalreg", "Legal — Contrats")}{tab("bi", "BI — Reporting sur mesure")}{tab("mobileadmin", "Mobile Banking")}{tab("oprisk", "Octopulse OpRisk")}{tab("trips", "Business Trip")}{tab("crossborder", "Cross-Border")}{tab("rejeu", "Rejeu KYC à date")}{tab("aml", "Règles AML")}{tab("islamic", "Finance Islamique")}{tab("cpsiProfil", "CPSI · Profil")}{tab("cpsiSeg", "CPSI · Segmentation")}{tab("cpsiCases", "CPSI · Risk cases")}{tab("cpsiParam", "CPSI · Barèmes")}{tab("cpsiGuide", "CPSI · Guide")}{tab("offboarding", "Offboarding")}{tab("olivia", "Olivia")}{tab("oliviaruns", "Olivia · Runs")}{tab("amlws", "AML Investigation")}{tab("sdkyc", "Sections & droits")}{tab("sdar", "Profils AR")}{tab("sdgar", "Profils GAR")}{tab("paramfields", "Registre paramètres")}{tab("cocparam", "Types de CoC")}{tab("sandboxes", "Bacs à sable")}{tab("sbkyc", "Bac à sable KYC")}{tab("sbbrm", "Bac à sable BRM")}{tab("sbcf", "Bac à sable Central File")}{tab("sbwf", "Bac à sable Workflow")}{tab("bat", "Recette client (BAT)")}{tab("audit", "Audit & transport")}{tab("auditit", "Audit IT")}{tab("paramnav", "Utilisateurs & rôles")}{tab("iamguide", "Guide IAM")}{tab("ssoparam", "SSO / Fédération")}
-    </div>
     <Suspense fallback={<div style={{ padding: 24, color: "#888" }}>{t("Chargement de l'écran…")}</div>}>
     {screen === "home" && <Home/>}
     {screen === "dashboard" && <Dashboard/>}
@@ -214,5 +293,6 @@ export function Router() {
     {["sandboxes", "sbkyc", "sbbrm", "sbcf", "sbwf"].includes(screen) &&
       <Sandboxes focus={screen === "sandboxes" ? undefined : screen}/>}
     </Suspense>
+    </main>
   </div>;
 }
