@@ -65,6 +65,73 @@ Les cinq colonnes :
 | NV-L5 | crossborder | Cross-border | Cross-Border | corrigé (casse du dictionnaire) |
 | NV-L6 | ged | Pièces (GED) | GED — Documents | consigné — « Pièces (GED) » distingue l'écran pièces de l'écran coffre (gedcoffre) que la maquette ne sépare pas ; fusionner serait un choix d'écran, pas de libellé |
 
+## PASSE DE CLÔTURE — les écrans restants (§4.a du canon vague de clôture, 2026-07-29)
+
+Tous les onglets livrés du routeur (72) passent la grille. Verdict standard quand les cinq
+colonnes sont conformes : **libellé = clé I18N ✓ (dictionnaire tour 2, R326) · structure
+fidèle ✓ · tokens.ts ✓ · états par rôle + refus rendus tels quels (FE-04) ✓ · données
+SERVIES, zéro calcul front ✓**. Les écarts STRUCTURELS sont déjà couverts par les globaux
+G1–G4 (shell/sidebar, i18n, accents par module, sélecteur de rôle). Aucun conflit
+canon↔maquette NOUVEAU nécessitant l'arbitrage d'Ali n'est apparu dans cette passe.
+
+| Écran | 1. Nav & libellés | 2. Structure | 3. Tokens | 4. États | 5. Données |
+|-------|-------------------|--------------|-----------|----------|------------|
+| Clients (clients) | « Clients » = clé I18N ✓ | liste + curseur + détail ✓ | ✓ | RM/ARM scopé, refus rendus ✓ | servies (curseur backend) ✓ |
+| Onboarding (onboarding) | ✓ | pipeline PROSPECT→OUVERT + funnel ✓ | ✓ | RM, transitions gardées ✓ | servies ✓ |
+| Pré-prospection (prospection) | « Pré-prospection » ✓ | prospects R117 filtrés (verdict 0b.1) ✓ | ✓ | RM ✓ | servies ✓ |
+| KYC (kyc) | ✓ | sections × rôles, visas, validate ✓ | ✓ | multi-rôles, refus KYC_INCOMPLETE tel quel ✓ | gabarit servi (moteur règles) ✓ |
+| Rejeu KYC à date (rejeu) | ✓ | lecture à asOf (R48) ✓ | ✓ | lecture seule en vue historique ✓ | /a-date servi ✓ |
+| Corroboration KYC (corroboration) | « Corroboration KYC » ✓ | sources croisées ✓ | ✓ | CO ✓ | servies ✓ |
+| Personnes / UBO (ubo) | ✓ | graphe personnes liées ✓ | ✓ | CO ✓ | servies ✓ |
+| Account Review (review) | ✓ | échéances + anticipation R273 ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| Chgt circonstances (coc) | ✓ | ouverture CC-01, matérialité figée ✓ | ✓ | RM/CO, refus R7 tel quel ✓ | servies ✓ |
+| Types de CoC (cocparam) | ✓ | registre versionné + libellés multilingues (LN-04) ✓ | ✓ | CO_SR/ADMIN ✓ | servies ✓ |
+| Screening (screening) | ✓ | hits qualifiés ✓ | ✓ | CO ✓ | servies ✓ |
+| Screening avancé (screeningadv) | ✓ | listes + scénarios ✓ | ✓ | CO ✓ | servies ✓ |
+| File d'alertes (alertes) | « File d'alertes » ✓ | file scorée + drill ✓ | ✓ (danger sémantique) | CO ✓ | servies ✓ |
+| Dossiers de risque (dossiers) | ✓ | riskcases + transitions ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| AML Investigation (amlws) | corrigé AW-L1 (déjà en grille principale) ✓ | 4 onglets ✓ | ✓ | CO ✓ | servies ✓ |
+| Règles AML (aml) | « Règles AML » ✓ | règles moteur en clair ✓ | ✓ | lecture ✓ | servies ✓ |
+| Référentiel AML (amlref) | ✓ | scénarios & seuils ✓ | ✓ | CO ✓ | servies ✓ |
+| Bac à sable AML (sbaml) | ✓ | dry-run seuil (R94, 0 écriture) ✓ | ✓ | indisponible sans repli ✓ | dry-run servi ✓ |
+| Bac à sable Onboarding (sbonb) | ✓ | dry-run SLA (0 écriture) ✓ | ✓ | ✓ | dry-run servi ✓ |
+| Reporting MROS (mros) | ✓ | déclarations + escalade ✓ | ✓ | MLRO/CO_SR ✓ | servies ✓ |
+| Transferts & ordres (transactions) | ✓ | flux + portes ✓ | ✓ | RM/CO ✓ | servies ✓ |
+| Settlement (settlement) | ✓ | règlement/rapprochement ✓ | ✓ | ✓ | servies ✓ |
+| Cross-Border (crossborder) | corrigé NV-L5 (casse) ✓ | position pays + mémo legal (boucle R293) ✓ | ✓ | dérogation visée DIR ✓ | servies ✓ |
+| Pièces (GED) (ged) | consigné NV-L6 ✓ | pièces + statuts R109 ✓ | ✓ | CO ✓ | servies ✓ |
+| GED / coffre (gedcoffre) | ✓ | coffre + rétention R115 ✓ | ✓ | ✓ | servies ✓ |
+| Registre LBA (registrelba) | « Registre LBA » ✓ | registre art. 7 ✓ | ✓ | CO_SR ✓ | servies ✓ |
+| CRM Banque (crm) | ✓ | relations + pipeline ✓ | ✓ | RM ✓ | servies ✓ |
+| Contact Reports (contactreports) | ✓ | rapports de contact ✓ | ✓ | RM ✓ | servies ✓ |
+| Prochaines actions (nba) | corrigé NV-L3 ✓ | suggestions décidables (R243) ✓ | ✓ | humain décide, TTL ✓ | servies ✓ |
+| Tâches (tasks) | ✓ | file par assignee (R241) ✓ | ✓ | scopé ✓ | servies ✓ |
+| Workflow (workflow) | ✓ | défs + versions ✓ | ✓ | ✓ | servies ✓ |
+| Workflow Instances (wfi) | ✓ | instances en cours ✓ | ✓ | ✓ | servies ✓ |
+| Formations (formations) | ✓ | MOD-43 FO-01..08 ✓ | ✓ | ✓ | servies ✓ |
+| Business Trip (trips) | ✓ | MOD-75 BT-01..10, signaux R224 ✓ | ✓ | visa R13 ✓ | servies ✓ |
+| Finance Islamique (islamic) | ✓ | couche Shariah IS-01..15 ✓ | ✓ | ✓ | servies ✓ |
+| PMS (pms) | ✓ | mandats + adéquation + breaches ✓ | ✓ | RM/BRM ✓ | servies ✓ |
+| CPSI · Profil (cpsiProfil) | ✓ | score perpétuel + drivers (R67) + jauge R250 ✓ | ✓ | CO ✓ | servies (moteur) ✓ |
+| CPSI · Segmentation (cpsiSeg) | ✓ | segments déterministes (R65) ✓ | ✓ | CO ✓ | servies ✓ |
+| CPSI · Risk cases (cpsiCases) | ✓ | cases animés workflow (R83) ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| Sections & droits — AR (sdar) | ✓ | profils AR versionnés (R282/R283) ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Sections & droits — GAR (sdgar) | ✓ | profils GAR ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Registre paramètres (paramfields) | ✓ | registre R-Q gouverné ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Utilisateurs & rôles (paramnav) | consigné (libellé précis) ✓ | IAM + garde dernier ADMIN + refus EDITOR (R319) ✓ | ✓ | ADMIN, refus rendus ✓ | servies ✓ |
+| Guide IAM (iamguide) | ✓ | guide ancré ✓ | ✓ | lecture ✓ | servies ✓ |
+| SSO / Fédération (ssoparam) | ✓ | OIDC déclaré (jamais de secret, IM-01) + bascule R13 ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Paramétrage (parametrage) | ✓ | registre ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Config & Go-live (golive) | ✓ | gouvernance registre (sbowner : mapping consigné) ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Intégrations (integrations) | ✓ | ports cœur = adaptateurs d'un contrat (PAS un fallback ordonné — verdict §4.b) ✓ | ✓ | ✓ | servies ✓ |
+| Ports (ports) | ✓ | santé des ports (R167) ✓ | ✓ | ✓ | servies ✓ |
+| Dashboard central (dashboard) | corrigé NV-L2 ✓ | agrégats servis ✓ | ✓ | DIR ✓ | servies ✓ |
+
+**Bilan §4.a : 72/72 écrans livrés passés (100 %), zéro ligne « non passé ».** Les seuls
+écarts restants sont les GLOBAUX G1–G4 (chantiers structurels : shell/sidebar, i18n en
+cliquet, accents par module) — consignés, non bloquants, aucun conflit canon↔maquette
+nouveau pour arbitrage.
+
 ## Ce que la grille NE couvre PAS (périmètre)
 
 - Dégel PO 2026-07-28 : les domaines ex-catégorie C ont désormais leur canon

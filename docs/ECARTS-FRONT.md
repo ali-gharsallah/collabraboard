@@ -33,7 +33,7 @@ FE-CORE (`api.ts`) livré en incrémental (JWT défaut, `/v1`). Détail de la re
 ### 2.1 FE-PORT — `GET /api/v1/ports`, `GET /ports/:portId/health`
 - **Réalité** : **aucun** registre `/v1/ports`. Seul port ratifié : **core banking** — `GET /v1/corebanking/etat` (R168, lecture seule) + `POST /v1/corebanking/importer` (R167, refuse sans port configuré).
 - **Écart** : les ports **fx / custody / mobile** n'existent pas comme routes. Le registre unifié `[{portId,status,lastCheckAt}]` et `/ports/:id/health` n'existent pas.
-- **Ce qui est vrai de la spec** : l'écran « Intégrations core » (fallback Avaloq/Temenos/Olympic) correspond à `corebanking` — mais l'ordre de fallback n'est pas exposé par une route dédiée à ce jour (à vérifier dans `core-sync.service.ts`).
+- **Ce qui est vrai de la spec** : l'écran « Intégrations core » (fallback Avaloq/Temenos/Olympic) correspond à `corebanking` — VERDICT (vague de clôture, §4.b) : il n'y a PAS d'« ordre de fallback » à exposer. Le canon PORT (R167→R169) traite chaque cœur (Avaloq/Temenos/Finnova/ERI) comme une IMPLÉMENTATION d'un contrat unique, PAS comme une chaîne de repli ordonnée — le tenant déclare SON adaptateur, il n'y a pas de cascade. La formulation « fallback » de la maquette est un abus de langage (la maquette cède au canon PORT). Écart RÉSOLU, plus aucun « à vérifier ».
 - **Options** : (a) construire une **porte `PortsModule`** qui projette un registre à partir des ports réellement ratifiés (aujourd'hui : corebanking + IA `iaProviderRef` + coffre `docStorage`), statut dérivé de la présence du secret/config tenant — **sans jamais toucher un secret côté navigateur** ; (b) écran seed-only signalé ; (c) attendre canon `fx/custody/mobile`.
 
 ### 2.2 FE-WFI — `GET /api/v1/workflow-instances`, `/:id`, `/:id/events`
@@ -1163,3 +1163,24 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   construction (RLS + rejeu générique déjà testés partout) — non re-testés sur GWB ;
   (3) le run Olivia v2 de démo s'ajoutera au seed avec §4.c (constat) ; (4) reset = purge
   (RUNBOOK §9) + re-seed.
+
+## SOLDE — DIRECTIVES §4 DE LA VAGUE DE CLÔTURE (2026-07-29)
+
+- **§4.a Conformité visuelle À 100 %** : la grille CONFORMITE-VISUELLE.md passe désormais
+  les **72/72 écrans livrés** (passe de clôture ajoutée) — zéro ligne « non passé ». Les
+  seuls écarts restants sont les GLOBAUX G1–G4 (shell/sidebar, i18n en cliquet, accents par
+  module) — structurels, consignés, non bloquants. Aucun conflit canon↔maquette NOUVEAU
+  pour arbitrage Ali.
+- **§4.b Index sans suspens** : les deux verdicts en attente sont SOLDÉS. (1) **prospects
+  vs R117–R120** : R117 modélise déjà PROSPECT (onboardings.etape) → verdict 0b.1 APPLIQUÉ
+  (prospects filtrés à l'écran Pré-prospection). (2) **sbowner vs écran propositions** :
+  COUVERT — la gouvernance du registre R-Q passe par Config & Go-live + Registre paramètres
+  (mapping consigné). Le seul « à vérifier » résiduel de l'index (ordre de fallback
+  corebanking) est RÉSOLU : le canon PORT n'a pas de cascade ordonnée (abus de langage
+  maquette). Plus AUCUN « à vérifier ».
+- **§4.c Olivia v2 — CONSTAT** : le canon v2 (R259–R266, SW-01..18) est DÉJÀ EXÉCUTÉ
+  INTÉGRALEMENT (tâches #24–#34, 54 assertions SW dans fat-swarm, ContextBuilder IMPORTÉ
+  jamais copié, `missions_actives` vide par défaut — SW-18 : une mission ne tourne
+  qu'activée). Prérequis OL-01..34 verts (Olivia v1/v1.1 livrés). Rien à dérouler — le run
+  de démo Olivia v2 s'ajoute au tenant GWB quand une mission est activée (hors seed par
+  défaut : missions_actives vide, R167).
