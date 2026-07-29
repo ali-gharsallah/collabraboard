@@ -1383,3 +1383,30 @@ describe("FE-JW — R328/JW-05 : session expirée → re-connexion propre, broui
     sessionStorage.removeItem("olive_jwt");
   });
 });
+
+describe("FE-CMP — comparaison front↔maquette (2026-07-29) : le front porte la palette de demo/olive-demo.html", () => {
+  it("cœur de palette ET accents par module : chaque couleur de tokens.ts qui vient de la maquette y EST présente", async () => {
+    const fs = await import("fs"); const path = await import("path");
+    const html = fs.readFileSync(path.resolve(__dirname, "../../../../demo/olive-demo.html"), "utf8").toUpperCase();
+    const { tokens } = await import("../theme/tokens");
+    // Cœur de palette : présent dans la maquette ET dans tokens.ts (concordance prouvée, pas affirmée)
+    const coeur = [tokens.color.olive600, tokens.color.gold, tokens.color.cream, tokens.color.ink];
+    for (const c of coeur) expect(html).toContain(c.toUpperCase());
+    // Accents par module recopiés de la maquette (G3 levé) — leur présence dans la maquette est le CONTRAT
+    for (const c of [tokens.color.accentCompliance, tokens.color.accentComplianceBg,
+      tokens.color.accentData, tokens.color.accentDataBg])
+      expect(html).toContain(c.toUpperCase());
+  });
+});
+
+describe("FE-CMP2 — les écrans convertis n'ont AUCUNE couleur hex décorative en dur (accents = tokens)", () => {
+  it("Regwatch/OpRisk/MobileAdmin/BiReporting : zéro littéral #RRGGBB — la palette passe par tokens.ts", async () => {
+    const fs = await import("fs"); const path = await import("path");
+    const ecrans = ["regwatch/Regwatch", "oprisk/OpRisk", "mobile/MobileAdmin", "bi/BiReporting"];
+    for (const e of ecrans) {
+      const src = fs.readFileSync(path.resolve(__dirname, `./${e}.tsx`), "utf8");
+      const litteraux = src.match(/#[0-9A-Fa-f]{6}\b/g) ?? [];
+      expect({ ecran: e, hex: litteraux }).toEqual({ ecran: e, hex: [] });   // tout passe par tokens.color.*
+    }
+  });
+});

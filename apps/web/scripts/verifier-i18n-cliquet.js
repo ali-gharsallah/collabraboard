@@ -16,6 +16,7 @@ const CONVERTIS = [
   "src/features/bi/BiReporting.tsx",  // tour 3 : premier écran-contenu converti (le patron)
   "src/features/oprisk/OpRisk.tsx",       // tranche 2
   "src/features/mobile/MobileAdmin.tsx",  // tranche 2
+  "src/features/regwatch/Regwatch.tsx",   // tranche 3 (+ accent data/IA en token)
 ];
 
 const racine = path.join(__dirname, "..");

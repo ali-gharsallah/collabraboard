@@ -18,6 +18,14 @@ export const tokens = {
     muted: "#8A8F82",
     border: "#E6E9DF",
     surface: "#FAFBF7",
+    // Accents PAR MODULE (comparaison front↔maquette 2026-07-29, lève l'écart G3) : la
+    // maquette `demo/olive-demo.html` colore certaines familles ; valeurs recopiées VERBATIM
+    // (une clé par famille, jamais un dégradé décoratif). Compliance & Risque = terracotta ;
+    // Data & Intelligence (BI, Olivia/IA) = violet.
+    accentCompliance: "#8C4A3C",
+    accentComplianceBg: "#FBEDEA",
+    accentData: "#7A5AF8",
+    accentDataBg: "#F0E9FB",
   },
   radius: { sm: 6, md: 8, lg: 10 },
   space: (n: number) => n * 4,

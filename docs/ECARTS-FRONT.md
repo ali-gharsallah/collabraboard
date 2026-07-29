@@ -1184,3 +1184,19 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   qu'activée). Prérequis OL-01..34 verts (Olivia v1/v1.1 livrés). Rien à dérouler — le run
   de démo Olivia v2 s'ajoute au tenant GWB quand une mission est activée (hors seed par
   défaut : missions_actives vide, R167).
+
+## COMPARAISON FRONT↔HTML + TRANCHE 3 CLIQUET (2026-07-29)
+
+- **Comparaison MESURÉE** (docs/COMPARAISON-FRONT-HTML.md, rejouable en CI) : le cœur de
+  palette est IDENTIQUE maquette↔React (olive600/gold/cream/ink — prouvé par FE-CMP qui lit
+  la maquette) ; les accents PAR MODULE de la maquette (terracotta compliance #8C4A3C,
+  violet data/IA #7A5AF8 + leurs fonds) sont AJOUTÉS à tokens.ts → **écart G3 LEVÉ**.
+  Nav : 29/72 libellés verbatim de la maquette, 43 écrans canon post-maquette (la maquette
+  les décrit sans onglet dédié) ; 7 sections sidebar maquette vs tab-switcher plat (G1,
+  shell — chantier).
+- **Correction mécanique appliquée** (§4.a autorise les écarts de tokens en direct) :
+  Regwatch remplace le littéral `#7A5AF8` par `tokens.color.accentData` ; FE-CMP2 vérifie
+  que les 4 écrans convertis (Regwatch/OpRisk/MobileAdmin/BiReporting) n'ont AUCUN hex
+  décoratif en dur — la palette passe par tokens.ts.
+- **Cliquet tranche 3** : Regwatch converti (10 clés × 3 langues) — 5 fichiers au cliquet,
+  0 texte en dur, rapport nav 0 écart.
