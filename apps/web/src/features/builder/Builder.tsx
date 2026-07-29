@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { tokens } from "../../theme/tokens";
+import { WorkflowCanvas } from "./WorkflowCanvas";
 
 /**
  * `builder` — R304-R308 (dégel V3, GO Ali 2026-07-28). L'ÉDITEUR de configurations des
@@ -55,6 +56,12 @@ export function Builder() {
       })}>Enregistrer le brouillon</button>
       <button onClick={charger} disabled={isDemoMode()} style={{ fontSize: 12 }}>Charger</button>
     </div>
+    {type === "WORKFLOW" && <div style={{ margin: "8px 0" }}>
+      <WorkflowCanvas onSave={(c) => setContenu(JSON.stringify(c, null, 1))}/>
+      <p style={{ fontSize: 11, color: tokens.color.muted, margin: "4px 0" }}>
+        « Enregistrer le brouillon » sur le canevas remplit la définition ci-dessous — puis
+        « Enregistrer le brouillon » (en-tête) la persiste côté moteur gouverné (R305).</p>
+    </div>}
     <textarea value={contenu} onChange={(e) => setContenu(e.target.value)} rows={7}
       style={{ width: "100%", fontSize: 11, fontFamily: "monospace" }}/>
     <div style={{ display: "flex", gap: 6, margin: "6px 0" }}>
