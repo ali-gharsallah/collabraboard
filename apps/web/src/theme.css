@@ -60,3 +60,14 @@ button:not([style]):hover { filter: brightness(1.08); }
 /* Petit utilitaire carte (adoptable progressivement par les écrans) */
 .olv-card { background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 2px rgba(43, 51, 31, 0.04); }
+
+/* Animations de la branche d'olivier verticale (carte de visite) — port maquette */
+@keyframes branchDraw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes oliveGrow  { from { transform: scale(0); }  to { transform: scale(1); } }
+@keyframes fadeUp     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  [style*="branchDraw"], [style*="oliveGrow"], [style*="fadeUp"] { animation: none !important; }
+}
+
+/* Carte de visite : deux colonnes → une seule en écran étroit */
+@media (max-width: 720px) { .olv-carte-grid { grid-template-columns: 1fr !important; } }
