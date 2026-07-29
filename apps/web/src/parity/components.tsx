@@ -174,3 +174,14 @@ export function Collapsible({ labelClosed, labelOpen, defaultOpen = false, varia
       {open && <div style={{ marginTop: 8 }}>{children}</div>}
     </div>);
 }
+
+// OliveNote (44444) — petite note « i » repliable (PORT VERBATIM).
+export function OliveNote({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  const [open, setOpen] = useState(false);
+  const pastille = <button onClick={() => setOpen(!open)} title={open ? "Replier" : "En savoir plus"}
+    style={{ width: 20, height: 20, borderRadius: 10, border: `1.5px solid ${T.olive600}`, background: "#fff", color: T.olive700, fontSize: 11, fontWeight: 800, cursor: "pointer", flexShrink: 0, lineHeight: "16px", padding: 0 }}>i</button>;
+  if (!open)
+    return <div onClick={() => setOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 10px", background: T.oliveSoft, borderRadius: 9, marginTop: 8, cursor: "pointer" }}>
+      {pastille}<span style={{ fontSize: 10.5, color: T.inkSoft, fontWeight: 700 }}>Info</span></div>;
+  return <div style={{ display: "flex", alignItems: "flex-start", gap: 8, ...style }}>{pastille}<div style={{ flex: 1 }}>{children}</div></div>;
+}
