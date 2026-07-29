@@ -1,6 +1,8 @@
 import { Global, Module } from "@nestjs/common";
+import { APP_FILTER } from "@nestjs/core";
 import { PrismaService } from "./prisma.service";
 import { AuditService } from "./audit.service";
+import { ConcurrencyConflictFilter } from "./optimistic-lock";
 
 /**
  * CoreModule (@Global) — AUDIT A1. Un SEUL `PrismaService` (donc un seul pool de connexions) et un
@@ -11,7 +13,10 @@ import { AuditService } from "./audit.service";
  */
 @Global()
 @Module({
-  providers: [PrismaService, AuditService],
+  // Bloc A robustesse (R336/LK) : filtre GLOBAL mappant ConcurrencyConflictError → HTTP 409 typé.
+  // Rien ne lève cette erreur tant que FF_OPTIMISTIC_LOCKING est off + qu'aucun handler n'adopte
+  // majVersionnee : comportement inchangé (e2e verts), mais le contrat 409 est prêt et testé.
+  providers: [PrismaService, AuditService, { provide: APP_FILTER, useClass: ConcurrencyConflictFilter }],
   exports: [PrismaService, AuditService],
 })
 export class CoreModule {}

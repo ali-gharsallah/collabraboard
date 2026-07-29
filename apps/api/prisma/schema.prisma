@@ -96,6 +96,7 @@ model KycFile {
   visas         KycVisa[]
   lock          KycLock?
   handoffPhase  Int          @default(0) @map("handoff_phase")   // R85 : index de phase du passage de main
+  version       Int          @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (UPDATE … WHERE version)
   @@unique([tenantId, code])
   @@index([tenantId, clientId])
   @@map("kyc_files")
