@@ -8,7 +8,7 @@ import { OliveLogo } from "../components/OliveLogo";
 // branche pilote (les 51 écrans, dont Home/CPSI/Olivia/Runs, passent tous en chunk à la
 // demande). Exports nommés ⇒ `.then((m) => ({ default: m.X }))`.
 const ClientsList = lazy(() => import("../features/clients/ClientsList").then((m) => ({ default: m.ClientsList })));
-const KycCreate = lazy(() => import("../features/kyc/KycCreate").then((m) => ({ default: m.KycCreate })));
+const KycList = lazy(() => import("../features/kyc/KycList").then((m) => ({ default: m.KycList })));
 const KycDetail = lazy(() => import("../features/kyc/KycDetail").then((m) => ({ default: m.KycDetail })));
 const RejeuKyc = lazy(() => import("../features/kyc/RejeuKyc").then((m) => ({ default: m.RejeuKyc })));
 const BatCampagne = lazy(() => import("../features/bat/BatCampagne").then((m) => ({ default: m.BatCampagne })));
@@ -214,7 +214,7 @@ export function Router() {
     {screen === "clients" && <ClientsList/>}
     {screen === "onboarding" && <Onboarding/>}
     {screen === "kyc" && <div>
-      <KycCreate onCreated={setKycCode}/>
+      <KycList onOpen={setKycCode}/>
       {kycCode && <div style={{ marginTop: 20 }}><KycDetail code={kycCode}/></div>}
     </div>}
     {screen === "screening" && <Screening/>}
