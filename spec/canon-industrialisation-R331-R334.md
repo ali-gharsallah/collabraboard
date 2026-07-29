@@ -27,6 +27,15 @@ pris (roles.guard) → registrar en **IX**. FB et MG libres.
 Le texte du canon PO fait foi pour le CONTENU (IX-01..05, FB-01..07, MG-01..05, phases
 0-5 du guide, A.1/A.5) — message PO du 2026-07-29.
 
+## Guide C.1 — Pipeline de déploiement (phases 0-5), guide GÉNÉRÉ
+
+`tools/deploiement/pipeline.mjs` = définition source unique ; `generer-guide.mjs` émet
+`docs/DEPLOIEMENT.md` (no-drift verrouillé, DP-05, porte CI « 3d »). Phases : 0 tag signé →
+1 staging auto → 2 répétition de restauration (RTO mesuré, bloquant) → 3 fumée+FAT staging →
+4 **prod déclenchée par un HUMAIN** (jamais auto, /readyz en garde) → 5 contract différé (N+1).
+Réfère les scripts réels : `infra/scripts/{deploy,restore-test,smoke}.sh`, endpoint `/readyz`.
+Harnais DP-01..05, 5/5.
+
 ## R334 [canon R331] — Migrations expand/contract vérifiées, répétées
 
 Cadre `tools/migrations/` (MG-01..05, harnais 5/5) :
