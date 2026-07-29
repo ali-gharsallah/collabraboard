@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from "
 import { join, dirname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
-import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, detecterAnomalies,
+import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, lireExceptions, detecterAnomalies,
   comparerSession, extraireSection, assembler, normaliserPourCheck } from "./generate.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -33,7 +33,8 @@ const lire = (p) => ({ chemin: rel(p), contenu: readFileSync(p, "utf8") });
 // ── Sources : spec/ (canons + catalogues + gherkin), hors inbox et hors référence de session/seed.
 const specFiles = collecter(join(racine, "spec"), [".md", ".feature"])
   .filter((p) => !p.includes("/inbox/")
-    && !p.endsWith("REFERENTIEL-SESSION-2026-07-29.md") && !p.endsWith("mapping-session-repo.md"))
+    && !p.endsWith("REFERENTIEL-SESSION-2026-07-29.md") && !p.endsWith("mapping-session-repo.md")
+    && !p.endsWith("canon-master-exceptions.md"))
   .map(lire);
 
 // ── Suites de test (liaison famille→suite) : e2e + harnais règles + tools + services + web + python.
@@ -47,16 +48,21 @@ const testFiles = [
 
 const refSession = readFileSync(join(racine, "spec", "REFERENTIEL-SESSION-2026-07-29.md"), "utf8");
 const seedMd = readFileSync(join(racine, "spec", "mapping-session-repo.md"), "utf8");
+const exPath = join(racine, "spec", "canon-master-exceptions.md");
+const exceptions = lireExceptions(existsSync(exPath) ? readFileSync(exPath, "utf8") : "");
 const rqPath = join(racine, "spec", "questionnaire-R-Q.md");
 const rqMd = existsSync(rqPath) ? readFileSync(rqPath, "utf8") : "";
 
 // ── Assemblage ──
 const artefacts = indexerArtefacts(specFiles);
-const toutesFamilles = [...new Set(artefacts.flatMap((a) => a.familles))].sort();
+// Familles ACTIVES = hors docs historiques/référence (changelogs de version, ADR, inventaires) :
+// leurs jetons XX-NN incidents (DB-, MO-) ne sont pas des familles de scénarios à couvrir.
+const estHisto = (chemin) => exceptions.historique.some((m) => chemin.includes(m));
+const toutesFamilles = [...new Set(artefacts.filter((a) => !estHisto(a.chemin)).flatMap((a) => a.familles))].sort();
 const liens = lierFamillesSuites(toutesFamilles, testFiles);
 const rq = extraireRQ(rqMd);
 const seed = lireSeed(seedMd);
-const anomalies = detecterAnomalies(artefacts, liens);
+const anomalies = detecterAnomalies(artefacts, liens, exceptions);
 const reglesRepo = [...new Set(artefacts.flatMap((a) => a.regles))];
 const comparaison = comparerSession(refSession, seed, reglesRepo);
 const invariantsVerbatim = (extraireSection(refSession, "3") || "").split("\n").slice(1).join("\n").trim()

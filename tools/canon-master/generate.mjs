@@ -88,16 +88,33 @@ export function lireSeed(contenuSeed) {
   return lignes.map((l) => ({ session: l[1], repo: l[2], objet: l[3].trim(), familles: l[4].trim() }));
 }
 
+// ── Lit le registre d'exceptions documentées (spec/canon-master-exceptions.md) : motifs de
+//    fichiers errata / historiques, numéros réservés, placeholders de test. JUSTIFIE, ne masque pas.
+export function lireExceptions(contenu = "") {
+  const sect = (kw) => (contenu.match(new RegExp(`^##[^\\n]*${kw}[^\\n]*\\n([\\s\\S]*?)(?=^##\\s|(?![\\s\\S]))`, "mi"))?.[1] ?? "");
+  const motifs = (txt) => [...txt.matchAll(/^-\s*`?([^`\n]+?)`?\s*$/gm)].map((m) => m[1].trim()).filter(Boolean);
+  const lignes = (txt) => [...txt.matchAll(/^\|\s*R(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|/gm)]
+    .map((m) => ({ numero: Number(m[1]), motif: m[2].trim(), ref: m[3].trim() }));
+  return { errata: motifs(sect("ERRATA")), historique: motifs(sect("HISTORIQUE")),
+    reserves: lignes(sect("RÉSERV")), placeholders: lignes(sect("PLACEHOLDER")) };
+}
+
+const _match = (chemin, motifs) => (motifs ?? []).some((p) => String(chemin).includes(p));
+
 // ── Détecte les anomalies (JAMAIS corrigées) : doublons de n° à titres divergents, règle sans
-//    scénario, famille sans suite, numéros absents dans la plage.
-export function detecterAnomalies(artefacts, liens) {
+//    scénario, famille sans suite, numéros absents. Les exceptions DOCUMENTÉES sont RECLASSÉES en
+//    « connues & justifiées » (errata, docs historiques, réserves, placeholders), jamais masquées.
+export function detecterAnomalies(artefacts, liens, exceptions = { errata: [], historique: [], reserves: [], placeholders: [] }) {
   const parNum = {};
   for (const a of artefacts) for (const r of a.regles) (parNum[r] ??= []).push(a);
 
   // Collision = un numéro POSSÉDÉ (nom de fichier) par ≥2 artefacts à titres divergents. Les
-  // citations de corps (R48 partout) ne comptent pas — sinon toute règle fondamentale « collisionne ».
+  // citations de corps (R48 partout) ne comptent pas ; un ERRATUM corrige, il ne collisionne pas.
   const parProprio = {};
-  for (const a of artefacts) for (const r of a.possede ?? []) (parProprio[r] ??= []).push(a);
+  for (const a of artefacts) {
+    if (_match(a.chemin, exceptions.errata) || _match(a.chemin, exceptions.historique)) continue;
+    for (const r of a.possede ?? []) (parProprio[r] ??= []).push(a);
+  }
   const doublons = Object.entries(parProprio)
     .filter(([, arts]) => arts.length > 1 && new Set(arts.map((x) => x.titre)).size > 1)
     .map(([n, arts]) => ({ numero: Number(n), sources: arts.map((x) => x.chemin) }))
@@ -105,10 +122,9 @@ export function detecterAnomalies(artefacts, liens) {
 
   const famillesSansSuite = Object.entries(liens).filter(([, s]) => s.length === 0).map(([f]) => f).sort();
 
-  // Artefacts porteurs de règles mais sans AUCUN scénario (ni famille XX-NN ni scénario Gherkin) —
-  // règle sans preuve exécutable in-situ (typiquement docs de consolidation/inventaire).
+  // Règle sans preuve exécutable in-situ — SAUF docs de référence/historiques (inventaires, ADR).
   const reglesSansScenario = artefacts
-    .filter((a) => a.regles.length > 0 && !a.porteScenarios)
+    .filter((a) => a.regles.length > 0 && !a.porteScenarios && !_match(a.chemin, exceptions.historique))
     .map((a) => ({ chemin: a.chemin, regles: a.regles }));
 
   // Plafond RÉEL = sommet du plus haut AMAS contigu, robuste aux citations aberrantes isolées
@@ -122,12 +138,15 @@ export function detecterAnomalies(artefacts, liens) {
   while (i > 0 && tri[i] - tri[i - 1] > 8) i--;      // écarte les outliers isolés (gros trou en tête)
   const maxOwned = owned.length ? Math.max(...owned) : 0;
   const plafond = Math.max(tri[i] ?? 0, maxOwned);
-  const numerosAbsents = [];
-  for (let n = 1; n <= plafond; n++) if (!presents.has(n)) numerosAbsents.push(n);
-  // Numéros CITÉS au-delà du plafond ratifié (placeholders de test, coquilles) — signalés à part.
-  const numerosHorsPlage = [...new Set(nums.filter((n) => n > plafond))].sort((a, b) => a - b);
+  const reserves = new Set((exceptions.reserves ?? []).map((r) => r.numero));
+  const placeholders = new Set((exceptions.placeholders ?? []).map((r) => r.numero));
+  const numerosAbsents = [];        // trous RÉELS = absents ET non réservés-documentés
+  for (let n = 1; n <= plafond; n++) if (!presents.has(n) && !reserves.has(n)) numerosAbsents.push(n);
+  // Hors plafond ET non déclaré placeholder de test = vraie coquille ; sinon reclassé « connu ».
+  const numerosHorsPlage = [...new Set(nums.filter((n) => n > plafond && !placeholders.has(n)))].sort((a, b) => a - b);
 
-  return { doublons, famillesSansSuite, reglesSansScenario, numerosAbsents, numerosHorsPlage, maxRegle: plafond };
+  return { doublons, famillesSansSuite, reglesSansScenario, numerosAbsents, numerosHorsPlage,
+    maxRegle: plafond, exceptions };
 }
 
 // ── Compare la RÉFÉRENCE DE SESSION au repo via le seed : divergences à SIGNALER (jamais absorber).
@@ -168,7 +187,11 @@ export function assembler({ dateISO, commit, artefacts, liens, rq, seed, anomali
   p("");
 
   // ── RAPPORT D'ANOMALIES (EN TÊTE, jamais corrigé en silence) ──
+  const total = anomalies.doublons.length + anomalies.famillesSansSuite.length
+    + anomalies.reglesSansScenario.length + anomalies.numerosAbsents.length + (anomalies.numerosHorsPlage ?? []).length;
   p(`## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)`);
+  p("");
+  p(total === 0 ? `**Aucune anomalie à traiter.** Les cas connus sont classés & justifiés ci-dessous.` : `**${total} anomalie(s) à traiter.**`);
   p("");
   p(`- **Doublons de numéro à titres divergents** : ${anomalies.doublons.length}`);
   for (const d of anomalies.doublons.slice(0, 40)) p(`  - R${d.numero} — ${d.sources.join(" · ")}`);
@@ -177,10 +200,22 @@ export function assembler({ dateISO, commit, artefacts, liens, rq, seed, anomali
   p(`- **Artefacts porteurs de règles sans aucune famille de scénario** : ${anomalies.reglesSansScenario.length}`);
   for (const r of anomalies.reglesSansScenario.slice(0, 30))
     p(`  - ${r.chemin} (R${r.regles.join(", R")})`);
-  p(`- **Numéros R absents dans [1..${anomalies.maxRegle}]** (plafond = sommet de l'amas contigu) : ${anomalies.numerosAbsents.length}`
+  p(`- **Numéros R absents dans [1..${anomalies.maxRegle}]** (plafond = sommet de l'amas contigu, hors réserves) : ${anomalies.numerosAbsents.length}`
     + (anomalies.numerosAbsents.length ? ` — ${resumerPlages(anomalies.numerosAbsents)}` : ""));
-  p(`- **Numéros cités hors plage ratifiée** (placeholders de test, coquilles) : ${(anomalies.numerosHorsPlage ?? []).length}`
+  p(`- **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : ${(anomalies.numerosHorsPlage ?? []).length}`
     + ((anomalies.numerosHorsPlage ?? []).length ? ` — ${resumerPlages(anomalies.numerosHorsPlage)}` : ""));
+  p("");
+
+  // ── CAS CONNUS & JUSTIFIÉS (registre spec/canon-master-exceptions.md) — tracés, pas masqués ──
+  const ex = anomalies.exceptions ?? {};
+  p(`### Cas connus & justifiés (\`spec/canon-master-exceptions.md\`)`);
+  p("");
+  p(`- **Errata** (corrections datées, pas des collisions) : ${(ex.errata ?? []).length ? "motifs `" + ex.errata.join("`, `") + "`" : "—"} — ex. R119 (\`APPROVED\`→\`VALIDATED\`, décision Ali).`);
+  p(`- **Docs historiques / référence** (hors couverture familles) : ${(ex.historique ?? []).length ? "motifs `" + ex.historique.join("`, `") + "`" : "—"} — écarte les jetons XX-NN incidents (DB-, MO-).`);
+  p(`- **Numéros réservés / non applicables** : ${(ex.reserves ?? []).length}`);
+  for (const r of ex.reserves ?? []) p(`  - R${r.numero} — ${r.motif} (réf. ${r.ref})`);
+  p(`- **Placeholders de test** : ${(ex.placeholders ?? []).length}`);
+  for (const r of ex.placeholders ?? []) p(`  - R${r.numero} — ${r.motif} (réf. ${r.ref})`);
   p("");
 
   // ── RAPPORT DE DIVERGENCES session ↔ repo ──

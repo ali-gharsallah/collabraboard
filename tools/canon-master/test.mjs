@@ -2,7 +2,7 @@
 // réelle : fixtures en mémoire). Prouve que le document faisant foi est ASSEMBLÉ depuis le repo,
 // que les anomalies sont RAPPORTÉES (jamais corrigées) et que le mapping n'est JAMAIS déduit.
 import assert from "node:assert/strict";
-import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, detecterAnomalies,
+import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, lireExceptions, detecterAnomalies,
   comparerSession, extraireSection, resumerPlages, assembler, normaliserPourCheck } from "./generate.mjs";
 
 let passed = 0; const t = (nom, fn) => { fn(); passed++; console.log("  ✓ " + nom); };
@@ -97,6 +97,34 @@ t("GC-06 assemblage : anomalies EN TÊTE + toutes les sections a–f + invariant
   const norm = normaliserPourCheck(md);
   assert.ok(!norm.includes("> **Généré le"));      // la ligne volatile (date + hash) est retirée
   assert.ok(!norm.includes("abc1234"));            // aucun hash de commit ne subsiste → diff stable
+});
+
+t("GC-07 exceptions DOCUMENTÉES reclassées (jamais masquées) : erratum ≠ collision · histo hors couverture · réserve ≠ trou · placeholder ≠ coquille", () => {
+  const exMd = [
+    "# Exceptions",
+    "## Motifs ERRATA", "- `erratum-`",
+    "## Motifs HISTORIQUE", "- `catalogue-patch-`",
+    "## Numéros RÉSERVÉS", "| Numéro | Motif | Référence |", "|--|--|--|", "| R247 | Read-model CAS B non applicable | ECARTS §A3 |",
+    "## Numéros PLACEHOLDER", "| Numéro | Motif | Référence |", "|--|--|--|", "| R999 | Test négatif OL-14 | home-olivia |",
+  ].join("\n");
+  const ex = lireExceptions(exMd);
+  assert.deepEqual(ex.errata, ["erratum-"]);
+  assert.deepEqual(ex.historique, ["catalogue-patch-"]);
+  assert.equal(ex.reserves[0].numero, 247);
+  assert.equal(ex.placeholders[0].numero, 999);
+
+  const idx = indexerArtefacts([
+    { chemin: "canon-R119-onboarding.md", contenu: "# Onboarding\nR119." },
+    { chemin: "erratum-R119-validated.md", contenu: "# Erratum R119 différent\nR119." },  // erratum : PAS une collision
+    { chemin: "catalogue-patch-v4.9.md", contenu: "# Patch\nR40, DB-01." },               // histo : DB hors couverture
+    { chemin: "canon-R248-porte.md", contenu: "# Porte\nR248, familles PC-01." },         // R247 = trou → réservé
+  ]);
+  const liens = lierFamillesSuites(["PC"], [{ chemin: "t.ts", contenu: "PC-01" }]);       // DB exclu en amont (histo)
+  const a = detecterAnomalies(idx, liens, ex);
+  assert.equal(a.doublons.length, 0);                                  // erratum ne collisionne pas
+  assert.ok(!a.numerosAbsents.includes(247));                          // R247 réservé, pas un trou
+  assert.ok(!(a.numerosHorsPlage ?? []).includes(999));                // R999 placeholder, pas une coquille
+  assert.ok(a.exceptions.reserves.some((r) => r.numero === 247));      // mais TRACÉ dans les cas connus
 });
 
 console.log(`\n### ${passed}/${passed} tests canon-master verts ###`);

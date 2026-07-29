@@ -2,20 +2,28 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-07-29 · commit `30bd611`.** Ce document se périme visiblement :
+> **Généré le 2026-07-29 · commit `c88ada1`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-- **Doublons de numéro à titres divergents** : 1
-  - R119 — spec/catalogue-amendement-R117-R120-onboarding.md · spec/erratum-R119-validated.md
-- **Familles de scénarios sans suite de test** : 2 — DB, MO
-- **Artefacts porteurs de règles sans aucune famille de scénario** : 3
-  - spec/ADR-14-moteur-workflow-reference.md (R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51, R52)
-  - spec/catalogue-v2-inventaire.md (R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51, R52)
-  - spec/wf-v2.md (R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51)
-- **Numéros R absents dans [1..339]** (plafond = sommet de l'amas contigu) : 1 — R247
-- **Numéros cités hors plage ratifiée** (placeholders de test, coquilles) : 1 — R999
+**Aucune anomalie à traiter.** Les cas connus sont classés & justifiés ci-dessous.
+
+- **Doublons de numéro à titres divergents** : 0
+- **Familles de scénarios sans suite de test** : 0
+- **Artefacts porteurs de règles sans aucune famille de scénario** : 0
+- **Numéros R absents dans [1..339]** (plafond = sommet de l'amas contigu, hors réserves) : 0
+- **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
+
+### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
+
+- **Errata** (corrections datées, pas des collisions) : motifs `erratum-` — ex. R119 (`APPROVED`→`VALIDATED`, décision Ali).
+- **Docs historiques / référence** (hors couverture familles) : motifs `catalogue-patch-`, `catalogue-v2-inventaire`, `wf-v2`, `ADR-` — écarte les jetons XX-NN incidents (DB-, MO-).
+- **Numéros réservés / non applicables** : 2
+  - R78 — Numéro RÉSERVÉ au catalogue CPSI (gap documenté, non attribué) (réf. `docs/CPSI-CATALOGUE-R63-R86.md` · référentiel §4)
+  - R247 — Read-model workflow **CAS B — NON APPLICABLE** (O-Live = CAS A : état persisté & requêtable, rejeu read-side) (réf. `docs/ECARTS-FRONT.md` §A3 · `docs/RUNBOOK-OPS.md` · `docs/tests/FAT/FAT-A3-WORKFLOW.md`)
+- **Placeholders de test** : 1
+  - R999 — Citation « REGLE:R999 inexistante » du test négatif **OL-14** (prouve le rejet d'une règle inconnue au catalogue) (réf. `spec/spec-fonctionnelle-home-olivia.md` (OL-14))
 
 ## 🔀 Divergences référence-de-session ↔ repo
 
@@ -80,7 +88,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1–R51 | sans-titre | PROPOSÉ | — | — |
 | R117–R120 | Catalogue O-Live — Amendement PROPOSÉ (R117 → R120) · Bloc 19 « Onboarding — l'entrée en relation » | RATIFIÉ | OB | onboarding.wiring.spec.ts |
 | R89–R99 | Catalogue O-Live — Amendements RATIFIÉS (R89 → R99) | RATIFIÉ | AU, KS, MF, OI, TM, TP | auth.spec.ts, fat-cloture-readiness.e2e-spec.ts, key-store.spec.ts, mfa.spec.ts |
-| R2, R4, R13, R39, R48–R49, R52, R58–R61, R84–R86, R100–R103 | Catalogue O-Live — Erratum & note de version **v4.0 → v4.1** | PROPOSÉ | CK, FE, HF, HM, LK, NV, SC, VQ | rules.spec.ts, run_tests.py, test_cpsi_bloc16.py, four-eyes.spec.ts |
+| R2, R4, R13, R39, R48–R49, R52, R58–R61, R84–R86, R100–R103 | Catalogue O-Live — Erratum & note de version **v4.0 → v4.1** | PROPOSÉ | CK, FE, HF, HM, LK, NV, SC, VQ | rules.spec.ts, run_tests.py, test_cpsi_bloc16.py, test_cpsi_bloc17.py |
 | R2, R7, R44, R48–R49, R66, R68–R70, R79–R80, R133–R136, R144, R167, R170, R177–R179, R250, R253–R266, R999 | O-Live — Spécification fonctionnelle détaillée | PROPOSÉ | HO, OL | fat-canon-derniers.e2e-spec.ts, fat-home.e2e-spec.ts, fat-swarm.e2e-spec.ts, screens.test.tsx |
 | R2, R39, R44, R68, R121–R124, R177, R253–R267 | O-Live — Spécification fonctionnelle détaillée | PROPOSÉ | AG, HO, OL, SW | prerevue.wiring.spec.ts, fat-canon-derniers.e2e-spec.ts, fat-home.e2e-spec.ts, fat-swarm.e2e-spec.ts |
 | R4–R5, R7, R13–R14, R17, R19, R25–R26, R29, R31, R33, R37, R39, R41–R43, R45, R47, R68, R163, R170, R177, R248–R278 | Questionnaire de paramétrage d'intégration (R-Q) | PROPOSÉ | CC, HO, OL, RV, SD, SW | fat-canon-anciens.e2e-spec.ts, fat-coc.e2e-spec.ts, fat-degel-v7.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts |
