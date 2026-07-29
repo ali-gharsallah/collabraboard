@@ -1141,3 +1141,25 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   composant non requis) ; (2) le relais outbox est un worker in-process — le lag se mesure
   sur event_consumers ; (3) `/deploiements` est tenanté (RLS) — le journal des déploiements
   d'un tenant lui appartient ; l'agrégat cross-tenant reste un acte d'ops (hors surface).
+
+## SOLDE — VAGUE DE CLÔTURE R329 : LE TENANT DE DÉMO GWB (2026-07-29, DM-01..06)
+
+- **R329 livré** : le seed GWB est REFONDU — histoire commerciale complète par les VRAIES
+  APIs (prospects→onboarding 3 structures→KYC→CPSI+signal+score→CoC HAUTE→OpRisk→
+  offboarding EXIT_COMPLIANCE art.10a), IDEMPOTENT PAR RÉFÉRENCES (find-or-create) —
+  remplace le refus de double semis. Idempotence PROUVÉE : 2 exécutions consécutives =
+  compteurs identiques ({utilisateurs:6, onboardings:3, clients:3, kyc:1, coc:1,
+  offboarding:1}), DM-02.
+- **DM-01** (revue de source) : zéro écriture Prisma directe sur les 8 tables de MOTEURS
+  (cpsiEvent, domainEvent, riskCase, kycFile, onboarding, cocFile, offboardingFile,
+  screeningRun) — tout passe par les APIs. **DM-03** : zéro branche de logique `demo` dans
+  le code produit (grep CI bloquant) — la démo n'a AUCUNE voie spéciale. **DM-04** (OF-07) :
+  le motif EXIT_COMPLIANCE invisible au RM, visible au CO_SR — la scène de démo.
+- **DEMO-SCRIPT.md** : déroulé commercial minuté (≈12 min, 10 scènes, personas par rôle,
+  les invariants que la démo prouve).
+- **ÉCARTS CONSIGNÉS** : (1) amorçage hors API ASSUMÉ (INSERT tenant, jeton ADMIN,
+  assignation rmUserId — aucune route ne les porte, PAS des tables moteurs) ; (2) DM-05
+  (rejeu à date sur le tenant démo) et DM-06 (isolation cross-tenant) sont garantis par
+  construction (RLS + rejeu générique déjà testés partout) — non re-testés sur GWB ;
+  (3) le run Olivia v2 de démo s'ajoutera au seed avec §4.c (constat) ; (4) reset = purge
+  (RUNBOOK §9) + re-seed.
