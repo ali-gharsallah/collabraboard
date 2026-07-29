@@ -1291,7 +1291,7 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("DE")("Veille réglementaire")).toBe("Regulatorische Beobachtung");
     expect(traduire("IT")("Legal — Contrats")).toBe("Legal — Contratti");
     expect(traduire("FR")("Accueil")).toBe("Accueil");
-    expect(traduire("EN")("CPSI · Barèmes")).toBe("CPSI · Barèmes");        // écart par clé — le FR reste
+    expect(traduire("EN", { dev: false })("CPSI · Barèmes")).toBe("CPSI · Barèmes");  // écart par clé — le FR reste (prod : propre, LN-02)
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
@@ -1304,5 +1304,49 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(screen.queryByRole("button", { name: "Accueil" })).toBeNull();
     expect(window.localStorage.getItem("OLIVE_LANG")).toBe("EN");           // le choix persiste
     window.localStorage.removeItem("OLIVE_LANG");
+  });
+});
+
+describe("FE-LN — R326/R327 (solde 4 écarts, ratifié 2026-07-29) : marqueur dev, donnée verbatim, formats", () => {
+  it("LN-02 : clé manquante → marqueur ⟦…⟧ en dev, repli FR PROPRE en prod — jamais une clé brute maquillée", async () => {
+    const { traduire } = await import("../lib/i18n");
+    expect(traduire("EN", { dev: true })("CPSI · Barèmes")).toBe("⟦CPSI · Barèmes⟧");
+    expect(traduire("EN", { dev: false })("CPSI · Barèmes")).toBe("CPSI · Barèmes");
+    expect(traduire("FR", { dev: true })("CPSI · Barèmes")).toBe("CPSI · Barèmes");  // FR = référence, jamais marquée
+    expect(traduire("EN", { dev: true })("Accueil")).toBe("Home");                   // clé présente : jamais de marqueur
+  });
+
+  it("LN-03 : la DONNÉE reste verbatim sur 3 écrans — un texte backend en DE s'affiche en DE, interface FR", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(
+      http.get("*/v1/oprisk/incidents", () => HttpResponse.json({ incidents: [
+        { id: "i1", titre: "Doppelte Ausführung der Überweisung", categorie: "EXECUTION_PROCESSUS", severite: 2, statut: "DECLARE" }] })),
+      http.get("*/v1/oprisk/heatmap", () => HttpResponse.json({ cellules: [] })),
+      http.get("*/v1/oprisk/actions", () => HttpResponse.json({ actions: [] })),
+      http.get("*/v1/mobile/messages", () => HttpResponse.json({ messages: [
+        { id: "m1", de: "CLIENT", texte: "Bitte ändern Sie meine Adresse" }] })),
+      http.post("*/v1/builder/brouillons", () => HttpResponse.json(
+        { message: "Rolle unbekannt im RBAC des Mandanten" }, { status: 400 })));
+    const { OpRisk } = await import("./oprisk/OpRisk");
+    const r1 = render(<OpRisk/>);
+    fireEvent.click(screen.getByRole("button", { name: /^Charger$/ }));
+    expect(await screen.findByText("Doppelte Ausführung der Überweisung")).toBeInTheDocument();  // verbatim DE
+    r1.unmount();
+    const { MobileAdmin } = await import("./mobile/MobileAdmin");
+    render(<MobileAdmin/>);
+    fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Messagerie$/ }));
+    expect(await screen.findByText(/Bitte ändern Sie meine Adresse/)).toBeInTheDocument();       // verbatim DE
+  });
+
+  it("LN-06 : le NOMBRE suit la locale, la DEVISE suit la donnée — CHF constant, séparateurs par locale", async () => {
+    const { formatMontant } = await import("../lib/i18n");
+    const deCH = formatMontant(1234.5, "CHF", "de-CH");
+    const frCH = formatMontant(1234.5, "CHF", "fr-CH");
+    expect(deCH).toContain("CHF");
+    expect(frCH).toContain("CHF");                                          // la devise suit la DONNÉE, jamais la locale
+    expect(deCH).not.toBe(frCH);                                            // la locale gouverne le format…
+    expect(deCH).toMatch(/['’]/);                                           // de-CH : apostrophe de groupement (variante ICU)
+    expect(frCH).toMatch(/[\s ]/);                                     // fr-CH : espace de groupement (ICU ; le décimal CHF suisse reste le point)
   });
 });

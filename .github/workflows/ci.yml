@@ -145,6 +145,8 @@ jobs:
           npx vitest run
           npx vite build
           node scripts/verifier-budget-bundle.js
+          node scripts/rapport-i18n.js
+          node scripts/verifier-i18n-cliquet.js
 
       # ── RUNBOOK §2 · 6 — Démo (73 écrans) ────────────────────────────────────
       # Step RETIRÉ (chantier B) : la démo exige Playwright + navigateurs, hors scope CI

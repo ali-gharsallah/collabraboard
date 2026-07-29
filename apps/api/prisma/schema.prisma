@@ -1198,6 +1198,7 @@ model CocConfigVersion {
   actionRequise String  @map("action_requise")            // REVISION_KYC | MAJ_CIBLEE | PRISE_CONNAISSANCE
   roleTraitant String   @map("role_traitant")
   severiteCpsi Float?   @map("severite_cpsi")             // sévérité du signal coc_sensible émis
+  libelles     Json?                                      // R327 (LN-04) : libellés multilingues du TENANT (fr obligatoire, de/en/it optionnels) — expand nullable (RUNBOOK §8)
   effetAt      DateTime @map("effet_at")                  // versionné à date (R68) — la config d'un CoC = la version ≤ ouverture
   par          String   @map("par") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")

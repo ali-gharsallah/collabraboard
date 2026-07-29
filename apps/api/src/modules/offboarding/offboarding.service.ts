@@ -121,17 +121,37 @@ export class OffboardingService {
   //    par construction, dès la création) — le motif sensible ne PEUT pas fuir ici. ──
   async courrier(ctx: Ctx, id: string) {
     const o = await this.dossier(this.prisma, ctx, id);
-    const texte = [
-      "Objet : clôture de votre relation bancaire",
-      "",
-      "Madame, Monsieur,",
-      `Nous vous informons de la clôture de votre relation (référence ${o.id.slice(0, 8)}).`,
-      `Motif : ${o.motif}.`,
-      o.clotureEffectiveAt ? `La clôture est effective au ${new Date(o.clotureEffectiveAt).toISOString().slice(0, 10)}.` : "La clôture est en cours de traitement.",
-      "Vos avoirs seront transférés selon vos instructions.",
-      "Veuillez agréer nos salutations distinguées.",
-    ].join("\n");
-    return { texte };
+    // R327/LN-05 (ratifié 2026-07-29) : le document GÉNÉRÉ suit la langue du DESTINATAIRE
+    // (`corrLang` du client — jamais la locale de l'opérateur) ; le MOTIF est une DONNÉE :
+    // il reste VERBATIM, quelle que soit la langue du gabarit.
+    const client = await this.prisma.client.findFirst({ where: { id: o.clientId, tenantId: ctx.tenantId } });
+    const langue = (["FR", "DE", "EN", "IT"].includes(client?.corrLang ?? "") ? client!.corrLang : "FR") as
+      "FR" | "DE" | "EN" | "IT";
+    const dateCloture = o.clotureEffectiveAt ? new Date(o.clotureEffectiveAt).toISOString().slice(0, 10) : null;
+    const G: Record<string, string[]> = {
+      FR: ["Objet : clôture de votre relation bancaire", "", "Madame, Monsieur,",
+        `Nous vous informons de la clôture de votre relation (référence ${o.id.slice(0, 8)}).`,
+        `Motif : ${o.motif}.`,
+        dateCloture ? `La clôture est effective au ${dateCloture}.` : "La clôture est en cours de traitement.",
+        "Vos avoirs seront transférés selon vos instructions.", "Veuillez agréer nos salutations distinguées."],
+      DE: ["Betreff: Auflösung Ihrer Bankbeziehung", "", "Sehr geehrte Damen und Herren,",
+        `Wir informieren Sie über die Auflösung Ihrer Beziehung (Referenz ${o.id.slice(0, 8)}).`,
+        `Grund: ${o.motif}.`,
+        dateCloture ? `Die Auflösung ist wirksam per ${dateCloture}.` : "Die Auflösung ist in Bearbeitung.",
+        "Ihre Vermögenswerte werden gemäss Ihren Instruktionen übertragen.", "Freundliche Grüsse."],
+      EN: ["Subject: closure of your banking relationship", "", "Dear Sir or Madam,",
+        `We inform you of the closure of your relationship (reference ${o.id.slice(0, 8)}).`,
+        `Reason: ${o.motif}.`,
+        dateCloture ? `The closure is effective as of ${dateCloture}.` : "The closure is being processed.",
+        "Your assets will be transferred according to your instructions.", "Yours faithfully."],
+      IT: ["Oggetto: chiusura della relazione bancaria", "", "Gentili Signore e Signori,",
+        `Vi informiamo della chiusura della relazione (riferimento ${o.id.slice(0, 8)}).`,
+        `Motivo: ${o.motif}.`,
+        dateCloture ? `La chiusura è effettiva al ${dateCloture}.` : "La chiusura è in corso di trattamento.",
+        "I vostri averi saranno trasferiti secondo le vostre istruzioni.", "Distinti saluti."],
+    };
+    const texte = G[langue].join("\n");
+    return { texte, langue };
   }
 
   // ── R268 : le type impose ses visas et ses documents — le refus liste TOUT ce qui manque ──

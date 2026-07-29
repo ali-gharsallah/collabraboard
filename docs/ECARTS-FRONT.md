@@ -1015,3 +1015,28 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   snapshot (canon) viendra AVEC le snapshot (PC-21..23) — rien à corrompre aujourd'hui ;
   (3) le déclencheur reste la jauge : si cpsi_replay_warn_ms refranchit en réel,
   PC-21..25 s'implémentent selon le contrat figé.
+
+## SOLDE — CANON « 4 DERNIERS ÉCARTS » PARTIE 2 : i18n R326/R327 EN CLIQUET (2026-07-29)
+
+- **R326** : dictionnaire = LA source (lib/i18n.ts, import maquette verbatim, versionné
+  par git) ; clé manquante = écart LISTÉ en CI (scripts/rapport-i18n.js — état initial :
+  29/72 clés nav traduites, 43 écarts par langue = la liste de travail) ; repli FR PROPRE
+  en prod, marqueur ⟦…⟧ en dev (LN-02) ; « une clé sans FR n'existe pas » satisfait par
+  construction (la clé EST le FR).
+- **LN-01 en CLIQUET (ratifié)** : scripts/verifier-i18n-cliquet.js BLOQUANT en CI — les
+  fichiers convertis (liste qui ne peut que croître ; départ : le shell) sont vérifiés
+  sans texte JSX en dur ; tout nouvel écran s'ajoute à sa livraison. Le cliquet a mordu
+  dès son premier tour (fallback Suspense converti).
+- **R327** : LN-03 donnée VERBATIM (3 écrans testés : incident DE, message mobile DE,
+  interface FR) ; LN-04 paramétrage traduit PAR le tenant (CoC `libelles` fr obligatoire
+  + de/en/it, langue inconnue → refus typé R327, colonne Json nullable = expand RUNBOOK
+  §8) ; LN-05 le courrier OF-09 suit `corrLang` du DESTINATAIRE (gabarits FR/DE/EN/IT,
+  MOTIF verbatim, re-vérifié en IT — jamais la locale de l'opérateur) ; LN-06 formats par
+  Intl (le nombre suit la locale, la devise suit la donnée). Clés R-Q :
+  tenant_langue_defaut, langues_actives_ui.
+- **ÉCARTS CONSIGNÉS** : (1) conversion des 73 écrans = chantier continu du cliquet ;
+  (2) les littéraux de format du canon (1'234.50 / 1.234,50) sont illustratifs — Intl
+  fait foi par locale (fr-CH : espace + point décimal CHF) ; (3) la croissance-seule de
+  la liste du cliquet est une discipline de revue (le retrait se voit au diff) ; (4) les
+  gabarits de courrier sont du TEXTE D'INTERFACE (traduits par l'éditeur) — le motif
+  reste une donnée, verbatim.

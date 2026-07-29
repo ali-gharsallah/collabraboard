@@ -30,9 +30,24 @@ export function setLangue(l: Langue) {
   try { window.localStorage.setItem("OLIVE_LANG", l); } catch { /* stockage indisponible — la langue reste FR */ }
 }
 
-/** Le `tr()` de la maquette : traduction si la clé existe, sinon la clé FR (écart par clé). */
-export function traduire(l: Langue): (cle: string) => string {
+/**
+ * Le `tr()` de la maquette : traduction si la clé existe, sinon la clé FR (écart par clé).
+ * R326/LN-02 (ratifié 2026-07-29) : la clé MANQUANTE se voit — marqueur ⟦…⟧ en DEV
+ * uniquement (repli FR PROPRE en prod, jamais une clé brute maquillée) ; FR = langue de
+ * référence, jamais marquée (la clé EST le FR).
+ */
+export function traduire(l: Langue, opts?: { dev?: boolean }): (cle: string) => string {
   if (l === "FR") return (cle) => cle;
+  const dev = opts?.dev ?? (typeof import.meta !== "undefined" && Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV));
   const d = DICT[l];
-  return (cle) => d[cle] ?? cle;
+  return (cle) => d[cle] ?? (dev ? `⟦${cle}⟧` : cle);
+}
+
+/**
+ * R327/LN-06 : le NOMBRE suit la LOCALE de l'utilisateur, la DEVISE suit la DONNÉE —
+ * jamais l'inverse. Intl fait foi par locale (les littéraux d'exemple du canon sont
+ * illustratifs — consigné).
+ */
+export function formatMontant(montant: number, devise: string, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: "currency", currency: devise }).format(montant);
 }

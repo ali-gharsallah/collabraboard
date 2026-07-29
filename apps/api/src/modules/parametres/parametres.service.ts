@@ -211,6 +211,11 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Solde 4 écarts — R326/R327 i18n (ratifié 2026-07-29). ──
+  { cle: "tenant_langue_defaut", type: "string", defaut: "FR", regle: "R327", requis: false,
+    description: "Langue par défaut du tenant (FR|DE|EN|IT) : préférence UI par défaut des utilisateurs et repli de `corrLang` pour les documents générés (LN-05 : le courrier suit le DESTINATAIRE, jamais la locale de l'opérateur)." },
+  { cle: "langues_actives_ui", type: "json", defaut: ["FR", "DE", "EN", "IT"], regle: "R327", requis: false,
+    description: "Langues d'interface proposées aux utilisateurs du tenant. La DONNÉE métier n'est JAMAIS traduite (LN-03) ; le paramétrage du tenant se traduit par le tenant lui-même (LN-04, colonnes multilingues fr obligatoire)." },
   // ── Solde 4 écarts — R324/R325 CONTRAT DORMANT (étape 0 ratifiée 2026-07-29) : le
   //    snapshot/cache ne s'ACTIVENT que si la jauge R250 refranchit cpsi_replay_warn_ms
   //    (état au jour de ratification : 103.7 ms pour 10 001 evts). Les clés portent le

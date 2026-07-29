@@ -55,9 +55,16 @@ export class CocService {
 
   // ── Éditeur du registre (annexe C) : versionné à date ; HAUTE FORCE la révision (SD-06, backend) ──
   async definirType(ctx: Ctx, dto: { typeCode?: string; libelle?: string; materialite?: string;
-    actionRequise?: string; roleTraitant?: string; severiteCpsi?: number; effetAt?: string }) {
+    actionRequise?: string; roleTraitant?: string; severiteCpsi?: number; effetAt?: string;
+    libelles?: Record<string, string> }) {
     if (!["CO_SR", "ADMIN"].includes(ctx.role)) throw new ForbiddenException("Le registre CoC s'édite en CO_SR/ADMIN");
     if (!dto?.typeCode || !dto?.libelle) throw new BadRequestException("typeCode et libelle requis");
+    // R327 (LN-04) : le TENANT traduit son paramétrage — langues fermées {fr,de,en,it}, fr obligatoire.
+    if (dto.libelles) {
+      const inconnues = Object.keys(dto.libelles).filter((l) => !["fr", "de", "en", "it"].includes(l));
+      if (inconnues.length) throw new BadRequestException(
+        `R327 : langues admises fr|de|en|it — reçues : ${inconnues.join(", ")}`);
+    }
     if (!MATERIALITES.includes(dto.materialite ?? "")) throw new BadRequestException("materialite : HAUTE | MOYENNE | BASSE");
     if (!ACTIONS.includes(dto.actionRequise ?? "")) throw new BadRequestException("actionRequise : REVISION_KYC | MAJ_CIBLEE | PRISE_CONNAISSANCE");
     if (dto.materialite === "HAUTE" && dto.actionRequise !== "REVISION_KYC")
@@ -66,6 +73,7 @@ export class CocService {
       tenantId: ctx.tenantId, typeCode: dto.typeCode, libelle: dto.libelle,
       materialite: dto.materialite!, actionRequise: dto.actionRequise!,
       roleTraitant: dto.roleTraitant ?? "CO", severiteCpsi: dto.severiteCpsi ?? 1,
+      libelles: { fr: dto.libelle, ...(dto.libelles ?? {}) },              // fr OBLIGATOIRE (= libelle)
       effetAt: dto.effetAt ? new Date(dto.effetAt) : new Date(), par: ctx.userId } });
     await this.audit.log(ctx.tenantId, ctx.userId, "COC_CONFIG_DEFINIE", `${dto.typeCode}:${dto.materialite}`);
     return { id: v.id, typeCode: v.typeCode, effetAt: v.effetAt };
@@ -78,7 +86,8 @@ export class CocService {
     for (const t of (CONFIG_LIVREE as any).types) parType.set(t.typeCode, { ...t, source: "livree" });
     for (const v of versions) parType.set(v.typeCode, { typeCode: v.typeCode, libelle: v.libelle,
       materialite: v.materialite, actionRequise: v.actionRequise, roleTraitant: v.roleTraitant,
-      severiteCpsi: v.severiteCpsi, effetAt: v.effetAt, source: "tenant" });
+      severiteCpsi: v.severiteCpsi, libelles: (v as any).libelles ?? { fr: v.libelle },  // LN-04 : repli fr tel quel
+      effetAt: v.effetAt, source: "tenant" });
     return { types: [...parType.values()] };
   }
 
