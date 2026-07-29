@@ -1,5 +1,6 @@
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { traduire, langue, setLangue, LANGUES, Langue } from "../lib/i18n";
+import { apiBase } from "../lib/api";
 
 // A6 (audit-architecture, PR #45 mergée) : code-splitting par écran — React.lazy + un
 // <Suspense> unique ; patron conservé à l'IDENTIQUE lors de la réconciliation avec la
@@ -83,6 +84,16 @@ export function Router() {
   const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
+  // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
+  // cours (état React des écrans) survivent ; le login rejoue la vraie route deux temps.
+  const [sessionExpiree, setSessionExpiree] = useState(false);
+  const [loginEmail, setLoginEmail] = useState(""); const [loginMdp, setLoginMdp] = useState("");
+  const [loginErreur, setLoginErreur] = useState("");
+  useEffect(() => {
+    const h = () => setSessionExpiree(true);
+    window.addEventListener("olive:session-expiree", h);
+    return () => window.removeEventListener("olive:session-expiree", h);
+  }, []);
   // i18n §10 (ratifié) : le libellé FR EST la clé du dictionnaire maquette — la traduction
   // s'applique en UN point ; une clé absente reste rendue en FR (écart par clé, lib/i18n).
   const t = traduire(lang);
@@ -92,6 +103,25 @@ export function Router() {
       background: screen === id ? "#4A6B28" : "#eee", color: screen === id ? "#fff" : "#333" }}>
       {t(label)}</button>;
   return <div style={{ fontFamily: "system-ui", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    {sessionExpiree && <div role="alert" style={{ background: "#FBEAE5", border: "1px solid #8C4A3C",
+      borderRadius: 8, padding: 12, marginBottom: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <strong style={{ fontSize: 13 }}>{t("Session expirée — reconnectez-vous (votre brouillon en cours est conservé).")}</strong>
+      <input placeholder={t("e-mail")} value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} style={{ fontSize: 12 }}/>
+      <input placeholder={t("mot de passe")} type="password" value={loginMdp} onChange={(e) => setLoginMdp(e.target.value)} style={{ fontSize: 12 }}/>
+      <button style={{ fontSize: 12 }} onClick={async () => {
+        setLoginErreur("");
+        try {
+          const r = await fetch(`${apiBase()}/v1/auth/login`, { method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: loginEmail, password: loginMdp }) });
+          const p = await r.json().catch(() => ({}));
+          if (!r.ok || !p.access_token) { setLoginErreur(p.message ?? `Erreur ${r.status}`); return; }  // le refus, TEL QUEL (FE-04)
+          sessionStorage.setItem("olive_jwt", p.access_token);
+          setSessionExpiree(false); setLoginMdp("");
+        } catch { setLoginErreur(t("Connexion impossible — vérifiez le réseau.")); }
+      }}>{t("Se reconnecter")}</button>
+      {loginErreur && <span style={{ fontSize: 12, color: "#8C4A3C" }}>{loginErreur}</span>}
+    </div>}
     <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", marginBottom: 6 }}>
       {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`}
         onClick={() => { setLangue(l); setLang(l); }}

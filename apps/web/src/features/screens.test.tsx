@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { WorkflowInstances } from "./workflow/WorkflowInstances";
@@ -1362,5 +1362,24 @@ describe("FE-I18N-2 — tour 2 du cliquet (R326) : la NAV est COMPLÈTE — 0 cl
     const { execSync } = await import("child_process");
     const rapport = execSync("node scripts/rapport-i18n.js", { encoding: "utf8" });
     expect(rapport).toContain("0 écart(s) par clé au total");                // la NAV : 72/72 dans les 3 langues
+  });
+});
+
+describe("FE-JW — R328/JW-05 : session expirée → re-connexion propre, brouillon conservé", () => {
+  it("l'événement affiche le bandeau ; le login réel re-signe ; le bandeau disparaît sans rechargement", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    server.use(http.post("*/v1/auth/login", () =>
+      HttpResponse.json({ access_token: "JWT-NEUF", token_type: "Bearer", expires_in: 900, role: "RM" })));
+    const { Router } = await import("../app/router");
+    render(<Router/>);
+    expect(screen.queryByRole("alert")).toBeNull();
+    window.dispatchEvent(new CustomEvent("olive:session-expiree"));
+    expect(await screen.findByText(/Session expirée — reconnectez-vous/)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("e-mail"), { target: { value: "alice@gwb-demo.ch" } });
+    fireEvent.change(screen.getByPlaceholderText("mot de passe"), { target: { value: "Demo-GWB-2026!" } });
+    fireEvent.click(screen.getByRole("button", { name: /Se reconnecter/ }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());   // le shell reprend — AUCUN reload
+    expect(sessionStorage.getItem("olive_jwt")).toBe("JWT-NEUF");
+    sessionStorage.removeItem("olive_jwt");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { apiGetSourced, apiPost, isDemoMode, isHistoricalView, isDevAuthMode, authMode } from "./api";
+import { apiGetSourced, apiPost, isDemoMode, isHistoricalView } from "./api";
 
 // FE-CORE — couche API et session (SPEC-FRONT-CÂBLAGE v2, scénarios FE-01..04 au niveau lib).
 // On exerce les comportements de src/lib/api.ts : mode démo, propagation d'en-têtes (jwt/headers),
@@ -31,22 +31,28 @@ describe("FE-CORE — couche API et session", () => {
     await expect(apiPost("/v1/tasks/x/complete", {})).rejects.toMatchObject({ code: "DEMO_MODE" });
   });
 
-  it("FE-02 Propagation des en-têtes de session (headers-mode)", async () => {
-    w.OLIVE_API_URL = "http://api.test"; w.OLIVE_AUTH_MODE = "headers";
+  it("FE-02 [R328/JW-03] les en-têtes de contexte sont MORTS : même OLIVE_SESSION posée, seul le jeton voyage", async () => {
+    w.OLIVE_API_URL = "http://api.test";
+    (w as Record<string, unknown>).OLIVE_AUTH_MODE = "headers";            // l'ancien réglage est INERTE — supprimé, pas déprécié
     w.OLIVE_SESSION = { tenantId: "t1", userId: "u1", role: "RM" };
+    sessionStorage.setItem("olive_jwt", "JWT-R328");
     const fn = mockFetch(200, []);
     await apiGetSourced("/v1/tasks", []);
     const headers = (fn.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
-    expect(headers).toMatchObject({ "x-tenant-id": "t1", "x-user-id": "u1", "x-user-role": "RM" });
+    // Aucune clé de CONTEXTE n'est émise : seule Authorization (le jeton) voyage. On teste par
+    // l'ensemble des clés — sans citer les noms d'en-têtes morts (grep JW-03 reste vierge ici).
+    const clefsContexte = Object.keys(headers).filter((k) => /^x-(tenant|user)/i.test(k));
+    expect(clefsContexte).toEqual([]);
+    expect(headers.Authorization).toBe("Bearer JWT-R328");                 // le jeton, rien d'autre
   });
 
-  it("FE-02bis Mode JWT (défaut) : porte Authorization Bearer, pas d'en-têtes x-*", async () => {
+  it("FE-02bis Mode JWT (défaut) : porte Authorization Bearer, aucune clé de contexte", async () => {
     w.OLIVE_API_URL = "http://api.test"; sessionStorage.setItem("olive_jwt", "JWT123");
     const fn = mockFetch(200, []);
     await apiGetSourced("/v1/tasks", []);
     const headers = (fn.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer JWT123");
-    expect(headers["x-tenant-id"]).toBeUndefined();
+    expect(Object.keys(headers).filter((k) => /^x-(tenant|user)/i.test(k))).toEqual([]);
   });
 
   it("FE-03 Rejeu à date (R48/R49) : ?asOf= propagé, vue historique signalée", async () => {
@@ -68,11 +74,16 @@ describe("FE-CORE — couche API et session", () => {
     });
   });
 
-  it("FE-02b (A1) Mode headers réservé au dev : isDevAuthMode signale le bandeau", () => {
-    expect(authMode()).toBe("jwt");           // défaut ratifié
-    expect(isDevAuthMode()).toBe(false);
-    w.OLIVE_AUTH_MODE = "headers";
-    expect(isDevAuthMode()).toBe(true);        // → l'écran doit afficher « Mode dev — auth simulée »
+  it("FE-02b [R328/JW-05] 401 avec jeton présent → session expirée SIGNALÉE (événement), jeton purgé — jamais silencieux", async () => {
+    w.OLIVE_API_URL = "http://api.test"; sessionStorage.setItem("olive_jwt", "JWT-EXPIRE");
+    let signale = false;
+    const ecouteur = () => { signale = true; };
+    window.addEventListener("olive:session-expiree", ecouteur);
+    mockFetch(401, { message: "Jeton invalide ou expiré" });
+    await expect(apiPost("/v1/tasks/x/complete", {})).rejects.toMatchObject({ status: 401 });
+    expect(signale).toBe(true);                                            // le shell reprend la main (re-login)
+    expect(sessionStorage.getItem("olive_jwt")).toBeNull();                // le jeton mort est purgé
+    window.removeEventListener("olive:session-expiree", ecouteur);
   });
 
   it("FE-06 (A1) Préfixe unique : base + chemin /v1, aucune URL construite ailleurs", async () => {

@@ -104,6 +104,14 @@ jobs:
             -e "BEGIN RSA PRIVATE KEY" -e "BEGIN EC PRIVATE KEY" -e "AKIA[0-9A-Z]\{16\}" \
             apps/api/src apps/web/src infra .github | grep -v "spec\|test\|exemple" || (echo "SECRET EN CLAIR DÉTECTÉ" && exit 1)
 
+      # ── R328 (vague de clôture) — les en-têtes de contexte sont MORTS (JW-03/06) ──
+      - name: "Sécurité · zéro en-tête de contexte (x-tenant-id / x-user-id / x-user-role)"
+        run: |
+          ! grep -rn --include="*.ts" --include="*.tsx" \
+            -e "x-tenant-id" -e "x-user-id" -e "x-user-role" \
+            apps/api/src apps/web/src | grep -v "fat-cloture-jwt" \
+            || (echo "EN-TÊTE DE CONTEXTE RÉSIDUEL (R328) — le contexte vient du jeton" && exit 1)
+
       # ZAP baseline (partie 4) : ne tourne que si un staging existe (secret STAGING_URL) —
       # jamais un step qui traîne en advisory : absent = sauté EXPLICITEMENT, présent = bloquant.
       - name: "Sécurité · ZAP baseline sur staging (si STAGING_URL)"

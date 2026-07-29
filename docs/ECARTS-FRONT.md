@@ -1102,3 +1102,25 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   libellé traduit, VALEUR technique conservée (le contrat API ne bouge pas).
 - Restent 70 écrans au patron — conversion par tranches, chaque fichier ajouté à la
   liste du cliquet à sa conversion.
+
+## SOLDE — VAGUE DE CLÔTURE R328 : LE CONTEXTE VIENT DU JETON (2026-07-29, JW-01..06)
+
+- **Étape 0 ratifiée** : canon R325-R327 → dépôt **R328-R330** (R325-R327 pris par le solde
+  des 4 écarts) ; familles JW/DM/RZ conservées. Spec : spec/canon-vague-cloture-R328-R330.md.
+- **Constat publié (ratifié)** : le guard global RS256/JWKS et les jetons réels au harnais
+  étaient DÉJÀ en place — livré le RELIQUAT.
+- **JW-01** : les 310 routes du routeur sont ÉNUMÉRÉES (le test suit le `_router.stack`,
+  jamais une liste manuelle) → 401 sans jeton, sauf 7 en liste blanche (auth token/oidc/
+  methode/login, JWKS, mobile/auth). **JW-02** : cross-tenant refusé/vide re-prouvé sur 5
+  modules (cpsi, oprisk, coc, clients, legal). **JW-03/06** : le mode `headers` du FRONT est
+  SUPPRIMÉ (authMode/isDevAuthMode retirés) — grep zéro en-tête de contexte dans code +
+  harnais + front, SCELLÉ en CI ; un en-tête envoyé à l'exécution est ignoré (le jeton
+  commande). **JW-04** : rotation JWKS traversée par le guard (grâce structurelle).
+  **JW-05** : 401 avec jeton présent → événement `olive:session-expiree`, bandeau de
+  re-connexion au shell (vraie route /v1/auth/login), brouillons (état React) préservés —
+  AUCUN rechargement.
+- **ÉCARTS CONSIGNÉS** : (1) OLIVE_SESSION reste une PROJECTION d'affichage (rôle courant)
+  — jamais un vecteur d'auth ; (2) le refresh silencieux est un raffinement futur : v1 =
+  re-login explicite au bandeau (le brouillon survit, l'exigence est tenue) ; (3) la liste
+  blanche du test reprend celle du code (tenant.middleware + mobile.gate) — si elle change,
+  les deux bougent ensemble (le test le forcerait).
