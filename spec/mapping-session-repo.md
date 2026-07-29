@@ -1,14 +1,16 @@
-<!-- SEED DE MAPPING session→repo — Statut : PROPOSÉ (à ratifier par Ali avant gel).
-     Le REPO FAIT FOI. Ce fichier est la SEULE source autorisée du mapping numéros-session →
-     numéros-repo pour le générateur docs/CANON-MASTER.md. Le générateur NE DÉDUIT JAMAIS un
-     mapping : il lit les lignes confirmées ci-dessous ; tout numéro hors de cette table est
-     rapporté « mapping non annoté », jamais inventé. Chaque ligne est grounded sur un fichier
-     du repo (colonne Preuve). Les entrées À CONFIRMER / DIVERGENCES ne sont PAS consommées comme
-     mapping : elles sont listées pour ta décision. -->
+<!-- SEED DE MAPPING session→repo — §1 RATIFIÉ par Ali Gharsallah le 2026-07-29 (les 9 mappings
+     confirmés, grounded repo, sont figés). Le REPO FAIT FOI. Ce fichier est la SEULE source
+     autorisée du mapping numéros-session → numéros-repo pour le générateur docs/CANON-MASTER.md.
+     Le générateur NE DÉDUIT JAMAIS un mapping : il lit les lignes confirmées ci-dessous ; tout
+     numéro hors de cette table est rapporté « mapping non annoté », jamais inventé. Chaque ligne
+     est grounded sur un fichier du repo (colonne Preuve). Les entrées À CONFIRMER / DIVERGENCES
+     ne sont PAS consommées comme mapping : elles sont listées pour décision ultérieure. -->
 
 # Mapping session → repo (clé de lecture des documents d'Ali)
 
-## 1. Mappings CONFIRMÉS (grounded repo — consommés par le générateur)
+**Statut §1 : RATIFIÉ (Ali Gharsallah, 2026-07-29).** §2 (à confirmer) et §3 (divergences) restent ouverts.
+
+## 1. Mappings CONFIRMÉS — RATIFIÉS (grounded repo — consommés par le générateur)
 
 Format machine : le générateur lit les lignes `| Rxxx | Ryyy | … |` de CETTE section uniquement.
 
