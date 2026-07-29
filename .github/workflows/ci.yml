@@ -132,6 +132,12 @@ jobs:
       # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
       # harnais jest unitaire est ajouté.
 
+      # ── Console éditeur (app VENDOR séparée, R319/R320) — VE-01..03 versant vendor ──
+      - name: "3v · Console éditeur vendor (attendu 6/6 — séparée, aucun couplage apps/api)"
+        run: |
+          out=$(node apps/editor-console/test/vendor.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 tests vendor verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api

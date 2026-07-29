@@ -1,0 +1,3 @@
+{ "name": "@olive/editor-console", "version": "0.1.0", "private": true, "type": "module",
+  "description": "Console ÉDITEUR O-Live — instance VENDOR SÉPARÉE (R319/R320). EDITOR n'existe QUE ici.",
+  "scripts": { "test": "node test/vendor.test.mjs" } }
