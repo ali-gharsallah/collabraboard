@@ -1,0 +1,5 @@
+# BOÎTE D'ENTRÉE du registrar (R331/IX). Tout artefact de session (canon, spec, diagnostic)
+# tombe ICI, tel quel. Le job CI (registrar.yml) l'indexe SANS main humaine : normalisation
+# du nom, extraction règles/familles/statut, détection de collisions (rapport, JAMAIS de
+# renumérotation auto), mise à jour de PROJECT-INDEX en « PROPOSÉ », PR de ratification.
+# La RATIFICATION = le merge d'Ali (événement daté signé) — jamais automatisée.

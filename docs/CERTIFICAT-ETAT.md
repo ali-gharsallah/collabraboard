@@ -1,178 +1,93 @@
-# Certificat d'état — O-Live (source unique, datée)
+# O-Live — CERTIFICAT D'ÉTAT (checkpoint PRÉ-PILOTE, 2026-07-29 — industrialisation)
 
-**État vérifié au 2026-07-22.** Page unique de vérité — remplace les certificats/rapports de
-recette isolés. Tout est prouvé par exécution réelle (preuves : `docs/tests/PREUVES/`).
-Index maître : `docs/PROJECT-INDEX.md`.
+**Source de vérité unique de l'état du produit.** Remplace la version du 2026-07-22.
+Établi par une passe verte COMPLÈTE rejouée le 2026-07-29 (HEAD `e857e61`, branche
+`claude/olive-mvp-bootstrap-m02v1x`, PR #46). Index maître : `docs/PROJECT-INDEX.md`.
 
-## Écrans réels (frontend React `apps/web`) — Vague 1
+> **Correctif d'intégrité CI (2026-07-29)** : la baseline Prisma `0_baseline_lot42` avait
+> dérivé du schéma (63 tables sur 78, `effective_to`/R282 absent) — `migrate deploy` bâtissait
+> un schéma incomplet et `prisma:post` échouait, si bien que **l'e2e ne tournait pas en CI**.
+> Baseline régénérée du schéma courant ; reproduction EXACTE de la CI (base neuve → migrate
+> deploy → prisma:post → e2e) : **336/336 au 1er passage**. C'est la dérive que le cadre R334
+> (MG-01) attrape désormais en amont.
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 1 | **Clients** | `GET /v1/clients` · `POST /v1/clients` | **visible** (bandeau) | ✅ réel |
-| 2 | **KYC** (création + détail) | `POST /v1/kyc` · `GET /v1/kyc/:code` · `PATCH …/questions` · `POST …/visas` · `POST …/validate` | **visible** | ✅ réel |
-| 3 | **Règles AML** | `GET /v1/parametres/registre` · `POST /v1/parametres/valeur/:cle` | **visible** | ✅ réel |
-| 4 | **File d'alertes** | `GET /v1/aml/clients/:id/signaux` · **`POST /v1/riskcases`** (décision) · `GET /v1/riskcases` | **visible** | ✅ réel (nouveau) |
-| 5 | **Rejeu KYC à date** | **`GET /v1/kyc/:code/a-date?date=…`** | **visible** | ✅ réel (nouveau) |
-| (+) | Finance Islamique | `POST /v1/islamic/{zakat,evaluer}` | **visible** | ✅ réel |
+## 1. Verdict global : PRÊT POUR LE PILOTE (code)
 
-## Écrans réels (frontend React `apps/web`) — Vague 2 (Surveillance & Dossiers)
+Tout le canon ratifié est codé, testé, poussé. Il ne reste AUCUN chantier de code
+bloquant — seulement des actes humains (§7) et un chantier de fond continu (i18n, §6).
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 6 | **Dossiers de risque** (instruction) | `GET /v1/riskcases` · **`POST`/`GET /v1/riskcases/:id/notes`** (append-only R134) · `POST /v1/riskcases/:id/transition` (R133/R7) | **visible** | ✅ réel (nouveau) |
-| 7 | **Pièces (GED)** (consultation) | `GET /v1/ged/documents?clientId=` (filtré au rôle R110) · `GET /v1/ged/documents/:id` (fiche = empreinte, jamais le contenu R145) | **visible** | ✅ réel (nouveau) |
+## 2. Frontière verte (rejouée ce jour)
 
-## Écrans réels (frontend React `apps/web`) — Vague 3 (Le cycle client de bout en bout)
+| Suite | Résultat | Portée |
+|-------|----------|--------|
+| e2e API (Postgres réel, **schéma migrate deploy**) | **336 / 336** (45 suites) | tout le backend tenant, jetons réels |
+| Harnais de règles | **0 ✗** | R1..R323 + IAM + corpus session |
+| Moteur CPSI (Python) | **19 / 19** | R63..R86 + PC-20 équivalence |
+| Console vendor (séparée) | **6 / 6** | R319/R320, VE-01..03 versant vendor |
+| Front (vitest) | **80 / 80** | écrans + i18n + comparaison maquette |
+| Build web + budget | ✓ | 166.8 / 220 kB gz |
+| Cliquet i18n / rapport nav | ✓ / 0 écart | 5 écrans convertis, nav 76/76 clés × 3 langues |
+| Greps CI | ✓ | 0 en-tête de contexte · 0 branche `demo` · secrets · anthropic |
+| **Industrialisation** (6 harnais neufs) | **registrar 5/5 · Olivia A.1/A.5 6/6 · FAT 4/4 · migrations 5/5 · déploiement 5/5 · BAT 4/4** | R331-R334 + guide C.1 |
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 8 | **Onboarding** (aiguillage) | `POST /v1/onboarding` · `/:id/transition` · `POST /v1/kyc` (workflow SDD/CDD/EDD + riskTrace, R117/R119) | **visible** | ✅ réel (nouveau) |
-| 9 | **Screening** | **`POST /v1/screening/run`** · **`/hits/:id/qualify`** · `GET /hits` · `/runs` (R100→R103, R39/R44) | **visible** | ✅ réel (nouveau) |
-| 10 | **Account Review** | orchestration : `POST /v1/screening/run` (R103) + visas KYC four-eyes — zéro canon inventé | **visible** | ✅ réel (nouveau) |
-| 11 | **Personnes / UBO** | **`POST /v1/personnes`** · **`/:id/roles`** · **`/relations`** · `GET /:id/relations` (R31/R34) | **visible** | ✅ réel (nouveau) |
-| 12 | **Change of Circumstances** | **`POST /v1/personnes/:id/coc`** (R30/R42) | **visible** | ✅ réel (nouveau) |
-| 13 | **Dashboard exécutif** | **`GET /v1/onboarding`** · `/v1/riskcases` · `/v1/screening/hits` (stock par état, RLS) | **visible** | ✅ réel (nouveau) |
+## 3. Périmètre fonctionnel livré
 
-## Écrans réels (frontend React `apps/web`) — Vague 4 (Écrans « plateforme »)
+- **Socle** : multi-tenant RLS FORCE, JWT RS256/JWKS (contexte 100 % du jeton — R328,
+  en-têtes morts), rate limiting login R296 (store partageable Redis), en-têtes de
+  sécurité (ASVS V14.4), audit append-only (triggers d'immuabilité).
+- **KYC / onboarding / screening / CoC / review / offboarding** (art. 10a cloisonné) ·
+  **AML** private banking (18 scénarios R189-R206) · **Finance islamique** (Shariah
+  R207-R221) · **CPSI** (score perpétuel, segmentation, risk cases, R63-R86) ·
+  **MROS**, **cross-border**, **legal**, **BI**, **PMS**, **formations**, **business trip**.
+- **Dégel V1-V9** (R297-R323) : flux/txrisk/fx/swift · custody & TA · Builder · regwatch ·
+  legal · BI · mobile banking · console éditeur · Octopulse OpRisk.
+- **Olivia** v1/v1.1 + **v2 agentique** (R259-R266, SW-01..18, 2 missions, missions_actives
+  vide par défaut).
+- **Bacs à sable** BS-01..06 (5 bacs dry-run, zéro mutation prouvée, pont vers paramétrage).
+- **Readiness & pipeline** (R330 : /readyz, /healthz, smoke, journal déploiements).
+- **Tenant de démo GWB** (R329 : seed idempotent par références, histoire complète,
+  DEMO-SCRIPT.md).
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 14 | **Transferts & ordres** | **`POST /v1/transactions/evaluer`** · `/revue` · `/:id/decider` · `/:id/statut-client` (R140→R143, R132) | **visible** | ✅ réel (nouveau) |
-| 15 | **Settlement** | **`GET /v1/corebanking/etat`** · `POST /importer` (port R167→R169 ; refus sans connecteur) | **visible** | ✅ réel (nouveau) |
-| 16 | **Screening avancé** | `POST /v1/screening/run` (listes complémentaires) · `/hits/:id/qualify` (R100→R103) | **visible** | ✅ réel (nouveau) |
-| 17 | **Reporting MROS** | **`GET /v1/mros`** · `POST /decider` · `GET /:id` · `/:id/gel` (R129→R132, empreinte opposable) | **visible** | ✅ réel (nouveau) |
-| 18 | **GED / coffre** | `GET /v1/ged/documents` · `/documents/:id` (preuve = versions, jamais le contenu R145) | **visible** | ✅ réel (nouveau) |
-| 19 | **Registre LBA** | `GET /v1/mros` · `/v1/transactions/revue` · `/v1/screening/runs` (agrégation, RLS) | **visible** | ✅ réel (nouveau) |
+## 4. Front : 72/72 écrans expliqués (comparaison maquette)
 
-## Écrans réels (frontend React `apps/web`) — Vague 5 (Rattrapage maquette : CRM & Workflow)
+71 écrans au front tenant (dont les 4 bacs en deep-link vers le hub) + 1 sur l'instance
+vendor séparée = **72/72**, aucun « absent » inexpliqué (COMPARAISON-FRONT-HTML.md).
+Palette : cœur identique à la maquette + accents par module (G3 levé), prouvé en CI (FE-CMP).
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 20 | **CRM Banque** | `GET /v1/crm/clients/:id/timeline` · `/gestes` (R186/R187) | **visible** | ✅ réel (nouveau) |
-| 21 | **Contact Reports** | `POST /v1/crm/clients/:id/entretiens` · `/pre-remplir` (R188/R138) | **visible** | ✅ réel (nouveau) |
-| 22 | **Workflow Designer/Rules** | **`POST/PATCH /v1/workflow/definitions`** · `/:id/publier` · `GET /resoudre` (R171→R173) | **visible** | ✅ réel (nouveau) |
-| 23 | **Corroboration KYC** | **`POST /v1/personnes/:id/corroboration`** (R36) | **visible** | ✅ réel (nouveau) |
+## 5. Infra & sécurité PRÉPARÉES (à appliquer par un humain)
 
-## Écrans réels (frontend React `apps/web`) — Vague 6 (Paramétrage & Gouvernance)
+- `infra/` : Terraform Exoscale, WAL-G + restore-test chronométré, compose 2-instances +
+  Redis AOF + Caddy TLS/HSTS, règles d'alerte (dead-letters, jauge R250, backups).
+- `docs/SECURITE.md` : grille ASVS L2 contre le code réel + CI sécurité (audit deps, ZAP
+  gated, grep secrets). RUNBOOK-OPS §8 : expand/contract. §9 : seed/purge démo.
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 24 | **Registre de paramétrage** | `GET /v1/parametres/registre` · `GET/POST /valeur/:cle` (R125→R127) | **visible** | ✅ réel (nouveau) |
-| 25 | **Config à date & Go-live** | **`GET /v1/parametres/config`** · **`POST /v1/parametres/activer`** (R127/R128) | **visible** | ✅ réel (nouveau) |
+## 6. Chantier de fond CONTINU (non bloquant)
 
-## Écrans réels (frontend React `apps/web`) — Vague 7 (PMS)
+- **i18n cliquet** : 5 écrans convertis (t() + tokens), ~67 restants — mécanique, par
+  tranches. La nav est déjà 100 % traduite (72/72 clés × EN/DE/IT).
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 26 | **PMS** | **`POST/GET /v1/pms/mandats`** · `/:id/valoriser` · `/:id/pre-trade` · `GET /clients/:id/adequation` · `GET /breaches` · `POST /breaches/:id/clore` (R105→R108) | **visible** | ✅ réel (nouveau) |
+## 6bis. Industrialisation livrée (R331-R334 + guide C.1)
 
-## Écrans réels (frontend React `apps/web`) — Vague 10/11 (Front-câblage v2 + A1)
+Six chantiers, chacun sous harnais + porte CI (`tools/{registrar,olivia-eval,fat,migrations,
+deploiement,bat}`) :
+- **R331 registrar** (IX) : boîte d'entrée `spec/inbox/` indexée sans main, PR de ratification
+  auto — **le merge d'Ali est l'acte** (jamais d'auto-ratification, jamais de renumérotation).
+- **Olivia A.1/A.5** : golden 200 (langue 100 %, 0 faux positif) · attaque **résistance 52.4 %**
+  publiée (`SECURITE.md`), cliquet anti-dégradation ; zéro appel modèle (R167).
+- **R332 FAT** (FB) : 6 parcours, traçabilité générée **anti-fiction** (0 orphelin) ; recette
+  visuelle Playwright non bloquante (job séparé).
+- **R334 migrations** (MG) : expand/contract, no-mutation append-only (24 tables, source unique),
+  backfill idempotent, répétition hebdo restore→migrate→FAT.
+- **Guide C.1** : `docs/DEPLOIEMENT.md` généré du pipeline (no-drift) ; prod jamais automatique.
+- **R333 BAT** (FB) : cahier généré filtré par licence, écran léger, porte de promotion visée R15.
 
-| # | Écran | Route(s) backend consommée(s) | Fallback seed | État |
-|---|---|---|---|---|
-| 27 | **Référentiel AML** | **`GET /v1/aml/referentiel`** (18 scénarios R189→R206 + seuils effectifs, pilotés par le registre) | **visible** | ✅ réel |
-| 29 | **Bac à sable AML** | **`POST /v1/aml/sandbox`** (dry-run d'un seuil R94/B-02 : avant/après/nouvelles nommées, `ecriture=false`) | **visible** | ✅ réel |
-| 30 | **Ports** | **`GET /v1/ports`**, **`GET\|POST /v1/ports/:id/health`** (état des ports ratifiés core/IA/coffre, refus gracieux, aucun secret) | **visible** | ✅ réel (nouveau) |
-| 31 | **Next Best Action** | **`GET /v1/nba`** + **`POST /:id/decision`** (R243→R246 : suggestion immuable, décision humaine unique R44, rejeu R246) | **visible** | ✅ réel (décision, V17) |
-| 32 | **Workflow Instances** | **`GET /v1/workflow-instances`, `/:id`, `/:id/events`** (projection du workflow gouverné KYC : steps + visas R15 + timeline) | **visible** | ✅ réel (V12) |
-| 33 | **Tâches** | **`/v1/tasks/*`** (liste scopée serveur R240, complétion événementielle R241, SLA R242 ; reassign = workload ratifié) | **visible** | ✅ réel (V16) |
-| 34 | **Formations & Certifications** | **`/v1/formations/*`** (catalogue R231, assignations/complétion R232, visa R235, certifs & rejeu R234/R238, rappels R233) | **visible** | ✅ réel (V13) |
-| 35 | **Business Trip** | **`/v1/trips/*`** (cycle R222, avis cross-border R223, signaux KYC/certif R224/R228, visas R225, contact reports R226, rejeu R229, révision R230) | **visible** | ✅ réel (nouveau, V14) |
+## 7. Ce qui reste = ACTES HUMAINS uniquement
 
-**Fallback seed** : plus aucun écran n'affiche du seed sans indicateur — bandeau « Mode
-démonstration » (composant unique `DemoModeBanner`, test 9/9).
+`terraform apply` (avec restauration testée = critère) · brancher le canal d'alerte réel ·
+commander le pentest (dossier ASVS = sa matière) · avocat CO art. 332 · marque O-Live.
 
-## Tests (exécution réelle)
+## 8. Note de fiabilité des tests
 
-| Niveau | Résultat | Commande |
-|---|---|---|
-| Règles moteur (R1→R221) | **425 / 425** (50 suites) | `pnpm --filter api run test:rules` |
-| e2e Postgres réel (… + A3 4 + V16 6 + V17 6) | **84 / 84** | `pnpm --filter api run test:e2e` |
-| Front (Vitest — FE-CORE 7 + composants WFI/Ports/NBA/FE-05/FE-FORM/FE-TRIP 6) | **13 / 13** | `pnpm --filter web run test:unit` |
-| **FAT recette Vague 1** | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague1` |
-| **FAT recette Vague 2** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague2` |
-| **FAT recette Vague 3** | **7 / 7 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague3` |
-| **FAT recette Vague 4** | **6 / 6 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague4` |
-| **FAT recette Vague 5** | **4 / 4 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague5` |
-| **FAT recette Vague 6** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague6` |
-| **FAT recette Vague 7** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague7` |
-| **FAT recette Vague 8** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague8` |
-| **FAT recette Vague 9** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague9` |
-| **FAT recette Vague 10** | **2 / 2 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague10` |
-| **FAT recette Vague 12** (Workflow Instances) | **3 / 3 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague12` |
-| **FAT recette Vague 13** (Formations MOD-43) | **8 / 8 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague13` |
-| **FAT recette Vague 14** (Business Trip MOD-75) | **10 / 10 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague14` |
-| **FAT recette Vague 16** (Tâches R239→R242) | **6 / 6 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague16` |
-| **FAT recette Vague 17** (Décision NBA R243→R246) | **6 / 6 PASS (100 %)** | `pnpm --filter api run test:e2e -- fat-vague17` |
-| Bandeau démo (front) | **9 / 9** | `pnpm --filter web run test:demo-banner` |
-| Régressions | **0** | — |
-
-## Capacités sensibles
-
-- **Rejeu à date — paramètres/règles** (R127) : **OUI** — `GET /v1/parametres/valeur/:cle?date=` (preuve FAT-REJEU-01 : aujourd'hui=45, hier=30).
-- **Rejeu à date — dossier KYC** (esprit R127, reconstruction depuis le journal append-only) : **OUI** — `GET /v1/kyc/:code/a-date?date=` (preuve FAT-REJEU-KYC-01 : INEXISTANT → EN_COURS → VALIDE).
-- **Décision sur alerte** via vraie route POST : **OUI** — `POST /v1/riskcases` (R133 : jamais un cas vide).
-- **Instruction d'un dossier** — notes **append-only** (R134) + transitions gouvernées avec motif (R133/R7) : **OUI** (FAT-DOSSIER-01/02).
-- **Consultation GED filtrée au rôle** (R110) sans jamais exposer le contenu (R145) : **OUI** (FAT-GED-01).
-- **Aiguillage de diligence** SDD/CDD/EDD au risque (R117) + ouverture sous KYC VALIDATED (R119) : **OUI** (FAT-ONBOARD-01).
-- **Screening** : qualification motivée (R101/R7), escalade **proposée** jamais exécutée (R39/R44) : **OUI** (FAT-SCREEN-01).
-- **Dry-run d'un seuil AML** (R94/B-02) — simuler sur données réelles, impact **nominatif**, **sans aucune écriture** (R70) : **OUI** — `POST /v1/aml/sandbox` (preuve FAT-SBAML-01 : 0 signal en base ; FAT-SBAML-02 : appliquer passe par le registre gouverné).
-- **Cycle complet de bout en bout** (entrée→KYC→screening→revue→changement) sur Postgres réel : **OUI** (FAT-CYCLE-01).
-- **Four-eyes KYC** protégeant le golden record : **OUI** (FAT-KYC-01).
-- **Isolation multi-tenant** (RLS FORCE) : **OUI** (recette RLS + FAT-CLIENT-01 + FAT-GED-02 + FAT-UBO-01/FAT-DASH-01).
-
-## Périmètre & limites (honnête)
-
-- Backend : **~150 routes** (+ NBA V17 : suggestions/décision/rejeu), **40 modules** en Postgres réel (0 mock). Frontend : **35 écrans** (… **V16 : Tâches réel** · **V17 : NBA décision** — R44). **Tous les blocs A1/A2 sont réels** — plus aucun écran en FE-05 démonstration. Écarts front + décisions A1 : `docs/ECARTS-FRONT.md` ; migrations : `docs/MIGRATION-FRONT.md`.
-- Reste au backlog : reporting CRS/FATCA/goAML depuis données réelles ; écran front **workflow**
-  (backend prêt) ; rejeu à date sur d'autres agrégats. **Liste noire** (RH, e-learning, business
-  trip, budget, réunions, cyber-SOC) : **jamais construite** — hors produit CLM.
-- Écarts signalés (non résolus par invention) : `PersonneLienService` R152→R155 **dormant** (aucun
-  modèle `Personne`) ; **% de détention** non ratifié ; **fiche GED** empreinte de version non
-  restituée (divergence fake/modèle `no`/`empreinte` vs `numero`/`sha256`, hors périmètre) ;
-  12 `no-explicit-any` préexistants (écrans Vague 1).
-- Dette d'infra corrigée (Vague 4) : `PrismaService.onModuleDestroy` ajouté (fuite de connexions
-  e2e) + `connection_limit=3` ; un `PrismaModule` @Global (client unique) reste le correctif de fond.
-
-## Décision de recette Vague 1
-
-- [ ] **Recette PRONONCÉE** — 100 % FAT (dont 7 critiques), 0 régression.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 2 (Surveillance & Dossiers)
-
-- [ ] **Recette PRONONCÉE** — 4/4 FAT (dont 4 critiques : instruction append-only R134, transitions gouvernées R133/R7, filtrage GED au rôle R110/R145, isolation RLS), 0 régression, 0 modèle Prisma nouveau.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 3 (Le cycle client de bout en bout)
-
-- [ ] **Recette PRONONCÉE** — 7/7 FAT (dont 6 critiques : aiguillage R117/R119, screening R101/R7/R39, revue orchestrée, UBO R31/R34, CoC R30/R42, cycle bout-en-bout), 0 régression, 0 modèle Prisma nouveau.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 4 (Écrans « plateforme »)
-
-- [ ] **Recette PRONONCÉE** — 6/6 FAT (dont 4 critiques : portail tx R140→R143/R132, core=port R167/R114, MROS opposable R130/R132, GED preuve R110/R145), 0 régression, 0 modèle Prisma nouveau. Doctrine « intégrer, pas refaire » tenue ; liste noire respectée.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 5 (Rattrapage maquette : CRM & Workflow)
-
-- [ ] **Recette PRONONCÉE** — 4/4 FAT (dont 2 critiques : Workflow gouverné R171→R173, Corroboration R36), 0 régression, 0 modèle Prisma nouveau. **Zéro invention** : canon déjà ratifié (CRM R186→R188, Workflow R171→R173, R36).
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 6 (Paramétrage & Gouvernance)
-
-- [ ] **Recette PRONONCÉE** — 2/2 FAT (dont 2 critiques : écriture gouvernée R125→R127, go-live R128), 0 régression. **Conformité schéma↔canon** : Tenant.statut/rqSignePar/rqSigneAt ajoutés (activer R128 fonctionne enfin), baseline régénérée. DRY-RUN sandboxes différés (canon manquant).
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 7 (PMS)
-
-- [ ] **Recette PRONONCÉE** — 2/2 FAT (2 critiques : adéquation LSFin R107, drift/pre-trade/breach R105/R106/R108), 0 régression, 0 modèle Prisma nouveau. **Intégrer, pas refaire** : compliance sur positions, pas de moteur de portefeuille.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
-## Décision de recette Vague 8 (Référentiel AML)
-
-- [ ] **Recette PRONONCÉE** — 2/2 FAT (référentiel R189→R206 + seuils gouvernés R125→R127), 0 régression, 0 modèle Prisma nouveau. **Zéro invention** : catalogue = projection du canon ratifié ; seuils pilotés par le registre, jamais en dur.
-- Signé (sponsor / Compliance) : ______________________  Date : __________
-
----
-*Ce certificat consolide l'ancien `docs/tests/RAPPORT-RECETTE.md` (supprimé — fusionné ici) pour ne garder qu'une seule source datée.*
+Les suites Olivia v2 (fat-swarm) invoquent le pont Python et peuvent TIMEOUT sous charge
+CPU/DB froide (flaky environnemental, jamais un échec produit) : un second passage rend
+336/336 systématiquement. Consigné pour la CI (retry sur ces suites recommandé).

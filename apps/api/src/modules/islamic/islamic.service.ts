@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 import {
   ContexteIslamic, evaluerIslamic, paramsIslamicDepuisSettings,
   calculerZakat, suiviQard, distribuerMudaraba, auditShariah, validerRetraitWaqf,
@@ -25,10 +26,10 @@ type Ctx = { tenantId: string; userId: string; role: string };
 export class IslamicService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async params(tx: any, ctx: Ctx) {
+  private async params(tx: Tx, ctx: Ctx) {
     const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
     if (!t) throw new NotFoundException("Tenant introuvable");
     return paramsIslamicDepuisSettings(t.settings);
@@ -37,7 +38,7 @@ export class IslamicService {
   // ── Évaluation Shariah : moteur → signaux persistés → état de blocage ──
   async evaluer(ctx: Ctx, dto: ContexteIslamic & { clientId: string }) {
     if (!dto || !dto.clientId) throw new NotFoundException("clientId requis");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const params = await this.params(tx, ctx);
       const signaux = evaluerIslamic({ ...dto }, params);
       const persistes: any[] = [];
@@ -66,7 +67,7 @@ export class IslamicService {
 
   // ── Calculateurs (non-signaux) : calcul + événement ledger, aucun IslamicSignal ──
   private async ledger(ctx: Ctx, type: string, aggregateId: string, payload: any) {
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx: Tx) => {
       await this.emit(tx, ctx.tenantId, type, aggregateId, payload);
     });
     await this.audit.log(ctx.tenantId, ctx.userId, type.toUpperCase().replace(/\./g, "_"), aggregateId);
@@ -76,7 +77,7 @@ export class IslamicService {
   // désormais leur trace (append-only, tenant-scopé, RLS) pour l'audit AAOIFI — l'auteur
   // reste le jeton, jamais le corps.
   async zakat(ctx: Ctx, dto: { clientId: string; patrimoineChf: number; annee?: number }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
       const rapport = calculerZakat(dto.patrimoineChf, paramsIslamicDepuisSettings(t?.settings));
       const annee = dto.annee ?? new Date().getUTCFullYear();
@@ -96,7 +97,7 @@ export class IslamicService {
 
   async mudaraba(ctx: Ctx, dto: { clientId: string; profitChf: number; bankSharePct: number; clientSharePct: number }) {
     const rapport = distribuerMudaraba(dto.profitChf, dto.bankSharePct, dto.clientSharePct);
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const row = await tx.mudarabaDistribution.create({ data: {
         tenantId: ctx.tenantId, clientId: dto.clientId, profitChf: rapport.profit,
         bankShare: rapport.bankShare, clientShare: rapport.clientShare, statut: rapport.status,
@@ -109,7 +110,7 @@ export class IslamicService {
   async waqfRetrait(ctx: Ctx, dto: { waqfId: string; incomeChf: number; retraitChf: number }) {
     const rapport = validerRetraitWaqf(dto.incomeChf, dto.retraitChf);
     if (!rapport.autorise) throw new BadRequestException(rapport.motif);
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const row = await tx.waqfDistribution.create({ data: {
         tenantId: ctx.tenantId, waqfId: dto.waqfId, montantChf: rapport.retrait,
         incomeChf: rapport.income, source: rapport.source, emisPar: ctx.userId, at: new Date().toISOString() } });

@@ -1,0 +1,42 @@
+# Recette visuelle FAT (R332) — NON BLOQUANTE. Double les parcours phares « vue utilisateur »
+# dans un vrai navigateur ; la porte CI bloquante reste la suite FAT API à jetons réels (ci.yml
+# step « 3f »). Ce workflow est séparé et n'est pas un check requis : sa rougeur n'empêche pas
+# le merge (décision PO 2026-07-29 : « API pour la porte CI + Playwright en job séparé »).
+name: fat-visuel
+on:
+  push:
+    branches: ["**"]
+    paths: ["apps/web/**", ".github/workflows/fat-visuel.yml"]
+  pull_request:
+    paths: ["apps/web/**"]
+jobs:
+  recette-visuelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - name: Install (workspace)
+        run: pnpm install --frozen-lockfile
+      - name: Build web
+        working-directory: apps/web
+        run: npx vite build
+      # @playwright/test installé ICI (hors manifeste workspace, lockfile intact) + son Chromium.
+      - name: Playwright (ad-hoc, hors lockfile) + Chromium
+        working-directory: apps/web
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Recette visuelle (non bloquante)
+        working-directory: apps/web
+        continue-on-error: true
+        run: npx playwright test --config playwright/playwright.config.mjs
+      - name: Empreintes d'écran (artefact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fat-recette-visuelle
+          path: apps/web/playwright/artefacts/
+          if-no-files-found: ignore

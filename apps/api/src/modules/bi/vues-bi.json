@@ -1,0 +1,8 @@
+{
+  "clients_par_pays": { "source": "clients", "dimensions": ["country", "riskLevel", "structure"],
+    "mesures": ["n"], "sensibilite": "NORMALE" },
+  "kyc_par_statut": { "source": "kyc_files", "dimensions": ["status", "workflow"],
+    "mesures": ["n"], "sensibilite": "NORMALE" },
+  "tx_par_devise": { "source": "transactions", "dimensions": ["devise", "sens", "type"],
+    "mesures": ["n", "volume"], "sensibilite": "NORMALE" }
+}

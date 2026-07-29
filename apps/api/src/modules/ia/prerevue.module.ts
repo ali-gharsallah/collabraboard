@@ -28,7 +28,16 @@ export class PreRevueController {
       // démarre, la pré-revue refuse proprement à l'appel (comportement préservé). Ce module
       // (prerevue.module.ts) est le câblage Nest actif importé par app.module.
       useFactory: (p: PrismaService, a: AuditService) =>
-        new PreRevueService(p, a, { ia: process.env.ANTHROPIC_API_KEY ? claudeIaAdapter() : undefined }),
+        new PreRevueService(p, a, { ia: process.env.ANTHROPIC_API_KEY ? claudeIaAdapter()
+          // Port de TEST déterministe (même doctrine que le port Olivia v1 : OLIVIA_FAKE_PORT=1,
+          // outillage de test, JAMAIS un chemin de prod) — livré au solde de l'anomalie A3 pour
+          // couvrir e2e le chemin demander() : les points = les réponses manquantes du snapshot.
+          : process.env.OLIVIA_FAKE_PORT === "1" ? {
+              prerevue: async (snapshot: any) => ({ modele: "fake-prerevue-1.0",
+                points: (snapshot.sections ?? []).flatMap((s: any) => (s.reponses ?? [])
+                  .filter((q: any) => q.valeur == null)
+                  .map((q: any) => ({ constat: `réponse manquante : ${q.code}`, section: s.code, question: q.code }))) }),
+            } : undefined }),
       inject: [PrismaService, AuditService],
     }],
   exports: [PreRevueService],

@@ -3,6 +3,7 @@ import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * Le module est une licence — R177→R179 (LC-01..05). Écrit APRÈS l'amendement, APRÈS les
@@ -34,10 +35,10 @@ export class VendorLicenseService {
       .update(JSON.stringify({ i: l.instanceId, v: l.version, m: [...l.modules].sort(), e: l.effetAt, x: l.expiry }))
       .digest("hex");
   }
-  private emit(tx: any, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, null, type, aggregateId, payload);
   }
-  private async courante(tx: any, instanceId: string) {
+  private async courante(tx: Tx, instanceId: string) {
     const ls = (await tx.vendorLicense.findMany({ where: { instanceId } }))
       .filter((l: any) => new Date(l.effetAt).getTime() <= Date.now())
       .sort((a: any, b: any) => String(a.effetAt).localeCompare(String(b.effetAt)));
@@ -50,7 +51,7 @@ export class VendorLicenseService {
 
   // ── R177/R179 : émettre — l'acte vendor qui fait le périmètre ──
   async emettre(ctx: VendorCtx, dto: LicenceDto) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (ctx.role !== "VENDOR") {
         await this.emit(tx, "vendor.licence.acces.refuse", dto.instanceId, { par: ctx.userId, role: ctx.role });
         throw new ForbiddenException("R179 : émettre une licence est un acte vendor");

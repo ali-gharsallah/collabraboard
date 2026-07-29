@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('RM', 'ARM', 'CO', 'CO_SR', 'MLRO', 'CF', 'BRM', 'DIR', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('RM', 'ARM', 'CO', 'CO_SR', 'MLRO', 'CF', 'BRM', 'DIR', 'ADMIN', 'SO');
 
 -- CreateEnum
 CREATE TYPE "KycStatus" AS ENUM ('IN_PROGRESS', 'UNDER_REVIEW', 'VALIDATED', 'REJECTED');
@@ -109,6 +109,8 @@ CREATE TABLE "kyc_access_rules" (
     "question_id" UUID NOT NULL,
     "role" "Role" NOT NULL,
     "right" "AccessRight" NOT NULL,
+    "effective_from" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "effective_to" TIMESTAMP(3),
 
     CONSTRAINT "kyc_access_rules_pkey" PRIMARY KEY ("id")
 );
@@ -935,6 +937,341 @@ CREATE TABLE "nba_suggestions" (
     CONSTRAINT "nba_suggestions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "event_consumers" (
+    "consumer" TEXT NOT NULL,
+    "stream" TEXT NOT NULL,
+    "last_seq" BIGINT NOT NULL,
+    "blocage_seq" BIGINT,
+    "tentatives" INTEGER NOT NULL DEFAULT 0,
+    "prochaine_tentative_at" TIMESTAMP(3),
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "event_consumers_pkey" PRIMARY KEY ("consumer","stream")
+);
+
+-- CreateTable
+CREATE TABLE "event_dead_letters" (
+    "id" BIGSERIAL NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "consumer" TEXT NOT NULL,
+    "event_id" BIGINT NOT NULL,
+    "erreur" TEXT NOT NULL,
+    "tentatives" INTEGER NOT NULL,
+    "rejoue_par" UUID,
+    "rejoue_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "event_dead_letters_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "cpsi_events" (
+    "id" BIGSERIAL NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "client_id" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "at" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "cpsi_events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_conversations" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "role_code" TEXT NOT NULL,
+    "capacite" TEXT NOT NULL,
+    "ancrage_type" TEXT,
+    "ancrage_id" TEXT,
+    "statut" TEXT NOT NULL DEFAULT 'OUVERTE',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_conversations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_messages" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "conversation_id" UUID,
+    "seq" INTEGER NOT NULL,
+    "direction" TEXT NOT NULL,
+    "texte" TEXT NOT NULL,
+    "provider" TEXT,
+    "model" TEXT,
+    "model_version" TEXT,
+    "citations" JSONB,
+    "est_source" BOOLEAN,
+    "contexte_empreinte" CHAR(64),
+    "contexte_objets" JSONB,
+    "latence_ms" INTEGER,
+    "persona_version" TEXT,
+    "langue" TEXT,
+    "statut_stream" TEXT,
+    "conforme" BOOLEAN DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "record_hash" CHAR(64) NOT NULL,
+    "prev_hash" CHAR(64),
+
+    CONSTRAINT "olivia_messages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_proposals" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "message_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "cible_type" TEXT NOT NULL,
+    "cible_id" TEXT NOT NULL,
+    "cible_etat" TEXT,
+    "justification" TEXT NOT NULL,
+    "impact_estime" JSONB,
+    "statut" TEXT NOT NULL DEFAULT 'PENDING',
+    "decide_par" UUID,
+    "decide_at" TIMESTAMP(3),
+    "motif_rejet" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_proposals_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "offboarding_files" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "motif" TEXT NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'CLOTURE_DEMANDEE',
+    "initiateur" UUID NOT NULL,
+    "documents" JSONB NOT NULL DEFAULT '[]',
+    "visas" JSONB NOT NULL DEFAULT '[]',
+    "attestation_avoirs" JSONB,
+    "motif_annulation" TEXT,
+    "cloture_effective_at" TIMESTAMP(3),
+    "retention_jusqua" DATE,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "offboarding_files_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "offboarding_sensibles" (
+    "offboarding_id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "motif_sensible" TEXT,
+    "mros_ref" UUID,
+
+    CONSTRAINT "offboarding_sensibles_pkey" PRIMARY KEY ("offboarding_id")
+);
+
+-- CreateTable
+CREATE TABLE "review_deadlines" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "source_kyc_id" UUID NOT NULL,
+    "ddl_level" TEXT NOT NULL,
+    "cadence_mois" INTEGER NOT NULL,
+    "due_date" DATE NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'PLANIFIEE',
+    "remplace_par" UUID,
+    "realisee_kyc_id" UUID,
+    "preavis_signale" BOOLEAN NOT NULL DEFAULT false,
+    "escalade_signalee" BOOLEAN NOT NULL DEFAULT false,
+    "report_en_attente" JSONB,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "review_deadlines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "coc_config_versions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "type_code" TEXT NOT NULL,
+    "libelle" TEXT NOT NULL,
+    "materialite" TEXT NOT NULL,
+    "action_requise" TEXT NOT NULL,
+    "role_traitant" TEXT NOT NULL,
+    "severite_cpsi" DOUBLE PRECISION,
+    "libelles" JSONB,
+    "effet_at" TIMESTAMP(3) NOT NULL,
+    "par" UUID NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "coc_config_versions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "coc_files" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "type_code" TEXT NOT NULL,
+    "materialite" TEXT NOT NULL,
+    "action_requise" TEXT NOT NULL,
+    "role_traitant" TEXT NOT NULL,
+    "severite_cpsi" DOUBLE PRECISION,
+    "config_version_at" TIMESTAMP(3) NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'OUVERT',
+    "description" TEXT NOT NULL,
+    "declarant" UUID NOT NULL,
+    "revision_kyc_id" UUID,
+    "maj_refs" JSONB,
+    "sans_maj_motif" TEXT,
+    "traitement_en_attente" JSONB,
+    "traite_par" UUID,
+    "traite_at" TIMESTAMP(3),
+    "motif_cloture" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "coc_files_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_tools" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "endpoint_ref" TEXT NOT NULL,
+    "methode" TEXT NOT NULL,
+    "schema_entree" JSONB NOT NULL,
+    "schema_sortie" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_tools_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_agents" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "version" INTEGER NOT NULL,
+    "capacite" TEXT NOT NULL,
+    "outils_autorises" JSONB NOT NULL,
+    "gabarit_ref" TEXT NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'ACTIF',
+    "effectif_depuis" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_agents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_runs" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "mission_code" TEXT NOT NULL,
+    "commanditaire_id" UUID NOT NULL,
+    "role_code" TEXT NOT NULL,
+    "ancrage_type" TEXT,
+    "ancrage_id" UUID,
+    "statut" TEXT NOT NULL DEFAULT 'PLANIFIE',
+    "budget" JSONB NOT NULL,
+    "consomme" JSONB NOT NULL DEFAULT '{"etapes":0,"duree_s":0,"tokens":0}',
+    "livrable_message_id" UUID,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "olivia_runs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "olivia_run_events" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "run_id" UUID NOT NULL,
+    "seq" INTEGER NOT NULL,
+    "type" TEXT NOT NULL,
+    "agent_code" TEXT,
+    "agent_version" INTEGER,
+    "outil_code" TEXT,
+    "entree_empreinte" CHAR(64),
+    "contexte_objets" JSONB,
+    "sortie" JSONB,
+    "cout" JSONB,
+    "at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "record_hash" CHAR(64) NOT NULL,
+    "prev_hash" CHAR(64),
+
+    CONSTRAINT "olivia_run_events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "transactions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID,
+    "compte" TEXT NOT NULL,
+    "date_valeur" TEXT NOT NULL,
+    "date_comptable" TEXT NOT NULL,
+    "montant" DECIMAL(65,30) NOT NULL,
+    "devise" TEXT NOT NULL,
+    "sens" TEXT NOT NULL,
+    "contrepartie_nom" TEXT,
+    "contrepartie_pays" TEXT,
+    "contrepartie_iban_hash" TEXT,
+    "type" TEXT NOT NULL,
+    "ref_externe" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "enrichi" JSONB,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "builder_artefacts" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "contenu" JSONB NOT NULL,
+    "auteur" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "builder_artefacts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "builder_versions" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "version" INTEGER NOT NULL,
+    "contenu" JSONB NOT NULL,
+    "depuis_le" TEXT NOT NULL,
+    "auteur" TEXT NOT NULL,
+    "publie_par" TEXT NOT NULL,
+    "motif" TEXT NOT NULL,
+    "rapport" JSONB,
+    "publie_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "builder_versions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "mobile_identites" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "client_id" UUID NOT NULL,
+    "statut" TEXT NOT NULL DEFAULT 'EN_ATTENTE',
+    "code_hash" TEXT NOT NULL,
+    "mfa_secret" TEXT,
+    "activee_par" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "active_at" TIMESTAMP(3),
+
+    CONSTRAINT "mobile_identites_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
@@ -960,7 +1297,7 @@ CREATE UNIQUE INDEX "kyc_sections_kyc_file_id_code_key" ON "kyc_sections"("kyc_f
 CREATE UNIQUE INDEX "kyc_questions_section_id_code_key" ON "kyc_questions"("section_id", "code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "kyc_access_rules_question_id_role_key" ON "kyc_access_rules"("question_id", "role");
+CREATE INDEX "kyc_access_rules_question_id_role_idx" ON "kyc_access_rules"("question_id", "role");
 
 -- CreateIndex
 CREATE INDEX "kyc_question_history_question_id_changed_at_idx" ON "kyc_question_history"("question_id", "changed_at");
@@ -1139,6 +1476,72 @@ CREATE INDEX "trip_visas_tenant_id_trip_id_idx" ON "trip_visas"("tenant_id", "tr
 -- CreateIndex
 CREATE INDEX "nba_suggestions_tenant_id_subject_id_idx" ON "nba_suggestions"("tenant_id", "subject_id");
 
+-- CreateIndex
+CREATE INDEX "event_dead_letters_tenant_id_consumer_idx" ON "event_dead_letters"("tenant_id", "consumer");
+
+-- CreateIndex
+CREATE INDEX "cpsi_events_tenant_id_id_idx" ON "cpsi_events"("tenant_id", "id");
+
+-- CreateIndex
+CREATE INDEX "olivia_conversations_tenant_id_user_id_idx" ON "olivia_conversations"("tenant_id", "user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "olivia_messages_conversation_id_seq_key" ON "olivia_messages"("conversation_id", "seq");
+
+-- CreateIndex
+CREATE INDEX "olivia_proposals_tenant_id_statut_idx" ON "olivia_proposals"("tenant_id", "statut");
+
+-- CreateIndex
+CREATE INDEX "offboarding_files_tenant_id_statut_idx" ON "offboarding_files"("tenant_id", "statut");
+
+-- CreateIndex
+CREATE INDEX "offboarding_files_tenant_id_client_id_idx" ON "offboarding_files"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE INDEX "offboarding_sensibles_tenant_id_idx" ON "offboarding_sensibles"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "review_deadlines_tenant_id_statut_due_date_idx" ON "review_deadlines"("tenant_id", "statut", "due_date");
+
+-- CreateIndex
+CREATE INDEX "review_deadlines_tenant_id_client_id_idx" ON "review_deadlines"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE INDEX "coc_config_versions_tenant_id_type_code_effet_at_idx" ON "coc_config_versions"("tenant_id", "type_code", "effet_at");
+
+-- CreateIndex
+CREATE INDEX "coc_files_tenant_id_statut_idx" ON "coc_files"("tenant_id", "statut");
+
+-- CreateIndex
+CREATE INDEX "coc_files_tenant_id_client_id_idx" ON "coc_files"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "olivia_tools_tenant_id_code_key" ON "olivia_tools"("tenant_id", "code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "olivia_agents_tenant_id_code_version_key" ON "olivia_agents"("tenant_id", "code", "version");
+
+-- CreateIndex
+CREATE INDEX "olivia_runs_tenant_id_statut_idx" ON "olivia_runs"("tenant_id", "statut");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "olivia_run_events_run_id_seq_key" ON "olivia_run_events"("run_id", "seq");
+
+-- CreateIndex
+CREATE INDEX "transactions_tenant_id_client_id_idx" ON "transactions"("tenant_id", "client_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "transactions_tenant_id_source_ref_externe_key" ON "transactions"("tenant_id", "source", "ref_externe");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "builder_artefacts_tenant_id_type_code_key" ON "builder_artefacts"("tenant_id", "type", "code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "builder_versions_tenant_id_type_code_version_key" ON "builder_versions"("tenant_id", "type", "code", "version");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "mobile_identites_tenant_id_client_id_key" ON "mobile_identites"("tenant_id", "client_id");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -1189,4 +1592,10 @@ ALTER TABLE "positions" ADD CONSTRAINT "positions_mandate_id_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_document_id_fkey" FOREIGN KEY ("document_id") REFERENCES "documents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "olivia_messages" ADD CONSTRAINT "olivia_messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "olivia_conversations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "olivia_run_events" ADD CONSTRAINT "olivia_run_events_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "olivia_runs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

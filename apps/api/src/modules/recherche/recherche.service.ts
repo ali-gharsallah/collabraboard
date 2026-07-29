@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * La recherche — trouver sans trahir. R148→R151 (RS-01..06). Écrit APRÈS l'amendement, APRÈS
@@ -27,10 +28,10 @@ type Ctx = { tenantId: string; userId: string; role: string };
 export class RechercheService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { types: s.gedDocTypes ?? [], inboxRoles: s.gedInboxRoles ?? ["CO", "CF"] };
@@ -38,7 +39,7 @@ export class RechercheService {
 
   // ── R148/R151 : indexer — une entrée par document, référence + empreinte du dérivé ──
   async indexer(ctx: Ctx, versionId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const v = await tx.documentVersion.findFirst({ where: { id: versionId, tenantId: ctx.tenantId } });
       if (!v) throw new NotFoundException("Version introuvable");
       const derives = (v.ocrDerives ?? []) as any[];
@@ -60,7 +61,7 @@ export class RechercheService {
 
   // ── R148 : rejouable — l'index peut brûler sans perte ──
   async reindexerTout(ctx: Ctx) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await tx.searchEntry.deleteMany({ where: { tenantId: ctx.tenantId } });
       const versions = await tx.documentVersion.findMany({ where: { tenantId: ctx.tenantId } });
       // par document : la version au numéro le plus haut portant un dérivé
@@ -87,7 +88,7 @@ export class RechercheService {
     if (!requete || requete.trim().length < 2)
       throw new BadRequestException("Requête trop courte");
     const q = requete.trim().toLowerCase();
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { types, inboxRoles } = await this.cfg(tx, ctx.tenantId);
       const brut = await tx.searchEntry.findMany({ where: { tenantId: ctx.tenantId, texte: { contains: q } } });
       const servis = brut.filter((e: any) => {
@@ -106,7 +107,7 @@ export class RechercheService {
 
   // ── R151 : la destruction certifiée retire — le retrait est un événement ──
   async retirer(ctx: Ctx, documentId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const d = await tx.document.findFirst({ where: { id: documentId, tenantId: ctx.tenantId } });
       if (!d) throw new NotFoundException("Document introuvable");
       if (d.statut !== "DETRUIT")
@@ -119,7 +120,7 @@ export class RechercheService {
 
   // ── R148 : la désynchronisation se détecte — un fait d'audit, pas un ménage ──
   async reconcilierIndex(ctx: Ctx) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const entries = await tx.searchEntry.findMany({ where: { tenantId: ctx.tenantId } });
       for (const e of entries) {
         const d = await tx.document.findFirst({ where: { id: e.documentId, tenantId: ctx.tenantId } });

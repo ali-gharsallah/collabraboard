@@ -49,6 +49,7 @@ enum Role {
   BRM
   DIR
   ADMIN
+  SO // R284 (ratifié 2026-07-28) : Security Officer — rôle d'AUDIT (journaux, jamais les dossiers)
 }
 
 model Client {
@@ -135,12 +136,17 @@ model KycQuestion {
 }
 
 model KycAccessRule {
-  id         String      @id @default(uuid()) @db.Uuid
-  questionId String      @map("question_id") @db.Uuid
-  question   KycQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  role       Role
-  right      AccessRight
-  @@unique([questionId, role])
+  id            String      @id @default(uuid()) @db.Uuid
+  questionId    String      @map("question_id") @db.Uuid
+  question      KycQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  role          Role
+  right         AccessRight
+  // R282 (canon écarts anciens, 2026-07-28) : la matrice est VERSIONNÉE à date — modifier =
+  // clore la ligne courante + insérer la nouvelle ; les versions closes sont immuables (trigger).
+  // Unicité « en vigueur » = index partiel SQL (question_id, role) WHERE effective_to IS NULL.
+  effectiveFrom DateTime    @default(now()) @map("effective_from")
+  effectiveTo   DateTime?   @map("effective_to")
+  @@index([questionId, role])
   @@map("kyc_access_rules")
 }
 
@@ -995,4 +1001,380 @@ model NbaSuggestion {
   createdAt   String   @map("created_at")                 // ISO
   @@index([tenantId, subjectId])
   @@map("nba_suggestions")
+}
+
+// ── CPSI (Client Profiling & Segmentation Intelligence) — porte HTTP mince (CP-01..19) ──
+// Journal APPEND-ONLY tenant-scopé : source de vérité de l'état CPSI. La porte NE réimplémente
+// aucune règle (R63→R83) ; elle persiste les faits (client enregistré, signal ingéré, …) puis
+// REJOUE le journal du tenant vers le moteur Python ratifié (`services/cpsi-server-py`) pour
+// ── R286 (canon SO + transport async, ratifié 2026-07-28) : livraison AT-LEAST-ONCE. ──
+// Le watermark d'un consommateur est PERSISTÉ (dernier seq traité par flux) ; la tête de flux
+// en échec porte son compteur de tentatives et son backoff — l'échec définitif devient une
+// dead-letter TRACÉE (jamais un log silencieux), rejouable manuellement (qui, quand).
+// `event_consumers` est une table d'INFRASTRUCTURE (sans tenant — les flux traversent) ;
+// `event_dead_letters` est tenantée (RLS).
+model EventConsumer {
+  consumer             String
+  stream               String                                       // flux ('global' MVP ; par agrégat/type en évolution)
+  lastSeq              BigInt    @map("last_seq")
+  blocageSeq           BigInt?   @map("blocage_seq")                // tête de flux en échec (retry en cours)
+  tentatives           Int       @default(0)
+  prochaineTentativeAt DateTime? @map("prochaine_tentative_at")     // backoff borné (R286)
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  @@id([consumer, stream])
+  @@map("event_consumers")
+}
+
+model EventDeadLetter {
+  id         BigInt    @id @default(autoincrement())
+  tenantId   String    @map("tenant_id") @db.Uuid
+  consumer   String
+  eventId    BigInt    @map("event_id")                             // réf domain_events — jamais le payload
+  erreur     String
+  tentatives Int
+  rejouePar  String?   @map("rejoue_par") @db.Uuid                  // rejeu MANUEL tracé (jeton)
+  rejoueAt   DateTime? @map("rejoue_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, consumer])
+  @@map("event_dead_letters")
+}
+
+// calculer (score, drivers, bande, segmentation…). Rejeu à date natif (R48/R49) via `at`.
+// L'auteur est TOUJOURS le jeton (payload.par = ctx.userId), jamais le corps.
+model CpsiEvent {
+  id        BigInt   @id @default(autoincrement())        // seq monotone (R49) — ordre de rejeu
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String                                        // cpsi.client.registered | cpsi.signal.ingested | …
+  clientId  String   @map("client_id")                    // sujet CPSI (référence applicative)
+  payload   Json                                          // charge de rejeu + par (acteur jeton)
+  at        String                                        // ISO — temps métier (date de calcul, R48)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId, id])
+  @@map("cpsi_events")
+}
+
+// ── OLIVIA v1 (R253→R257, spec spec-fonctionnelle-home-olivia.md) — bloc B.1 ──
+// Conversations : le rôle est FIGÉ à la création (une conversation ne survit pas à son périmètre).
+model OliviaConversation {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  roleCode    String   @map("role_code")                  // rôle AU MOMENT de la création (figé)
+  capacite    String                                      // C1 | C2 | C3 | C4
+  ancrageType String?  @map("ancrage_type")               // KYC_FILE | RISK_CASE | ALERTE | PARAM
+  ancrageId   String?  @map("ancrage_id")                 // uuid (KYC_FILE/RISK_CASE) OU chemin de paramètre (C4/PARAM) — élargi à l'étape 6
+  statut      String   @default("OUVERTE")                // OUVERTE | FERMEE
+  createdAt   DateTime @default(now()) @map("created_at")
+  messages    OliviaMessage[]
+  @@index([tenantId, userId])
+  @@map("olivia_conversations")
+}
+
+// Messages : APPEND-ONLY (R257) — chaîné par hachage (pattern kyc_question_history).
+model OliviaMessage {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  // NULLABLE depuis v2 (0c ratifié, non destructif) : le LIVRABLE d'un run est un message SANS
+  // conversation (olivia_runs.livrable_message_id) — son chaînage s'ancre sur le journal du run.
+  conversationId     String?  @map("conversation_id") @db.Uuid
+  conversation       OliviaConversation? @relation(fields: [conversationId], references: [id])
+  seq                Int                                   // monotone par conversation
+  direction          String                                // IN | OUT
+  texte              String
+  provider           String?                               // R253 : déclaration (OUT)
+  model              String?
+  modelVersion       String?  @map("model_version")
+  citations          Json?                                 // R256 : [{type, ref, assertion}]
+  estSource          Boolean? @map("est_source")           // R256 : false = « non sourcé »
+  contexteEmpreinte  String?  @map("contexte_empreinte") @db.Char(64)  // R255 : HMAC du contexte
+  contexteObjets     Json?    @map("contexte_objets")      // R255 : [{type,id}] — la LISTE, prouvable
+  latenceMs          Int?     @map("latence_ms")
+  // ── v1.1 (R258) — le comportement est un CONTRAT paramétré, journalisé pour le rejeu ──
+  personaVersion     String?  @map("persona_version")       // OL-23 : la version du gabarit de l'époque
+  langue             String?                                // OL-25/26 : langue effective de la réponse
+  statutStream       String?  @map("statut_stream")         // OL-31 : COMPLET | INTERROMPU (jamais de fragments)
+  conforme           Boolean? @default(true)                // OL-24 : false = recommandation en prose non corrigée
+  createdAt          DateTime @default(now()) @map("created_at")
+  recordHash         String   @map("record_hash") @db.Char(64)         // chaînage R257
+  prevHash           String?  @map("prev_hash") @db.Char(64)
+  @@unique([conversationId, seq])
+  @@map("olivia_messages")
+}
+
+// Propositions (R254) : cycle PENDING → ADOPTEE | REJETEE (motif obligatoire) | CADUQUE.
+model OliviaProposal {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  messageId     String    @map("message_id") @db.Uuid     // la sortie OUT qui la fonde
+  type          String                                     // QUALIF_ALERTE_* | AIGUILLAGE_EDD | ALLEGEMENT_EDD | AJUSTEMENT_PARAM
+  cibleType     String    @map("cible_type")               // ALERTE | KYC_FILE | PARAM
+  cibleId       String    @map("cible_id")
+  cibleEtat     String?   @map("cible_etat")               // R254 : état de la cible FIGÉ à la création — la caducité (B.7) se juge contre lui
+  justification String                                     // obligatoire à la création
+  impactEstime  Json?     @map("impact_estime")            // C4 : sortie du bac à sable R70
+  statut        String    @default("PENDING")              // PENDING | ADOPTEE | REJETEE | CADUQUE
+  decidePar     String?   @map("decide_par") @db.Uuid
+  decideAt      DateTime? @map("decide_at")
+  motifRejet    String?   @map("motif_rejet")              // OBLIGATOIRE si REJETEE (R7)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@map("olivia_proposals")
+}
+
+// ── Bloc OFFBOARDING (R267-R271, canon-vague-ecrans-pilote.md partie 5, ratifié 2026-07-27) ──
+// R267 : la clôture est un WORKFLOW tracé — jamais une suppression. Machine à états
+// CLOTURE_DEMANDEE → EN_CLOTURE → { CLOTUREE | CLOTURE_ANNULEE } ; CLOTUREE = lecture seule
+// intégrale pour la durée de rétention (LBA art. 7). ACTIVE = absence de clôture active.
+model OffboardingFile {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  clientId           String    @map("client_id") @db.Uuid
+  type               String                              // DEMANDE_CLIENT | DECISION_BANQUE | EXIT_COMPLIANCE | DECES_SUCCESSION | TRANSFERT_ETABLISSEMENT (R268)
+  motif              String                              // R270 : pour EXIT_COMPLIANCE, TOUJOURS le motif générique — le détail vit dans offboarding_sensibles
+  statut             String    @default("CLOTURE_DEMANDEE") // CLOTURE_DEMANDEE | EN_CLOTURE | CLOTUREE | CLOTURE_ANNULEE
+  initiateur         String    @db.Uuid                  // jeton (ctx.userId) — R13 : ne peut pas apposer le visa final
+  documents          Json      @default("[]")            // R268 : [{type, ref}] fournis
+  visas              Json      @default("[]")            // R268/R15 : [{role, statut, par, at}] — mécanisme uniforme, pas de table neuve
+  attestationAvoirs  Json?     @map("attestation_avoirs") // R269/OF-06 : {par, at, motif} — port core absent
+  motifAnnulation    String?   @map("motif_annulation")  // OF-12 : obligatoire si CLOTURE_ANNULEE (R7)
+  clotureEffectiveAt DateTime? @map("cloture_effective_at") // départ de la rétention (R267)
+  retentionJusqua    DateTime? @map("retention_jusqua") @db.Date
+  createdAt          DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@index([tenantId, clientId])
+  @@map("offboarding_files")
+}
+
+// R270 (LBA art. 10a) : motif détaillé + réf MROS d'un EXIT_COMPLIANCE, CLOISONNÉS dans une
+// table dédiée sous politique RLS restrictive par rôle (testable au niveau SQL — critère 5.6-2).
+// Écart d'implémentation signalé : le canon 5.2 les montre en COLONNES de offboarding_files ;
+// une politique d'accès PAR COLONNE n'existe pas en Postgres — la table dédiée réalise la même
+// sémantique (« colonne sous politique d'accès dédiée ») avec une vraie policy SQL.
+model OffboardingSensible {
+  offboardingId String  @id @map("offboarding_id") @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  motifSensible String? @map("motif_sensible")
+  mrosRef       String? @map("mros_ref") @db.Uuid
+  @@index([tenantId])
+  @@map("offboarding_sensibles")
+}
+
+// ── Échéances de review (R272-R275, canon débloquants Home partie 1, ratifié 2026-07-27) ──
+// R272 : l'échéance est CALCULÉE (approbation + cadence(ddl_level)), la cadence appliquée est
+// FIGÉE dans la ligne (grandfathering R29/RV-02). EN_RETARD n'est PAS un statut stocké : c'est
+// due_date < today AND statut='PLANIFIEE' — un fait calculé à la lecture. REMPLACEE = recalcul
+// (anticipation R273, changement ddl) chaîné par remplace_par ; REALISEE référence le KYC Rn+1
+// (R275). Au plus UNE PLANIFIEE par client : index partiel unique (post-deploy, RV-08).
+model ReviewDeadline {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  clientId          String    @map("client_id") @db.Uuid
+  sourceKycId       String    @map("source_kyc_id") @db.Uuid   // le KYC dont part le calcul
+  ddlLevel          String    @map("ddl_level")                // niveau au moment du calcul (figé)
+  cadenceMois       Int       @map("cadence_mois")             // valeur EN VIGUEUR au calcul (figée, R272)
+  dueDate           DateTime  @map("due_date") @db.Date
+  statut            String    @default("PLANIFIEE")            // PLANIFIEE | REALISEE | REMPLACEE
+  remplacePar       String?   @map("remplace_par") @db.Uuid
+  realiseeKycId     String?   @map("realisee_kyc_id") @db.Uuid // R275
+  preavisSignale    Boolean   @default(false) @map("preavis_signale")     // R274 : notifié une fois
+  escaladeSignalee  Boolean   @default(false) @map("escalade_signalee")   // R274 : escaladé une fois
+  reportEnAttente   Json?     @map("report_en_attente")        // R273/R13 : {nouvelleDate, motif, par, at} — visa d'un second requis
+  createdAt         DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut, dueDate])
+  @@index([tenantId, clientId])
+  @@map("review_deadlines")
+}
+
+// ── Cycle de vie du CoC (R276-R278, canon débloquants Home partie 2, R276 ÉTENDU ratifié :
+// le canon CRÉE le store COC_CONFIG). Le CoC devient un DOSSIER : matérialité/action/rôle FIGÉS
+// à l'ouverture depuis la config EN VIGUEUR (grandfathering R29, CC-02) ; NON_RETENU exige un
+// motif (contrainte SQL au post-deploy, CC-07) ; la chaîne complète se rejoue (R278). ──
+model CocConfigVersion {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  typeCode     String   @map("type_code")
+  libelle      String
+  materialite  String                                     // HAUTE | MOYENNE | BASSE
+  actionRequise String  @map("action_requise")            // REVISION_KYC | MAJ_CIBLEE | PRISE_CONNAISSANCE
+  roleTraitant String   @map("role_traitant")
+  severiteCpsi Float?   @map("severite_cpsi")             // sévérité du signal coc_sensible émis
+  libelles     Json?                                      // R327 (LN-04) : libellés multilingues du TENANT (fr obligatoire, de/en/it optionnels) — expand nullable (RUNBOOK §8)
+  effetAt      DateTime @map("effet_at")                  // versionné à date (R68) — la config d'un CoC = la version ≤ ouverture
+  par          String   @map("par") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@index([tenantId, typeCode, effetAt])
+  @@map("coc_config_versions")
+}
+
+model CocFile {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  clientId        String    @map("client_id") @db.Uuid
+  typeCode        String    @map("type_code")
+  // ── Figé à l'ouverture (R276) ──
+  materialite     String
+  actionRequise   String    @map("action_requise")
+  roleTraitant    String    @map("role_traitant")
+  severiteCpsi    Float?    @map("severite_cpsi")
+  configVersionAt DateTime  @map("config_version_at")     // version COC_CONFIG appliquée (preuve)
+  // ── Cycle de vie ──
+  statut          String    @default("OUVERT")            // OUVERT | EN_TRAITEMENT | TRAITE | NON_RETENU
+  description     String
+  declarant       String    @db.Uuid
+  // ── Preuves de traitement (R277) ──
+  revisionKycId   String?   @map("revision_kyc_id") @db.Uuid
+  majRefs         Json?     @map("maj_refs")
+  sansMajMotif    String?   @map("sans_maj_motif")        // MOYENNE : décision motivée « aucune mise à jour requise »
+  traitementEnAttente Json? @map("traitement_en_attente") // four-eyes HAUTE : {par, at, preuves} — visa d'un second requis
+  traitePar       String?   @map("traite_par") @db.Uuid
+  traiteAt        DateTime? @map("traite_at")
+  motifCloture    String?   @map("motif_cloture")         // OBLIGATOIRE si NON_RETENU (CHECK SQL)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  @@index([tenantId, statut])
+  @@index([tenantId, clientId])
+  @@map("coc_files")
+}
+
+model OliviaTool {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  code         String
+  endpointRef  String   @map("endpoint_ref")              // DOIT appartenir à la liste blanche livrée (R264)
+  methode      String                                     // GET | PROPOSE (CHECK SQL)
+  schemaEntree Json     @map("schema_entree")
+  schemaSortie Json     @map("schema_sortie")
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, code])
+  @@map("olivia_tools")
+}
+
+model OliviaAgent {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  code            String
+  version         Int
+  capacite        String
+  outilsAutorises Json     @map("outils_autorises")       // [codes d'outils DÉCLARÉS au registre R264]
+  gabaritRef      String   @map("gabarit_ref")            // paramètre versionné R68
+  statut          String   @default("ACTIF")              // ACTIF | RETIRE (CHECK SQL)
+  effectifDepuis  DateTime @map("effectif_depuis")
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, code, version])
+  @@map("olivia_agents")
+}
+
+model OliviaRun {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  missionCode       String   @map("mission_code")
+  commanditaireId   String   @map("commanditaire_id") @db.Uuid  // scope hérité, figé (R261) — jeton, jamais le corps
+  roleCode          String   @map("role_code")
+  ancrageType       String?  @map("ancrage_type")
+  ancrageId         String?  @map("ancrage_id") @db.Uuid
+  statut            String   @default("PLANIFIE")               // machine R260 (CHECK SQL)
+  budget            Json                                        // {maxEtapes,maxDureeS,maxCoutTokens} figé à la création
+  consomme          Json     @default("{\"etapes\":0,\"duree_s\":0,\"tokens\":0}")
+  livrableMessageId String?  @map("livrable_message_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
+  events            OliviaRunEvent[]
+  @@index([tenantId, statut])
+  @@map("olivia_runs")
+}
+
+model OliviaRunEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  runId           String    @map("run_id") @db.Uuid
+  run             OliviaRun @relation(fields: [runId], references: [id])
+  seq             Int
+  type            String                                        // PLAN|ETAPE_AGENT|ETAPE_OUTIL|PORTE_OUVERTE|PORTE_DECISION|SCOPE_DENIED|BUDGET_TICK|TRANSITION|LIVRABLE
+  agentCode       String?   @map("agent_code")
+  agentVersion    Int?      @map("agent_version")
+  outilCode       String?   @map("outil_code")
+  entreeEmpreinte String?   @map("entree_empreinte") @db.Char(64)
+  contexteObjets  Json?     @map("contexte_objets")
+  sortie          Json?
+  cout            Json?                                         // {tokens, dureeMs}
+  at              DateTime  @default(now())
+  recordHash      String    @map("record_hash") @db.Char(64)    // chaînage R260/R265
+  prevHash        String?   @map("prev_hash") @db.Char(64)
+  @@unique([runId, seq])
+  @@map("olivia_run_events")
+}
+
+// ═══ R297 [canon R294] — LE journal transactionnel canonique (dégel vague 1, TF-01..03).
+// Append-only (trigger post-deploy), alimenté EXCLUSIVEMENT par le port core banking —
+// jamais inventé. Idempotence par (tenant, source, ref_externe). L'enrichissement est
+// calculé À l'insertion et tracé dans `enrichi` — jamais un écrasement (le trigger l'interdit).
+model Transaction {
+  id                   String   @id @default(uuid()) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  clientId             String?  @map("client_id") @db.Uuid       // via coreMapping (R169) ; inconnu = quarantaine
+  compte               String
+  dateValeur           String   @map("date_valeur")              // ISO date — la donnée du port
+  dateComptable        String   @map("date_comptable")
+  montant              Decimal
+  devise               String
+  sens                 String                                    // CREDIT | DEBIT
+  contrepartieNom      String?  @map("contrepartie_nom")
+  contrepartiePays     String?  @map("contrepartie_pays")
+  contrepartieIbanHash String?  @map("contrepartie_iban_hash")   // jamais l'IBAN en clair
+  type                 String
+  refExterne           String   @map("ref_externe")
+  source               String
+  enrichi              Json?                                     // colonnes calculées TRACÉES {champ:{valeur,regle}}
+  createdAt            DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, source, refExterne])
+  @@index([tenantId, clientId])
+  @@map("transactions")
+}
+
+// ═══ R304 [canon R301] — LE BUILDER (dégel V3, WB-01..10). Brouillons MUTABLES,
+// versions publiées APPEND-ONLY (trigger post-deploy) datées — grandfathering R29 :
+// les dossiers en cours restent sur LEUR version, les nouveaux prennent celle en vigueur.
+model BuilderArtefact {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String                                     // SECTION | QUESTIONNAIRE | WORKFLOW
+  code      String
+  contenu   Json
+  auteur    String                                     // le DERNIER éditeur du brouillon (R307 : ne publie pas)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([tenantId, type, code])
+  @@map("builder_artefacts")
+}
+
+model BuilderVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  type       String
+  code       String
+  version    Int
+  contenu    Json
+  depuisLe   String   @map("depuis_le")                // R29/R68 — date de mise en vigueur
+  auteur     String
+  publiePar  String   @map("publie_par")               // ≠ auteur (R13)
+  motif      String                                    // R7
+  rapport    Json?                                     // R305 — le rapport d'impact JOINT
+  publieAt   DateTime @default(now()) @map("publie_at")
+  @@unique([tenantId, type, code, version])
+  @@map("builder_versions")
+}
+
+// ═══ Mobile Banking — R316 (dégel V7, GO Ali 2026-07-28) : POPULATION IAM DISTINCTE ═══
+// La contrainte MB-01 est STRUCTURELLE : cette table n'a AUCUNE colonne de rôle — un client
+// final ne peut pas détenir un rôle interne parce que le schéma ne sait pas l'exprimer.
+// Le code hors bande n'est JAMAIS stocké en clair ; le secret MFA est obligatoire (R316).
+model MobileIdentite {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  clientId   String    @map("client_id") @db.Uuid
+  statut     String    @default("EN_ATTENTE")           // EN_ATTENTE | ACTIVE | SUSPENDUE
+  codeHash   String    @map("code_hash")                // sha256 du code hors bande — jamais en clair
+  mfaSecret  String?   @map("mfa_secret")               // posé à l'activation — MFA obligatoire ensuite
+  activeePar String    @map("activee_par")              // le RM qui active (tracé, MB-02)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  activeAt   DateTime? @map("active_at")
+  @@unique([tenantId, clientId])
+  @@map("mobile_identites")
 }

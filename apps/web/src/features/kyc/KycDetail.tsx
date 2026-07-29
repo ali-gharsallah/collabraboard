@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { BanniereCloture } from "../../components/BanniereCloture"; // R267/OF-10 — écran KYC
 
 // Détail dossier : sections → questions (droits appliqués côté serveur),
 // visas de section, validation four-eyes. Miroir produit de l'écran démo.
@@ -22,6 +23,7 @@ export function KycDetail({ code }: { code: string }) {
     if (!r.ok) setErr((await r.json()).message ?? "Erreur"); else load();
   }
   return <div>
+    <BanniereCloture clientId={kyc.clientId}/>
     <h3>{kyc.code} — {kyc.workflow} · score {kyc.riskScore} · {kyc.status}</h3>
     {err && <p style={{ color: "#B5483C" }}>{err}</p>}
     {kyc.sections.map((s: any) => <div key={s.code} style={{ marginBottom: 14 }}>

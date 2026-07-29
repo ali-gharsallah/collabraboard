@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Surface de consultation GED — GS-01..05. AUCUNE règle nouvelle : expose des règles
@@ -43,7 +44,7 @@ export class GedConsultationService {
     if (!d) throw new NotFoundException("Document introuvable");
     const lisibles = await this.typesLisibles(ctx);
     if (!d.typeCode || !lisibles.has(d.typeCode)) {
-      await this.prisma.$transaction(async (tx: any) =>
+      await this.prisma.$transaction(async (tx: Tx) =>
         tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "ged.consultation.refusee",
           aggregateId: documentId, payload: { par: ctx.userId, role: ctx.role, typeCode: d.typeCode },
           at: new Date().toISOString() } }));

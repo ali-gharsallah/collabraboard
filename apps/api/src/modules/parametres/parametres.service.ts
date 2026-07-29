@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * Gouvernance des paramètres tenant — R125→R128 (RQ-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -170,7 +171,7 @@ export const REGISTRE_RQ: Entree[] = [
   //    d'approbation et les sévérités sont des règles : réglés par le registre (R7/R125). ──
   { cle: "tripCrossBorderReferentiel", type: "json", defaut: [], regle: "R223", requis: false,
     exemple: [{ jurisdiction: "SA", activite: "sollicitation", verdict: "INTERDITE", depuisLe: "2026-01-01" }],
-    description: "Référentiel cross-border versionné (par date d'effet, R229) : verdict AUTORISEE|INTERDITE|SOUMISE_A_LICENCE par (juridiction, activité). L'avis ne décide pas — l'approbation reste humaine (R223)." },
+    description: "LE country manual (R293 : enrichi — jamais un second référentiel) : verdict AUTORISEE|INTERDITE|SOUMISE_A_LICENCE par (juridiction, activité), versionné par date d'effet (R229), avec licence/source/dateAvis (référence du mémo juridique — la banque assume sa position, O-Live la structure). Juridiction absente = NON DÉTERMINÉ (default-deny). L'avis ne décide pas — l'approbation reste humaine (R223)." },
   { cle: "tripKycCheckSeverity", type: "string", defaut: "INFORMATIF", regle: "R224", requis: false,
     description: "Sévérité si un client visité n'a pas de KYC approuvé : INFORMATIF ou BLOQUANT_APPROBATION (R224)." },
   { cle: "tripApprovalMatrix", type: "json", defaut: ["DIR"], regle: "R225", requis: false,
@@ -197,6 +198,99 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Durée de vie (jours) d'une suggestion NBA — au-delà elle expire et n'est plus décidable (R243)." },
   { cle: "nbaRejectRationaleRequired", type: "bool", defaut: false, regle: "R244", requis: false,
     description: "Un rejet de suggestion NBA exige-t-il un motif ? (R244)." },
+  // ── Cross-border — R293-R295 (canon triage final, ratifié 2026-07-28). ──
+  { cle: "visa_derogation_xb", type: "string", defaut: "DIR", regle: "R294", requis: false,
+    description: "Rôle qui vise une dérogation cross-border (R13 : l'initiateur exclu). Le canon dit LEGAL — rôle absent du RBAC tenant : mappé DIR (consigné)." },
+  { cle: "preuve_reverse_solicitation", type: "string", defaut: "declaration", regle: "R295", requis: false,
+    description: "Exigence de preuve pour la reverse solicitation : declaration (tracée, suffit) ou preuve (référence GED toujours obligatoire). En EDD, la preuve est TOUJOURS exigée." },
+  // ── Extension MOD-30 / SSO — R290 (ratifié 2026-07-28). ──
+  { cle: "ssoOidc", type: "json", defaut: null, regle: "R290", requis: false,
+    exemple: { issuer: "https://login.banque.ch/realms/olive", audience: "olive-app", roleMapping: { "grp-co": "CO" }, defaultRole: "RM" },
+    description: "Config OIDC DÉCLARÉE du tenant (issuer, audience, mapping claims→rôles) — JAMAIS de secret ici : le client_secret vit au coffre/env, l'état ne dit que « configuré/absent » (IM-01)." },
+  { cle: "sso_mode", type: "string", defaut: "jwt", regle: "R290", requis: false,
+    description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
+  { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
+    description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Solde 4 écarts — R326/R327 i18n (ratifié 2026-07-29). ──
+  { cle: "tenant_langue_defaut", type: "string", defaut: "FR", regle: "R327", requis: false,
+    description: "Langue par défaut du tenant (FR|DE|EN|IT) : préférence UI par défaut des utilisateurs et repli de `corrLang` pour les documents générés (LN-05 : le courrier suit le DESTINATAIRE, jamais la locale de l'opérateur)." },
+  { cle: "langues_actives_ui", type: "json", defaut: ["FR", "DE", "EN", "IT"], regle: "R327", requis: false,
+    description: "Langues d'interface proposées aux utilisateurs du tenant. La DONNÉE métier n'est JAMAIS traduite (LN-03) ; le paramétrage du tenant se traduit par le tenant lui-même (LN-04, colonnes multilingues fr obligatoire)." },
+  // ── Solde 4 écarts — R324/R325 CONTRAT DORMANT (étape 0 ratifiée 2026-07-29) : le
+  //    snapshot/cache ne s'ACTIVENT que si la jauge R250 refranchit cpsi_replay_warn_ms
+  //    (état au jour de ratification : 103.7 ms pour 10 001 evts). Les clés portent le
+  //    contrat ; le mécanisme viendra avec PC-21..25. ──
+  { cle: "snapshot_interval_events", type: "int", defaut: 1000, regle: "R324", requis: false,
+    description: "CONTRAT DORMANT R324 : période (en événements) de production d'un snapshot — projection JETABLE du journal (état + watermark seq + version de config + contract_version), jamais une source. Équivalence prouvée en continu (PC-20), invalidation automatique, purge indolore. Sans effet tant que l'optimisation n'est pas déclenchée par la jauge R250." },
+  { cle: "engine_cache_actif", type: "bool", defaut: false, regle: "R325", requis: false,
+    description: "CONTRAT DORMANT R325 : cache d'instance moteur par tenant — commodité RÉVOCABLE (watermark comparé À CHAQUE lecture, jamais une lecture en retard) ; le chemin utilisé est déclaré dans les meta R250 (replay_complet | snapshot+queue | cache). Défaut FAUX ; sans effet tant que l'optimisation n'est pas déclenchée." },
+  { cle: "engine_cache_ttl_s", type: "int", defaut: 300, regle: "R325", requis: false,
+    description: "CONTRAT DORMANT R325 : TTL (secondes) du cache d'instance. Un cache invalide ou absent = retour au chemin R324/rejeu — aucun chemin de code distinct pour le RÉSULTAT, seulement pour la latence." },
+  // ── Dégel vague 9 — Octopulse OpRisk R321-R323 (ratifié 2026-07-28). ──
+  { cle: "oprisk_taxonomie", type: "json", regle: "R321", requis: false,
+    defaut: ["FRAUDE_INTERNE", "FRAUDE_EXTERNE", "PRATIQUES_EMPLOI", "CLIENTS_PRODUITS_PRATIQUES",
+      "DOMMAGES_ACTIFS", "INTERRUPTION_SYSTEMES", "EXECUTION_PROCESSUS"],
+    description: "Taxonomie Bâle des incidents opérationnels (paramètre TENANT — défaut : les 7 catégories de niveau 1). La classification est OBLIGATOIRE à la déclaration ; hors taxonomie = refus typé (default-deny). La heatmap R322 se calcule PAR catégorie de cette liste." },
+  { cle: "oprisk_escalade_jours", type: "int", defaut: 7, regle: "R323", requis: false,
+    description: "Jours de retard d'une action du plan au-delà desquels la notification owner (R274) s'ESCALADE à DIR. Le retard est un fait calculé — mesuré, notifié, jamais bloquant (R39)." },
+  // ── Dégel vague 7 — Mobile Banking R316-R318 (GO Ali 2026-07-28). ──
+  { cle: "mobile_actif", type: "bool", defaut: false, regle: "R316", requis: false,
+    description: "Le canal mobile du tenant. OFF par défaut : TOUTE la surface mobile répond 404 (existence cachée — jamais un 403). L'activation d'un client reste un acte du RM + code hors bande, tracé (MB-02)." },
+  { cle: "mobile_partage_defaut", type: "json", defaut: [], regle: "R318", requis: false,
+    exemple: ["RELEVE"],
+    description: "Catégories de pièces (typeCode GED) partagées PAR DÉFAUT au client mobile. VIDE par défaut : RIEN n'est visible sans acte de marquage explicite tracé (mobile.partage.marque). Aucune donnée compliance ne peut y figurer — la projection mobile est minimale (OL-34/R270)." },
+  // ── Dégel vague 6 — BI libre R314-R315 (ratifié 2026-07-28). ──
+  { cle: "bi_seuil_export", type: "int", defaut: 10000, regle: "R315", requis: false,
+    description: "Seuil de lignes au-delà duquel un export BI devient un ACTE D'AUDIT : AUDIT_ACCESS (qui, quelle requête, combien) notifié SO — l'export reste SERVI, jamais bloqué (R39)." },
+  // ── Dégel vague 4 — Regwatch R309-R311 (ratifié 2026-07-28). ──
+  { cle: "regwatch_sources", type: "json", defaut: [], regle: "R309", requis: false,
+    exemple: [{ code: "FINMA", libelle: "Communications FINMA", credentials: true }],
+    description: "Sources de veille réglementaire (PORTS déclarés) : sans credentials (coffre), la source est ÉTEINTE — affichée, jamais cassée (R167). Chaque item collecté est un événement dédupliqué par empreinte." },
+  // ── Dégel vague 3 — Builder R304-R308 (GO Ali 2026-07-28). ──
+  { cle: "roles_publication_builder", type: "json", defaut: ["ADMIN", "CO_SR"], regle: "R307", requis: false,
+    description: "Rôles habilités à PUBLIER un artefact du Builder (section, questionnaire, workflow). L'auteur du brouillon ne publie jamais le sien (R13) ; la publication exige la simulation du contenu exact (R305) et grave une version datée (R304)." },
+  // ── Dégel vague 2 — R302 registre nominatif (ratifié 2026-07-28). ──
+  { cle: "ta_visas_par_type", type: "json", defaut: {}, regle: "R302", requis: false,
+    exemple: { NANTISSEMENT: "CO", RADIATION: "CO_SR" },
+    description: "Visa exigé PAR TYPE de mouvement nominatif (rôle) : un mouvement en attente de visa n'est PAS au registre ; l'initiateur ne vise jamais (R13). Vide = aucun visa exigé." },
+  // ── Login deux temps — R296 (canon triage final, ratifié 2026-07-28). ──
+  { cle: "loginDomaines", type: "json", defaut: [], regle: "R296", requis: false,
+    exemple: ["gwb.ch", "gwb-private.ch"],
+    description: "Domaines e-mail du tenant pour la résolution AU LOGIN (temps 1 : email → méthode). Un domaine inconnu répond la MÊME forme que LOCAL (indistinguable, pattern OL-34) — jamais une existence révélée." },
+  { cle: "sso_fallback_local", type: "bool", defaut: false, regle: "R296", requis: false,
+    description: "Repli mot de passe local quand l'IdP est indisponible ? Défaut FAUX : l'indisponibilité est une ERREUR TYPÉE, jamais un repli silencieux. Le changement se motive au registre (four-eyes du changement = extension consignée v1)." },
+  // ── Dégel vague 1 — R299 FX / R300 SWIFT (ratifiés 2026-07-28). ──
+  { cle: "fx_seuils_exposition", type: "json", defaut: {}, regle: "R299", requis: false,
+    exemple: { USD: 1000000, EUR: 2000000 },
+    description: "Seuils d'attention d'exposition PAR DEVISE : franchi = événement fx.seuil.franchi NOTIFIÉ (R39) — l'exposition reste servie, rien n'est jamais bloqué. Aucune opération de change n'existe." },
+  { cle: "swift_types_actifs", type: "json", defaut: ["MT103", "MT202", "pacs.008"], regle: "R300", requis: false,
+    description: "Bibliothèque de types de messages SWIFT que le laboratoire PARSE (MT/MX). Un type hors liste part en quarantaine motivée (pattern R169) — jamais deviné. L'émission n'existe pas, structurellement." },
+  { cle: "breakGlassComptes", type: "json", defaut: [], regle: "R296", requis: false,
+    exemple: ["secours@gwb.ch"],
+    description: "Comptes de secours (break-glass) : login LOCAL possible même en mode SSO — MFA OBLIGATOIRE, chaque usage audité (BREAK_GLASS_LOGIN) et notifié SO/DIR. Jamais une dégradation de sécurité silencieuse." },
+  // ── Command Center — R289 (canon triage écrans HTML, ratifié 2026-07-28). ──
+  { cle: "command_seuils", type: "json", defaut: {}, regle: "R289", requis: false,
+    exemple: { sla_en_retard: 5 },
+    description: "Seuils d'attention du Command Center, par indicateur : atteint = la tuile se COLORE (ambre/rouge) — jamais un blocage (R39). Les notifications restent celles des modules ratifiés." },
+  // ── Barèmes de scoring KYC — R288 (ratifié 2026-07-28). ──
+  { cle: "kycScoringBareme", type: "json", defaut: [], regle: "R288", requis: false,
+    exemple: [{ depuisLe: "2026-08-01", structurePts: { PP: 0, HOLDING: 35 }, accountPts: { CURRENT: 0, ADVISORY: 5 },
+      paysRisque: ["IR", "KP"], paysRisquePts: 40, seuilEdd: 40, seuilCdd: 25 }],
+    description: "Barème de scoring KYC versionné par date d'effet (pattern workloadBareme) : points par structure/compte, pays à risque, seuils EDD/CDD. Vide = barème par défaut du moteur. Un dossier garde à vie le score du barème de SA création (R29) — jamais rétroactif ; le bac sbbrm simule un barème hypothétique sans rien écrire (BS-08)." },
+  // ── Transport asynchrone — R286 (canon SO + transport async, ratifié 2026-07-28). ──
+  { cle: "retry_max", type: "int", defaut: 5, regle: "R286", requis: false,
+    description: "Tentatives de consommation d'un événement avant dead-letter (retry borné — jamais un exactly-once prétendu)." },
+  { cle: "backoff_base_s", type: "int", defaut: 10, regle: "R286", requis: false,
+    description: "Base (secondes) du backoff exponentiel entre tentatives de consommation." },
+  { cle: "dead_letter_alerte_seuil", type: "int", defaut: 1, regle: "R286", requis: false,
+    description: "Nombre d'événements en souffrance à partir duquel l'alerte est émise (défaut 1 : notifié dès la première — R39, notifie sans jamais bloquer)." },
+  { cle: "cumul_so_admin_interdit", type: "bool", defaut: true, regle: "R284", requis: false,
+    description: "Refuser qu'un même utilisateur cumule SO (surveille les journaux) et ADMIN (paramètre) — séparation structurelle des regards. Une petite banque peut assouplir : le cumul devient accepté ET tracé (événement iam.cumul_so_admin.autorise)." },
+  // ── Questionnaires de review — R283 (canon écarts anciens, ratifié 2026-07-28). ──
+  { cle: "reviewProfiles", type: "json", defaut: [], regle: "R283", requis: false,
+    exemple: [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],
+      questionsRequises: ["SOF-Q2"], sectionsReconfirmation: ["IDENTITY"] }],
+    description: "Profils de review (AR|GAR × SDD|CDD|EDD) : la review N'A PAS son propre questionnaire — elle SÉLECTIONNE dans le gabarit KYC (sections actives, questions requises ajoutées, sections en re-confirmation simple). Versionné par le registre, figé au lancement (R29) ; droits = matrice R282, jamais une matrice parallèle." },
 ];
 
 const bonType = (t: Entree["type"], v: any) =>
@@ -209,10 +303,10 @@ const bonType = (t: Entree["type"], v: any) =>
 export class ParametresService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async tenant(tx: any, ctx: Ctx) {
+  private async tenant(tx: Tx, ctx: Ctx) {
     const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
     if (!t) throw new NotFoundException("Tenant introuvable");
     return t;
@@ -232,7 +326,7 @@ export class ParametresService {
     const effet = effetAt ?? new Date().toISOString();
     if (new Date(effet).getTime() < Date.now() - 60_000)
       throw new BadRequestException("R126 : effet rétroactif refusé — on ne réécrit pas le passé (R48)");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const avant = await this.valeurEffectiveTx(tx, ctx, cle, new Date());
       await tx.tenantParamChange.create({ data: { tenantId: ctx.tenantId, cle,
@@ -249,7 +343,7 @@ export class ParametresService {
   }
 
   // ── R127 / RQ-05 : la valeur d'alors — reconstruite des changements, sinon le défaut ──
-  private async valeurEffectiveTx(tx: any, ctx: Ctx, cle: string, date: Date) {
+  private async valeurEffectiveTx(tx: Tx, ctx: Ctx, cle: string, date: Date) {
     const chgs = (await tx.tenantParamChange.findMany({ where: { tenantId: ctx.tenantId, cle } }))
       .filter((c: any) => new Date(c.effetAt) <= date)
       .sort((a: any, b: any) => new Date(a.effetAt).getTime() - new Date(b.effetAt).getTime());
@@ -269,7 +363,7 @@ export class ParametresService {
 
   // ── R126 : tick — applique les effets différés atteints (matérialise la vue courante) ──
   async tickEffets(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const settings = { ...(t.settings as any) };
       let touche = false;
@@ -288,7 +382,7 @@ export class ParametresService {
   async activer(ctx: Ctx, signataire: string) {
     if (!signataire || !signataire.trim())
       throw new BadRequestException("R128 : signature du répondant bancaire obligatoire");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await this.tenant(tx, ctx);
       const manquants: string[] = [];
       for (const e of REGISTRE_RQ.filter((x) => x.requis)) {

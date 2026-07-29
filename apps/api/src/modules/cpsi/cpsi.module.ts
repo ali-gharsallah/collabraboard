@@ -1,0 +1,517 @@
+import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException, UseGuards, OnApplicationShutdown } from "@nestjs/common";
+import { spawn, ChildProcess } from "child_process";
+import * as readline from "readline";
+import * as path from "path";
+import { PrismaService } from "../../common/prisma.service";
+import { AuditService } from "../../common/audit.service";
+import { LicenseModule, ModuleLicencie } from "../license/license.module"; // partie 3 débloquants : enforcement SERVEUR (LS-01)
+
+/**
+ * Porte HTTP mince CPSI (spec `spec/cpsi-scenarios/CPSI-PORTE.feature`, CP-01..19). Squelette
+ * vertical : chemin SCORE (CP-01/02) + ingestion default-deny (CP-11). Doctrine porte mince :
+ *   • Aucune règle réimplémentée. La porte PERSISTE des faits (journal append-only `cpsi_events`,
+ *     tenant-scopé, RLS) puis REJOUE le journal du tenant vers le moteur ratifié Python
+ *     (`services/cpsi-server-py`, source de vérité R63→R83) pour CALCULER — elle ne décide rien.
+ *   • Auteur = jeton (`payload.par = ctx.userId`), jamais le corps.
+ *   • Rejeu à date `?asOf=` (R48/R49) : le moteur est une fonction pure des faits ≤ date.
+ *   • Default-deny préservé : un type de signal inconnu est refusé AVANT persistance (validation
+ *     par rejeu) — la `CpsiError` du moteur devient un 4xx, jamais avalée.
+ *   • Transport = worker persistant NDJSON (chantier #3, ex-shell-out Q4) : `python3 bridge.py --serve`,
+ *     échangé SANS toucher au contrat (enveloppe R248 inchangée, moteur reconstruit à chaque enveloppe).
+ */
+
+type Ctx = { tenantId: string; userId: string; role: string };
+const cpsiDir = () => process.env.CPSI_DIR ?? path.resolve(process.cwd(), "..", "..", "services", "cpsi-server-py");
+export const CONTRACT_VERSION = "1.1";                                           // R248/R281 : enveloppe 1.1 (la 1.0 reste servie — PC-17)
+
+// R251 : le pont est un PORT optionnel. Python absent / non exécutable / timeout ⇒ rejet (mappé en
+// 503 typé par la porte, jamais un 500 opaque). `GateUnavailable` distingue l'indisponibilité de la
+// porte d'une erreur métier typée du moteur.
+class GateUnavailable extends Error { constructor(public cause: string) { super(cause); } }
+
+// Transport persistant (chantier #3, ex-Q4 shell-out — « échangeable sans toucher au contrat ») :
+// UN worker `python3 bridge.py --serve` (NDJSON : une enveloppe par ligne, une réponse par ligne),
+// spawné à la demande et respawné après mort/timeout. L'enveloppe R248 et la sémantique sont
+// STRICTEMENT inchangées : bridge.traiter() reconstruit le moteur à chaque enveloppe (aucun état
+// entre deux appels) — seul le coût de démarrage Python (~80 ms/appel) est amorti. Les appels sont
+// SÉRIALISÉS (FIFO) sur le worker : le rejeu est CPU-bound côté moteur, une file évite tout
+// entrelacement stdout ; un timeout TUE le worker (l'appel suivant repart propre). Un changement
+// de CPSI_DIR (PC-08) invalide le worker courant.
+let worker: { child: ChildProcess; rl: readline.Interface; dir: string } | null = null;
+let fifo: Promise<unknown> = Promise.resolve();
+
+export function tuerWorkerCpsi() { try { worker?.child.kill(); } catch { /* déjà mort */ } worker = null; }
+
+function obtenirWorker() {
+  const dir = cpsiDir();
+  if (worker && worker.dir === dir && worker.child.exitCode === null && !worker.child.killed) return worker;
+  tuerWorkerCpsi();
+  const child = spawn("python3", ["bridge.py", "--serve"], { cwd: dir, stdio: ["pipe", "pipe", "ignore"] });
+  // unref : le worker ne retient JAMAIS le processus Node (arrêt propre des suites de test).
+  child.unref(); (child.stdin as any).unref?.(); (child.stdout as any).unref?.();
+  const rl = readline.createInterface({ input: child.stdout! });
+  worker = { child, rl, dir };
+  return worker;
+}
+
+function runBridge(env: any, timeoutMs: number): Promise<any> {
+  const exec = () => new Promise((resolve, reject) => {
+    const { child, rl } = obtenirWorker();
+    let fini = false;
+    const conclure = (fn: (v: any) => void, v: any) => { if (!fini) { fini = true; nettoyer(); fn(v); } };
+    const surLigne = (ligne: string) => {
+      try { conclure(resolve, JSON.parse(ligne)); }
+      catch { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("réponse illisible du moteur")); }
+    };
+    const surErreur = (err: any) => {                                     // ENOENT : python3 ou CPSI_DIR absent
+      tuerWorkerCpsi();
+      conclure(reject, new GateUnavailable(err?.code === "ENOENT" ? "python3 introuvable" : `échec du moteur (${err?.code ?? err?.message})`));
+    };
+    const surSortie = () => { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("échec du moteur (worker terminé)")); };
+    const minuterie = setTimeout(() => { tuerWorkerCpsi(); conclure(reject, new GateUnavailable(`timeout ${timeoutMs}ms`)); }, timeoutMs);
+    const nettoyer = () => { clearTimeout(minuterie); rl.off("line", surLigne); child.off("error", surErreur); child.off("exit", surSortie); };
+    rl.on("line", surLigne); child.on("error", surErreur); child.on("exit", surSortie);
+    try { child.stdin!.write(JSON.stringify(env) + "\n"); }
+    catch { tuerWorkerCpsi(); conclure(reject, new GateUnavailable("échec du moteur (stdin)")); }
+  });
+  const p = fifo.then(exec, exec);                                        // FIFO : jamais deux enveloppes en vol
+  fifo = p.catch(() => undefined);
+  return p;
+}
+
+@Injectable()
+export class CpsiService implements OnApplicationShutdown {
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  onApplicationShutdown() { tuerWorkerCpsi(); }                           // hygiène : pas de worker orphelin
+
+  private async config(tenantId: string) {
+    const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
+    return ((t?.settings as any) ?? {}).cpsiConfig ?? {};                 // R68 : config CPSI du tenant
+  }
+  // Journal ordonné (seq croissant, R49) → format de rejeu du pont.
+  private async journal(tenantId: string) {
+    const rows = await this.prisma.cpsiEvent.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
+    return rows.map((e: any) => ({ type: e.type, at: e.at, ...(e.payload as any) }));
+  }
+
+  // R248 : invoque le moteur via l'enveloppe versionnée. Rejeu STRICT jusqu'à `as_of` (R48 : les
+  // événements > as_of n'existent pas encore) ; un `candidat` (écriture non encore persistée) est
+  // scellé en fin de journal pour la validation-par-rejeu. Retourne l'enveloppe de réponse brute.
+  private async call(ctx: Ctx, commande: string, payload: any = {}, opts: { asOf?: string; candidat?: any } = {}) {
+    const effAt = opts.asOf ?? new Date().toISOString();                  // instant de lecture effectif (as_of ou maintenant)
+    const cfg = await this.config(ctx.tenantId);
+    const tousEvts = await this.journal(ctx.tenantId);
+    const base = tousEvts.filter((e: any) => e.at <= effAt);             // R48 : rejeu STRICT jusqu'à l'instant de lecture
+    const journal = opts.candidat ? [...base, opts.candidat] : base;
+    const timeout = cfg.cpsi_gate_timeout_ms ?? 5000;                     // R251 : timeout = paramètre tenant
+    let rep: any;
+    try {
+      rep = await runBridge({ contract_version: CONTRACT_VERSION, tenant_id: ctx.tenantId, as_of: effAt, config: cfg, journal, commande, payload }, timeout);
+    } catch (e) {
+      if (e instanceof GateUnavailable) throw new ServiceUnavailableException(`CPSI_GATE_UNAVAILABLE: ${e.cause}`);  // R251 : refus gracieux typé
+      throw e;
+    }
+    // R250/R39 : le dépassement du seuil d'hydratation MESURE et NOTIFIE — jamais un blocage.
+    const warn = cfg.cpsi_replay_warn_ms ?? 2000;
+    if (rep?.meta?.duree_ms != null && rep.meta.duree_ms > warn)
+      await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_REPLAY_SLOW", `${rep.meta.duree_ms}ms>${warn}ms`);
+    return rep;
+  }
+
+  // ── R250 : santé de la porte — profondeur du journal, dernier rejeu, contrat, config en vigueur. ──
+  async sante(ctx: Ctx) {
+    const evts = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId }, orderBy: { id: "asc" } });
+    const cfg = await this.config(ctx.tenantId);
+    const r = await this.call(ctx, "rules", {});                          // lecture légère → mesure le dernier rejeu
+    const dernierRejeuMs = r?.meta?.duree_ms ?? null;
+    const warn = cfg.cpsi_replay_warn_ms ?? 2000;
+    const dernierParam = [...evts].reverse().find((e: any) => e.type === "cpsi.param.adopted");
+    return { contractVersion: CONTRACT_VERSION, profondeurJournal: evts.length, dernierRejeuMs,
+      rejeuWarnMs: warn, rejeuHorsSeuil: dernierRejeuMs != null && dernierRejeuMs > warn,
+      configEnVigueur: dernierParam ? dernierParam.at : "base" };         // R68 : version de config en vigueur
+  }
+
+  // ── Enregistrement d'un client CPSI (prérequis au score) — un seul par (tenant, client). ──
+  async enregistrerClient(ctx: Ctx, dto: { clientId: string; statique?: any; attributs?: any; at?: string }) {
+    if (!dto?.clientId) throw new BadRequestException("clientId requis");
+    const deja = await this.prisma.cpsiEvent.findFirst({ where: { tenantId: ctx.tenantId, clientId: dto.clientId, type: "cpsi.client.registered" } });
+    if (deja) throw new ConflictException("CPSI_CLIENT_ALREADY_REGISTERED");
+    const at = dto.at ?? new Date().toISOString();
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.client.registered",
+      clientId: dto.clientId, at, payload: { client: dto.clientId, statique: dto.statique ?? {}, attributs: dto.attributs ?? {}, par: ctx.userId } } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_CLIENT_REGISTERED", dto.clientId);
+    return { clientId: dto.clientId, at };
+  }
+
+  // ── R63/CP-11 : ingestion d'un signal — default-deny VALIDÉ par rejeu avant persistance. ──
+  async ingererSignal(ctx: Ctx, clientId: string, dto: { type: string; severite?: number; at?: string; meta?: any }) {
+    if (!dto?.type) throw new BadRequestException("type requis");
+    const at = dto.at ?? new Date().toISOString();
+    const nouvel = { type: "cpsi.signal.ingested", at, client: clientId, signal: dto.type, severite: dto.severite ?? 1, meta: dto.meta ?? null };
+    // Validation par rejeu : on scelle le candidat et on demande un score ; toute CpsiError (type
+    // inconnu, client non enregistré) fait échouer AVANT toute écriture. PC-02 : default-deny → 422 typé.
+    const r = await this.call(ctx, "score", { client: clientId }, { candidat: nouvel });
+    if (r.erreur_typee) throw new UnprocessableEntityException(r.erreur_typee.message);
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.signal.ingested",
+      clientId, at, payload: { client: clientId, signal: dto.type, severite: dto.severite ?? 1, meta: dto.meta ?? null, par: ctx.userId } } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SIGNAL_INGESTED", `${clientId}:${dto.type}`);
+    return { clientId, contractVersion: r.contract_version, ...r.resultat };  // état recalculé (score, bande, drivers)
+  }
+
+  // ── CP-01/CP-02 : score perpétuel + drivers (R63/R67), rejeu à date (R48/R64/R68). ──
+  async score(ctx: Ctx, clientId: string, asOf?: string) {
+    const r = await this.call(ctx, "score", { client: clientId }, { asOf });
+    if (r.erreur_typee) throw new NotFoundException(r.erreur_typee.message);  // client inconnu / non enregistré
+    return { clientId, asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
+  }
+
+  // Lecture générique : rejeu (borné ≤ as_of) puis commande de lecture du moteur. Erreur typée → 4xx.
+  private async lire(ctx: Ctx, commande: string, payload: any = {}, asOf?: string) {
+    const r = await this.call(ctx, commande, payload, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return r.resultat;
+  }
+
+  // ── CP-03 (R65) : segmentation déterministe en groupes de pairs, rejeu à date. ──
+  async segmentation(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, segments: await this.lire(ctx, "segmentation", {}, asOf) };
+  }
+
+  // ── CP-07 (R79) : catalogue de conformité, lecture seule. ──
+  async catalogueConformite(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, catalogue: await this.lire(ctx, "compliance_catalogue", {}, asOf) };
+  }
+
+  // ── CP-08 (R68) : règles de calcul en clair. ──
+  async regles(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, regles: await this.lire(ctx, "rules", {}, asOf) };
+  }
+
+  // Écriture gouvernée VALIDÉE par rejeu avant persistance (default-deny : opérateur/groupe/sens
+  // invalide fait échouer AVANT toute écriture). `candidat` est au format de rejeu du pont.
+  private async valider(ctx: Ctx, candidat: any) {
+    const r = await this.call(ctx, "groups", {}, { candidat });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+  }
+
+  // ── CP-04/05 (R71/R72) : définir un groupe de population (prédicat composable). ──
+  async definirGroupe(ctx: Ctx, dto: { gid: string; label: string; predicat: any; priorite?: number; bareme?: any; at?: string }) {
+    if (!dto?.gid || !dto?.label || !dto?.predicat) throw new BadRequestException("gid, label, predicat requis");
+    const at = dto.at ?? new Date().toISOString();
+    const payload = { gid: dto.gid, label: dto.label, predicat: dto.predicat, priorite: dto.priorite ?? 100, bareme: dto.bareme ?? null, par: ctx.userId };
+    await this.valider(ctx, { type: "cpsi.group.defined", at, ...payload });
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.group.defined", clientId: dto.gid, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_GROUP_DEFINED", dto.gid);
+    return { gid: dto.gid, at };
+  }
+
+  // ── CP-06 (R73) : définir un scénario AML ciblé par groupe (seuil propre à chaque groupe). ──
+  async definirScenario(ctx: Ctx, dto: { sid: string; label: string; champ: string; groupesSeuils: any; sens?: string; at?: string }) {
+    if (!dto?.sid || !dto?.label || !dto?.champ || !dto?.groupesSeuils) throw new BadRequestException("sid, label, champ, groupesSeuils requis");
+    const at = dto.at ?? new Date().toISOString();
+    const payload = { sid: dto.sid, label: dto.label, champ: dto.champ, groupes_seuils: dto.groupesSeuils, sens: dto.sens ?? "gte", par: ctx.userId };
+    await this.valider(ctx, { type: "cpsi.scenario.defined", at, ...payload });
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.scenario.defined", clientId: dto.sid, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SCENARIO_DEFINED", dto.sid);
+    return { sid: dto.sid, at };
+  }
+
+  // ── CP-04 (R71/R72) : groupes d'un client + groupe primaire. ──
+  async groupesDe(ctx: Ctx, clientId: string, asOf?: string) {
+    return { clientId, asOf: asOf ?? null, ...(await this.lire(ctx, "client_groups", { client: clientId }, asOf)) };
+  }
+
+  // ── CP-05 (R74) : registre des groupes en clair. ──
+  async groupes(ctx: Ctx, asOf?: string) {
+    return { asOf: asOf ?? null, groupes: await this.lire(ctx, "groups", {}, asOf) };
+  }
+
+  // ── CP-06 (R73) : évaluer un scénario — seuls les membres des groupes ciblés. ──
+  async evaluerScenario(ctx: Ctx, sid: string, asOf?: string) {
+    return { asOf: asOf ?? null, ...(await this.lire(ctx, "evaluate_scenario", { scenario: sid }, asOf)) };
+  }
+
+  // ── CP-12 (R80/R81) : signaux scorés, alertes (≥X), near-miss, corrélations. ──
+  async alertes(ctx: Ctx, asOf?: string, seuil?: number) {
+    const r: any = await this.lire(ctx, "alerts", seuil != null ? { seuil } : {}, asOf);
+    // AW-08 (canon vague pilote, ratifié) : le SCOPE est appliqué ICI — un RM/ARM ne reçoit que
+    // les signaux de SES clients (Client.rmUserId, matrice A.3) ; le front n'a aucun filtre.
+    let signaux: any[] = r.signaux; let correlations: Record<string, string[]> = r.correlations;
+    if (ctx.role === "RM" || ctx.role === "ARM") {
+      const miens = new Set((await this.prisma.client.findMany({
+        where: { tenantId: ctx.tenantId, rmUserId: ctx.userId }, select: { id: true } })).map((c) => c.id));
+      signaux = signaux.filter((s) => miens.has(s.client));
+      correlations = Object.fromEntries(Object.entries(correlations ?? {}).filter(([client]) => miens.has(client)));
+    }
+    return { asOf: asOf ?? null, signaux,
+      alertes: signaux.filter((s: any) => s.statut === "ALERTE"),
+      nearMiss: signaux.filter((s: any) => s.statut === "NEAR_MISS"),
+      correlations };
+  }
+
+  // ── PC-14 (extension ratifiée 2026-07-27, P1) : timeline d'un client — PROJECTION du journal
+  //    rejoué ≤ as_of, servie par la porte. Rejouer à la même date redonne l'identique (R48). ──
+  async timeline(ctx: Ctx, clientId: string, asOf?: string) {
+    const r: any = await this.call(ctx, "timeline_client", { client: clientId }, { asOf });  // alias canon 1.1 (R281)
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
+  }
+
+  // ── PC-13 (extension ratifiée 2026-07-27, P1) : volumétrie par scénario — comptages du moteur
+  //    à date (onglet Reporting du workspace AML). Le délai hit→MROS reste chez riskcases (PC-12). ──
+  async volumetrie(ctx: Ctx, asOf?: string, seuil?: number) {
+    const r: any = await this.call(ctx, "reporting_volumetrie", seuil != null ? { seuil } : {}, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
+  }
+
+  // Écriture gouvernée : scelle le candidat, le VALIDE par rejeu (via une op de lecture qui renvoie
+  // l'entité résultante), et ne persiste QU'APRÈS succès. Toute CpsiError du moteur (habilitation,
+  // motif manquant, transition impossible…) devient un 4xx AVANT persistance — 403 si habilitation.
+  private async muter(ctx: Ctx, type: string, clientId: string, fields: any, readOp: string, readExtra: any = {}) {
+    const at = fields.at ?? new Date().toISOString();
+    const payload: any = { ...fields, par: ctx.userId }; delete payload.at;
+    const candidat = { type, at, ...payload };
+    const r = await this.call(ctx, readOp, readExtra, { candidat });
+    if (r.erreur_typee) {
+      if (/habilit/i.test(r.erreur_typee.message)) throw new ForbiddenException(r.erreur_typee.message);
+      throw new BadRequestException(r.erreur_typee.message);
+    }
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type, clientId, at, payload } });
+    await this.audit.log(ctx.tenantId, ctx.userId, type.replace(/\./g, "_").toUpperCase(), clientId);
+    return r.resultat;
+  }
+
+  // ── CP-09 (R70) : bac à sable — dry-run, AUCUNE écriture (le journal n'est pas touché). ──
+  async simuler(ctx: Ctx, changements: any) {
+    if (!changements || typeof changements !== "object") throw new BadRequestException("changements requis");
+    return this.lire(ctx, "sandbox_simulate", { changements, acteur: ctx.userId });
+  }
+
+  // ── CP-10 (R69) : l'IA/humain PROPOSE, un humain ADOPTE/REJETTE (motivation obligatoire au rejet). ──
+  async proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }) {
+    if (!dto?.chemin || dto?.valeur === undefined) throw new BadRequestException("chemin et valeur requis");
+    return this.muter(ctx, "cpsi.param.proposed", "PARAM",
+      { auteur: ctx.userId, chemin: dto.chemin, valeur: dto.valeur, justification: dto.justification ?? "" }, "propose_param");
+  }
+  async adopter(ctx: Ctx, pid: string) {
+    return this.muter(ctx, "cpsi.param.adopted", "PARAM", { pid, humain: ctx.userId }, "proposition", { id: pid });
+  }
+  async rejeter(ctx: Ctx, pid: string, motivation?: string) {
+    return this.muter(ctx, "cpsi.param.rejected", "PARAM", { pid, humain: ctx.userId, motivation: motivation ?? "" }, "proposition", { id: pid });
+  }
+  // Lecture des propositions (R69) — état reconstruit par rejeu, pour l'écran de gouvernance.
+  async listerPropositions(ctx: Ctx) {
+    return this.lire(ctx, "propositions", {});
+  }
+
+  // ── PC-15 (extension ratifiée P2) : APPLIQUER un paramètre = un ÉVÉNEMENT du journal (R68/R249).
+  //    Date de vigueur immédiate ou FUTURE (PA-03) : l'événement est journalisé maintenant, sa prise
+  //    d'effet attend sa date — le rejeu à J+n l'applique, le rejeu d'aujourd'hui l'ignore. La voie
+  //    normale reste proposition→simulation→adoption (R69/R70) ; l'application directe est l'acte
+  //    R68 final, motivé, réservé (CO_SR/ADMIN). Validée par rejeu À LA DATE DE VIGUEUR avant persistance. ──
+  async appliquerParametre(ctx: Ctx, dto: { chemin?: string; valeur?: any; dateVigueur?: string; motif?: string }) {
+    if (!["CO_SR", "ADMIN"].includes(ctx.role))
+      throw new ForbiddenException("R68 : appliquer un paramètre est un acte CO_SR/ADMIN");
+    if (!dto?.chemin || dto?.valeur === undefined) throw new BadRequestException("chemin et valeur requis");
+    if (!dto?.motif?.trim()) throw new BadRequestException("R7 : appliquer un paramètre exige un motif");
+    const at = new Date().toISOString();
+    const vigueur = dto.dateVigueur ?? at;
+    const candidat = { type: "cpsi.param.applied", at, chemin: dto.chemin, valeur: dto.valeur,
+      date_vigueur: vigueur, par: ctx.userId, motif: dto.motif.trim() };
+    // Validation par rejeu À la date de vigueur (le candidat doit s'appliquer proprement)
+    const essai = await this.call(ctx, "rules", {}, { asOf: vigueur, candidat });
+    if (essai.erreur_typee) throw new UnprocessableEntityException(`CPSI_PARAM_INVALIDE: ${essai.erreur_typee.message}`);
+    await this.prisma.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.param.applied",
+      clientId: "PARAM", at, payload: { chemin: dto.chemin, valeur: dto.valeur, date_vigueur: vigueur,
+        par: ctx.userId, motif: dto.motif.trim() } } });
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_PARAM_APPLIED", `${dto.chemin}@${vigueur}`);
+    return { chemin: dto.chemin, valeur: dto.valeur, dateVigueur: vigueur };
+  }
+
+  // ── 2.1-4 : l'HISTORIQUE des versions est la LECTURE du journal (qui, quand, ancienne→nouvelle,
+  //    date d'effet) — aucune table neuve, le journal append-only fait foi. ──
+  async historiqueParams(ctx: Ctx) {
+    const evs = await this.prisma.cpsiEvent.findMany({ where: { tenantId: ctx.tenantId,
+      type: { in: ["cpsi.param.proposed", "cpsi.param.adopted", "cpsi.param.rejected", "cpsi.param.applied"] } },
+      orderBy: { id: "asc" } });
+    const enVigueur: Record<string, any> = {};
+    const lignes = evs.map((e: any) => {
+      const p = e.payload as any;
+      const chemin = p.chemin ?? null;
+      const ancienne = chemin ? (enVigueur[chemin] ?? null) : null;
+      if (chemin && (e.type === "cpsi.param.applied" || e.type === "cpsi.param.adopted"))
+        enVigueur[chemin] = p.valeur;
+      return { type: e.type, at: e.at, chemin, ancienne, nouvelle: p.valeur ?? null,
+        par: p.par ?? p.humain ?? p.auteur ?? null, dateVigueur: p.date_vigueur ?? e.at,
+        motif: p.motif ?? p.justification ?? p.motivation ?? null };
+    });
+    return { historique: lignes.reverse() };
+  }
+
+  // ── CP-13 (R82) : rétroaction faux-positif (pénalité escaladante, tracée). ──
+  async declarerFauxPositif(ctx: Ctx, dto: { client: string; scenario: string; motif?: string }) {
+    if (!dto?.client || !dto?.scenario) throw new BadRequestException("client et scenario requis");
+    if (!dto?.motif?.trim())                                              // AW-06 (canon vague pilote) : la voie est TRACÉE
+      throw new BadRequestException("R7 : déclarer un faux positif exige un motif");
+    await this.muter(ctx, "cpsi.fp.declared", dto.client,
+      { client: dto.client, scenario: dto.scenario, acteur: ctx.userId, motif: dto.motif.trim() }, "reporting");
+    return { client: dto.client, scenario: dto.scenario, declare: true };
+  }
+
+  // ── CP-14 (R75) : marquage insider — habilitation par le RÔLE DU JETON, motif obligatoire. ──
+  async taguerInsider(ctx: Ctx, cid: string, dto: { motif?: string; instrument?: string }) {
+    return this.muter(ctx, "cpsi.insider.tagged", cid,
+      { client: cid, acteur: ctx.userId, role: ctx.role, motif: dto?.motif ?? "", instrument: dto?.instrument ?? null }, "insiders");
+  }
+  async leverInsider(ctx: Ctx, cid: string, dto: { motif?: string }) {
+    return this.muter(ctx, "cpsi.insider.lifted", cid,
+      { client: cid, acteur: ctx.userId, role: ctx.role, motif: dto?.motif ?? "" }, "insiders");
+  }
+
+  // ── R252/PC-09 : le CPSI PROPOSE, riskcases (R133-R136) instruit. La corrélation R81 (≥2
+  // scénarios même client) devient un événement `case_proposal` append-only, consommable par le
+  // module riskcases — AUCUN état de riskcase muté ici (R66), aucune surface produit risk-case
+  // (les anciennes routes CP-15/16/17 sont SUPERSEDED — voir amendement R248-R252). ──
+  // ── R281/PC-18..19 : la chaîne hit→MROS — t0 par la porte (rejeu CPSI), t1/t2 assemblés
+  //    depuis les journaux Nest (riskcases/MROS, append-only). AUCUNE table SLA matérialisée :
+  //    un délai est un fait CALCULÉ (pattern EN_RETARD/R274). Invariant PC-12 conservé :
+  //    la porte ne porte AUCUNE écriture riskcases — lectures de journaux uniquement. ──
+  async reportingSla(ctx: Ctx, asOf?: string) {
+    const r: any = await this.call(ctx, "reporting_sla", {}, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+    const st = ((t?.settings as any) ?? {});
+    const seuils = { hitEscaladeJours: st.slaHitEscaladeJours ?? 30, escaladeMrosJours: st.slaEscaladeMrosJours ?? 5 };
+    const ouverts = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "riskcase.ouvert" } });
+    const casParCle = new Map<string, string>();
+    for (const e of ouverts) { const cle = (e.payload as any)?.depuisProposition; if (cle) casParCle.set(cle, e.aggregateId); }
+    const jours = (a?: string | null, b?: string | null) =>
+      a && b ? Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000) : null;
+    const maintenant = asOf ?? new Date().toISOString();
+    const chaine: any[] = [];
+    for (const j of (r.resultat.jalons ?? [])) {
+      const caseId = casParCle.get(j.cle) ?? null;
+      let t1: string | null = null, t2: string | null = null;
+      if (caseId) {
+        const trans = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "riskcase.transition", aggregateId: caseId } });
+        t1 = (trans.find((e: any) => (e.payload as any)?.vers === "ESCALADEE") as any)?.at ?? null;
+        const mros = await this.prisma.mrosCommunication.findFirst({ where: { tenantId: ctx.tenantId, riskCaseId: caseId } });
+        t2 = mros ? new Date(mros.decideAt).toISOString() : null;
+      }
+      chaine.push({ cle: j.cle, client: j.client, scenarios: j.scenarios, caseId,
+        t0: j.t0, t1, t2,
+        joursHitEscalade: jours(j.t0, t1), joursEscaladeMros: jours(t1, t2),
+        // R281 : l'ABSENCE est une donnée, pas un trou — le maillon manquant se voit.
+        maillonManquant: !caseId ? "sans riskcase" : !t1 ? "sans escalade" : !t2 ? "sans MROS" : null,
+        enAttenteMrosJours: t1 && !t2 ? jours(t1, maintenant) : null,
+        depassementHitEscalade: jours(j.t0, t1 ?? maintenant)! > seuils.hitEscaladeJours,
+        depassementEscaladeMros: t1 && !t2 && jours(t1, maintenant)! > seuils.escaladeMrosJours });
+    }
+    return { asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, seuils, chaine };
+  }
+
+  // R281/R39 : le dépassement NOTIFIE, n'empêche jamais — route ops au pattern tick (R274),
+  // idempotente par (clé, jalon) : une notification par fait, jamais de spam.
+  async tickSla(ctx: Ctx) {
+    if (!["ADMIN", "CO", "CO_SR"].includes(ctx.role)) throw new ForbiddenException("R281 : tick réservé ops/compliance");
+    const rep = await this.reportingSla(ctx);
+    const deja = new Set((await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.sla.depassement" } }))
+      .map((e: any) => `${(e.payload as any)?.cle}|${(e.payload as any)?.jalon}`));
+    const notifies: any[] = [];
+    for (const c of rep.chaine) {
+      const cas: [string, boolean][] = [["hit_escalade", c.depassementHitEscalade], ["escalade_mros", c.depassementEscaladeMros]];
+      for (const [jalon, depasse] of cas) {
+        if (!depasse || deja.has(`${c.cle}|${jalon}`)) continue;
+        await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.sla.depassement",
+          aggregateId: c.caseId ?? c.cle, payload: { cle: c.cle, jalon, enAttenteMrosJours: c.enAttenteMrosJours ?? null, par: ctx.userId }, at: new Date().toISOString() } });
+        notifies.push({ cle: c.cle, jalon });
+      }
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_SLA_TICK", `${notifies.length}`);
+    return { notifies };
+  }
+
+  async emettreCaseProposals(ctx: Ctx) {
+    const r = await this.call(ctx, "alerts", {});
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);
+    const correlations: Record<string, string[]> = r.resultat.correlations ?? {};
+    const dejaEmises = new Set((await this.prisma.cpsiEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted" } }))
+      .map((e: any) => (e.payload as any).cle));
+    const emises: any[] = [];
+    for (const [client, scenarios] of Object.entries(correlations)) {
+      const cle = `${client}|${[...scenarios].sort().join("+")}`;         // PC-10 : idempotence (pattern R76)
+      if (dejaEmises.has(cle)) continue;
+      const at = new Date().toISOString();
+      const payload = { client, scenarios, cle, par: ctx.userId };
+      // R285/R286 : le journal CPSI reste LA source ; le MIROIR outbox (référence : la clé,
+      // jamais la corrélation) part dans la MÊME transaction — le worker-riskcases le
+      // consommera par la porte d'entrée canonique (UC-01, idempotent par depuisProposition).
+      await this.prisma.$transaction(async (tx) => {
+        await tx.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted", clientId: client, at, payload } });
+        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted",
+          aggregateId: client, payload: { cle, par: ctx.userId }, at } });
+      });
+      await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_CASE_PROPOSAL_EMITTED", cle);
+      emises.push({ client, scenarios, cle, at });
+    }
+    return { emises, dejaExistantes: dejaEmises.size, correlationsVues: Object.keys(correlations).length };
+  }
+
+  // Lecture des propositions émises — LA surface de consommation du module riskcases (R252).
+  async listerCaseProposals(ctx: Ctx) {
+    const rows = await this.prisma.cpsiEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted" }, orderBy: { id: "asc" } });
+    return rows.map((e: any) => { const p = e.payload as any;
+      return { client: p.client, scenarios: p.scenarios, cle: p.cle, emisePar: p.par, at: e.at }; });
+  }
+}
+
+@UseGuards(ModuleLicencie("cpsi"))            // LS-01 : module hors licence → 403 MODULE_INACTIF (l'enforcement est serveur)
+@Controller("cpsi")
+export class CpsiController {
+  constructor(private svc: CpsiService) {}
+  @Get("health")                   sante(@Req() r: any) { return this.svc.sante(r.ctx); }                                                // R250
+  @Post("clients")                 enregistrer(@Req() r: any, @Body() b: any) { return this.svc.enregistrerClient(r.ctx, b); }
+  @Post("clients/:cid/signals")    ingerer(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.ingererSignal(r.ctx, cid, b); } // CP-11
+  @Get("clients/:cid/score")       score(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.score(r.ctx, cid, asOf); } // CP-01/02
+  @Get("segmentation")             segmentation(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.segmentation(r.ctx, asOf); }            // CP-03
+  @Get("compliance-catalogue")     catalogue(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.catalogueConformite(r.ctx, asOf); }        // CP-07
+  @Get("rules")                    regles(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.regles(r.ctx, asOf); }                        // CP-08
+  @Post("groups")                  defGroupe(@Req() r: any, @Body() b: any) { return this.svc.definirGroupe(r.ctx, b); }                              // CP-04/05
+  @Get("groups")                   groupes(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.groupes(r.ctx, asOf); }                     // CP-05
+  @Get("clients/:cid/groups")      groupesDe(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.groupesDe(r.ctx, cid, asOf); } // CP-04
+  @Post("scenarios")               defScenario(@Req() r: any, @Body() b: any) { return this.svc.definirScenario(r.ctx, b); }                           // CP-06
+  @Get("scenarios/:sid/evaluate")  evalScenario(@Req() r: any, @Param("sid") sid: string, @Query("asOf") asOf?: string) { return this.svc.evaluerScenario(r.ctx, sid, asOf); } // CP-06
+  @Get("alerts")                   alertes(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.alertes(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // CP-12
+  @Get("clients/:cid/timeline")    timeline(@Req() r: any, @Param("cid") cid: string, @Query("asOf") asOf?: string) { return this.svc.timeline(r.ctx, cid, asOf); }   // PC-14 (P1)
+  @Get("volumetrie")               volumetrie(@Req() r: any, @Query("asOf") asOf?: string, @Query("seuil") seuil?: string) { return this.svc.volumetrie(r.ctx, asOf, seuil != null ? Number(seuil) : undefined); } // PC-13 (P1)
+  @Post("sandbox/simulate")        simuler(@Req() r: any, @Body() b: any) { return this.svc.simuler(r.ctx, b?.changements); }                            // CP-09
+  @Get("params/proposals")         propositions(@Req() r: any) { return this.svc.listerPropositions(r.ctx); }                                          // CP-10 (lecture)
+  @Post("params/proposals")        proposer(@Req() r: any, @Body() b: any) { return this.svc.proposer(r.ctx, b); }                                     // CP-10
+  @Post("params/proposals/:pid/adopt")  adopter(@Req() r: any, @Param("pid") pid: string) { return this.svc.adopter(r.ctx, pid); }                     // CP-10
+  @Post("params/proposals/:pid/reject") rejeter(@Req() r: any, @Param("pid") pid: string, @Body() b: any) { return this.svc.rejeter(r.ctx, pid, b?.motivation); } // CP-10
+  @Post("params/apply")            appliquer(@Req() r: any, @Body() b: any) { return this.svc.appliquerParametre(r.ctx, b ?? {}); }       // PC-15 (P2)
+  @Get("params/history")           historique(@Req() r: any) { return this.svc.historiqueParams(r.ctx); }                                  // 2.1-4 (P2)
+  @Post("false-positives")         fauxPositif(@Req() r: any, @Body() b: any) { return this.svc.declarerFauxPositif(r.ctx, b); }                        // CP-13
+  @Post("clients/:cid/insider")      insider(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.taguerInsider(r.ctx, cid, b); }     // CP-14
+  @Post("clients/:cid/insider/lift") insiderLift(@Req() r: any, @Param("cid") cid: string, @Body() b: any) { return this.svc.leverInsider(r.ctx, cid, b); }   // CP-14
+  // R252/PC-11 : AUCUNE surface produit risk-case sur la porte (CP-15/16/17 SUPERSEDED —
+  // l'instruction, les transitions et le reporting SLA relèvent de riskcases R133-R136).
+  @Get("reporting/sla")            reportingSla(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.reportingSla(r.ctx, asOf); } // PC-18 (R281)
+  @Post("reporting/sla/tick")      tickSla(@Req() r: any) { return this.svc.tickSla(r.ctx); }                                             // PC-19 (R281/R39)
+  @Post("case-proposals")          emettreCp(@Req() r: any) { return this.svc.emettreCaseProposals(r.ctx); }                              // PC-09/10
+  @Get("case-proposals")           listerCp(@Req() r: any) { return this.svc.listerCaseProposals(r.ctx); }                               // PC-09 (consommation riskcases)
+}
+
+@Module({
+  imports: [LicenseModule],
+  controllers: [CpsiController],
+  providers: [
+    { provide: CpsiService, useFactory: (p: PrismaService, a: AuditService) => new CpsiService(p, a), inject: [PrismaService, AuditService] },
+  ],
+  exports: [CpsiService],
+})
+export class CpsiModule {}

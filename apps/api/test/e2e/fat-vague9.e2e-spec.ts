@@ -67,4 +67,33 @@ describe("FAT Vague 9 — Bac à sable AML : dry-run d'un seuil (backend réel)"
     expect(Number(apres.text)).toBe(200000);
     console.log(`FAT-SBAML-02 PASS — simulation inchangée (100000), application gouvernée au registre → 200000 (R126/R29)`);
   });
+
+  // ── Bac à sable SLA onboarding (sbonb) — même application R94, patron identique ──
+  it("FAT-SBONB-01 [CO] un seuil SLA simulé montre l'impact NOMINATIF, sans AUCUNE écriture (R94, R120/R39)", async () => {
+    // Un onboarding en COLLECTE depuis 20 jours : sous le SLA actuel (30 j), en dépassement à 15 j simulés.
+    const depuis = new Date(Date.now() - 20 * 86400000).toISOString();
+    const ob = await prisma.onboarding.create({ data: { tenantId: TID, prospectNom: "Prospect Vingt Jours",
+      etape: "COLLECTE", etapeDepuis: depuis, slaSignale: false } });
+    const r = await request(http).post("/v1/onboarding/sandbox").set(bearer(TID, CO, "CO"))
+      .send({ override: { etape: "COLLECTE", jours: 15 } });
+    expect(r.status).toBe(201);
+    expect(r.body.ecriture).toBe(false);
+    expect(r.body.override).toMatchObject({ etape: "COLLECTE", valeurActuelle: 30, valeurSimulee: 15 });
+    const nouveau = r.body.nouveaux.find((n: any) => n.onboardingId === ob.id);
+    expect(nouveau).toMatchObject({ prospect: "Prospect Vingt Jours", etape: "COLLECTE", jours: 20, seuil: 15 });  // NOMINATIF
+    // Preuve du dry-run : slaSignale intact, AUCUN événement SLA émis (R70/R94)
+    const relu = await prisma.onboarding.findFirst({ where: { id: ob.id } });
+    expect(relu!.slaSignale).toBe(false);
+    const evs = await prisma.domainEvent.count({ where: { tenantId: TID, type: "onboarding.sla.alerte", aggregateId: ob.id } });
+    expect(evs).toBe(0);
+    console.log("FAT-SBONB-01 PASS — dépassement nominatif simulé (20j ≥ 15j), zéro écriture");
+  });
+
+  it("FAT-SBONB-02 [CO] default-deny : une étape hors SLA gouverné est refusée", async () => {
+    const ko = await request(http).post("/v1/onboarding/sandbox").set(bearer(TID, CO, "CO"))
+      .send({ override: { etape: "ETAPE_BIDON", jours: 10 } });
+    expect(ko.status).toBe(400);
+    expect(JSON.stringify(ko.body)).toContain("R125");
+    console.log("FAT-SBONB-02 PASS — étape non gouvernée refusée (default-deny)");
+  });
 });

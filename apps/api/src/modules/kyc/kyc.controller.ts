@@ -20,10 +20,28 @@ export class KycController {
       legalStructure: p.data.legalStructure, accountType: p.data.accountType,
       countryCode: p.data.countryCode, rmId: p.data.rmId });
   }
+  // ── Portes minces Home (amendement Ali 2026-07-27 : critère « zéro endpoint nouveau » AMENDÉ). ──
+  // T1 : liste des dossiers, périmètre par RÔLE côté serveur (RM/ARM = ses clients via Client.rmUserId ;
+  // voit-tout = tenant ; ADMIN = refus, aucune donnée client — matrice A.3). Déclarées AVANT ":code".
+  @Get()
+  lister(@Req() req: any, @Query("statut") statut?: string) { return this.svc.lister(req.ctx, statut); }
+  // T2 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de mon périmètre (HO-05).
+  @Get("visas/pending")
+  visasPending(@Req() req: any) { return this.svc.visasPending(req.ctx); }
+  // R291/DC-06 : l'AGRÉGAT de charge — visas PENDING par rôle, tenant entier (Direction/CO_SR).
+  @Get("visas/charge")
+  visasCharge(@Req() req: any) { return this.svc.visasCharge(req.ctx); }
+
   @Get(":code")
   get(@Req() req: any, @Param("code") code: string) { return this.svc.get(req.ctx, code); }
 
   // Rejeu KYC à date (Vague 1, esprit R127) — état reconstruit depuis le journal d'événements
+  @Get(":code/access-matrix")
+  matrix(@Req() r: any, @Param("code") code: string, @Query("asOf") asOf?: string) { return this.svc.accessMatrix(r.ctx, code, asOf); } // SD-01 + VD-03 (matrice d'époque, R282)
+  @Patch(":code/questions/:qcode/access")
+  access(@Req() r: any, @Param("code") code: string, @Param("qcode") q: string, @Body() b: any) { return this.svc.modifierAccess(r.ctx, code, q, b ?? {}); } // SD-01/02
+  @Get(":code/voir-comme/:role")
+  voirComme(@Req() r: any, @Param("code") code: string, @Param("role") role: string) { return this.svc.voirComme(r.ctx, code, role); } // SD-03
   @Get(":code/a-date")
   etatADate(@Req() req: any, @Param("code") code: string, @Query("date") date?: string) {
     return this.svc.etatADate(req.ctx, code, date ? new Date(date) : new Date());

@@ -8,8 +8,9 @@ import { PersonnesService } from "./personnes.service";
  * TRACE et PROPOSE, il n'exécute pas (invariant n°1) : le rattachement de rôle (R31), la
  * relation bijective (R34) et le CoC (R30/R42 : propagation aux dossiers + re-screening
  * DÉCLENCHÉ, jamais exécuté) sont des faits journalisés. Auteur = jeton (r.ctx).
- * NB écart : `PersonneLienService` (R152→R155) reste DORMANT — aucun modèle `Personne` au
- * schéma ; la chaîne de contrôle ratifiée exploitable est celle de `PersonnesService`.
+ * NB écart : `PersonneLienService` (R152→R155) reste DORMANT (aucune route) — depuis le solde
+ * A3 (2026-07-28) il est CONFORME au schéma réel (modèle `Person`, donnée dans `donnees` R30) ;
+ * la chaîne de contrôle ratifiée exploitable reste celle de `PersonnesService`.
  */
 @Controller("personnes")
 export class PersonnesController {

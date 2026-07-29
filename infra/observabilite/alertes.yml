@@ -1,0 +1,24 @@
+# §9 — règles d'alerte (Prometheus/Grafana) : branchées sur un canal RÉEL (mail/Slack).
+# ✔ = une alerte de TEST reçue de bout en bout avant la mise en prod.
+groups:
+  - name: olive
+    rules:
+      - alert: DeadLettersPresentes            # AS-04 — transport : un message bloqué se voit
+        expr: olive_dead_letters_total > 0
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "Dead-letters > 0 — rejouer via l'écran Audit & transport" }
+      - alert: CpsiRejeuHorsSeuil              # R250 — la jauge notifie, l'infra alerte
+        expr: olive_cpsi_dernier_rejeu_ms > 2000
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "Rejeu CPSI > cpsi_replay_warn_ms — contrat dormant R324/R325 prêt" }
+      - alert: BackupEchoue                    # §4 — un backup manqué est un incident
+        expr: time() - olive_dernier_backup_ok_timestamp > 90000
+        labels: { severity: critical }
+        annotations: { summary: "Aucun backup réussi depuis > 25 h — vérifier WAL-G/SOS" }
+      - alert: DisqueSature
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes < 0.15
+        for: 15m
+        labels: { severity: warning }
+        annotations: { summary: "Disque < 15 % — purger/étendre avant saturation" }

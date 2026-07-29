@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Personnes liées — R30→R36 (P-01..08). PORT FIDÈLE du moteur de référence
@@ -18,34 +19,42 @@ const IDENTITE = new Set(["nom", "naissance", "nationalite"]);   // R42 : rescre
 export class PersonnesService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private async params(tx: any, tenantId: string) {
+  private async params(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { cumulRolesAutorise: s.cumulRolesAutorise ?? false,
              depepDelaiJours: s.depepDelaiJours ?? 365 };
   }
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
   }
-  private notify(tx: any, tenantId: string, aggregateId: string, destinataire: string, message: string) {
+  private notify(tx: Tx, tenantId: string, aggregateId: string, destinataire: string, message: string) {
     return this.emit(tx, tenantId, "notification", aggregateId, { destinataire, message });
   }
-  private async personne(tx: any, ctx: Ctx, id: string) {
+  private async personne(tx: Tx, ctx: Ctx, id: string) {
     const p = await tx.person.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!p) throw new NotFoundException("Personne introuvable");
     return p;
   }
-  private async dossiersDe(tx: any, ctx: Ctx, personId: string) {
+  private async dossiersDe(tx: Tx, ctx: Ctx, personId: string) {
     const roles = await tx.personRole.findMany({ where: { tenantId: ctx.tenantId, personId } });
     const ids = [...new Set(roles.map((r: any) => r.kycFileId))];
-    return ids.length ? tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, id: { in: ids } } }) : [];
+    const dossiers: any[] = ids.length
+      ? await tx.kycFile.findMany({ where: { tenantId: ctx.tenantId, id: { in: ids } } }) : [];
+    // Anomalie A3 SOLDÉE (2026-07-28) : le RM vit sur le CLIENT (Client.rmUserId, matrice A.3),
+    // jamais sur le dossier — l'ancien d.rmId fantôme rendait TOUTES ces notifications muettes.
+    const clientIds = [...new Set(dossiers.map((d) => d.clientId))];
+    const clients: any[] = clientIds.length
+      ? await tx.client.findMany({ where: { tenantId: ctx.tenantId, id: { in: clientIds } } }) : [];
+    const rmParClient = new Map(clients.map((c) => [c.id, c.rmUserId]));
+    return dossiers.map((d) => ({ ...d, rmUserId: rmParClient.get(d.clientId) ?? null }));
   }
 
   // ── R30 : objet unique du référentiel ──
   async creer(ctx: Ctx, dto: { nom: string; donnees?: Record<string, unknown> }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const p = await tx.person.create({ data: { tenantId: ctx.tenantId, nom: dto.nom,
-        donnees: dto.donnees ?? {}, etat: "ACTIVE", statutPep: false,
+        donnees: (dto.donnees ?? {}) as any, etat: "ACTIVE", statutPep: false,
         alerteDepepEmise: false, flags: [] } });
       await this.emit(tx, ctx.tenantId, "personne.creee", p.id, { nom: dto.nom });
       await this.audit.log(ctx.tenantId, ctx.userId, "PERSON_CREATED", p.id);
@@ -55,7 +64,7 @@ export class PersonnesService {
 
   // ── R31 : cumul selon politique banque ; conflit → flag insider obligatoire · R35 : réactivation ──
   async lier(ctx: Ctx, kycFileId: string, personId: string, role: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const p = await this.personne(tx, ctx, personId);
       const kyc = await tx.kycFile.findFirst({ where: { id: kycFileId, tenantId: ctx.tenantId } });
       if (!kyc) throw new NotFoundException("Dossier introuvable");
@@ -83,7 +92,7 @@ export class PersonnesService {
 
   // ── R35 : plus aucun rôle → archivée, jamais supprimée (conservation LBA) ──
   async retirerRole(ctx: Ctx, kycFileId: string, personId: string, role: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await tx.personRole.deleteMany({ where: { tenantId: ctx.tenantId, personId, kycFileId, role } });
       await this.emit(tx, ctx.tenantId, "personne.role.retire", personId, { dossier: kycFileId, role });
@@ -103,7 +112,7 @@ export class PersonnesService {
 
   // ── R30 : CoC — la donnée vit sur la personne ; les dossiers reçoivent des ÉVÉNEMENTS ──
   async changementCirconstances(ctx: Ctx, personId: string, champ: string, valeur: unknown, document?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const p = await this.personne(tx, ctx, personId);
       await tx.person.update({ where: { id: p.id },
         data: { donnees: { ...(p.donnees as any), [champ]: valeur } } });
@@ -111,8 +120,8 @@ export class PersonnesService {
       if (document) await this.emit(tx, ctx.tenantId, "tache.maj_ged", personId, { document });
       for (const d of await this.dossiersDe(tx, ctx, personId)) {
         await this.emit(tx, ctx.tenantId, "personne.coc.propage", personId, { dossier: d.id, champ });
-        if (d.rmId) await this.notify(tx, ctx.tenantId, personId,
-          d.rmId, `CoC ${personId} (${champ}) impacte votre dossier ${d.code ?? d.id}`);
+        if (d.rmUserId) await this.notify(tx, ctx.tenantId, personId,
+          d.rmUserId, `CoC ${personId} (${champ}) impacte votre dossier ${d.code ?? d.id}`);
       }
       if (IDENTITE.has(champ))                                                  // R42
         await this.emit(tx, ctx.tenantId, "personne.rescreening.declenche", personId, { cause: `coc:${champ}` });
@@ -122,15 +131,15 @@ export class PersonnesService {
 
   // ── R32 : PEPisation contagieuse — tâche par dossier, AUCUNE bascule de risque ──
   async declarerPep(ctx: Ctx, personId: string, source: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await tx.person.update({ where: { id: personId }, data: { statutPep: true } });
       await this.emit(tx, ctx.tenantId, "personne.pep.declare", personId, { source });
       for (const d of await this.dossiersDe(tx, ctx, personId)) {
         await this.emit(tx, ctx.tenantId, "tache.reevaluation_pep", personId, { dossier: d.id });
         await this.emit(tx, ctx.tenantId, "personne.pep.propage", personId, { dossier: d.id });
-        if (d.rmId) await this.notify(tx, ctx.tenantId, personId,
-          d.rmId, `${personId} déclaré PEP : réévaluation ${d.code ?? d.id}`);
+        if (d.rmUserId) await this.notify(tx, ctx.tenantId, personId,
+          d.rmUserId, `${personId} déclaré PEP : réévaluation ${d.code ?? d.id}`);
       }
     });
   }
@@ -142,7 +151,7 @@ export class PersonnesService {
 
   // ── R33 : le délai écoulé ne dé-PEPise JAMAIS — il alerte (une fois) ──
   async tickPersonnes(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const cfg = await this.params(tx, ctx.tenantId);
       const peps = await tx.person.findMany({ where: {
         tenantId: ctx.tenantId, statutPep: true, alerteDepepEmise: false } });
@@ -162,7 +171,7 @@ export class PersonnesService {
 
   // ── R33 : levée = décision humaine, tracée (décideur = jeton) ──
   async leverPep(ctx: Ctx, personId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await tx.person.update({ where: { id: personId }, data: { statutPep: false } });
       await this.emit(tx, ctx.tenantId, "personne.pep.leve", personId, { decideur: ctx.userId });
@@ -172,7 +181,7 @@ export class PersonnesService {
 
   // ── R34 : bijectivité — une arête, deux lectures ; suppression des deux d'un coup ──
   async declarerRelation(ctx: Ctx, aId: string, bId: string, typeAb: string, typeBa: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, aId); await this.personne(tx, ctx, bId);
       await tx.personRelation.create({ data: { tenantId: ctx.tenantId, aId, bId, typeAb, typeBa } });
       await this.emit(tx, ctx.tenantId, "personne.relation.declaree", aId, { b: bId, typeAb, typeBa });
@@ -185,7 +194,7 @@ export class PersonnesService {
       ? { autre: r.bId, type: r.typeAb } : { autre: r.aId, type: r.typeBa });
   }
   async supprimerRelation(ctx: Ctx, aId: string, bId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await tx.personRelation.deleteMany({ where: { tenantId: ctx.tenantId, aId, bId } });
       await tx.personRelation.deleteMany({ where: { tenantId: ctx.tenantId, aId: bId, bId: aId } });
       await this.emit(tx, ctx.tenantId, "personne.relation.supprimee", aId, { b: bId });
@@ -194,14 +203,18 @@ export class PersonnesService {
 
   // ── R36 : divergence → Central File + corroboration ; AUCUNE donnée modifiée avant décision ──
   async signalerDivergence(ctx: Ctx, personId: string, champ: string, constats: Record<string, unknown>) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await this.emit(tx, ctx.tenantId, "central_file.dossier.ouvert", personId,
         { champ, constats });
       for (const kycFileId of Object.keys(constats)) {
+        // Anomalie A3 SOLDÉE (ratification 2026-07-28) : le RM se résout depuis le CLIENT du
+        // dossier (matrice A.3, Client.rmUserId) — kycFile.rmId n'a jamais existé et
+        // l'événement ne partait jamais.
         const d = await tx.kycFile.findFirst({ where: { id: kycFileId, tenantId: ctx.tenantId } });
-        if (d?.rmId) await this.emit(tx, ctx.tenantId, "tache.corroboration", personId,
-          { dossier: kycFileId, rm: d.rmId });
+        const c = d ? await tx.client.findFirst({ where: { id: d.clientId, tenantId: ctx.tenantId } }) : null;
+        if (c?.rmUserId) await this.emit(tx, ctx.tenantId, "tache.corroboration", personId,
+          { dossier: kycFileId, rm: c.rmUserId });
       }
       await this.audit.log(ctx.tenantId, ctx.userId, "IDENTITY_DIVERGENCE", `${personId}:${champ}`);
     });

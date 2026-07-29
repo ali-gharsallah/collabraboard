@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/screening-qualification";
+import { Tx } from "../../common/tx";
 
 /**
  * Câblage persistant des règles screening R100→R103 (SC-01..04, ratifiées 15.07.2026).
@@ -38,7 +39,7 @@ export class ScreeningService {
   async run(ctx: Ctx, dto: RunDto) {
     if (!dto?.liste || !dto?.version || !Array.isArray(dto?.entries))
       throw new BadRequestException("liste, version et entries requis");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const clients = await tx.client.findMany({ where: {
         tenantId: ctx.tenantId, ...(dto.clientIds ? { id: { in: dto.clientIds } } : {}) } });
       const at = new Date().toISOString();
@@ -73,7 +74,7 @@ export class ScreeningService {
   // ── R101 — verdict + motif obligatoire (R7) + auteur = jeton ; VP → escalade PROPOSÉE ──
   async qualify(ctx: Ctx, hitId: string, verdict: Verdict, motif: string) {
     if (!motif || !motif.trim()) throw new BadRequestException("R7 : la qualification exige un motif");
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const hit = await tx.screeningHit.findFirst({ where: { id: hitId, tenantId: ctx.tenantId } });
       if (!hit) throw new NotFoundException("Hit introuvable");
       if (hit.statut === "QUALIFIE")

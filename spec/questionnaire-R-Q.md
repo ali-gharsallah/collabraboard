@@ -93,3 +93,202 @@ avant le code correspondant. Le moteur est réputé conforme lorsque 100 %
 des scénarios passent en suite de tests. Toute nouvelle règle découverte
 en exploitation est ajoutée au catalogue selon la même numérotation,
 avec ses scénarios, avant implémentation.*
+
+12. Paramètres tenant — porte CPSI (amendement R248-R252, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R251**      `cpsi_gate_timeout_ms` — timeout du        Porte CPSI
+                sous-processus moteur (défaut 5000 ms).
+                Dépassé ⇒ 503 typé CPSI_GATE_UNAVAILABLE
+                (refus gracieux, jamais un 500 opaque).
+
+  **R250**      `cpsi_replay_warn_ms` — seuil de durée     Porte CPSI
+                d'hydratation (défaut 2000 ms). Dépassé ⇒
+                notification tracée (CPSI_REPLAY_SLOW),
+                JAMAIS un blocage (R39).
+
+  **R248**      `cpsi_contract_version` supportées —       Porte CPSI
+                versions d'enveloppe acceptées (défaut
+                ["1"]). Version inconnue ⇒ erreur typée
+                UNSUPPORTED_CONTRACT.
+  ------------- ----------------------------------------- ----------------------
+
+  Ces paramètres vivent sous `tenant.settings.cpsiConfig` (R68 : versionnés par
+  date de mise en vigueur ; le rejeu à date utilise la config d'alors).
+
+13. Paramètres tenant — bloc Offboarding (R267-R271, canon vague écrans pilote §5.4, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R267**      `retentionPostClotureAns` — durée de       Offboarding
+                rétention post-clôture (défaut 10 ans,
+                LBA art. 7). La purge de fin de rétention
+                est un processus distinct (R170).
+
+  **R268**      `visasParTypeCloture` — visas requis par   Offboarding
+                type (défauts : EXIT_COMPLIANCE →
+                [CO_SR, DIR] (Head PB → DIR, mapping
+                ratifié), DECES_SUCCESSION → [CO],
+                autres → [CO]).
+
+  **R268**      `documentsParTypeCloture` — documents      Offboarding
+                exigés par type (défauts : DEMANDE_CLIENT
+                → INSTRUCTION_TRANSFERT_SIGNEE,
+                DECES_SUCCESSION → ACTE_DECES).
+
+  **R270**      `rolesMotifSensible` — rôles habilités au  Offboarding
+                motif détaillé + réf MROS d'un
+                EXIT_COMPLIANCE (défaut [CO_SR, MLRO] ;
+                le canon cite SO — rôle non ratifié,
+                écart consigné). Appliqué au contrôleur,
+                à Olivia (R256) ET par policy SQL
+                RESTRICTIVE (GUC app.role).
+
+  **R271**      `exExitComplianceForceEdd` — un ex-        Offboarding
+                EXIT_COMPLIANCE qui revient entre en
+                workflow EDD imposé (défaut vrai).
+  ------------- ----------------------------------------- ----------------------
+
+  Ces paramètres vivent sous `tenant.settings` (R68) ; les valeurs appliquées à une
+  clôture (visas, documents) sont figées dans le dossier au moment de l'acte.
+
+14. Paramètres tenant — module Olivia v1 (R253-R257, spec B.9, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R253**      `oliviaProviderRef` / `oliviaModel` —      Olivia
+                RÉFÉRENCES du fournisseur et du modèle
+                (jamais le secret — pattern R163 ; le
+                secret vit en env serveur/coffre).
+                Non configuré ⇒ 503 OLIVIA_PORT_OFF.
+
+  **R253**      `oliviaTimeoutMs` — timeout fournisseur    Olivia
+                (défaut 30000). Dépassé ⇒ 502
+                OLIVIA_PROVIDER_DOWN, échec JOURNALISÉ.
+
+  **R255**      `oliviaScopeMaxObjets` — borne du          Olivia
+                contexte (défaut 50). Dépassée ⇒ 422
+                OLIVIA_CONTEXT_OVERFLOW AVANT tout appel.
+
+  **R255/R68**  `oliviaPromptTemplate.{C1..C4}` —          Olivia
+                gabarits versionnés à date. Défauts =
+                artefact livré
+                `olivia-gabarits.default.json`
+                (B.11.6 : zéro persona en dur, grep CI).
+
+  **R257**      `oliviaRetentionConversationsMois` —       Olivia
+                rétention du journal (politique R170 du
+                tenant ; la purge est un processus
+                distinct, jamais implicite).
+
+  **B.9**       `oliviaCapacitesActives` — activation      Olivia
+                fine par tenant (défaut C1,C2,C3,C4).
+                Capacité absente ⇒ 400
+                OLIVIA_CAPACITE_NON_OUVERTE.
+  ------------- ----------------------------------------- ----------------------
+
+15. Paramètres tenant — échéances de review (R272-R275, canon débloquants Home partie 1, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R272**      `cadenceReviewMois` {EDD, CDD, SDD} —      Reviews
+                cadence par niveau de diligence (défauts
+                12 / 36 / 60). La valeur EN VIGUEUR au
+                calcul est FIGÉE dans l'échéance
+                (grandfathering R29 — RV-02).
+
+  **R274**      `preavisReviewJours` — préavis de tâche    Reviews
+                RM + notification (défaut 30). Notifie
+                UNE fois, ne bloque jamais (R39).
+
+  **R274**      `escaladeRetardJours` {CO, DIR} —          Reviews
+                escalade du retard (défauts 30 / 90).
+                EN_RETARD est un fait CALCULÉ à la
+                lecture, jamais un statut stocké.
+
+  **R273**      `rolesReportEcheance` — rôles habilités    Reviews
+                à RECULER une échéance (défaut [CO_SR]) ;
+                motif R7 + visa four-eyes d'un SECOND
+                (R13, l'initiateur ne vise pas).
+  ------------- ----------------------------------------- ----------------------
+
+16. Paramètres tenant — cycle de vie CoC (R276-R278, canon débloquants Home partie 2, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R276**      Registre COC_CONFIG — types de CoC         CoC
+                versionnés à date (append-only,
+                `coc_config_versions` ; table LIVRÉE de
+                12 types en repli, éditable via
+                POST /v1/coc/config). HAUTE force
+                REVISION_KYC (contrainte backend, SD-06).
+
+  **R277**      `cocFourEyes` {HAUTE, MOYENNE, BASSE} —    CoC
+                visa d'un second au traitement (défauts
+                vrai / faux / faux ; l'initiateur ne
+                vise pas, R13).
+
+  **R278**      `cocSlaJours` {HAUTE, MOYENNE, BASSE} —    CoC
+                délais ouverture→traitement (défauts
+                10 / 30 / 90). MESURÉS au reporting,
+                jamais bloquants (R39).
+
+  **R273**      `cocReviewAnticipationJours` — un CoC      CoC/Reviews
+                HAUTE anticipe l'échéance de review à
+                J+n (défaut 30 ; déclencheur `coc_haute`
+                tracé — RV-04/CC-04).
+  ------------- ----------------------------------------- ----------------------
+
+14b. Paramètres tenant — Olivia v1.1 comportement (R258/A.7, 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R258/A.2**  `oliviaPersona` {version, texte} — gabarit Olivia
+                de persona VERSIONNÉ à date (défaut =
+                artefact livré, version journalisée sur
+                chaque OUT — le rejeu restitue la version
+                de l'époque, OL-23).
+
+  **R258/A.2**  `oliviaReponseMaxMots` — longueur          Olivia
+                contractuelle (défaut 300 ; directive du
+                gabarit — la coupe dure serait une
+                altération de sortie, écart noté).
+
+  **R258/A.3**  `oliviaLanguesActives` / `oliviaLangueDefaut` Olivia
+                (défauts {FR,DE,EN} / FR). Langue inactive
+                ⇒ défaut + excuse contractuelle dans la
+                langue demandée (artefact livré, OL-26).
+
+  **R258/A.4**  `oliviaFenetreTours` — fenêtre glissante   Olivia
+                du prompt (défaut 10 couples IN/OUT) ;
+                le journal garde TOUT (OL-27).
+  ------------- ----------------------------------------- ----------------------
+
+17. Paramètres tenant — Olivia v2 architecture agentique (R259-R266, Partie B dégelée 2026-07-27)
+
+  ------------- ----------------------------------------- ----------------------
+  **R262/B.5**  `runMaxEtapes` / `runMaxDureeS` /          Olivia v2
+                `runMaxCoutTokens` — budgets durs par run
+                (défauts 20 / 300 / 200000). Le premier
+                épuisé ⇒ EPUISE, livrable partiel avec
+                mention ; surcharge par mission À LA
+                BAISSE uniquement (SW-08).
+
+  **R263/B.5**  `porteTimeoutH` — expiration d'une porte   Olivia v2
+                humaine sans décision (défaut 72 h) ⇒
+                INTERROMPU notifié, JAMAIS une reprise
+                (SW-11).
+
+  **R266/B.5**  `runsActifsMaxParTenant` — plafond de      Olivia v2
+                runs actifs (défaut 5). Le dépassement
+                NOTIFIE (olivia.runs.saturation), ne
+                bloque jamais (R39) — la file d'attente
+                exige le transport asynchrone (écart).
+
+  **B.5/SW-18** `missionsActives` — interrupteur v2        Olivia v2
+                (défaut {} : v2 ÉTEINTE partout).
+                Activation EXPLICITE mission par mission ;
+                servi au front par /v1/olivia/missions
+                (pattern R177/HO-02).
+
+  **B.4**       `missionsDeclarees` — déclaration          Olivia v2
+                ratifiée de missions SUPPLÉMENTAIRES
+                {code: {agents, portes, roles, ancrage?}}
+                — jamais une mission ad hoc ; l'artefact
+                livré ne porte que les 2 missions B.4.
+  ------------- ----------------------------------------- ----------------------

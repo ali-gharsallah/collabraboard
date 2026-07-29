@@ -46,6 +46,13 @@ function fakePrisma(sc: Scenario) {
       return [...new Set(list)].map((changedBy) => ({ changedBy }));
     } },
     domainEvent: { create: async () => ({}) },
+    // R267/OF-10 : le garde « client clôturé » interroge offboarding_files — aucun scénario
+    // du corpus n'est clôturé (le bloc offboarding a ses propres FAT e2e).
+    offboardingFile: { findFirst: async () => null },
+    // R282 : la complétude (validate) lit les questions + règles à date — aucun scénario du
+    // corpus ne porte de REQUIRED (les VD-01..04 sont e2e).
+    kycQuestion: { findMany: async () => [] },
+    kycAccessRule: { findMany: async () => [] },
   };
   base.$transaction = async (fn: any) => fn(base);
   return base;

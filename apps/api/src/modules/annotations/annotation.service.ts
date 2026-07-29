@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * Annotations & caviardage — le regard sans la plume. R156→R159 (AN-01..06). Écrit APRÈS
@@ -26,10 +27,10 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 export class AnnotationService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
-  private async cfg(tx: any, tenantId: string) {
+  private async cfg(tx: Tx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });
     const s = (t?.settings as any) ?? {};
     return { annotRoles: s.annotationRoles ?? ["CO", "CF", "RM"],
@@ -42,7 +43,7 @@ export class AnnotationService {
 
   // ── R156/R157 : annoter — le calque, habilité ──
   async annoter(ctx: Ctx, dto: { versionId: string; type: string; ancre: any; contenu: string; cercle: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { annotRoles } = await this.cfg(tx, ctx.tenantId);
       if (!annotRoles.includes(ctx.role)) {
         await this.emit(tx, ctx.tenantId, "annotation.acces.refuse", dto.versionId,
@@ -66,7 +67,7 @@ export class AnnotationService {
 
   // ── R156 : retirer — motivé, tracé ──
   async retirerAnnotation(ctx: Ctx, annotationId: string, motif: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : le retrait d'une annotation exige un motif");
       const a = await tx.annotation.findFirst({ where: { id: annotationId, tenantId: ctx.tenantId } });
       if (!a) throw new NotFoundException("Annotation introuvable");
@@ -87,7 +88,7 @@ export class AnnotationService {
 
   // ── R158 : caviarder — zones motivées, dérivé chaîné, original intact ──
   async caviarder(ctx: Ctx, dto: { versionId: string; zones: Array<{ zone: any; motif: string }> }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const { cavRoles } = await this.cfg(tx, ctx.tenantId);
       if (!cavRoles.includes(ctx.role)) {
         await this.emit(tx, ctx.tenantId, "caviardage.refuse", dto.versionId,
@@ -113,7 +114,7 @@ export class AnnotationService {
 
   // ── R159 : divulguer — QUE le caviardé, et on prouve ce qui sort ──
   async divulguer(ctx: Ctx, dto: { caviardeId: string; destinataire: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!dto.destinataire || !dto.destinataire.trim())
         throw new BadRequestException("R159 : la divulgation nomme son destinataire");
       const c = await tx.caviardageDerive.findFirst({ where: { id: dto.caviardeId, tenantId: ctx.tenantId } });

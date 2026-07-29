@@ -1,0 +1,35 @@
+# REGISTRAR (R331/IX) — indexe spec/inbox/ SANS main humaine et ouvre une PR de ratification.
+# La RATIFICATION reste le MERGE d'Ali (événement daté signé) : ce workflow n'auto-ratifie
+# JAMAIS ni ne renumérote. Il indexe, rapporte les collisions, et propose la PR.
+name: registrar
+on:
+  push:
+    paths: ["spec/inbox/**"]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: "IX — harnais registrar (5/5)"
+        run: |
+          out=$(node tools/registrar/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests registrar verts ###"
+      - name: "IX-01/02 — indexation + rapport de collision"
+        id: idx
+        run: |
+          node tools/registrar/run.mjs | tee registrar-rapport.md
+      - name: "Ouvrir la PR de ratification (le merge = ratification, IX-03)"
+        if: ${{ hashFiles('spec/inbox/_INDEX-PROPOSE.md') != '' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: registrar/inbox-${{ github.run_id }}
+          title: "Ratification : artefacts déposés dans spec/inbox"
+          body-path: registrar-rapport.md
+          add-paths: |
+            spec/inbox/_INDEX-PROPOSE.md
+          commit-message: "chore(registrar): index inbox (PROPOSÉ) — merge = ratification"

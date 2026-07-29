@@ -1,0 +1,61 @@
+{
+  "commentaire": "Fixtures du FOURNISSEUR MOCKÉ déterministe (B.7 critère 1) — le mock rejoue des plans/sorties FIXÉS : le déterminisme du TEST, jamais un chemin de prod (le port réel reste à brancher, refus 503 typé sans lui). Une mission → un plan d'étapes ; chaque étape → l'agent invoqué et sa sortie fixée. Le marqueur CRASH_TEST simule un kill -9 entre deux étapes (SW-03).",
+  "PREREVUE_DOSSIER": {
+    "etapes": [
+      { "agent": "agent-kyc", "outil": "kyc.dossier", "sortie": { "lecture": "dossier chargé" }, "cout": { "tokens": 40 } },
+      { "agent": "agent-kyc", "sortie": { "constat": "IDE-Q3 vide — origine des fonds non établie" }, "cout": { "tokens": 120 } },
+      { "agent": "agent-redacteur", "outil": "kyc.dossier", "sortie": { "jamais": "exécuté" }, "cout": { "tokens": 10 } },
+      { "agent": "agent-redacteur", "sortie": { "rapport": "Pré-revue : 1 manquant (IDE-Q3)" }, "cout": { "tokens": 200 } },
+      { "porte": "proposition_aiguillage" }
+    ],
+    "livrable": { "rapport": "Rapport de pré-revue : le dossier ne permet pas d'établir l'origine des fonds (IDE-Q3 vide).",
+      "citations": [{ "type": "KYC_FILE", "ref": "__ANCRAGE__", "assertion": "IDE-Q3 vide" }] },
+    "propositions": [
+      { "type": "AIGUILLAGE_EDD", "justification": "Pré-revue : origine des fonds non établie — clarification EDD requise (IDE-Q3)" },
+      { "type": "ALLEGEMENT_EDD", "justification": "Pré-revue : si la clarification IDE-Q3 est apportée, l'allègement redevient possible" }
+    ]
+  },
+  "ANALYSE_CORRELATION": {
+    "etapes": [
+      { "agent": "agent-aml", "sortie": { "analyse": "3 signaux convergent vers SC_STRUCT (R80)" }, "cout": { "tokens": 150 } },
+      { "agent": "agent-redacteur", "sortie": { "rapport": "Analyse corrélée rédigée" }, "cout": { "tokens": 120 } },
+      { "porte": "proposition_escalade" }
+    ],
+    "livrable": { "rapport": "Analyse des scénarios corrélés : trois signaux convergent vers SC_STRUCT.",
+      "citations": [{ "type": "RISK_CASE", "ref": "__ANCRAGE__", "assertion": "cas en analyse, signaux corrélés" }] },
+    "propositions": [
+      { "type": "QUALIF_ALERTE_FONDEE", "cibleType": "ALERTE", "cibleId": "__CLIENT__|SC_STRUCT",
+        "justification": "Corrélation multi-scénarios établie — qualification fondée proposée (l'humain décide, R44)" }
+    ]
+  },
+  "MISSION_AGENT_FANTOME": { "etapes": [
+    { "agent": "agent-fantome", "sortie": {} }
+  ] },
+  "MISSION_SIMPLE": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "lecture du dossier OK" }, "cout": { "tokens": 60 } },
+    { "agent": "agent-kyc", "sortie": { "constat": "aucune incohérence" }, "cout": { "tokens": 40 } },
+    { "agent": "agent-redacteur", "sortie": { "rapport": "Synthèse : dossier propre" }, "cout": { "tokens": 90 } }
+  ] },
+  "MISSION_25_ETAPES": { "repete": { "agent": "agent-kyc", "sortie": { "constat": "exploration…" }, "cout": { "tokens": 10 }, "fois": 25 } },
+  "MISSION_SCOPE": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "complétude analysée" }, "cout": { "tokens": 70 } },
+    { "agent": "agent-redacteur", "sortie": { "rapport": "Synthèse du dossier" }, "cout": { "tokens": 90 } }
+  ] },
+  "MISSION_CORREL_TEST": { "etapes": [
+    { "agent": "agent-redacteur", "sortie": { "analyse": "corrélations examinées" }, "cout": { "tokens": 80 } }
+  ] },
+  "MISSION_PORTE_ADHOC": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "x" } },
+    { "porte": "porte_pirate" }
+  ] },
+  "MISSION_PORTE": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "analyse avant porte" }, "cout": { "tokens": 60 } },
+    { "porte": "revue_intermediaire" },
+    { "agent": "agent-redacteur", "sortie": { "rapport": "synthèse après décision humaine" }, "cout": { "tokens": 90 } }
+  ] },
+  "MISSION_CRASH": { "etapes": [
+    { "agent": "agent-kyc", "sortie": { "constat": "étape 1 complète" }, "cout": { "tokens": 50 } },
+    { "agent": "agent-kyc", "sortie": { "constat": "étape 2 complète" }, "cout": { "tokens": 50 } },
+    { "agent": "agent-kyc", "marqueur": "CRASH_TEST", "sortie": { "constat": "jamais atteint" } }
+  ] }
+}

@@ -1,0 +1,6 @@
+{
+  "publieLe": "2026-07-29",
+  "commentaire": "Planchers anti-dégradation (cliquet type R70) — MESURÉS ce jour sur le corpus de fixtures versionné. CI assertion : la mesure courante doit rester >= à ces planchers. Améliorer le lexique (ou ajouter des cas et re-mesurer) NE PEUT QUE monter ces nombres, jamais les baisser en douce : toute baisse doit être un acte visible (ce fichier édité dans le même commit, revu). La résistance < 100 % est ASSUMÉE : les filtres déterministes sont une couche de pré-filtrage bon marché ; la décision reste modèle + humain (R44, propositions seulement).",
+  "golden": { "min": 200, "parCapaciteMin": 50, "langueAccuracyMin": 100, "fauxPositifsMax": 0 },
+  "attaques": { "min": 42, "resistanceMin": 52.4 }
+}

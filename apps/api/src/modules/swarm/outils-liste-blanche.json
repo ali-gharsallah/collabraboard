@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "livreLe": "2026-07-27",
+  "commentaire": "R264 — LA liste blanche d'endpoints outillables (Partie B, dégel 2026-07-27). Un outil = LECTURE (GET) ou PROPOSITION (création olivia_proposals) — RIEN d'autre. Cet artefact est la SOURCE UNIQUE : vérifié en CI (le build échoue si un outil livré pointe hors liste — B.7 critère 2) ET appliqué au runtime (déclaration hors liste ⇒ 422 TOOL_ENDPOINT_HORS_LISTE, SW-12). Chaque entrée « lecture » référence un endpoint GET EXISTANT de la porte O-Live ; « proposition » ne peut contenir QUE la création de propositions v1 (R254). Étendre la liste = revue de code (CI), jamais un acte runtime.",
+  "lecture": [
+    "GET /v1/kyc/:code",
+    "GET /v1/kyc/:code/a-date",
+    "GET /v1/screening/hits",
+    "GET /v1/cpsi/clients/:cid/score",
+    "GET /v1/cpsi/clients/:cid/timeline",
+    "GET /v1/cpsi/alerts",
+    "GET /v1/cpsi/rules",
+    "GET /v1/riskcases/:id",
+    "GET /v1/ged/documents"
+  ],
+  "proposition": [
+    "POST /v1/olivia/proposals"
+  ]
+}

@@ -20,7 +20,14 @@
 | `spec/vague9-scenarios/VAGUE9-ECRANS.feature` | Gherkin spec-first Vague 9 (Bac à sable AML : dry-run d'un seuil, R94/B-02) | 2026-07-26 |
 | `spec/vague13-scenarios/FORMATIONS-MOD43.feature` | Gherkin RATIFIÉ MOD-43 (FO-01..08) — implémenté Vague 13 | 2026-07-27 |
 | `spec/vague14-scenarios/BUSINESS-TRIP-MOD75.feature` | Gherkin RATIFIÉ MOD-75 (BT-01..10) — implémenté Vague 14 | 2026-07-27 |
-| `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 | 2026-07-26 |
+| `spec/spec-fonctionnelle-home-olivia.md` | **Olivia v1** (R253–R257 : port, propositions, contexte, citations, journal — OL-01..22) + **écran Home** (principe sans R-number, HO-01..08). Numérotation ratifiée ; écarts étape 0 signalés (rôle SO inexistant, 4 tuiles Home sans endpoint) | 2026-07-27 |
+| `spec/spec-olivia-v1.1-comportement-v2-agents.md` | Olivia **v1.1** (R258, comportement/UX, OL-23..34 — socle v1 reçu 2026-07-27) + **v2 agentique** (R259–R266, SW-01..18) **RATIFIÉE – CODE GELÉ**. Mapping ratifié : v1=R253–R257 (`spec-fonctionnelle-home-olivia.md`), Home sans R-number | 2026-07-27 |
+| `spec/catalogue-amendement-R248-R252-porte-cpsi.md` | Amendement **R248–R252** (durcissement porte CPSI : enveloppe versionnée, jauge de rejeu, refus gracieux 503, frontière `case_proposal` R252 — supersede CP-15/16/17). Numérotation ratifiée ; scénarios PC PROPOSÉS | 2026-07-27 |
+| `spec/canon-vague-ecrans-pilote.md` | Canon **VAGUE ÉCRANS PILOTE** (PROPOSÉ) : AML workspace (AW-01..08) · paramétrage CPSI (PA-01..06) · 5 bacs à sable (ex-SB → **BS** proposé, collision SecretBox) · sections & droits (SD-01..06) · **bloc Offboarding R267–R271** (OF-01..12, numéros vérifiés libres). Verdict étape 0 en tête : endpoints manquants signalés AVANT code (reporting/timeline P1, historique+applied P2, dry-run P3, sdkyc/sdar/cocparam P4) — arbitrage requis | 2026-07-27 |
+| `spec/canon-debloquants-home.md` | Canon **DÉBLOQUANTS HOME** (PROPOSÉ) : échéances de review **R272–R275** (RV-01..08, T7) · cycle de vie CoC **R276–R278** (CC-01..08, T8) · licence servie (LC→**LS** proposé — collision corpus licence). Verdict étape 0 en tête : R272–R278 libres, **R279 requalifié en APPLICATION de R177–R179** (2 services de licence codés, zéro branchement runtime), **STOP partie 2** (store COC_CONFIG inexistant) | 2026-07-27 |
+| `spec/cpsi-scenarios/CPSI-PORTE.feature` | Gherkin **PROPOSÉ** de la porte HTTP mince CPSI (CP-01..19) — relais du moteur `services/cpsi-server-py` (R63–R83), aucune règle nouvelle ; à ratifier « OK pour la porte CPSI » | 2026-07-27 |
+| `docs/CPSI-CATALOGUE-R63-R86.md` | Catalogue consolidé CPSI (R63–R86) : score perpétuel, segmentation, groupes de population, pipeline signaux scorés, risk cases, extension KYC. Moteur réf. `services/cpsi-server-py` (18/18 vert). Cœur R63–R83 **non intégré** (porte HTTP mince à venir) | 2026-07-27 |
+| `docs/ECARTS-FRONT.md` | Confrontation SPEC-FRONT-CÂBLAGE v2 ↔ backend ratifié + décisions actées + amendement A1 + écart R78 (réservé) | 2026-07-26 |
 | `docs/MIGRATION-FRONT.md` | Journal des migrations d'écrans (boy-scout A1/D3) | 2026-07-26 |
 | `docs/AUDIT-ARCHITECTURE.md` | Audit archi/scalabilité (lecture seule, behavior-preserving) — A1..A6 priorisés | 2026-07-27 |
 | `docs/DECALAGE-FRONT-DEMO.md` | Gap front React ↔ maquette `olive-demo.html` (couverture, ports, liste noire) | 2026-07-26 |
@@ -76,3 +83,4 @@
 - **Cycle client de bout en bout** (entrée→KYC→screening→revue→changement) prouvé sur Postgres réel (FAT-CYCLE-01).
 - **Rejeu à date** : paramètres (R127) **ET** dossier KYC (`/kyc/:code/a-date`) — **OUI**.
 - **Périmètre règles** : R1 → R221 · **34 modules backend**. Écarts signalés : `PersonneLienService` dormant (pas de modèle `Personne`), % détention non ratifié, fiche GED empreinte non restituée. Dette infra corrigée (Vague 4) : `PrismaService.$disconnect` + `connection_limit=3`.
+- spec/canon-ecarts-anciens.md — canon écarts anciens R280-R283 (PROPOSÉ, étape 0 exécutée 2026-07-28)

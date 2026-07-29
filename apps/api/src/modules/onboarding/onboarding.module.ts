@@ -21,6 +21,8 @@ export class OnboardingController {
   }
   @Get()                                  // Vague 3 — stock du pipeline pour le dashboard exécutif
   liste(@Req() r: any) { return this.svc.liste(r.ctx); }
+  @Post("sandbox")                        // Bac à sable SLA — dry-run d'un seuil (application R94, 0 écriture)
+  sandbox(@Req() r: any, @Body() b: any) { return this.svc.sandbox(r.ctx, b); }
   @Get(":id/funnel")
   funnel(@Req() r: any, @Param("id") id: string) { return this.svc.funnel(r.ctx, id); }
 }
@@ -32,7 +34,11 @@ export class OnboardingController {
     {
       provide: OnboardingService,
       useFactory: (prisma: PrismaService, audit: AuditService, kyc: KycService) =>
-        new OnboardingService(prisma, audit, kyc),
+        // R271 : la création déléguée par l'onboarding est LA voie du retour d'un client
+        // clôturé — le moteur KYC chaîne alors Rn+1 (previousKycId) et impose l'EDD si
+        // ex-EXIT_COMPLIANCE (paramètre). La création directe, elle, reste refusée.
+        new OnboardingService(prisma, audit,
+          { create: (ctx: any, dto: any) => kyc.create(ctx, dto, { viaOnboarding: true }) }),
       inject: [PrismaService, AuditService, KycService],
     }],
   exports: [OnboardingService],

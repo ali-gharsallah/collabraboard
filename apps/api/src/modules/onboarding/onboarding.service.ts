@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
 
 /**
  * Onboarding — l'entrée en relation. R117→R120 (OB-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -28,11 +29,11 @@ export class OnboardingService {
   constructor(private prisma: PrismaService, private audit: AuditService,
               private kycSvc: { create: (ctx: Ctx, dto: any) => Promise<any> }) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload,
       at: new Date().toISOString() } });
   }
-  private async ob(tx: any, ctx: Ctx, id: string) {
+  private async ob(tx: Tx, ctx: Ctx, id: string) {
     const o = await tx.onboarding.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!o) throw new NotFoundException("Onboarding introuvable");
     return o;
@@ -40,7 +41,7 @@ export class OnboardingService {
 
   // ── R117 : création — l'entrée du funnel ──
   async creer(ctx: Ctx, dto: { prospectNom: string }) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await tx.onboarding.create({ data: { tenantId: ctx.tenantId,
         prospectNom: dto.prospectNom, etape: "PROSPECT",
         etapeDepuis: new Date().toISOString(), slaSignale: false } });
@@ -58,7 +59,7 @@ export class OnboardingService {
   // ── R117/R118/R119 : LA transition — garde des états, délégations, blocages ──
   async transitionner(ctx: Ctx, onboardingId: string, vers: string,
                       opts: { motif?: string; form?: any } = {}) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const o = await this.ob(tx, ctx, onboardingId);
       if (!(TRANSITIONS[o.etape] ?? []).includes(vers))
         throw new BadRequestException(`Transition illégale : ${o.etape} → ${vers}`);
@@ -103,7 +104,7 @@ export class OnboardingService {
 
   // ── R120 : le SLA alerte une fois — l'abandon reste une décision humaine ──
   async tickSla(ctx: Ctx, now: Date) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
       const sla = { ...SLA_DEFAUT, ...((t?.settings as any)?.onboardingSlaJours ?? {}) };
       const actifs = await tx.onboarding.findMany({ where: { tenantId: ctx.tenantId,
@@ -119,6 +120,46 @@ export class OnboardingService {
         // L'état ne bouge pas : le système mesure et notifie (R39).
       }
     });
+  }
+
+  // ── Bac à sable SLA onboarding — dry-run d'un seuil (application R94, patron sbaml/B-02) ──
+  // « Voir avant d'écrire » : on rejoue la MÊME détermination SLA que tickSla (R120) sur les
+  // onboardings réels, avec les seuils ACTUELS puis SIMULÉS, et l'on rend l'impact NOMINATIF
+  // (dépassements avant/après, nouveaux/disparus, chacun NOMMÉ : prospect, étape, jours, seuil).
+  // AUCUNE écriture (ni slaSignale, ni événement, ni tâche — R70/R94). Appliquer reste un acte
+  // gouverné au registre R-Q (`onboardingSlaJours`, R125/R126) : proposer n'est pas appliquer.
+  async sandbox(ctx: Ctx, dto: { override?: { etape?: string; jours?: number }; now?: string }) {
+    const etape = dto?.override?.etape;
+    if (!etape || !(etape in SLA_DEFAUT))
+      throw new BadRequestException(`R125 : «${etape}» n'est pas une étape SLA gouvernée (${Object.keys(SLA_DEFAUT).join(", ")})`);
+    if (typeof dto?.override?.jours !== "number" || dto.override.jours <= 0)
+      throw new BadRequestException("override.jours (nombre > 0) requis");
+    const now = dto.now ? new Date(dto.now) : new Date();
+    const t = await this.prisma.tenant.findFirst({ where: { id: ctx.tenantId } });
+    if (!t) throw new NotFoundException("Tenant introuvable");
+    const actuels = { ...SLA_DEFAUT, ...((t.settings as any)?.onboardingSlaJours ?? {}) };
+    const simules = { ...actuels, [etape]: dto.override.jours };
+    // Même périmètre que tickSla : étapes suivies, alerte pas encore émise (l'alerte tire une fois).
+    const actifs = await this.prisma.onboarding.findMany({ where: { tenantId: ctx.tenantId,
+      etape: { in: Object.keys(SLA_DEFAUT) }, slaSignale: false } });
+    const nomme = (o: any, sla: Record<string, number>) =>
+      ({ onboardingId: o.id, prospect: o.prospectNom, etape: o.etape,
+         jours: Math.floor((now.getTime() - new Date(o.etapeDepuis).getTime()) / 86400000), seuil: sla[o.etape] });
+    const enDepassement = (o: any, sla: Record<string, number>) =>
+      (now.getTime() - new Date(o.etapeDepuis).getTime()) / 86400000 >= (sla[o.etape] ?? Infinity);
+    const avant = actifs.filter((o: any) => enDepassement(o, actuels));
+    const apres = actifs.filter((o: any) => enDepassement(o, simules));
+    const idsAvant = new Set(avant.map((o: any) => o.id));
+    const idsApres = new Set(apres.map((o: any) => o.id));
+    return {
+      override: { etape, valeurActuelle: actuels[etape], valeurSimulee: dto.override.jours },
+      ecriture: false,                                                    // R70/R94 — aucune écriture
+      totaux: { avant: avant.length, apres: apres.length,
+        nouveaux: apres.filter((o: any) => !idsAvant.has(o.id)).length,
+        disparus: avant.filter((o: any) => !idsApres.has(o.id)).length },
+      nouveaux: apres.filter((o: any) => !idsAvant.has(o.id)).map((o: any) => nomme(o, simules)),
+      disparus: avant.filter((o: any) => !idsApres.has(o.id)).map((o: any) => nomme(o, actuels)),
+    };
   }
 
   // ── R120 : le funnel se restitue des ÉVÉNEMENTS (R48) ──

@@ -192,3 +192,46 @@ le schéma est versionné par migrations Prisma** — `db push` ne sert plus qu'
   baseline, e2e 6/6, recette RLS `clients` → 0 ligne sans GUC.
 - **Base existante déjà poussée par `db push`** (sans `_prisma_migrations`) : marquer la baseline
   appliquée une fois — `prisma migrate resolve --applied 0_baseline_lot42` — puis basculer sur `deploy`.
+
+## 8. Migrations expand/contract (dette §8 du canon du dégel, 2026-07-28)
+
+Toute migration qui TOUCHE une colonne/table encore lue par le code en production suit
+TROIS temps — jamais un seul déploiement destructif :
+
+1. **EXPAND** — ajouter sans retirer : nouvelle colonne/table nullable ou avec défaut,
+   triggers/RLS posés par `prisma:post` ; l'ancien chemin de lecture/écriture reste intact.
+   Déployer le schéma AVANT le code qui s'en sert (le code N-1 doit tourner sur le schéma N).
+2. **MIGRATE** — le code écrit dans les DEUX formes (double-écriture) le temps d'une
+   release ; un script de rattrapage IDEMPOTENT recopie l'existant (par lots, rejouable —
+   jamais un UPDATE massif sans borne). La preuve : un count de contrôle avant/après,
+   consigné dans le commit du script.
+3. **CONTRACT** — une release PLUS TARD seulement : retirer l'ancien chemin du code, puis
+   une migration qui supprime l'ancienne colonne/table. Interdits absolus : contracter dans
+   la même release que l'expand ; supprimer une colonne d'une table append-only auditée
+   (audit_immutable — la contraction d'un journal n'existe pas, R48/R271).
+
+Cas particuliers O-Live :
+- **Tables à trigger `audit_immutable()`** (domain_events, audit_log, transactions,
+  builder_versions…) : JAMAIS d'UPDATE de rattrapage — la migration de forme passe par de
+  NOUVEAUX événements (rejeu), l'histoire ne se réécrit pas.
+- **`enum Role` et listes fermées** : l'ajout d'une valeur est un expand (une migration) ;
+  le RETRAIT exige d'abord la preuve qu'aucune ligne ne la porte (requête consignée), et
+  reste interdit pour les rôles historiques d'un journal.
+- **Renommage** : traité comme expand (nouvelle) + migrate (copie) + contract (retrait) —
+  `@map` Prisma peut différer la contraction physique (précédent : Document.nom → name).
+- Chaque temps passe la chaîne §2 COMPLÈTE (rules, e2e, RLS) avant le suivant.
+
+## 9. Seed tenant démo GWB (dette §11, 2026-07-28)
+
+`OLIVE_SEED_DEMO=1 npm run seed:demo` (apps/api) — sème le tenant démo `GWB Demo`
+(id fixe `9b1de001-0000-4000-8000-00000000006b`) par les VRAIES routes HTTP : 6 rôles,
+domaine de login, 3 clients, 1 dossier KYC, client CPSI + signal (score lisible avec
+jauge R250), type CoC + dossier, incident OpRisk. Preuve comptée en sortie (SEED GWB OK).
+- GARDES : sans `OLIVE_SEED_DEMO=1` → refus ; tenant déjà présent → refus (pas de double
+  semis). JAMAIS sur une base de production (R167 — le seed est un outil de démo/recette).
+- Deux actes hors routes, assumés : l'INSERT du tenant et le jeton ADMIN d'amorçage
+  (création de tenant et premier ADMIN = actes d'ops, pas de route par construction).
+- PURGE (base de démo/recette UNIQUEMENT) : les journaux sont append-only (triggers R48) —
+  la purge passe par `BEGIN; SET LOCAL session_replication_role = replica; DELETE … ;
+  COMMIT;` en superuser/owner, tables enfants d'abord (boucle pg_tables sur tenant_id,
+  puis tenants). Cette manœuvre est INTERDITE en production : on ne purge pas un journal.

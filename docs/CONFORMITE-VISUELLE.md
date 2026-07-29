@@ -1,0 +1,142 @@
+# CONFORMITÉ VISUELLE — grille sur pièce (canon triage final, séquence 6 — 2026-07-28)
+
+Méthode ratifiée : chaque écran DÉJÀ livré est passé contre la maquette `demo/olive-demo.html`
+sur CINQ colonnes. **Hiérarchie : canon > maquette > goût.** Chaque écart est UNE ligne ;
+**AUCUNE correction sans ligne de grille** (les corrections appliquées sont marquées `corrigé`,
+les autres `consigné` — jamais une retouche silencieuse). La maquette reste une RÉFÉRENCE
+visuelle : aucune donnée de maquette n'est migrée (interdit du canon, tenu partout).
+
+Les cinq colonnes :
+1. **Nav & libellés** — intitulés d'onglets/titres vs le dictionnaire I18N de la maquette
+   (4 langues : FR source + EN/DE/IT, 52 clés).
+2. **Structure** — blocs, ordre, hiérarchie de l'écran.
+3. **Tokens** — palette olive (`theme/tokens.ts` : olive900/700/600, gold #C9A227,
+   cream #FAFBF7, ink #1A2410 — le cœur de palette de la maquette) ; statuts sémantiques
+   (ok/warn/danger), jamais décoratifs.
+4. **États** — projection par rôle (HO-04), licence servie (LC-01/HO-02), bandeau démo,
+   refus backend rendus tels quels (FE-04).
+5. **Données** — tout est SERVI (API/registre) ; jamais un chiffre calculé au front,
+   jamais une donnée de maquette.
+
+## Écarts GLOBAUX (shell)
+
+| # | Colonne | Écart | Verdict |
+|---|---------|-------|---------|
+| G1 | Nav | La maquette groupe la nav en sections latérales (Clients & Relations, Front & Croissance, Compliance & Risque, Wealth & Marchés, Data & Intelligence, Configuration) ; le shell React est un tab-switcher plat de démonstration. | consigné — le shell définitif (sidebar groupée + portail de login R296) est un chantier d'assemblage, pas un écran ; gelé jusqu'à canon shell |
+| G2 | Nav/libellés | Dictionnaire I18N 4 langues (FR/EN/DE/IT) dans la maquette ; le front React est FR uniquement. | **levé pour la NAV** (ratification 2026-07-28) : dictionnaire maquette recopié VERBATIM (lib/i18n.ts), sélecteur FR/EN/DE/IT persisté, bascule en UN point (le helper tab) SANS réécriture — la promesse tenue ; « écart par clé » : les libellés hors dictionnaire (écrans canon post-maquette) restent FR jusqu'à l'ajout de leur clé ; les CONTENUS d'écrans restent FR (chantier continu, écart par clé) |
+| G3 | Tokens | Cœur de palette IDENTIQUE (#5A7D3A, #C9A227, #FAFBF7, #1A2410) ; la maquette ajoute des accents PAR MODULE (terracotta #8C4A3C compliance, violet #7A5AF8 data/IA) absents des tokens. | consigné — accents par module = évolution de `tokens.ts` (une clé par famille), pas une retouche écran par écran |
+| G4 | États | La maquette affiche un sélecteur de rôle/persona global ; le React porte `OLIVE_SESSION` (jeton) et rend les REFUS par écran. | conforme au canon (R89 : le rôle vient du jeton, jamais d'un sélecteur) — la maquette cède |
+
+## Grille PAR ÉCRAN (12 écrans livrés)
+
+| Écran | 1. Nav & libellés | 2. Structure | 3. Tokens | 4. États | 5. Données |
+|-------|-------------------|--------------|-----------|----------|------------|
+| Home | « Accueil » = clé I18N ✓ | Tuiles par rôle comme la maquette ✓ | tokens.ts ✓ | HO-04 rôle + HO-02 licence + bandeau démo ✓ | servies (compteurs backend) ✓ |
+| Command Center | « Command Center » — la maquette dit « Dashboard Exécutif » : le CANON R289 nomme Command Center → canon > maquette, consigné | 9 groupes de tuiles, drill vers écrans ✓ | ✓ (alerte = warn/danger sémantiques) | DIR-only rendu, LC-01, seuils `command_seuils` ✓ | agrégats servis (DC-01..07) ✓ |
+| Compliance Center | « Compliance Center » = clé I18N ✓ | MÊME patron Projection (DC-09) ✓ | ✓ | CO/CO_SR/DIR ✓ | ✓ |
+| AML Investigation Workspace | onglet React disait « AML Workspace » — la maquette et le canon P1 disent « AML Investigation » → **corrigé** (ligne AW-L1) | 4 onglets internes ✓ | ✓ | rôle CO + bandeau ✓ | AW-01..03 servis ✓ |
+| CPSI · Barèmes (cpsiparam) | ✓ (« CPSI · Barèmes », hors dictionnaire maquette — écran canon R250+) | historique + application à date ✓ | ✓ | ADMIN/CO, refus rendus ✓ | journal servi (PA-01..06) ✓ |
+| CPSI · Guide | ✓ | règles servies ✓ | ✓ | lecture seule ✓ | GET /v1/cpsi/rules ✓ |
+| Bacs à sable (sandboxes) | ✓ | projection backend, AUCUN « Appliquer » ✓ (BS-02/06) | ✓ | indisponible SANS repli ✓ | dry-run servi ✓ |
+| Sections & droits (sdkyc) | ✓ | matrice sections×rôles ✓ | ✓ | ADMIN ✓ | SD-01..05 servis ✓ |
+| Offboarding | « Offboarding » = clé I18N ✓ | workflow + obstacles + bannières R267 ✓ | ✓ | cloisonnement R270 rendu ✓ | ✓ |
+| Olivia (+ Runs) | « Olivia (AI Core) » en maquette, onglets « Olivia » / « Olivia · Runs » — consigné (le suffixe maquette est marketing, le canon B.x ne nomme pas) | badge sourcé, proposer verrouillé sans source ✓ | ✓ | interrupteur v2 servi (SW-18) ✓ | runs/journal servis ✓ |
+| IAM (paramnav, iamguide, ssoparam) | « Utilisateurs & rôles » / « Guide IAM » / « SSO / Fédération » — la maquette dit « Administration » (groupe) : libellés React plus précis, consigné | liste + garde dernier ADMIN ✓ | ✓ | IM-01..05 : refus rendus tels quels ✓ | ✓ |
+| Audit & transport (+ Audit IT) | hors dictionnaire maquette (écran canon R284) ✓ | journaux + santé transport + rejeu ✓ | ✓ | SO/ADMIN/DIR selon route ✓ | SO-01..08 servis ✓ |
+| Transactions Risk Monitoring (txrisk) | « Transactions Risk Monitoring » = clé I18N ✓ | flux + live SSE + tendances + drill AML ✓ | ✓ | refus gracieux sans port (R167) rendu ✓ | journal/tendances servis, agrégats poussés AU moteur — zéro verdict front ✓ |
+| Multi-devise & FX (fx) | « Multi-devise & FX » = clé I18N ✓ | table d'exposition par devise ✓ | ✓ (franchissement = danger sémantique) | mention « jamais un taux inventé » rendue (R167) ✓ | exposition servie, seuil notifié SERVEUR — zéro calcul front ✓ |
+| Analyseur SWIFT/SEPA (swiftlab) | « Analyseur SWIFT/SEPA » = clé I18N ✓ | textarea → extraction + historique + quarantaine ✓ | ✓ (quarantaine = warn sémantique) | motifs de quarantaine rendus TELS QUELS (FE-04) ✓ | extraction SERVIE, champs sensibles surlignés — zéro parsing front ✓ |
+| Custody & TA (custodyta) | hors dictionnaire maquette (écran canon dégel V2) — consigné | positions port + registre rejoué à date + écarts avec voie ✓ | ✓ (négatif = danger) | refus gracieux sans port rendu (R167) ✓ | positions/registre/rapprochement SERVIS — zéro calcul front ✓ |
+| Workflow Builder (builder) | « Workflow Builder » = clé I18N ✓ | brouillon → simuler → publier, brouillons/versions ✓ | ✓ (refus = danger) | refus R306 rendus EN LISTE tels quels (FE-04) ✓ | rapport d'impact SERVI, cohérence backend — zéro précalcul front ✓ |
+| Veille réglementaire (veille) | « Veille réglementaire » = clé I18N ✓ | sources → items → qualification, proposition IA distincte (violet data/IA maquette) ✓ | ✓ | port éteint AFFICHÉ (R167), NON_TRAITE tant que l'humain n'a pas décidé ✓ | items/propositions SERVIS, citations Rn validées serveur ✓ |
+| Legal — Contrats (legalreg) | « Legal — Contrats » = clé I18N ✓ | échéances + ouverture par référence (boucle R293) ✓ | ✓ (retard = danger, préavis = warn) | statuts CALCULÉS rendus, refus R312 tel quel ✓ | échéances/pièces SERVIES, version résolue à date — zéro calcul front ✓ |
+| BI — Reporting sur mesure (bi) | « BI — Reporting sur mesure » = clé I18N ✓ | annuaire → dimensions cochées → table ✓ | ✓ | refus R314 rendus tels quels ✓ | annuaire/résultats SERVIS, scope BACKEND (mention rendue) — zéro agrégation front ✓ |
+| Octopulse OpRisk (oprisk) | « Octopulse OpRisk » = clé I18N ✓ | déclaration → incidents → heatmap → plan d'action ✓ | ✓ (sévérité ≥ 4 = danger sémantique) | refus R321 (classification) rendu tel quel (FE-04) ✓ | incidents/heatmap/actions SERVIS — la heatmap est RENDUE, jamais peinte ni calculée au front (OP-03) ✓ |
+| Mobile Banking (mobileadmin) | « Mobile Banking » = clé I18N (la maquette nomme le module client ; l'écran livré est la FACE BANQUE — l'app cliente est un rendu, consigné) | activation RM → code hors bande → marquage partagé → messagerie/CoC ✓ | ✓ | refus rendus tels quels (FE-04), 404 neutre du canal inactif affiché ✓ | activation/messages SERVIS ; code hors bande affiché UNE fois, jamais re-servi ; mention « rien par défaut » (R318) ✓ |
+
+## Lignes de LIBELLÉS nav (corrections appliquées — chacune EST sa ligne)
+
+| Ligne | Onglet | Avant | Après (clé I18N maquette) | Verdict |
+|-------|--------|-------|---------------------------|---------|
+| AW-L1 | amlws | AML Workspace | AML Investigation | corrigé (canon P1 + maquette concordent) |
+| NV-L2 | dashboard | Dashboard | Dashboard central | corrigé |
+| NV-L3 | nba | Next Best Action | Prochaines actions | corrigé (le FR est la clé du dictionnaire) |
+| NV-L4 | corroboration | Corroboration | Corroboration KYC | corrigé |
+| NV-L5 | crossborder | Cross-border | Cross-Border | corrigé (casse du dictionnaire) |
+| NV-L6 | ged | Pièces (GED) | GED — Documents | consigné — « Pièces (GED) » distingue l'écran pièces de l'écran coffre (gedcoffre) que la maquette ne sépare pas ; fusionner serait un choix d'écran, pas de libellé |
+
+## PASSE DE CLÔTURE — les écrans restants (§4.a du canon vague de clôture, 2026-07-29)
+
+Tous les onglets livrés du routeur (72) passent la grille. Verdict standard quand les cinq
+colonnes sont conformes : **libellé = clé I18N ✓ (dictionnaire tour 2, R326) · structure
+fidèle ✓ · tokens.ts ✓ · états par rôle + refus rendus tels quels (FE-04) ✓ · données
+SERVIES, zéro calcul front ✓**. Les écarts STRUCTURELS sont déjà couverts par les globaux
+G1–G4 (shell/sidebar, i18n, accents par module, sélecteur de rôle). Aucun conflit
+canon↔maquette NOUVEAU nécessitant l'arbitrage d'Ali n'est apparu dans cette passe.
+
+| Écran | 1. Nav & libellés | 2. Structure | 3. Tokens | 4. États | 5. Données |
+|-------|-------------------|--------------|-----------|----------|------------|
+| Clients (clients) | « Clients » = clé I18N ✓ | liste + curseur + détail ✓ | ✓ | RM/ARM scopé, refus rendus ✓ | servies (curseur backend) ✓ |
+| Onboarding (onboarding) | ✓ | pipeline PROSPECT→OUVERT + funnel ✓ | ✓ | RM, transitions gardées ✓ | servies ✓ |
+| Pré-prospection (prospection) | « Pré-prospection » ✓ | prospects R117 filtrés (verdict 0b.1) ✓ | ✓ | RM ✓ | servies ✓ |
+| KYC (kyc) | ✓ | sections × rôles, visas, validate ✓ | ✓ | multi-rôles, refus KYC_INCOMPLETE tel quel ✓ | gabarit servi (moteur règles) ✓ |
+| Rejeu KYC à date (rejeu) | ✓ | lecture à asOf (R48) ✓ | ✓ | lecture seule en vue historique ✓ | /a-date servi ✓ |
+| Corroboration KYC (corroboration) | « Corroboration KYC » ✓ | sources croisées ✓ | ✓ | CO ✓ | servies ✓ |
+| Personnes / UBO (ubo) | ✓ | graphe personnes liées ✓ | ✓ | CO ✓ | servies ✓ |
+| Account Review (review) | ✓ | échéances + anticipation R273 ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| Chgt circonstances (coc) | ✓ | ouverture CC-01, matérialité figée ✓ | ✓ | RM/CO, refus R7 tel quel ✓ | servies ✓ |
+| Types de CoC (cocparam) | ✓ | registre versionné + libellés multilingues (LN-04) ✓ | ✓ | CO_SR/ADMIN ✓ | servies ✓ |
+| Screening (screening) | ✓ | hits qualifiés ✓ | ✓ | CO ✓ | servies ✓ |
+| Screening avancé (screeningadv) | ✓ | listes + scénarios ✓ | ✓ | CO ✓ | servies ✓ |
+| File d'alertes (alertes) | « File d'alertes » ✓ | file scorée + drill ✓ | ✓ (danger sémantique) | CO ✓ | servies ✓ |
+| Dossiers de risque (dossiers) | ✓ | riskcases + transitions ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| AML Investigation (amlws) | corrigé AW-L1 (déjà en grille principale) ✓ | 4 onglets ✓ | ✓ | CO ✓ | servies ✓ |
+| Règles AML (aml) | « Règles AML » ✓ | règles moteur en clair ✓ | ✓ | lecture ✓ | servies ✓ |
+| Référentiel AML (amlref) | ✓ | scénarios & seuils ✓ | ✓ | CO ✓ | servies ✓ |
+| Bac à sable AML (sbaml) | ✓ | dry-run seuil (R94, 0 écriture) ✓ | ✓ | indisponible sans repli ✓ | dry-run servi ✓ |
+| Bac à sable Onboarding (sbonb) | ✓ | dry-run SLA (0 écriture) ✓ | ✓ | ✓ | dry-run servi ✓ |
+| Reporting MROS (mros) | ✓ | déclarations + escalade ✓ | ✓ | MLRO/CO_SR ✓ | servies ✓ |
+| Transferts & ordres (transactions) | ✓ | flux + portes ✓ | ✓ | RM/CO ✓ | servies ✓ |
+| Settlement (settlement) | ✓ | règlement/rapprochement ✓ | ✓ | ✓ | servies ✓ |
+| Cross-Border (crossborder) | corrigé NV-L5 (casse) ✓ | position pays + mémo legal (boucle R293) ✓ | ✓ | dérogation visée DIR ✓ | servies ✓ |
+| Pièces (GED) (ged) | consigné NV-L6 ✓ | pièces + statuts R109 ✓ | ✓ | CO ✓ | servies ✓ |
+| GED / coffre (gedcoffre) | ✓ | coffre + rétention R115 ✓ | ✓ | ✓ | servies ✓ |
+| Registre LBA (registrelba) | « Registre LBA » ✓ | registre art. 7 ✓ | ✓ | CO_SR ✓ | servies ✓ |
+| CRM Banque (crm) | ✓ | relations + pipeline ✓ | ✓ | RM ✓ | servies ✓ |
+| Contact Reports (contactreports) | ✓ | rapports de contact ✓ | ✓ | RM ✓ | servies ✓ |
+| Prochaines actions (nba) | corrigé NV-L3 ✓ | suggestions décidables (R243) ✓ | ✓ | humain décide, TTL ✓ | servies ✓ |
+| Tâches (tasks) | ✓ | file par assignee (R241) ✓ | ✓ | scopé ✓ | servies ✓ |
+| Workflow (workflow) | ✓ | défs + versions ✓ | ✓ | ✓ | servies ✓ |
+| Workflow Instances (wfi) | ✓ | instances en cours ✓ | ✓ | ✓ | servies ✓ |
+| Formations (formations) | ✓ | MOD-43 FO-01..08 ✓ | ✓ | ✓ | servies ✓ |
+| Business Trip (trips) | ✓ | MOD-75 BT-01..10, signaux R224 ✓ | ✓ | visa R13 ✓ | servies ✓ |
+| Finance Islamique (islamic) | ✓ | couche Shariah IS-01..15 ✓ | ✓ | ✓ | servies ✓ |
+| PMS (pms) | ✓ | mandats + adéquation + breaches ✓ | ✓ | RM/BRM ✓ | servies ✓ |
+| CPSI · Profil (cpsiProfil) | ✓ | score perpétuel + drivers (R67) + jauge R250 ✓ | ✓ | CO ✓ | servies (moteur) ✓ |
+| CPSI · Segmentation (cpsiSeg) | ✓ | segments déterministes (R65) ✓ | ✓ | CO ✓ | servies ✓ |
+| CPSI · Risk cases (cpsiCases) | ✓ | cases animés workflow (R83) ✓ | ✓ | CO/CO_SR ✓ | servies ✓ |
+| Sections & droits — AR (sdar) | ✓ | profils AR versionnés (R282/R283) ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Sections & droits — GAR (sdgar) | ✓ | profils GAR ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Registre paramètres (paramfields) | ✓ | registre R-Q gouverné ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Utilisateurs & rôles (paramnav) | consigné (libellé précis) ✓ | IAM + garde dernier ADMIN + refus EDITOR (R319) ✓ | ✓ | ADMIN, refus rendus ✓ | servies ✓ |
+| Guide IAM (iamguide) | ✓ | guide ancré ✓ | ✓ | lecture ✓ | servies ✓ |
+| SSO / Fédération (ssoparam) | ✓ | OIDC déclaré (jamais de secret, IM-01) + bascule R13 ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Paramétrage (parametrage) | ✓ | registre ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Config & Go-live (golive) | ✓ | gouvernance registre (sbowner : mapping consigné) ✓ | ✓ | ADMIN ✓ | servies ✓ |
+| Intégrations (integrations) | ✓ | ports cœur = adaptateurs d'un contrat (PAS un fallback ordonné — verdict §4.b) ✓ | ✓ | ✓ | servies ✓ |
+| Ports (ports) | ✓ | santé des ports (R167) ✓ | ✓ | ✓ | servies ✓ |
+| Dashboard central (dashboard) | corrigé NV-L2 ✓ | agrégats servis ✓ | ✓ | DIR ✓ | servies ✓ |
+
+**Bilan §4.a : 72/72 écrans livrés passés (100 %), zéro ligne « non passé ».** Les seuls
+écarts restants sont les GLOBAUX G1–G4 (chantiers structurels : shell/sidebar, i18n en
+cliquet, accents par module) — consignés, non bloquants, aucun conflit canon↔maquette
+nouveau pour arbitrage.
+
+## Ce que la grille NE couvre PAS (périmètre)
+
+- Dégel PO 2026-07-28 : les domaines ex-catégorie C ont désormais leur canon
+  (spec/canon-degel-complet-vagues-1-9.md) — chaque écran livré par vague ajoute SA ligne
+  ici (SWIFT/SEPA, Multi-devise & FX livrés en vague 1 ; Legal, BI, Mobile, Octopulse
+  OpRisk suivront leur vague). Un écran encore sans livraison n'a pas de ligne.
+- La passe est REJOUABLE : tout nouvel écran livré ajoute SA ligne aux deux tableaux ;
+  le template PR (.github/pull_request_template.md) en fait un critère d'acceptation.

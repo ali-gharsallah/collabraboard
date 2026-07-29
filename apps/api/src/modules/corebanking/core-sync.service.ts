@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { Tx } from "../../common/tx";
 
 /**
  * Le core banking est un port — R167→R169 (SY-01..05). Écrit APRÈS l'amendement, APRÈS les
@@ -28,13 +29,13 @@ export class CoreSyncService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { core?: CoreBankingPort } = {}) {}
 
-  private emit(tx: any, tenantId: string, type: string, aggregateId: string, payload: any) {
+  private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── R167/R168/R169 : importer un lot ──
   async importerLot(ctx: Ctx, type: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!this.ports.core)
         throw new BadRequestException("R167 : aucun connecteur core banking configuré — pas de données simulées");
       const port = this.ports.core;
@@ -74,7 +75,7 @@ export class CoreSyncService {
 
   // ── R169 : résoudre — l'acte humain qui enrichit le mapping ──
   async resoudreQuarantaine(ctx: Ctx, quarantaineId: string, clientId: string) {
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx: Tx) => {
       if (!clientId || !clientId.trim())
         throw new BadRequestException("R169 : la résolution nomme le clientId — jamais de devinette");
       const q = await tx.coreQuarantaine.findFirst({ where: { id: quarantaineId, tenantId: ctx.tenantId } });
@@ -86,10 +87,10 @@ export class CoreSyncService {
       const t = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
       const settings = (t.settings as any) ?? {};
       settings.coreMapping = [...(settings.coreMapping ?? []),
-        { compteCore: q.ligne.compteCore, clientId: clientId.trim(), depuisLe: at }];   // daté (R29)
+        { compteCore: (q.ligne as any).compteCore, clientId: clientId.trim(), depuisLe: at }]; // daté (R29)
       await tx.tenant.update({ where: { id: t.id }, data: { settings } });
       await this.emit(tx, ctx.tenantId, "core.sync.resolution", q.id,
-        { compteCore: q.ligne.compteCore ?? null, clientId: clientId.trim(), par: ctx.userId });
+        { compteCore: (q.ligne as any).compteCore ?? null, clientId: clientId.trim(), par: ctx.userId });
       await this.audit.log(ctx.tenantId, ctx.userId, "CORE_RESOLVE", `${q.id}:${clientId.trim()}`);
     });
   }

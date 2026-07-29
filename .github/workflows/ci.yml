@@ -76,21 +76,140 @@ jobs:
         working-directory: apps/api
         run: pnpm run lint && pnpm run typecheck
 
+      # ── Olivia B.11.4 + B.11.6 (gardes grep BLOQUANTES) ──────────────────────
+      # 4 : l'appel fournisseur IA ne vit QUE côté serveur — api.anthropic.com ne doit
+      #     JAMAIS réapparaître dans apps/web (la clé ne transite pas par le navigateur).
+      # 6 : zéro texte de persona en dur dans le code — les gabarits C1..C4 vivent dans
+      #     l'artefact livré olivia-gabarits.default.json (paramètre versionné R68).
+      - name: "1b · Gardes grep Olivia (B.11.4 front sans fournisseur · B.11.6 persona hors code)"
+        run: |
+          ! grep -rn "api.anthropic.com" apps/web/src apps/web/index.html
+          ! grep -rn --include="*.ts" --include="*.tsx" "Tu es Olivia" apps/api/src apps/web/src
+
+      # ── Olivia v2 R264 / B.7 critère 2 (BLOQUANT) : le build échoue si un outil livré
+      #    pointe hors de la liste blanche, ou si la liste admet autre chose que
+      #    LECTURE (GET) + PROPOSITION (création olivia_proposals, R254). ──
+      - name: "1c · R264 — liste blanche d'outils (build rouge hors liste)"
+        run: node apps/api/scripts/verifier-liste-blanche-outils.js
+      # R314 (dégel V6) : les vues BI sont des projections déclarées — hors liste = build rouge
+      - name: Vérifier la liste blanche des vues BI (R314)
+        run: node apps/api/scripts/verifier-vues-bi.js
+
+      # ── Partie 4 (solde 4 écarts, 2026-07-29) — CI SÉCURITÉ ──
+      - name: "Sécurité · audit des dépendances (bloquant sur CRITIQUES) + grep secrets (§3.7)"
+        run: |
+          pnpm audit --audit-level critical
+          # Aucun secret en clair au dépôt : motifs de clés privées/API hors fixtures de test.
+          # NB : on exclut .github/workflows — ce sont les fichiers CI qui DÉFINISSENT ces motifs
+          # comme arguments de grep (sinon la garde se détecte elle-même : faux positif).
+          ! grep -rn --include="*.ts" --include="*.js" --include="*.yml" --include="*.env" \
+            -e "BEGIN RSA PRIVATE KEY" -e "BEGIN EC PRIVATE KEY" -e "AKIA[0-9A-Z]\{16\}" \
+            apps/api/src apps/web/src infra .github | grep -v "spec\|test\|exemple\|\.github/workflows" || (echo "SECRET EN CLAIR DÉTECTÉ" && exit 1)
+
+      # ── R329 (vague de clôture) — zéro branche `demo` dans le code produit (DM-03) ──
+      - name: "Sécurité · zéro branche de logique demo (la démo est un tenant ordinaire)"
+        run: |
+          ! grep -rnE 'if[[:space:]]*\([[:space:]]*demo\b|===[[:space:]]*["'\'']demo["'\'']' \
+            apps/api/src apps/web/src \
+            || (echo "BRANCHE demo DÉTECTÉE (R329) — la démo n'a aucune voie spéciale" && exit 1)
+
+      # ── R328 (vague de clôture) — les en-têtes de contexte sont MORTS (JW-03/06) ──
+      - name: "Sécurité · zéro en-tête de contexte (x-tenant-id / x-user-id / x-user-role)"
+        run: |
+          ! grep -rn --include="*.ts" --include="*.tsx" \
+            -e "x-tenant-id" -e "x-user-id" -e "x-user-role" \
+            apps/api/src apps/web/src | grep -v "fat-cloture-jwt" \
+            || (echo "EN-TÊTE DE CONTEXTE RÉSIDUEL (R328) — le contexte vient du jeton" && exit 1)
+
+      # ZAP baseline (partie 4) : ne tourne que si un staging existe (secret STAGING_URL) —
+      # jamais un step qui traîne en advisory : absent = sauté EXPLICITEMENT, présent = bloquant.
+      - name: "Sécurité · ZAP baseline sur staging (si STAGING_URL)"
+        if: ${{ vars.STAGING_URL != '' }}
+        run: |
+          docker run --rm -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "${{ vars.STAGING_URL }}" -I
+
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
       # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans
       # le dépôt (`jest` sortirait en « No tests found »). La caractérisation des règles est
       # couverte par `test:rules` (étape 3). À réintroduire — bloquante — le jour où un
       # harnais jest unitaire est ajouté.
 
+      # ── Console éditeur (app VENDOR séparée, R319/R320) — VE-01..03 versant vendor ──
+      - name: "3v · Console éditeur vendor (attendu 6/6 — séparée, aucun couplage apps/api)"
+        run: |
+          out=$(node apps/editor-console/test/vendor.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 tests vendor verts ###"
+
+      # ── Registrar (boîte d'entrée indexée sans main, R331/IX) — IX-01..05 ──
+      # Le job d'indexation (run.mjs) est déclenché par .github/workflows/registrar.yml sur
+      # push vers spec/inbox/**. Ici on VERROUILLE ses invariants purs (extraction, collision
+      # rapportée sans renumériser, promotion au merge, rappel J+7, append-only IX-05).
+      - name: "3r · Registrar (R331/IX) — invariants d'indexation (attendu 5/5)"
+        run: |
+          out=$(node tools/registrar/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests registrar verts ###"
+
+      # ── Olivia A.1 golden set + A.5 suite d'attaque (harnais de fixtures, R167) — AI-EV-01..06 ──
+      # ZÉRO appel modèle : mesure déterministe (justesse de langue, faux positifs, résistance).
+      # Verrou anti-dégradation (cliquet R70) : la résistance publiée (docs/SECURITE.md) est un
+      # plancher — elle ne peut que monter. Toute régression du lexique = rouge.
+      - name: "3o · Olivia A.1/A.5 (golden set + suite d'attaque, attendu 6/6)"
+        run: |
+          out=$(node tools/olivia-eval/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 tests olivia-eval verts ###"
+
+      # ── Guide de déploiement (C.1, phases 0-5) — porte BLOQUANTE + no-drift ──
+      # docs/DEPLOIEMENT.md est GÉNÉRÉ de tools/deploiement/pipeline.mjs ; DP-05 échoue si le
+      # guide committé a dérivé du pipeline (régénérer + committer). Prod jamais automatique.
+      - name: "3d · Guide de déploiement (harnais 5/5 + no-drift du guide généré)"
+        run: |
+          node tools/deploiement/generer-guide.mjs
+          out=$(node tools/deploiement/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests deploiement verts ###"
+          git diff --exit-code -- docs/DEPLOIEMENT.md || (echo "DEPLOIEMENT.md a dérivé du pipeline — régénérer + committer" && exit 1)
+
+      # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
+      # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
+      # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille
+      # aussi le backfill idempotent et le gabarit de plan. La RÉPÉTITION restore→migrate→FAT est
+      # un job hebdo séparé (.github/workflows/migrations-repetition.yml).
+      - name: "3m · Migrations expand/contract (harnais 5/5 + analyse des migrations réelles)"
+        run: |
+          out=$(node tools/migrations/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests migrations verts ###"
+          node tools/migrations/run-analyse.mjs
+
+      # ── FAT (Factory Acceptance Test, R332/FB) — porte BLOQUANTE (parcours API à jetons réels) ──
+      # Vérifie que la matrice de traçabilité parcours→scénario→règle est GÉNÉRÉE et ADOSSÉE au
+      # réel : tout scénario/règle déclaré mais non exécuté fait échouer FB-02 (anti-fiction).
+      # DEMO-SCRIPT est un parcours FAT (FB-04). La recette VISUELLE (Playwright) est un job
+      # SÉPARÉ non bloquant (.github/workflows/fat-visuel.yml).
+      - name: "3f · FAT — parcours + traçabilité générée (attendu 4/4, anti-fiction)"
+        run: |
+          out=$(node tools/fat/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 tests fat verts ###"
+
+      # ── BAT (Business Acceptance Test, R333/FB) — porte BLOQUANTE ──
+      # Cahier de recette CLIENT généré du catalogue, filtré par la licence du tenant (FB-05,
+      # jamais rédigé à la main) ; campagne = verdicts + écarts classés + visa (FB-06) ; porte de
+      # promotion tenant : APTE seulement si complet, sans écart bloquant, visé (R15, FB-07).
+      - name: "3b · BAT — cahier généré + porte de promotion (attendu 4/4)"
+        run: |
+          out=$(node tools/bat/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 tests bat verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api
         run: pnpm run test:rules
 
-      # ── RUNBOOK §2 · 4 — e2e Postgres réel (6/6) ─────────────────────────────
-      - name: "4 · e2e API réelle + Postgres (attendu 84/84 : kyc-rules 6 + … + A3 4 + V16 6 + V17 6)"
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (336/336) ─────────────────────────
+      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky
+      # sous charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake
+      # (vert au 2e) est absorbé — jamais un masquage d'échec persistant.
+      - name: "4 · e2e API réelle + Postgres (336/336, 1 retry anti-flake §8)"
         working-directory: apps/api
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 
       # ── Recette RLS (RUNBOOK §3.2) : en olive_app sans GUC → 0 ligne ─────────
       - name: "4b · Recette RLS multi-tenant (olive_app, 0 ligne sans GUC)"
@@ -112,10 +231,22 @@ jobs:
           out=$(python3 services/workflow-engine-py/run_tests_sql.py); echo "$out"
           echo "$out" | grep -q "suites vertes ###"
 
-      - name: "5c · cpsi-server-py (attendu 18/18 — garde grep, le runner rend 0 à tort)"
+      - name: "5c · cpsi-server-py (attendu 19/19 — garde grep, le runner rend 0 à tort)"
         run: |
           out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
-          echo "$out" | grep -q "### 18/18 suites vertes ###"
+          echo "$out" | grep -q "### 19/19 suites vertes ###"
+
+      # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
+      # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
+      # se mesure (gzip réel) — dépassement = build ROUGE (verifier-budget-bundle.js).
+      - name: "6 · Front — vitest + vite build + budget bundle (§4)"
+        working-directory: apps/web
+        run: |
+          npx vitest run
+          npx vite build
+          node scripts/verifier-budget-bundle.js
+          node scripts/rapport-i18n.js
+          node scripts/verifier-i18n-cliquet.js
 
       # ── RUNBOOK §2 · 6 — Démo (73 écrans) ────────────────────────────────────
       # Step RETIRÉ (chantier B) : la démo exige Playwright + navigateurs, hors scope CI

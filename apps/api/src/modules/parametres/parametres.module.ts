@@ -6,5 +6,6 @@ import { AuditService } from "../../common/audit.service";
 
 @Module({ controllers: [ParametresController],
   providers: [
-    { provide: ParametresService, useFactory: (p: PrismaService, a: AuditService) => new ParametresService(p, a), inject: [PrismaService, AuditService] }] })
+    { provide: ParametresService, useFactory: (p: PrismaService, a: AuditService) => new ParametresService(p, a), inject: [PrismaService, AuditService] }],
+  exports: [ParametresService] })   // R290 : la bascule SSO écrit sso_mode PAR le registre
 export class ParametresModule {}

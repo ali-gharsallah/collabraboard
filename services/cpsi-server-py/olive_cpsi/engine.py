@@ -31,8 +31,16 @@ POIDS_STATIQUE = {"pays_risque": 6.0, "structure_risque": 5.0,
 class CpsiError(Exception): pass
 
 class OliveCpsiEngine:
-    def __init__(self, tenant_config=None):
+    # `rejeu_leger` (optimisation RATIFIÉE PO 2026-07-28, jauge R250 à l'appui — 10k événements
+    # = 159 s de rejeu quadratique) : en mode léger, les RECALCULS INTERMÉDIAIRES d'hydratation
+    # (score_recalcule/bande_franchie/tâches à CHAQUE ingestion) sont sautés — ils n'alimentent
+    # que le journal interne `events` et `taches`, qu'AUCUNE requête du pont ne lit ; toute
+    # lecture (score, signaux, segmentation…) reste une fonction PURE de (statique, signaux ≤
+    # as_of, config) — résultats BYTE-IDENTIQUES. Défaut False : le contrat direct-Python
+    # (PC-01..06, pytest sur events/taches) est INCHANGÉ.
+    def __init__(self, tenant_config=None, rejeu_leger=False):
         cfg = tenant_config or {}
+        self._rejeu_leger = bool(rejeu_leger)
         self.half_life_jours = cfg.get("half_life_jours", 180)   # R64
         self.bandes = cfg.get("bandes", (40, 70))                # LOW < b0 ≤ MED < b1 ≤ HIGH
         self.k_segments = cfg.get("k_segments", 4)               # accepté (granularité future)
@@ -158,6 +166,8 @@ class OliveCpsiEngine:
         return "LOW" if score < b0 else ("MEDIUM" if score < b1 else "HIGH")
 
     def _recalculer(self, cid, at):
+        if self._rejeu_leger:
+            return None        # rejeu léger (ratifié) : la lecture recalcule PUREMENT à la demande
         score, drivers = self.score_a_date(cid, at)
         bande = self.bande(score)
         # R67 : les drivers accompagnent CHAQUE score publié
