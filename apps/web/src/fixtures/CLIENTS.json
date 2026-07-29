@@ -1,0 +1,1806 @@
+[
+  {
+    "id": "CLI-00001",
+    "name": "Suzuki Ltd",
+    "initials": "SU",
+    "type": "DOM",
+    "typeLabel": "Société de domicile",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 3.7M",
+    "sector": "Santé",
+    "rm": "Patrick Durand",
+    "score": 22,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-154",
+    "uboName": "Hana Inoue",
+    "cdbForm": "A",
+    "onboardingDate": "2019-09-04",
+    "kycCodes": [
+      "KYC-2026-CH-3693-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00002",
+    "name": "Bruno Foundation",
+    "initials": "BR",
+    "type": "FOND",
+    "typeLabel": "Fondation",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "countryFlag": "🇬🇧",
+    "segment": "Mass Affluent",
+    "aum": "CHF 725k",
+    "sector": "Retail / Distribution",
+    "rm": "Lucie Morel",
+    "score": 37,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-051",
+    "uboName": "Esposito Investments",
+    "cdbForm": "S",
+    "onboardingDate": "2023-03-24",
+    "kycCodes": [
+      "KYC-2026-GB-6782-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "Fondation",
+      "CRS-GB"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00003",
+    "name": "Anne Greco",
+    "initials": "AN",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "Mass Affluent",
+    "aum": "CHF 280k",
+    "sector": "Industrie",
+    "rm": "Valentina Rossi",
+    "score": 12,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-236",
+    "uboName": "Morin Trust",
+    "cdbForm": "A",
+    "onboardingDate": "2022-07-22",
+    "kycCodes": [
+      "KYC-2026-FR-1321-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00004",
+    "name": "Tanaka SA",
+    "initials": "TA",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "Affluent",
+    "aum": "CHF 3.4M",
+    "sector": "Juridique / Conseil",
+    "rm": "Jean-Paul Favre",
+    "score": 9,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-043",
+    "uboName": "Nils Larsen",
+    "cdbForm": "K",
+    "onboardingDate": "2018-10-29",
+    "kycCodes": [
+      "KYC-2024-CH-5189-R1",
+      "KYC-2026-CH-7122-R2"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "R2",
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00005",
+    "name": "Fortin Holding",
+    "initials": "FO",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "HNWI",
+    "aum": "CHF 29.9M",
+    "sector": "Immobilier",
+    "rm": "Valentina Rossi",
+    "score": 39,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-108",
+    "uboName": "Olga Simon",
+    "cdbForm": "K",
+    "onboardingDate": "2023-03-06",
+    "kycCodes": [
+      "KYC-2025-FR-2281-R1",
+      "KYC-2026-FR-9644-R2"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "R2",
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00011",
+    "name": "Bianchi Fund",
+    "initials": "BI",
+    "type": "FUND",
+    "typeLabel": "Fonds de placement",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "countryFlag": "🇲🇨",
+    "segment": "Affluent",
+    "aum": "CHF 2.7M",
+    "sector": "Juridique / Conseil",
+    "rm": "Sophie Berger",
+    "score": 26,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-139",
+    "uboName": "Grace Larsen",
+    "cdbForm": "A",
+    "onboardingDate": "2021-08-03",
+    "kycCodes": [
+      "KYC-2026-CH-8451-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-MC"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00012",
+    "name": "Svensson GmbH",
+    "initials": "SV",
+    "type": "SARL",
+    "typeLabel": "Société (SARL/GmbH)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "countryFlag": "🇩🇪",
+    "segment": "Affluent",
+    "aum": "CHF 2.2M",
+    "sector": "Private equity",
+    "rm": "Ming Chen",
+    "score": 19,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-085",
+    "uboName": "Anne Morin",
+    "cdbForm": "K",
+    "onboardingDate": "2019-03-09",
+    "kycCodes": [
+      "KYC-2026-DE-5871-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-DE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00013",
+    "name": "Galliano Trust",
+    "initials": "GA",
+    "type": "TRUST",
+    "typeLabel": "Trust",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "countryFlag": "🇩🇪",
+    "segment": "Mass Affluent",
+    "aum": "CHF 402k",
+    "sector": "Media",
+    "rm": "Sixtine Marchand",
+    "score": 39,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-066",
+    "uboName": "Ahmed Romano",
+    "cdbForm": "T",
+    "onboardingDate": "2022-12-22",
+    "kycCodes": [
+      "KYC-2026-DE-7553-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "Trust",
+      "CRS-DE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00015",
+    "name": "Wilhelm Robert",
+    "initials": "WI",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "countryFlag": "🇰🇾",
+    "segment": "Mass Affluent",
+    "aum": "CHF 201k",
+    "sector": "Immobilier",
+    "rm": "Sixtine Marchand",
+    "score": 81,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-225",
+    "uboName": "Julia Moreau",
+    "cdbForm": "A",
+    "onboardingDate": "2022-04-30",
+    "kycCodes": [
+      "KYC-2026-CH-6205-R1"
+    ],
+    "currentKycStatus": "UNDER_REVIEW",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00016",
+    "name": "Roy Family Office",
+    "initials": "RO",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "countryFlag": "🇺🇸",
+    "segment": "HNWI",
+    "aum": "CHF 14.5M",
+    "sector": "Technologie",
+    "rm": "Valentina Rossi",
+    "score": 47,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-026",
+    "uboName": "Quentin Roux",
+    "cdbForm": "K",
+    "onboardingDate": "2019-01-28",
+    "kycCodes": [
+      "KYC-2026-CH-5912-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "FATCA",
+      "CRS-US"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00041",
+    "name": "Leroy Assoc.",
+    "initials": "LE",
+    "type": "ASSO",
+    "typeLabel": "Association",
+    "country": "EAU",
+    "countryCode": "AE",
+    "countryFlag": "🇦🇪",
+    "segment": "Affluent",
+    "aum": "CHF 4.7M",
+    "sector": "Finance & Asset management",
+    "rm": "Ali Gharsallah",
+    "score": 39,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-237",
+    "uboName": "Delphine Lindgren",
+    "cdbForm": "A",
+    "onboardingDate": "2021-03-17",
+    "kycCodes": [
+      "KYC-2024-CH-2331-R1",
+      "KYC-2026-CH-2931-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "R2",
+      "CRS-AE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00045",
+    "name": "Petrov SCS",
+    "initials": "PE",
+    "type": "SCS",
+    "typeLabel": "Sté en commandite simple",
+    "country": "Chine",
+    "countryCode": "CN",
+    "countryFlag": "🇨🇳",
+    "segment": "Mass Affluent",
+    "aum": "CHF 915k",
+    "sector": "Retail / Distribution",
+    "rm": "Ralf Kessler",
+    "score": 62,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-234",
+    "uboName": "Groupe Al-Harbi",
+    "cdbForm": "K",
+    "onboardingDate": "2019-02-03",
+    "kycCodes": [
+      "KYC-2026-CH-3667-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-CN"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00176",
+    "name": "Katarina Bergström",
+    "initials": "KA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "countryFlag": "🇩🇪",
+    "segment": "Mass Affluent",
+    "aum": "CHF 888k",
+    "sector": "Retail / Distribution",
+    "rm": "Ralf Kessler",
+    "score": 54,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-041",
+    "uboName": "Claire Yılmaz",
+    "cdbForm": "A",
+    "onboardingDate": "2019-04-13",
+    "kycCodes": [
+      "KYC-2024-DE-6097-R1",
+      "KYC-2026-DE-5427-R2"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-DE"
+    ],
+    "pep": true
+  },
+  {
+    "id": "CLI-00039",
+    "name": "Arslan Family Office",
+    "initials": "AR",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "EAU",
+    "countryCode": "AE",
+    "countryFlag": "🇦🇪",
+    "segment": "HNWI",
+    "aum": "CHF 25.1M",
+    "sector": "Négoce matières premières",
+    "rm": "Lucie Morel",
+    "score": 33,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-139",
+    "uboName": "Grace Larsen",
+    "cdbForm": "K",
+    "onboardingDate": "2022-05-11",
+    "kycCodes": [
+      "KYC-2026-CH-6333-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-AE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00017",
+    "name": "Kılıç Holding",
+    "initials": "KI",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "countryFlag": "🇧🇪",
+    "segment": "Mass Affluent",
+    "aum": "CHF 377k",
+    "sector": "Private equity",
+    "rm": "Jean-Paul Favre",
+    "score": 15,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-099",
+    "uboName": "Xu Nakamura",
+    "cdbForm": "K",
+    "onboardingDate": "2020-05-17",
+    "kycCodes": [
+      "KYC-2026-CH-2423-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-BE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00083",
+    "name": "Eriksson Fund",
+    "initials": "ER",
+    "type": "FUND",
+    "typeLabel": "Fonds de placement",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Mass Affluent",
+    "aum": "CHF 720k",
+    "sector": "Santé",
+    "rm": "Ralf Kessler",
+    "score": 25,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-261",
+    "uboName": "Fabio Weber",
+    "cdbForm": "A",
+    "onboardingDate": "2025-09-27",
+    "kycCodes": [
+      "KYC-2026-CH-6126-R1"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00075",
+    "name": "Al-Qassimi SA",
+    "initials": "AL",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "countryFlag": "🇨🇳",
+    "segment": "Affluent",
+    "aum": "CHF 3.3M",
+    "sector": "Juridique / Conseil",
+    "rm": "Patrick Durand",
+    "score": 60,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-054",
+    "uboName": "Tanaka Wealth Management",
+    "cdbForm": "K",
+    "onboardingDate": "2023-10-13",
+    "kycCodes": [
+      "KYC-2023-CH-1818-R1",
+      "KYC-2026-CH-4022-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "R2",
+      "CRS-CN"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00070",
+    "name": "Odile Lefebvre",
+    "initials": "OD",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Russie",
+    "countryCode": "RU",
+    "countryFlag": "🇷🇺",
+    "segment": "Affluent",
+    "aum": "CHF 3.9M",
+    "sector": "Industrie",
+    "rm": "Patrick Durand",
+    "score": 64,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-085",
+    "uboName": "Anne Morin",
+    "cdbForm": "A",
+    "onboardingDate": "2022-11-20",
+    "kycCodes": [
+      "KYC-2026-CH-7209-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-RU",
+      "CRS-CY"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00048",
+    "name": "Fatima Kumar",
+    "initials": "FA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 9.9M",
+    "sector": "Finance & Asset management",
+    "rm": "Ralf Kessler",
+    "score": 21,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-265",
+    "uboName": "Boris Moreau",
+    "cdbForm": "A",
+    "onboardingDate": "2023-03-20",
+    "kycCodes": [
+      "KYC-2026-CH-1280-R1"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00037",
+    "name": "Yılmaz SA",
+    "initials": "YI",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "countryFlag": "🇺🇸",
+    "segment": "Affluent",
+    "aum": "CHF 4.6M",
+    "sector": "Agriculture",
+    "rm": "Patrick Durand",
+    "score": 42,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-289",
+    "uboName": "Grace Kobayashi",
+    "cdbForm": "K",
+    "onboardingDate": "2020-09-12",
+    "kycCodes": [
+      "KYC-2024-CH-4163-R1",
+      "KYC-2026-CH-9441-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "FATCA",
+      "R2",
+      "CRS-US"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00186",
+    "name": "Xavier Martin",
+    "initials": "XA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "Affluent",
+    "aum": "CHF 1.5M",
+    "sector": "Finance & Asset management",
+    "rm": "Ali Gharsallah",
+    "score": 31,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-282",
+    "uboName": "Rita Roy",
+    "cdbForm": "A",
+    "onboardingDate": "2021-09-22",
+    "kycCodes": [
+      "KYC-2026-FR-3364-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00152",
+    "name": "Fortin Holding",
+    "initials": "FO",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "UHNWI",
+    "aum": "CHF 497M",
+    "sector": "Private equity",
+    "rm": "Patrick Durand",
+    "score": 15,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-192",
+    "uboName": "Marco Tanaka",
+    "cdbForm": "K",
+    "onboardingDate": "2024-09-22",
+    "kycCodes": [
+      "KYC-2026-FR-0498-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00033",
+    "name": "Bouchard SA",
+    "initials": "BO",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "countryFlag": "🇰🇾",
+    "segment": "Affluent",
+    "aum": "CHF 2.7M",
+    "sector": "Agriculture",
+    "rm": "Ali Gharsallah",
+    "score": 71,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-167",
+    "uboName": "Sven Inoue",
+    "cdbForm": "K",
+    "onboardingDate": "2019-02-17",
+    "kycCodes": [
+      "KYC-2026-CH-4307-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00164",
+    "name": "Watanabe SA",
+    "initials": "WA",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "countryFlag": "🇱🇺",
+    "segment": "HNWI",
+    "aum": "CHF 20.9M",
+    "sector": "Agriculture",
+    "rm": "Sophie Berger",
+    "score": 24,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-128",
+    "uboName": "Laura Bin Laden",
+    "cdbForm": "K",
+    "onboardingDate": "2021-03-14",
+    "kycCodes": [
+      "KYC-2023-CH-0820-R1",
+      "KYC-2026-CH-6514-R2"
+    ],
+    "currentKycStatus": "PENDING_APPROVAL",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-LU"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00121",
+    "name": "Raj Roy",
+    "initials": "RA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "Mass Affluent",
+    "aum": "CHF 705k",
+    "sector": "Négoce matières premières",
+    "rm": "Valentina Rossi",
+    "score": 7,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-019",
+    "uboName": "Mireille Şahin",
+    "cdbForm": "A",
+    "onboardingDate": "2024-04-28",
+    "kycCodes": [
+      "KYC-2026-FR-9035-R1"
+    ],
+    "currentKycStatus": "DRAFT",
+    "tags": [
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00019",
+    "name": "Colombo SA",
+    "initials": "CO",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "countryFlag": "🇬🇧",
+    "segment": "Mass Affluent",
+    "aum": "CHF 943k",
+    "sector": "Juridique / Conseil",
+    "rm": "Ali Gharsallah",
+    "score": 34,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-274",
+    "uboName": "Weber & Associates",
+    "cdbForm": "K",
+    "onboardingDate": "2020-06-29",
+    "kycCodes": [
+      "KYC-2026-GB-2786-R1"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "CRS-GB"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00018",
+    "name": "Roux Family Office",
+    "initials": "RO",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "HNWI",
+    "aum": "CHF 28.8M",
+    "sector": "Industrie",
+    "rm": "Ming Chen",
+    "score": 11,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-214",
+    "uboName": "Hans Martin",
+    "cdbForm": "K",
+    "onboardingDate": "2021-01-08",
+    "kycCodes": [
+      "KYC-2025-CH-6672-R1",
+      "KYC-2026-CH-4238-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "R2",
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00034",
+    "name": "Françoise Lindqvist",
+    "initials": "FR",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "countryFlag": "🇰🇾",
+    "segment": "Affluent",
+    "aum": "CHF 1.8M",
+    "sector": "Juridique / Conseil",
+    "rm": "Jean-Paul Favre",
+    "score": 90,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-134",
+    "uboName": "Viktor Roy",
+    "cdbForm": "A",
+    "onboardingDate": "2021-10-02",
+    "kycCodes": [
+      "KYC-2024-CH-4223-R1",
+      "KYC-2023-CH-2742-R2",
+      "KYC-2026-CH-8836-R3"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "R3",
+      "CRS-KY"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00068",
+    "name": "Luca Dupont",
+    "initials": "LU",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "HNWI",
+    "aum": "CHF 25.4M",
+    "sector": "Négoce matières premières",
+    "rm": "Sophie Berger",
+    "score": 27,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-102",
+    "uboName": "Joëlle Tanaka",
+    "cdbForm": "A",
+    "onboardingDate": "2023-03-10",
+    "kycCodes": [
+      "KYC-2026-CH-7028-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00072",
+    "name": "Tina Kato",
+    "initials": "TI",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "countryFlag": "🇰🇾",
+    "segment": "Affluent",
+    "aum": "CHF 1.9M",
+    "sector": "Négoce matières premières",
+    "rm": "Lucie Morel",
+    "score": 97,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-263",
+    "uboName": "Katarina Al-Harbi",
+    "cdbForm": "A",
+    "onboardingDate": "2018-07-04",
+    "kycCodes": [
+      "KYC-2026-CH-9314-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "PEP-Hit",
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "pep": true
+  },
+  {
+    "id": "CLI-00142",
+    "name": "Johansson SA",
+    "initials": "JO",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "countryFlag": "🇧🇪",
+    "segment": "Affluent",
+    "aum": "CHF 2.2M",
+    "sector": "Santé",
+    "rm": "Ralf Kessler",
+    "score": 15,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-049",
+    "uboName": "Kristina Roy",
+    "cdbForm": "K",
+    "onboardingDate": "2021-06-01",
+    "kycCodes": [
+      "KYC-2023-CH-3172-R1",
+      "KYC-2026-CH-0093-R2"
+    ],
+    "currentKycStatus": "PENDING_APPROVAL",
+    "tags": [
+      "R2",
+      "CRS-BE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00167",
+    "name": "Lindqvist SA",
+    "initials": "LI",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "countryFlag": "🇩🇪",
+    "segment": "Mass Affluent",
+    "aum": "CHF 828k",
+    "sector": "Santé",
+    "rm": "Valentina Rossi",
+    "score": 23,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-006",
+    "uboName": "Ulrich Şahin",
+    "cdbForm": "K",
+    "onboardingDate": "2019-01-24",
+    "kycCodes": [
+      "KYC-2023-DE-7282-R1",
+      "KYC-2023-DE-1903-R2",
+      "KYC-2026-DE-3040-R3"
+    ],
+    "currentKycStatus": "PENDING_APPROVAL",
+    "tags": [
+      "R3",
+      "CRS-DE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00198",
+    "name": "Sven Al-Farsi",
+    "initials": "SV",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Mexique",
+    "countryCode": "MX",
+    "countryFlag": "🇲🇽",
+    "segment": "Mass Affluent",
+    "aum": "CHF 755k",
+    "sector": "Santé",
+    "rm": "Patrick Durand",
+    "score": 50,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-129",
+    "uboName": "Henri Bianchi",
+    "cdbForm": "A",
+    "onboardingDate": "2024-09-16",
+    "kycCodes": [
+      "KYC-2026-CH-9923-R1"
+    ],
+    "currentKycStatus": "UNDER_REVIEW",
+    "tags": [
+      "CRS-MX"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00156",
+    "name": "Sofia Johansson",
+    "initials": "SO",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "Affluent",
+    "aum": "CHF 2.2M",
+    "sector": "Media",
+    "rm": "Sixtine Marchand",
+    "score": 29,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-228",
+    "uboName": "Jean Demir",
+    "cdbForm": "A",
+    "onboardingDate": "2019-08-24",
+    "kycCodes": [
+      "KYC-2024-CH-7747-R1",
+      "KYC-2026-CH-0853-R2"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "R2",
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00063",
+    "name": "Carlos Dubois",
+    "initials": "CA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "countryFlag": "🇱🇺",
+    "segment": "Affluent",
+    "aum": "CHF 1.1M",
+    "sector": "Négoce matières premières",
+    "rm": "Ralf Kessler",
+    "score": 17,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-014",
+    "uboName": "Kenji Bernard",
+    "cdbForm": "A",
+    "onboardingDate": "2023-08-03",
+    "kycCodes": [
+      "KYC-2026-CH-1579-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-LU"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00191",
+    "name": "Kumar Trust",
+    "initials": "KU",
+    "type": "TRUST",
+    "typeLabel": "Trust",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "HNWI",
+    "aum": "CHF 22.3M",
+    "sector": "Agriculture",
+    "rm": "Patrick Durand",
+    "score": 39,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-007",
+    "uboName": "Younes Colombo",
+    "cdbForm": "T",
+    "onboardingDate": "2023-11-16",
+    "kycCodes": [
+      "KYC-2026-CH-8149-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "Trust",
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00120",
+    "name": "Ahmed Ferrari",
+    "initials": "AH",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "EAU",
+    "countryCode": "AE",
+    "countryFlag": "🇦🇪",
+    "segment": "Mass Affluent",
+    "aum": "CHF 568k",
+    "sector": "Santé",
+    "rm": "Sixtine Marchand",
+    "score": 35,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-280",
+    "uboName": "Nora Al-Rashid",
+    "cdbForm": "A",
+    "onboardingDate": "2024-05-16",
+    "kycCodes": [
+      "KYC-2026-CH-3400-R1"
+    ],
+    "currentKycStatus": "DRAFT",
+    "tags": [
+      "CRS-AE"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00069",
+    "name": "Nadia Gauthier",
+    "initials": "NA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "countryFlag": "🇱🇺",
+    "segment": "HNWI",
+    "aum": "CHF 27.7M",
+    "sector": "Juridique / Conseil",
+    "rm": "Jean-Paul Favre",
+    "score": 8,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-132",
+    "uboName": "Kristina Martin",
+    "cdbForm": "A",
+    "onboardingDate": "2022-09-30",
+    "kycCodes": [
+      "KYC-2026-CH-3848-R1"
+    ],
+    "currentKycStatus": "DRAFT",
+    "tags": [
+      "CRS-LU"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00127",
+    "name": "Aslan Fund",
+    "initials": "AS",
+    "type": "FUND",
+    "typeLabel": "Fonds de placement",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "Mass Affluent",
+    "aum": "CHF 502k",
+    "sector": "Négoce matières premières",
+    "rm": "Valentina Rossi",
+    "score": 25,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-228",
+    "uboName": "Jean Demir",
+    "cdbForm": "A",
+    "onboardingDate": "2019-05-07",
+    "kycCodes": [
+      "KYC-2024-CH-1909-R1",
+      "KYC-2025-CH-3417-R2",
+      "KYC-2026-CH-0475-R3"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "R3",
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00163",
+    "name": "Al-Qassimi Trust",
+    "initials": "AL",
+    "type": "TRUST",
+    "typeLabel": "Trust",
+    "country": "Russie",
+    "countryCode": "RU",
+    "countryFlag": "🇷🇺",
+    "segment": "Mass Affluent",
+    "aum": "CHF 583k",
+    "sector": "Energie",
+    "rm": "Lucie Morel",
+    "score": 81,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-082",
+    "uboName": "Chiara Çelik",
+    "cdbForm": "T",
+    "onboardingDate": "2022-05-10",
+    "kycCodes": [
+      "KYC-2026-CH-4266-R1"
+    ],
+    "currentKycStatus": "PENDING_APPROVAL",
+    "tags": [
+      "EDD",
+      "Trust",
+      "CRS-RU"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00084",
+    "name": "Youssef Gagnon",
+    "initials": "YO",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "Affluent",
+    "aum": "CHF 1.5M",
+    "sector": "Energie",
+    "rm": "Ming Chen",
+    "score": 30,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-280",
+    "uboName": "Nora Al-Rashid",
+    "cdbForm": "A",
+    "onboardingDate": "2023-10-02",
+    "kycCodes": [
+      "KYC-2026-CH-1169-R1"
+    ],
+    "currentKycStatus": "UNDER_REVIEW",
+    "tags": [
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00007",
+    "name": "Mohamed Demir",
+    "initials": "MO",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "countryFlag": "🇬🇧",
+    "segment": "Affluent",
+    "aum": "CHF 4.7M",
+    "sector": "Private equity",
+    "rm": "Jean-Paul Favre",
+    "score": 22,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-276",
+    "uboName": "Laura Tremblay",
+    "cdbForm": "A",
+    "onboardingDate": "2023-06-17",
+    "kycCodes": [
+      "KYC-2026-GB-3066-R1"
+    ],
+    "currentKycStatus": "UNDER_REVIEW",
+    "tags": [
+      "CRS-GB"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00053",
+    "name": "Isabelle Gauthier",
+    "initials": "IS",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "HNWI",
+    "aum": "CHF 11.3M",
+    "sector": "Media",
+    "rm": "Lucie Morel",
+    "score": 18,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-268",
+    "uboName": "Hans Kowalski",
+    "cdbForm": "A",
+    "onboardingDate": "2021-01-14",
+    "kycCodes": [
+      "KYC-2026-CH-0617-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00188",
+    "name": "Dubois Fund",
+    "initials": "DU",
+    "type": "FUND",
+    "typeLabel": "Fonds de placement",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 4.1M",
+    "sector": "Santé",
+    "rm": "Valentina Rossi",
+    "score": 34,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-124",
+    "uboName": "Grace Çelik",
+    "cdbForm": "A",
+    "onboardingDate": "2020-05-01",
+    "kycCodes": [
+      "KYC-2026-CH-0279-R1"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00100",
+    "name": "Bernard Trust",
+    "initials": "BE",
+    "type": "TRUST",
+    "typeLabel": "Trust",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 3.2M",
+    "sector": "Finance & Asset management",
+    "rm": "Valentina Rossi",
+    "score": 33,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-220",
+    "uboName": "Maria Hassan",
+    "cdbForm": "T",
+    "onboardingDate": "2020-10-10",
+    "kycCodes": [
+      "KYC-2026-CH-3092-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "Trust",
+      "CRS-CH"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00172",
+    "name": "Ito Holding",
+    "initials": "IT",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "countryFlag": "🇬🇧",
+    "segment": "UHNWI",
+    "aum": "CHF 289M",
+    "sector": "Agriculture",
+    "rm": "Patrick Durand",
+    "score": 25,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-227",
+    "uboName": "Niels Bianchi",
+    "cdbForm": "K",
+    "onboardingDate": "2022-05-08",
+    "kycCodes": [
+      "KYC-2026-GB-6620-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-GB"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00052",
+    "name": "Nielsen Family Office",
+    "initials": "NI",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "countryFlag": "🇲🇨",
+    "segment": "Affluent",
+    "aum": "CHF 1.5M",
+    "sector": "Négoce matières premières",
+    "rm": "Jean-Paul Favre",
+    "score": 7,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-088",
+    "uboName": "Nadia Çelik",
+    "cdbForm": "K",
+    "onboardingDate": "2023-02-12",
+    "kycCodes": [
+      "KYC-2026-CH-9749-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-MC"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00184",
+    "name": "Al-Maktoum SA",
+    "initials": "AL",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "countryFlag": "🇨🇳",
+    "segment": "Mass Affluent",
+    "aum": "CHF 549k",
+    "sector": "Immobilier",
+    "rm": "Valentina Rossi",
+    "score": 53,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-100",
+    "uboName": "Inès Watanabe",
+    "cdbForm": "K",
+    "onboardingDate": "2023-05-25",
+    "kycCodes": [
+      "KYC-2024-CH-6961-R1",
+      "KYC-2026-CH-6077-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-CN"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00099",
+    "name": "Boris Mancini",
+    "initials": "BO",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "countryFlag": "🇬🇧",
+    "segment": "HNWI",
+    "aum": "CHF 16.1M",
+    "sector": "Négoce matières premières",
+    "rm": "Sixtine Marchand",
+    "score": 7,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-252",
+    "uboName": "Klaus Johansson",
+    "cdbForm": "A",
+    "onboardingDate": "2022-10-31",
+    "kycCodes": [
+      "KYC-2023-GB-6730-R1",
+      "KYC-2026-GB-2088-R2"
+    ],
+    "currentKycStatus": "UNDER_REVIEW",
+    "tags": [
+      "R2",
+      "CRS-GB"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00193",
+    "name": "Nguyen SA",
+    "initials": "NG",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "countryFlag": "🇦🇪",
+    "segment": "HNWI",
+    "aum": "CHF 26.6M",
+    "sector": "Retail / Distribution",
+    "rm": "Sixtine Marchand",
+    "score": 64,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-025",
+    "uboName": "Amira Richard",
+    "cdbForm": "K",
+    "onboardingDate": "2018-03-15",
+    "kycCodes": [
+      "KYC-2025-CH-4682-R1",
+      "KYC-2026-CH-9173-R2"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-AE"
+    ],
+    "pep": true
+  },
+  {
+    "id": "CLI-00185",
+    "name": "David Al-Harbi",
+    "initials": "DA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "countryFlag": "🇲🇨",
+    "segment": "Mass Affluent",
+    "aum": "CHF 320k",
+    "sector": "Juridique / Conseil",
+    "rm": "Ralf Kessler",
+    "score": 31,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-188",
+    "uboName": "Xu Petrov",
+    "cdbForm": "A",
+    "onboardingDate": "2020-04-16",
+    "kycCodes": [
+      "KYC-2026-CH-1037-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-MC"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00110",
+    "name": "Moreau Foundation",
+    "initials": "MO",
+    "type": "FOND",
+    "typeLabel": "Fondation",
+    "country": "Italie",
+    "countryCode": "IT",
+    "countryFlag": "🇮🇹",
+    "segment": "Affluent",
+    "aum": "CHF 4.3M",
+    "sector": "Santé",
+    "rm": "Ali Gharsallah",
+    "score": 25,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-265",
+    "uboName": "Boris Moreau",
+    "cdbForm": "S",
+    "onboardingDate": "2021-07-27",
+    "kycCodes": [
+      "KYC-2026-CH-9453-R1"
+    ],
+    "currentKycStatus": "PENDING_APPROVAL",
+    "tags": [
+      "Fondation",
+      "CRS-IT"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00035",
+    "name": "Odile Kumar",
+    "initials": "OD",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "Mass Affluent",
+    "aum": "CHF 663k",
+    "sector": "Finance & Asset management",
+    "rm": "Jean-Paul Favre",
+    "score": 15,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-252",
+    "uboName": "Klaus Johansson",
+    "cdbForm": "A",
+    "onboardingDate": "2024-12-25",
+    "kycCodes": [
+      "KYC-2026-FR-8765-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-FR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00104",
+    "name": "Eriksson Family Office",
+    "initials": "ER",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "Brésil",
+    "countryCode": "BR",
+    "countryFlag": "🇧🇷",
+    "segment": "Affluent",
+    "aum": "CHF 1.4M",
+    "sector": "Négoce matières premières",
+    "rm": "Sixtine Marchand",
+    "score": 40,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-183",
+    "uboName": "Erik Silva",
+    "cdbForm": "K",
+    "onboardingDate": "2021-02-28",
+    "kycCodes": [
+      "KYC-2026-CH-1390-R1"
+    ],
+    "currentKycStatus": "APPROVED",
+    "tags": [
+      "CRS-BR"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00101",
+    "name": "Bruno Holding",
+    "initials": "BR",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "Chine",
+    "countryCode": "CN",
+    "countryFlag": "🇨🇳",
+    "segment": "Affluent",
+    "aum": "CHF 3.9M",
+    "sector": "Agriculture",
+    "rm": "Jean-Paul Favre",
+    "score": 52,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-122",
+    "uboName": "Youssef Tanaka",
+    "cdbForm": "K",
+    "onboardingDate": "2022-03-03",
+    "kycCodes": [
+      "KYC-2025-CH-2138-R1",
+      "KYC-2026-CH-0997-R2"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "R2",
+      "CRS-CN"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00080",
+    "name": "Maria Fortin",
+    "initials": "MA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Russie",
+    "countryCode": "RU",
+    "countryFlag": "🇷🇺",
+    "segment": "Affluent",
+    "aum": "CHF 7.5M",
+    "sector": "Juridique / Conseil",
+    "rm": "Ali Gharsallah",
+    "score": 57,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-120",
+    "uboName": "Anne Svensson",
+    "cdbForm": "A",
+    "onboardingDate": "2020-06-24",
+    "kycCodes": [
+      "KYC-2026-CH-9930-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-RU"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00022",
+    "name": "Zayd Svensson",
+    "initials": "ZA",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Chine",
+    "countryCode": "CN",
+    "countryFlag": "🇨🇳",
+    "segment": "Affluent",
+    "aum": "CHF 3.9M",
+    "sector": "Technologie",
+    "rm": "Sixtine Marchand",
+    "score": 31,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "uboId": "PER-210",
+    "uboName": "Yasmine Nguyen",
+    "cdbForm": "A",
+    "onboardingDate": "2022-01-06",
+    "kycCodes": [
+      "KYC-2026-CH-3403-R1"
+    ],
+    "currentKycStatus": "DRAFT",
+    "tags": [
+      "CRS-CN"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00130",
+    "name": "Mancini GmbH",
+    "initials": "MA",
+    "type": "SARL",
+    "typeLabel": "Société (SARL/GmbH)",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "countryFlag": "🇸🇬",
+    "segment": "UHNWI",
+    "aum": "CHF 355M",
+    "sector": "Energie",
+    "rm": "Jean-Paul Favre",
+    "score": 36,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-177",
+    "uboName": "Roux Investments",
+    "cdbForm": "K",
+    "onboardingDate": "2020-07-14",
+    "kycCodes": [
+      "KYC-2026-CH-6983-R1"
+    ],
+    "currentKycStatus": "IN_PROGRESS",
+    "tags": [
+      "CRS-SG"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00150",
+    "name": "Johansson SA",
+    "initials": "JO",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "countryFlag": "🇭🇰",
+    "segment": "Mass Affluent",
+    "aum": "CHF 372k",
+    "sector": "Industrie",
+    "rm": "Ralf Kessler",
+    "score": 39,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "uboId": "PER-058",
+    "uboName": "Kenji Lindqvist",
+    "cdbForm": "K",
+    "onboardingDate": "2018-03-07",
+    "kycCodes": [
+      "KYC-2024-CH-9183-R1",
+      "KYC-2026-CH-7918-R2"
+    ],
+    "currentKycStatus": "DRAFT",
+    "tags": [
+      "R2",
+      "CRS-HK"
+    ],
+    "pep": false
+  },
+  {
+    "id": "CLI-00043",
+    "name": "Larsen SA",
+    "initials": "LA",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Panama",
+    "countryCode": "PA",
+    "countryFlag": "🇵🇦",
+    "segment": "HNWI",
+    "aum": "CHF 15.6M",
+    "sector": "Media",
+    "rm": "Ali Gharsallah",
+    "score": 85,
+    "risk": "HIGH",
+    "ddl": "EDD",
+    "uboId": "PER-243",
+    "uboName": "Uwe Al-Hamdan",
+    "cdbForm": "K",
+    "onboardingDate": "2023-05-17",
+    "kycCodes": [
+      "KYC-2026-CH-7547-R1"
+    ],
+    "currentKycStatus": "REJECTED",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-PA"
+    ],
+    "pep": false
+  }
+]

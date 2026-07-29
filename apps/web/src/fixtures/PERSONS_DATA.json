@@ -1,0 +1,1995 @@
+[
+  {
+    "id": "PER-006",
+    "name": "Ulrich Şahin",
+    "type": "PP",
+    "flag": "🇬🇧",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "pep": null,
+    "initials": "UŞ",
+    "roles": [
+      {
+        "entity": "Lindqvist SA",
+        "entityId": "CLI-00167",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "41%"
+      }
+    ]
+  },
+  {
+    "id": "PER-007",
+    "name": "Younes Colombo",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "YC",
+    "roles": [
+      {
+        "entity": "Kumar Trust",
+        "entityId": "CLI-00191",
+        "struct": "TRUST",
+        "role": "Ayant droit économique (UBO)",
+        "share": "56%"
+      }
+    ]
+  },
+  {
+    "id": "PER-014",
+    "name": "Kenji Bernard",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "KB",
+    "roles": [
+      {
+        "entity": "Carlos Dubois",
+        "entityId": "CLI-00063",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "47%"
+      }
+    ]
+  },
+  {
+    "id": "PER-019",
+    "name": "Mireille Şahin",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "MŞ",
+    "roles": [
+      {
+        "entity": "Raj Roy",
+        "entityId": "CLI-00121",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "69%"
+      }
+    ]
+  },
+  {
+    "id": "PER-025",
+    "name": "Amira Richard",
+    "type": "PP",
+    "flag": "🇧🇪",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "pep": "NEAR-PEP",
+    "initials": "AR",
+    "roles": [
+      {
+        "entity": "Nguyen SA",
+        "entityId": "CLI-00193",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "89%"
+      }
+    ]
+  },
+  {
+    "id": "PER-026",
+    "name": "Quentin Roux",
+    "type": "PP",
+    "flag": "🇮🇳",
+    "country": "Inde",
+    "countryCode": "IN",
+    "pep": null,
+    "initials": "QR",
+    "roles": [
+      {
+        "entity": "Roy Family Office",
+        "entityId": "CLI-00016",
+        "struct": "FO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "75%"
+      }
+    ]
+  },
+  {
+    "id": "PER-041",
+    "name": "Claire Yılmaz",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": "NEAR-PEP",
+    "initials": "CY",
+    "roles": [
+      {
+        "entity": "Katarina Bergström",
+        "entityId": "CLI-00176",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "83%"
+      }
+    ]
+  },
+  {
+    "id": "PER-043",
+    "name": "Nils Larsen",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "NL",
+    "roles": [
+      {
+        "entity": "Tanaka SA",
+        "entityId": "CLI-00004",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "59%"
+      }
+    ]
+  },
+  {
+    "id": "PER-049",
+    "name": "Kristina Roy",
+    "type": "PP",
+    "flag": "🇵🇦",
+    "country": "Panama",
+    "countryCode": "PA",
+    "pep": null,
+    "initials": "KR",
+    "roles": [
+      {
+        "entity": "Johansson SA",
+        "entityId": "CLI-00142",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "81%"
+      }
+    ]
+  },
+  {
+    "id": "PER-051",
+    "name": "Esposito Investments",
+    "type": "DOM",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "ES",
+    "roles": [
+      {
+        "entity": "Bruno Foundation",
+        "entityId": "CLI-00002",
+        "struct": "FOND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "85%"
+      }
+    ]
+  },
+  {
+    "id": "PER-054",
+    "name": "Tanaka Wealth Management",
+    "type": "DOM",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "TA",
+    "roles": [
+      {
+        "entity": "Al-Qassimi SA",
+        "entityId": "CLI-00075",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "31%"
+      }
+    ]
+  },
+  {
+    "id": "PER-058",
+    "name": "Kenji Lindqvist",
+    "type": "PP",
+    "flag": "🇧🇪",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "pep": null,
+    "initials": "KL",
+    "roles": [
+      {
+        "entity": "Johansson SA",
+        "entityId": "CLI-00150",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "49%"
+      }
+    ]
+  },
+  {
+    "id": "PER-066",
+    "name": "Ahmed Romano",
+    "type": "PP",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": null,
+    "initials": "AR",
+    "roles": [
+      {
+        "entity": "Galliano Trust",
+        "entityId": "CLI-00013",
+        "struct": "TRUST",
+        "role": "Ayant droit économique (UBO)",
+        "share": "36%"
+      }
+    ]
+  },
+  {
+    "id": "PER-082",
+    "name": "Chiara Çelik",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "CÇ",
+    "roles": [
+      {
+        "entity": "Al-Qassimi Trust",
+        "entityId": "CLI-00163",
+        "struct": "TRUST",
+        "role": "Ayant droit économique (UBO)",
+        "share": "50%"
+      }
+    ]
+  },
+  {
+    "id": "PER-085",
+    "name": "Anne Morin",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "AM",
+    "roles": [
+      {
+        "entity": "Svensson GmbH",
+        "entityId": "CLI-00012",
+        "struct": "SARL",
+        "role": "Ayant droit économique (UBO)",
+        "share": "82%"
+      },
+      {
+        "entity": "Odile Lefebvre",
+        "entityId": "CLI-00070",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "65%"
+      }
+    ]
+  },
+  {
+    "id": "PER-088",
+    "name": "Nadia Çelik",
+    "type": "PP",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": null,
+    "initials": "NÇ",
+    "roles": [
+      {
+        "entity": "Nielsen Family Office",
+        "entityId": "CLI-00052",
+        "struct": "FO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "100%"
+      }
+    ]
+  },
+  {
+    "id": "PER-099",
+    "name": "Xu Nakamura",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "XN",
+    "roles": [
+      {
+        "entity": "Kılıç Holding",
+        "entityId": "CLI-00017",
+        "struct": "HOLD",
+        "role": "Ayant droit économique (UBO)",
+        "share": "41%"
+      }
+    ]
+  },
+  {
+    "id": "PER-100",
+    "name": "Inès Watanabe",
+    "type": "PP",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "IW",
+    "roles": [
+      {
+        "entity": "Al-Maktoum SA",
+        "entityId": "CLI-00184",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "48%"
+      }
+    ]
+  },
+  {
+    "id": "PER-102",
+    "name": "Joëlle Tanaka",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "JT",
+    "roles": [
+      {
+        "entity": "Luca Dupont",
+        "entityId": "CLI-00068",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "58%"
+      }
+    ]
+  },
+  {
+    "id": "PER-108",
+    "name": "Olga Simon",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "OS",
+    "roles": [
+      {
+        "entity": "Fortin Holding",
+        "entityId": "CLI-00005",
+        "struct": "HOLD",
+        "role": "Ayant droit économique (UBO)",
+        "share": "81%"
+      }
+    ]
+  },
+  {
+    "id": "PER-120",
+    "name": "Anne Svensson",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "AS",
+    "roles": [
+      {
+        "entity": "Maria Fortin",
+        "entityId": "CLI-00080",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "88%"
+      }
+    ]
+  },
+  {
+    "id": "PER-122",
+    "name": "Youssef Tanaka",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "YT",
+    "roles": [
+      {
+        "entity": "Bruno Holding",
+        "entityId": "CLI-00101",
+        "struct": "HOLD",
+        "role": "Ayant droit économique (UBO)",
+        "share": "60%"
+      }
+    ]
+  },
+  {
+    "id": "PER-124",
+    "name": "Grace Çelik",
+    "type": "PP",
+    "flag": "🇬🇧",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "pep": null,
+    "initials": "GÇ",
+    "roles": [
+      {
+        "entity": "Dubois Fund",
+        "entityId": "CLI-00188",
+        "struct": "FUND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "77%"
+      }
+    ]
+  },
+  {
+    "id": "PER-128",
+    "name": "Laura Bin Laden",
+    "type": "PP",
+    "flag": "🇲🇨",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "pep": null,
+    "initials": "LB",
+    "roles": [
+      {
+        "entity": "Johansson SA",
+        "entityId": "CLI-00150",
+        "struct": "SA",
+        "role": "Administrateur / directeur",
+        "share": "—"
+      },
+      {
+        "entity": "Watanabe SA",
+        "entityId": "CLI-00164",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "34%"
+      }
+    ]
+  },
+  {
+    "id": "PER-129",
+    "name": "Henri Bianchi",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "HB",
+    "roles": [
+      {
+        "entity": "Sven Al-Farsi",
+        "entityId": "CLI-00198",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "89%"
+      }
+    ]
+  },
+  {
+    "id": "PER-132",
+    "name": "Kristina Martin",
+    "type": "PP",
+    "flag": "🇰🇾",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "pep": null,
+    "initials": "KM",
+    "roles": [
+      {
+        "entity": "Nadia Gauthier",
+        "entityId": "CLI-00069",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "34%"
+      }
+    ]
+  },
+  {
+    "id": "PER-134",
+    "name": "Viktor Roy",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "VR",
+    "roles": [
+      {
+        "entity": "Françoise Lindqvist",
+        "entityId": "CLI-00034",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "71%"
+      }
+    ]
+  },
+  {
+    "id": "PER-139",
+    "name": "Grace Larsen",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "GL",
+    "roles": [
+      {
+        "entity": "Bianchi Fund",
+        "entityId": "CLI-00011",
+        "struct": "FUND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "34%"
+      },
+      {
+        "entity": "Arslan Family Office",
+        "entityId": "CLI-00039",
+        "struct": "FO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "71%"
+      }
+    ]
+  },
+  {
+    "id": "PER-154",
+    "name": "Hana Inoue",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "HI",
+    "roles": [
+      {
+        "entity": "Suzuki Ltd",
+        "entityId": "CLI-00001",
+        "struct": "DOM",
+        "role": "Ayant droit économique (UBO)",
+        "share": "73%"
+      }
+    ]
+  },
+  {
+    "id": "PER-167",
+    "name": "Sven Inoue",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": null,
+    "initials": "SI",
+    "roles": [
+      {
+        "entity": "Bouchard SA",
+        "entityId": "CLI-00033",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "71%"
+      }
+    ]
+  },
+  {
+    "id": "PER-177",
+    "name": "Roux Investments",
+    "type": "DOM",
+    "flag": "🇮🇳",
+    "country": "Inde",
+    "countryCode": "IN",
+    "pep": null,
+    "initials": "RO",
+    "roles": [
+      {
+        "entity": "Mancini GmbH",
+        "entityId": "CLI-00130",
+        "struct": "SARL",
+        "role": "Ayant droit économique (UBO)",
+        "share": "26%"
+      }
+    ]
+  },
+  {
+    "id": "PER-183",
+    "name": "Erik Silva",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "ES",
+    "roles": [
+      {
+        "entity": "Eriksson Family Office",
+        "entityId": "CLI-00104",
+        "struct": "FO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "34%"
+      }
+    ]
+  },
+  {
+    "id": "PER-188",
+    "name": "Xu Petrov",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "XP",
+    "roles": [
+      {
+        "entity": "Zayd Svensson",
+        "entityId": "CLI-00022",
+        "struct": "PP",
+        "role": "Co-titulaire",
+        "share": "—"
+      },
+      {
+        "entity": "David Al-Harbi",
+        "entityId": "CLI-00185",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "63%"
+      }
+    ]
+  },
+  {
+    "id": "PER-192",
+    "name": "Marco Tanaka",
+    "type": "PP",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "MT",
+    "roles": [
+      {
+        "entity": "Fortin Holding",
+        "entityId": "CLI-00152",
+        "struct": "HOLD",
+        "role": "Ayant droit économique (UBO)",
+        "share": "98%"
+      }
+    ]
+  },
+  {
+    "id": "PER-210",
+    "name": "Yasmine Nguyen",
+    "type": "PP",
+    "flag": "🇰🇾",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "pep": null,
+    "initials": "YN",
+    "roles": [
+      {
+        "entity": "Zayd Svensson",
+        "entityId": "CLI-00022",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "62%"
+      },
+      {
+        "entity": "Al-Qassimi SA",
+        "entityId": "CLI-00075",
+        "struct": "SA",
+        "role": "Signataire autorisé",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-214",
+    "name": "Hans Martin",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "HM",
+    "roles": [
+      {
+        "entity": "Roux Family Office",
+        "entityId": "CLI-00018",
+        "struct": "FO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "36%"
+      },
+      {
+        "entity": "Moreau Foundation",
+        "entityId": "CLI-00110",
+        "struct": "FOND",
+        "role": "Co-titulaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-220",
+    "name": "Maria Hassan",
+    "type": "PP",
+    "flag": "🇲🇽",
+    "country": "Mexique",
+    "countryCode": "MX",
+    "pep": null,
+    "initials": "MH",
+    "roles": [
+      {
+        "entity": "Galliano Trust",
+        "entityId": "CLI-00013",
+        "struct": "TRUST",
+        "role": "Mandataire (procuration)",
+        "share": "—"
+      },
+      {
+        "entity": "Bernard Trust",
+        "entityId": "CLI-00100",
+        "struct": "TRUST",
+        "role": "Ayant droit économique (UBO)",
+        "share": "50%"
+      }
+    ]
+  },
+  {
+    "id": "PER-225",
+    "name": "Julia Moreau",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "JM",
+    "roles": [
+      {
+        "entity": "Wilhelm Robert",
+        "entityId": "CLI-00015",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "78%"
+      }
+    ]
+  },
+  {
+    "id": "PER-227",
+    "name": "Niels Bianchi",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "NB",
+    "roles": [
+      {
+        "entity": "Ito Holding",
+        "entityId": "CLI-00172",
+        "struct": "HOLD",
+        "role": "Ayant droit économique (UBO)",
+        "share": "51%"
+      }
+    ]
+  },
+  {
+    "id": "PER-228",
+    "name": "Jean Demir",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "JD",
+    "roles": [
+      {
+        "entity": "Aslan Fund",
+        "entityId": "CLI-00127",
+        "struct": "FUND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "80%"
+      },
+      {
+        "entity": "Sofia Johansson",
+        "entityId": "CLI-00156",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "37%"
+      }
+    ]
+  },
+  {
+    "id": "PER-234",
+    "name": "Groupe Al-Harbi",
+    "type": "SA",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "GR",
+    "roles": [
+      {
+        "entity": "Petrov SCS",
+        "entityId": "CLI-00045",
+        "struct": "SCS",
+        "role": "Ayant droit économique (UBO)",
+        "share": "64%"
+      },
+      {
+        "entity": "Ahmed Ferrari",
+        "entityId": "CLI-00120",
+        "struct": "PP",
+        "role": "Mandataire (procuration)",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-236",
+    "name": "Morin Trust",
+    "type": "SA",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "MO",
+    "roles": [
+      {
+        "entity": "Anne Greco",
+        "entityId": "CLI-00003",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "97%"
+      }
+    ]
+  },
+  {
+    "id": "PER-237",
+    "name": "Delphine Lindgren",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "DL",
+    "roles": [
+      {
+        "entity": "Leroy Assoc.",
+        "entityId": "CLI-00041",
+        "struct": "ASSO",
+        "role": "Ayant droit économique (UBO)",
+        "share": "46%"
+      }
+    ]
+  },
+  {
+    "id": "PER-243",
+    "name": "Uwe Al-Hamdan",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "UA",
+    "roles": [
+      {
+        "entity": "Larsen SA",
+        "entityId": "CLI-00043",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "29%"
+      }
+    ]
+  },
+  {
+    "id": "PER-252",
+    "name": "Klaus Johansson",
+    "type": "PP",
+    "flag": "🇷🇺",
+    "country": "Russie",
+    "countryCode": "RU",
+    "pep": null,
+    "initials": "KJ",
+    "roles": [
+      {
+        "entity": "Odile Kumar",
+        "entityId": "CLI-00035",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "49%"
+      },
+      {
+        "entity": "Boris Mancini",
+        "entityId": "CLI-00099",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "50%"
+      }
+    ]
+  },
+  {
+    "id": "PER-261",
+    "name": "Fabio Weber",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "FW",
+    "roles": [
+      {
+        "entity": "Eriksson Fund",
+        "entityId": "CLI-00083",
+        "struct": "FUND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "72%"
+      }
+    ]
+  },
+  {
+    "id": "PER-263",
+    "name": "Katarina Al-Harbi",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": "PEP",
+    "initials": "KA",
+    "roles": [
+      {
+        "entity": "Tina Kato",
+        "entityId": "CLI-00072",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "38%"
+      },
+      {
+        "entity": "Eriksson Fund",
+        "entityId": "CLI-00083",
+        "struct": "FUND",
+        "role": "Co-titulaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-265",
+    "name": "Boris Moreau",
+    "type": "PP",
+    "flag": "🇷🇺",
+    "country": "Russie",
+    "countryCode": "RU",
+    "pep": null,
+    "initials": "BM",
+    "roles": [
+      {
+        "entity": "Fatima Kumar",
+        "entityId": "CLI-00048",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "35%"
+      },
+      {
+        "entity": "Moreau Foundation",
+        "entityId": "CLI-00110",
+        "struct": "FOND",
+        "role": "Ayant droit économique (UBO)",
+        "share": "45%"
+      }
+    ]
+  },
+  {
+    "id": "PER-268",
+    "name": "Hans Kowalski",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "HK",
+    "roles": [
+      {
+        "entity": "Bianchi Fund",
+        "entityId": "CLI-00011",
+        "struct": "FUND",
+        "role": "Co-titulaire",
+        "share": "—"
+      },
+      {
+        "entity": "Isabelle Gauthier",
+        "entityId": "CLI-00053",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "82%"
+      }
+    ]
+  },
+  {
+    "id": "PER-274",
+    "name": "Weber & Associates",
+    "type": "FOND",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "WE",
+    "roles": [
+      {
+        "entity": "Colombo SA",
+        "entityId": "CLI-00019",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "85%"
+      }
+    ]
+  },
+  {
+    "id": "PER-276",
+    "name": "Laura Tremblay",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "LT",
+    "roles": [
+      {
+        "entity": "Mohamed Demir",
+        "entityId": "CLI-00007",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "47%"
+      }
+    ]
+  },
+  {
+    "id": "PER-280",
+    "name": "Nora Al-Rashid",
+    "type": "PP",
+    "flag": "🇭🇰",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "pep": null,
+    "initials": "NA",
+    "roles": [
+      {
+        "entity": "Youssef Gagnon",
+        "entityId": "CLI-00084",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "35%"
+      },
+      {
+        "entity": "Ahmed Ferrari",
+        "entityId": "CLI-00120",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "34%"
+      }
+    ]
+  },
+  {
+    "id": "PER-282",
+    "name": "Rita Roy",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "RR",
+    "roles": [
+      {
+        "entity": "Xavier Martin",
+        "entityId": "CLI-00186",
+        "struct": "PP",
+        "role": "Ayant droit économique (UBO)",
+        "share": "42%"
+      }
+    ]
+  },
+  {
+    "id": "PER-289",
+    "name": "Grace Kobayashi",
+    "type": "PP",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": null,
+    "initials": "GK",
+    "roles": [
+      {
+        "entity": "Yılmaz SA",
+        "entityId": "CLI-00037",
+        "struct": "SA",
+        "role": "Ayant droit économique (UBO)",
+        "share": "94%"
+      }
+    ]
+  },
+  {
+    "id": "PER-235",
+    "name": "Nora Suzuki",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "NS",
+    "roles": []
+  },
+  {
+    "id": "PER-050",
+    "name": "Uwe Lindqvist",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "UL",
+    "roles": []
+  },
+  {
+    "id": "PER-337",
+    "name": "Kristina Hassan",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": "NEAR-PEP",
+    "initials": "KH",
+    "roles": []
+  },
+  {
+    "id": "PER-182",
+    "name": "Chiara Moreau",
+    "type": "PP",
+    "flag": "🇧🇪",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "pep": null,
+    "initials": "CM",
+    "roles": []
+  },
+  {
+    "id": "PER-376",
+    "name": "David Ferrari",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": "PEP",
+    "initials": "DF",
+    "roles": [
+      {
+        "entity": "David Al-Harbi",
+        "entityId": "CLI-00185",
+        "struct": "PP",
+        "role": "Mandataire (procuration)",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-371",
+    "name": "Boris Al-Rashid",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "BA",
+    "roles": [
+      {
+        "entity": "Nguyen SA",
+        "entityId": "CLI-00193",
+        "struct": "SA",
+        "role": "Co-titulaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-223",
+    "name": "Younes Al-Mansoori",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "YA",
+    "roles": []
+  },
+  {
+    "id": "PER-350",
+    "name": "Viktor Eriksson",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "VE",
+    "roles": []
+  },
+  {
+    "id": "PER-119",
+    "name": "Viktor Nguyen",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "VN",
+    "roles": [
+      {
+        "entity": "Ito Holding",
+        "entityId": "CLI-00172",
+        "struct": "HOLD",
+        "role": "Administrateur / directeur",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-044",
+    "name": "Lucia Laurent",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": null,
+    "initials": "LL",
+    "roles": []
+  },
+  {
+    "id": "PER-030",
+    "name": "Wilhelm Watanabe",
+    "type": "PP",
+    "flag": "🇧🇷",
+    "country": "Brésil",
+    "countryCode": "BR",
+    "pep": null,
+    "initials": "WW",
+    "roles": []
+  },
+  {
+    "id": "PER-393",
+    "name": "Hana Al-Nahyan",
+    "type": "PP",
+    "flag": "🇰🇾",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "pep": null,
+    "initials": "HA",
+    "roles": [
+      {
+        "entity": "Yılmaz SA",
+        "entityId": "CLI-00037",
+        "struct": "SA",
+        "role": "Mandataire (procuration)",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-145",
+    "name": "Klaus Andersen",
+    "type": "PP",
+    "flag": "🇭🇰",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "pep": null,
+    "initials": "KA",
+    "roles": []
+  },
+  {
+    "id": "PER-180",
+    "name": "Olga Yılmaz",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "OY",
+    "roles": []
+  },
+  {
+    "id": "PER-148",
+    "name": "Mireille Şahin",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "MŞ",
+    "roles": [
+      {
+        "entity": "Raj Roy",
+        "entityId": "CLI-00121",
+        "struct": "PP",
+        "role": "Représentant légal",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-064",
+    "name": "Thomas Leclerc",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "TL",
+    "roles": []
+  },
+  {
+    "id": "PER-238",
+    "name": "Brigitte Silva",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "BS",
+    "roles": [
+      {
+        "entity": "Odile Lefebvre",
+        "entityId": "CLI-00070",
+        "struct": "PP",
+        "role": "Représentant légal",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-173",
+    "name": "Roberto Andersen",
+    "type": "PP",
+    "flag": "🇧🇪",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "pep": "PEP",
+    "initials": "RA",
+    "roles": []
+  },
+  {
+    "id": "PER-286",
+    "name": "Roberto Côté",
+    "type": "PP",
+    "flag": "🇮🇹",
+    "country": "Italie",
+    "countryCode": "IT",
+    "pep": null,
+    "initials": "RC",
+    "roles": []
+  },
+  {
+    "id": "PER-380",
+    "name": "Laura Roux",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": null,
+    "initials": "LR",
+    "roles": [
+      {
+        "entity": "Xavier Martin",
+        "entityId": "CLI-00186",
+        "struct": "PP",
+        "role": "Mandataire (procuration)",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-224",
+    "name": "Xavier Kowalski",
+    "type": "PP",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": null,
+    "initials": "XK",
+    "roles": []
+  },
+  {
+    "id": "PER-103",
+    "name": "Julia Lindqvist",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "JL",
+    "roles": [
+      {
+        "entity": "Odile Lefebvre",
+        "entityId": "CLI-00070",
+        "struct": "PP",
+        "role": "Co-titulaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-230",
+    "name": "Heidi Bergström",
+    "type": "PP",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "HB",
+    "roles": []
+  },
+  {
+    "id": "PER-218",
+    "name": "Erik Doğan",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "ED",
+    "roles": []
+  },
+  {
+    "id": "PER-135",
+    "name": "Claire Al-Mansoori",
+    "type": "PP",
+    "flag": "🇬🇧",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "pep": null,
+    "initials": "CA",
+    "roles": []
+  },
+  {
+    "id": "PER-398",
+    "name": "Emeka Côté",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "EC",
+    "roles": []
+  },
+  {
+    "id": "PER-166",
+    "name": "Valentina Kumar",
+    "type": "PP",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": null,
+    "initials": "VK",
+    "roles": [
+      {
+        "entity": "Nadia Gauthier",
+        "entityId": "CLI-00069",
+        "struct": "PP",
+        "role": "Administrateur / directeur",
+        "share": "—"
+      },
+      {
+        "entity": "Sofia Johansson",
+        "entityId": "CLI-00156",
+        "struct": "PP",
+        "role": "Signataire autorisé",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-386",
+    "name": "Nadia Yılmaz",
+    "type": "PP",
+    "flag": "🇧🇪",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "pep": "NEAR-PEP",
+    "initials": "NY",
+    "roles": []
+  },
+  {
+    "id": "PER-045",
+    "name": "Kristina Silva",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "KS",
+    "roles": []
+  },
+  {
+    "id": "PER-366",
+    "name": "Ursula Ito",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "UI",
+    "roles": []
+  },
+  {
+    "id": "PER-107",
+    "name": "Joëlle Inoue",
+    "type": "PP",
+    "flag": "🇭🇰",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "pep": null,
+    "initials": "JI",
+    "roles": [
+      {
+        "entity": "Bernard Trust",
+        "entityId": "CLI-00100",
+        "struct": "TRUST",
+        "role": "Bénéficiaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-328",
+    "name": "Xiao Kılıç",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": "NEAR-PEP",
+    "initials": "XK",
+    "roles": []
+  },
+  {
+    "id": "PER-155",
+    "name": "Julia Weber",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "JW",
+    "roles": [
+      {
+        "entity": "Bruno Foundation",
+        "entityId": "CLI-00002",
+        "struct": "FOND",
+        "role": "Signataire autorisé",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-291",
+    "name": "Julia Johansson",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": "PEP",
+    "initials": "JJ",
+    "roles": [
+      {
+        "entity": "Svensson GmbH",
+        "entityId": "CLI-00012",
+        "struct": "SARL",
+        "role": "Bénéficiaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-169",
+    "name": "Diane Magnusson",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "DM",
+    "roles": []
+  },
+  {
+    "id": "PER-382",
+    "name": "Tremblay Wealth Management",
+    "type": "DOM",
+    "flag": "🇨🇳",
+    "country": "Chine",
+    "countryCode": "CN",
+    "pep": "NEAR-PEP",
+    "initials": "TR",
+    "roles": []
+  },
+  {
+    "id": "PER-340",
+    "name": "Fatima Fortin",
+    "type": "PP",
+    "flag": "🇲🇽",
+    "country": "Mexique",
+    "countryCode": "MX",
+    "pep": null,
+    "initials": "FF",
+    "roles": []
+  },
+  {
+    "id": "PER-141",
+    "name": "Chiara Al-Rashid",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": null,
+    "initials": "CA",
+    "roles": [
+      {
+        "entity": "Roy Family Office",
+        "entityId": "CLI-00016",
+        "struct": "FO",
+        "role": "Administrateur / directeur",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-201",
+    "name": "Pierre Robert",
+    "type": "PP",
+    "flag": "🇰🇾",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "pep": "NEAR-PEP",
+    "initials": "PR",
+    "roles": []
+  },
+  {
+    "id": "PER-035",
+    "name": "Xavier Dupont",
+    "type": "PP",
+    "flag": "🇸🇬",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "pep": null,
+    "initials": "XD",
+    "roles": []
+  },
+  {
+    "id": "PER-146",
+    "name": "Raj Hassan",
+    "type": "PP",
+    "flag": "🇺🇸",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "pep": "NEAR-PEP",
+    "initials": "RH",
+    "roles": []
+  },
+  {
+    "id": "PER-021",
+    "name": "Klaus Dubois",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": "PEP",
+    "initials": "KD",
+    "roles": []
+  },
+  {
+    "id": "PER-196",
+    "name": "Rita Aslan",
+    "type": "PP",
+    "flag": "🇲🇽",
+    "country": "Mexique",
+    "countryCode": "MX",
+    "pep": null,
+    "initials": "RA",
+    "roles": []
+  },
+  {
+    "id": "PER-250",
+    "name": "Ali Demir",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": null,
+    "initials": "AD",
+    "roles": []
+  },
+  {
+    "id": "PER-168",
+    "name": "Jorge Bruno",
+    "type": "PP",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": "NEAR-PEP",
+    "initials": "JB",
+    "roles": [
+      {
+        "entity": "Fatima Kumar",
+        "entityId": "CLI-00048",
+        "struct": "PP",
+        "role": "Représentant légal",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-040",
+    "name": "Brigitte Larsen",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "BL",
+    "roles": []
+  },
+  {
+    "id": "PER-136",
+    "name": "Ursula Robert",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "UR",
+    "roles": []
+  },
+  {
+    "id": "PER-345",
+    "name": "Viktor Özdemir",
+    "type": "PP",
+    "flag": "🇵🇦",
+    "country": "Panama",
+    "countryCode": "PA",
+    "pep": "PEP",
+    "initials": "VÖ",
+    "roles": []
+  },
+  {
+    "id": "PER-390",
+    "name": "Maria Bernard",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "MB",
+    "roles": []
+  },
+  {
+    "id": "PER-310",
+    "name": "Vincent Kowalski",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": null,
+    "initials": "VK",
+    "roles": []
+  },
+  {
+    "id": "PER-247",
+    "name": "Beatrice Hansen",
+    "type": "PP",
+    "flag": "🇩🇪",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "pep": "PEP",
+    "initials": "BH",
+    "roles": []
+  },
+  {
+    "id": "PER-384",
+    "name": "Fortin Capital",
+    "type": "FO",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "FO",
+    "roles": []
+  },
+  {
+    "id": "PER-288",
+    "name": "Maria Bergström",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "MB",
+    "roles": []
+  },
+  {
+    "id": "PER-090",
+    "name": "Katarina Roy",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "KR",
+    "roles": []
+  },
+  {
+    "id": "PER-165",
+    "name": "Kristina Ferrari",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": null,
+    "initials": "KF",
+    "roles": []
+  },
+  {
+    "id": "PER-087",
+    "name": "Anne Al-Mansoori",
+    "type": "PP",
+    "flag": "🇮🇳",
+    "country": "Inde",
+    "countryCode": "IN",
+    "pep": null,
+    "initials": "AA",
+    "roles": []
+  },
+  {
+    "id": "PER-156",
+    "name": "Delphine Hassan",
+    "type": "PP",
+    "flag": "🇱🇺",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "pep": "PEP",
+    "initials": "DH",
+    "roles": [
+      {
+        "entity": "Fortin Holding",
+        "entityId": "CLI-00005",
+        "struct": "HOLD",
+        "role": "Bénéficiaire",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-342",
+    "name": "Zheng Saito",
+    "type": "PP",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "ZS",
+    "roles": []
+  },
+  {
+    "id": "PER-330",
+    "name": "Yasmine Saito",
+    "type": "PP",
+    "flag": "🇭🇰",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "pep": "NEAR-PEP",
+    "initials": "YS",
+    "roles": []
+  },
+  {
+    "id": "PER-164",
+    "name": "Xavier Yılmaz",
+    "type": "PP",
+    "flag": "🇰🇾",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "pep": null,
+    "initials": "XY",
+    "roles": []
+  },
+  {
+    "id": "PER-354",
+    "name": "Sven Al-Harbi",
+    "type": "PP",
+    "flag": "🇵🇦",
+    "country": "Panama",
+    "countryCode": "PA",
+    "pep": null,
+    "initials": "SA",
+    "roles": [
+      {
+        "entity": "Mohamed Demir",
+        "entityId": "CLI-00007",
+        "struct": "PP",
+        "role": "Représentant légal",
+        "share": "—"
+      }
+    ]
+  },
+  {
+    "id": "PER-269",
+    "name": "Younes Tremblay",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "YT",
+    "roles": []
+  },
+  {
+    "id": "PER-353",
+    "name": "Gagnon Holdings",
+    "type": "DOM",
+    "flag": "🇫🇷",
+    "country": "France",
+    "countryCode": "FR",
+    "pep": null,
+    "initials": "GA",
+    "roles": []
+  },
+  {
+    "id": "PER-249",
+    "name": "Klaus Leclerc",
+    "type": "PP",
+    "flag": "🇨🇭",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "pep": null,
+    "initials": "KL",
+    "roles": []
+  },
+  {
+    "id": "PER-086",
+    "name": "Cédric Côté",
+    "type": "PP",
+    "flag": "🇬🇧",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "pep": "PEP",
+    "initials": "CC",
+    "roles": []
+  },
+  {
+    "id": "PER-315",
+    "name": "Groupe Roy",
+    "type": "DOM",
+    "flag": "🇦🇪",
+    "country": "EAU",
+    "countryCode": "AE",
+    "pep": null,
+    "initials": "GR",
+    "roles": [
+      {
+        "entity": "Eriksson Family Office",
+        "entityId": "CLI-00104",
+        "struct": "FO",
+        "role": "Représentant légal",
+        "share": "—"
+      }
+    ]
+  }
+]

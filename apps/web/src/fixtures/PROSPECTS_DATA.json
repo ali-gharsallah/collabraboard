@@ -1,0 +1,490 @@
+[
+  {
+    "id": "PRO-001",
+    "name": "Meridian Trust Ltd",
+    "initials": "MT",
+    "type": "TRUST",
+    "typeLabel": "Trust",
+    "country": "Jersey",
+    "countryCode": "JE",
+    "countryFlag": "🇯🇪",
+    "segment": "HNWI",
+    "aum": "CHF 12.0M",
+    "sector": "Finance & Asset management",
+    "rm": "Sophie Marchand",
+    "score": 34,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "T",
+    "uboName": "Edward Caine",
+    "firstKyc": {
+      "code": "KYC-2026-JE-1042-R1",
+      "status": "APPROVED"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB T",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-18"
+  },
+  {
+    "id": "PRO-002",
+    "name": "Helvetia Capital SA",
+    "initials": "HC",
+    "type": "SA",
+    "typeLabel": "Société opérationnelle (SA)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 4.3M",
+    "sector": "Private equity",
+    "rm": "Ralf Kessler",
+    "score": 21,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "K",
+    "uboName": "Markus Brun",
+    "firstKyc": {
+      "code": "KYC-2026-CH-2210-R1",
+      "status": "APPROVED"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB K",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-20"
+  },
+  {
+    "id": "PRO-003",
+    "name": "Lac Léman Holding",
+    "initials": "LL",
+    "type": "HOLD",
+    "typeLabel": "Holding",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "HNWI",
+    "aum": "CHF 18.7M",
+    "sector": "Immobilier",
+    "rm": "Valentina Rossi",
+    "score": 44,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "cdbForm": "K",
+    "uboName": "Céline Favre",
+    "firstKyc": {
+      "code": "KYC-2026-CH-3318-R1",
+      "status": "IN_PROGRESS"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB K",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": false
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-22"
+  },
+  {
+    "id": "PRO-004",
+    "name": "Dr. Anna Keller",
+    "initials": "AK",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "Autriche",
+    "countryCode": "AT",
+    "countryFlag": "🇦🇹",
+    "segment": "Mass Affluent",
+    "aum": "CHF 690k",
+    "sector": "Santé",
+    "rm": "Sophie Marchand",
+    "score": 12,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "A",
+    "uboName": "Anna Keller",
+    "firstKyc": {
+      "code": "KYC-2026-AT-4471-R1",
+      "status": "APPROVED"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB A",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-23"
+  },
+  {
+    "id": "PRO-005",
+    "name": "Zürcher Stiftung",
+    "initials": "ZS",
+    "type": "FOND",
+    "typeLabel": "Fondation",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "Affluent",
+    "aum": "CHF 2.9M",
+    "sector": "Media",
+    "rm": "Ming Chen",
+    "score": 40,
+    "risk": "MEDIUM",
+    "ddl": "CDD",
+    "cdbForm": "S",
+    "uboName": "Conseil de fondation",
+    "firstKyc": {
+      "code": "KYC-2026-CH-5560-R1",
+      "status": "UNDER_REVIEW"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB S",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": false
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-24"
+  },
+  {
+    "id": "PRO-006",
+    "name": "Nordic Wealth GmbH",
+    "initials": "NW",
+    "type": "SARL",
+    "typeLabel": "Société (SARL/GmbH)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "countryFlag": "🇩🇪",
+    "segment": "HNWI",
+    "aum": "CHF 9.1M",
+    "sector": "Technologie",
+    "rm": "Ralf Kessler",
+    "score": 28,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "K",
+    "uboName": "Lars Holm",
+    "firstKyc": {
+      "code": "KYC-2026-DE-6690-R1",
+      "status": "APPROVED"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB K",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": false
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-25"
+  },
+  {
+    "id": "PRO-007",
+    "name": "Olivier Blanc",
+    "initials": "OB",
+    "type": "PP",
+    "typeLabel": "Personne physique",
+    "country": "France",
+    "countryCode": "FR",
+    "countryFlag": "🇫🇷",
+    "segment": "Mass Affluent",
+    "aum": "CHF 410k",
+    "sector": "Industrie",
+    "rm": "Valentina Rossi",
+    "score": 18,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "A",
+    "uboName": "Olivier Blanc",
+    "firstKyc": {
+      "code": "KYC-2026-FR-7705-R1",
+      "status": "PENDING_APPROVAL"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB A",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-26"
+  },
+  {
+    "id": "PRO-008",
+    "name": "Genève Family Office",
+    "initials": "GF",
+    "type": "FO",
+    "typeLabel": "Family Office",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "countryFlag": "🇨🇭",
+    "segment": "UHNWI",
+    "aum": "CHF 78.0M",
+    "sector": "Finance & Asset management",
+    "rm": "Sophie Marchand",
+    "score": 31,
+    "risk": "LOW",
+    "ddl": "SDD",
+    "cdbForm": "K",
+    "uboName": "Famille Rochat",
+    "firstKyc": {
+      "code": "KYC-2026-CH-8830-R1",
+      "status": "APPROVED"
+    },
+    "docs": [
+      {
+        "label": "Formulaire CDB K",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Contrat d'ouverture de compte",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Conditions générales",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Profil investisseur (LSFin)",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Pièce d'identité certifiée",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Justificatif de domicile",
+        "present": true,
+        "signed": true
+      },
+      {
+        "label": "Auto-certification CRS / FATCA",
+        "present": true,
+        "signed": true
+      }
+    ],
+    "createdAt": "2026-06-27"
+  }
+]
