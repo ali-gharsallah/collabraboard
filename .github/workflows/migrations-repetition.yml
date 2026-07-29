@@ -1,0 +1,48 @@
+# RÉPÉTITION de migration (R334/MG-05) — hebdomadaire. Prouve, sur une COPIE, que la chaîne
+# restore → migrate → post-deploy → FAT-rapide passe AVANT toute prod. En CI la « copie » est
+# une base neuve ; contre une vraie prod, remplacer l'étape « base neuve » par la restauration
+# d'un dump récent (pg_restore) — les étapes suivantes sont identiques. La migration destructive
+# et la migration détruisant de la donnée sont déjà refusées en amont (porte « 3m »).
+name: migrations-repetition
+on:
+  schedule:
+    - cron: "0 4 * * 1"      # lundi 04:00 UTC
+  workflow_dispatch:
+jobs:
+  repetition:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: olive, POSTGRES_PASSWORD: olive, POSTGRES_DB: olive_copie }
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U olive -d olive_copie"
+          --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://olive:olive@localhost:5433/olive_copie?connection_limit=3
+      WEBHOOK_SECRET: ci-webhook-secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Secrets de test
+        run: |
+          echo "AUDIT_HMAC_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "MFA_ENC_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # « Restauration » : en CI, base neuve (remplacer par pg_restore d'un dump prod pour la vraie répétition).
+      - name: Migrate sur la copie (migrate deploy + post-deploy)
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma migrate deploy
+          pnpm run prisma:post
+      - name: Analyse expand/contract (garde)
+        run: node tools/migrations/run-analyse.mjs
+      - name: FAT-rapide sur la copie migrée (traçabilité + parcours démo)
+        working-directory: apps/api
+        run: |
+          node ../../tools/fat/test.mjs
+          pnpm exec jest --config jest-e2e.config.js --runInBand fat-cloture-demo

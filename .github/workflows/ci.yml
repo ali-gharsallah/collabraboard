@@ -156,6 +156,17 @@ jobs:
           out=$(node tools/olivia-eval/test.mjs); echo "$out"
           echo "$out" | grep -q "### 6/6 tests olivia-eval verts ###"
 
+      # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
+      # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
+      # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille
+      # aussi le backfill idempotent et le gabarit de plan. La RÉPÉTITION restore→migrate→FAT est
+      # un job hebdo séparé (.github/workflows/migrations-repetition.yml).
+      - name: "3m · Migrations expand/contract (harnais 5/5 + analyse des migrations réelles)"
+        run: |
+          out=$(node tools/migrations/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests migrations verts ###"
+          node tools/migrations/run-analyse.mjs
+
       # ── FAT (Factory Acceptance Test, R332/FB) — porte BLOQUANTE (parcours API à jetons réels) ──
       # Vérifie que la matrice de traçabilité parcours→scénario→règle est GÉNÉRÉE et ADOSSÉE au
       # réel : tout scénario/règle déclaré mais non exécuté fait échouer FB-02 (anti-fiction).

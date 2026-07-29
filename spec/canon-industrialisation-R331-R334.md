@@ -27,6 +27,22 @@ pris (roles.guard) → registrar en **IX**. FB et MG libres.
 Le texte du canon PO fait foi pour le CONTENU (IX-01..05, FB-01..07, MG-01..05, phases
 0-5 du guide, A.1/A.5) — message PO du 2026-07-29.
 
+## R334 [canon R331] — Migrations expand/contract vérifiées, répétées
+
+Cadre `tools/migrations/` (MG-01..05, harnais 5/5) :
+- **MG-01 expand-only** : une migration de phase N n'ajoute que ; DROP/RENAME/TRUNCATE, ADD
+  COLUMN NOT NULL sans DEFAULT, SET NOT NULL a posteriori = refusés (porte CI « 3m »). Le
+  contract (suppression) vient en N+1, quand plus aucun code ne lit l'ancien.
+- **MG-02 plan à vérifs obligatoires** : `plan-template.md` — un plan sans Pré-/Post-vérification
+  et « Contract différé (N+1) » est refusé.
+- **MG-03 backfill idempotent à filigrane** : rejouable, jamais de doublon, reprend au filigrane.
+- **MG-04 append-only intouchable** : aucune migration ne mute une table de journal ; la liste
+  est LUE de `post-deploy-v2.sql` (source unique, 24 tables).
+- **MG-05 répétition** : job hebdo `migrations-repetition.yml` restore→migrate→post-deploy→
+  FAT-rapide sur une COPIE (base neuve en CI ; `pg_restore` d'un dump pour la vraie prod).
+
+Interdits tenus : migration destructive en N · UPDATE sur append-only même en migration.
+
 ## R332 [canon R329] — Programme FAT : parcours métier tracés, générés, bloquants
 
 **Décision PO (2026-07-29) — substrat FAT** : « API pour la porte CI + Playwright en job
