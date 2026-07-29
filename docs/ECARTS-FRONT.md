@@ -1093,3 +1093,12 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   (2) chaque chaîne visible → `t("…")`, la clé EST le FR ; (3) traductions au bloc
   ÉCRANS ; (4) le fichier s'ajoute au cliquet — qui vérifie. Les tests FR existants ne
   bougent pas (FR = référence).
+
+## TRANCHE 2 DU CLIQUET i18n — OPRISK + MOBILEADMIN CONVERTIS (2026-07-29)
+
+- Deux écrans-contenus de plus au cliquet (**4 fichiers vérifiés, 0 texte en dur**) :
+  OpRisk (17 clés) et MobileAdmin (24 clés) — l'UI par t(), les DONNÉES verbatim (titres
+  d'incidents, messages clients, motifs). Le cliquet a mordu sur les `<option>` :
+  libellé traduit, VALEUR technique conservée (le contrat API ne bouge pas).
+- Restent 70 écrans au patron — conversion par tranches, chaque fichier ajouté à la
+  liste du cliquet à sa conversion.

@@ -14,6 +14,8 @@ const path = require("path");
 const CONVERTIS = [
   "src/app/router.tsx",            // le shell — labels par t(), sélecteur de langue
   "src/features/bi/BiReporting.tsx",  // tour 3 : premier écran-contenu converti (le patron)
+  "src/features/oprisk/OpRisk.tsx",       // tranche 2
+  "src/features/mobile/MobileAdmin.tsx",  // tranche 2
 ];
 
 const racine = path.join(__dirname, "..");
