@@ -187,6 +187,15 @@ jobs:
           out=$(node tools/fat/test.mjs); echo "$out"
           echo "$out" | grep -q "### 4/4 tests fat verts ###"
 
+      # ── BAT (Business Acceptance Test, R333/FB) — porte BLOQUANTE ──
+      # Cahier de recette CLIENT généré du catalogue, filtré par la licence du tenant (FB-05,
+      # jamais rédigé à la main) ; campagne = verdicts + écarts classés + visa (FB-06) ; porte de
+      # promotion tenant : APTE seulement si complet, sans écart bloquant, visé (R15, FB-07).
+      - name: "3b · BAT — cahier généré + porte de promotion (attendu 4/4)"
+        run: |
+          out=$(node tools/bat/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 tests bat verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api

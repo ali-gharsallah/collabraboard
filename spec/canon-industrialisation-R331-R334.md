@@ -52,6 +52,21 @@ Cadre `tools/migrations/` (MG-01..05, harnais 5/5) :
 
 Interdits tenus : migration destructive en N · UPDATE sur append-only même en migration.
 
+## R333 [canon R330] — Programme BAT : cahier généré, exécuté client, signé
+
+`tools/bat/` (FB-05..07, harnais 4/4) + écran léger `apps/web/src/features/bat/BatCampagne.tsx` :
+- **FB-05** : le cahier de recette CLIENT est GÉNÉRÉ du catalogue (`catalogue.mjs`), filtré par
+  les MODULES de la licence du tenant (R320) — un tenant ne teste que ce qu'il a acheté, jamais
+  rédigé à la main (`genererCahier`/`rendreCahier`).
+- **FB-06** : écran BAT léger (lecture seule) — campagne : cases, verdicts, ÉCARTS classés
+  (BLOQUANT/MINEUR), visa. La logique fait autorité côté moteur puis serveur ; l'écran rend.
+- **FB-07** : porte de promotion tenant — APTE seulement si le cahier est complet (chaque case
+  a un verdict), sans écart BLOQUANT, et VISÉ par un rôle habilité (signature nommée R15 :
+  CO_SR/DIR/ADMIN). `promotable(campagne, modulesLicence)`.
+
+Interdit tenu : cahier BAT rédigé à la main (il est généré du catalogue). Onglet « Recette
+client (BAT) », clé nav traduite EN/DE/IT (rapport i18n 0 écart, cliquet 0 texte en dur).
+
 ## R332 [canon R329] — Programme FAT : parcours métier tracés, générés, bloquants
 
 **Décision PO (2026-07-29) — substrat FAT** : « API pour la porte CI + Playwright en job
