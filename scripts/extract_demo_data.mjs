@@ -78,6 +78,39 @@ for (const name of TARGETS) {
   }
 }
 
+// ── Enrichissement du jeu de démonstration (+24 clients, +24 KYC, +12 reviews) ──
+// PORT VERBATIM de la boucle déterministe olive-demo.html (13771–13795). Ce n'est PAS de
+// l'état runtime : c'est de la donnée de démo générée à l'identique → intégrée aux fixtures
+// pour la parité des compteurs (CLIENTS 60→84, KYCS_DATA 81→105, ACCOUNT_REVIEWS +12).
+if (scope.CLIENTS && scope.KYCS_DATA && scope.ACCOUNT_REVIEWS_DATA) {
+  const segDeAum = (m) => m >= 100 ? "UHNWI" : m >= 10 ? "HNWI" : m >= 1 ? "Affluent" : "Mass Affluent";
+  const CCs = [["CH", "Suisse", "🇨🇭"], ["FR", "France", "🇫🇷"], ["DE", "Allemagne", "🇩🇪"], ["AE", "EAU", "🇦🇪"], ["SG", "Singapour", "🇸🇬"], ["GB", "Royaume-Uni", "🇬🇧"]];
+  const TPs = [["PP", "Personne physique", "A"], ["SA", "Société opérationnelle (SA)", "K"], ["TRUST", "Trust", "T"], ["HOLD", "Holding", "K"], ["FOND", "Fondation", "S"], ["FO", "Family Office", "K"]];
+  const NMs = ["Keller", "Nguyen", "Rossi", "Al-Sabah", "Meunier", "Okafor", "Lindberg", "Costa", "Haddad", "Brunner", "Sato", "Van Dijk"];
+  const PRs = ["Anna", "Marc", "Lena", "Omar"];
+  const RMs = ["Sophie Marchand", "Ralf Kessler", "Valentina Rossi", "Ali Gharsallah", "Patrick Durand", "Lucie Morel"];
+  for (let i = 0; i < 24; i++) {
+    const cc = CCs[i % 6], tp = TPs[i % 6];
+    const nm = tp[0] === "PP" ? (PRs[i % 4] + " " + NMs[i % 12]) : (NMs[i % 12] + " " + (tp[0] === "SA" ? "SA" : tp[0] === "HOLD" ? "Holding" : tp[0] === "TRUST" ? "Trust" : tp[0] === "FOND" ? "Foundation" : "Family Office"));
+    const score = (i * 37 + 11) % 100;
+    const risk = score <= 33 ? "LOW" : score <= 66 ? "MEDIUM" : "HIGH";
+    const ddl = risk === "LOW" ? "SDD" : risk === "MEDIUM" ? "CDD" : "EDD";
+    const cid = "CLI-9" + String(100 + i);
+    const rev = (i % 3 === 0) ? 2 : 1;
+    const prevCode = "KYC-2024-" + cc[0] + "-" + String(1000 + i) + "-R1";
+    const code = "KYC-2026-" + cc[0] + "-" + String(7000 + i) + "-R" + rev;
+    const st = ["IN_PROGRESS", "APPROVED", "UNDER_REVIEW", "DRAFT"][i % 4];
+    scope.CLIENTS.push({ id: cid, name: nm, initials: nm.slice(0, 2).toUpperCase(), type: tp[0], typeLabel: tp[1], country: cc[1], countryCode: cc[0], countryFlag: cc[2], segment: segDeAum((i % 40) + 1 + (i % 9) / 10), aum: "CHF " + ((i % 40) + 1) + "." + (i % 9) + "M", sector: ["Technologie", "Immobilier", "Santé", "Energie"][i % 4], rm: RMs[i % 6], score, risk, ddl, uboId: "PER-9" + i, uboName: NMs[(i + 3) % 12] + " Holding", cdbForm: tp[2], onboardingDate: "2024-0" + ((i % 9) + 1) + "-15", kycCodes: (rev === 2 ? [prevCode, code] : [code]), currentKycStatus: st, tags: (risk === "HIGH" ? ["EDD"] : []).concat(i % 7 === 0 ? ["PEP-Hit"] : []).concat(rev === 2 ? ["R2"] : []), pep: i % 7 === 0 });
+    scope.KYCS_DATA.push({ id: "KYCF-9" + i, code, clientId: cid, clientName: nm, structCode: tp[0], revision: rev, previousKycId: (rev === 2 ? prevCode : null), workflow: ddl, riskScore: score, risk, status: st, wfPhase: ["SAISIE", "COMPLIANCE", "AML", "COMITE"][i % 4], rm: RMs[i % 6], co: "Marc Dubois", screening: { ofac: "CLEAR", seco: (i % 11 === 0 ? "HIT" : "CLEAR"), pep: (i % 7 === 0 ? "HIT" : "CLEAR"), adverse: "CLEAR" }, createdAt: "2026-0" + ((i % 6) + 1) + "-10" });
+    if (i % 2 === 0)
+      scope.ACCOUNT_REVIEWS_DATA.push({ id: "AR-" + cid + "-01", clientId: cid, kycRef: code, trigger: ["Révision annuelle programmée", "Alerte AML déclenchée", "Hit PEP détecté", "Expiration des documents"][i % 4], status: ["PENDING", "IN_PROGRESS", "OVERDUE"][i % 3], reviewDate: "2026-0" + ((i % 6) + 1) + "-2" + (i % 8), nextReviewDate: null, reviewer: ["Marc Dubois (CO)", "Isabelle Vernet (CO Senior)", "Sarah Zimmermann (CO)"][i % 3], rm: RMs[i % 6], outcome: null });
+  }
+  for (const n of ["CLIENTS", "KYCS_DATA", "ACCOUNT_REVIEWS_DATA"]) {
+    fs.writeFileSync(path.join(OUT, n + ".json"), JSON.stringify(scope[n], null, 2) + "\n");
+    const r = report.find(x => x.name === n); if (r) r.count = scope[n].length;
+  }
+}
+
 // ── Rapport de comptages (le test de socle compare ces nombres à la référence) ──
 const w = (s, n) => String(s).padEnd(n);
 console.log("\n  FIXTURE            TYPE     COMPTE");
@@ -89,7 +122,7 @@ for (const r of report) {
 // Vérifications de socle (spec §5 : 60 clients ; types CDB 20 complets).
 if (scope.CLIENTS) {
   const types = [...new Set(scope.CLIENTS.map(c => c.type))].sort();
-  console.log("\n  CLIENTS = " + scope.CLIENTS.length + " (attendu 60)  ·  types CDB 20 = [" + types.join(", ") + "]");
+  console.log("\n  CLIENTS = " + scope.CLIENTS.length + " (attendu 84 = 60 littéral + 24 générés)  ·  types CDB 20 = [" + types.join(", ") + "]");
   const byRisk = scope.CLIENTS.reduce((a, c) => (a[c.risk] = (a[c.risk] || 0) + 1, a), {});
   console.log("  répartition risque : " + JSON.stringify(byRisk));
 }
