@@ -1124,3 +1124,20 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   re-login explicite au bandeau (le brouillon survit, l'exigence est tenue) ; (3) la liste
   blanche du test reprend celle du code (tenant.middleware + mobile.gate) — si elle change,
   les deux bougent ensemble (le test le forcerait).
+
+## SOLDE — VAGUE DE CLÔTURE R330 : READINESS & PIPELINE (2026-07-29, RZ-01..04)
+
+- **R330 livré** : `/readyz` AGRÉGÉ (liste déclarée : db_migree, redis SI REDIS_URL, outbox
+  lag<seuil, jwks, secrets, moteur_cpsi) → 200 si tout OK, 503 sinon (jamais 401 — public) ;
+  `/healthz` vivacité simple ; les deux SANS jeton (sondes). RZ-03 : les secrets déclarent
+  leur PRÉSENCE, jamais leur valeur (grep du corps de réponse). RZ-02/04 : un déploiement =
+  événement `deploiement.enregistre` append-only (version, qui, quand, smokeOk) ; un smoke
+  ROUGE se trace aussi (bascule annulée) ; journal visible en auditit (GET /v1/deploiements,
+  ouvert au SO).
+- **Pipeline PRÉPARÉ (infra/scripts, déclenchement HUMAIN)** : deploy.sh (migrations expand
+  → deploy → /readyz vert → smoke → bascule ; échec = arrêt AVANT bascule) + smoke.sh
+  (readyz + login local + lecture scopée). Les identifiants de smoke vivent au coffre.
+- **ÉCARTS CONSIGNÉS** : (1) Redis n'est vérifié que si REDIS_URL (pas de files au dépôt =
+  composant non requis) ; (2) le relais outbox est un worker in-process — le lag se mesure
+  sur event_consumers ; (3) `/deploiements` est tenanté (RLS) — le journal des déploiements
+  d'un tenant lui appartient ; l'agrégat cross-tenant reste un acte d'ops (hors surface).

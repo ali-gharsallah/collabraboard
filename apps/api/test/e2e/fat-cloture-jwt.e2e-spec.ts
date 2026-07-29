@@ -21,6 +21,7 @@ import { KeyStore } from "../../src/modules/auth/key-store";
 const LISTE_BLANCHE = [
   /^\/v1\/auth\/token$/, /^\/v1\/auth\/oidc\/login$/, /^\/v1\/auth\/methode$/,
   /^\/v1\/auth\/login$/, /^\/v1\/\.well-known\/jwks\.json$/, /^\/v1\/mobile\/auth\//,
+  /^\/v1\/healthz$/, /^\/v1\/readyz$/,                                     // R330 : sondes de déploiement, publiques
 ];
 
 describe("FAT CLÔTURE — R328 : le contexte vient du jeton, les en-têtes sont morts (JW-01..04/06)", () => {

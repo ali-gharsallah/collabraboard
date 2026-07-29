@@ -19,6 +19,7 @@ const SO_GET = [
   /^\/v1\/events\//,                         // T9 : santé du transport + flux (références)
   /^\/v1\/offboarding\//,                    // motifs sensibles R270 — auditer l'art. 10a
   /^\/v1\/tasks(\/|$)/,                      // T3 : ses tâches (accueil SO = T3 + T9, HO-06)
+  /^\/v1\/deploiements$/,                    // RZ-04 : le journal des déploiements (auditit, AU-08 étendu)
 ];
 const SO_TRAIL = [/\/a-date/, /\/replay/, /\/access-matrix/];   // le trail : rejeu à date, tous modules (R48/R49)
 const SO_POST = [/^\/v1\/olivia\/runs\/[^/]+\/stop$/, /^\/v1\/audit\/export$/,
@@ -61,7 +62,8 @@ export class TenantMiddleware implements NestMiddleware {
     const cheminPublic = String(req.originalUrl ?? req.path ?? "").split("?")[0];   // harnais : req.path direct
     if (["/v1/auth/token", "/v1/auth/oidc/login",
          "/v1/auth/methode", "/v1/auth/login",                        // R296 : login deux temps
-         "/v1/.well-known/jwks.json"].includes(cheminPublic)) return next();   // routes publiques
+         "/v1/.well-known/jwks.json",
+         "/v1/healthz", "/v1/readyz"].includes(cheminPublic)) return next();   // routes publiques (R330 : sondes sans jeton)
     // R316 (dégel V7) : la surface mobile est une AUTRE porte — population IAM distincte,
     // jamais le RBAC interne. L'étanchéité vaut dans les deux sens (cf. rejet `pop` plus bas).
     if (SURFACE_MOBILE.test(cheminPublic)) return garderMobile(req, cheminPublic, this.keys, next);
