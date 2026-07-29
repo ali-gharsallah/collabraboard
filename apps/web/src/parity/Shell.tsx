@@ -4,7 +4,8 @@ import { OliveLogo } from "../components/OliveLogo";
 import { LoginScreen } from "./LoginScreen";
 import { ClientsScreen } from "./ClientsScreen";
 import { KycListScreen } from "./KycListScreen";
-import { clientById } from "./components-data";
+import { KycDetailScreen } from "./KycDetailScreen";
+import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
 import NAV_MODULE_MAP from "../fixtures/NAV_MODULE_MAP.json";
@@ -61,8 +62,12 @@ export function Shell() {
 
   const renderScreen = () => {
     if (selectedClient) {
-      return <Placeholder title={openMode === "client" ? "Fiche client — golden record" : "Dossier KYC"}
-        desc={`Écran ${openMode === "client" ? "ClientFileScreen" : "KycDetailScreen (Annexe D)"} — portage de parité en cours. Client sélectionné : ${selectedClient.name}.`} />;
+      if (openMode === "kyc") {
+        const ks = kycsByClientId[selectedClient.id] || [];
+        return <KycDetailScreen client={selectedClient} kyc={ks[ks.length - 1]} onBack={() => setSelectedClient(null)} user={currentUser} />;
+      }
+      return <Placeholder title="Fiche client — golden record"
+        desc={`Écran ClientFileScreen — portage de parité à venir. Client sélectionné : ${selectedClient.name}.`} />;
     }
     switch (screen) {
       case "clients": return <ClientsScreen onOpen={c => { setSelectedClient(c); setOpenMode("client"); }} />;
