@@ -30,6 +30,14 @@ const EXT: Record<Exclude<Langue, "FR">, Record<string, string>> = {
 };
 for (const l of ["EN", "DE", "IT"] as const) Object.assign(DICT[l], EXT[l]);
 
+// ── Contenus d'écrans (tour 3 du cliquet — un bloc par écran converti, clés FR) ──
+const ECRANS: Record<Exclude<Langue, "FR">, Record<string, string>> = {
+  EN: { "BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)": "BI — Custom Reporting (declared projections only — zero free-form SQL)", "Charger l'annuaire": "Load the directory", "Interroger": "Query", "ligne(s) source (scopées BACKEND) · sensibilité": "source row(s) (scoped BACKEND) · sensitivity", "Chargement de l'écran…": "Loading screen…" },
+  DE: { "BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)": "BI — Individuelles Reporting (nur deklarierte Projektionen — kein freies SQL)", "Charger l'annuaire": "Verzeichnis laden", "Interroger": "Abfragen", "ligne(s) source (scopées BACKEND) · sensibilité": "Quellzeile(n) (BACKEND-gescoped) · Sensibilität", "Chargement de l'écran…": "Bildschirm wird geladen…" },
+  IT: { "BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)": "BI — Reporting su misura (solo proiezioni dichiarate — zero SQL libero)", "Charger l'annuaire": "Caricare l'elenco", "Interroger": "Interrogare", "ligne(s) source (scopées BACKEND) · sensibilité": "riga/e sorgente (scope BACKEND) · sensibilità", "Chargement de l'écran…": "Caricamento della schermata…" },
+};
+for (const l of ["EN", "DE", "IT"] as const) Object.assign(DICT[l], ECRANS[l]);
+
 export function langue(): Langue {
   try {
     const l = window.localStorage.getItem("OLIVE_LANG") as Langue | null;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { tokens } from "../../theme/tokens";
+import { traduire, langue } from "../../lib/i18n";
 
 /**
  * `bi` — R314-R315 (dégel V6, ratifié 2026-07-28). Le constructeur n'interroge QUE des
@@ -25,11 +26,12 @@ export function BiReporting() {
   };
   const courante = vues?.find((v) => v.code === vue);
   const td = { fontSize: 12, borderTop: `1px solid ${tokens.color.border}`, padding: "3px 8px" };
+  const t = traduire(langue());        // tour 3 du cliquet : contenu d'écran par t() — clés FR
   return <div>
     {isDemoMode() && <DemoModeBanner/>}
-    <h3>BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)</h3>
+    <h3>{t("BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)")}</h3>
     <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
-      <button onClick={charger} disabled={isDemoMode()} style={{ fontSize: 12 }}>Charger l&apos;annuaire</button>
+      <button onClick={charger} disabled={isDemoMode()} style={{ fontSize: 12 }}>{t("Charger l'annuaire")}</button>
       {vues && <select value={vue} onChange={(e) => { setVue(e.target.value); setDims([vues.find((v) => v.code === e.target.value)!.dimensions[0]]); }} style={{ fontSize: 12 }}>
         {vues.map((v) => <option key={v.code}>{v.code}</option>)}</select>}
       {courante && courante.dimensions.map((d) => <label key={d} style={{ fontSize: 12 }}>
@@ -39,11 +41,11 @@ export function BiReporting() {
         setMsg("");
         try { setResultat(await apiPost("/v1/bi/requete", { vue, dimensions: dims, mesures: courante!.mesures })); }
         catch (e) { setMsg((e as OliveError).message ?? "Erreur"); }         // le refus R314, TEL QUEL
-      }}>Interroger</button>
+      }}>{t("Interroger")}</button>
     </div>
     {msg && <p style={{ fontSize: 12, color: tokens.color.olive700 }}>{msg}</p>}
     {resultat && <div>
-      <p style={{ fontSize: 12, color: tokens.color.muted }}>{resultat.source} ligne(s) source (scopées BACKEND) · sensibilité {resultat.sensibilite}</p>
+      <p style={{ fontSize: 12, color: tokens.color.muted }}>{resultat.source} {t("ligne(s) source (scopées BACKEND) · sensibilité")} {resultat.sensibilite}</p>
       <table style={{ borderCollapse: "collapse" }}><tbody>
         {resultat.lignes.map((l: any, i: number) => <tr key={i}>
           {dims.map((d) => <td key={d} style={td}><strong>{String(l[d])}</strong></td>)}

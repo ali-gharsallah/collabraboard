@@ -13,6 +13,7 @@ const path = require("path");
 
 const CONVERTIS = [
   "src/app/router.tsx",            // le shell — labels par t(), sélecteur de langue
+  "src/features/bi/BiReporting.tsx",  // tour 3 : premier écran-contenu converti (le patron)
 ];
 
 const racine = path.join(__dirname, "..");

@@ -1082,3 +1082,14 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   OpRisk » existe désormais, la maquette cède au canon.
 - RESTE au cliquet : les CONTENUS d'écrans (titres internes, colonnes, boutons) — écran
   par écran, chaque conversion ajoute le fichier à la liste du cliquet.
+
+## TOUR 3 DU CLIQUET i18n — LE PATRON D'ÉCRAN-CONTENU (2026-07-29)
+
+- Premier écran-contenu converti : **BiReporting** (`t()` sur titre, boutons, mention de
+  scope — les données restent des données) ; le fichier entre dans la LISTE DU CLIQUET
+  (2 fichiers, 0 texte en dur). Bloc dictionnaire « ÉCRANS » distinct (un bloc par
+  vague de conversion — maquette / extension nav / contenus, auditables séparément).
+- C'est LE gabarit des 72 écrans restants : (1) `const t = traduire(langue())` ;
+  (2) chaque chaîne visible → `t("…")`, la clé EST le FR ; (3) traductions au bloc
+  ÉCRANS ; (4) le fichier s'ajoute au cliquet — qui vérifie. Les tests FR existants ne
+  bougent pas (FR = référence).
