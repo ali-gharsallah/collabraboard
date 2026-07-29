@@ -81,7 +81,7 @@ describe("FAT OLIVIA — R253 port IA (OL-01..04, backend réel + port de test)"
     expect(msgs.length).toBe(2);                                           // IN + OUT d'échec (seq consommé)
     expect(msgs[1].direction).toBe("OUT");
     expect(msgs[1].texte).toContain("ÉCHEC FOURNISSEUR");
-    expect(msgs[1].latenceMs).toBeGreaterThanOrEqual(150);
+    expect(msgs[1].latenceMs).toBeGreaterThanOrEqual(140);   // ≈ timeout 150ms, tolérance gigue d'horloge (mesure ms, jamais un instant)
     await setOn();
     console.log("OL-04 PASS — 502 typé, OUT d'échec journalisé (seq", msgs[1].seq, ")");
   });

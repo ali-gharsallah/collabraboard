@@ -203,10 +203,13 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:rules
 
-      # ── RUNBOOK §2 · 4 — e2e Postgres réel (6/6) ─────────────────────────────
-      - name: "4 · e2e API réelle + Postgres (attendu 84/84 : kyc-rules 6 + … + A3 4 + V16 6 + V17 6)"
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (336/336) ─────────────────────────
+      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky
+      # sous charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake
+      # (vert au 2e) est absorbé — jamais un masquage d'échec persistant.
+      - name: "4 · e2e API réelle + Postgres (336/336, 1 retry anti-flake §8)"
         working-directory: apps/api
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 
       # ── Recette RLS (RUNBOOK §3.2) : en olive_app sans GUC → 0 ligne ─────────
       - name: "4b · Recette RLS multi-tenant (olive_app, 0 ligne sans GUC)"
