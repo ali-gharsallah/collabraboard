@@ -6,6 +6,10 @@ import { extraireMeta } from "../registrar/registrar.mjs";
 
 export { extraireMeta };
 
+// Comparateur STABLE par point de code (jamais localeCompare : dépend de l'ICU/locale de la
+// machine → ordre différent en CI vs local → dérive du doc généré). Déterministe partout.
+const cmpStable = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
 // ── Domaine lisible dérivé du chemin d'un artefact (déterministe, jamais deviné au-delà du nom).
 export function domaineDepuisChemin(chemin) {
   const base = String(chemin).split("/").pop().replace(/\.(md|feature)$/i, "");
@@ -54,7 +58,7 @@ export function indexerArtefacts(fichiers) {
         regles: reglesAvecPlages(contenu), possede: plageDuNom(chemin),
         porteScenarios: porteScenarios(chemin, contenu, meta.familles) };
     })
-    .sort((a, b) => (a.regles[0] ?? 9999) - (b.regles[0] ?? 9999) || a.chemin.localeCompare(b.chemin));
+    .sort((a, b) => (a.regles[0] ?? 9999) - (b.regles[0] ?? 9999) || cmpStable(a.chemin, b.chemin));
 }
 
 // ── Lie chaque famille de scénarios (ex. « LK ») aux suites de test qui la contiennent.
