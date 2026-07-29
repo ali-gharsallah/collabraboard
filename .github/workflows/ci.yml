@@ -211,10 +211,10 @@ jobs:
       # + porte no-drift : --check régénère en mémoire et compare (en-tête volatil date+hash
       # normalisé). docs/CANON-MASTER.md édité à la main OU périmé (nouvelle ratification non
       # régénérée) → ROUGE. Régénérer : node tools/canon-master/run.mjs. Le généré fait foi.
-      - name: "3c · CANON-MASTER — doc faisant foi généré + no-drift (attendu 6/6)"
+      - name: "3c · CANON-MASTER — doc faisant foi généré + no-drift (attendu 7/7)"
         run: |
           out=$(node tools/canon-master/test.mjs); echo "$out"
-          echo "$out" | grep -q "### 6/6 tests canon-master verts ###"
+          echo "$out" | grep -q "### 7/7 tests canon-master verts ###"
           node tools/canon-master/run.mjs --check
 
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
