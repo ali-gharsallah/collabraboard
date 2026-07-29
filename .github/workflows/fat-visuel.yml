@@ -23,16 +23,18 @@ jobs:
       - name: Build web
         working-directory: apps/web
         run: npx vite build
-      # @playwright/test installé ICI (hors manifeste workspace, lockfile intact) + son Chromium.
-      - name: Playwright (ad-hoc, hors lockfile) + Chromium
-        working-directory: apps/web
+      # @playwright/test ajouté au ROOT via pnpm (npm ne sait pas résoudre le protocole
+      # `workspace:*` du monorepo → EUNSUPPORTEDPROTOCOL). Un seul exemplaire au root, résolu
+      # depuis apps/web/playwright en remontant l'arbre (pas de dual-package). Mutation de
+      # lockfile ÉPHÉMÈRE (runner jetable, jamais commitée). + son Chromium managé.
+      - name: Playwright (ajout root pnpm, éphémère) + Chromium
         run: |
-          npm install --no-save @playwright/test
-          npx playwright install --with-deps chromium
+          pnpm add -Dw @playwright/test
+          pnpm exec playwright install --with-deps chromium
       - name: Recette visuelle (non bloquante)
         working-directory: apps/web
         continue-on-error: true
-        run: npx playwright test --config playwright/playwright.config.mjs
+        run: pnpm exec playwright test --config playwright/playwright.config.mjs
       - name: Empreintes d'écran (artefact)
         if: always()
         uses: actions/upload-artifact@v4
