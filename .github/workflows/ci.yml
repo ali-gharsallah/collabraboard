@@ -99,10 +99,12 @@ jobs:
       - name: "Sécurité · audit des dépendances (bloquant sur CRITIQUES) + grep secrets (§3.7)"
         run: |
           pnpm audit --audit-level critical
-          # Aucun secret en clair au dépôt : motifs de clés privées/API hors fixtures de test
+          # Aucun secret en clair au dépôt : motifs de clés privées/API hors fixtures de test.
+          # NB : on exclut .github/workflows — ce sont les fichiers CI qui DÉFINISSENT ces motifs
+          # comme arguments de grep (sinon la garde se détecte elle-même : faux positif).
           ! grep -rn --include="*.ts" --include="*.js" --include="*.yml" --include="*.env" \
             -e "BEGIN RSA PRIVATE KEY" -e "BEGIN EC PRIVATE KEY" -e "AKIA[0-9A-Z]\{16\}" \
-            apps/api/src apps/web/src infra .github | grep -v "spec\|test\|exemple" || (echo "SECRET EN CLAIR DÉTECTÉ" && exit 1)
+            apps/api/src apps/web/src infra .github | grep -v "spec\|test\|exemple\|\.github/workflows" || (echo "SECRET EN CLAIR DÉTECTÉ" && exit 1)
 
       # ── R329 (vague de clôture) — zéro branche `demo` dans le code produit (DM-03) ──
       - name: "Sécurité · zéro branche de logique demo (la démo est un tenant ordinaire)"
