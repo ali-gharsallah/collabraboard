@@ -8,7 +8,7 @@
 
 # Mapping session → repo (clé de lecture des documents d'Ali)
 
-**Statut §1 : RATIFIÉ (Ali Gharsallah, 2026-07-29).** §2 (à confirmer) et §3 (divergences) restent ouverts.
+**Statut §1 : RATIFIÉ (Ali, 2026-07-29).** **§2 : RÉSOLU (Ali, 2026-07-29)** — identité Olivia + Home sans numéro. §3 (divergences structurelles) reste ouvert.
 
 ## 1. Mappings CONFIRMÉS — RATIFIÉS (grounded repo — consommés par le générateur)
 
@@ -29,12 +29,19 @@ Format machine : le générateur lit les lignes `| Rxxx | Ryyy | … |` de CETTE
 > **Règle observée** : décalage constant **+3** sur toute la région clôture→industrialisation
 > (session R325–R331 ⇒ repo R328–R334). Les renumérotations R70→R95 et R222→R248 sont ponctuelles.
 
-## 2. À CONFIRMER (source de renumérotation introuvable au repo — NON consommé)
+## 2. RÉSOLU (Ali, 2026-07-29) — identité / sans numéro : PAS des renumérotations, donc PAS consommé
 
-| Session | Repo présumé | Objet | Pourquoi en attente |
-|---------|--------------|-------|---------------------|
-| R253–R266 | R253–R266 (identité ?) | Olivia v1/v1.1/v2 | La doctrine cite « Olivia R253–R266 » comme renumérotation, mais le repo utilise déjà R253–R266 pour Olivia. Source de la renumérotation d'origine introuvable — identité probable, à trancher. |
-| Home « R253* » | (sans R-number) | Écran Home | `PROJECT-INDEX.md` : Home = principe **sans R-number**. Le `*` de session est à retirer. |
+Vérifié sur le repo, où la numérotation Olivia est **RATIFIÉE (Ali, 2026-07-27)** dans les en-têtes
+des specs. Résultat : ni l'un ni l'autre n'est un décalage session→repo.
+
+| Session | Repo | Verdict | Preuve (repo) |
+|---------|------|---------|---------------|
+| R253–R266 | R253–R266 | **IDENTITÉ** — aucune renumérotation. Olivia **v1 = R253–R257**, **v1.1 = R258**, **v2 = R259–R266** (familles OL-01..34, SW-01..18). La mention doctrinale « Olivia R253–R266 » nommait la plage, pas un décalage. | `spec/spec-fonctionnelle-home-olivia.md` (en-tête « NUMÉROTATION RATIFIÉE ») · `spec/spec-olivia-v1.1-comportement-v2-agents.md` (en-tête) |
+| Home « R253* » | (sans R-number) | **SANS NUMÉRO DE RÈGLE** — décision Ali 2026-07-27 (pattern écrans vagues 1-9) ; invariants portés par **HO-01..08**. Le `*` de session était un placeholder, retiré. | `spec/spec-fonctionnelle-home-olivia.md` (PARTIE A) · `docs/PROJECT-INDEX.md` |
+
+> Conséquence : le générateur teste l'**identité** par défaut pour tout numéro hors §1 ; ces deux
+> entrées n'ajoutent **aucune** ligne de mapping (identité triviale / absence de numéro). Rien à
+> traduire, rien à consommer — §2 est clos.
 
 ## 3. DIVERGENCES structurelles session↔repo (à signaler, pas à absorber)
 

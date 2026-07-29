@@ -2,7 +2,7 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-07-29 · commit `32b6ae0`.** Ce document se périme visiblement :
+> **Généré le 2026-07-29 · commit `fd1f9d3`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
@@ -32,7 +32,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 > Cette table ne capte que la présence NUMÉRIQUE. Les divergences **structurelles/sémantiques**
 > (ex. On-premise session R332–R334 absent du repo — créneau R335–R339 pris par la robustesse,
-> PK réservé **R340+** par décision Ali) sont énumérées dans `spec/mapping-session-repo.md` §2/§3.
+> PK réservé **R340+** par décision Ali) sont dans `spec/mapping-session-repo.md` §3 (§2 résolu : Olivia = identité, Home sans numéro).
 
 ## a) Mapping session → repo (seed ratifié — `spec/mapping-session-repo.md`)
 
