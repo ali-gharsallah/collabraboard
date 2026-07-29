@@ -257,7 +257,11 @@ def traiter(env):
             return {"contract_version": cv, "erreur_typee": {
                 "type": "UNSUPPORTED_CONTRACT", "code": "CPSI_CONTRACT",
                 "message": f"contract_version {cv} non supportée (supportées : {sorted(SUPPORTED_CONTRACTS)})"}}
-        engine = OliveCpsiEngine(env.get("config") or {})
+        # rejeu_leger (ratifié PO 2026-07-28) : le pont ne fait QUE des lectures après rejeu —
+        # les recalculs intermédiaires d'hydratation (journal interne, jamais lu par une
+        # requête) sont sautés ; chaque réponse reste une fonction pure de (journal ≤ as_of,
+        # config). Jauge avant/après : 10 001 evts 159.4 s → linéaire (cf. fat-charge-cpsi).
+        engine = OliveCpsiEngine(env.get("config") or {}, rejeu_leger=True)
         journal = env.get("journal") or []
         t0 = time.perf_counter()
         _replay(engine, journal, _dt(env["as_of"]) if env.get("as_of") else None)  # journal filtré ≤ as_of par la porte (R48)

@@ -963,3 +963,20 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   RUNBOOK §9 et INTERDITE en production : on ne purge pas un journal ; (4) le seed
   s'exécute par la machinerie ts-jest (config jest-seed dédiée, périmètre disjoint de
   l'e2e) — pas de ts-node au dépôt, pas de dépendance ajoutée pour un outil de démo.
+
+## SOLDE — OPTIMISATION DU REJEU MOTEUR (2026-07-28, RATIFIÉE « tout ratifié »)
+
+- **Levée du gel** : la ratification PO couvre l'optimisation du rejeu CPSI que la jauge
+  R250 exigeait (constat §6 : 10 001 evts = 159.4 s, quadratique).
+- **Livré** : mode `rejeu_leger` OPT-IN du moteur (défaut False — le contrat direct-Python
+  PC-01..06 et la suite pytest 18/18 sont inchangés au bit près) ; le PONT seul l'active :
+  les recalculs intermédiaires d'hydratation (score_recalcule/bande_franchie/tâches à
+  chaque ingestion — journal interne `events`/`taches` qu'AUCUNE requête du pont ne lit)
+  sont sautés ; toute lecture reste une fonction PURE de (journal ≤ as_of, config).
+- **Preuves** : identité BYTE-À-BYTE prouvée sur les 10 commandes du pont (lourd vs léger,
+  journal mixte 302 événements) · pytest 18/18 · e2e 40 suites / 323 tests · harnais 0 ✗ ·
+  jauge avant/après : 10 001 evts **159 424 ms → 103.7 ms** (~1 500×, linéaire) ;
+  2 501 evts 4 021 ms → 84.9 ms. CPSI_REPLAY_SLOW ne se déclenche plus à 10k (< warn).
+- **Écart consigné** : le diff moteur est MINIMAL (un drapeau + un court-circuit de
+  `_recalculer`) — aucune règle, aucun barème, aucun arrondi touché ; le mode lourd reste
+  le défaut et la seule voie des tests de caractérisation du moteur.

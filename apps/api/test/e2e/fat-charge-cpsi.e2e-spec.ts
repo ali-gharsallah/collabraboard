@@ -8,11 +8,13 @@
  * Les signaux sont insérés au format EXACT de la porte (type ratifié hit_screening), en
  * fixture de test — jamais une donnée simulée en prod (R167).
  *
- * CONSTAT DE CHARGE (2026-07-28, gravé au solde §6) : le rejeu est QUADRATIQUE — le moteur
- * recalcule score_comportemental à CHAQUE ingestion (profil cProfile : 3000 signaux ⇒ 7.5 s,
- * 2.3 M appels _decay). Le moteur est INTOUCHABLE : l'optimisation est un chantier ratifiable
- * PO, la jauge R250 notifie en attendant. La frontière rejoue N=2500 (≈8 s) à CHAQUE passe ;
- * la pleine charge canon se rejoue à la demande : CPSI_CHARGE=10000 npx jest fat-charge-cpsi.
+ * CONSTAT DE CHARGE (2026-07-28) : le rejeu était QUADRATIQUE — le moteur recalculait
+ * score_comportemental à CHAQUE ingestion (10 001 evts = 159.4 s, profil cProfile gravé au
+ * solde §6). OPTIMISATION RATIFIÉE PO (« tout ratifié ») : mode `rejeu_leger` opt-in du
+ * moteur, activé par le PONT seulement — les recalculs intermédiaires (journal interne,
+ * jamais lu par une requête) sont sautés, chaque lecture reste PURE ; identité prouvée
+ * byte-à-byte sur les 10 commandes (lourd vs léger). Après : 10 001 evts = 103.7 ms.
+ * La frontière rejoue N=2500 à chaque passe ; pleine charge : CPSI_CHARGE=10000.
  */
 import * as request from "supertest";
 import { randomUUID } from "crypto";
