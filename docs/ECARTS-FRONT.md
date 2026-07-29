@@ -997,3 +997,21 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   « Octopulse OpRisk » : repli FR jusqu'à correction de la clé maquette (la maquette cède
   au canon, G-hiérarchie) ; (4) AUCUNE donnée métier n'est traduite — ce qui vient du
   backend s'affiche tel quel (FE-04), la langue est un choix d'affichage.
+
+## SOLDE — CANON « 4 DERNIERS ÉCARTS » PARTIE 1 : R324/R325 DORMANTS (2026-07-29)
+
+- **Étape 0 ratifiée** : canon R321-R324 → dépôt **R324-R327** (R321-R323 pris par
+  OpRisk) ; scénarios canon PC-15..20 → **PC-20..PC-25** ; famille LN conservée.
+  Spec enregistré : spec/canon-solde-4-ecarts-R324-R327.md.
+- **R324/R325 = CONTRAT DORMANT, règle du canon appliquée** : la jauge R250 post-
+  rejeu_leger est à **103.7 ms pour 10 001 événements** (seuil 2 000 ms) — « optimisation
+  non déclenchée, jauge à 103.7 ms ». Livré : PC-20 PERMANENT (bloc 19 Python, 19/19 —
+  équivalence byte-à-byte léger/lourd sur les 10 commandes + rejeu à date, pleine charge
+  à la demande CPSI_EQUIV=10000) ; chemin déclaré dans les meta R250 (`chemin:
+  "replay_complet"` — seul chemin existant) ; 3 clés R-Q dormantes déclarées
+  (snapshot_interval_events, engine_cache_actif, engine_cache_ttl_s).
+- **ÉCARTS CONSIGNÉS** : (1) fixture PC-20 permanente à 1 200 evts (le chemin lourd est
+  quadratique — c'est la raison d'être du léger) ; (2) l'injection de corruption de
+  snapshot (canon) viendra AVEC le snapshot (PC-21..23) — rien à corrompre aujourd'hui ;
+  (3) le déclencheur reste la jauge : si cpsi_replay_warn_ms refranchit en réel,
+  PC-21..25 s'implémentent selon le contrat figé.

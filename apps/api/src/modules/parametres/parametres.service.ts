@@ -211,6 +211,16 @@ export const REGISTRE_RQ: Entree[] = [
     description: "Mode d'authentification du tenant (jwt | sso). NE S'ÉCRIT QUE par la bascule four-eyes (POST /v1/admin/sso/mode + visa d'un second, R13) — versionnée à date (R68/R126)." },
   { cle: "sso_bascule_coupe_sessions", type: "bool", defaut: false, regle: "R290", requis: false,
     description: "La bascule de mode coupe-t-elle les sessions ouvertes ? Défaut faux : les jetons émis restent vérifiables jusqu'à expiration (grâce JWKS — structurel, IM-04)." },
+  // ── Solde 4 écarts — R324/R325 CONTRAT DORMANT (étape 0 ratifiée 2026-07-29) : le
+  //    snapshot/cache ne s'ACTIVENT que si la jauge R250 refranchit cpsi_replay_warn_ms
+  //    (état au jour de ratification : 103.7 ms pour 10 001 evts). Les clés portent le
+  //    contrat ; le mécanisme viendra avec PC-21..25. ──
+  { cle: "snapshot_interval_events", type: "int", defaut: 1000, regle: "R324", requis: false,
+    description: "CONTRAT DORMANT R324 : période (en événements) de production d'un snapshot — projection JETABLE du journal (état + watermark seq + version de config + contract_version), jamais une source. Équivalence prouvée en continu (PC-20), invalidation automatique, purge indolore. Sans effet tant que l'optimisation n'est pas déclenchée par la jauge R250." },
+  { cle: "engine_cache_actif", type: "bool", defaut: false, regle: "R325", requis: false,
+    description: "CONTRAT DORMANT R325 : cache d'instance moteur par tenant — commodité RÉVOCABLE (watermark comparé À CHAQUE lecture, jamais une lecture en retard) ; le chemin utilisé est déclaré dans les meta R250 (replay_complet | snapshot+queue | cache). Défaut FAUX ; sans effet tant que l'optimisation n'est pas déclenchée." },
+  { cle: "engine_cache_ttl_s", type: "int", defaut: 300, regle: "R325", requis: false,
+    description: "CONTRAT DORMANT R325 : TTL (secondes) du cache d'instance. Un cache invalide ou absent = retour au chemin R324/rejeu — aucun chemin de code distinct pour le RÉSULTAT, seulement pour la latence." },
   // ── Dégel vague 9 — Octopulse OpRisk R321-R323 (ratifié 2026-07-28). ──
   { cle: "oprisk_taxonomie", type: "json", regle: "R321", requis: false,
     defaut: ["FRAUDE_INTERNE", "FRAUDE_EXTERNE", "PRATIQUES_EMPLOI", "CLIENTS_PRODUITS_PRATIQUES",

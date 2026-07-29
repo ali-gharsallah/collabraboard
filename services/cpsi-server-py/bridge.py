@@ -281,8 +281,13 @@ def traiter(env):
             raise CpsiError(f"commande inconnue : {commande} (default-deny)")
         else:
             res = QUERIES[commande_effective](engine, q)
+        # R325 (contrat dormant, ratifié 2026-07-29) : les meta DÉCLARENT le chemin de
+        # production du chiffre. Un seul existe aujourd'hui : replay_complet (léger/lourd =
+        # même rejeu intégral) ; snapshot+queue et cache viendront avec PC-21..25 si la
+        # jauge refranchit — l'audit voit toujours COMMENT le chiffre a été produit.
         return {"contract_version": cv, "resultat": res,
-                "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms}}
+                "meta": {"evenements_rejoues": len(journal), "duree_ms": duree_ms,
+                         "chemin": "replay_complet"}}
     except CpsiError as e:  # default-deny / règle métier du moteur → erreur TYPÉE (jamais avalée)
         return {"contract_version": cv, "erreur_typee": {
             "type": "DEFAULT_DENY", "code": "CPSI_ERROR", "message": str(e)}}
