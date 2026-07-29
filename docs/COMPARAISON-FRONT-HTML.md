@@ -52,3 +52,15 @@ jamais un sélecteur — la maquette cède, G4) ; les refus backend sont rendus 
 - `apps/web` : test **FE-CMP** (palette maquette ↔ tokens.ts) + `scripts/rapport-i18n.js`
   (0 clé nav manquante) + `scripts/verifier-i18n-cliquet.js` (cliquet zéro-dur).
 - Toute dérive de palette ou toute clé de nav manquante rend la CI rouge.
+
+
+## 5. MISE À JOUR (décisions PO 2026-07-29) — 71/72
+
+- Les 4 bacs sbkyc/sbbrm/sbcf/sbwf étaient DÉJÀ livrés (endpoints /v1/sandbox/*, hub
+  Sandboxes.tsx, tests fat-bs 5/5 dont BS-01 zéro mutation) mais comptés « absents » car
+  sans onglet dédié. RÉSOLU : 4 onglets deep-link ouvrent le hub focalisé → couverture 1:1
+  de la maquette. **Couverture : 71/72.**
+- Le seul écran restant absent est **editorconsole (Administration Éditeur)** — CONFORME au
+  canon **R319** (instance vendor SÉPARÉE, EDITOR jamais au RBAC tenant) : « absent par
+  canon, non par retard ». Scaffoldé comme app distincte apps/editor-console.
+- Aucun « absent » inexpliqué : 71 présents au front tenant + 1 sur l'instance vendor = 72/72.

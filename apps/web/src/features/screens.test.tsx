@@ -1410,3 +1410,18 @@ describe("FE-CMP2 — les écrans convertis n'ont AUCUNE couleur hex décorative
     }
   });
 });
+
+describe("FE-SB-NAV — 4 onglets deep-link vers le hub Bacs à sable (71/72, décision PO)", () => {
+  it("l'onglet Bac à sable BRM ouvre le hub FOCALISÉ sur sbbrm (surbrillance) — un seul écran, 4 accès", async () => {
+    window.localStorage.removeItem("OLIVE_LANG");
+    const { Router } = await import("../app/router");
+    render(<Router/>);
+    fireEvent.click(screen.getByRole("button", { name: "Bac à sable BRM" }));
+    // le hub s'affiche, le bac sbbrm est ancré et mis en évidence
+    const bac = await screen.findByText("sbbrm");
+    expect(bac).toBeInTheDocument();
+    expect(document.getElementById("bac-sbbrm")).toBeTruthy();
+    // le bac AML reste présent (c'est bien LE hub, pas un écran séparé)
+    expect(screen.getByText("sbkyc")).toBeInTheDocument();
+  });
+});
