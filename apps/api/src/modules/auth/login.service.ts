@@ -55,7 +55,7 @@ export class LoginService {
   async methode(email?: string) {
     const domaine = this.domaineDe(email);
     // R296 (§7) : la résolution se protège AUSSI — l'énumération de domaines se paie (429 typé)
-    this.limiteur.garder(`methode|${String(email).trim().toLowerCase()}`, LIMITES.methode);
+    await this.limiteur.garder(`methode|${String(email).trim().toLowerCase()}`, LIMITES.methode);
     const tenantId = await this.resoudreTenant(domaine);
     if (!tenantId) return { methode: "LOCAL" };                            // même forme — rien de révélé (OL-34)
     if ((await this.modeEnVigueur(tenantId)) !== "sso") return { methode: "LOCAL" };
@@ -73,7 +73,7 @@ export class LoginService {
     const email = String(dto!.email).trim().toLowerCase();
     // R296 (§7) : fenêtre glissante PAR identifiant, AVANT toute résolution — le 429 est
     // identique que l'email existe ou non (jamais un oracle), aucune punition collective.
-    this.limiteur.garder(`login|${email}`, LIMITES.login);
+    await this.limiteur.garder(`login|${email}`, LIMITES.login);
     const tenantId = await this.resoudreTenant(domaine);
     if (!tenantId || !dto?.password) {
       PasswordHasher.verify(dto?.password ?? "", DUMMY);                   // leurre : même coût que la voie réelle

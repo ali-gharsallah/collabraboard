@@ -1040,3 +1040,19 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   la liste du cliquet est une discipline de revue (le retrait se voit au diff) ; (4) les
   gabarits de courrier sont du TEXTE D'INTERFACE (traduits par l'éditeur) — le motif
   reste une donnée, verbatim.
+
+## SOLDE — CANON « 4 DERNIERS ÉCARTS » PARTIE 3 : INFRA CADRÉE, STORE PARTAGÉ LIVRÉ (2026-07-29)
+
+- **§3.5 LIVRÉ (code)** : le rate limit R296 vit dans un STORE enfichable —
+  `MemoireRateStore` (dev/mono-instance) / `RedisRateStore` (fenêtre glissante par
+  sorted-set, activé par REDIS_URL) : N instances = UN quota par construction. RL-04
+  prouve le quota GLOBAL (deux limiteurs, un store — mémoire ET adaptateur Redis via
+  stub in-process). Écarts : (1) le démon Docker est indisponible en session — la
+  recette « saturer via app1, 429 via app2 » se REJOUE en staging avec
+  infra/compose/prod-compose.yml ; (2) ioredis se charge dynamiquement (présent là où
+  REDIS_URL l'est) — pas de dépendance ajoutée au dev.
+- **Runbook §1-§10 PRÉPARÉ (fichiers, zéro provisionnement)** : infra/exoscale (Terraform
+  réseau/SG/VMs/SOS/DR), infra/scripts (backup-walg.sh + restore-test.sh CHRONOMÉTRÉ —
+  le critère §4), infra/compose (2 instances app + Redis AOF + Caddy TLS/HSTS),
+  infra/observabilite (alertes dead-letters AS-04 / jauge R250 / backups / disque —
+  canal réel à brancher §9). L'acte humain restant = appliquer, pas bricoler.

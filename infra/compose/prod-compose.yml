@@ -1,0 +1,29 @@
+# §3 — déploiement REPRODUCTIBLE par script (K8s différé, décision PO tenue).
+# DEUX instances app derrière Caddy : le rate limit R296 est PARTAGÉ via Redis
+# (REDIS_URL) — le quota est global, jamais N× (§3.5 ; RL-04 le prouve côté code,
+# CE compose le prouve en staging : saturer via l'instance A, vérifier 429 via B).
+services:
+  caddy:
+    image: caddy:2
+    ports: ["443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile", "caddy-data:/data"]   # §8 TLS auto + HSTS
+    depends_on: [app1, app2]
+  app1: &app
+    image: olive/api:${OLIVE_VERSION:?}
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      REDIS_URL: redis://redis:6379          # §3.5 : store PARTAGÉ du rate limit
+      AUDIT_HMAC_SECRET: ${AUDIT_HMAC_SECRET:?}   # §7 : depuis le coffre, jamais en clair au repo
+      MFA_ENC_KEY: ${MFA_ENC_KEY:?}
+    depends_on: [postgres, redis]
+  app2: *app
+  postgres:
+    image: postgres:16
+    environment: { POSTGRES_DB: olive, POSTGRES_USER: olive, POSTGRES_PASSWORD: ${PG_PASSWORD:?} }
+    volumes: ["pg-data:/var/lib/postgresql/data"]
+    # §4 : WAL-G en sidecar/cron sur l'hôte data (voir infra/scripts/backup-walg.sh)
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]                    # §5 : persistance AOF
+    volumes: ["redis-data:/data"]
+volumes: { caddy-data: {}, pg-data: {}, redis-data: {} }

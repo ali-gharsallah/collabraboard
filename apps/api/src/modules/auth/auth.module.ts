@@ -205,7 +205,9 @@ function oidcConfigFromEnv(): OidcConfig {
   imports: [ParametresModule],   // R290
   controllers: [AuthController, JwksController, MfaController, UsersController, IamGuideController, SsoController],
   providers: [
-    AuthService, UsersService, MfaService, RolesGuard, LoginService, LoginRateLimiter,
+    AuthService, UsersService, MfaService, RolesGuard, LoginService,
+    // Store partagé §3.5 : Redis dès REDIS_URL (N instances = UN quota), mémoire sinon.
+    { provide: LoginRateLimiter, useFactory: () => new LoginRateLimiter() },
     // MfaService dépend de SecretBox (metadata décorateur → DI, la valeur par défaut du
     // constructeur ne suffit pas). Câblage documenté dans mfa.service.ts.
     { provide: SecretBox, useFactory: () => new SecretBox(process.env.MFA_ENC_KEY) },

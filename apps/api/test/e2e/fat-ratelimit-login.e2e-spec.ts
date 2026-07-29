@@ -78,3 +78,37 @@ describe("FAT RATE LIMIT — §7 : le login se protège serveur (R296), 429 typ�
     console.log(`RL-03 PASS — mobile 429 au ${premier429 + 1}e essai`);
   });
 });
+
+// ── Partie 3 du solde 4 écarts (ratifié 2026-07-29) : le STORE du rate limit est PARTAGEABLE —
+//    N instances app = UN quota (jamais N×). L'adaptateur Redis est prêt (REDIS_URL) ; ici il
+//    se prouve contre un stub in-process (démon Docker indisponible en session — le test
+//    « 2 instances compose » se rejoue en staging, consigné). ──
+describe("FAT RATE LIMIT — store PARTAGÉ : deux limiteurs, un quota (RL-04)", () => {
+  it("RL-04 [R296/§3.5] deux instances de limiteur sur UN store → le quota est GLOBAL ; l'adaptateur Redis compte pareil", async () => {
+    const { LoginRateLimiter, MemoireRateStore, RedisRateStore, LIMITES } = await import("../../src/modules/auth/login-rate");
+    // 1. Store mémoire PARTAGÉ entre deux « instances app »
+    const store = new MemoireRateStore();
+    const app1 = new LoginRateLimiter(store), app2 = new LoginRateLimiter(store);
+    let refus = 0;
+    for (let i = 0; i < LIMITES.login.max; i++)
+      await (i % 2 === 0 ? app1 : app2).garder("login|partage@gwb.ch", LIMITES.login);   // 8 essais RÉPARTIS
+    try { await app2.garder("login|partage@gwb.ch", LIMITES.login); } catch { refus++; }
+    expect(refus).toBe(1);                                                  // le 9e refuse GLOBALEMENT — pas 8 par instance
+    // 2. L'adaptateur REDIS (stub in-process : zremrangebyscore/zadd/zcard/pexpire) — même contrat
+    const zsets = new Map<string, Map<string, number>>();
+    const stub = {
+      zremrangebyscore: async (k: string, _min: number, max: number) => {
+        const z = zsets.get(k) ?? new Map(); for (const [m, s] of z) if (s <= max) z.delete(m); zsets.set(k, z); },
+      zadd: async (k: string, score: number, membre: string) => { const z = zsets.get(k) ?? new Map(); z.set(membre, score); zsets.set(k, z); },
+      zcard: async (k: string) => (zsets.get(k) ?? new Map()).size,
+      pexpire: async () => 1,
+    };
+    const redisStore = new RedisRateStore(stub as any);
+    const r1 = new LoginRateLimiter(redisStore), r2 = new LoginRateLimiter(redisStore);
+    let refusRedis = 0;
+    for (let i = 0; i < LIMITES.login.max; i++) await (i % 2 ? r1 : r2).garder("login|redis@gwb.ch", LIMITES.login);
+    try { await r1.garder("login|redis@gwb.ch", LIMITES.login); } catch { refusRedis++; }
+    expect(refusRedis).toBe(1);
+    console.log("RL-04 PASS — quota GLOBAL sur store partagé (mémoire ET adaptateur Redis)");
+  });
+});

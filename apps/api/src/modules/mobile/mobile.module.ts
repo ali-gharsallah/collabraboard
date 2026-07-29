@@ -152,7 +152,7 @@ export class MobileService {
   // ── MB-02 : activation avec le code hors bande — puis le MFA est OBLIGATOIRE. ──
   async authActiver(dto: { identite?: string; code?: string }) {
     if (!dto?.identite || !dto?.code) throw new UnauthorizedException("identite et code requis");
-    this.limiteur.garder(`mobile-activer|${dto.identite}`, LIMITES.login);  // R296 (§7) — même garde que le login
+    await this.limiteur.garder(`mobile-activer|${dto.identite}`, LIMITES.login);  // R296 (§7) — même garde que le login
     const idt = await this.prisma.mobileIdentite.findUnique({ where: { id: dto.identite } });
     if (!idt) throw new UnauthorizedException("Activation refusée");        // rien n'est révélé
     await this.actifOu404(idt.tenantId);
@@ -170,7 +170,7 @@ export class MobileService {
     if (!dto?.identite) throw new UnauthorizedException("identite requise");
     // R296 (§7) : la porte mobile se protège comme la porte interne — 429 typé par identité,
     // identique que l'identité existe ou non (jamais un oracle, pattern OL-34).
-    this.limiteur.garder(`mobile-login|${dto.identite}`, LIMITES.login);
+    await this.limiteur.garder(`mobile-login|${dto.identite}`, LIMITES.login);
     const idt = await this.prisma.mobileIdentite.findUnique({ where: { id: dto.identite } });
     if (!idt || idt.statut !== "ACTIVE" || !idt.mfaSecret) throw new UnauthorizedException("Connexion refusée");
     await this.actifOu404(idt.tenantId);
