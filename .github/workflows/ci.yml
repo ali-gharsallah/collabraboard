@@ -147,6 +147,15 @@ jobs:
           out=$(node tools/registrar/test.mjs); echo "$out"
           echo "$out" | grep -q "### 5/5 tests registrar verts ###"
 
+      # ── Olivia A.1 golden set + A.5 suite d'attaque (harnais de fixtures, R167) — AI-EV-01..06 ──
+      # ZÉRO appel modèle : mesure déterministe (justesse de langue, faux positifs, résistance).
+      # Verrou anti-dégradation (cliquet R70) : la résistance publiée (docs/SECURITE.md) est un
+      # plancher — elle ne peut que monter. Toute régression du lexique = rouge.
+      - name: "3o · Olivia A.1/A.5 (golden set + suite d'attaque, attendu 6/6)"
+        run: |
+          out=$(node tools/olivia-eval/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 tests olivia-eval verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api

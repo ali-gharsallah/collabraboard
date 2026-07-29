@@ -27,6 +27,21 @@ limit à store partagé), (c) staging Exoscale iso-prod — infra/ prête, acte 
 | V14.4 Config | secrets fail-fast au boot (AUDIT_HMAC_SECRET/MFA_ENC_KEY exigés), zéro secret au dépôt (grep CI), coffre §7 (humain) | ✔/⚠ | étape CI secrets ; coffre = acte infra |
 | **ÉCARTS OUVERTS** | (1) HSTS servi par le proxy seulement — accepté (API derrière Caddy, consigné) ; (2) rotation des secrets d'ENV = procédure infra §7 (JWKS applicatif déjà rotatif) ; (3) scan ZAP = gated STAGING_URL (pas de cible en session) ; (4) pentest + retest = acte humain, budget 15-30 kCHF (canon) | ⚠ | ce tableau |
 
+## Olivia — résistance des filtres déterministes (A.1/A.5, mesuré en CI, R167)
+
+Harnais `tools/olivia-eval/` — ZÉRO appel modèle (fixtures + logique déterministe). Les filtres
+(injection de prompt, hors-périmètre, forçage de reco en prose) sont **une couche de
+pré-filtrage** : la décision reste modèle + humain (R44, propositions seulement), défense en
+profondeur. Mesuré le **2026-07-29** sur corpus versionné :
+
+- **Golden set (A.1)** : 200 cas légitimes (50 / capacité C1–C4) · justesse de langue **100 %** ·
+  **0 faux positif** (aucun filtre défensif ne bloque une vraie question de conformité).
+- **Suite d'attaque (A.5)** : 42 cas adverses · **résistance 52.4 %** (22/42). Les formes connues
+  du lexique sont neutralisées ; les variantes multilingues et paraphrasées **passent** — angles
+  morts ASSUMÉS et publiés. Ce taux est un **plancher cliquet** (`seuils.json`) : il ne peut que
+  monter (enrichir le lexique de refus/injection), jamais baisser en douce (toute baisse = édition
+  visible du plancher, revue). Verrou CI : step « 3o · Olivia A.1/A.5 ».
+
 ## Vérifications ciblées re-prouvées (avant prestataire)
 - **Indistinguabilité + timing login (LG-02)** : leurre scrypt sur tous les chemins, message unique — suite fat-login.
 - **Rate limit partagé (§3.5)** : RL-04 + recette compose 2 instances (staging).

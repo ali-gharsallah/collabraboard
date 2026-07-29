@@ -6,6 +6,7 @@ import { KycModule } from "../kyc/kyc.module";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 import { KycService } from "../kyc/kyc.service";
 import * as GABARITS_LIVRES from "./olivia-gabarits.default.json"; // B.11.6 — gabarits C1..C4 livrés, versionnés
+import { detecterLangue, estHorsPerimetre, detecterInjection, detecterRecoProse } from "./olivia-detecteurs"; // R258 — source unique (harnais A.1/A.5)
 import { Tx } from "../../common/tx";
 
 /**
@@ -38,24 +39,8 @@ const CATALOGUE_MAX_REGLE = 271;   // R256 — borne du catalogue : R267-R271 (o
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 // ═══ R258 — le comportement est un CONTRAT : détecteurs DÉTERMINISTES sur lexiques LIVRÉS ═══
+// SOURCE UNIQUE : olivia-detecteurs.ts (même module importé par le harnais d'évaluation A.1/A.5).
 const G: any = GABARITS_LIVRES;
-function detecterLangue(texte: string): string {
-  const t = ` ${texte.toLowerCase()} `;
-  const marque = (mots: string[]) => mots.reduce((n, m) => n + (t.includes(` ${m} `) ? 1 : 0), 0);
-  const scores: [string, number][] = [
-    ["DE", marque(["der", "die", "das", "und", "ist", "nicht", "welche", "bitte", "für", "wie"])],
-    ["EN", marque(["the", "is", "what", "which", "please", "and", "not", "for", "does"])],
-    ["IT", marque(["che", "di", "il", "per", "sono", "quale", "non", "come", "della"])],
-  ];
-  scores.sort((a, b) => b[1] - a[1]);
-  return scores[0][1] > 0 ? scores[0][0] : "FR";
-}
-const estHorsPerimetre = (texte: string) =>
-  (G.horsPerimetre as string[]).some((m) => texte.toLowerCase().includes(m));
-const detecterInjection = (contenu: string) =>
-  (G.injectionMarqueurs as string[]).find((m) => contenu.toLowerCase().includes(m)) ?? null;
-const detecterRecoProse = (texte: string) =>
-  (G.recoProse.prescriptifs as string[]).some((m) => texte.toLowerCase().includes(m));
 const CONVERSER_C1 = ["RM", "ARM", "CO", "CO_SR", "BRM", "DIR"];          // matrice B.3 (Direction→DIR)
 const CONVERSER_C2 = ["RM", "ARM", "CO", "CO_SR"];                        // matrice B.3
 const CONVERSER_C3 = ["CO", "CO_SR"];                                     // matrice B.3 — pré-analyse alerte/risk case
