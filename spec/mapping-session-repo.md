@@ -38,6 +38,6 @@ Format machine : le générateur lit les lignes `| Rxxx | Ryyy | … |` de CETTE
 
 | Session | Repo | Nature |
 |---------|------|--------|
-| R332–R334 (On-premise PK-01..06) | **absent** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB (flags/baseline), R336=LK (verrou optimiste), R337=IDM (idempotence), R338=PJ (projections), R339=EV (versioning). ⇒ soit renuméroter On-premise au-delà de R339, soit ratifier PK comme reliquat non numéroté. |
+| R332–R334 (On-premise PK-01..06) | **réservé R340+** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB, R336=LK, R337=IDM, R338=PJ, R339=EV. **DÉCISION Ali (2026-07-29) : PK renuméroté > R339** — à la ratification de l'On-premise, il prendra **R340+** (après la robustesse). Réservation notée ici jusqu'à la spec PK. |
 | Industrialisation « R328–R331 » (§4 session) | R331–R334 | La borne haute session (R331) et repo (R334) diffèrent : même décalage +3, mais la plage session couvre 4 numéros pour 4 objets → cohérent une fois décalée. |
 | i18n « R323–R324 » (session) | R324–R327 région | `spec/canon-solde-4-ecarts-R324-R327.md` couvre le solde d'écarts + i18n cliquet côté repo aux R324–R327 ; mapping fin à confirmer par relecture du canon. |

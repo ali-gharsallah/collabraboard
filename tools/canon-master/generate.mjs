@@ -197,8 +197,8 @@ export function assembler({ dateISO, commit, artefacts, liens, rq, seed, anomali
     p("");
   }
   p(`> Cette table ne capte que la présence NUMÉRIQUE. Les divergences **structurelles/sémantiques**`);
-  p(`> (ex. On-premise session R332–R334 absent du repo, créneau réattribué à la robustesse) sont`);
-  p(`> énumérées dans \`spec/mapping-session-repo.md\` §2 (à confirmer) et §3 (divergences).`);
+  p(`> (ex. On-premise session R332–R334 absent du repo — créneau R335–R339 pris par la robustesse,`);
+  p(`> PK réservé **R340+** par décision Ali) sont énumérées dans \`spec/mapping-session-repo.md\` §2/§3.`);
   p("");
 
   // ── (a) TABLE DE MAPPING session → repo (depuis le seed ratifié) ──
