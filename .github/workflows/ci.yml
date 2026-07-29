@@ -168,6 +168,14 @@ jobs:
           echo "$out" | grep -q "### 5/5 tests deploiement verts ###"
           git diff --exit-code -- docs/DEPLOIEMENT.md || (echo "DEPLOIEMENT.md a dérivé du pipeline — régénérer + committer" && exit 1)
 
+      # ── Surface API (Bloc 0 robustesse, R335/RB) — détecteur de dérive de CONTRAT ──
+      # Scan déterministe des contrôleurs (sans Swagger, sans booter Nest) : toute route
+      # ajoutée/retirée/renommée doit être un acte VOLONTAIRE (régénérer le snapshot committé).
+      - name: "3a · Surface API — no-drift du contrat de routes (attendu 2/2)"
+        run: |
+          out=$(node tools/api-contract/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 2/2 tests surface-api verts ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille
