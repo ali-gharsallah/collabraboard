@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { traduire, langue, setLangue, LANGUES, Langue } from "../lib/i18n";
 import { apiBase } from "../lib/api";
+import { OliveLogo } from "../components/OliveLogo";
 
 // A6 (audit-architecture, PR #45 mergée) : code-splitting par écran — React.lazy + un
 // <Suspense> unique ; patron conservé à l'IDENTIQUE lors de la réconciliation avec la
@@ -174,12 +175,7 @@ export function Router() {
   return <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", background: "#FAFBF7", color: "#2B331F" }}>
     <aside style={{ width: 238, flexShrink: 0, height: "100vh", position: "sticky", top: 0, overflowY: "auto",
       background: "#FFFFFF", borderRight: "1px solid #E7EBDD", padding: "16px 10px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 12px" }}>
-        <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(150deg,#3B5323,#6B8E4E)",
-          display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 16 }}>🫒</div>
-        <div><div style={{ fontWeight: 800, fontSize: 15, color: "#3B5323", lineHeight: 1.1 }}>O-Live</div>
-          <div style={{ fontSize: 10, color: "#8A9578" }}>Client Lifecycle Intelligence</div></div>
-      </div>
+      <div style={{ padding: "2px 8px 12px" }}><OliveLogo/></div>
       <div style={{ display: "flex", gap: 3, padding: "0 6px 10px" }}>
         {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`} onClick={() => { setLangue(l); setLang(l); }}
           style={{ fontSize: 11, padding: "3px 9px", border: "1px solid " + (lang === l ? "#4A6B28" : "#E7EBDD"),
