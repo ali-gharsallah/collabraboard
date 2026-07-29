@@ -1069,3 +1069,16 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   retest inclus, mobile V7 en pentest dédié) reste VOTRE acte — le dossier est sa matière.
 - **Écarts** : HSTS au proxy seulement (API derrière Caddy, accepté) ; coffre secrets §7
   et rotation d'env = actes infra ; ZAP sans cible en session.
+
+## TOUR 2 DU CLIQUET i18n — LA NAV EST COMPLÈTE (2026-07-29)
+
+- Les 43 clés post-maquette sont AJOUTÉES au dictionnaire (« chaque clé manquante se
+  comble par un ajout », R326) — bloc EXTENSION ÉDITEUR distinct : le bloc maquette reste
+  VERBATIM et auditables séparément. Rapport CI : **72/72 clés nav traduites en EN/DE/IT,
+  0 écart**. Les libellés d'interface sont du texte de l'ÉDITEUR (précédent OF-09) —
+  jamais une donnée métier.
+- Écarts LEVÉS : (1) « onglets post-maquette restent FR » (solde §10 partie 2) — levé
+  pour la NAV ; (2) le sic maquette « Octopulse OppRisk » — la clé canon « Octopulse
+  OpRisk » existe désormais, la maquette cède au canon.
+- RESTE au cliquet : les CONTENUS d'écrans (titres internes, colonnes, boutons) — écran
+  par écran, chaque conversion ajoute le fichier à la liste du cliquet.

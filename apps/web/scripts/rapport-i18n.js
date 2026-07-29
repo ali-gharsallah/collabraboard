@@ -16,8 +16,11 @@ const routeur = fs.readFileSync(path.join(racine, "src/app/router.tsx"), "utf8")
 
 const dicts = {};
 for (const langue of ["EN", "DE", "IT"]) {
-  const bloc = i18n.match(new RegExp(`${langue}: \\{([\\s\\S]*?)\\},?\\n`));
-  dicts[langue] = new Set([...bloc[1].matchAll(/"((?:[^"\\]|\\.)+)":/g)].map((m) => m[1]));
+  // TOUS les blocs de la langue (maquette verbatim + extension éditeur) — fusionnés comme au runtime.
+  const cles = new Set();
+  for (const bloc of i18n.matchAll(new RegExp(`${langue}: \\{([\\s\\S]*?)\\},?\\n`, "g")))
+    for (const m of bloc[1].matchAll(/"((?:[^"\\]|\\.)+)":/g)) cles.add(m[1]);
+  dicts[langue] = cles;
 }
 const utilisees = [...routeur.matchAll(/tab\("[^"]+", "((?:[^"\\]|\\.)+)"\)/g)].map((m) => m[1]);
 let total = 0;

@@ -1291,7 +1291,7 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("DE")("Veille réglementaire")).toBe("Regulatorische Beobachtung");
     expect(traduire("IT")("Legal — Contrats")).toBe("Legal — Contratti");
     expect(traduire("FR")("Accueil")).toBe("Accueil");
-    expect(traduire("EN", { dev: false })("CPSI · Barèmes")).toBe("CPSI · Barèmes");  // écart par clé — le FR reste (prod : propre, LN-02)
+    expect(traduire("EN", { dev: false })("Clé hors dictionnaire ξ")).toBe("Clé hors dictionnaire ξ");  // écart par clé — le FR reste (prod : propre, LN-02)
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
@@ -1310,9 +1310,9 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
 describe("FE-LN — R326/R327 (solde 4 écarts, ratifié 2026-07-29) : marqueur dev, donnée verbatim, formats", () => {
   it("LN-02 : clé manquante → marqueur ⟦…⟧ en dev, repli FR PROPRE en prod — jamais une clé brute maquillée", async () => {
     const { traduire } = await import("../lib/i18n");
-    expect(traduire("EN", { dev: true })("CPSI · Barèmes")).toBe("⟦CPSI · Barèmes⟧");
-    expect(traduire("EN", { dev: false })("CPSI · Barèmes")).toBe("CPSI · Barèmes");
-    expect(traduire("FR", { dev: true })("CPSI · Barèmes")).toBe("CPSI · Barèmes");  // FR = référence, jamais marquée
+    expect(traduire("EN", { dev: true })("Clé hors dictionnaire ξ")).toBe("⟦Clé hors dictionnaire ξ⟧");
+    expect(traduire("EN", { dev: false })("Clé hors dictionnaire ξ")).toBe("Clé hors dictionnaire ξ");
+    expect(traduire("FR", { dev: true })("Clé hors dictionnaire ξ")).toBe("Clé hors dictionnaire ξ");  // FR = référence, jamais marquée
     expect(traduire("EN", { dev: true })("Accueil")).toBe("Home");                   // clé présente : jamais de marqueur
   });
 
@@ -1348,5 +1348,19 @@ describe("FE-LN — R326/R327 (solde 4 écarts, ratifié 2026-07-29) : marqueur 
     expect(deCH).not.toBe(frCH);                                            // la locale gouverne le format…
     expect(deCH).toMatch(/['’]/);                                           // de-CH : apostrophe de groupement (variante ICU)
     expect(frCH).toMatch(/[\s ]/);                                     // fr-CH : espace de groupement (ICU ; le décimal CHF suisse reste le point)
+  });
+});
+
+describe("FE-I18N-2 — tour 2 du cliquet (R326) : la NAV est COMPLÈTE — 0 clé manquante au rapport", () => {
+  it("les clés post-maquette sont au dictionnaire (échantillon) et le rapport CI tombe à 0 écart", async () => {
+    const { traduire } = await import("../lib/i18n");
+    expect(traduire("EN")("File d'alertes")).toBe("Alert Queue");
+    expect(traduire("DE")("Utilisateurs & rôles")).toBe("Benutzer & Rollen");
+    expect(traduire("IT")("Règles AML")).toBe("Regole LRD");
+    expect(traduire("DE")("Audit & transport")).toBe("Audit & Transport");
+    expect(traduire("EN")("Octopulse OpRisk")).toBe("Octopulse OpRisk");     // l'écart « OppRisk » (sic maquette) levé par la clé canon
+    const { execSync } = await import("child_process");
+    const rapport = execSync("node scripts/rapport-i18n.js", { encoding: "utf8" });
+    expect(rapport).toContain("0 écart(s) par clé au total");                // la NAV : 72/72 dans les 3 langues
   });
 });
