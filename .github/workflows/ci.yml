@@ -138,6 +138,15 @@ jobs:
           out=$(node apps/editor-console/test/vendor.test.mjs); echo "$out"
           echo "$out" | grep -q "### 6/6 tests vendor verts ###"
 
+      # ── Registrar (boîte d'entrée indexée sans main, R331/IX) — IX-01..05 ──
+      # Le job d'indexation (run.mjs) est déclenché par .github/workflows/registrar.yml sur
+      # push vers spec/inbox/**. Ici on VERROUILLE ses invariants purs (extraction, collision
+      # rapportée sans renumériser, promotion au merge, rappel J+7, append-only IX-05).
+      - name: "3r · Registrar (R331/IX) — invariants d'indexation (attendu 5/5)"
+        run: |
+          out=$(node tools/registrar/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 tests registrar verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api
