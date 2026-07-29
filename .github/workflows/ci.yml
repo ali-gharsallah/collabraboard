@@ -206,6 +206,17 @@ jobs:
           out=$(node tools/bat/test.mjs); echo "$out"
           echo "$out" | grep -q "### 4/4 tests bat verts ###"
 
+      # ── CANON-MASTER — document unique faisant foi, GÉNÉRÉ (jamais rédigé à la main) ──
+      # Harnais GC-01..06 (assemblage depuis le repo, anomalies rapportées, mapping jamais déduit)
+      # + porte no-drift : --check régénère en mémoire et compare (en-tête volatil date+hash
+      # normalisé). docs/CANON-MASTER.md édité à la main OU périmé (nouvelle ratification non
+      # régénérée) → ROUGE. Régénérer : node tools/canon-master/run.mjs. Le généré fait foi.
+      - name: "3c · CANON-MASTER — doc faisant foi généré + no-drift (attendu 6/6)"
+        run: |
+          out=$(node tools/canon-master/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 tests canon-master verts ###"
+          node tools/canon-master/run.mjs --check
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api
