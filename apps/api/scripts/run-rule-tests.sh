@@ -47,6 +47,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/crm/crm.service.ts src/modules/crm/crm.wiring.spec.ts \
   src/modules/aml/aml-scoring.engine.ts src/modules/aml/aml.service.ts src/modules/aml/aml-scoring.wiring.spec.ts \
   src/modules/islamic/islamic-screening.engine.ts src/modules/islamic/islamic.service.ts src/modules/islamic/islamic-screening.wiring.spec.ts \
+  src/common/feature-flags.ts src/common/feature-flags.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -100,3 +101,4 @@ echo "── Câblage OCR typé (OC-01..06, R174→R176) ──"; run ocr-extrac
 echo "── Câblage Licence vendor (LC-01..05, R177→R179) ──"; run vendor-license.wiring.spec.js
 echo "── Câblage Surveillance AML (A-69..A-86, R189→R206) ──"; run aml-scoring.wiring.spec.js
 echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run islamic-screening.wiring.spec.js
+echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
