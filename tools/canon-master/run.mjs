@@ -9,7 +9,8 @@ import { join, dirname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
 import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, lireExceptions, detecterAnomalies,
-  comparerSession, extraireSection, assembler, normaliserPourCheck } from "./generate.mjs";
+  comparerSession, extraireSection, assembler, normaliserPourCheck,
+  blocStamp, stampCourant, injecterStamp } from "./generate.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const rel = (p) => relative(racine, p).split("\\").join("/");
@@ -79,7 +80,15 @@ try { commit = execSync("git rev-parse --short HEAD", { cwd: racine }).toString(
 const md = assembler({ dateISO, commit, artefacts, liens, rq, seed, anomalies, comparaison,
   invariantsVerbatim, gelsVerbatim, ecransResume });
 
-// ── Mode CI --check : compare le généré (normalisé) à l'existant. Drift OU édition-main → exit 1. ──
+// ── Docs en PROSE stampées (README, PROJECT-INDEX) : le stamp de fraîcheur y est injecté/vérifié.
+//    Stamp STABLE (plafond + compteurs), donc pas de churn par commit. `lien` relatif par fichier.
+const faitsStamp = { maxR: anomalies.maxRegle, nArtefacts: artefacts.length, nFamilles: toutesFamilles.length };
+const stampCibles = [
+  { chemin: join(racine, "README.md"), lien: "docs/CANON-MASTER.md" },
+  { chemin: join(racine, "docs", "PROJECT-INDEX.md"), lien: "./CANON-MASTER.md" },
+];
+
+// ── Mode CI --check : compare le généré (normalisé) à l'existant + les stamps. Drift/main → exit 1. ──
 if (process.argv.includes("--check")) {
   if (!existsSync(SORTIE)) { console.error("CANON-MASTER : docs/CANON-MASTER.md absent — lancez la génération."); process.exit(1); }
   const actuel = readFileSync(SORTIE, "utf8");
@@ -88,11 +97,28 @@ if (process.argv.includes("--check")) {
     console.error("→ régénérez : node tools/canon-master/run.mjs — le généré fait foi.");
     process.exit(1);
   }
-  console.log("CANON-MASTER : à jour ✓");
+  for (const c of stampCibles) {
+    if (!existsSync(c.chemin)) continue;
+    const attendu = blocStamp({ ...faitsStamp, lien: c.lien });
+    const present = stampCourant(readFileSync(c.chemin, "utf8"));
+    if (present !== attendu) {
+      console.error(`CANON-MASTER : stamp de fraîcheur périmé ou absent dans ${rel(c.chemin)}.`);
+      console.error("→ régénérez : node tools/canon-master/run.mjs (met à jour README + PROJECT-INDEX).");
+      process.exit(1);
+    }
+  }
+  console.log("CANON-MASTER : à jour ✓ (doc + stamps README/PROJECT-INDEX)");
   process.exit(0);
 }
 
 writeFileSync(SORTIE, md);
+// Met à jour le stamp dans les docs en prose (si les marqueurs y sont présents).
+for (const c of stampCibles) {
+  if (!existsSync(c.chemin)) continue;
+  const injecte = injecterStamp(readFileSync(c.chemin, "utf8"), blocStamp({ ...faitsStamp, lien: c.lien }));
+  if (injecte === null) { console.warn(`  ⚠ ${rel(c.chemin)} : marqueurs CANON-STAMP absents — non stampé.`); continue; }
+  writeFileSync(c.chemin, injecte);
+}
 console.log(`CANON-MASTER généré : ${rel(SORTIE)}`);
 console.log(`  artefacts=${artefacts.length} · règles=${reglesRepo.length} · familles=${toutesFamilles.length}`
   + ` · R-Q=${rq.length} · doublons=${anomalies.doublons.length}`

@@ -1,20 +1,34 @@
 # Olive MVP — production-ready, minimal, scalable
 
-## État réel vérifié au 2026-07-22
-Certificat unique : **`docs/CERTIFICAT-ETAT.md`** · index maître : **`docs/PROJECT-INDEX.md`**.
-Périmètre **réellement en code** : règles **R1→R221** (AML R189-R206 + Islamic R207-R221),
-**27 modules NestJS** en Postgres réel (0 mock jest), **441 tests verts** (425 règles + 16 e2e),
-RLS FORCE prouvée. **Vague 1** : 6 écrans React réels (Clients, KYC, Règles AML, File d'alertes,
-Rejeu KYC à date, Finance Islamique), **fallback seed rendu visible** (bandeau). **Rejeu-à-date :
-OUI** pour les paramètres (R127) **et** le dossier KYC (`/v1/kyc/:code/a-date`). Recette Vague 1 :
-**10/10 FAT PASS**.
-Monorepo pnpm. Voir ARCHITECTURE.md. Démarrage :
+<!-- CANON-STAMP:START (généré par tools/canon-master — NE PAS éditer) -->
+> **Catalogue faisant foi : [`docs/CANON-MASTER.md`](docs/CANON-MASTER.md) — R1–R339, 96 artefacts, 101 familles.**
+> Généré depuis le repo + gaté CI (porte 3c). Protocole de synchro claude.ai : [`docs/SYNC-CLAUDE-AI.md`](docs/SYNC-CLAUDE-AI.md).
+<!-- CANON-STAMP:END -->
+
+**Sources de vérité** (ne pas dupliquer à la main) :
+- **Catalogue des règles** → **`docs/CANON-MASTER.md`** (GÉNÉRÉ : inventaire R1–R339+, mapping session→repo, R-Q, écrans, anomalies).
+- **Certificat d'état** → `docs/CERTIFICAT-ETAT.md` · **index maître** → `docs/PROJECT-INDEX.md`.
+- **Synchro projet claude.ai** → `docs/SYNC-CLAUDE-AI.md` (quel fichier exporter à chaque bloc).
+
+## Architecture (résumé — détail : `docs/CANON-MASTER.md` §f invariants)
+
+Plateforme CLM/KYC/AML multi-tenant pour banques privées suisses (CDB 20, LBA/OBA, LSFin/LEFin,
+FINMA). Backend **NestJS + Prisma + PostgreSQL** (RLS FORCE, journaux append-only chaînés, rejeu à
+date) · front **React/Vite** · moteur CPSI **Python isolé** derrière une porte à contrat versionné ·
+Redis · SSE descendant · JWT RS256 + OIDC per-tenant. Monorepo pnpm. « AI-assisted, human-decided,
+replayable by design. »
+
+## Démarrage (dev local)
+
 ```bash
-docker compose up -d          # postgres + redis + minio
+docker compose up -d                                   # postgres + redis + minio
 pnpm i && pnpm -r build
-pnpm --filter api prisma:migrate && pnpm --filter api start
-pnpm --filter web dev
+pnpm --filter @olive/api exec prisma migrate deploy     # applique les migrations
+pnpm --filter @olive/api run prisma:post                # RLS FORCE + immuabilité (R48)
+OLIVE_SEED_DEMO=1 pnpm --filter @olive/api run seed:demo # tenant démo GWB (facultatif)
+pnpm --filter @olive/api start                          # API :3000
+pnpm --filter @olive/web dev                            # front :5173
 ```
-Le module KYC reprend tel quel le module **durci v0.2.0** (tests unitaires +
-e2e inclus dans olive-consolidated) : isolation tenant, default-deny, HMAC,
-lock consultatif, outbox. Rien n'est réinventé — on industrialise.
+
+Le module KYC reprend tel quel le module **durci v0.2.0** (isolation tenant, default-deny, HMAC,
+lock consultatif, outbox). Rien n'est réinventé — on industrialise.

@@ -1,7 +1,12 @@
 # PROJECT-INDEX — O-Live (index maître de la documentation)
 
-**Mis à jour le 2026-07-22.** Point d'entrée unique. En cas de divergence entre deux documents,
-**cet index désigne la source de vérité**. Un seul certificat, un seul cahier, zéro doublon.
+<!-- CANON-STAMP:START (généré par tools/canon-master — NE PAS éditer) -->
+> **Catalogue faisant foi : [`docs/CANON-MASTER.md`](./CANON-MASTER.md) — R1–R339, 96 artefacts, 101 familles.**
+> Généré depuis le repo + gaté CI (porte 3c). Protocole de synchro claude.ai : [`docs/SYNC-CLAUDE-AI.md`](./SYNC-CLAUDE-AI.md).
+<!-- CANON-STAMP:END -->
+
+Point d'entrée unique. En cas de divergence entre deux documents, **cet index désigne la source de
+vérité**. Un seul certificat, un seul cahier, zéro doublon.
 
 ## Source de vérité (à lire en premier)
 
