@@ -156,6 +156,16 @@ jobs:
           out=$(node tools/olivia-eval/test.mjs); echo "$out"
           echo "$out" | grep -q "### 6/6 tests olivia-eval verts ###"
 
+      # ── FAT (Factory Acceptance Test, R332/FB) — porte BLOQUANTE (parcours API à jetons réels) ──
+      # Vérifie que la matrice de traçabilité parcours→scénario→règle est GÉNÉRÉE et ADOSSÉE au
+      # réel : tout scénario/règle déclaré mais non exécuté fait échouer FB-02 (anti-fiction).
+      # DEMO-SCRIPT est un parcours FAT (FB-04). La recette VISUELLE (Playwright) est un job
+      # SÉPARÉ non bloquant (.github/workflows/fat-visuel.yml).
+      - name: "3f · FAT — parcours + traçabilité générée (attendu 4/4, anti-fiction)"
+        run: |
+          out=$(node tools/fat/test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 tests fat verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api

@@ -27,6 +27,21 @@ pris (roles.guard) → registrar en **IX**. FB et MG libres.
 Le texte du canon PO fait foi pour le CONTENU (IX-01..05, FB-01..07, MG-01..05, phases
 0-5 du guide, A.1/A.5) — message PO du 2026-07-29.
 
+## R332 [canon R329] — Programme FAT : parcours métier tracés, générés, bloquants
+
+**Décision PO (2026-07-29) — substrat FAT** : « API pour la porte CI + Playwright en job
+séparé ». Deux versants :
+- **Porte CI BLOQUANTE** = parcours API à jetons réels (la suite e2e existante, 336 verts, est
+  le substrat). Un CATALOGUE de parcours métier (`tools/fat/parcours.mjs`) déclare, par
+  parcours, les scénarios (identifiants de tests e2e RÉELS) et les règles traversées ; le
+  TRACER (`tools/fat/tracer.mjs`) génère `docs/FAT-TRACABILITE.md` et ÉCHOUE si un scénario ou
+  une règle déclaré n'est adossé à rien (anti-fiction, FB-02). DEMO-SCRIPT = parcours FAT
+  (FB-04). Harnais `tools/fat/test.mjs` FB-01..04, verrou CI « 3f ».
+- **Recette VISUELLE NON BLOQUANTE** = job Playwright séparé (`.github/workflows/fat-visuel.yml`
+  + `apps/web/playwright/`) : le bundle construit boote dans Chromium et les points d'entrée des
+  parcours phares sont cliquables. Job séparé, jamais un check requis : sa rougeur ne bloque pas
+  le merge. `@playwright/test` installé ad-hoc en CI (lockfile workspace intact).
+
 ## R331 [canon R328] — Le repo a une BOÎTE D'ENTRÉE indexée sans main humaine
 `spec/inbox/` : tout artefact y tombe. Un job CI l'indexe (normalise le nom, extrait
 règles/familles/statut, détecte les collisions SANS renumériser, met à jour PROJECT-INDEX
