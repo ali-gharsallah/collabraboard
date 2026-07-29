@@ -1056,3 +1056,16 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   le critère §4), infra/compose (2 instances app + Redis AOF + Caddy TLS/HSTS),
   infra/observabilite (alertes dead-letters AS-04 / jauge R250 / backups / disque —
   canal réel à brancher §9). L'acte humain restant = appliquer, pas bricoler.
+
+## SOLDE — CANON « 4 DERNIERS ÉCARTS » PARTIE 4 : DOSSIER SÉCURITÉ INITIALISÉ (2026-07-29)
+
+- **Livré** : docs/SECURITE.md — grille ASVS L2 remplie CONTRE LE CODE RÉEL (12 domaines ✔
+  avec preuve par test, 4 écarts ouverts assumés) ; en-têtes de sécurité posés SERVEUR sur
+  TOUTE réponse (SecurityHeadersMiddleware — SEC-01 rouge puis vert, 200 ET 401) ; CI
+  sécurité : audit dépendances BLOQUANT sur critiques + grep secrets + ZAP baseline gated
+  sur STAGING_URL (absent = sauté explicitement, jamais un advisory qui traîne).
+- **Séquencement du canon constaté** : (a) JWT partout FAIT, (b) login R296 FAIT (avec
+  store partagé), (c) staging = infra/ prête, acte humain. Le pentest (cabinet suisse,
+  retest inclus, mobile V7 en pentest dédié) reste VOTRE acte — le dossier est sa matière.
+- **Écarts** : HSTS au proxy seulement (API derrière Caddy, accepté) ; coffre secrets §7
+  et rotation d'env = actes infra ; ZAP sans cible en session.

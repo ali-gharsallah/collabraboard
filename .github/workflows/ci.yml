@@ -95,6 +95,22 @@ jobs:
       - name: Vérifier la liste blanche des vues BI (R314)
         run: node apps/api/scripts/verifier-vues-bi.js
 
+      # ── Partie 4 (solde 4 écarts, 2026-07-29) — CI SÉCURITÉ ──
+      - name: "Sécurité · audit des dépendances (bloquant sur CRITIQUES) + grep secrets (§3.7)"
+        run: |
+          pnpm audit --audit-level critical
+          # Aucun secret en clair au dépôt : motifs de clés privées/API hors fixtures de test
+          ! grep -rn --include="*.ts" --include="*.js" --include="*.yml" --include="*.env" \
+            -e "BEGIN RSA PRIVATE KEY" -e "BEGIN EC PRIVATE KEY" -e "AKIA[0-9A-Z]\{16\}" \
+            apps/api/src apps/web/src infra .github | grep -v "spec\|test\|exemple" || (echo "SECRET EN CLAIR DÉTECTÉ" && exit 1)
+
+      # ZAP baseline (partie 4) : ne tourne que si un staging existe (secret STAGING_URL) —
+      # jamais un step qui traîne en advisory : absent = sauté EXPLICITEMENT, présent = bloquant.
+      - name: "Sécurité · ZAP baseline sur staging (si STAGING_URL)"
+        if: ${{ vars.STAGING_URL != '' }}
+        run: |
+          docker run --rm -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "${{ vars.STAGING_URL }}" -I
+
       # ── RUNBOOK §2 · 2 — Unitaires ───────────────────────────────────────────
       # Étape retirée : ni config jest unitaire ni fichiers *.spec unitaires ne sont dans
       # le dépôt (`jest` sortirait en « No tests found »). La caractérisation des règles est

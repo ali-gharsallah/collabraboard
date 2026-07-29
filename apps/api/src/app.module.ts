@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer } from "@nestjs/common";
 import { CoreModule } from "./common/core.module";
 import { TenantMiddleware } from "./common/tenant.middleware";
+import { SecurityHeadersMiddleware } from "./common/security-headers.middleware";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ClientsModule } from "./modules/clients/clients.module";
 import { KycModule } from "./modules/kyc/kyc.module";
@@ -53,5 +54,5 @@ import { SwarmModule } from "./modules/swarm/swarm.module";
 
 @Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
 export class AppModule {
-  configure(c: MiddlewareConsumer) { c.apply(TenantMiddleware).forRoutes("*"); }
+  configure(c: MiddlewareConsumer) { c.apply(SecurityHeadersMiddleware, TenantMiddleware).forRoutes("*"); }
 }
