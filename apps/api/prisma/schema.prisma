@@ -96,6 +96,7 @@ model KycFile {
   visas         KycVisa[]
   lock          KycLock?
   handoffPhase  Int          @default(0) @map("handoff_phase")   // R85 : index de phase du passage de main
+  version       Int          @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (UPDATE … WHERE version)
   @@unique([tenantId, code])
   @@index([tenantId, clientId])
   @@map("kyc_files")
@@ -258,6 +259,7 @@ model DomainEvent {
   type        String
   aggregateId String    @map("aggregate_id")               // conformité lot 41 : codes métier OU uuid — usage prouvé par les corpus (ex. R182/R183), @db.Uuid retiré
   payload     Json
+  eventVersion Int      @default(1) @map("event_version")   // Bloc E robustesse (R339/EV) : version du schéma de payload, upcast à la LECTURE
   at          DateTime  @default(now())                    // conformité lot 41 : horodatage métier écrit par les services ratifiés (n'est plus un « champ fantôme »)
   createdAt   DateTime  @default(now()) @map("created_at")
   publishedAt DateTime? @map("published_at")
@@ -275,6 +277,20 @@ model AuditLog {
   hash     String   @db.Char(64)
   @@index([tenantId, at])
   @@map("audit_log")
+}
+
+// Bloc B robustesse (R337/IDM) — idempotence des commandes. Le command_id (généré client) est
+// consommé UNE fois ; le rejeu retourne la réponse snapshotée (aucun nouvel effet). Écrit dans
+// la MÊME transaction que la commande (atomicité : un échec ne consomme pas la clé).
+model ProcessedCommand {
+  commandId        String   @id @map("command_id") @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  aggregateId      String   @map("aggregate_id")
+  resultHash       String   @map("result_hash") @db.Char(64)     // sha256(payload) — détecte la réutilisation de clé
+  responseSnapshot Json     @map("response_snapshot")
+  createdAt        DateTime @default(now()) @map("created_at")
+  @@index([tenantId, createdAt])
+  @@map("processed_commands")
 }
 
 

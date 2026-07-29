@@ -1,0 +1,1 @@
+{ "type": "kyc.access.modifie", "eventVersion": 1, "payload": { "kycId": "K-2026-CH-0001-R1", "questionId": "q-1", "role": "CO", "right": "READ" } }

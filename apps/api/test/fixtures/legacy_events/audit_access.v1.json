@@ -1,0 +1,1 @@
+{ "type": "AUDIT_ACCESS", "eventVersion": 1, "payload": { "par": "u-1", "role": "SO", "chemin": "/v1/audit/acces", "methode": "GET" } }
