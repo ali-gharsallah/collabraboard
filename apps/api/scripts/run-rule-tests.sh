@@ -50,6 +50,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/common/feature-flags.ts src/common/feature-flags.spec.ts \
   src/common/optimistic-lock.ts src/common/optimistic-lock.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
+  src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -106,3 +107,4 @@ echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run is
 echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js
 echo "── Idempotence commandes (IDM-01..03, R337) ──"; run idempotency.spec.js
+echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec.js

@@ -259,6 +259,7 @@ model DomainEvent {
   type        String
   aggregateId String    @map("aggregate_id")               // conformité lot 41 : codes métier OU uuid — usage prouvé par les corpus (ex. R182/R183), @db.Uuid retiré
   payload     Json
+  eventVersion Int      @default(1) @map("event_version")   // Bloc E robustesse (R339/EV) : version du schéma de payload, upcast à la LECTURE
   at          DateTime  @default(now())                    // conformité lot 41 : horodatage métier écrit par les services ratifiés (n'est plus un « champ fantôme »)
   createdAt   DateTime  @default(now()) @map("created_at")
   publishedAt DateTime? @map("published_at")
