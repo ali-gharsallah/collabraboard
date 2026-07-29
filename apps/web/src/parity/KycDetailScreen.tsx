@@ -4,6 +4,7 @@ import { Badge, SevPill, OliveNote, KYC_STATUS_LABEL } from "./components";
 import { RiskFactorsList, kycsByClientId } from "./components-data";
 import { kycTypeOf } from "./kyc-support";
 import { evalAmlRules } from "./aml";
+import { WF_DEFS, wfAvailable, wfCheckGuards, wfHeadId, KYC_PHASES } from "./wf-engine";
 import {
   SECTIONS_STATIC, SECTION_STATUS_STYLE, RIGHT_STYLE, SECTION_VISA, MESSAGES_SEED,
   WF_STEPS, WF_ORDER, kycMatrixRole, sectionVisibleTo, QUESTIONS_TEMPLATE, KYC_SECTION_LIST, Question,
@@ -28,6 +29,12 @@ export function KycDetailScreen({ client, kyc, onBack, user }: { client: any; ky
   const [visaModal, setVisaModal] = useState<any>(null);
   const [visaVerdict, setVisaVerdict] = useState("OK");
   const [visaMsg, setVisaMsg] = useState("");
+  const [wfPanelOpen, setWfPanelOpen] = useState(false);
+  const [wfLog, setWfLog] = useState<any[]>([]);
+  const [wfModal, setWfModal] = useState<any>(null);   // { trans, action }
+  const [wfComment, setWfComment] = useState("");
+  const [wfIdx, setWfIdx] = useState(Math.max(0, WF_ORDER.indexOf(kyc?.wfPhase || "COMPLIANCE")));
+  const [wfStatus, setWfStatus] = useState(kyc?.status === "APPROVED" ? "approved" : kyc?.status === "REJECTED" ? "rejected" : "in_progress");
 
   const KYC_CODE = kyc?.code || "KYC-2026-CH-0044-R2";
   const KYC_VERSION = kyc?.revision || 2;
@@ -110,6 +117,64 @@ export function KycDetailScreen({ client, kyc, onBack, user }: { client: any; ky
           <div style={{ fontSize: 10.5, color: T.inkSoft, marginTop: 1 }}>Responsable : {curRole}</div>
         </div>
         <button onClick={() => setWfDiagramOpen(true)} style={{ padding: "8px 16px", borderRadius: 9, border: `1px solid ${isFinal ? T.gold : T.olive600}`, background: isFinal ? T.gold : T.olive600, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>Voir le workflow →</button>
+      </div>
+
+      {/* Détail du workflow — stepper + transitions gouvernées (WF_DEFS + guards) */}
+      <div style={{ ...card, padding: "20px 24px", marginBottom: 18 }}>
+        <div onClick={() => setWfPanelOpen(!wfPanelOpen)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: wfPanelOpen ? 18 : 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: T.olive700, textTransform: "uppercase", letterSpacing: 1 }}>Détail du workflow</span>
+          <span style={{ fontSize: 11, color: T.inkMid }}>· {KYC_PHASES[wfIdx]} ({wfIdx + 1}/{KYC_PHASES.length})</span>
+          <span style={{ marginLeft: "auto", fontSize: 13, color: T.inkSoft, transform: wfPanelOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}>▾</span>
+        </div>
+        {wfPanelOpen && <>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {KYC_PHASES.map((ph, i, arr) => {
+              const state = wfStatus === "rejected" ? (i < wfIdx ? "done" : i === wfIdx ? "rejected" : "pending") : wfStatus === "approved" ? "done" : (i < wfIdx ? "done" : i === wfIdx ? "current" : "pending");
+              const col = state === "done" ? T.green : state === "current" ? T.gold : state === "rejected" ? T.red : T.inkSoft;
+              return <div key={i} style={{ display: "flex", alignItems: "center", flex: i < arr.length - 1 ? 1 : "none" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 90 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: state === "pending" ? T.surface : col, border: state === "pending" ? `2px solid ${T.line}` : "none", color: state === "pending" ? T.inkSoft : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{state === "done" ? "✓" : state === "rejected" ? "✕" : i + 1}</div>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: state === "pending" ? T.inkSoft : T.ink, textAlign: "center" }}>{ph}</span>
+                </div>
+                {i < arr.length - 1 && <div style={{ flex: 1, height: 3, background: state === "done" ? T.green : T.line, margin: "0 4px", marginBottom: 22, borderRadius: 2 }} />}
+              </div>;
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 20, paddingTop: 16, borderTop: `1px solid ${T.line}`, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, fontSize: 12, color: T.inkSoft, minWidth: 200 }}>
+              <span style={{ fontFamily: "monospace", fontSize: 10.5, color: T.olive700, fontWeight: 700, marginRight: 8 }}>{wfHeadId(WF_DEFS[0])}</span>
+              <Badge text={wfStatus === "approved" ? "VALIDÉ" : wfStatus === "rejected" ? "REJETÉ" : "EN COURS"} color={wfStatus === "approved" ? T.green : wfStatus === "rejected" ? T.red : T.blue} bg={wfStatus === "approved" ? T.greenSoft : wfStatus === "rejected" ? T.redSoft : T.blueSoft} />
+              <span style={{ marginLeft: 8 }}>Phase actuelle : <strong style={{ color: T.ink }}>{KYC_PHASES[wfIdx]}</strong></span>
+            </div>
+            {wfStatus === "in_progress" && (() => {
+              const engInst = { state: WF_ORDER[wfIdx], status: "RUNNING", history: wfLog.map(e => ({ action: e.icon === "✓" ? "validate" : e.icon === "←" ? "pushback" : "reject", by: e.by, byRole: user?.role || "" })), createdBy: kyc_rm };
+              const engUser = { name: user?.name || "", role: user?.role || "" };
+              const avail = wfAvailable(WF_DEFS[0], engInst, engUser);
+              const ownerRole = ["RM", "CO", "AML", "BRM", "HPB"][Math.min(wfIdx, 4)];
+              if (avail.length === 0) return <span style={{ fontSize: 11.5, color: T.inkSoft, fontStyle: "italic" }}>Aucune action pour votre rôle ({engUser.role || "—"}) dans cette phase — responsabilité : <strong style={{ color: T.ink }}>{ownerRole}</strong>.</span>;
+              return <>{avail.map(t => {
+                const fails = wfCheckGuards(WF_DEFS[0], engInst, t, engUser, "motif", {});
+                const blocked = fails.length > 0;
+                const col = t.action === "validate" ? T.olive600 : t.action === "reject" ? T.red : T.amber;
+                const solid = t.action === "validate";
+                return <button key={t.id} disabled={blocked} title={blocked ? fails.join(" ") : t.label} onClick={() => { setWfModal({ trans: t }); setWfComment(""); }}
+                  style={{ padding: solid ? "9px 18px" : "9px 16px", borderRadius: 9, border: solid ? "none" : `1px solid ${blocked ? T.line : col}`, background: solid ? (blocked ? T.line : col) : T.surface, color: solid ? "#fff" : (blocked ? T.inkSoft : col), fontSize: 12.5, fontWeight: 700, cursor: blocked ? "not-allowed" : "pointer", opacity: blocked ? 0.6 : 1 }}>
+                  {t.action === "pushback" ? "← " : ""}{t.label}{t.action === "validate" ? " →" : ""}</button>;
+              })}</>;
+            })()}
+          </div>
+          {wfLog.length > 0 && <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 10, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Journal des transitions (piste d'audit)</div>
+            {wfLog.map((e, i) => <div key={i} style={{ display: "flex", gap: 10, padding: "7px 0", borderBottom: i < wfLog.length - 1 ? `1px solid ${T.lineSoft}` : "none" }}>
+              <span style={{ color: e.color, fontWeight: 700, fontSize: 13, width: 14 }}>{e.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.ink }}>{e.act}</div>
+                {e.note && <div style={{ fontSize: 11, color: T.inkMid, fontStyle: "italic" }}>« {e.note} »</div>}
+                <div style={{ fontSize: 10, color: T.inkSoft }}>{e.by} · {e.phase} · {e.at}</div>
+              </div>
+            </div>)}
+          </div>}
+        </>}
       </div>
 
       {/* Corps : rail sections + contenu + messages */}
@@ -295,5 +360,40 @@ export function KycDetailScreen({ client, kyc, onBack, user }: { client: any; ky
           </div>
         </div>
       </div>}
+
+      {/* Modale de confirmation de transition workflow */}
+      {wfModal && (() => {
+        const t = wfModal.trans;
+        const needComment = t.action !== "validate";
+        const isFinalApp = t.to === "APPROVED";
+        const apply = () => {
+          if (needComment && !wfComment.trim()) return;
+          const icon = t.action === "validate" ? "✓" : t.action === "pushback" ? "←" : "✕";
+          const color = t.action === "validate" ? T.green : t.action === "pushback" ? T.amber : T.red;
+          setWfLog(l => [{ icon, color, act: t.label, note: wfComment.trim(), by: user?.name || "Moi", phase: KYC_PHASES[wfIdx], at: "à l'instant" }, ...l]);
+          if (t.to === "APPROVED") setWfStatus("approved");
+          else if (t.to === "REJECTED") setWfStatus("rejected");
+          else setWfIdx(WF_ORDER.indexOf(t.to));
+          setWfModal(null); setWfComment("");
+        };
+        return <div onClick={() => setWfModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,20,10,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: T.surface, borderRadius: 14, width: 440, maxWidth: "92vw", padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: T.ink, marginBottom: 8 }}>{t.label}</div>
+            <div style={{ fontSize: 12, color: T.inkMid, lineHeight: 1.6, marginBottom: 12 }}>
+              {isFinalApp
+                ? "Approbation finale — principe des quatre yeux : votre visa engage la banque. Le golden record ne sera mis à jour qu'après cette validation."
+                : t.action === "reject" ? "Rejet du dossier KYC — la fiche client reste inchangée. Un motif documenté est obligatoire."
+                  : t.action === "pushback" ? "Renvoi à l'étape précédente — un motif documenté est obligatoire (piste d'audit)."
+                    : "Confirmer la transition vers l'étape suivante du workflow gouverné."}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>Motif / commentaire {needComment ? "(obligatoire)" : "(facultatif)"}</div>
+            <textarea value={wfComment} onChange={e => setWfComment(e.target.value)} placeholder="Documenter la décision…" style={{ width: "100%", minHeight: 64, padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${needComment && !wfComment.trim() ? T.red + "80" : T.line}`, fontSize: 12, boxSizing: "border-box", outline: "none", background: T.cream, color: T.ink, resize: "vertical" }} />
+            <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
+              <button onClick={() => setWfModal(null)} style={{ padding: "9px 16px", borderRadius: 9, border: `1px solid ${T.line}`, background: T.surface, color: T.inkMid, fontSize: 12.5, cursor: "pointer" }}>Annuler</button>
+              <button onClick={apply} disabled={needComment && !wfComment.trim()} style={{ padding: "9px 18px", borderRadius: 9, border: "none", background: (needComment && !wfComment.trim()) ? T.line : (t.action === "reject" ? T.red : T.olive600), color: (needComment && !wfComment.trim()) ? T.inkSoft : "#fff", fontSize: 12.5, fontWeight: 800, cursor: (needComment && !wfComment.trim()) ? "not-allowed" : "pointer" }}>Confirmer</button>
+            </div>
+          </div>
+        </div>;
+      })()}
     </div>);
 }
