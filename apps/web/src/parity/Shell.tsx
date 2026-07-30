@@ -11,6 +11,7 @@ import { CocScreen } from "./CocScreen";
 import { OffboardingScreen } from "./OffboardingScreen";
 import { ProspectToContactScreen } from "./ProspectToContactScreen";
 import { PreOnboardingScreen } from "./PreOnboardingScreen";
+import { TasksScreen } from "./TasksScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -84,6 +85,7 @@ export function Shell() {
       case "offboarding": return <OffboardingScreen user={currentUser} />;
       case "prospect_contact": return <ProspectToContactScreen user={currentUser} goTo={goTo} />;
       case "prospect_test": return <PreOnboardingScreen user={currentUser} goTo={goTo} />;
+      case "tasks": return <TasksScreen user={currentUser} />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };

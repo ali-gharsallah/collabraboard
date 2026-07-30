@@ -1,0 +1,62 @@
+[
+  {
+    "id": "USR-001",
+    "name": "Sophie Marchand",
+    "avatar": "SM",
+    "c": "olive600"
+  },
+  {
+    "id": "USR-002",
+    "name": "Ralf Kessler",
+    "avatar": "RK",
+    "c": "olive600"
+  },
+  {
+    "id": "USR-004",
+    "name": "Marc Dubois",
+    "avatar": "MD",
+    "c": "amber"
+  },
+  {
+    "id": "USR-005",
+    "name": "Isabelle Vernet",
+    "avatar": "IV",
+    "c": "amber"
+  },
+  {
+    "id": "USR-006",
+    "name": "Jean Blanc",
+    "avatar": "JB",
+    "c": "red"
+  },
+  {
+    "id": "USR-007",
+    "name": "Hana Müller",
+    "avatar": "HM",
+    "c": "red"
+  },
+  {
+    "id": "USR-008",
+    "name": "Sarah Fischer",
+    "avatar": "SF",
+    "c": "green"
+  },
+  {
+    "id": "USR-009",
+    "name": "Pierre Legal",
+    "avatar": "PL",
+    "c": "blue"
+  },
+  {
+    "id": "USR-010",
+    "name": "Claire Dupont",
+    "avatar": "CD",
+    "c": "violet"
+  },
+  {
+    "id": "USR-011",
+    "name": "Patrick Durand",
+    "avatar": "PD",
+    "c": "gold"
+  }
+]

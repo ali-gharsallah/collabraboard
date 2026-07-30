@@ -56,7 +56,8 @@ function extractLiteral(src, name) {
 const TARGETS = [
   "I18N", "NAV", "SCREEN_LABEL", "CLIENTS", "KYCS_DATA", "PERSONS_DATA",
   "ACCOUNT_REVIEWS_DATA", "PROSPECTS_DATA", "COC_TYPE_LABELS", "COC_ROLES",
-  "COC_CONFIG_DEFAULT", "COC_DATA", "DS_STATS", "NAV_MODULE_MAP", "USERS",
+  "COC_CONFIG_DEFAULT", "COC_DATA", "TASK_TYPE_LABELS", "TASK_ASSIGNEES", "TASKS_DATA",
+  "DS_STATS", "NAV_MODULE_MAP", "USERS",
 ];
 // NB : OFFBOARDING_CASES / promoted sont calculés au runtime par la coquille (non littéraux)
 // → non extractibles ici ; ils seront disponibles au portage de la coquille (§2).
