@@ -209,7 +209,6 @@ export function Shell() {
                 <div style={{ fontSize: 9, color: currentUser.color, fontWeight: 700 }}>{currentUser.roleLabel}</div>
               </div>
             </div>
-            <button onClick={logout} style={{ width: "100%", padding: "5px", borderRadius: 6, border: `1px solid ${T.line}`, background: T.surface, fontSize: 10, color: T.inkMid, cursor: "pointer", marginBottom: 8 }}>Déconnexion</button>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: T.green }} />
               <span style={{ fontSize: 10, color: T.green, fontWeight: 600 }}>Systèmes opérationnels</span>
