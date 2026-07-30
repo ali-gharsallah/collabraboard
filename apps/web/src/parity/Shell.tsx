@@ -249,10 +249,11 @@ export function Shell() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 9, paddingLeft: 12, borderLeft: `1px solid ${T.line}` }}>
               <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg,${currentUser.color},${T.leaf})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>{currentUser.avatar}</div>
-              <div>
+              {!isMobile && <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.ink }}>{currentUser.name}</div>
                 <div style={{ fontSize: 10, color: T.inkSoft }}>{currentUser.roleLabel}</div>
-              </div>
+              </div>}
+              <button onClick={logout} title="Se déconnecter" style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: 4, padding: "6px 12px", borderRadius: 9, border: `1px solid ${T.line}`, background: T.surface, color: T.inkMid, fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>⏻{!isMobile && <span>Déconnexion</span>}</button>
             </div>
           </div>
         </header>
