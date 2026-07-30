@@ -11,6 +11,7 @@ import { CPSI_GROUPES, CPSI_SCENARIOS } from "./cpsi-data-support";
 let CPSI_USER: any = null;
 export function cpsiSetUser(u: any) { CPSI_USER = u || CPSI_USER; }
 export function cpsiUserNom() { return (CPSI_USER && CPSI_USER.name) || "Admin"; }
+export function cpsiUser() { return CPSI_USER; }
 export var CPSI_PAYS_RISQUE = { KY: 3, PA: 3, RU: 3, CN: 2, AE: 2, MX: 2, HK: 2, SG: 1, BR: 2, US: 1, MC: 1, LU: 1, GB: 1, DE: 0, FR: 0, IT: 0, BE: 0, CH: 0 };
 export var CPSI_STRUCT_RISQUE = { DOM: 3, TRUST: 2, FOND: 2, HOLD: 2, SCS: 2, SA: 1, SARL: 1, FUND: 1, FO: 1, ASSO: 1, PP: 0 };
 // Score de risque par activité (0 = neutre → 3 = élevé). Toute activité DOIT avoir une valeur
