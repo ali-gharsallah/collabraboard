@@ -7,14 +7,14 @@ import { kycsByClientId } from "./components-data";
 
 // CONSIGNÉ — moteurs non encore portés → stubs neutres (aucun blocage ajouté) :
 //  · screenMatch (Screening sanctions/PEP) → [] (aucune correspondance).
-//  · cbCountry (Cross-Border) → null (sans restriction).
 //  · AML_ALERTS / MROS_REPORTS → [] (aucune alerte / communication).
 //  · TX_DATA (monitoring transactionnel) → [] : un ordre exécuté y est poussé (idem aml.ts).
 //  · wfEmit (event-sourcing paramétrage) → no-op.
-// À rebrancher au portage des modules Screening / Cross-Border / AML / MROS.
+// cbCountry (Cross-Border) : porté (cross-border-support) — consignation levée.
+// À rebrancher au portage des modules Screening / AML / MROS.
 import { PARAM_AUDIT, pushParamAudit } from "./param-audit-support";
+import { cbCountry } from "./cross-border-support";
 function screenMatch(_name: string, _opts?: any): any[] { return []; }
-function cbCountry(_cc: string): any { return null; }
 const AML_ALERTS: any[] = [];
 const MROS_REPORTS: any[] = [];
 const TX_DATA: any[] = [];
