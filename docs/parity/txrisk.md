@@ -30,3 +30,10 @@
 - `pnpm run test:unit` → 80/80 · `pnpm run build` → 0 fuite parité (`TX_CONTINENTS`,
   `TransactionsRiskScreen`, `parity/` absents de `dist`).
 - Dev-transform esbuild + Playwright : 0 erreur runtime ; carte des corridors et top flux conformes.
+
+## Amélioration (demande Ali)
+- **Coloriage des pays par risque** sur la carte : chaque tracé porte son code ISO alpha-2 ; couleur =
+  `CPSI_PAYS_RISQUE` (≥3 rouge élevé · 2 jaune moyen · 0-1 vert faible). Légende « Pays » ajoutée.
+- **Sous la carte** (onglet Carte) : bandeau KPI (volume total, transactions à risque élevé, nb tx,
+  pays/hubs) + **Top 5 grandes transactions / Top 5 entrantes (CH) / Top 5 sortantes (CH)** + la liste
+  complète des transactions — tout calculé depuis `TX_DATA`.
