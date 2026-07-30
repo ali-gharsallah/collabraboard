@@ -90,7 +90,6 @@ export function Shell() {
   if (!currentUser) return <LoginScreen onLogin={u => setCurrentUser(u as User)} />;
 
   const ds = DS_STATS as any;
-  const headerTitle = selectedClient ? (openMode === "client" ? "Fiche client" : "Dossier KYC") : (SL[screen] || screen);
 
   const navItemStyle = (active: boolean, sub = false): React.CSSProperties => ({
     display: "flex", alignItems: "center", gap: 11, padding: sub ? "9px 12px 9px 34px" : "10px 12px",
@@ -231,7 +230,7 @@ export function Shell() {
       <main style={{ flex: 1, overflow: "auto", height: "100vh" }}>
         <header style={{ padding: isMobile ? "9px 12px" : "16px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${T.line}`, background: T.surface, position: "sticky", top: 0, zIndex: 50, gap: 8 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 800, color: T.ink, letterSpacing: -0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{headerTitle}</div>
+            {/* Titre d'écran retiré de l'en-tête (demande Ali) : chaque écran porte déjà son propre titre → suppression du doublon. */}
             {!isMobile && <div style={{ fontSize: 11, color: T.inkSoft }}>mercredi, 29 juillet 2026</div>}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
