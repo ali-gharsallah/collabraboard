@@ -7,6 +7,7 @@ import { KycListScreen } from "./KycListScreen";
 import { KycDetailScreen } from "./KycDetailScreen";
 import { PersonsScreen } from "./PersonsScreen";
 import { AccountReviewScreen } from "./AccountReviewScreen";
+import { CocScreen } from "./CocScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -76,6 +77,7 @@ export function Shell() {
       case "kyc": return <KycListScreen onOpen={(k: any) => { setSelectedClient(clientById[k.clientId] || { id: k.clientId, name: k.clientName }); setOpenMode("kyc"); }} />;
       case "persons": return <PersonsScreen />;
       case "review": return <AccountReviewScreen user={currentUser} />;
+      case "coc": return <CocScreen user={currentUser} />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
