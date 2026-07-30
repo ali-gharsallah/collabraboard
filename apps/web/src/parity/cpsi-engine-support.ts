@@ -5,7 +5,7 @@ import CLIENTS from "../fixtures/CLIENTS.json";
 import KYCS_DATA from "../fixtures/KYCS_DATA.json";
 import { AML_ALERTS } from "./aml-workspace-support";
 import { pushParamAudit } from "./param-audit-support";
-import { CPSI_GROUPES } from "./cpsi-data-support";
+import { CPSI_GROUPES, CPSI_SCENARIOS } from "./cpsi-data-support";
 
 // Utilisateur courant (le screen appelle cpsiSetUser). ESM = bindings en lecture seule → holder local.
 let CPSI_USER: any = null;
@@ -339,3 +339,134 @@ return { id: g.id, fam: g.fam, label: g.label, regle: regle, priorite: g.priorit
 });
 }
 // ── Bibliothèque de scénarios AML/surveillance ciblés par groupe (seuils par groupe, R73) ──
+// ── Scénarios AML & signaux — extraction par appariement d'accolades (source blocs 26211+, 27757+) ──
+// Seuil d'alerte X, pondérations impact/fréquence, pénalité faux positifs (R80-R82).
+export var CPSI_SEUIL_ALERTE = 55; // X paramétrable (tenant/scénario)
+export var CPSI_MARGE_NM = 10; // bande near-miss [X-marge, X)
+export var CPSI_W_IMPACT = 0.6, CPSI_W_FREQ = 0.4; // pondérations
+export var CPSI_FP = {}; // "client|scenario" -> nb de faux positifs déclarés
+export var CPSI_FP_ACTIVE = true; // R82 désactivable
+export function cpsiImpact(v, s) {
+if (typeof v === "boolean")
+return v ? 100 : 0;
+if (typeof v === "number" && typeof s === "number" && s)
+return Math.max(0, Math.min(100, Math.round(100 * (v - s) / Math.abs(s))));
+return 50;
+}
+export function cpsiFreqNorm(cl) { var r = (cl && cl.attr && cl.attr.recurrence) || 1; return Math.min(100, Math.round(100 * r / 6)); }
+export function cpsiPenaliteFP(client, sid) { var n = CPSI_FP[client + "|" + sid] || 0; return -10 * n * (n + 1) / 2; }
+// R80/R81 : UN signal dédupliqué par (client, scénario), scoré (impact+fréquence), classé vs X.
+export function cpsiSignaux(seuil) {
+var X = (seuil != null) ? seuil : CPSI_SEUIL_ALERTE, agg = {};
+CPSI_SCENARIOS.filter(function (sc) { return sc.on !== false; }).forEach(function (sc) {
+Object.keys(sc.groupes_seuils).forEach(function (gid) {
+var g = CPSI_GROUPES.find(function (x) { return x.id === gid; });
+if (!g)
+return;
+cpsiMembres(g).forEach(function (cl) {
+var v = cpsiAttr(cl, sc.champ), seuil2 = sc.groupes_seuils[gid];
+if (CPSI_OPS[sc.sens](v, seuil2)) {
+var key = cl.id + "|" + sc.id, imp = cpsiImpact(v, seuil2);
+if (!agg[key] || imp > agg[key].impact)
+agg[key] = { client: cl.id, clientName: cl.name, scenario: sc.id, scenarioLabel: sc.label, fam: sc.fam, champ: sc.champ, groupe: gid, valeur: v, seuil: seuil2, impact: imp, cl: cl };
+}
+});
+});
+});
+return Object.keys(agg).map(function (key) {
+var a = agg[key], freq = cpsiFreqNorm(a.cl);
+var brut = Math.round(CPSI_W_IMPACT * a.impact + CPSI_W_FREQ * freq);
+var penal = CPSI_FP_ACTIVE ? cpsiPenaliteFP(a.client, a.scenario) : 0;
+var score = Math.max(0, brut + penal);
+var statut = score >= X ? "ALERTE" : (score >= X - CPSI_MARGE_NM ? "NEAR_MISS" : "ANALYSE");
+return { client: a.client, clientName: a.clientName, scenario: a.scenario, scenarioLabel: a.scenarioLabel, fam: a.fam,
+champ: a.champ, groupe: a.groupe, valeur: a.valeur, seuil: a.seuil, impact: a.impact, frequence: freq,
+score_brut: brut, penalite_fp: penal, fp_count: (CPSI_FP[a.client + "|" + a.scenario] || 0), score: score, seuilX: X, statut: statut };
+}).sort(function (x, y) { return y.score - x.score; });
+}
+export function cpsiAlertesParScenario() {
+return CPSI_SCENARIOS.filter(function (sc) { return sc.on !== false; }).map(function (sc) {
+var total = 0, high = 0, medium = 0, effectif = 0, seen = {};
+Object.keys(sc.groupes_seuils).forEach(function (gid) {
+var g = CPSI_GROUPES.find(function (x) { return x.id === gid; });
+if (!g)
+return;
+cpsiMembres(g).forEach(function (cl) {
+if (!seen[cl.id]) {
+seen[cl.id] = 1;
+effectif++;
+}
+var v = cpsiAttr(cl, sc.champ), seuil = sc.groupes_seuils[gid];
+if (CPSI_OPS[sc.sens](v, seuil)) {
+total++;
+var dep = (typeof v === "number") ? v - seuil : 0;
+if (dep >= Math.max(1, 0.5 * seuil))
+high++;
+else
+medium++;
+}
+});
+});
+return { id: sc.id, label: sc.label, fam: sc.fam, champ: sc.champ, desc: sc.desc,
+groupes: Object.keys(sc.groupes_seuils), seuils: sc.groupes_seuils,
+effectif: effectif, total: total, high: high, medium: medium };
+});
+}
+export function cpsiSimulerScenarios(facteur) {
+facteur = facteur || 1;
+var total = 0, parDom = {}, parSev = { HIGH: 0, MEDIUM: 0 }, parScen = [];
+CPSI_SCENARIOS.forEach(function (sc) {
+var n = 0;
+Object.keys(sc.groupes_seuils).forEach(function (gid) {
+var g = CPSI_GROUPES.find(function (x) { return x.id === gid; });
+if (!g)
+return;
+var seuil = sc.groupes_seuils[gid] * facteur;
+cpsiMembres(g).forEach(function (cl) {
+var v = cpsiAttr(cl, sc.champ);
+if (CPSI_OPS[sc.sens](v, seuil)) {
+n++;
+total++;
+var dep = (typeof v === "number") ? v - seuil : 0;
+parSev[dep >= Math.max(1, 0.5 * seuil) ? "HIGH" : "MEDIUM"]++;
+}
+});
+});
+parDom[sc.fam] = (parDom[sc.fam] || 0) + n;
+parScen.push({ id: sc.id, label: sc.label, fam: sc.fam, n: n });
+});
+return { total: total, parDom: parDom, parSev: parSev, parScen: parScen.sort(function (a, b) { return b.n - a.n; }) };
+}
+export function cpsiEvaluerScenario(sc) {
+var hits = [], evalues = 0;
+Object.keys(sc.groupes_seuils).forEach(function (gid) {
+var g = CPSI_GROUPES.find(function (x) { return x.id === gid; });
+if (!g)
+return;
+cpsiMembres(g).forEach(function (cl) {
+evalues++;
+var v = cpsiAttr(cl, sc.champ);
+var seuil = sc.groupes_seuils[gid];
+if (CPSI_OPS[sc.sens](v, seuil))
+hits.push({ client: cl.name, groupe: gid, valeur: v, seuil: seuil });
+});
+});
+return { evalues: evalues, hits: hits };
+}
+export var CPSI_CHAMPS = ["secteur", "type", "aum_band", "pays_risque", "pep", "score", "risk_band", "anciennete", "insider",
+"tx_par_mois", "ratio_cash", "ratio_cross_border", "score_structuration", "rapidite_in_out", "nb_contreparties",
+"fop_deliveries", "transferts_in_specie", "reglements_tiers", "rotation_titres", "concentration_titre",
+"trades_pre_annonce", "ratio_annulation_ordres", "wash_trade_flags", "concentration_intraday",
+"wires_high_risk_jur", "wires_same_day_inout", "wires_third_party", "wires_structured", "funnel_sources",
+"illiquid_ratio", "cross_trades_related", "marking_close_flags", "churn_ratio", "off_market_trades",
+"asset_dominant", "pump_dump_score", "transferts_in_specie",
+"cash_deposits", "cash_withdrawals", "capital_calls", "private_placements", "ipo_flows", "unlisted_investments"];
+export var CPSI_OP_LIST = ["eq", "ne", "in", "nin", "gte", "lte", "gt", "lt"];
+export function cpsiCreerGroupe(g) {
+CPSI_GROUPES.push(g);
+cpsiLog("groupe_cree", { groupe: g.id, label: g.label, acteur: cpsiUserNom() });
+if (typeof pushParamAudit === "function")
+pushParamAudit(cpsiUserNom(), "Groupe de population créé : «" + g.label + "» (" + g.id + ")");
+}
+export var CPSI_FAM_GROUPES = ["Type d'entité", "Secteur", "AUM", "Juridiction", "PEP & risque", "Transactionnel", "Custody", "Abus de marché", "Transferts", "Post-marché & trading", "Capital markets", "Classe d'actifs", "Combinés"];
+export var CPSI_FAM_SCEN = ["Cash & espèces", "Transferts & transfer agent", "Activité transactionnelle", "Trading & marchés", "Capital markets / CIB", "Abus de marché", "Private banking", "Finance islamique"];
