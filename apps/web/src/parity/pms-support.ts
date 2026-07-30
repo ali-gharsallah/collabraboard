@@ -4,14 +4,8 @@
 // pre-trade check, adéquation LSFin, métriques de risque.
 import { amlHash } from "./preonboarding-support";
 
-// CONSIGNÉ — module Settlement non encore porté : le bouton « Générer les ordres → Settlement »
-// (PmsMandateExtras) appelle settleOrders()/settleTokenize(). Stubs locaux : la file d'ordres est
-// tenue en mémoire du module et le tokenizer renvoie une empreinte déterministe minimale.
-// À rebrancher sur le vrai Settlement au portage de l'écran « Exécution & Settlement ».
-const __settleQueue: any[] = [];
-export function settleOrders() { return __settleQueue; }
-export function settleTokenize(src: any) { return { token: "TOK-" + (src.id || src.isin || "x"), tokenizedAt: "2026-07-11" }; }
-
+// Settlement porté (settlement-support.ts) : PmsScreen importe désormais settleOrders/settleTokenize
+// directement depuis le vrai moteur de règlement — consignation levée.
 export const PMS_UNIVERSE: any[] = [
   { isin: "CH0012032048", name: "Roche Holding AG", cls: "ACT", ccy: "CHF", riskLvl: 3, sector: "Santé", esg: true, shariah: true },
   { isin: "CH0038863350", name: "Nestlé SA", cls: "ACT", ccy: "CHF", riskLvl: 2, sector: "Consommation", esg: true, shariah: true },

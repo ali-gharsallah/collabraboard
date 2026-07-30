@@ -5,8 +5,9 @@ import { clientById } from "./components-data";
 import CLIENTS from "../fixtures/CLIENTS.json";
 import {
   PMS_UNIVERSE, PMS_CLS_LABEL, pmsPortfolio, pmsEnrich, pmsReportMd, pmsRebalanceProposal,
-  pmsPreTradeCheck, pmsRebalanceFor, pmsSuitability, pmsRiskMetrics, settleOrders, settleTokenize,
+  pmsPreTradeCheck, pmsRebalanceFor, pmsSuitability, pmsRiskMetrics,
 } from "./pms-support";
+import { settleOrders, settleTokenize } from "./settlement-support";
 import { amlHash } from "./preonboarding-support";
 
 // pushParamAudit : piste d'audit (hors périmètre front) → no-op.
