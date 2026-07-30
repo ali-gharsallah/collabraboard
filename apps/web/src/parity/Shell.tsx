@@ -23,6 +23,7 @@ import { OILScreen } from "./OILScreen";
 import { WfEngineScreen } from "./WfEngineScreen";
 import { WorkflowManagementScreen } from "./WorkflowManagementScreen";
 import { SwiftLabScreen } from "./SwiftLabScreen";
+import { RegWatchScreen } from "./RegWatchScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -109,6 +110,7 @@ export function Shell() {
       case "wfmanagement": return <WorkflowManagementScreen user={currentUser} />;
       case "wfdesigner": return <WorkflowManagementScreen user={currentUser} />;
       case "swiftlab": return <SwiftLabScreen user={currentUser} />;
+      case "regwatch": return <RegWatchScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
