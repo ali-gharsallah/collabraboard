@@ -15,6 +15,23 @@ export function aumMOf(c: any) {
   return v; // défaut : millions CHF
 }
 
+// Parseur / formateur AUM partagés (source 20641–20661).
+export function parseAumValue(s: any) {
+  if (!s) return 0;
+  const m = String(s).match(/([\d.]+)\s*([kKmM])?/);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  const unit = (m[2] || "").toLowerCase();
+  if (unit === "m") return n * 1000000;
+  if (unit === "k") return n * 1000;
+  return n;
+}
+export function formatAumTotal(chf: number) {
+  if (chf >= 1e9) return "CHF " + (chf / 1e9).toFixed(2) + "Md";
+  if (chf >= 1e6) return "CHF " + (chf / 1e6).toFixed(0) + "M";
+  return "CHF " + Math.round(chf / 1000) + "k";
+}
+
 // -- exoticOverlay (21358) : ~12% des clients reçoivent un secteur exotique (art, crypto, casinos…),
 //    passent LOW→MEDIUM et sont tagués SECTEUR-EXOTIQUE. Verbatim, idempotent. --
 let __exoticDone = false;
