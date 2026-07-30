@@ -65,6 +65,47 @@ export function markLeadDecision(leadId: string, status: string, user: any) {
   wfEmit("PARAM_CHANGED", null, { subjectId: "LEAD_DECISION/" + leadId, actor: (user && user.name) || "—", payload: { status } });
 }
 
+// ── Pré-prospection (ProspectionScreen, source 31370–31404) ──
+import { aumMOf, runExoticOverlay } from "./demo-init";
+import { pmsPortfolio } from "./pms-support";
+import { CONTACT_REPORTS } from "./contactreports-support";
+import { amlHash } from "./preonboarding-support";
+runExoticOverlay(); // garantit c.exotic même si la Pré-prospection est le premier écran ouvert.
+
+export const PROSPECTION_CHANNELS = [
+  { id: "APPORTEURS", icon: "🤝", label: "Apporteurs d'affaires", how: "Avocats, fiduciaires, MFO sous convention — rémunération rétrocédée, déclarée LSFin.", stats: "12 apporteurs actifs · 9 leads / 12 mois · conversion 33%" },
+  { id: "EVENTS", icon: "🎪", label: "Événements & salons", how: "Présence ciblée UHNWI : art, horlogerie, philanthropie. Objectif : 10 contacts qualifiés / événement.", stats: "6 événements / an · 41 contacts · 7 ouvertures" },
+  { id: "LIQUIDITY", icon: "📰", label: "Liquidity events (presse M&A)", how: "Veille cessions d'entreprises romandes & alémaniques — approche du cédant à J+30.", stats: "18 signaux détectés · 5 approches · 2 mandats" },
+  { id: "RESEAUX", icon: "🕸", label: "Réseaux professionnels", how: "Chambres de commerce, clubs services, alumni — cartographie des cercles par RM.", stats: "RM mappés sur 14 cercles · 6 leads" },
+  { id: "REFERRAL", icon: "👥", label: "Recommandation clients", how: "Programme de parrainage discret — clients promoteurs identifiés au CRM (NPS implicite).", stats: "23 clients promoteurs · 4 parrainages signés" },
+  { id: "CROSSSELL", icon: "⤴", label: "Cross-selling base existante", how: "Offres dérivées des données Olive : mandat, Lombard, succession, ESG — voir onglet dédié.", stats: "dérivé en direct des 84 relations" },
+];
+export const PROSPECTION_EVENTS = [
+  { date: "2026-09-17", label: "Art Basel — VIP preview", cible: "Collectionneurs UHNWI", rm: "S. Marchand", status: "Inscrit", todo: "Liste d'invités croisée avec la veille M&A" },
+  { date: "2026-08-28", label: "Geneva Watch Days", cible: "Entrepreneurs horlogerie", rm: "R. Kessler", status: "Inscrit", todo: "3 RDV pré-bookés" },
+  { date: "2026-10-06", label: "Zurich Private Wealth Forum", cible: "Family offices", rm: "A. Gharsallah", status: "À confirmer", todo: "Proposer un speaking slot compliance IA" },
+  { date: "2026-11-12", label: "Trophée de golf — Genève", cible: "Clients promoteurs + invités", rm: "S. Marchand", status: "Organisateur", todo: "Chaque client invite un prospect" },
+];
+export const PROSPECTION_LOG = [
+  { at: "2026-07-02", who: "R. Kessler", what: "EPHJ Genève — 14 contacts, 4 cartes qualifiées, 1 RDV fixé (négoce horloger)" },
+  { at: "2026-06-19", who: "S. Marchand", what: "Signal presse : cession PME vaudoise (CHF 40M) — approche du cédant via fiduciaire apporteur" },
+  { at: "2026-06-05", who: "A. Gharsallah", what: "Dîner philanthropie — 2 family offices rencontrés, suivi CRM créé" },
+];
+export function crossSellFor(_user: any) {
+  const out: any[] = [];
+  // clientVisibleTo non portée côté parité → tous les clients visibles (garde iso-fonctionnelle).
+  (CLIENTS as any[]).forEach(function (c) {
+    const aumM = aumMOf(c);
+    const h = amlHash(c.id + "XS", 100);
+    if (aumM >= 30 && h < 40) out.push({ c, offer: "Crédit Lombard", why: "AUM " + c.aum + " nanti disponible — ligne indicative " + Math.round(aumM * 0.45) + "M (LTV 45%)", link: "Octopulse OppRisk : scoring collatéral" });
+    if (pmsPortfolio(c).drift >= 10) out.push({ c, offer: "Mandat discrétionnaire", why: "Dérive d'allocation " + pmsPortfolio(c).drift + "% en advisory — le mandat supprime la dérive", link: null });
+    if (c.exotic) out.push({ c, offer: "Conseil patrimonial spécialisé", why: "Secteur " + c.sector + " — structuration, assurance œuvres/actifs, due diligence renforcée incluse", link: null });
+    if (aumM >= 50 && h >= 40 && h < 60) out.push({ c, offer: "Planification successorale", why: "Patrimoine " + c.aum + " sans structure de transmission documentée au dossier", link: null });
+  });
+  return out.slice(0, 24);
+}
+export { CONTACT_REPORTS };
+
 // -- Handoffs inter-écrans. La maquette utilise des variables module-level mutables
 //    (PENDING_TEST_LEAD_ID / PENDING_ONBOARD_LEAD_NAME) réassignées entre écrans. Les imports ESM
 //    étant en lecture seule, on reproduit le pattern via un objet-conteneur mutable. --
