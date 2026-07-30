@@ -53,5 +53,32 @@ export function runExoticOverlay() {
   });
 }
 
-// Exécuté à l'import (comme l'IIFE de la maquette).
+// Source : docs/reference/olive-demo.html 14685–14712 — enrichissement screening.
+// Les dossiers MEDIUM/HIGH entièrement CLEAR reçoivent (~45%) un hit réaliste (SECO/adverse/PEP/OFAC
+// pondérés). Comme AML_ALERTS dérive du screening, les alertes se multiplient — cascade voulue.
+// Doit muter KYCS_DATA AVANT la construction de AML_ALERTS (aml-workspace-support, lazy).
+import KYCS_DATA from "../fixtures/KYCS_DATA.json";
+let __enrichDone = false;
+export function enrichScreening() {
+  if (__enrichDone) return;
+  __enrichDone = true;
+  (KYCS_DATA as any[]).forEach(function (k) {
+    if (k.risk === "LOW") return;
+    const sc = k.screening || (k.screening = {});
+    if (sc.ofac === "HIT" || sc.seco === "HIT" || sc.pep === "HIT" || sc.adverse === "HIT") return;
+    const h = amlHash(k.code + "ENR", 100);
+    if (h >= 45) return;
+    if (h < 14) sc.adverse = "HIT";
+    else if (h < 26) sc.seco = "HIT";
+    else if (h < 36) sc.pep = "HIT";
+    else sc.ofac = "HIT";
+    if (amlHash(k.code + "ENR2", 10) < 2) {
+      if (sc.adverse !== "HIT") sc.adverse = "HIT";
+      else sc.seco = "HIT";
+    }
+  });
+}
+
+// Exécuté à l'import (comme les IIFE de la maquette).
 runExoticOverlay();
+enrichScreening();
