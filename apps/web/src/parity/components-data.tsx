@@ -54,7 +54,7 @@ const LIFECYCLE_STATUS_STYLE: Record<string, [string, string]> = {
   "Prospect — en contact": [T.inkSoft, T.lineSoft], "Prospect — en onboarding": [T.gold, T.amberSoft],
   "Client actif": [T.green, T.greenSoft], "Client — sortie en cours": [T.amber, T.amberSoft], "Ancien client": [T.inkSoft, T.lineSoft],
 };
-function clientLifecycleStatus(entity: any): string {
+export function clientLifecycleStatus(entity: any): string {
   if (!entity) return "—";
   if (entity._isLead) return "Prospect — en contact";
   if (entity.firstKyc !== undefined) return entity.entered ? "Client actif" : "Prospect — en onboarding";
