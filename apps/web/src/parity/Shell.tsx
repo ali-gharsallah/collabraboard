@@ -21,6 +21,7 @@ import { MobileBankingScreen } from "./MobileBankingScreen";
 import { CustodyTAScreen } from "./CustodyTAScreen";
 import { OILScreen } from "./OILScreen";
 import { WfEngineScreen } from "./WfEngineScreen";
+import { WorkflowManagementScreen } from "./WorkflowManagementScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -104,6 +105,8 @@ export function Shell() {
       case "custody": return <CustodyTAScreen />;
       case "oil": return <OILScreen go={goTo} />;
       case "wfengine": return <WfEngineScreen go={goTo} />;
+      case "wfmanagement": return <WorkflowManagementScreen user={currentUser} />;
+      case "wfdesigner": return <WorkflowManagementScreen user={currentUser} />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };

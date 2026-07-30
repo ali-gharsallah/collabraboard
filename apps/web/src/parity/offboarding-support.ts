@@ -22,6 +22,7 @@ export const OFF_PP_CHECKLIST = ["Vérifier les soldes", "Clôturer les comptes"
 export const OFF_CORP_CHECKLIST = ["Vérifier les UBO", "Vérifier les pouvoirs de signature", "Clôturer les comptes liés", "Vérifier les structures associées", "Contrôler les obligations CRS/FATCA", "Archiver les documents légaux"];
 export function offChecklistFor(client: any) { return (client && client.type === "PP") ? OFF_PP_CHECKLIST : OFF_CORP_CHECKLIST; }
 
+export const OFF_ROLE_SEQ = ["RM", "ARM", "CO", "CO_SR", "MLRO", "DIR", "ADMIN"];
 const OFF_APPROVAL_CHAINS: Record<string, string[]> = { LOW: ["RM", "CO"], MEDIUM: ["RM", "CO", "CO_SR"], HIGH: ["RM", "CO", "MLRO", "DIR"] };
 const OFF_REASON_FORCE: Record<string, string | null> = {
   "Demande du client": null, "Décision de la banque": null, "Risque AML élevé": "HIGH", "Sanctions": "HIGH",
