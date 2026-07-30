@@ -51,6 +51,7 @@ import { AmlSandboxScreen } from "./AmlSandboxScreen";
 import { KycSandboxScreen } from "./KycSandboxScreen";
 import { BrmSandboxScreen } from "./BrmSandboxScreen";
 import { OnbSandboxScreen } from "./OnbSandboxScreen";
+import { OwnerSandboxScreen } from "./OwnerSandboxScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -165,6 +166,7 @@ export function Shell() {
       case "sbkyc": return <KycSandboxScreen />;
       case "sbbrm": return <BrmSandboxScreen />;
       case "sbonb": return <OnbSandboxScreen />;
+      case "sbowner": return <OwnerSandboxScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
