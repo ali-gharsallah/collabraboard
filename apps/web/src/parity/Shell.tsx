@@ -18,6 +18,7 @@ import { ProspectionScreen } from "./ProspectionScreen";
 import { FxScreen } from "./FxScreen";
 import { ExecutiveDashboardScreen } from "./ExecutiveDashboardScreen";
 import { MobileBankingScreen } from "./MobileBankingScreen";
+import { CustodyTAScreen } from "./CustodyTAScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -98,6 +99,7 @@ export function Shell() {
       case "fx": return <FxScreen user={currentUser} />;
       case "execdash": return <ExecutiveDashboardScreen user={currentUser} go={goTo} />;
       case "mobile": return <MobileBankingScreen user={currentUser} />;
+      case "custody": return <CustodyTAScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
