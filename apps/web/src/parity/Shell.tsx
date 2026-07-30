@@ -47,6 +47,7 @@ import { CocParamScreen } from "./CocParamScreen";
 import { ScreeningTabs } from "./ScreeningScreen";
 import { ComplianceCenterScreen } from "./ComplianceCenterScreen";
 import { TransactionsRiskScreen } from "./TransactionsRiskScreen";
+import { AmlSandboxScreen } from "./AmlSandboxScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -157,6 +158,7 @@ export function Shell() {
       case "screening": return <ScreeningTabs user={currentUser} />;
       case "compliance": return <ComplianceCenterScreen user={currentUser} />;
       case "txrisk": return <TransactionsRiskScreen />;
+      case "sbaml": return <AmlSandboxScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
