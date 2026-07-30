@@ -6,12 +6,7 @@ import { pushParamAudit } from "./param-audit-support";
 import { AML_SCORING_RULES, AML_PARAMS } from "./aml";
 import { AML_SCENARIOS } from "./aml-workspace-support";
 import { C48_AML, C48_ISL, AML_NOMS_FR, amlCleanName, amlThemeOf, amlHitsSeries, RULE_PARAM_KEY } from "./aml-catalog-support";
-
-// CONSIGNÉ — CPSI_SCENARIOS / CPSI_GROUPES (profilage continu) non portés → undefined.
-// La garde `typeof … !== "undefined"` de la source saute cette section : ces scénarios
-// n'apparaissent pas dans le référentiel (fidèle tant que le moteur CPSI n'est pas porté).
-const CPSI_SCENARIOS: any = undefined;
-const CPSI_GROUPES: any = undefined;
+import { CPSI_SCENARIOS, CPSI_GROUPES } from "./cpsi-data-support";
 
 // Source : docs/reference/olive-demo.html 26972–27122 — porté verbatim.
 export function AmlEncyclopediaScreen({ user }: { user?: any }) {

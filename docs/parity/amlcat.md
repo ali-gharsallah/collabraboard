@@ -12,17 +12,19 @@
   seuils/poids éditables, simulation, journal des signaux.
 - Wiring `Shell.tsx` : `case "amlcat"`.
 
+## Fichiers portés (complément)
+- `apps/web/src/parity/cpsi-data-support.ts` — `CPSI_GROUPES` (56) + `CPSI_SCENARIOS` (64), portés
+  verbatim (25970–26040 / 26069–26205). Le référentiel intègre désormais le profilage continu.
+
 ## Réutilise (déjà porté)
 - `AML_SCORING_RULES`/`AML_PARAMS` (aml.ts), `AML_SCENARIOS` (aml-workspace-support),
   `SectionTitle`/`Badge`/`ExportBtn`, `pushParamAudit`.
 
-## Consigné (hors périmètre, non porté)
-- **`CPSI_SCENARIOS` / `CPSI_GROUPES`** (profilage continu) → `undefined` : la garde
-  `typeof … !== "undefined"` de la source saute cette section — ces scénarios (seuils par groupe)
-  n'apparaissent pas. Fidèle tant que le moteur CPSI n'est pas porté. À compléter au portage CPSI.
-
-## Réellement calculé
-- 87 règles : 36 scoring (socle) + 36 scénarios AML (dont catalogue Gherkin R189-R206) + 15 Islamic.
+## Réellement calculé — total 118 (logique de fusion de la source, vérifiée)
+- **36** scoring (socle) + **36** scénarios AML (dont catalogue Gherkin R189-R206) + **15** Islamic = **87** lignes de base.
+- **64** scénarios CPSI (profilage continu) : **33** portent un `ruleRef` (R189-R221) → rattachés à
+  une ligne hôte (seuils par groupe, pas de nouvelle ligne) ; les **31** sans `ruleRef` → nouvelles lignes.
+- Total = 87 + 31 = **118** (`host = sc.ruleRef && refIndex[sc.ruleRef]`, aucun dédoublonnage — conforme source).
 - Thèmes dérivés (`amlThemeOf`), séries de hits 6 mois déterministes (`amlHitsSeries`).
 - Édition de poids/seuils/paramètres tracée (pushParamAudit), simulation → journal des signaux.
 
