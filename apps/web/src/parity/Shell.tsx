@@ -30,6 +30,7 @@ import { SettlementScreen } from "./SettlementScreen";
 import { RegistreLbaScreen } from "./RegistreLbaScreen";
 import { FormationsScreen } from "./FormationsScreen";
 import { LegalScreen } from "./LegalScreen";
+import { TransfersScreen } from "./TransfersScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -123,6 +124,7 @@ export function Shell() {
       case "registre": return <RegistreLbaScreen user={currentUser} />;
       case "formations": return <FormationsScreen user={currentUser} />;
       case "legal": return <LegalScreen user={currentUser} />;
+      case "transferts": return <TransfersScreen user={currentUser} />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };

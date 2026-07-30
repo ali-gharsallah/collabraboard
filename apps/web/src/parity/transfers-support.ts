@@ -2,17 +2,26 @@
 // Moteur Transferts & ordres : contrôles pré-exécution + création d'ordre. Partagé par Mobile
 // Banking, Transferts & ordres, Settlement et le bouton rééquilibrage PMS.
 import CLIENTS from "../fixtures/CLIENTS.json";
+import { T } from "./tokens";
 import { kycsByClientId } from "./components-data";
 
 // CONSIGNÉ — moteurs non encore portés → stubs neutres (aucun blocage ajouté) :
 //  · screenMatch (Screening sanctions/PEP) → [] (aucune correspondance).
 //  · cbCountry (Cross-Border) → null (sans restriction).
 //  · AML_ALERTS / MROS_REPORTS → [] (aucune alerte / communication).
+//  · TX_DATA (monitoring transactionnel) → [] : un ordre exécuté y est poussé (idem aml.ts).
+//  · wfEmit (event-sourcing paramétrage) → no-op.
 // À rebrancher au portage des modules Screening / Cross-Border / AML / MROS.
+import { PARAM_AUDIT, pushParamAudit } from "./param-audit-support";
 function screenMatch(_name: string, _opts?: any): any[] { return []; }
 function cbCountry(_cc: string): any { return null; }
 const AML_ALERTS: any[] = [];
 const MROS_REPORTS: any[] = [];
+const TX_DATA: any[] = [];
+function wfEmit(_t: string, _d: any, _p: any) {}
+
+export const XFER_CC_CITY: any = { US: "New York", GB: "Londres", FR: "Paris", DE: "Francfort", AE: "Dubaï", PA: "Panama", KY: "Cayman", BS: "Nassau", TR: "Istanbul", HK: "Hong Kong", SG: "Singapour", LU: "Luxembourg", MC: "Monaco", LI: "Vaduz", SA: "Riyad", QA: "Doha", IN: "Mumbai", JP: "Tokyo", CH: "Zürich", IT: "Milan", ES: "Madrid" };
+export const XFER_STATUS_META: any = { PENDING_APPROVAL: ["En attente de validation", T.amber, "amberSoft"], EXECUTED: ["Exécuté", T.green, "greenSoft"], BLOCKED: ["Bloqué — contrôle", T.red, "redSoft"], REJECTED: ["Rejeté", T.inkSoft, "lineSoft"] };
 
 export const TRANSFER_ORDERS: any[] = [];
 let TRANSFER_SEQ = 71000;
@@ -89,3 +98,38 @@ export function transferCreate(f: any, user: any) {
   TRANSFER_ORDERS.unshift(o);
   return o;
 }
+
+// Source : docs/reference/olive-demo.html 29833–29852 — validation four-eyes + rejet.
+export function transferApprove(o: any, user: any, justification: string | null): any {
+  if (o.createdBy === (user && user.name))
+    return { err: "Four-eyes : le valideur doit différer du créateur de l'ordre" };
+  if (o.controls.verdict === "WARN" && !justification)
+    return { err: "Verdict WARN : une justification de dérogation est obligatoire" };
+  o.status = "EXECUTED";
+  o.approvedBy = (user && user.name) || "—";
+  o.executedAt = "2026-07-11";
+  o.justification = justification || null;
+  const city = XFER_CC_CITY[o.destCC] || "Zürich";
+  TX_DATA.push({ id: "TX-" + (60000 + TRANSFER_ORDERS.length), date: "2026-07-11", from: "Genève", to: city, amt: o.amt, cur: o.cur, client: o.clientName, type: o.type, risk: o.controls.verdict === "WARN" ? "HIGH" : XFER_SENSITIVE.indexOf(o.destCC) >= 0 ? "MEDIUM" : "LOW" });
+  pushParamAudit((user && user.name) || "—", "Transferts — ordre " + o.id + " VALIDÉ et EXÉCUTÉ (four-eyes : " + o.createdBy + " → " + o.approvedBy + ")" + (justification ? (" — dérogation : " + justification) : ""));
+  wfEmit("PARAM_CHANGED", null, { subjectId: "XFER/" + o.id, actor: (user && user.name) || "—", payload: { action: "EXECUTE", amt: o.amt } });
+  return { ok: true };
+}
+export function transferReject(o: any, user: any) {
+  o.status = "REJECTED";
+  o.approvedBy = (user && user.name) || "—";
+  pushParamAudit((user && user.name) || "—", "Transferts — ordre " + o.id + " REJETÉ (" + o.controls.verdict + ")");
+}
+
+// Source : docs/reference/olive-demo.html 43528–43542 — seed des ordres du jour (tous états).
+(function seedTransfers() {
+  const mk = function (cid: string, ben: string, iban: string, cc: string, amt: number, cur: string, type: string, motif: string, by: string) { return transferCreate({ clientId: cid, beneficiary: ben, iban: iban, destCC: cc, amt: amt, cur: cur, type: type, motif: motif }, { name: by }); };
+  const ids = (CLIENTS as any[]).slice(0, 30).map(function (c) { return c.id; });
+  mk(ids[2], "Continental Assets Ltd", "GB29NWBK60161331926819", "GB", 1.8, "USD", "SWIFT", "Acquisition immobilière", "Lucie Morel");
+  mk(ids[5], "Al Faisal Trading FZE", "AE070331234567890123456", "AE", 3.2, "AED", "SWIFT", "Contrat commercial", "Ming Chen");
+  mk(ids[8], "Novatek Energia OOO", "RU0204452560040702810", "RU", 0.9, "USD", "SWIFT", "Fourniture équipement", "Ralf Kessler");
+  const o4 = mk(ids[11], "Fondation Helvetia Kids", "CH5604835012345678009", "CH", 0.25, "CHF", "SEPA", "Don caritatif", "Sophie Berger");
+  const o5 = mk(ids[14], "Meyer & Cie Notaires", "CH9300762011623852957", "CH", 1.1, "CHF", "SEPA", "Frais d'acte", "Patrick Durand");
+  [o4, o5].forEach(function (o, i) { if (o.status === "PENDING_APPROVAL") { transferApprove(o, { name: "Isabelle Vernet" }, "Ordre récurrent documenté au dossier"); o.executedAt = "2026-07-0" + (8 + i); } });
+  PARAM_AUDIT.splice(0, 7); // les seeds ne polluent pas la piste du jour
+})();
