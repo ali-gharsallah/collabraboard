@@ -70,3 +70,83 @@ export const DOC_STRUCTURES: any[] = [
   { id: "FOND", name: "Fondation", roles: ["Fondateur", "Conseil", "Bénéficiaire"] },
   { id: "FO", name: "Family Office", roles: ["Titulaire", "UBO", "Gérant mandaté"] },
 ];
+
+// Source 18132–18272 (verbatim) — matrice documentaire : liste des pièces, règles, moteur.
+export const DOC_LIST: string[] = [
+  "Passeport / pièce d'identité",
+  "Justificatif de domicile",
+  "Contrat d'ouverture de compte",
+  "Formulaire A (ayant droit éco.)",
+  "Formulaire K (détenteur du contrôle)",
+  "Formulaire S (fondation)",
+  "Formulaire T (trust)",
+  "Questionnaire AML / LBA",
+  "Source of Wealth (SOW)",
+  "Source of Funds (SOF)",
+  "Déclaration PEP",
+  "Consentement screening sanctions",
+  "Auto-certification CRS",
+  "Formulaire FATCA (W-8BEN/W-9)",
+  "Extrait du registre du commerce",
+  "Statuts / actes constitutifs",
+  "Registre des actions",
+  "Procès-verbal du conseil",
+  "Procuration",
+  "Trust Deed",
+  "Charte de fondation",
+  "États financiers",
+  "Profil de transactions attendu",
+];
+export const DOC_RULES_DEFAULT: any[] = [
+  { id: "R1", label: "Socle KYC obligatoire", desc: "Identité, domicile, ouverture, AML, PEP, screening, CRS/FATCA → obligatoires pour tout titulaire ou UBO.", on: true },
+  { id: "R2", label: "Ayant droit économique (Form. A)", desc: "Formulaire A obligatoire pour tout ayant droit économique / UBO (CDB 20 art. 27).", on: true },
+  { id: "R3", label: "Détenteur du contrôle (Form. K)", desc: "Formulaire K obligatoire pour l'UBO des sociétés opérationnelles non cotées (CDB 20 art. 20).", on: true },
+  { id: "R4", label: "Documents corporate", desc: "Extrait RC, statuts, registre des actions, PV du conseil → obligatoires pour les structures sociétés.", on: true },
+  { id: "R5", label: "Trust (Form. T)", desc: "Trust Deed et formulaire T obligatoires pour Settlor, Trustee et le compte.", on: true },
+  { id: "R6", label: "Fondation (Form. S)", desc: "Charte de fondation et formulaire S obligatoires pour Fondateur, Conseil et le compte.", on: true },
+  { id: "R7", label: "Origine des avoirs (EDD)", desc: "SOW et SOF obligatoires pour titulaire et UBO.", on: true },
+];
+function docRuleEval(doc: any, struct: any, role: any, rules: any) {
+  var on = function (id: any) { return rules.some(function (r: any) { return r.id === id && r.on; }); };
+  // ── Colonne "Compte" : documents exigés au niveau du compte / de l'entité ──
+  if (role === "Compte") {
+    if (on("R1") && /ouverture|AML|screening|CRS|FATCA/i.test(doc))
+      return { v: "M", rule: "R1" };
+    if (on("R7") && /Profil de transactions/.test(doc))
+      return { v: "M", rule: "R7" };
+    if (on("R4") && /registre du commerce|Statuts|Registre des actions|conseil|États financiers/i.test(doc) && ["SA", "SARL", "HOLD", "FO"].indexOf(struct.id) >= 0)
+      return { v: "M", rule: "R4" };
+    if (on("R5") && /Trust Deed|Formulaire T/.test(doc) && struct.id === "TRUST")
+      return { v: "M", rule: "R5" };
+    if (on("R6") && /Charte de fondation|Formulaire S/.test(doc) && struct.id === "FOND")
+      return { v: "M", rule: "R6" };
+    return { v: "O", rule: null };
+  }
+  // ── Colonnes personnes / relations : documents rattachés à chaque intervenant ──
+  var uboish = /UBO|Ayant droit|Settlor|Fondateur/.test(role);
+  var holderish = /Titulaire|UBO|Ayant droit/.test(role);
+  if (on("R1") && /Passeport|domicile|Déclaration PEP/i.test(doc))
+    return { v: "M", rule: "R1" };
+  if (on("R2") && /Formulaire A/.test(doc) && uboish)
+    return { v: "M", rule: "R2" };
+  if (on("R3") && /Formulaire K/.test(doc) && /UBO/.test(role) && ["SA", "SARL", "HOLD", "FO"].indexOf(struct.id) >= 0)
+    return { v: "M", rule: "R3" };
+  if (on("R7") && /Source of Wealth|Source of Funds/.test(doc) && holderish)
+    return { v: "M", rule: "R7" };
+  if (/Procuration/.test(doc) && /Fondé de pouvoir|Signataire|mandaté/.test(role))
+    return { v: "M", rule: "R1" };
+  return { v: "O", rule: null };
+}
+// Calcule le set documentaire requis pour une structure (Compte + rôles).
+export function computeRequiredDocs(structId: any, rules: any) {
+  rules = rules || DOC_RULES_DEFAULT;
+  var struct = DOC_STRUCTURES.find(function (s: any) { return s.id === structId; }) || DOC_STRUCTURES[0];
+  var cols = ["Compte"].concat(struct.roles);
+  var docs: any[] = [];
+  DOC_LIST.forEach(function (doc: any) {
+    var where = cols.filter(function (col: any) { return docRuleEval(doc, struct, col, rules).v === "M"; });
+    if (where.length)
+      docs.push({ doc: doc, where: where, account: where.indexOf("Compte") >= 0 });
+  });
+  return { struct: struct, cols: cols, docs: docs };
+}
