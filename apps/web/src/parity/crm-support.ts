@@ -5,6 +5,9 @@ import KYCS_DATA from "../fixtures/KYCS_DATA.json";
 import { clientById } from "./components-data";
 import { CONTACT_REPORTS } from "./contactreports-support";
 import { pmsPortfolio } from "./pms-support";
+import { aumMOf } from "./demo-init";
+import { clientVisibleTo } from "./cloison-support";
+import { amlHash } from "./preonboarding-support";
 
 export function crmRelances(): any[] {
   return (CONTACT_REPORTS as any[]).filter(function (r) { return r.nextStep && r.nextDate && !r.nextDone; })
@@ -36,4 +39,34 @@ export function crmOpportunities(): any[] {
     }
   });
   return cov.slice(0, 12).concat(pfl.slice(0, 10), dos.slice(0, 8));
+}
+// Source 30020-30048 (verbatim) — tiering AUM, SLA de couverture, plan NNM 2026.
+export function crmTierOf(c: any) {
+  const aM = aumMOf(c);
+  if (aM >= 50)
+    return { tier: "A", sla: 90, label: "Tier A — contact trimestriel" };
+  if (aM >= 15)
+    return { tier: "B", sla: 180, label: "Tier B — contact semestriel" };
+  return { tier: "C", sla: 365, label: "Tier C — contact annuel" };
+}
+export function crmCoverage(user: any): any[] {
+  return (CLIENTS as any[]).filter(function (c) { return clientVisibleTo(user, c); }).map(function (c) {
+    const t = crmTierOf(c);
+    const dates = (CONTACT_REPORTS as any[]).filter(function (r) { return r.clientId === c.id; }).map(function (r) { return r.date; }).sort();
+    const last = dates[dates.length - 1] || null;
+    const days = last ? Math.round((new Date("2026-07-11").getTime() - new Date(last).getTime()) / 86400000) : 9999;
+    return { c: c, tier: t, last: last, days: days, overdue: days > t.sla, dueIn: t.sla - days };
+  });
+}
+export function crmNnmPlan(user: any): any[] {
+  const byRm: any = {};
+  (CLIENTS as any[]).filter(function (c) { return clientVisibleTo(user, c); }).forEach(function (c) {
+    const aM = aumMOf(c);
+    const rm = c.rm || "—";
+    byRm[rm] = byRm[rm] || { target: 0, real: 0, n: 0 };
+    byRm[rm].target += aM * 0.05;
+    byRm[rm].real += aM * 0.05 * (amlHash(c.id + "NNM", 140) / 100);
+    byRm[rm].n++;
+  });
+  return Object.keys(byRm).map(function (rm) { const x = byRm[rm]; return { rm: rm, target: Math.round(x.target * 10) / 10, real: Math.round(x.real * 10) / 10, n: x.n, pct: Math.round(x.real / Math.max(0.1, x.target) * 100) }; }).sort(function (a, b) { return b.target - a.target; });
 }
