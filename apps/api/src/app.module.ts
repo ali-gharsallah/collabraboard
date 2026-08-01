@@ -49,11 +49,12 @@ import { OliviaModule } from "./modules/olivia/olivia.module";
 import { OffboardingModule } from "./modules/offboarding/offboarding.module";
 import { LicenseModule } from "./modules/license/license.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
+import { RapportsModule } from "./modules/rapports/rapports.module";   // R50 : exports réglementaires
 import { CocModule } from "./modules/coc/coc.module";
 import { SandboxModule } from "./modules/sandbox/sandbox.module";
 import { SwarmModule } from "./modules/swarm/swarm.module";
 
-@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule] })
+@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule, RapportsModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(SecurityHeadersMiddleware, TenantMiddleware).forRoutes("*"); }
 }
