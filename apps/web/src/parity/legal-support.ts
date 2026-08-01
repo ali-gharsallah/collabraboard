@@ -4,10 +4,22 @@ import CLIENTS from "../fixtures/CLIENTS.json";
 import { amlHash } from "./preonboarding-support";
 import { pmsPortfolio, pmsEnrich } from "./pms-support";
 
-// CONSIGNÉ — GED_DOCS (documents GED, source 30297) non porté → tableau local vide.
-// L'onglet « Générer » alimente cette file locale au lieu de la vraie GED ; la contrathèque
-// et l'échéancier fonctionnent pleinement. À rebrancher au portage de l'écran GED vivante.
-export const GED_DOCS: any[] = [];
+// GED_DOCS (documents GED, source 30297) — seed déterministe partagé (30 clients × 1-3 docs).
+// Écran GED (docs/plan), CRM (vue 360°) et Legal (génération de contrats) partagent cette référence.
+// corrLangOverlay (30295) : langue de correspondance déterministe par client.
+(function corrLangOverlay() { const L = ["FR", "EN", "DE", "IT"]; (CLIENTS as any[]).forEach(function (c: any) { if (!c.corrLang) c.corrLang = L[amlHash(c.id + "LNG", 4)]; }); })();
+export const GED_DOCS: any[] = (function () {
+  const out: any[] = [];
+  const TYPES: [string, string][] = [["Passeport", "01-IDENT"], ["Formulaire A", "02-CDB"], ["Auto-certification CRS", "03-FISC"], ["Clarification SOF", "04-AML"], ["Mandat de gestion", "05-CONTRAT"], ["Courrier annuel", "06-CORR"]];
+  (CLIENTS as any[]).slice(0, 30).forEach(function (c: any) {
+    const n = 1 + amlHash(c.id + "GD", 3);
+    for (let i = 0; i < n; i++) {
+      const t = TYPES[amlHash(c.id + "GT" + i, TYPES.length)];
+      out.push({ id: "DOC-" + (7000 + out.length), clientId: c.id, name: t[0] + " — " + c.name, code: t[1], lang: c.corrLang, version: 1 + (amlHash(c.id + "GV" + i, 3)), sizeKb: 80 + amlHash(c.id + "GS" + i, 4000), status: ["VALIDE", "VALIDE", "A_VALIDER", "ARCHIVE"][amlHash(c.id + "GW" + i, 4)], uploadedBy: c.rm || "Central File", at: "2026-0" + (1 + amlHash(c.id + "GA" + i, 6)) + "-1" + (amlHash(c.id + "GB" + i, 9)) });
+    }
+  });
+  return out;
+})();
 
 export const LEGAL_TYPES: [string, string][] = [["MANDAT", "Mandat de gestion discrétionnaire"], ["CONSEIL", "Contrat de conseil en placement"], ["LOMBARD", "Contrat-cadre crédit Lombard"], ["EBANK", "Convention e-banking"], ["NDA", "Accord de confidentialité"], ["APPORTEUR", "Convention d'apporteur d'affaires"]];
 export const LEGAL_STATUS: any = { DRAFT: ["Brouillon", "inkSoft"], NEGO: ["En négociation", "amber"], SIGNED: ["Signé", "blue"], ACTIVE: ["Actif", "green"], EXPIRING: ["Échéance proche", "amber"], TERMINATED: ["Résilié", "red"] };
