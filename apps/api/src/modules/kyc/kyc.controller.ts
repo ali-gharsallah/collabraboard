@@ -87,6 +87,16 @@ export class KycController {
     return this.svc.annulerPourVice(req.ctx, code, section, body?.requiredRole, body?.motif ?? "");
   }
 
+  // R46 — hit pendant la validation : gel des visas en cours + décision du comité.
+  @Post(":code/geler-hit")
+  gelerHit(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.gelerPourHit(req.ctx, code, body?.hit ?? "", body?.delaiAnalyseJours ?? 5);
+  }
+  @Post(":code/comite")
+  comite(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.deciderComite(req.ctx, code, body?.hit ?? "", body?.decision, body?.membres ?? []);
+  }
+
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")
   lock(@Req() req: any, @Param("code") code: string) { return this.svc.takeLock(req.ctx, code); }

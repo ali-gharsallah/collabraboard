@@ -334,6 +334,32 @@ export class KycService {
     });
   }
 
+  // ── R46 : hit pendant la validation — GÈLE les visas en attente le temps de la décision du comité.
+  async gelerPourHit(ctx: Ctx, code: string, hitRef: string, delaiAnalyseJours: number = 5) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      const gel = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, status: "PENDING" }, data: { status: "GELE" } });
+      await this.emit(tx, ctx, "kyc.visas.geles", kyc.id, { hit: hitRef, nb: gel.count, delaiAnalyseJours });   // R46
+      return { ok: true, geles: gel.count };
+    });
+  }
+
+  // ── R46 : le comité Risk & Compliance décide — « poursuite » dégèle les visas ; sinon offboarding.
+  async deciderComite(ctx: Ctx, code: string, hitRef: string, decision: string, membres: string[] = []) {
+    if (!["poursuite", "offboarding"].includes(decision))
+      throw new BadRequestException("[R46] Décision comité invalide : « poursuite » ou « offboarding ».");
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      await this.emit(tx, ctx, "kyc.comite.decision", kyc.id, { hit: hitRef, decision, membres });   // R46
+      if (decision === "poursuite") {
+        const degel = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, status: "GELE" }, data: { status: "PENDING" } });
+        return { ok: true, decision, degeles: degel.count };
+      }
+      await this.emit(tx, ctx, "kyc.offboarding.propose", kyc.id, { hit: hitRef, origine: "comite_risk_compliance" });
+      return { ok: true, decision };
+    });
+  }
+
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
   // R11 : réassignation de validateur réservée au process owner / manager (domain.py
   // ROLES_REASSIGNATION = process_owner, application_manager, coo).

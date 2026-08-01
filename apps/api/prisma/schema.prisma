@@ -191,6 +191,7 @@ model KycVisa {
 enum VisaStatus {
   PENDING
   SIGNED
+  GELE       // R46 : hit pendant la validation — visa gelé le temps de la décision du comité
 }
 
 model Document {

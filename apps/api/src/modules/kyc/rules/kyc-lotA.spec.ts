@@ -24,6 +24,11 @@ function fake(opts: { kyc?: any; visas?: any[]; question?: any } = {}) {
       if (nd.version && typeof nd.version === "object" && "increment" in nd.version) nd.version = v.version + nd.version.increment;
       Object.assign(v, nd); return v;
     },
+    updateMany: async ({ where, data }: any) => {
+      const ms = visas.filter((v) => match(v, where));
+      ms.forEach((v) => Object.assign(v, data));
+      return { count: ms.length };
+    },
   };
   const p: any = {
     kycFile: { findFirst: async () => kyc },
@@ -49,7 +54,7 @@ const rejects = async (pr: Promise<any>, needle: string) => {
   const t = async (nom: string, fn: () => Promise<void>) => { await fn(); passed++; console.log("  ✓ " + nom); };
   const CO_SR = { tenantId: "t1", userId: "sel", role: "CO_SR" };
   const CO = { tenantId: "t1", userId: "co", role: "CO" };
-  console.log("KYC lot A (R6/R10, R9, R11, R12, R8, R24) :");
+  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46) :");
 
   await t("R9 : la révocation discrétionnaire est refusée (409 typé, tracée)", async () => {
     await rejects(svc(fake()).tenterRevocation(CO, "KYC-1", "IDENT"), "[R9]");
@@ -112,6 +117,31 @@ const rejects = async (pr: Promise<any>, needle: string) => {
       // Deux « instances » du même workflow partagent la MÊME structure (la donnée ≠ la structure).
       assert.deepEqual(SECTIONS_BY_WORKFLOW[wf].map((s: any) => s.code), secs.map((s: any) => s.code));
     }
+  });
+
+  await t("R46 : hit pendant validation → gèle les visas EN ATTENTE", async () => {
+    const p = fake({ visas: [
+      { id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING" },
+      { id: "v2", sectionCode: "SOF", requiredRole: "CO", status: "SIGNED" }] });
+    const r: any = await svc(p).gelerPourHit(CO_SR, "KYC-1", "HIT-1", 5);
+    assert.equal(r.geles, 1);
+    assert.equal(p._visas.find((v: any) => v.id === "v1").status, "GELE");   // en attente → gelé
+    assert.equal(p._visas.find((v: any) => v.id === "v2").status, "SIGNED"); // signé intact
+    assert.ok(p._events.some((e: any) => e.type === "kyc.visas.geles"));
+  });
+  await t("R46 : comité « poursuite » → dégèle les visas gelés", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "GELE" }] });
+    const r: any = await svc(p).deciderComite(CO_SR, "KYC-1", "HIT-1", "poursuite", ["BRM", "COO"]);
+    assert.equal(r.degeles, 1);
+    assert.equal(p._visas[0].status, "PENDING");
+    assert.ok(p._events.some((e: any) => e.type === "kyc.comite.decision"));
+  });
+  await t("R46 : comité « offboarding » → propose l'offboarding, visas non dégelés ; décision invalide refusée", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "GELE" }] });
+    await svc(p).deciderComite(CO_SR, "KYC-1", "HIT-1", "offboarding", ["BRM"]);
+    assert.equal(p._visas[0].status, "GELE");
+    assert.ok(p._events.some((e: any) => e.type === "kyc.offboarding.propose"));
+    await rejects(svc(fake()).deciderComite(CO_SR, "KYC-1", "HIT-1", "peut-être", []), "[R46]");
   });
 
   console.log(`\n### ${passed}/${passed} tests kyc-lotA verts ###`);
