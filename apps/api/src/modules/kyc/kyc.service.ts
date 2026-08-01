@@ -160,6 +160,11 @@ export class KycService {
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
         type: "kyc.created", aggregateId: kyc.id,
         payload: { code, workflow: risk.workflow, riskTrace: risk.trace } as any } });
+      // R18 : détection du retour d'un prospect précédemment REFUSÉ (alerte compliance, jamais un blocage).
+      const refusAnterieurs = await this.dossiersRefusesAnterieurs(ctx, dto.clientId, tx);
+      if (refusAnterieurs.length)
+        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "prospect.retour.refuse.detecte",
+          aggregateId: kyc.id, payload: { code, dossiersRefuses: refusAnterieurs.map((r: any) => r.code) } as any } });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_CREATED", code);
       return { ...kyc, riskTrace: risk.trace };
     });
@@ -358,6 +363,14 @@ export class KycService {
       await this.emit(tx, ctx, "kyc.offboarding.propose", kyc.id, { hit: hitRef, origine: "comite_risk_compliance" });
       return { ok: true, decision };
     });
+  }
+
+  // ── R18 : rejeté ≠ clôture — un client dont un dossier a été REJETÉ alimente la liste des refusés.
+  // Détection du RETOUR : les dossiers refusés antérieurs d'un client (pour alerte à la re-création).
+  async dossiersRefusesAnterieurs(ctx: Ctx, clientId: string, db: any = this.prisma) {
+    return db.kycFile.findMany({
+      where: { tenantId: ctx.tenantId, clientId, status: "REJECTED" },
+      select: { code: true, createdAt: true }, orderBy: { createdAt: "desc" } });
   }
 
   // ── Validation finale : four-eyes strict + visas complets → outbox ──

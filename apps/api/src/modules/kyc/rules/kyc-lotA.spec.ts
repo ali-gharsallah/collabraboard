@@ -11,7 +11,7 @@ import { SECTIONS_BY_WORKFLOW } from "../kyc.templates";
 const audit = { log: async () => undefined } as any;
 
 // Fake Prisma minimal du cycle de vie visa. `visas` porte kycFileId = kyc.id (comme en base).
-function fake(opts: { kyc?: any; visas?: any[]; question?: any } = {}) {
+function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[] } = {}) {
   const kyc = opts.kyc ?? { id: "K1", code: "KYC-1", tenantId: "t1", status: "IN_PROGRESS", version: 0, clientId: "C1" };
   const visas: any[] = (opts.visas ?? []).map((v) => ({ version: 0, kycFileId: kyc.id, signedBy: null, verdict: null, message: null, ...v }));
   const events: any[] = [];
@@ -31,7 +31,8 @@ function fake(opts: { kyc?: any; visas?: any[]; question?: any } = {}) {
     },
   };
   const p: any = {
-    kycFile: { findFirst: async () => kyc },
+    kycFile: { findFirst: async () => kyc,
+      findMany: async ({ where }: any) => (opts as any).refused ? (opts as any).refused.filter((k: any) => k.status === where.status) : [] },
     kycVisa,
     kycQuestion: { findFirst: async () => opts.question ?? null, update: async ({ data }: any) => ({ ...(opts.question ?? {}), ...data }) },
     kycQuestionHistory: { findFirst: async () => null, create: async () => ({}) },
@@ -54,7 +55,7 @@ const rejects = async (pr: Promise<any>, needle: string) => {
   const t = async (nom: string, fn: () => Promise<void>) => { await fn(); passed++; console.log("  ✓ " + nom); };
   const CO_SR = { tenantId: "t1", userId: "sel", role: "CO_SR" };
   const CO = { tenantId: "t1", userId: "co", role: "CO" };
-  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46) :");
+  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46, R18) :");
 
   await t("R9 : la révocation discrétionnaire est refusée (409 typé, tracée)", async () => {
     await rejects(svc(fake()).tenterRevocation(CO, "KYC-1", "IDENT"), "[R9]");
@@ -142,6 +143,17 @@ const rejects = async (pr: Promise<any>, needle: string) => {
     assert.equal(p._visas[0].status, "GELE");
     assert.ok(p._events.some((e: any) => e.type === "kyc.offboarding.propose"));
     await rejects(svc(fake()).deciderComite(CO_SR, "KYC-1", "HIT-1", "peut-être", []), "[R46]");
+  });
+
+  await t("R18 : détection du retour d'un prospect REFUSÉ (dossiers rejetés antérieurs remontés)", async () => {
+    const p = fake({ refused: [
+      { code: "KYC-2026-CH-0001-R1", status: "REJECTED", createdAt: "2026-05-01" },
+      { code: "KYC-2026-CH-0002-R1", status: "IN_PROGRESS", createdAt: "2026-06-01" }] });
+    const r = await svc(p).dossiersRefusesAnterieurs(CO, "C1");
+    assert.equal(r.length, 1);                       // seul le REJETÉ remonte (rejeté ≠ clôture ≠ en cours)
+    assert.equal(r[0].code, "KYC-2026-CH-0001-R1");
+    const vide = await svc(fake()).dossiersRefusesAnterieurs(CO, "C9");
+    assert.equal(vide.length, 0);                    // client sans refus → aucun retour détecté
   });
 
   console.log(`\n### ${passed}/${passed} tests kyc-lotA verts ###`);
