@@ -22,7 +22,24 @@
   R-Q). Basculer un mode mute `WF_FIELDS` (état partagé avec le Section Designer) en direct et se trace ;
   l'aperçu se recompose immédiatement. Ajouter un champ l'insère dans la section.
 
+## Champ obligatoire + câblage back-end (demande Ali)
+- **Front (parité)** : colonne **Obligatoire (R78)** par champ — bascule Obligatoire / Facultatif
+  (désactivée si le champ est en mode « Désactivé »), tracée. L'aperçu vivant marque les champs
+  obligatoires d'un **✱** rouge et applique `required` + bordure rouge à l'input. Un pied de page
+  **« Câblage back-end — paramètre gouverné (R-Q) »** affiche l'écriture courante (JSON exact qui serait
+  posté).
+- **Back-end** (`apps/api/src/modules/parametres`) : nouveau paramètre gouverné
+  `champsObligatoiresParSection` (type `json`, défaut `{}`, règle **R78**, non requis au go-live) dans le
+  registre R-Q. Structure `{ "CTX/SECTION_CODE": ["Libellé du champ", …] }`. Écrit via
+  `POST /parametres/valeur/champsObligatoiresParSection` : acte **motivé (R7)**, à effet daté **(R29)**,
+  append-only (`TenantParamChange`), rejeu à date (R127). Un champ obligatoire manquant est un refus
+  explicite au dépôt, jamais un blocage silencieux.
+- **Test** : `parametres.wiring.spec.ts` étendu — **RQ-07** (registre typé + refus R7 sans motif +
+  matérialisation de la vue effective). `bash scripts/run-rule-tests.sh` → paramètres R-Q **8/8**
+  (RQ-01..07), suite complète verte (exit 0).
+
 ## Vérification
-- `pnpm run test:unit` → 80/80 · `pnpm run build` → 0 fuite parité (`ParamFieldsScreen`, `parity/` absents
-  de `dist`).
-- Dev-transform esbuild + Playwright : 0 erreur runtime ; modes de champ + aperçu vivant conformes.
+- `pnpm run test:unit` → 80/80 · `pnpm run build` → 0 fuite parité (`ParamFieldsScreen`,
+  `champsObligatoiresParSection` absents de `dist`).
+- Backend : `scripts/run-rule-tests.sh` → RQ-01..07 8/8, suite complète exit 0 (harnais autonome, sans DB).
+- Dev-transform esbuild + Playwright : 0 erreur runtime ; modes, obligatoire, aperçu vivant et payload gouverné conformes.

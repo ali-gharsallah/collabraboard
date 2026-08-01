@@ -125,12 +125,33 @@ const mk = () => { const p = fakePrisma(); return { p, s: new ParametresService(
     ok(evts(p, 'tenant.active').length === 1, 'activation tracée');
   });
 
+  // ── RQ-07 (R78) — champ obligatoire = acte de paramétrage motivé, gouverné comme tout le reste ──
+  await it('RQ-07 champsObligatoiresParSection : dans le registre ; sans motif → R7 ; motivé → matérialisé + tracé', async () => {
+    const { p, s } = mk();
+    const reg: any[] = await s.registre();
+    const champs = reg.find((e) => e.cle === 'champsObligatoiresParSection');
+    ok(!!champs && champs.type === 'json' && champs.regle.includes('R78') && champs.requis === false,
+       'clé gouvernée, json, rattachée R78, non requise au go-live');
+    // défaut = aucune obligation implicite
+    ok(JSON.stringify(await s.valeurEffective(CO, 'champsObligatoiresParSection', new Date())) === '{}',
+       'défaut : aucun champ obligatoire par défaut');
+    // pas de motif → refus (R7 : rendre un champ obligatoire, c\'est changer une règle)
+    await rejects(s.ecrire(CO, 'champsObligatoiresParSection', { 'KYC/IDENT': ['Statut PEP'] }, ''), 'R7');
+    // motivé → matérialisé, effet immédiat, tracé append-only
+    await s.ecrire(CO, 'champsObligatoiresParSection', { 'KYC/IDENT': ['Dénomination / raison sociale', 'Statut PEP'] },
+      'Comité de paramétrage — identité : dénomination et PEP rendues obligatoires');
+    const eff: any = await s.valeurEffective(CO, 'champsObligatoiresParSection', new Date());
+    ok(Array.isArray(eff['KYC/IDENT']) && eff['KYC/IDENT'].length === 2, 'vue effective : 2 champs obligatoires sur KYC/IDENT');
+    ok(evts(p, 'param.change').some((e: any) => e.payload.par === 'i.vernet'), 'changement tracé (auteur)');
+    ok(p._db.changes.length === 1, 'registre append-only alimenté');
+  });
+
   // ── garde transverse ──
   await it('R125 isolation tenant : écrire pour un autre tenant → introuvable', async () => {
     const { s } = mk();
     await rejects(s.ecrire({ ...CO, tenantId: 't2' }, 'pmsDriftToleranceBp', 300, 'test'), 'introuvable');
   });
 
-  console.log(`\nCâblage paramètres R-Q (RQ-01..06, R125→R128) — ${passed}/${passed + failed} tests verts`);
+  console.log(`\nCâblage paramètres R-Q (RQ-01..07, R125→R128 · R78) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

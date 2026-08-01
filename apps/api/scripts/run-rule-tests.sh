@@ -79,7 +79,7 @@ echo "── Câblage Surface consultation GED (GS-01..05, R110/R112/R125/R145) 
 echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-avance.wiring.spec.js
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
-echo "── Câblage paramètres R-Q (RQ-01..06, R125→R128) ──"; run parametres.wiring.spec.js
+echo "── Câblage paramètres R-Q (RQ-01..07, R125→R128 · R78) ──"; run parametres.wiring.spec.js
 echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
 echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js
 echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-ingestion.wiring.spec.js
