@@ -66,6 +66,7 @@ import SectionDesignerScreen from "./SectionDesignerScreen";
 import ParamFieldsScreen from "./ParamFieldsScreen";
 import IamGuideScreen from "./IamGuideScreen";
 import ParamNavScreen from "./ParamNavScreen";
+import SsoParamScreen from "./SsoParamScreen";
 import AdminScreen from "./AdminScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
@@ -198,6 +199,7 @@ export function Shell() {
       case "paramfields": return <ParamFieldsScreen />;
       case "iamguide": return <IamGuideScreen />;
       case "paramnav": return <ParamNavScreen />;
+      case "ssoparam": return <SsoParamScreen />;
       case "admin": return <AdminScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
