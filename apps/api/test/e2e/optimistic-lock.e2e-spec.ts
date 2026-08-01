@@ -37,6 +37,24 @@ describe("VERROU OPTIMISTE — concurrence réelle (Bloc A)", () => {
     expect(relu!.version).toBe(1);                                 // une SEULE mutation appliquée (pas d'écrasement)
   });
 
+  it("LK-VISA-02 double validation visa SIMULTANÉE (lot 1) → une signature tient, l'autre 409", async () => {
+    // Deux porteurs du même rôle signant LA MÊME section (visa version 0) : four-eyes concurrent.
+    const k = await mkKyc();
+    const visa = await prisma.kycVisa.create({ data: { kycFileId: k.id, sectionCode: "IDENT",
+      requiredRole: "CO", status: "PENDING" } });                   // version = 0 (défaut)
+    const [r1, r2] = await Promise.allSettled([
+      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: "premier", verdict: "OK" }, { enforce: true }),
+      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: "second", verdict: "NOK" }, { enforce: true }),
+    ]);
+    const reussites = [r1, r2].filter((r) => r.status === "fulfilled").length;
+    const conflits = [r1, r2].filter((r) => r.status === "rejected"
+      && (r as PromiseRejectedResult).reason instanceof ConcurrencyConflictError).length;
+    expect(reussites).toBe(1);                                       // une seule signature l'emporte
+    expect(conflits).toBe(1);                                        // l'autre = conflit typé (→ 409)
+    const relu = await prisma.kycVisa.findUnique({ where: { id: visa.id } });
+    expect(relu!.version).toBe(1);                                   // JAMAIS d'écrasement du signataire
+  });
+
   it("LK-04 atomicité : une commande qui échoue APRÈS la 1re écriture ne persiste RIEN (rollback)", async () => {
     const k = await mkKyc();
     await expect(prisma.$transaction(async (tx) => {

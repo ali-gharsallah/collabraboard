@@ -16,10 +16,22 @@ export function KycDetail({ code }: { code: string }) {
   if (!base) return <DemoModeBanner/>;
   if (!kyc) return <p>Chargement…</p>;
 
-  async function call(path: string, method: string, body?: any) {
+  // R336/LK (lot 1) : les mutations de visa/validation portent If-Match (version attendue).
+  // Un 409 concurrent_modification ⇒ JAMAIS d'écrasement silencieux : message + rechargement de
+  // l'état à jour (le collaborateur reprend son action sur la version fraîche).
+  async function call(path: string, method: string, body?: any, ifMatch?: number) {
     setErr("");
-    const r = await fetch(`${base}${path}`, { method, headers: H,
+    const headers: Record<string, string> = ifMatch != null ? { ...H, "If-Match": String(ifMatch) } : { ...H };
+    const r = await fetch(`${base}${path}`, { method, headers,
       body: body ? JSON.stringify(body) : undefined });
+    if (r.status === 409) {
+      const b = await r.json().catch(() => ({} as any));
+      setErr(b?.error === "concurrent_modification"
+        ? "Le dossier a été modifié entre-temps par un autre utilisateur — rechargement. Reprenez votre action sur la version à jour."
+        : (b?.message ?? "Conflit de concurrence"));
+      load();                                                        // recharge la version fraîche
+      return;
+    }
     if (!r.ok) setErr((await r.json()).message ?? "Erreur"); else load();
   }
   return <div>
@@ -29,7 +41,7 @@ export function KycDetail({ code }: { code: string }) {
     {kyc.sections.map((s: any) => <div key={s.code} style={{ marginBottom: 14 }}>
       <h4>{s.label} {kyc.visas.filter((v: any) => v.sectionCode === s.code)
         .map((v: any) => <button key={v.requiredRole} disabled={v.status === "SIGNED"}
-          onClick={() => call(`/v1/kyc/${code}/visas/${s.code}`, "POST")}
+          onClick={() => call(`/v1/kyc/${code}/visas/${s.code}`, "POST", undefined, v.version)}
           style={{ marginLeft: 8, fontSize: 11 }}>
           {v.status === "SIGNED" ? `✓ visa ${v.requiredRole}` : `Signer (${v.requiredRole})`}</button>)}
       </h4>
@@ -43,7 +55,7 @@ export function KycDetail({ code }: { code: string }) {
         <span style={{ fontSize: 10, color: "#888", width: 70 }}>{q.right}</span>
       </div>)}
     </div>)}
-    <button onClick={() => call(`/v1/kyc/${code}/validate`, "POST")}
+    <button onClick={() => call(`/v1/kyc/${code}/validate`, "POST", undefined, kyc.version)}
       disabled={kyc.status === "VALIDATED"}
       style={{ padding: "10px 18px", background: "#4A6B28", color: "#fff",
         border: "none", borderRadius: 8, cursor: "pointer" }}>

@@ -35,10 +35,31 @@ function fakePrisma(sc: Scenario) {
     upsert: async ({ create }: any) => { st.requests.push(create.requester); return {}; },
     deleteMany: async () => ({ count: 0 }),
   };
+  // R336/LK (lot 1) : le service garde désormais les écritures KycFile/KycVisa par la version
+  // (majVersionnee → updateMany WHERE id AND version, puis findUnique). Le fake modélise ce
+  // compare-and-set : version courante, incrément si (where.version absent OU == courante).
+  st.kycVersion = sc.kyc.version ?? 0;
+  const vstore: Record<string, any> = {};
+  for (const v of (sc.kyc.visas ?? [])) vstore[v.id] = { version: 0, ...v };
+  const withVersions = (kyc: any) => ({ ...kyc, version: st.kycVersion,
+    visas: (kyc.visas ?? []).map((v: any) => vstore[v.id] ?? { version: 0, ...v }) });
+  const casKycFile = (where: any, data: any) => {
+    if (where.version === undefined || where.version === st.kycVersion) { Object.assign(sc.kyc, data); st.kycVersion++; return { count: 1 }; }
+    return { count: 0 };
+  };
   const base: any = {
     _state: st,
-    kycFile: { findFirst: async () => sc.kyc, update: async ({ data }: any) => ({ ...sc.kyc, ...data }) },
-    kycVisa: { update: async ({ data }: any) => ({ ...data }) },
+    kycFile: { findFirst: async () => withVersions(sc.kyc), findUnique: async () => ({ ...sc.kyc, version: st.kycVersion }),
+      update: async ({ data }: any) => { Object.assign(sc.kyc, data); return { ...sc.kyc }; },
+      updateMany: async ({ where, data }: any) => casKycFile(where, data) },
+    kycVisa: {
+      findUnique: async ({ where }: any) => vstore[where.id] ?? null,
+      update: async ({ where, data }: any) => { vstore[where.id] = { ...(vstore[where.id] ?? { id: where.id, version: 0 }), ...data }; return vstore[where.id]; },
+      updateMany: async ({ where, data }: any) => {
+        const cur = vstore[where.id] ?? { id: where.id, version: 0 };
+        if (where.version === undefined || where.version === cur.version) { vstore[where.id] = { ...cur, ...data, version: cur.version + 1 }; return { count: 1 }; }
+        return { count: 0 };
+      } },
     kycLock, kycLockRequest,
     kycQuestionHistory: { findMany: async ({ where }: any) => {
       const code = where?.question?.section?.code;

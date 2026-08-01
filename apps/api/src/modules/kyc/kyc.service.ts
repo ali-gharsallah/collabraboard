@@ -11,6 +11,7 @@ import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
 import { KycHandoff, HandoffError, HandoffStatus } from "./rules/kyc-handoff"; // R85
 import { etatCloture } from "../offboarding/cloture.util"; // R267/OF-10 — lecture seule intégrale
 import { Tx } from "../../common/tx";
+import { majVersionnee } from "../../common/optimistic-lock"; // R336/LK : verrou optimiste (lot 1)
 import { loadSettings } from "../../common/tenant-settings"; // R288 : barème gouverné
 
 type Ctx = { tenantId: string; userId: string; role: string };
@@ -226,7 +227,7 @@ export class KycService {
   }
 
   // ── Visa de section (rôle requis strict) ──
-  async signVisa(ctx: Ctx, code: string, sectionCode: string, verdict: string = "OK", message: string = "") {
+  async signVisa(ctx: Ctx, code: string, sectionCode: string, verdict: string = "OK", message: string = "", expectedVersion?: number) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
@@ -268,13 +269,19 @@ export class KycService {
     }
     await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VISA_SIGNED",
       `${code}/${sectionCode} — ${qv.verdict}${qv.message ? " : " + qv.message : ""}`);
-    return this.prisma.kycVisa.update({ where: { id: visa.id },
-      data: { status: "SIGNED", signedBy: ctx.userId, signedAt: new Date(),
-              verdict: qv.verdict, message: qv.message } });
+    // R336/LK (lot 1) : signature de visa GARDÉE par la version — deux porteurs du même rôle
+    // signant CETTE section ne s'écrasent jamais. If-Match présent → strict (409 si version
+    // périmée) ; absent → repli sur la version courante (rollout expand, legacy non cassé).
+    // enforce:true = lot 1 STRICT quel que soit le flag global (shadow ailleurs).
+    const attendue = expectedVersion ?? visa.version;
+    await majVersionnee(this.prisma.kycVisa, visa.id, attendue,
+      { status: "SIGNED", signedBy: ctx.userId, signedAt: new Date(), verdict: qv.verdict, message: qv.message },
+      { enforce: true });
+    return this.prisma.kycVisa.findUnique({ where: { id: visa.id } });
   }
 
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
-  async validate(ctx: Ctx, code: string) {
+  async validate(ctx: Ctx, code: string, expectedVersion?: number) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
@@ -304,15 +311,19 @@ export class KycService {
       `R282 : contributions REQUISES manquantes (matrice à la création du dossier) : ${requisesManquantes.join(", ")}`);
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.kycFile.update({ where: { id: kyc.id },
-        data: { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() } });
+      // R336/LK (lot 1) : validation finale GARDÉE par la version du dossier (jamais deux
+      // validations concurrentes qui s'écrasent). If-Match présent → strict ; absent → version
+      // courante (expand). enforce:true = strict sur le lot 1.
+      const validatedAt = new Date();
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version,
+        { status: "VALIDATED", validatedBy: ctx.userId, validatedAt }, { enforce: true });
       await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
         type: "kyc.validated", aggregateId: kyc.id,
         payload: { code, validatedBy: ctx.userId } as any } });
       if (this.reviews) await this.reviews.surApprobation(ctx, tx,            // RV-01/07 : l'échéance naît ICI
-        { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt: updated.validatedAt });
+        { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VALIDATED", code);
-      return updated;
+      return tx.kycFile.findUnique({ where: { id: kyc.id } });
     });
   }
 
@@ -548,51 +559,54 @@ export class KycService {
   }
   private idxOf(phase: string): number { return KycService.HANDOFF_PHASES.indexOf(phase); }
 
-  async handoffNext(ctx: Ctx, code: string, message: string) {
+  // R336/LK (lot 1) : chaque transition de handoff est GARDÉE par la version du dossier
+  // (deux acteurs qui se repassent la main ne clobbent jamais handoff_phase / status).
+  // If-Match présent → strict ; absent → version courante (expand). enforce:true = strict lot 1.
+  async handoffNext(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     let phase: string;
     try { phase = hf.nextStep(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // message obligatoire / dernière étape
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { handoffPhase: this.idxOf(phase) } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { handoffPhase: this.idxOf(phase) }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.next", kyc.id, { code, to: phase, by: ctx.userId, message });
       return { phase, status: hf.status };
     });
   }
 
-  async handoffBack(ctx: Ctx, code: string, message: string) {
+  async handoffBack(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     let phase: string;
     try { phase = hf.revenir(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // message obligatoire / première étape
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { handoffPhase: this.idxOf(phase) } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { handoffPhase: this.idxOf(phase) }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.back", kyc.id, { code, to: phase, by: ctx.userId, message });
       return { phase, status: hf.status };
     });
   }
 
-  async handoffValidate(ctx: Ctx, code: string, message: string) {
+  async handoffValidate(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     try { hf.valider(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // seulement à la section de validation
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.validated", kyc.id, { code, by: ctx.userId, message });
       return { status: "valide" };
     });
   }
 
-  async handoffReject(ctx: Ctx, code: string, message: string) {
+  async handoffReject(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     try { hf.rejeter(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // motif obligatoire (R7)
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { status: "REJECTED" } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { status: "REJECTED" }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.rejected", kyc.id, { code, by: ctx.userId, message });
       return { status: "rejete" };
     });

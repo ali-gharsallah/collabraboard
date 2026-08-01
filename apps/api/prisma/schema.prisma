@@ -183,6 +183,7 @@ model KycVisa {
   signedAt     DateTime?  @map("signed_at")
   verdict      String?    @map("verdict")                // R86 : OK | CONDITIONAL | NOK
   message      String?    @map("message")                // R86 : justificatif (obligatoire si NOK/CONDITIONAL)
+  version      Int        @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (signature de visa)
   @@unique([kycFileId, sectionCode, requiredRole])
   @@map("kyc_visas")
 }

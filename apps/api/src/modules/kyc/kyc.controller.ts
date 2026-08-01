@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Patch, Query, Req, BadRequestException } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Param, Post, Patch, Query, Req, BadRequestException } from "@nestjs/common";
 import { KycCreate, QuestionAnswer } from "@olive/shared/src/contracts";
 import { KycService } from "./kyc.service";
+
+// R336/LK (lot 1) : le contrôle de concurrence optimiste passe par l'en-tête If-Match (version
+// attendue). Présent → verrou strict (409 concurrent_modification si périmée) ; absent → repli
+// sur la version courante côté service (rollout expand). Accepte "5" ou la forme ETag W/"5".
+function versionSiPresente(ifMatch?: string): number | undefined {
+  if (!ifMatch) return undefined;
+  const m = ifMatch.match(/\d+/);
+  return m ? parseInt(m[0], 10) : undefined;
+}
 
 // PATCH 2026-07-19 (pré-vol e2e) :
 // Le guard RBAC était retiré de `validate`. Un guard s'exécute AVANT le handler ;
@@ -54,13 +63,13 @@ export class KycController {
     return this.svc.answer(req.ctx, code, qcode, p.data.answer);
   }
   @Post(":code/visas/:section")
-  visa(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
-    return this.svc.signVisa(req.ctx, code, section, body?.verdict ?? "OK", body?.message ?? "");
+  visa(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any, @Headers("if-match") ifMatch?: string) {
+    return this.svc.signVisa(req.ctx, code, section, body?.verdict ?? "OK", body?.message ?? "", versionSiPresente(ifMatch));
   }
 
   // RBAC appliqué DANS le service (après four-eyes R13/R52) — voir note d'en-tête.
   @Post(":code/validate")
-  validate(@Req() req: any, @Param("code") code: string) { return this.svc.validate(req.ctx, code); }
+  validate(@Req() req: any, @Param("code") code: string, @Headers("if-match") ifMatch?: string) { return this.svc.validate(req.ctx, code, versionSiPresente(ifMatch)); }
 
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")
@@ -74,11 +83,11 @@ export class KycController {
 
   // R85 — passage de main section par section (message obligatoire)
   @Post(":code/handoff/next")
-  hNext(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffNext(req.ctx, code, body?.message ?? ""); }
+  hNext(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffNext(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/back")
-  hBack(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffBack(req.ctx, code, body?.message ?? ""); }
+  hBack(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffBack(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/validate")
-  hValidate(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffValidate(req.ctx, code, body?.message ?? ""); }
+  hValidate(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffValidate(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/reject")
-  hReject(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffReject(req.ctx, code, body?.message ?? ""); }
+  hReject(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffReject(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
 }
