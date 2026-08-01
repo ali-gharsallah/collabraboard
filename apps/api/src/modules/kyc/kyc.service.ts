@@ -463,6 +463,59 @@ export class KycService {
     });
   }
 
+  // ═══════════ R23 — PROCESSES CONCURRENTS (pas de fusion ; priorité ; pause/reprise ; absorption) ═══════════
+  async ouvrirProcess(ctx: Ctx, code: string, type: string) {
+    if (!["recertification", "evenement"].includes(type)) throw new BadRequestException("[R23] Type de process invalide (« recertification » | « evenement »).");
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      // R23 : l'événement de risque est PRIORITAIRE — il met la recertification EN COURS en PAUSE.
+      if (type === "evenement") {
+        const pause = await tx.kycProcess.updateMany({
+          where: { tenantId: ctx.tenantId, kycFileId: kyc.id, type: "recertification", etat: "EN_COURS" }, data: { etat: "EN_PAUSE" } });
+        if (pause.count) await this.emit(tx, ctx, "kyc.process.pause", kyc.id, { cause: "priorite_evenement", nb: pause.count });
+      }
+      const p = await tx.kycProcess.create({ data: { tenantId: ctx.tenantId, kycFileId: kyc.id, type } });
+      await this.emit(tx, ctx, "kyc.process.ouvert", kyc.id, { process: p.id, type });
+      return { ok: true, process: p.id, type, etat: "EN_COURS" };
+    });
+  }
+
+  async cloturerProcess(ctx: Ctx, code: string, processId: string, sectionsRevalidees: string[] = []) {
+    const kyc = await this.findKyc(ctx, code);
+    const p = await this.prisma.kycProcess.findFirst({ where: { id: processId, tenantId: ctx.tenantId, kycFileId: kyc.id } });
+    if (!p) throw new NotFoundException("Process introuvable");
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycProcess.update({ where: { id: p.id }, data: { etat: "CLOTURE", sectionsRevalidees } });
+      await this.emit(tx, ctx, "kyc.process.cloture", kyc.id, { process: p.id, sections: sectionsRevalidees });
+      return { ok: true };
+    });
+  }
+
+  // R23 : reprise d'une recertification en pause — ABSORBE les sections déjà revalidées par les
+  // process ÉVÉNEMENT clôturés depuis son ouverture (elle ne les redemande pas).
+  async reprendreRecertification(ctx: Ctx, code: string, recertId: string) {
+    const kyc = await this.findKyc(ctx, code);
+    const recert = await this.prisma.kycProcess.findFirst({
+      where: { id: recertId, tenantId: ctx.tenantId, kycFileId: kyc.id, type: "recertification" } });
+    if (!recert) throw new NotFoundException("Recertification introuvable");
+    const evClotures = await this.prisma.kycProcess.findMany({
+      where: { tenantId: ctx.tenantId, kycFileId: kyc.id, type: "evenement", etat: "CLOTURE" } });
+    const absorbes = new Set<string>((recert.sectionsRevalidees as string[]) ?? []);
+    for (const e of evClotures)
+      if (new Date(e.ouvertLe) >= new Date(recert.ouvertLe))
+        for (const s of ((e.sectionsRevalidees as string[]) ?? [])) absorbes.add(s);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycProcess.update({ where: { id: recert.id }, data: { etat: "EN_COURS", sectionsRevalidees: [...absorbes] } });
+      await this.emit(tx, ctx, "kyc.process.repris", kyc.id, { process: recert.id, sectionsAbsorbees: [...absorbes] });
+      return { ok: true, sectionsAbsorbees: [...absorbes] };
+    });
+  }
+
+  async processDuDossier(ctx: Ctx, code: string) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.kycProcess.findMany({ where: { tenantId: ctx.tenantId, kycFileId: kyc.id }, orderBy: { ouvertLe: "asc" } });
+  }
+
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
   // R11 : réassignation de validateur réservée au process owner / manager (domain.py
   // ROLES_REASSIGNATION = process_owner, application_manager, coo).

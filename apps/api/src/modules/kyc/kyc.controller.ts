@@ -115,6 +115,21 @@ export class KycController {
     return this.svc.operationAutorisee(req.ctx, code, (sens === "entree" ? "entree" : "sortie"));
   }
 
+  // R23 — processes concurrents (pas de fusion ; l'événement met la recertification en pause ;
+  // à la reprise la recert absorbe les sections déjà revalidées par l'événement clôturé).
+  @Get(":code/processes")
+  processes(@Req() req: any, @Param("code") code: string) { return this.svc.processDuDossier(req.ctx, code); }
+  @Post(":code/processes")
+  ouvrirProcess(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.ouvrirProcess(req.ctx, code, body?.type); }
+  @Post(":code/processes/:processId/cloturer")
+  cloturerProcess(@Req() req: any, @Param("code") code: string, @Param("processId") processId: string, @Body() body: any) {
+    return this.svc.cloturerProcess(req.ctx, code, processId, body?.sectionsRevalidees ?? []);
+  }
+  @Post(":code/processes/:processId/reprendre")
+  reprendreRecert(@Req() req: any, @Param("code") code: string, @Param("processId") processId: string) {
+    return this.svc.reprendreRecertification(req.ctx, code, processId);
+  }
+
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")
   lock(@Req() req: any, @Param("code") code: string) { return this.svc.takeLock(req.ctx, code); }

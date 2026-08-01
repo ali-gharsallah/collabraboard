@@ -11,11 +11,28 @@ import { SECTIONS_BY_WORKFLOW } from "../kyc.templates";
 const audit = { log: async () => undefined } as any;
 
 // Fake Prisma minimal du cycle de vie visa. `visas` porte kycFileId = kyc.id (comme en base).
-function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[] } = {}) {
+function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[]; processes?: any[] } = {}) {
   const kyc = opts.kyc ?? { id: "K1", code: "KYC-1", tenantId: "t1", status: "IN_PROGRESS", version: 0, clientId: "C1" };
   const visas: any[] = (opts.visas ?? []).map((v) => ({ version: 0, kycFileId: kyc.id, signedBy: null, verdict: null, message: null, ...v }));
   const events: any[] = [];
   const match = (v: any, where: any) => Object.entries(where).every(([k, val]: any) => v[k] === val);
+  // R23 : délégué kycProcess (create/findFirst/findMany/update/updateMany sur un tableau en mémoire).
+  let procSeq = 0;
+  const processes: any[] = (opts.processes ?? []).map((pr) => ({
+    id: pr.id ?? "P" + (++procSeq), tenantId: kyc.tenantId, kycFileId: kyc.id, etat: "EN_COURS",
+    ouvertLe: new Date(0), sectionsRevalidees: [], ...pr }));
+  const kycProcess = {
+    create: async ({ data }: any) => {
+      const row = { id: "P" + (++procSeq), etat: "EN_COURS", ouvertLe: new Date(), sectionsRevalidees: [], ...data };
+      processes.push(row); return row;
+    },
+    findFirst: async ({ where }: any) => processes.find((pr) => match(pr, where)) ?? null,
+    findMany: async ({ where }: any = {}) => processes.filter((pr) => match(pr, where ?? {})),
+    update: async ({ where, data }: any) => { const pr = processes.find((x) => x.id === where.id); Object.assign(pr, data); return pr; },
+    updateMany: async ({ where, data }: any) => {
+      const ms = processes.filter((pr) => match(pr, where)); ms.forEach((pr) => Object.assign(pr, data)); return { count: ms.length };
+    },
+  };
   const kycVisa = {
     findFirst: async ({ where }: any) => visas.find((v) => match(v, where)) ?? null,
     findMany: async ({ where }: any = {}) => visas.filter((v) => match(v, where)),
@@ -44,8 +61,9 @@ function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[] 
     kycQuestion: { findFirst: async () => opts.question ?? null, update: async ({ data }: any) => ({ ...(opts.question ?? {}), ...data }) },
     kycQuestionHistory: { findFirst: async () => null, create: async () => ({}) },
     offboardingFile: { findFirst: async () => null },
+    kycProcess,
     domainEvent: { create: async ({ data }: any) => { events.push(data); return data; } },
-    _events: events, _visas: visas,
+    _events: events, _visas: visas, _processes: processes,
   };
   p.$transaction = async (fn: any) => fn(p);
   return p;
@@ -208,6 +226,52 @@ const rejects = async (pr: Promise<any>, needle: string) => {
     const q = fake({ kyc: kycEtat("VALIDATED"), visas: [{ id: "v1", sectionCode: "UBO", requiredRole: "CO", status: "SIGNED" }] });
     await svc(q).changementCirconstances(CO_SR, "KYC-1", ["UBO"], "UBO change", true);
     assert.equal((await q.kycFile.findFirst()).status, "SUSPENDED");            // risque majeur → suspension (R22)
+  });
+
+  // ── R23 : processes concurrents (pas de fusion ; priorité ; pause/reprise ; absorption) ──
+  await t("R23 : type de process invalide refusé", async () => {
+    await rejects(svc(fake()).ouvrirProcess(CO_SR, "KYC-1", "n_importe_quoi"), "[R23]");
+  });
+  await t("R23 : ouvrir un ÉVÉNEMENT met la recertification EN COURS en PAUSE (priorité, pas de fusion)", async () => {
+    const p = fake({ processes: [{ id: "R1", type: "recertification", etat: "EN_COURS" }] });
+    const r: any = await svc(p).ouvrirProcess(CO_SR, "KYC-1", "evenement");
+    assert.equal(p._processes.find((x: any) => x.id === "R1").etat, "EN_PAUSE");   // recert suspendue
+    const ev = p._processes.find((x: any) => x.id === r.process);
+    assert.equal(ev.type, "evenement");
+    assert.equal(ev.etat, "EN_COURS");                                             // deux process distincts coexistent
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.pause"));
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.ouvert"));
+  });
+  await t("R23 : une recertification n'interrompt pas une autre recertification", async () => {
+    const p = fake({ processes: [{ id: "R1", type: "recertification", etat: "EN_COURS" }] });
+    await svc(p).ouvrirProcess(CO_SR, "KYC-1", "recertification");
+    assert.equal(p._processes.find((x: any) => x.id === "R1").etat, "EN_COURS");   // pas de pause hors événement
+  });
+  await t("R23 : reprise d'une recert en pause ABSORBE les sections revalidées par l'événement clôturé", async () => {
+    const p = fake({ processes: [
+      { id: "R1", type: "recertification", etat: "EN_PAUSE", ouvertLe: new Date("2026-06-01"), sectionsRevalidees: ["IDENT"] },
+      { id: "E1", type: "evenement", etat: "CLOTURE", ouvertLe: new Date("2026-06-10"), sectionsRevalidees: ["SOF", "UBO"] }] });
+    const r: any = await svc(p).reprendreRecertification(CO_SR, "KYC-1", "R1");
+    const recert = p._processes.find((x: any) => x.id === "R1");
+    assert.equal(recert.etat, "EN_COURS");
+    assert.deepEqual([...recert.sectionsRevalidees].sort(), ["IDENT", "SOF", "UBO"]);   // fusion des sections revalidées
+    assert.ok(r.sectionsAbsorbees.includes("SOF") && r.sectionsAbsorbees.includes("UBO"));
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.repris"));
+  });
+  await t("R23 : un événement clôturé AVANT l'ouverture de la recert n'est pas absorbé", async () => {
+    const p = fake({ processes: [
+      { id: "R1", type: "recertification", etat: "EN_PAUSE", ouvertLe: new Date("2026-06-05"), sectionsRevalidees: [] },
+      { id: "E0", type: "evenement", etat: "CLOTURE", ouvertLe: new Date("2026-05-01"), sectionsRevalidees: ["SOF"] }] });
+    const r: any = await svc(p).reprendreRecertification(CO_SR, "KYC-1", "R1");
+    assert.equal(r.sectionsAbsorbees.length, 0);                                   // antérieur → hors périmètre
+  });
+  await t("R23 : clôturer un process fixe son état + ses sections revalidées ; process inconnu → 404", async () => {
+    const p = fake({ processes: [{ id: "E1", type: "evenement", etat: "EN_COURS" }] });
+    await svc(p).cloturerProcess(CO_SR, "KYC-1", "E1", ["SOF"]);
+    const e1 = p._processes.find((x: any) => x.id === "E1");
+    assert.equal(e1.etat, "CLOTURE");
+    assert.deepEqual(e1.sectionsRevalidees, ["SOF"]);
+    await rejects(svc(p).cloturerProcess(CO_SR, "KYC-1", "INEXISTANT", []), "introuvable");
   });
 
   console.log(`\n### ${passed}/${passed} tests kyc-lotA verts ###`);

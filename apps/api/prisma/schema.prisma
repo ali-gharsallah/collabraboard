@@ -260,6 +260,21 @@ model KycLockRequest {
   @@map("kyc_lock_requests")
 }
 
+// R23 : processes CONCURRENTS d'un dossier — pas de fusion ; priorité (l'événement met la
+// recertification EN PAUSE) ; pause/reprise ; audit trail propre ; absorption des sections
+// déjà revalidées à la reprise.
+model KycProcess {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  kycFileId          String   @map("kyc_file_id") @db.Uuid
+  type               String                                   // "recertification" | "evenement"
+  etat               String   @default("EN_COURS")            // EN_COURS | EN_PAUSE | CLOTURE
+  ouvertLe           DateTime @default(now()) @map("ouvert_le")
+  sectionsRevalidees Json     @default("[]") @map("sections_revalidees")
+  @@index([tenantId, kycFileId])
+  @@map("kyc_processes")
+}
+
 model DomainEvent {
   id          BigInt    @id @default(autoincrement())
   tenantId    String    @map("tenant_id") @db.Uuid

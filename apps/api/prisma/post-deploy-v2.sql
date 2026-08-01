@@ -113,6 +113,7 @@ DO $$ DECLARE t text; BEGIN
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
     'onboardings',                                        -- R117→R120 (bloc 19, tenantée)
+    'kyc_processes',                                      -- R23 (processes concurrents du dossier, tenantée)
     'ia_prerevues', 'ia_prompt_versions',                 -- R121→R124 (bloc 20, tenantées)
     'tenant_param_changes',                               -- R125→R128 (bloc 21)
     'mros_communications',                                -- R129→R132 (bloc 22)
