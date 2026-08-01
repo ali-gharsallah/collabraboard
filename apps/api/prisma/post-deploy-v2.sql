@@ -162,6 +162,58 @@ DO $$ DECLARE t text; BEGIN
   END LOOP;
 END $$;
 
+-- ── 2a-bis. Tables filles KYC SANS colonne tenant_id : policy par SOUS-REQUÊTE FK ─────
+-- Les 6 tables enfant du dossier (kyc_sections, kyc_questions, kyc_access_rules,
+-- kyc_question_history, kyc_visas, kyc_lock_requests) n'ont pas de colonne tenant_id (§2).
+-- Sans policy, sous FORCE RLS une lecture DIRECTE (`SELECT * FROM kyc_visas`) fuiterait
+-- cross-tenant : l'isolation transitive par FK n'était qu'APPLICATIVE. On la rend RÉELLE
+-- en base via une policy dont le prédicat remonte au parent tenanté (kyc_files ou kyc_locks).
+-- Aucune colonne nouvelle, aucune migration de données. Idempotent (DROP POLICY IF EXISTS).
+-- Le prédicat sert en USING (lecture/maj/suppression) ET en WITH CHECK (insertion/maj) :
+-- on ne peut rattacher une ligne fille qu'à un parent de SON tenant.
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+    ('kyc_sections',
+       $u$EXISTS (SELECT 1 FROM kyc_files f
+                  WHERE f.id = kyc_sections.kyc_file_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_visas',
+       $u$EXISTS (SELECT 1 FROM kyc_files f
+                  WHERE f.id = kyc_visas.kyc_file_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_questions',
+       $u$EXISTS (SELECT 1 FROM kyc_sections s JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE s.id = kyc_questions.section_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_access_rules',
+       $u$EXISTS (SELECT 1 FROM kyc_questions q JOIN kyc_sections s ON s.id = q.section_id
+                  JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE q.id = kyc_access_rules.question_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_question_history',
+       $u$EXISTS (SELECT 1 FROM kyc_questions q JOIN kyc_sections s ON s.id = q.section_id
+                  JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE q.id = kyc_question_history.question_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_lock_requests',
+       $u$EXISTS (SELECT 1 FROM kyc_locks l
+                  WHERE l.id = kyc_lock_requests.lock_id
+                    AND l.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$)
+  ) AS v(tbl, predicat)
+  LOOP
+    IF to_regclass(r.tbl) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', r.tbl);
+      EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', r.tbl);
+      EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', r.tbl);
+      EXECUTE format('CREATE POLICY tenant_isolation ON %I USING (%s) WITH CHECK (%s)',
+                     r.tbl, r.predicat, r.predicat);
+    END IF;
+  END LOOP;
+END $$;
+
 -- ── 2b. R270 (LBA art. 10a) : cloisonnement SQL du motif sensible d'offboarding ─────
 -- Politique RESTRICTIVE en LECTURE sur offboarding_sensibles : outre l'isolation tenant,
 -- la ligne n'est SERVIE que si le rôle applicatif courant (GUC app.role) figure dans la
