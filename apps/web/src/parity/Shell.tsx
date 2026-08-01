@@ -70,6 +70,7 @@ import SsoParamScreen from "./SsoParamScreen";
 import OliviaConsoleScreen from "./OliviaConsoleScreen";
 import BusinessTripScreen from "./BusinessTripScreen";
 import OnboardingScreen from "./OnboardingScreen";
+import EditorConsoleScreen from "./EditorConsoleScreen";
 import AdminScreen from "./AdminScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
@@ -206,6 +207,7 @@ export function Shell() {
       case "olivia": return <OliviaConsoleScreen />;
       case "trip": return <BusinessTripScreen />;
       case "prospect_onboard": return <OnboardingScreen />;
+      case "editorconsole": return <EditorConsoleScreen />;
       case "admin": return <AdminScreen />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
