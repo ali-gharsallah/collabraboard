@@ -50,6 +50,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/common/feature-flags.ts src/common/feature-flags.spec.ts \
   src/common/optimistic-lock.ts src/common/optimistic-lock.spec.ts \
   src/modules/kyc/kyc-locking.spec.ts \
+  src/modules/kyc/rules/kyc-lotA.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
   src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
@@ -108,5 +109,6 @@ echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run is
 echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js
 echo "── Verrou optimiste KYC lot 1 (LK-KYCFILE/KYCVISA + double-visa, R336) ──"; run kyc-locking.spec.js
+echo "── Moteur lot A (R6/R10, R9, R11, R12, R8, R24 — port domain.py) ──"; run kyc-lotA.spec.js
 echo "── Idempotence commandes (IDM-01..03, R337) ──"; run idempotency.spec.js
 echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec.js

@@ -69,7 +69,23 @@ export class KycController {
 
   // RBAC appliqué DANS le service (après four-eyes R13/R52) — voir note d'en-tête.
   @Post(":code/validate")
-  validate(@Req() req: any, @Param("code") code: string, @Headers("if-match") ifMatch?: string) { return this.svc.validate(req.ctx, code, versionSiPresente(ifMatch)); }
+  validate(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) {
+    return this.svc.validate(req.ctx, code, versionSiPresente(ifMatch), body?.engagement === true);   // R14 : engagement obligatoire
+  }
+
+  // R9 — la révocation discrétionnaire n'existe pas (toujours 409 typé).
+  @Post(":code/visas/:section/revoke")
+  revoke(@Req() req: any, @Param("code") code: string, @Param("section") section: string) { return this.svc.tenterRevocation(req.ctx, code, section); }
+  // R11 — réassignation d'un validateur (rôles habilités).
+  @Post(":code/visas/:section/reassign")
+  reassign(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
+    return this.svc.reassignerValidateur(req.ctx, code, section, body?.requiredRole, body?.nouveau);
+  }
+  // R12 — annulation pour vice de process (incident op-risk).
+  @Post(":code/visas/:section/annuler-vice")
+  annulerVice(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
+    return this.svc.annulerPourVice(req.ctx, code, section, body?.requiredRole, body?.motif ?? "");
+  }
 
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")

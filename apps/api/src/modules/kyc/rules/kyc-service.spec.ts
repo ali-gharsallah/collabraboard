@@ -145,11 +145,18 @@ const baseVisa = (over: any = {}) => ({ id: 'v1', sectionCode: 'IDENT', required
     await rejects(svc(sc).validate({ tenantId: 't1', userId: 'RM_Joe', role: 'RM' }, 'KYC-1'), 'validation finale non autorisée');
   });
 
-  // ── Chemin nominal : CO_SR non-créateur non-contributeur, visas signés → VALIDATED ──
+  // ── R14 : engagement de responsabilité obligatoire à la validation finale ──
+  await it('VAL-R14 validation finale sans engagement → refusée', async () => {
+    const sc: Scenario = { kyc: { id: 'k1', code: 'KYC-1', tenantId: 't1', status: 'UNDER_REVIEW', createdBy: 'X',
+      visas: [baseVisa({ status: 'SIGNED' })] }, contributors: { IDENT: ['U1'] } };
+    await rejects(svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1'), 'R14');   // engagement absent
+  });
+
+  // ── Chemin nominal : CO_SR non-créateur non-contributeur, visas signés, engagement → VALIDATED ──
   await it('VAL nominal → VALIDATED', async () => {
     const sc: Scenario = { kyc: { id: 'k1', code: 'KYC-1', tenantId: 't1', status: 'UNDER_REVIEW', createdBy: 'X',
       visas: [baseVisa({ status: 'SIGNED' })] }, contributors: { IDENT: ['U1'] } };
-    const r = await svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1');
+    const r = await svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1', undefined, true);   // R14 : engagement
     ok(r.status === 'VALIDATED' && r.validatedBy === 'CO_SR_Ann');
   });
 

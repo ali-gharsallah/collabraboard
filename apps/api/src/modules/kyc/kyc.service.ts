@@ -221,8 +221,19 @@ export class KycService {
           changedAt.toISOString()].join("|")).digest("hex");
       await tx.kycQuestionHistory.create({ data: { questionId: q.id,
         previousValue: q.answer, newValue: answer, changedBy: ctx.userId, changedAt, hash } });
-      return tx.kycQuestion.update({ where: { id: q.id },
+      const updated = await tx.kycQuestion.update({ where: { id: q.id },
         data: { answer, answeredBy: ctx.userId, answeredAt: changedAt } });
+      // R6/R10 : la modification d'une donnée invalide le visa de CETTE section (ciblé) — il
+      // repasse EN ATTENTE (re-signature requise) ; les visas des AUTRES sections restent intacts.
+      const aInvalider = await tx.kycVisa.findMany({
+        where: { kycFileId: q.section.kycFile.id, sectionCode: q.section.code, status: "SIGNED" } });
+      for (const v of aInvalider)
+        await tx.kycVisa.update({ where: { id: v.id },
+          data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+      if (aInvalider.length)
+        await this.emit(tx, ctx, "kyc.visa.invalide", q.section.kycFile.id,
+          { section: q.section.code, cause: "donnees_modifiees", nb: aInvalider.length });
+      return updated;
     });
   }
 
@@ -280,8 +291,55 @@ export class KycService {
     return this.prisma.kycVisa.findUnique({ where: { id: visa.id } });
   }
 
+  // ── R9 : la révocation discrétionnaire d'un visa n'existe pas — toute tentative est refusée ET tracée.
+  async tenterRevocation(ctx: Ctx, code: string, sectionCode: string) {
+    await this.findKyc(ctx, code);                                     // existence + périmètre
+    await this.audit.log(ctx.tenantId, ctx.userId, "KYC_REVOCATION_REFUSEE", `${code}/${sectionCode}`);
+    throw new ConflictException(
+      "[R9] La révocation discrétionnaire d'un visa n'existe pas — un visa accordé ne se retire pas « parce qu'on a changé d'avis ». " +
+      "Seules l'invalidation ciblée sur modification (R6/R10) ou l'annulation pour vice de process (R12) sont possibles.");
+  }
+
+  // ── R11 : réassignation d'un validateur nommé — réservée aux rôles habilités (process owner/manager), tracée.
+  async reassignerValidateur(ctx: Ctx, code: string, sectionCode: string, requiredRole: string, nouveau: string) {
+    if (!KycService.ROLES_REASSIGNATION.includes(ctx.role))
+      throw new ForbiddenException(`[R11] Rôle ${ctx.role} non habilité à réassigner un validateur (process owner / manager uniquement).`);
+    const kyc = await this.findKyc(ctx, code);
+    const visa = await this.prisma.kycVisa.findFirst({ where: { kycFileId: kyc.id, sectionCode, requiredRole: requiredRole as any } });
+    if (!visa) throw new NotFoundException(`Visa introuvable pour ${sectionCode}/${requiredRole}`);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycVisa.update({ where: { id: visa.id }, data: { validateur: nouveau, version: { increment: 1 } } });
+      await this.emit(tx, ctx, "kyc.visa.validateur.reassigne", kyc.id,
+        { section: sectionCode, requiredRole, ancien: (visa as any).validateur ?? null, nouveau });
+      return { ok: true, section: sectionCode, requiredRole, validateur: nouveau };
+    });
+  }
+
+  // ── R12 : annulation pour vice de process — décideur habilité + motif ; incident op-risk enregistré.
+  async annulerPourVice(ctx: Ctx, code: string, sectionCode: string, requiredRole: string, motif: string) {
+    if (!KycService.ROLES_REASSIGNATION.includes(ctx.role))
+      throw new ForbiddenException(`[R12] Rôle ${ctx.role} non habilité à annuler pour vice (process owner / manager).`);
+    if (!motif || !motif.trim()) throw new BadRequestException("[R12] Motif obligatoire pour l'annulation pour vice de process.");
+    const kyc = await this.findKyc(ctx, code);
+    const visa = await this.prisma.kycVisa.findFirst({ where: { kycFileId: kyc.id, sectionCode, requiredRole: requiredRole as any } });
+    if (!visa) throw new NotFoundException(`Visa introuvable pour ${sectionCode}/${requiredRole}`);
+    if (visa.status !== "SIGNED") throw new ConflictException("[R12] Seul un visa accordé peut être annulé pour vice de process.");
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycVisa.update({ where: { id: visa.id },
+        data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+      await this.emit(tx, ctx, "kyc.visa.annule.vice", kyc.id, { section: sectionCode, requiredRole, motif });
+      await this.emit(tx, ctx, "risque.operationnel.incident", kyc.id,
+        { origine: "visa_hors_process", section: sectionCode, requiredRole, motif });   // R12 : incident op-risk
+      return { ok: true, section: sectionCode, requiredRole };
+    });
+  }
+
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
-  async validate(ctx: Ctx, code: string, expectedVersion?: number) {
+  // R11 : réassignation de validateur réservée au process owner / manager (domain.py
+  // ROLES_REASSIGNATION = process_owner, application_manager, coo).
+  private static ROLES_REASSIGNATION = ["CO_SR", "DIR", "ADMIN"];
+
+  async validate(ctx: Ctx, code: string, expectedVersion?: number, engagement: boolean = false) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
@@ -309,6 +367,10 @@ export class KycService {
       .map((q) => q.code);
     if (requisesManquantes.length) throw new BadRequestException(
       `R282 : contributions REQUISES manquantes (matrice à la création du dossier) : ${requisesManquantes.join(", ")}`);
+    // R14 : engagement de responsabilité obligatoire à la validation finale (pop-up serveur).
+    // Placé APRÈS tous les gardes (R13/R52/rôle/complétude) : la précédence des refus est conservée.
+    if (!engagement) throw new ConflictException(
+      "[R14] Engagement de responsabilité requis : le validateur final confirme le respect des process avant de signer.");
 
     return this.prisma.$transaction(async (tx) => {
       // R336/LK (lot 1) : validation finale GARDÉE par la version du dossier (jamais deux
@@ -322,6 +384,7 @@ export class KycService {
         payload: { code, validatedBy: ctx.userId } as any } });
       if (this.reviews) await this.reviews.surApprobation(ctx, tx,            // RV-01/07 : l'échéance naît ICI
         { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt });
+      await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ENGAGEMENT_RESPONSABILITE", code);   // R14
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VALIDATED", code);
       return tx.kycFile.findUnique({ where: { id: kyc.id } });
     });
