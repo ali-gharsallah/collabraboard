@@ -32,7 +32,7 @@ React.createElement("option", { value: "GAR" }, "Grouped AR")),
 React.createElement("select", { value: sec.code, onChange: (e: any) => setCode(e.target.value), style: { border: `1px solid ${T.sage}`, borderRadius: 6, padding: "6px 9px", flex: 1 } }, secs.map((s: any) => React.createElement("option", { key: s.code, value: s.code }, s.label)))),
 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 12.5 } },
 React.createElement("thead", null,
-React.createElement("tr", null, ["Champ", "Mode", "Obligatoire (R78)"].map(h => React.createElement("th", { key: h, style: { textAlign: "left", padding: "7px 9px", fontSize: 10, color: T.inkSoft, textTransform: "uppercase", borderBottom: `1px solid ${T.line}` } }, h)))),
+React.createElement("tr", null, ["Champ", "Mode", "Obligatoire"].map(h => React.createElement("th", { key: h, style: { textAlign: "left", padding: "7px 9px", fontSize: 10, color: T.inkSoft, textTransform: "uppercase", borderBottom: `1px solid ${T.line}` } }, h)))),
 React.createElement("tbody", null, champs.map((f: any) => React.createElement("tr", { key: f.name },
 React.createElement("td", { style: { padding: "7px 9px", borderBottom: `1px solid ${T.lineSoft}`, color: f.mode === "OFF" ? T.inkSoft : T.ink,
 textDecoration: f.mode === "OFF" ? "line-through" : "none" } }, f.name),
@@ -49,9 +49,9 @@ fontWeight: f.mode === m ? 800 : 400 } }, l)))),
 React.createElement("td", { style: { padding: "7px 9px", borderBottom: `1px solid ${T.lineSoft}` } },
 React.createElement("button", { disabled: f.mode === "OFF", onClick: () => {
 f.required = !f.required;
-pushParamAudit("Admin", "champsObligatoiresParSection — " + ctx + "/" + sec.code + "/" + f.name + " → " + (f.required ? "obligatoire" : "facultatif") + " (R78 · motif R7 · effet R29)");
+pushParamAudit("Admin", "Champ " + ctx + "/" + sec.code + "/" + f.name + " → " + (f.required ? "obligatoire" : "facultatif") + " (paramétrage motivé, effet daté)");
 re2();
-}, title: f.mode === "OFF" ? "Un champ désactivé ne peut être obligatoire" : "Basculer obligatoire / facultatif — écrit champsObligatoiresParSection (R78)", style: { padding: "4px 11px", borderRadius: 7, fontSize: 11, cursor: f.mode === "OFF" ? "not-allowed" : "pointer",
+}, title: f.mode === "OFF" ? "Un champ désactivé ne peut être obligatoire" : "Basculer obligatoire / facultatif", style: { padding: "4px 11px", borderRadius: 7, fontSize: 11, cursor: f.mode === "OFF" ? "not-allowed" : "pointer",
 border: `1px solid ${f.required && f.mode !== "OFF" ? T.red : T.line}`,
 background: f.required && f.mode !== "OFF" ? T.redSoft : T.surface,
 color: f.mode === "OFF" ? T.inkSoft : (f.required ? T.red : T.inkMid),
@@ -80,7 +80,7 @@ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.
 React.createElement("div", { style: { fontSize: 11, color: T.inkMid, lineHeight: 1.6, marginBottom: 8 } },
 "Le caractère obligatoire d'un champ est un paramètre gouverné du registre R-Q : ",
 React.createElement("code", { style: { fontSize: 10.5, color: T.olive900 } }, "champsObligatoiresParSection"),
-" (R78). Chaque bascule est un acte ",
+". Chaque bascule est un acte ",
 React.createElement("b", null, "motivé (R7)"),
 ", à effet daté (R29), ",
 React.createElement("b", null, "append-only"),
