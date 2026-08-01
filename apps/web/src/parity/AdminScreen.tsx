@@ -4,7 +4,9 @@ import USERS from "../fixtures/USERS.json";
 import { Badge, SectionTitle } from "./components";
 import { ROLE_LABELS } from "./offboarding-support";
 import { pushParamAudit } from "./param-audit-support";
-import { ADMIN_NAV, SCOPE_OPTS, WF_ROLE_UNIVERSE, wfEmit } from "./admin-support";
+import { ADMIN_NAV, SCOPE_OPTS, WF_ROLE_UNIVERSE, wfEmit, SANCTIONS_SOURCES } from "./admin-support";
+import { RISK_COUNTRIES, RC_LEVELS, riskCountryOf } from "./risk-country-support";
+import { amlHash } from "./preonboarding-support";
 
 // Source : docs/reference/olive-demo.html 40526-40636 — AdminScreen (Administration, hub 30 panneaux) + UserCreateModal (39207).
 // Onglet « Utilisateurs & rôles » (RBAC) + « Créer un utilisateur » portés verbatim. Les autres panneaux
@@ -108,6 +110,80 @@ React.createElement("button", { onClick: onClose, style: { padding: "9px 16px", 
 React.createElement("button", { onClick: create, disabled: !valid, style: { padding: "9px 18px", borderRadius: 9, border: "none", background: valid ? T.olive600 : T.line, color: valid ? "#fff" : T.inkSoft, fontSize: 12.5, fontWeight: 800, cursor: valid ? "pointer" : "not-allowed" } }, "Créer l'utilisateur →")))));
 }
 
+// Source : docs/reference/olive-demo.html 31638-31679 — RiskCountriesPanel (« Pays à risque GAFI + interne »). Verbatim.
+function RiskCountriesPanel({ user }: { user: any }) {
+const [, bump] = useState(0);
+const re = function () { bump(function (x) { return x + 1; }); };
+const [nCc, setNCc] = useState("");
+const [nName, setNName] = useState("");
+const [nLvl, setNLvl] = useState("INTERNE");
+const card: any = { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 20 };
+return (React.createElement("div", { style: card },
+React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "center", marginBottom: 4, flexWrap: "wrap" } },
+React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: T.ink, flex: 1 } },
+"⚑ Pays à risque — ",
+RISK_COUNTRIES.length,
+" juridictions"),
+React.createElement("label", { style: { padding: "8px 14px", borderRadius: 9, border: "1px solid " + T.olive600, color: T.olive700, fontSize: 11, fontWeight: 800, cursor: "pointer" } },
+"⬆ Charger une liste (CSV)",
+React.createElement("input", { type: "file", accept: ".csv,.txt", style: { display: "none" }, onChange: function (e: any) { var f = e.target.files && e.target.files[0]; if (!f)
+return; var rd = new FileReader(); rd.onload = function (ev: any) { var lines = String(ev.target.result).split(/\r?\n/).filter(Boolean); var n = 0; lines.forEach(function (l: string) { var p = l.split(/[;,]/); if (p.length >= 2 && p[0].trim().length === 2 && !riskCountryOf(p[0].trim().toUpperCase())) {
+RISK_COUNTRIES.push({ cc: p[0].trim().toUpperCase(), name: p[1].trim(), level: (p[2] || "INTERNE").trim().toUpperCase(), source: "Import " + f.name });
+n++;
+} }); pushParamAudit((user && user.name) || "—", "Pays à risque — import " + f.name + " : " + n + " ajoutée(s)"); re(); }; rd.readAsText(f); } }))),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 12 } }, "Format CSV : code ISO;nom;niveau (FATF_BLACK / FATF_GREY / INTERNE). Consommé par : contrôles pré-exécution des transferts, scénarios AML, analyseur SWIFT, corroboration."),
+React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" } },
+React.createElement("input", { placeholder: "CC", maxLength: 2, value: nCc, onChange: function (e: any) { setNCc(e.target.value.toUpperCase()); }, style: { width: 52, padding: "7px 9px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11 } }),
+React.createElement("input", { placeholder: "Nom du pays", value: nName, onChange: function (e: any) { setNName(e.target.value); }, style: { flex: "1 1 160px", padding: "7px 9px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11 } }),
+React.createElement("select", { value: nLvl, onChange: function (e: any) { setNLvl(e.target.value); }, style: { padding: "7px 9px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11 } }, Object.keys(RC_LEVELS).map(function (k: string) { return React.createElement("option", { key: k, value: k }, RC_LEVELS[k][0]); })),
+React.createElement("button", { onClick: function () { if (nCc.length === 2 && nName && !riskCountryOf(nCc)) {
+RISK_COUNTRIES.push({ cc: nCc, name: nName, level: nLvl, source: "Saisie manuelle" });
+pushParamAudit((user && user.name) || "—", "Pays à risque — ajout " + nCc);
+setNCc("");
+setNName("");
+re();
+} }, style: { padding: "7px 14px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer" } }, "+ Ajouter")),
+RISK_COUNTRIES.map(function (x: any) {
+var lv = RC_LEVELS[x.level] || RC_LEVELS.INTERNE;
+return (React.createElement("div", { key: x.cc, style: { display: "flex", gap: 9, alignItems: "center", padding: "6px 0", borderBottom: "1px solid " + T.lineSoft, fontSize: 10.5 } },
+React.createElement("span", { style: { fontFamily: "monospace", fontWeight: 800, color: T.ink, width: 30, flexShrink: 0 } }, x.cc),
+React.createElement("span", { style: { fontWeight: 700, color: T.ink, width: 150, flexShrink: 0 } }, x.name),
+React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: (T as any)[lv[1]], background: (T as any)[lv[1] + "Soft"], padding: "2px 9px", borderRadius: 8, flexShrink: 0 } }, lv[0]),
+React.createElement("span", { style: { color: T.inkSoft, flex: 1 } }, x.source),
+React.createElement("button", { onClick: function () { var i = RISK_COUNTRIES.indexOf(x); RISK_COUNTRIES.splice(i, 1); pushParamAudit((user && user.name) || "—", "Pays à risque — retrait " + x.cc); re(); }, style: { border: "none", background: "transparent", color: T.red, fontSize: 11, cursor: "pointer" } }, "✕")));
+})));
+}
+
+// Source : docs/reference/olive-demo.html 31923-31950 — SanctionsSourcesPanel (« Listes de sanctions & embargos »). Verbatim.
+function SanctionsSourcesPanel({ user }: { user: any }) {
+const [, bump] = useState(0);
+const re = function () { bump(function (x) { return x + 1; }); };
+const card: any = { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 20 };
+return (React.createElement("div", { style: card },
+React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "center", marginBottom: 4, flexWrap: "wrap" } },
+React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: T.ink, flex: 1 } },
+"⛔ Listes de sanctions & embargos — ",
+SANCTIONS_SOURCES.reduce(function (a: number, x: any) { return a + x.entries; }, 0).toLocaleString("fr-CH"),
+" entrées"),
+React.createElement("label", { style: { padding: "8px 14px", borderRadius: 9, border: "1px solid " + T.olive600, color: T.olive700, fontSize: 11, fontWeight: 800, cursor: "pointer" } },
+"⬆ Charger une liste (CSV/XML)",
+React.createElement("input", { type: "file", accept: ".csv,.xml,.txt", style: { display: "none" }, onChange: function (e: any) { var f = e.target.files && e.target.files[0]; if (!f)
+return; var src = SANCTIONS_SOURCES.find(function (x: any) { return f.name.toLowerCase().indexOf(x.id) >= 0; }) || SANCTIONS_SOURCES[4]; src.ver = "2026-07-11"; src.status = "À jour"; src.mode = "Chargement manuel (" + f.name + ")"; src.entries += amlHash(f.name, 40); pushParamAudit((user && user.name) || "—", "Sanctions — chargement " + f.name + " → " + src.label); re(); } }))),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 12 } }, "Consommées par : moteur de screening, contrôles pré-exécution des transferts, analyseur SWIFT, scénarios AML."),
+SANCTIONS_SOURCES.map(function (x: any) {
+return (React.createElement("div", { key: x.id, style: { display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid " + T.lineSoft, fontSize: 10.5 } },
+React.createElement("span", { style: { fontFamily: "monospace", fontWeight: 800, color: T.olive700, width: 44, textTransform: "uppercase", flexShrink: 0 } }, x.id),
+React.createElement("span", { style: { fontWeight: 700, color: T.ink, flex: 1, minWidth: 180 } }, x.label),
+React.createElement("span", { style: { fontFamily: "monospace", color: T.inkMid } },
+x.entries.toLocaleString("fr-CH"),
+" entrées · v",
+x.ver),
+React.createElement("span", { style: { color: T.inkSoft, width: 170 } }, x.mode),
+React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: x.status === "À jour" ? T.green : T.amber } }, x.status)));
+}),
+React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, marginTop: 10 } }, "Base de démonstration active : 20 entrées réelles (OFAC/SECO/UE/ONU) chargées dans le moteur local.")));
+}
+
 export default function AdminScreen() {
 const [tab, setTab] = useState(function () { var w: any = typeof window !== "undefined" ? window : {}; var t = w.OLIVE_NAV_HINT_ADMIN || "users"; w.OLIVE_NAV_HINT_ADMIN = null; return t; });
 const [nuOpen, setNuOpen] = useState(false);
@@ -150,7 +226,9 @@ React.createElement("span", null, it.label)));
 React.createElement("div", { style: { flex: 1, minWidth: 0 } },
 React.createElement("div", { style: { fontSize: 9.5, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 10 } }, activeLabel),
 tab === "user_create" && React.createElement(UserCreateModal, { onClose: () => setTab("users"), onCreated: (u: any) => { setNuLast(u); adminBump(x => x + 1); } }),
-tab !== "users" && tab !== "user_create" && React.createElement(AdminConsigne, { label: activeLabel }),
+tab === "riskcountries" && React.createElement(RiskCountriesPanel, { user: null }),
+tab === "sanctionssrc" && React.createElement(SanctionsSourcesPanel, { user: null }),
+tab !== "users" && tab !== "user_create" && tab !== "riskcountries" && tab !== "sanctionssrc" && React.createElement(AdminConsigne, { label: activeLabel }),
 tab === "users" && React.createElement("div", { style: { background: T.surface, border: `1px solid ${T.olive600}44`, borderRadius: 14, padding: 14, marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" } },
 React.createElement("div", { style: { flex: 1, minWidth: 220 } },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink } }, "＋ Créer un utilisateur & affecter un rôle"),

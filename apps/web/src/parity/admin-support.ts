@@ -12,6 +12,15 @@ export const SCOPE_OPTS: any[] = [
 { id: "admin", icon: "⚙", label: "Admin", desc: "Paramétrage, utilisateurs, référentiels." },
 ];
 
+// Source : docs/reference/olive-demo.html 31916-31922 — SANCTIONS_SOURCES. Verbatim.
+export const SANCTIONS_SOURCES: any[] = [
+{ id: "ofac", label: "OFAC SDN (US Treasury)", ver: "2026-07-10", entries: 12480, mode: "Flux auto quotidien", status: "À jour" },
+{ id: "seco", label: "SECO SESAM (Suisse)", ver: "2026-07-11", entries: 4312, mode: "Flux auto quotidien", status: "À jour" },
+{ id: "eu", label: "UE — mesures restrictives", ver: "2026-07-09", entries: 5121, mode: "Flux auto quotidien", status: "À jour" },
+{ id: "un", label: "ONU — Conseil de sécurité", ver: "2026-07-08", entries: 1098, mode: "Flux auto hebdo", status: "À jour" },
+{ id: "hmt", label: "UK HMT / OFSI", ver: "2026-06-30", entries: 4870, mode: "Manuel", status: "⚠ 11 j" },
+];
+
 export const ADMIN_NAV: any[] = [
 { group: "Identité & accès", items: [
 { id: "screencfg", icon: "◫", label: "Colonnes & libellés par écran" },
