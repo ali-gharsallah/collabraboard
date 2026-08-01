@@ -97,6 +97,61 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
         .send({ clientId: cKeller, legalStructure: "PP", accountType: "CURRENT", countryCode: "CH", rmId: ids.RM }).expect(201);
     }
 
+    // ── 3-bis. BOUCLE KYC DE BOUT EN BOUT — personnes/PEP → documents → visa 4-yeux → ACTIF → révision.
+    // BEST-EFFORT + IDÉMPOTENT : si le dossier est déjà VALIDATED (run 2), ou si le gabarit exige un
+    // rôle absent du casting démo (RM/CO/CO_SR), on TOLÈRE (log) — le seed ne casse JAMAIS (même esprit
+    // que les transitions déjà-atteintes ci-dessus). Le parcours EXACT est prouvé par la suite e2e
+    // (kyc-rules.e2e-spec.ts) ; ici il PEUPLE la démo pour dérouler l'histoire à l'écran.
+    try {
+      const kf = await prisma.kycFile.findFirst({ where: { tenantId: TENANT_GWB, clientId: cKeller } });
+      if (kf) {
+        // Personnes + PEP (find-or-create par nom via prisma — pas de route de liste personnes).
+        let hans = await prisma.person.findFirst({ where: { tenantId: TENANT_GWB, nom: "Hans Keller" } });
+        if (!hans) {
+          const p = await request(http).post("/v1/personnes").set(rm()).send({ nom: "Hans Keller", donnees: { role: "UBO" } });
+          if (p.status === 201) hans = p.body;
+        }
+        if (hans) {
+          await request(http).post(`/v1/personnes/${hans.id}/roles`).set(rm()).send({ kycFileId: kf.id, role: "UBO" }).catch(() => {}); // R31
+          await request(http).post(`/v1/personnes/${hans.id}/coc`).set(co()).send({ champ: "pep", valeur: true, document: "Mandat cantonal (démo)" }).catch(() => {}); // R32 (PEPisation)
+        }
+        // Documents au dossier (find-or-create par nom).
+        const docVu = await prisma.document.findFirst({ where: { tenantId: TENANT_GWB, clientId: cKeller, nom: "Passeport Hans Keller (démo)" } });
+        if (!docVu)
+          await request(http).post("/v1/ged/documents").set(rm())
+            .send({ clientId: cKeller, nom: "Passeport Hans Keller (démo)", typeCode: "ID" }).catch(() => {});
+
+        // Visa 4-yeux → validation finale, seulement si le dossier n'est pas déjà validé.
+        if (kf.status !== "VALIDATED") {
+          const code = kf.code;
+          const roleToken: Record<string, () => any> = { CO: co, CO_SR: cosr };
+          // 1) le PRÉPARATEUR (RM) répond aux questions éditables/obligatoires (devient contributeur).
+          const dossier = (await request(http).get(`/v1/kyc/${code}`).set(rm())).body;
+          for (const s of dossier.sections ?? [])
+            for (const q of s.questions ?? [])
+              if ((q.right === "EDIT" || q.right === "REQUIRED") && !q.answer)
+                await request(http).patch(`/v1/kyc/${code}/questions/${q.code}`).set(rm()).send({ answer: "Renseigné (démo)" }).catch(() => {});
+          // 2) chaque visa PENDING est signé par un persona dont le rôle == requiredRole (jamais le RM).
+          const frais = (await request(http).get(`/v1/kyc/${code}`).set(rm())).body;
+          for (const v of frais.visas ?? [])
+            if (v.status === "PENDING" && roleToken[v.requiredRole])
+              await request(http).post(`/v1/kyc/${code}/visas/${v.sectionCode}`)
+                .set(roleToken[v.requiredRole]()).set("If-Match", String(v.version ?? 0)).send({ verdict: "OK" }).catch(() => {});
+          // 3) validation finale par CO_SR (n'a pas préparé le dossier — four-eyes R52 respecté).
+          const vfin = (await request(http).get(`/v1/kyc/${code}`).set(rm())).body;
+          await request(http).post(`/v1/kyc/${code}/validate`)
+            .set(cosr()).set("If-Match", String(vfin.version ?? 0)).send({}).catch(() => {});
+        }
+        // Révision : l'échéance NAÎT à la validation (RV-01/07) — on la surface.
+        const revs = (await request(http).get(`/v1/reviews/deadlines?horizonJours=3650`).set(co())).body;
+        const nRev = (revs?.deadlines ?? revs ?? []).length ?? 0;
+        const relu = await prisma.kycFile.findFirst({ where: { id: kf.id } });
+        console.log(`SEED GWB — boucle KYC : dossier ${kf.code} statut=${relu?.status} · ${nRev} révision(s) planifiée(s)`);
+      }
+    } catch (e) {
+      console.log("SEED GWB — boucle KYC best-effort tolérée :", (e as any)?.message ?? e);
+    }
+
     // ── 4. CPSI : client enregistré + signal + score (idempotent : registered une fois) ──
     const cpsiVu = await prisma.cpsiEvent.findFirst({ where: { tenantId: TENANT_GWB, clientId: cKeller, type: "cpsi.client.registered" } });
     if (!cpsiVu) {

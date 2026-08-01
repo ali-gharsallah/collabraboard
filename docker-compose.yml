@@ -1,3 +1,7 @@
+# O-Live — pile de DÉMO complète en une commande :  docker compose up
+#   db (Postgres) → migrate (prisma db push + prisma:post) → api (NestecJS) → web (nginx).
+#   Séquence détaillée + seed + e2e : voir README-DEMO.md.
+# Valeurs de secrets ci-dessous = DÉMO uniquement (jamais de vrai secret dans le repo).
 services:
   db:
     image: postgres:16-alpine
@@ -14,4 +18,45 @@ services:
     environment: { MINIO_ROOT_USER: olive, MINIO_ROOT_PASSWORD: olive-secret }
     ports: ["9000:9000","9001:9001"]
     volumes: [minio:/data]
+
+  # ── Schéma : prisma db push (structure) PUIS prisma:post (RLS FORCE + policies, post-deploy-v2.sql).
+  # Tourne une fois puis sort ; `api` attend sa complétion (depends_on: service_completed_successfully).
+  migrate:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    working_dir: /repo/apps/api
+    environment:
+      DATABASE_URL: postgresql://olive:olive@db:5432/olive
+    command: >
+      sh -c "npx prisma db push --skip-generate &&
+             npx prisma db execute --file prisma/post-deploy-v2.sql --schema prisma/schema.prisma"
+    depends_on: { db: { condition: service_healthy } }
+    restart: "no"
+
+  # ── API NestJS (/v1). Secrets FAIL-FAST au boot = valeurs DÉMO ci-dessous. CORS ouvert pour le web.
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment:
+      DATABASE_URL: postgresql://olive:olive@db:5432/olive
+      AUDIT_HMAC_SECRET: "00000000000000000000000000000000000000000000000000000000demo0001"
+      MFA_ENC_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      CORS_ORIGIN: "http://localhost:8080"
+      PORT: "3000"
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/v1/healthz',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))\""]
+      interval: 5s
+      retries: 20
+
+  # ── Web (build Vite servi par nginx). OLIVE_API_URL pointe le navigateur vers l'API (port hôte).
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    environment:
+      OLIVE_API_URL: "http://localhost:3000"
+    ports: ["8080:80"]
+    depends_on:
+      api: { condition: service_healthy }
+
 volumes: { pgdata: {}, minio: {} }

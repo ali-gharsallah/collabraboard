@@ -1,6 +1,8 @@
 import React from "react";
 import { tokens } from "../../theme/tokens";
 import { traduire, langue } from "../../lib/i18n";
+import { useApiOrSeed } from "../../lib/useApiOrSeed";
+import { DemoModeBanner } from "../../components/DemoModeBanner";
 
 // ÉCRAN BAT LÉGER (R333/FB-06) — recette CLIENT. Lecture seule : il AFFICHE une campagne (cases
 // du cahier généré filtré par licence, verdicts, écarts classés, visa) et le VERDICT de
@@ -30,8 +32,14 @@ const DEMO: Campagne = {
   promotion: { promotable: false, raisons: ["écart bloquant : BAT-AML-01"] },
 };
 
-export function BatCampagne({ campagne = DEMO }: { campagne?: Campagne }) {
+// Câblé au backend (SPEC-FRONT-CÂBLAGE v2, pattern useApiOrSeed) : GET /v1/bat/campagne — la
+// campagne (cases, verdicts, écarts, visa, promotion) fait autorité SERVEUR/moteur (tools/bat/
+// bat.mjs) ; l'écran ne re-décide rien. Repli sur la campagne de démo (DEMO) si le backend est
+// absent (bandeau démo affiché). Un `campagne` explicite (tests) court-circuite le fetch.
+export function BatCampagne({ campagne: campagneProp }: { campagne?: Campagne } = {}) {
   const t = traduire(langue());
+  const { data, isDemo } = useApiOrSeed<Campagne>("/v1/bat/campagne", DEMO);
+  const campagne = campagneProp ?? data;
   const bloquants = campagne.cases.filter((c) => c.ecart?.gravite === "BLOQUANT");
   const mineurs = campagne.cases.filter((c) => c.ecart?.gravite === "MINEUR");
   const badge = (ok: boolean) => ({
@@ -40,6 +48,7 @@ export function BatCampagne({ campagne = DEMO }: { campagne?: Campagne }) {
   });
 
   return <div style={{ font: tokens.font }}>
+    {!campagneProp && isDemo && <DemoModeBanner/>}
     <h2 style={{ color: tokens.ink, marginBottom: 4 }}>{t("Recette client (BAT)")}</h2>
     <div style={{ color: tokens.muted, fontSize: 13, marginBottom: 12 }}>
       {t("Cahier généré du catalogue, filtré par la licence — jamais rédigé à la main.")}
