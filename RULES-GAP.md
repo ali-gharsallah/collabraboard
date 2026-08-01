@@ -52,7 +52,7 @@
 | R35 | | Personne sans rôle = archivée | `retirer_role` · `test_P07` | **IMPL** personnes.service.ts:93 | — |
 | R36 | | Divergence d'identité résolue | `signaler_divergence` · `test_P08` | **IMPL** personnes.service.ts:204 | — |
 | R37 | ⚙ | Central File : contrôle = doc réputé valide | `controler_document` · `test_T01` | **ABSENT** | **C** |
-| R38 | | Tâche rôle→personne in-scope | `creer_tache` · `test_T02/T03` | **ABSENT** (tâches list-scopées seulement) | **B** |
+| R38 | | Tâche rôle→personne in-scope | `creer_tache` · `test_T02/T03` | **IMPL** tasks.module.ts `creerRoutee`/`deleguer` (in-scope = RM titulaire ∪ rôle voit-tout) | **B** |
 | R39 | 🔒 | Le SLA mesure/notifie, ne coerce pas | `tick_taches` · `test_T04` | **IMPL** tasks.module.ts:132 | — |
 | R40 | | Vue de charge + réaffectation managériale | `reaffecter_tache` · `test_T05` | **IMPL** workload.service.ts:108 | — |
 | R41 | ⚙ | Escalade d'urgence ; risque homme-clé | `escalader_deblocage` · `test_T06/T07` | **ABSENT** | **C** |

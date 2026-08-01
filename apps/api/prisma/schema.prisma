@@ -846,6 +846,9 @@ model Task {
   origine         String? @map("origine")                  // R239 : type d'événement d'origine (jamais par effet de bord)
   completedBy     String? @map("completed_by") @db.Uuid    // R241 : acteur de la complétion (distinct de l'assignee, tracé)
   completeComment String? @map("complete_comment")         // R241 : commentaire de complétion
+  // R38 (port creer_tache) : routage rôle → personne in-scope. Le rôle ciblé est enregistré ; la
+  // résolution stocke le titulaire in-scope dans assigneeId. Additif nullable — aucune donnée impactée.
+  roleCible       String? @map("role_cible")
   @@index([tenantId, assigneeId])
   @@map("tasks")
 }
