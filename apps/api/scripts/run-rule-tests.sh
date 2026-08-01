@@ -51,6 +51,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/common/optimistic-lock.ts src/common/optimistic-lock.spec.ts \
   src/modules/kyc/kyc-locking.spec.ts \
   src/modules/kyc/rules/kyc-lotA.spec.ts \
+  src/modules/kyc/docmatrix.service.ts src/modules/kyc/rules/docmatrix.spec.ts \
   src/modules/rapports/rapports.module.ts src/modules/rapports/rapports.wiring.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
   src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
@@ -111,6 +112,7 @@ echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flag
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js
 echo "── Verrou optimiste KYC lot 1 (LK-KYCFILE/KYCVISA + double-visa, R336) ──"; run kyc-locking.spec.js
 echo "── Moteur lot A (R6/R10, R9, R11, R12, R8, R24 — port domain.py) ──"; run kyc-lotA.spec.js
+echo "── Matrice documentaire versionnée (R26/R27/R29 — port referentiel.py) ──"; run docmatrix.spec.js
 echo "── Exports réglementaires R50 (RP-01..04 — port domain.py) ──"; run rapports.wiring.spec.js
 echo "── Idempotence commandes (IDM-01..03, R337) ──"; run idempotency.spec.js
 echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec.js

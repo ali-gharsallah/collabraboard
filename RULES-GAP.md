@@ -40,9 +40,9 @@
 | R23 | | Collision process : pas de fusion | `ouvrir_process` · `test_D08/D09` | **ABSENT** | **B** |
 | R24 | | Sections fixes, contenu variable | `evaluer_completude` · `test_S01` | **REF** kyc.templates.ts:12 (par SDD/CDD/EDD, pas 8 types) | **A** |
 | R25 | ⚙ | Visa conditionnel + délai d'invalidation | `soumettre_au_visa`+`tick` · `test_S02/S10` | **ABSENT** (CONDITIONAL existe R86, délai non) | **C** |
-| R26 | | Matrice doc = documents × entité × juridiction × rôle | `evaluer_completude` · `test_S03` | **REF** parametres.service.ts:44 (type×rôle, pas la matrice) | **B** |
-| R27 | | La juridiction résout le document | `resoudre_document` · `test_S04` | **ABSENT** | **B** |
-| R28 | | Péremption doc = tâche, pas suspension | `tick` · `test_S05` | **ABSENT** (péremption rétention ≠ validité doc) | **B** |
+| R26 | | Matrice doc = documents × entité × juridiction × rôle | `evaluer_completude` · `test_S03` | **IMPL** docmatrix.service.ts `evaluerCompletude` (union porteurs) — contenu ⚙ tenant | **B** |
+| R27 | | La juridiction résout le document | `resoudre_document` · `test_S04` | **IMPL** docmatrix.service.ts `resoudreDocument` (groupe d'équivalence) | **B** |
+| R28 | | Péremption doc = tâche, pas suspension | `tick` · `test_S05` | **IMPL** ged.service.ts `tickPeremptions` (émet `tache.ged.renouvellement`, statut reste ACTIF) | **B** |
 | R29 | | Versioning matrice par date — grandfathering | snapshot FINAL_STEP · `test_S06/07/08` | **IMPL** kyc.service.ts:197/303 (via R282) | — |
 | R30 | | Personne unique, propagation par événement | `creer_personne` · `test_P01` | **IMPL** personnes.service.ts:113 | — |
 | R31 | ⚙ | Cumul de rôles ; flag insider | `lier_personne` · `test_P02/P03` | **IMPL** personnes.service.ts:65 | — |
