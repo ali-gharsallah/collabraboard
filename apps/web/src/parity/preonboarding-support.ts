@@ -1,5 +1,7 @@
-// Source : docs/reference/olive-demo.html 21107–21162 (+ amlHash 14678, DOC_STRUCTURES 18123) — verbatim.
+// Source : docs/reference/olive-demo.html 21107–21162 (+ amlHash 14678, DOC_STRUCTURES 18123,
+// computeDocsByPerson 18219) — verbatim.
 // Pré-onboarding : verdict rapide et sans friction, règles taguées par juridiction ; OCR simulé.
+import PERSONS_DATA from "../fixtures/PERSONS_DATA.json";
 
 export function amlHash(str: string, mod: number) {
   let h = 0;
@@ -149,4 +151,43 @@ export function computeRequiredDocs(structId: any, rules: any) {
       docs.push({ doc: doc, where: where, account: where.indexOf("Compte") >= 0 });
   });
   return { struct: struct, cols: cols, docs: docs };
+}
+// Source : docs/reference/olive-demo.html 18219 — computeDocsByPerson (verbatim).
+export function computeDocsByPerson(structId: any, persons?: any, rules?: any) {
+  rules = rules || DOC_RULES_DEFAULT;
+  var struct = DOC_STRUCTURES.find(function (x: any) { return x.id === structId; }) || DOC_STRUCTURES[0];
+  // Intervenants de démonstration si non fournis : le titulaire cumule les 2 premiers
+  // rôles (démontre la fusion multi-rôles), le reste est réparti.
+  if (!persons) {
+    persons = [];
+    var rr = struct.roles.slice();
+    persons.push({ name: null, roles: ["Compte"].concat(rr.slice(0, 2)) });
+    rr.slice(2).forEach(function (role: any, i: number) {
+      var nm = (typeof PERSONS_DATA !== "undefined" && (PERSONS_DATA as any[])[i + 3] && ((PERSONS_DATA as any[])[i + 3].name || (PERSONS_DATA as any[])[i + 3].fullName)) || ("Intervenant " + (i + 1));
+      persons.push({ name: nm, roles: [role] });
+    });
+  }
+  return persons.map(function (p: any) {
+    var mand: any[] = [], opt: any[] = [];
+    DOC_LIST.forEach(function (doc: any) {
+      var isM = false, isO = false, via: any[] = [];
+      p.roles.forEach(function (col: any) {
+        var v = docRuleEval(doc, struct, col, rules).v;
+        if (v === "M") {
+          isM = true;
+          via.push(col);
+        }
+        else if (v === "O") {
+          isO = true;
+          if (!isM)
+            via.push(col);
+        }
+      });
+      if (isM)
+        mand.push({ doc: doc, via: via }); // dédup native : 1 itération par type
+      else if (isO)
+        opt.push({ doc: doc, via: via });
+    });
+    return { name: p.name, roles: p.roles, mandatory: mand, optional: opt };
+  });
 }
