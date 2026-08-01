@@ -62,6 +62,7 @@ import NextBestActionScreen from "./NextBestActionScreen";
 import CrmScreen from "./CrmScreen";
 import ReportingScreen from "./ReportingScreen";
 import GedScreen from "./GedScreen";
+import SectionDesignerScreen from "./SectionDesignerScreen";
 import { clientById, kycsByClientId } from "./components-data";
 import NAV from "../fixtures/NAV.json";
 import SCREEN_LABEL from "../fixtures/SCREEN_LABEL.json";
@@ -187,6 +188,9 @@ export function Shell() {
       case "crm": return <CrmScreen user={currentUser} />;
       case "reporting": return <ReportingScreen user={currentUser} />;
       case "ged": return <GedScreen user={currentUser} />;
+      case "sdkyc": return <SectionDesignerScreen kind="KYC" />;
+      case "sdar": return <SectionDesignerScreen kind="AR" />;
+      case "sdgar": return <SectionDesignerScreen kind="GAR" />;
       default: return <Placeholder title={SL[screen] || screen} desc="Écran non encore porté en parité — au programme des vagues suivantes (§6). La navigation, la coquille et les 2 premiers écrans métier sont fonctionnels." />;
     }
   };
