@@ -108,7 +108,17 @@ export const DOC_RULES_DEFAULT: any[] = [
   { id: "R6", label: "Fondation (Form. S)", desc: "Charte de fondation et formulaire S obligatoires pour Fondateur, Conseil et le compte.", on: true },
   { id: "R7", label: "Origine des avoirs (EDD)", desc: "SOW et SOF obligatoires pour titulaire et UBO.", on: true },
 ];
-function docRuleEval(doc: any, struct: any, role: any, rules: any) {
+// Source : docs/reference/olive-demo.html 18063-18071 — DOC_GED / gedCode (codification GED par document). Verbatim.
+export const DOC_GED: any = {}; // codification GED par document (auto-générée si absente)
+export function gedCode(label: string) {
+  if (DOC_GED[label])
+    return DOC_GED[label];
+  var slug = label.normalize("NFD").replace(/[^a-zA-Z ]/g, "").split(" ").filter(Boolean).map(function (w: any) { return w[0]; }).join("").toUpperCase().slice(0, 4);
+  var code = "GED-" + slug + "-" + String(Object.keys(DOC_GED).length + 1).padStart(3, "0");
+  DOC_GED[label] = code;
+  return code;
+}
+export function docRuleEval(doc: any, struct: any, role: any, rules: any) {
   var on = function (id: any) { return rules.some(function (r: any) { return r.id === id && r.on; }); };
   // ── Colonne "Compte" : documents exigés au niveau du compte / de l'entité ──
   if (role === "Compte") {

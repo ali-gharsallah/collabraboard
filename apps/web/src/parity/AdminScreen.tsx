@@ -6,7 +6,7 @@ import { ROLE_LABELS } from "./offboarding-support";
 import { pushParamAudit } from "./param-audit-support";
 import { ADMIN_NAV, SCOPE_OPTS, WF_ROLE_UNIVERSE, wfEmit, SANCTIONS_SOURCES } from "./admin-support";
 import { RISK_COUNTRIES, RC_LEVELS, riskCountryOf } from "./risk-country-support";
-import { amlHash } from "./preonboarding-support";
+import { amlHash, DOC_STRUCTURES, DOC_LIST, DOC_GED, DOC_RULES_DEFAULT, docRuleEval, gedCode } from "./preonboarding-support";
 
 // Source : docs/reference/olive-demo.html 40526-40636 — AdminScreen (Administration, hub 30 panneaux) + UserCreateModal (39207).
 // Onglet « Utilisateurs & rôles » (RBAC) + « Créer un utilisateur » portés verbatim. Les autres panneaux
@@ -184,6 +184,179 @@ React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: x.
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, marginTop: 10 } }, "Base de démonstration active : 20 entrées réelles (OFAC/SECO/UE/ONU) chargées dans le moteur local.")));
 }
 
+// Source : docs/reference/olive-demo.html 18257-18427 — DocMatrixPanel (« Matrice documentaire — Document × Structure × Rôle »). Verbatim.
+function DocMatrixPanel() {
+const [rules, setRules] = useState(DOC_RULES_DEFAULT.map(function (r: any) { return Object.assign({}, r); }));
+const [structId, setStructId] = useState("SA");
+const [overrides, setOverrides] = useState<any>({});
+const [explain, setExplain] = useState<any>(null);
+const [mode, setMode] = useState("consult");
+const [newRel, setNewRel] = useState("");
+const [newDoc, setNewDoc] = useState("");
+const [newGed, setNewGed] = useState("");
+const editing = mode === "edit";
+const struct = DOC_STRUCTURES.find(function (s: any) { return s.id === structId; });
+const cols = ["Compte"].concat(struct.roles);
+const cellOf = function (doc: any, role: any) {
+var key = doc + "|" + structId + "|" + role;
+if (overrides[key])
+return { v: overrides[key], rule: null, manual: true, key: key };
+var e = docRuleEval(doc, struct, role, rules);
+return { v: e.v, rule: e.rule, manual: false, key: key };
+};
+// Cycle tri-état au clic (mode édition) : M → O → NC (non concerné) → M
+const cycleCell = function (doc: any, role: any) {
+var c = cellOf(doc, role);
+var next = c.v === "M" ? "O" : c.v === "O" ? "NC" : "M";
+setOverride(c.key, next);
+pushParamAudit("Compliance", "Matrice doc : " + doc + " / " + struct.name + " / " + role + " → " + (next === "NC" ? "Non concerné" : next));
+};
+const setOverride = function (key: any, val: any) { setOverrides(function (prev: any) { var ns = Object.assign({}, prev); if (val === null) {
+delete ns[key];
+}
+else {
+ns[key] = val;
+} return ns; }); };
+const toggleRule = function (id: any) { if (!editing)
+return; setRules(function (prev: any) { return prev.map(function (r: any) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; }); }); };
+var required: any[] = [];
+DOC_LIST.forEach(function (doc: any) {
+var where = cols.filter(function (col: any) { return cellOf(doc, col).v === "M"; });
+if (where.length)
+required.push({ doc: doc, where: where });
+});
+var mCount = required.reduce(function (a: any, r: any) { return a + r.where.length; }, 0);
+var overrideCount = Object.keys(overrides).filter(function (k: any) { return k.split("|")[1] === structId; }).length;
+const ruleById = function (id: any) { return rules.find(function (r: any) { return r.id === id; }); };
+const colStyle = function (col: any, isM: any, manual: any) {
+var isAcct = col === "Compte";
+return { bg: isM ? (manual ? T.violetSoft : isAcct ? T.gold + "1E" : T.oliveSoft) : T.surface,
+fg: isM ? (manual ? T.violet : isAcct ? T.gold : T.olive700) : T.inkSoft,
+bd: manual ? T.violet : isM ? (isAcct ? T.gold : T.olive600) : T.line };
+};
+return (React.createElement("div", null,
+React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 14, alignItems: "center", flexWrap: "wrap" } },
+React.createElement("div", { style: { display: "flex", gap: 4, background: T.surface, padding: 5, borderRadius: 10, border: "1px solid " + T.line } }, [["consult", "◉ Consultation"], ["edit", "✎ Édition"]].map(function (m: any) {
+return (React.createElement("button", { key: m[0], onClick: function () { setMode(m[0]); }, style: { padding: "7px 14px", borderRadius: 7, border: "none", cursor: "pointer", background: mode === m[0] ? T.olive600 : "transparent", color: mode === m[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: mode === m[0] ? 700 : 500 } }, m[1]));
+})),
+React.createElement("span", { style: { fontSize: 11.5, color: T.inkSoft } }, editing ? "Ajustez les règles et surchargez les cases — la matrice se recalcule en direct." : "Vue lecture seule du set documentaire dérivé des règles.")),
+React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" } }, DOC_STRUCTURES.map(function (s: any) {
+return (React.createElement("button", { key: s.id, onClick: function () { setStructId(s.id); setExplain(null); }, style: { padding: "8px 14px", borderRadius: 9, border: "1.5px solid " + (structId === s.id ? T.olive600 : T.line), background: structId === s.id ? T.oliveSoft : T.surface, color: structId === s.id ? T.olive700 : T.inkMid, fontSize: 12.5, fontWeight: 700, cursor: "pointer" } }, s.name));
+})),
+React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
+React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, overflow: "hidden" } },
+React.createElement("div", { style: { padding: "12px 18px", borderBottom: "1px solid " + T.line, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+React.createElement("span", { style: { fontSize: 14, fontWeight: 700, color: T.ink, flex: 1 } },
+struct.name,
+" — Compte + ",
+struct.roles.length,
+" relations"),
+React.createElement(Badge, { text: mCount + " exigences", color: T.olive700, bg: T.oliveSoft }),
+overrideCount > 0 && React.createElement(Badge, { text: overrideCount + " surcharge(s)", color: T.violet, bg: T.violetSoft })),
+React.createElement("div", { style: { overflowX: "auto" } },
+React.createElement("table", { style: { borderCollapse: "collapse", width: "100%", fontSize: 11 } },
+React.createElement("thead", null,
+React.createElement("tr", { style: { background: T.lineSoft } },
+React.createElement("th", { style: { textAlign: "left", padding: "8px 12px", color: T.inkSoft, fontWeight: 700, position: "sticky", left: 0, background: T.lineSoft, minWidth: 200 } }, "Document"),
+cols.map(function (col: any) { var acct = col === "Compte"; return (React.createElement("th", { key: col, style: { padding: "8px 6px", color: acct ? T.gold : T.inkSoft, fontWeight: 700, textAlign: "center", whiteSpace: "nowrap", borderLeft: acct ? "none" : "1px solid " + T.lineSoft, background: acct ? T.gold + "12" : "transparent" } }, col)); }))),
+React.createElement("tbody", null, DOC_LIST.map(function (doc: any) {
+return (React.createElement("tr", { key: doc, style: { borderTop: "1px solid " + T.lineSoft } },
+React.createElement("td", { style: { padding: "7px 12px", position: "sticky", left: 0, background: T.surface, whiteSpace: "nowrap" } },
+React.createElement("div", { style: { color: T.ink, fontWeight: 600 } }, doc),
+React.createElement("div", { style: { fontSize: 9, color: T.inkSoft, fontFamily: "monospace" } }, gedCode(doc))),
+cols.map(function (col: any) {
+var c = cellOf(doc, col);
+var isM = c.v === "M";
+var st = colStyle(col, isM, c.manual);
+var sel = explain && explain.doc === doc && explain.role === col;
+return (React.createElement("td", { key: col, style: { textAlign: "center", padding: "4px", background: col === "Compte" ? T.gold + "08" : "transparent" } },
+React.createElement("button", { onClick: function () { setExplain({ doc: doc, role: col }); if (editing)
+cycleCell(doc, col); }, title: c.manual ? "Surcharge manuelle" : (c.rule ? ("Règle " + c.rule) : "Optionnel"), style: { width: 30, height: 26, borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 800, position: "relative",
+border: (sel ? "2px solid " + T.olive600 : "1px solid " + st.bd), background: st.bg, color: st.fg } },
+c.v === "NC" ? "—" : c.v,
+c.manual && React.createElement("span", { style: { position: "absolute", top: 2, right: 2, width: 4, height: 4, borderRadius: "50%", background: T.violet } }))));
+})));
+})))),
+editing && React.createElement("div", { style: { padding: "10px 16px", borderTop: "1px solid " + T.line, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
+React.createElement("input", { value: newRel, onChange: function (e: any) { setNewRel(e.target.value); }, placeholder: "Nouvelle relation (ex. Nominee)", style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11.5, width: 190 } }),
+React.createElement("button", { onClick: function () { var v = newRel.trim(); if (!v || struct.roles.indexOf(v) >= 0)
+return; struct.roles.push(v); pushParamAudit("Compliance", "Relation ajoutée : " + v + " (" + struct.name + ")"); setNewRel(""); }, style: { padding: "7px 12px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 11.5, fontWeight: 700, cursor: "pointer" } }, "+ Relation"),
+React.createElement("span", { style: { width: 1, alignSelf: "stretch", background: T.line } }),
+React.createElement("input", { value: newDoc, onChange: function (e: any) { setNewDoc(e.target.value); }, placeholder: "Nouveau document", style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11.5, width: 190 } }),
+React.createElement("input", { value: newGed, onChange: function (e: any) { setNewGed(e.target.value); }, placeholder: "Code GED (optionnel)", style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11.5, width: 150, fontFamily: "monospace" } }),
+React.createElement("button", { onClick: function () { var v = newDoc.trim(); if (!v || DOC_LIST.indexOf(v) >= 0)
+return; DOC_LIST.push(v); if (newGed.trim())
+DOC_GED[v] = newGed.trim(); pushParamAudit("Compliance", "Document ajouté : " + v + " (" + gedCode(v) + ")"); setNewDoc(""); setNewGed(""); }, style: { padding: "7px 12px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 11.5, fontWeight: 700, cursor: "pointer" } }, "+ Document")),
+React.createElement("div", { style: { padding: "10px 16px", background: T.oliveSoft, fontSize: 11, color: T.inkMid, display: "flex", gap: 16, flexWrap: "wrap" } },
+React.createElement("span", null,
+React.createElement("strong", { style: { color: T.gold } }, "Compte"),
+" = niveau compte/entité"),
+React.createElement("span", null,
+React.createElement("strong", { style: { color: T.olive700 } }, "M"),
+" = obligatoire (1 clic)"),
+React.createElement("span", null,
+React.createElement("strong", { style: { color: T.inkSoft } }, "O"),
+" = optionnel (2 clics)"),
+React.createElement("span", null,
+React.createElement("strong", { style: { color: T.inkSoft } }, "—"),
+" = non concerné (3 clics)"),
+React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 5 } },
+React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: T.violet } }),
+"surcharge"))),
+React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 14, alignItems: "start" } },
+!editing && (React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 16 } },
+React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 } }, "Set documentaire requis"),
+React.createElement("div", { style: { fontSize: 11.5, color: T.inkMid, marginBottom: 10 } },
+required.length,
+" documents · ",
+mCount,
+" exigences"),
+React.createElement("div", { style: { maxHeight: 340, overflowY: "auto" } }, required.map(function (r: any, i: number) {
+return (React.createElement("div", { key: i, style: { padding: "6px 0", borderBottom: i < required.length - 1 ? "1px solid " + T.lineSoft : "none" } },
+React.createElement("div", { style: { fontSize: 11.5, fontWeight: 600, color: T.ink } }, r.doc),
+React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap", marginTop: 3 } }, r.where.map(function (w: any) { var acct = w === "Compte"; return (React.createElement("span", { key: w, style: { fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: acct ? T.gold + "20" : T.oliveSoft, color: acct ? T.gold : T.olive700 } }, w)); }))));
+})))),
+editing && (React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 16 } },
+React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 } }, "Explication"),
+!explain && React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, fontStyle: "italic" } }, "Cliquez une case pour voir la règle et la surcharger."),
+explain && (function () {
+var c = cellOf(explain.doc, explain.role);
+var r = c.rule ? ruleById(c.rule) : null;
+return (React.createElement("div", null,
+React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: T.ink, marginBottom: 2 } }, explain.doc),
+React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, marginBottom: 10 } },
+struct.name,
+" · ",
+explain.role),
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 } },
+React.createElement("span", { style: { fontSize: 16, fontWeight: 800, color: c.v === "M" ? T.olive700 : T.inkSoft } }, c.v === "M" ? "Obligatoire" : "Optionnel"),
+c.manual && React.createElement(Badge, { text: "Surcharge", color: T.violet, bg: T.violetSoft })),
+React.createElement("div", { style: { fontSize: 11.5, color: T.inkMid, lineHeight: 1.6, background: c.manual ? T.violetSoft : T.oliveSoft, padding: "9px 11px", borderRadius: 8, marginBottom: 12 } }, c.manual ? "Valeur fixée manuellement (surcharge). Réinitialisez pour revenir à la règle."
+: r ? ("Déterminé par la règle " + r.id + " — " + r.label + ". " + r.desc)
+: "Aucune règle ne rend ce document obligatoire ici — optionnel par défaut."),
+React.createElement("div", { style: { display: "flex", gap: 8 } },
+React.createElement("button", { onClick: function () { setOverride(c.key, c.v === "M" ? "O" : "M"); }, style: { flex: 1, padding: "8px 10px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 11.5, fontWeight: 700, cursor: "pointer" } },
+"Passer en ",
+c.v === "M" ? "Optionnel" : "Obligatoire"),
+c.manual && React.createElement("button", { onClick: function () { setOverride(c.key, null); }, style: { padding: "8px 10px", borderRadius: 8, border: "1px solid " + T.line, background: T.surface, color: T.inkMid, fontSize: 11.5, cursor: "pointer" } }, "Réinitialiser"))));
+})())),
+React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 16, opacity: editing ? 1 : 0.75 } },
+React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 } },
+"Moteur de règles ",
+!editing && "(lecture seule)"),
+rules.map(function (r: any) {
+return (React.createElement("div", { key: r.id, style: { display: "flex", gap: 10, padding: "9px 0", borderBottom: "1px solid " + T.lineSoft, alignItems: "flex-start" } },
+React.createElement("button", { onClick: function () { toggleRule(r.id); }, disabled: !editing, style: { flexShrink: 0, width: 34, height: 20, borderRadius: 10, border: "none", cursor: editing ? "pointer" : "default", background: r.on ? T.olive600 : T.line, position: "relative" } },
+React.createElement("span", { style: { position: "absolute", top: 2, left: r.on ? 16 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff" } })),
+React.createElement("div", { style: { flex: 1 } },
+React.createElement("div", { style: { fontSize: 11.5, fontWeight: 700, color: r.on ? T.ink : T.inkSoft } },
+r.id,
+" · ",
+r.label),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, lineHeight: 1.5 } }, r.desc))));
+}))))));
+}
+
 export default function AdminScreen() {
 const [tab, setTab] = useState(function () { var w: any = typeof window !== "undefined" ? window : {}; var t = w.OLIVE_NAV_HINT_ADMIN || "users"; w.OLIVE_NAV_HINT_ADMIN = null; return t; });
 const [nuOpen, setNuOpen] = useState(false);
@@ -228,7 +401,8 @@ React.createElement("div", { style: { fontSize: 9.5, fontWeight: 700, color: T.i
 tab === "user_create" && React.createElement(UserCreateModal, { onClose: () => setTab("users"), onCreated: (u: any) => { setNuLast(u); adminBump(x => x + 1); } }),
 tab === "riskcountries" && React.createElement(RiskCountriesPanel, { user: null }),
 tab === "sanctionssrc" && React.createElement(SanctionsSourcesPanel, { user: null }),
-tab !== "users" && tab !== "user_create" && tab !== "riskcountries" && tab !== "sanctionssrc" && React.createElement(AdminConsigne, { label: activeLabel }),
+tab === "docmatrix" && React.createElement(DocMatrixPanel, null),
+tab !== "users" && tab !== "user_create" && tab !== "riskcountries" && tab !== "sanctionssrc" && tab !== "docmatrix" && React.createElement(AdminConsigne, { label: activeLabel }),
 tab === "users" && React.createElement("div", { style: { background: T.surface, border: `1px solid ${T.olive600}44`, borderRadius: 14, padding: 14, marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" } },
 React.createElement("div", { style: { flex: 1, minWidth: 220 } },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink } }, "＋ Créer un utilisateur & affecter un rôle"),
