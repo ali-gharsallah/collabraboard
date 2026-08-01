@@ -97,6 +97,8 @@ model KycFile {
   lock          KycLock?
   handoffPhase  Int          @default(0) @map("handoff_phase")   // R85 : index de phase du passage de main
   version       Int          @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (UPDATE … WHERE version)
+  restrictions  Json?                       // R17 : restrictions figées à la suspension (grandfathering S-09)
+  lectureSeule  Boolean      @default(false) @map("lecture_seule")   // R20 : conservation LBA prime l'effacement LPD
   @@unique([tenantId, code])
   @@index([tenantId, clientId])
   @@map("kyc_files")
@@ -107,6 +109,9 @@ enum KycStatus {
   UNDER_REVIEW
   VALIDATED
   REJECTED
+  SUSPENDED    // R17 : Suspendu (restrictions paramétrées ; discrétion MROS)
+  ABANDONED    // R19 : Abandonné (dossier en préparation inactif ; réactivable)
+  EN_MAJ       // R21 : En mise à jour (réouverture ciblée ; client reste opérationnel)
 }
 
 model KycSection {

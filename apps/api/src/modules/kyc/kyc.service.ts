@@ -207,9 +207,10 @@ export class KycService {
     const q = await this.prisma.kycQuestion.findFirst({
       where: { code: qCode, section: { kycFile: { code, tenantId: ctx.tenantId } } },
       include: { accessRules: true,
-        section: { include: { kycFile: { select: { id: true, status: true, clientId: true } } } } } });
+        section: { include: { kycFile: { select: { id: true, status: true, clientId: true, lectureSeule: true } } } } } });
     if (!q) throw new NotFoundException("Question introuvable");
     await this.verifierNonCloture(ctx, q.section.kycFile.clientId);   // OF-10
+    this.verifierModifiable(q.section.kycFile);                       // R17/R20 : suspendu/abandonné/lecture seule
     if (q.section.kycFile.status === "VALIDATED")
       throw new ConflictException("Dossier validé — créer une révision (Rn+1)");
 
@@ -248,6 +249,7 @@ export class KycService {
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
     await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
+    this.verifierModifiable(kyc);                                     // R17/R20 : suspendu/abandonné/lecture seule
     const visa = kyc.visas.find(v => v.sectionCode === sectionCode
       && v.requiredRole === ctx.role && v.status === "PENDING");
     if (!visa) throw new ForbiddenException(
@@ -373,6 +375,94 @@ export class KycService {
       select: { code: true, createdAt: true }, orderBy: { createdAt: "desc" } });
   }
 
+  // ═══════════ R16-R22 — MACHINE D'ÉTATS DU DOSSIER (port domain.py, expand-only) ═══════════
+  // États actifs (mutables) d'où l'on peut suspendre / abandonner / rouvrir.
+  private static ETATS_ACTIFS = ["IN_PROGRESS", "UNDER_REVIEW", "EN_MAJ"];
+
+  // R20 : un dossier en lecture seule OU suspendu OU abandonné n'accepte plus d'écriture métier.
+  static estFige(kyc: { status: string; lectureSeule?: boolean | null }): boolean {
+    return !!kyc.lectureSeule || kyc.status === "SUSPENDED" || kyc.status === "ABANDONED";
+  }
+  private verifierModifiable(kyc: any) {
+    if (KycService.estFige(kyc)) throw new ConflictException(
+      `[R17/R20] Dossier ${kyc.status === "SUSPENDED" ? "suspendu" : kyc.status === "ABANDONED" ? "abandonné" : "en lecture seule"} — écriture métier refusée.`);
+  }
+
+  // R17 : suspension — restrictions FIGÉES à la date (grandfathering S-09) ; discrétion MROS.
+  async suspendre(ctx: Ctx, code: string, cause: string) {
+    const kyc = await this.findKyc(ctx, code);
+    if (!KycService.ETATS_ACTIFS.includes(kyc.status)) throw new ConflictException(`[R17] Un dossier ${kyc.status} ne se suspend pas.`);
+    const cfg = await loadSettings(this.prisma, ctx.tenantId).catch(() => ({} as any));
+    const restrictions = (cfg.restrictionsSuspendu as any) ?? { entrees: false, sorties: false };   // ⚙ R-Q (défaut : tout gelé)
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "SUSPENDED", restrictions }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.suspendu", kyc.id, { cause, restrictions });
+      return { ok: true, status: "SUSPENDED", restrictions };
+    });
+  }
+
+  // R17 : une opération est-elle permise ? Hors suspension tout est permis ; sinon selon les restrictions figées.
+  async operationAutorisee(ctx: Ctx, code: string, sens: "entree" | "sortie"): Promise<boolean> {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "SUSPENDED") return true;
+    const r = (kyc.restrictions as any) ?? {};
+    return !!r[sens === "entree" ? "entrees" : "sorties"];
+  }
+
+  // R19 : abandon d'un dossier en préparation inactif (réactivable) ; le délai J30/J60/J90 = ⚙ R-Q.
+  async abandonner(ctx: Ctx, code: string, motif: string = "inactivité") {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "IN_PROGRESS") throw new ConflictException(`[R19] Seul un dossier en préparation s'abandonne (état ${kyc.status}).`);
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "ABANDONED" }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.abandonne", kyc.id, { motif });
+      return { ok: true, status: "ABANDONED" };
+    });
+  }
+
+  // R19 : un dossier ABANDONNÉ est réactivable — retour en préparation.
+  async reactiver(ctx: Ctx, code: string) {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "ABANDONED") throw new ConflictException("[R19] Seul un dossier abandonné se réactive.");
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "IN_PROGRESS" }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.reactive", kyc.id, {});
+      return { ok: true, status: "IN_PROGRESS" };
+    });
+  }
+
+  // R20 : conservation LBA (10 ans) prime l'effacement LPD — la demande est REFUSÉE et tracée, le dossier passe en lecture seule.
+  async demandeEffacementLpd(ctx: Ctx, code: string, demandeur: string) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { lectureSeule: true }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.effacement.refuse.lba", kyc.id, { demandeur, baseLegale: "LBA art. 7 (10 ans)" });
+      return { ok: false, efface: false, motif: "Conservation LBA (10 ans) — effacement LPD refusé.", lectureSeule: true };
+    });
+  }
+
+  // R21/R22 : changement de circonstances — réouverture CIBLÉE des sections concernées (visas invalidés) ;
+  // c'est le RISQUE du changement qui décide (risqueMajeur → suspension), pas le changement lui-même.
+  async changementCirconstances(ctx: Ctx, code: string, sections: string[], description: string, risqueMajeur: boolean) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      for (const sc of sections) {
+        const inval = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, sectionCode: sc, status: "SIGNED" },
+          data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+        if (inval.count) await this.emit(tx, ctx, "kyc.visa.invalide", kyc.id, { section: sc, cause: "changement_circonstances" });
+      }
+      if (risqueMajeur) {
+        const cfg = await loadSettings(this.prisma, ctx.tenantId).catch(() => ({} as any));
+        await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "SUSPENDED", restrictions: (cfg.restrictionsSuspendu as any) ?? { entrees: false, sorties: false } }, { enforce: true });
+        await this.emit(tx, ctx, "kyc.dossier.suspendu", kyc.id, { cause: `coc_risque_majeur:${description}` });
+      } else {
+        await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "EN_MAJ" }, { enforce: true });
+        await this.emit(tx, ctx, "kyc.dossier.mise_a_jour", kyc.id, { description, sections });
+      }
+      return { ok: true, status: risqueMajeur ? "SUSPENDED" : "EN_MAJ" };
+    });
+  }
+
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
   // R11 : réassignation de validateur réservée au process owner / manager (domain.py
   // ROLES_REASSIGNATION = process_owner, application_manager, coo).
@@ -383,6 +473,7 @@ export class KycService {
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
     await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
+    this.verifierModifiable(kyc);                                     // R17/R20 : suspendu/abandonné/lecture seule
     if (kyc.status === "VALIDATED") throw new ConflictException("Déjà validé");
     if (kyc.createdBy === ctx.userId)
       throw new ConflictException("Four-eyes : le validateur doit différer du créateur");

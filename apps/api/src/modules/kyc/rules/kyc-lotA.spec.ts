@@ -32,7 +32,14 @@ function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[] 
   };
   const p: any = {
     kycFile: { findFirst: async () => kyc,
-      findMany: async ({ where }: any) => (opts as any).refused ? (opts as any).refused.filter((k: any) => k.status === where.status) : [] },
+      findMany: async ({ where }: any) => (opts as any).refused ? (opts as any).refused.filter((k: any) => k.status === where.status) : [],
+      updateMany: async ({ where, data }: any) => {
+        if (where.id !== kyc.id) return { count: 0 };
+        if (where.version !== undefined && where.version !== (kyc.version ?? 0)) return { count: 0 };
+        const nd = { ...data };
+        if (nd.version && typeof nd.version === "object" && "increment" in nd.version) nd.version = (kyc.version ?? 0) + nd.version.increment;
+        Object.assign(kyc, nd); return { count: 1 };
+      } },
     kycVisa,
     kycQuestion: { findFirst: async () => opts.question ?? null, update: async ({ data }: any) => ({ ...(opts.question ?? {}), ...data }) },
     kycQuestionHistory: { findFirst: async () => null, create: async () => ({}) },
@@ -55,7 +62,7 @@ const rejects = async (pr: Promise<any>, needle: string) => {
   const t = async (nom: string, fn: () => Promise<void>) => { await fn(); passed++; console.log("  ✓ " + nom); };
   const CO_SR = { tenantId: "t1", userId: "sel", role: "CO_SR" };
   const CO = { tenantId: "t1", userId: "co", role: "CO" };
-  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46, R18) :");
+  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46, R18, R16-R22 états) :");
 
   await t("R9 : la révocation discrétionnaire est refusée (409 typé, tracée)", async () => {
     await rejects(svc(fake()).tenterRevocation(CO, "KYC-1", "IDENT"), "[R9]");
@@ -154,6 +161,53 @@ const rejects = async (pr: Promise<any>, needle: string) => {
     assert.equal(r[0].code, "KYC-2026-CH-0001-R1");
     const vide = await svc(fake()).dossiersRefusesAnterieurs(CO, "C9");
     assert.equal(vide.length, 0);                    // client sans refus → aucun retour détecté
+  });
+
+  // ── R16-R22 : machine d'états du dossier ──
+  const kycEtat = (status: string, extra: any = {}) => ({ id: "K1", code: "KYC-1", tenantId: "t1", status, version: 0, clientId: "C1", ...extra });
+
+  await t("R17 : suspendre un dossier actif → SUSPENDED + restrictions figées", async () => {
+    const p = fake({ kyc: kycEtat("IN_PROGRESS") });
+    const r: any = await svc(p).suspendre(CO_SR, "KYC-1", "alerte:AML");
+    assert.equal(r.status, "SUSPENDED");
+    assert.equal((await p.kycFile.findFirst()).status, "SUSPENDED");
+    assert.ok((await p.kycFile.findFirst()).restrictions);            // snapshot posé
+  });
+  await t("R17 : opérations gelées en suspension (défaut : entrées ET sorties bloquées)", async () => {
+    const p = fake({ kyc: kycEtat("SUSPENDED", { restrictions: { entrees: false, sorties: false } }) });
+    assert.equal(await svc(p).operationAutorisee(CO_SR, "KYC-1", "entree"), false);
+    const q = fake({ kyc: kycEtat("IN_PROGRESS") });
+    assert.equal(await svc(q).operationAutorisee(CO_SR, "KYC-1", "sortie"), true);   // hors suspension : permis
+  });
+  await t("R17/R20 : écriture métier refusée sur un dossier suspendu (signVisa)", async () => {
+    const p = fake({ kyc: kycEtat("SUSPENDED"), visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING" }] });
+    await rejects(svc(p).signVisa(CO, "KYC-1", "IDENT"), "[R17/R20]");
+  });
+  await t("R19 : abandonner (préparation) puis réactiver — réactivation réservée à l'abandonné", async () => {
+    const p = fake({ kyc: kycEtat("IN_PROGRESS") });
+    await svc(p).abandonner(CO_SR, "KYC-1");
+    assert.equal((await p.kycFile.findFirst()).status, "ABANDONED");
+    await svc(p).reactiver(CO_SR, "KYC-1");
+    assert.equal((await p.kycFile.findFirst()).status, "IN_PROGRESS");
+    await rejects(svc(fake({ kyc: kycEtat("VALIDATED") })).reactiver(CO_SR, "KYC-1"), "[R19]");
+  });
+  await t("R20 : demande d'effacement LPD refusée (conservation LBA) → lecture seule", async () => {
+    const p = fake({ kyc: kycEtat("VALIDATED") });
+    const r: any = await svc(p).demandeEffacementLpd(CO_SR, "KYC-1", "client");
+    assert.equal(r.efface, false);
+    assert.equal((await p.kycFile.findFirst()).lectureSeule, true);
+  });
+  await t("R21/R22 : changement de circonstances — réouverture ciblée ; risque majeur → suspension", async () => {
+    const p = fake({ kyc: kycEtat("VALIDATED"), visas: [
+      { id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED" },
+      { id: "v2", sectionCode: "SOF", requiredRole: "CO", status: "SIGNED" }] });
+    await svc(p).changementCirconstances(CO_SR, "KYC-1", ["IDENT"], "nouvelle adresse", false);
+    assert.equal(p._visas.find((v: any) => v.id === "v1").status, "PENDING");   // section ciblée rouverte
+    assert.equal(p._visas.find((v: any) => v.id === "v2").status, "SIGNED");    // autre section intacte
+    assert.equal((await p.kycFile.findFirst()).status, "EN_MAJ");
+    const q = fake({ kyc: kycEtat("VALIDATED"), visas: [{ id: "v1", sectionCode: "UBO", requiredRole: "CO", status: "SIGNED" }] });
+    await svc(q).changementCirconstances(CO_SR, "KYC-1", ["UBO"], "UBO change", true);
+    assert.equal((await q.kycFile.findFirst()).status, "SUSPENDED");            // risque majeur → suspension (R22)
   });
 
   console.log(`\n### ${passed}/${passed} tests kyc-lotA verts ###`);

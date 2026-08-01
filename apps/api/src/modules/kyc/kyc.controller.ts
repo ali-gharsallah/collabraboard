@@ -97,6 +97,24 @@ export class KycController {
     return this.svc.deciderComite(req.ctx, code, body?.hit ?? "", body?.decision, body?.membres ?? []);
   }
 
+  // R16-R22 — machine d'états du dossier.
+  @Post(":code/suspendre")
+  suspendre(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.suspendre(req.ctx, code, body?.cause ?? ""); }
+  @Post(":code/abandonner")
+  abandonner(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.abandonner(req.ctx, code, body?.motif ?? "inactivité"); }
+  @Post(":code/reactiver")
+  reactiver(@Req() req: any, @Param("code") code: string) { return this.svc.reactiver(req.ctx, code); }
+  @Post(":code/effacement-lpd")
+  effacementLpd(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.demandeEffacementLpd(req.ctx, code, body?.demandeur ?? req.ctx.userId); }
+  @Post(":code/changement-circonstances")
+  changementCirc(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.changementCirconstances(req.ctx, code, body?.sections ?? [], body?.description ?? "", body?.risqueMajeur === true);
+  }
+  @Get(":code/operation-autorisee")
+  operationAutorisee(@Req() req: any, @Param("code") code: string, @Query("sens") sens?: string) {
+    return this.svc.operationAutorisee(req.ctx, code, (sens === "entree" ? "entree" : "sortie"));
+  }
+
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")
   lock(@Req() req: any, @Param("code") code: string) { return this.svc.takeLock(req.ctx, code); }
