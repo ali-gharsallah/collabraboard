@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
 import { BanniereCloture } from "../../components/BanniereCloture"; // R267/OF-10 — écran KYC
+import { useConfirmGate } from "../../components/ConfirmValidation"; // contrat UX : confirmer + pré-vol
 
 // Détail dossier : sections → questions (droits appliqués côté serveur),
 // visas de section, validation four-eyes. Miroir produit de l'écran démo.
@@ -8,6 +9,7 @@ export function KycDetail({ code }: { code: string }) {
   const [kyc, setKyc] = useState<any>(null);
   const [procs, setProcs] = useState<any[]>([]);   // R23 — processes du dossier
   const [err, setErr] = useState("");
+  const { ask, modal } = useConfirmGate();          // contrat UX : confirmation + pré-vol
   const base = (window as any).OLIVE_API_URL;
   const H = { "Content-Type": "application/json",
     Authorization: `Bearer ${sessionStorage.getItem("olive_jwt")}` };
@@ -40,8 +42,18 @@ export function KycDetail({ code }: { code: string }) {
   // R17/R19/R23 — actions cycle de vie (le back applique les gardes d'état ; l'UI grise selon kyc.status).
   const fige = !!kyc?.lectureSeule || kyc?.status === "SUSPENDED" || kyc?.status === "ABANDONED";
   const suspendable = ["IN_PROGRESS", "UNDER_REVIEW", "EN_MAJ"].includes(kyc?.status);
-  const demander = (label: string) => { const v = window.prompt(label); return v == null ? undefined : v; };
+  // Pré-vol de validation finale (« tout est-il à valider ? ») — reconstruit de l'état chargé.
+  const preflight = () => {
+    const qManquantes = (kyc.sections ?? []).flatMap((s: any) => (s.questions ?? [])
+      .filter((q: any) => q.right === "REQUIRED" && !q.answer).map((q: any) => q.label));
+    const visasEnAttente = (kyc.visas ?? []).filter((v: any) => v.status !== "SIGNED");
+    return [
+      { label: qManquantes.length ? `${qManquantes.length} question(s) obligatoire(s) à renseigner` : "Questions obligatoires renseignées", ok: qManquantes.length === 0 },
+      { label: visasEnAttente.length ? `${visasEnAttente.length} visa(s) de section à signer` : "Tous les visas de section signés", ok: visasEnAttente.length === 0 },
+    ];
+  };
   return <div>
+    {modal}
     <BanniereCloture clientId={kyc.clientId}/>
     <h3>{kyc.code} — {kyc.workflow} · score {kyc.riskScore} · {kyc.status}</h3>
     {err && <p style={{ color: "#B5483C" }}>{err}</p>}
@@ -62,7 +74,10 @@ export function KycDetail({ code }: { code: string }) {
         <span style={{ fontSize: 10, color: "#888", width: 70 }}>{q.right}</span>
       </div>)}
     </div>)}
-    <button onClick={() => call(`/v1/kyc/${code}/validate`, "POST", undefined, kyc.version)}
+    <button onClick={() => ask({ title: "Validation finale (four-eyes)",
+        message: "Vérifiez que le dossier est complet avant d'engager la validation.",
+        items: preflight(), blockIfIncomplete: true, confirmLabel: "Valider le dossier",
+        onConfirm: () => call(`/v1/kyc/${code}/validate`, "POST", undefined, kyc.version) })}
       disabled={kyc.status === "VALIDATED" || fige}
       style={{ padding: "10px 18px", background: "#4A6B28", color: "#fff",
         border: "none", borderRadius: 8, cursor: "pointer" }}>
@@ -77,13 +92,23 @@ export function KycDetail({ code }: { code: string }) {
           ` Opérations : entrées ${kyc.restrictions.entrees ? "autorisées" : "gelées"}, sorties ${kyc.restrictions.sorties ? "autorisées" : "gelées"}.`}
       </p>}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {suspendable && <button onClick={() => { const c = demander("Cause de la suspension (R17) :"); if (c) call(`/v1/kyc/${code}/suspendre`, "POST", { cause: c }); }}
+        {suspendable && <button onClick={() => ask({ title: "Suspendre le dossier (R17)", danger: true,
+            message: "Les opérations et l'écriture métier seront gelées jusqu'à réactivation.",
+            input: { label: "Cause de la suspension", placeholder: "ex. alerte AML", required: true }, confirmLabel: "Suspendre",
+            onConfirm: (cause) => call(`/v1/kyc/${code}/suspendre`, "POST", { cause }) })}
           style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #B5483C", background: "#fff", color: "#B5483C", cursor: "pointer" }}>Suspendre</button>}
-        {kyc.status === "IN_PROGRESS" && <button onClick={() => { const m = demander("Motif d'abandon (R19) :"); if (m) call(`/v1/kyc/${code}/abandonner`, "POST", { motif: m }); }}
+        {kyc.status === "IN_PROGRESS" && <button onClick={() => ask({ title: "Abandonner le dossier (R19)", danger: true,
+            message: "Le dossier passera en préparation abandonnée (réactivable).",
+            input: { label: "Motif d'abandon", placeholder: "ex. inactivité", required: true }, confirmLabel: "Abandonner",
+            onConfirm: (motif) => call(`/v1/kyc/${code}/abandonner`, "POST", { motif }) })}
           style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #888", background: "#fff", cursor: "pointer" }}>Abandonner</button>}
-        {(kyc.status === "ABANDONED" || kyc.status === "SUSPENDED") && <button onClick={() => call(`/v1/kyc/${code}/reactiver`, "POST")}
+        {(kyc.status === "ABANDONED" || kyc.status === "SUSPENDED") && <button onClick={() => ask({ title: "Réactiver le dossier (R19)",
+            message: "Le dossier repasse en préparation active.", confirmLabel: "Réactiver",
+            onConfirm: () => call(`/v1/kyc/${code}/reactiver`, "POST") })}
           style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #4A6B28", background: "#fff", color: "#4A6B28", cursor: "pointer" }}>Réactiver</button>}
-        {kyc.status === "VALIDATED" && <button onClick={() => call(`/v1/kyc/${code}/processes`, "POST", { type: "recertification" })}
+        {kyc.status === "VALIDATED" && <button onClick={() => ask({ title: "Ouvrir une recertification (R23)",
+            message: "Un événement de risque ultérieur la mettrait en pause (priorité).", confirmLabel: "Ouvrir",
+            onConfirm: () => call(`/v1/kyc/${code}/processes`, "POST", { type: "recertification" }) })}
           style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #4A6B28", background: "#fff", color: "#4A6B28", cursor: "pointer" }}>Ouvrir une recertification (R23)</button>}
       </div>
       {procs.length > 0 && <table style={{ marginTop: 10, borderCollapse: "collapse", fontSize: 12 }}>
