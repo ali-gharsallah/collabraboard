@@ -1428,3 +1428,24 @@ describe("FE-SB-NAV — 4 onglets deep-link vers le hub Bacs à sable (71/72, d�
     expect(screen.getByText("sbkyc")).toBeInTheDocument();
   });
 });
+
+// Contrat UX (docs/UX-VALIDATION-CONTRAT.md) : les dialogues natifs bloquants sont bannis —
+// toute confirmation/saisie de motif passe par la modale ConfirmValidation. Garde anti-régression.
+describe("UX-CONTRAT — aucun dialogue natif bloquant (window.prompt/confirm) dans les écrans", () => {
+  it("features/**/*.tsx ne contient plus aucun window.prompt / window.confirm", async () => {
+    const { readdirSync, readFileSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const racine = join(process.cwd(), "src", "features");
+    const fautifs: string[] = [];
+    const parcourir = (dir: string) => {
+      for (const nom of readdirSync(dir)) {
+        const p = join(dir, nom);
+        if (statSync(p).isDirectory()) { parcourir(p); continue; }
+        if (!/\.tsx?$/.test(nom) || nom.endsWith(".test.tsx")) continue;
+        if (/window\.(prompt|confirm)\s*\(/.test(readFileSync(p, "utf8"))) fautifs.push(p);
+      }
+    };
+    parcourir(racine);
+    expect(fautifs, `écrans avec un dialogue natif bloquant : ${fautifs.join(", ")}`).toHaveLength(0);
+  });
+});

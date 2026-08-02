@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Contact Reports » (Vague 5). Trace un compte rendu d'entretien (POST
 // /v1/crm/clients/:id/entretiens, R188) — le type doit exister au paramétrage, les champs
@@ -16,6 +17,7 @@ export function ContactReports() {
   const [type, setType] = useState("REVUE_ANNUELLE");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function creer() {
     setMsg("");
@@ -39,6 +41,7 @@ export function ContactReports() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Contact Reports — compte rendu d'entretien (R188), pré-remplissage IA gouverné (R138)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
@@ -49,7 +52,10 @@ export function ContactReports() {
     <textarea style={{ ...inp, width: "100%", minHeight: 90, boxSizing: "border-box" }} placeholder="Note d'entretien…"
       value={note} onChange={(e) => setNote(e.target.value)}/>
     <div style={{ marginTop: 8 }}>
-      <button style={btn} onClick={creer} disabled={!clientId || !note}>Enregistrer le compte rendu</button>
+      <button style={btn} disabled={!clientId || !note} onClick={() => ask({ title: "Enregistrer le compte rendu (R188)",
+        message: "Le compte rendu est tracé (LSFin). Le type doit exister au paramétrage (contrôlé serveur).",
+        items: [{ label: `Type : ${type}`, ok: !!type.trim() }, { label: note.trim() ? "Note fournie" : "Note manquante", ok: !!note.trim() }],
+        confirmLabel: "Enregistrer", onConfirm: creer })}>Enregistrer le compte rendu</button>
     </div>
     {msg && <div style={{ margin: "10px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
   </div>;

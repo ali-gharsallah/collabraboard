@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Personnes liées / UBO » (Vague 3). Crée une personne (POST /v1/personnes), la rattache
 // à un dossier avec un rôle (POST /v1/personnes/:id/roles — R31 : cumul selon politique banque),
@@ -19,6 +20,7 @@ export function PersonnesLiees() {
   const [role, setRole] = useState("UBO");
   const [rels, setRels] = useState<Rel[]>([]);
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function creer() {
     setMsg("");
@@ -45,13 +47,16 @@ export function PersonnesLiees() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Personnes liées / UBO — chaîne de contrôle (R31/R34)</h3>
     <p style={{ fontSize: 12, color: "#777" }}>Note : le % de détention n'est pas un attribut ratifié du modèle — la chaîne
       montre les rôles (UBO, contrôle) et les relations, pas un pourcentage fabriqué.</p>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap" }}>
       <input style={inp} placeholder="Nom de la personne" value={nom} onChange={(e) => setNom(e.target.value)}/>
-      <button style={btn} onClick={creer} disabled={!nom}>Créer</button>
+      <button style={btn} disabled={!nom} onClick={() => ask({ title: "Créer une personne (R31)",
+        message: `Création de « ${nom} » (la personne est ensuite rattachée à un dossier avec un rôle).`, confirmLabel: "Créer",
+        onConfirm: creer })}>Créer</button>
     </div>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
       <input style={inp} placeholder="personId" value={personId} onChange={(e) => setPersonId(e.target.value)}/>
@@ -59,7 +64,9 @@ export function PersonnesLiees() {
       <select style={inp} value={role} onChange={(e) => setRole(e.target.value)}>
         {["UBO", "DETENTEUR_CONTROLE", "TITULAIRE", "SETTLOR", "TRUSTEE", "BENEFICIAIRE", "SIGNATAIRE"].map((x) => <option key={x}>{x}</option>)}
       </select>
-      <button style={btn} onClick={rattacher} disabled={!personId || !kycFileId}>Rattacher le rôle</button>
+      <button style={btn} disabled={!personId || !kycFileId} onClick={() => ask({ title: "Rattacher un rôle au dossier (R31)",
+        message: `Rattache le rôle « ${role} » au dossier ${kycFileId.slice(0, 8)} (cumul selon la politique banque, contrôlé serveur).`, confirmLabel: "Rattacher",
+        onConfirm: rattacher })}>Rattacher le rôle</button>
       <button style={{ ...btn, background: "#777" }} onClick={relations} disabled={!personId}>Voir les relations</button>
     </div>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}

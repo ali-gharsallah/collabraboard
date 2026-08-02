@@ -50,7 +50,13 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/formations/Formations` (R232/R235) | déposer attestation (id GED) / valider visa via modale | n/a | ✅ tranche 8 |
 | `features/aml/AmlParametres` (R7/R125) | enregistrer un seuil (pré-vol valeur+motif, bloquant) via modale | n/a | ✅ tranche 8 |
 | _TxRisk, Fx, ReferentielAml_ | lecture seule → hors contrat (noté) | n/a | — |
-| olivia, mobile, oprisk, prospection, legal, bi, crm… (~55 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥9 |
+| `features/olivia/Olivia` (R44/R7) | adopter / rejeter (motif) une proposition via modale | n/a | ✅ tranche 9 |
+| `features/cpsi/CpsiParam` (R68/R69/R7) | appliquer (motif) / adopter / rejeter (motif) via modale | n/a | ✅ tranche 9 |
+| `features/personnes/PersonnesLiees` (R31) | créer une personne / rattacher un rôle via modale | n/a | ✅ tranche 9 |
+| `features/crm/ContactReports` (R188) | enregistrer un compte rendu via modale + pré-vol | n/a | ✅ tranche 9 |
+| _Prospection, MobileBanking, TxRisk, Fx, Custody, SWIFT, dashboards, guides…_ | lecture seule → hors contrat | n/a | — |
+
+**Garde CI** : `screens.test.tsx` échoue si un `window.prompt`/`window.confirm` réapparaît dans `features/**`. `window.prompt` = **0 dans toute l'app** après tranche 9.
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme
