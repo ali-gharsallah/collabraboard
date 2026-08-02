@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Workflow Designer/Rules » (Vague 5). Une définition de workflow est un paramètre
 // GOUVERNÉ (R171→R173) : le brouillon se modifie à volonté (POST/PATCH /v1/workflow/definitions),
@@ -17,9 +18,9 @@ export function WorkflowDesigner() {
   const [contenu, setContenu] = useState('{ "etapes": ["IDENTITY", "RISK"] }');
   const [defs, setDefs] = useState<Def[]>([]);
   const [depuisLe, setDepuisLe] = useState("2026-01-01");
-  const [motif, setMotif] = useState("");
   const [dateRes, setDateRes] = useState("2026-06-01");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function lister() { setDefs((await apiGetSourced<Def[]>(`/v1/workflow/definitions?code=${code}`, [])).data); }
   async function creerBrouillon() {
@@ -32,11 +33,11 @@ export function WorkflowDesigner() {
     setMsg(r.ok ? `Brouillon créé (v${b.version}).` : (b.message ?? "Erreur"));
     if (r.ok) lister();
   }
-  async function publier(id: string) {
+  async function publier(id: string, motifArg: string) {
     setMsg("");
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
-    const r = await fetch(`${base}/v1/workflow/definitions/${id}/publier`, { method: "POST", headers: auth(), body: JSON.stringify({ depuisLe, motif }) });
+    const r = await fetch(`${base}/v1/workflow/definitions/${id}/publier`, { method: "POST", headers: auth(), body: JSON.stringify({ depuisLe, motif: motifArg }) });
     const b = await r.json().catch(() => ({}));
     setMsg(r.ok ? `Publiée (immuable, en vigueur au ${depuisLe}).` : (b.message ?? "Erreur (motif/date requis ? R7/R171)"));
     if (r.ok) lister();
@@ -49,6 +50,7 @@ export function WorkflowDesigner() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Workflow Designer / Rules — définition gouvernée & versionnée (R171→R173)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
@@ -67,15 +69,18 @@ export function WorkflowDesigner() {
           <td style={{ padding: 6 }}>v{d.version}</td>
           <td><span style={{ color: d.statut === "PUBLIEE" ? "#4A6B28" : "#c93", fontWeight: 700 }}>{d.statut}</span></td>
           <td>{d.depuisLe ?? "—"}</td>
-          <td>{d.statut !== "PUBLIEE" && <button style={btn} onClick={() => publier(d.id)}>Publier</button>}</td>
+          <td>{d.statut !== "PUBLIEE" && <button style={btn} onClick={() => ask({ title: "Publier la définition (R171/R7)", danger: true,
+            message: `v${d.version} — une version PUBLIÉE est IMMUABLE. En vigueur à partir du ${depuisLe}.`,
+            items: [{ label: depuisLe ? `Date de mise en vigueur : ${depuisLe}` : "Date de mise en vigueur manquante", ok: !!depuisLe }],
+            input: { label: "Motif de publication", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Publier (immuable)",
+            onConfirm: (m) => publier(d.id, m ?? "") })}>Publier</button>}</td>
         </tr>)}
         {defs.length === 0 && <tr><td colSpan={4} style={{ padding: 6, color: "#666" }}>Aucune version chargée.</td></tr>}
       </tbody>
     </table>
 
     <div style={{ display: "flex", gap: 8, margin: "12px 0", flexWrap: "wrap", alignItems: "center" }}>
-      <input style={inp} placeholder="date mise en vigueur" value={depuisLe} onChange={(e) => setDepuisLe(e.target.value)}/>
-      <input style={{ ...inp, flex: 1 }} placeholder="motif de publication (R7)" value={motif} onChange={(e) => setMotif(e.target.value)}/>
+      <input style={inp} placeholder="date mise en vigueur (publication)" value={depuisLe} onChange={(e) => setDepuisLe(e.target.value)}/>
       <span style={{ width: 12 }}/>
       <input style={inp} placeholder="résoudre à la date" value={dateRes} onChange={(e) => setDateRes(e.target.value)}/>
       <button style={{ ...btn, background: "#777" }} onClick={resoudre}>Résoudre à date (R172)</button>

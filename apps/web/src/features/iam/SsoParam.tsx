@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 /**
@@ -18,8 +19,8 @@ type Etat = { oidc: { issuer: string | null; audience: string | null; roleMappin
 export function SsoParam() {
   const [etat, setEtat] = useState<Etat | null>(null);
   const [msg, setMsg] = useState("");
-  const [motifRotation, setMotifRotation] = useState("");
   const [bascule, setBascule] = useState({ vers: "sso", effetAt: "", motif: "" });
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const charger = async () => {
     const r = await apiGetSourced<Etat | null>("/v1/admin/sso/etat", null);
@@ -32,6 +33,7 @@ export function SsoParam() {
   };
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>SSO — fédération d&apos;identité (ssoparam) — la porte d&apos;entrée se pilote, tracée</h3>
     <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -46,24 +48,31 @@ export function SsoParam() {
         {" "}secret : <strong>{etat.oidc.secretConfigure ? "configuré (coffre)" : "absent"}</strong></p>
       <h4 style={{ margin: "8px 0 4px" }}>Trousseau JWKS</h4>
       <p>kid courant : <code>{etat.jwks.kidCourant.slice(0, 8)}…</code> · dernière rotation : {etat.jwks.derniereRotation ?? "jamais (clé de démarrage)"}
-        <input placeholder="motif de rotation (R7)" value={motifRotation} onChange={(e) => setMotifRotation(e.target.value)}
-          style={{ marginLeft: 8, fontSize: 11 }}/>
-        <button style={{ marginLeft: 4, fontSize: 11 }} disabled={isDemoMode()}
-          onClick={() => agir(() => apiPost("/v1/admin/sso/jwks/rotation", { motif: motifRotation }), () => "Rotation effectuée — les jetons émis restent vérifiables (grâce).")}>Tourner la clé</button></p>
+        <button style={{ marginLeft: 8, fontSize: 11 }} disabled={isDemoMode()}
+          onClick={() => ask({ title: "Tourner la clé JWKS (R7)",
+            message: "Rotation motivée. Les jetons déjà émis restent vérifiables (période de grâce).",
+            input: { label: "Motif de rotation", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Tourner la clé",
+            onConfirm: (m) => agir(() => apiPost("/v1/admin/sso/jwks/rotation", { motif: m }), () => "Rotation effectuée — les jetons émis restent vérifiables (grâce).") })}>Tourner la clé</button></p>
       <h4 style={{ margin: "8px 0 4px" }}>Mode d&apos;authentification : <strong>{etat.mode}</strong></h4>
       {etat.basculeEnAttente
         ? <p>Bascule vers <strong>{etat.basculeEnAttente.vers}</strong> (effet {etat.basculeEnAttente.effetAt.slice(0, 10)}) EN ATTENTE de visa d&apos;un second —
             <button style={{ marginLeft: 6, fontSize: 11 }} disabled={isDemoMode()}
-              onClick={() => agir(() => apiPost("/v1/admin/sso/mode/visa", {}), (x: any) => `Bascule visée — effet au ${String(x.effetAt).slice(0, 10)} (les sessions du jour continuent).`)}>Viser (second regard)</button></p>
+              onClick={() => ask({ title: "Viser la bascule de mode (second regard)",
+                message: "Second regard four-eyes (R13) : le viseur doit être distinct du demandeur. Les sessions du jour continuent.", confirmLabel: "Viser",
+                onConfirm: () => agir(() => apiPost("/v1/admin/sso/mode/visa", {}), (x: any) => `Bascule visée — effet au ${String(x.effetAt).slice(0, 10)} (les sessions du jour continuent).`) })}>Viser (second regard)</button></p>
         : <p>
             <select value={bascule.vers} onChange={(e) => setBascule({ ...bascule, vers: e.target.value })} style={{ fontSize: 11 }}>
               <option value="sso">sso</option><option value="jwt">jwt</option></select>
             <input type="date" value={bascule.effetAt} onChange={(e) => setBascule({ ...bascule, effetAt: e.target.value })} style={{ marginLeft: 4, fontSize: 11 }}/>
             <input placeholder="motif (R7)" value={bascule.motif} onChange={(e) => setBascule({ ...bascule, motif: e.target.value })} style={{ marginLeft: 4, fontSize: 11 }}/>
             <button style={{ marginLeft: 4, fontSize: 11 }} disabled={isDemoMode()}
-              onClick={() => agir(() => apiPost("/v1/admin/sso/mode", { vers: bascule.vers,
-                effetAt: bascule.effetAt ? new Date(bascule.effetAt).toISOString() : undefined, motif: bascule.motif }),
-                () => "Bascule demandée — en attente du visa d'un SECOND (R13).")}>Demander la bascule</button></p>}
+              onClick={() => ask({ title: "Demander la bascule de mode (R13/R7)",
+                message: `Bascule vers « ${bascule.vers} » à date. Elle exige le visa d'un SECOND (four-eyes).`,
+                items: [{ label: bascule.effetAt ? `Effet au ${bascule.effetAt}` : "Date d'effet non renseignée", ok: !!bascule.effetAt },
+                  { label: bascule.motif ? "Motif fourni" : "Motif non renseigné (R7)", ok: !!bascule.motif }],
+                confirmLabel: "Demander la bascule", onConfirm: () => agir(() => apiPost("/v1/admin/sso/mode", { vers: bascule.vers,
+                  effetAt: bascule.effetAt ? new Date(bascule.effetAt).toISOString() : undefined, motif: bascule.motif }),
+                  () => "Bascule demandée — en attente du visa d'un SECOND (R13).") })}>Demander la bascule</button></p>}
     </div>}
   </div>;
 }

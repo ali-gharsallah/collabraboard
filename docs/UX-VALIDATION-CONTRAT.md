@@ -41,7 +41,12 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/crossborder/CrossBorder` (R7/R13) | demande de dérogation + visa second regard via modale | n/a | ✅ tranche 6 |
 | `features/settlement/Settlement` (R167-169) | import lot core banking via modale | n/a | ✅ tranche 6 |
 | _SWIFT_ (`swift/SwiftLab`) | analyse = parsing, PAS un commit gouverné → hors contrat (noté) | n/a | — |
-| iam, workflow, aml, olivia, custody, txrisk, fx… (~62 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥7 |
+| `features/iam/ParamNav` (MOD-30) | créer utilisateur / réinit MFA / (dés)activer via modale | n/a | ✅ tranche 7 |
+| `features/iam/SsoParam` (R290/R7/R13) | rotation JWKS (motif) / bascule mode / visa second regard via modale | n/a | ✅ tranche 7 |
+| `features/workflow/WorkflowDesigner` (R171/R7) | publier (immuable, motif) via modale | n/a | ✅ tranche 7 |
+| `features/aml/AmlWorkspace` (R7) | créer/rattacher risk case + faux positif (motif) via modale | n/a | ✅ tranche 7 |
+| _Custody & TA_ (`custody/CustodyTa`) | lecture seule (charger/rapprocher = GET) → hors contrat (noté) | n/a | — |
+| olivia, txrisk, fx, mobile, oprisk, formations, regwatch… (~58 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥8 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme

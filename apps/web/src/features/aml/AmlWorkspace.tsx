@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // AML INVESTIGATION WORKSPACE (canon vague écrans pilote partie 1, AW-01..08) — le poste de
@@ -72,6 +73,7 @@ export function AmlWorkspace() {
   };
   const ouvrirDrill = (s: Signal) => { setDrill(s); setTimeline(null); chargerTimeline(s.client); };
   const caseDuClient = (client: string) => cases.find((c) => c.clientId === client && c.statut !== "CLOTUREE");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const tab = (id: typeof onglet, label: string) =>
     <button onClick={() => setOnglet(id)} style={{ padding: "6px 14px", border: "none", borderRadius: 6,
@@ -79,6 +81,7 @@ export function AmlWorkspace() {
       background: onglet === id ? tokens.color.olive700 : "#eee", color: onglet === id ? "#fff" : "#333" }}>{label}</button>;
 
   return <div>
+    {modal}
     {isDemo && <DemoModeBanner/>}
     <h3>AML Investigation Workspace</h3>
     {/* Bandeau permanent R77 — les deux vocabulaires ne se confondent JAMAIS */}
@@ -140,14 +143,18 @@ export function AmlWorkspace() {
         </div>
         <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
           {caseDuClient(drill.client)
-            ? <button style={{ fontSize: 12 }} onClick={() => agir(() =>
-                apiPost(`/v1/riskcases/${caseDuClient(drill.client)!.id}/rattacher`, { signalId: `${drill.client}|${drill.scenario}` }))}>
+            ? <button style={{ fontSize: 12 }} onClick={() => ask({ title: "Rattacher au risk case",
+                message: `Signal ${drill.client}|${drill.scenario} → risk case ${caseDuClient(drill.client)!.id.slice(0, 8)}.`, confirmLabel: "Rattacher",
+                onConfirm: () => agir(() => apiPost(`/v1/riskcases/${caseDuClient(drill.client)!.id}/rattacher`, { signalId: `${drill.client}|${drill.scenario}` })) })}>
                 Rattacher au risk case</button>
-            : <button style={{ fontSize: 12 }} onClick={() => agir(() =>
-                apiPost("/v1/riskcases", { clientId: drill.client, signalIds: [`${drill.client}|${drill.scenario}`] }))}>
+            : <button style={{ fontSize: 12 }} onClick={() => ask({ title: "Créer un risk case",
+                message: `Ouvre un risk case pour ${drill.client} à partir du signal ${drill.scenario}.`, confirmLabel: "Créer",
+                onConfirm: () => agir(() => apiPost("/v1/riskcases", { clientId: drill.client, signalIds: [`${drill.client}|${drill.scenario}`] })) })}>
                 Créer un risk case</button>}
-          <button style={{ fontSize: 12 }} onClick={() => { const m = window.prompt("Motif du faux positif (obligatoire, R7)");
-            if (m) agir(() => apiPost("/v1/cpsi/false-positives", { client: drill.client, scenario: drill.scenario, motif: m })); }}>
+          <button style={{ fontSize: 12 }} onClick={() => ask({ title: "Déclarer un faux positif (R7)", danger: true,
+            message: `Signal ${drill.client}|${drill.scenario}. La déclaration est motivée et tracée.`,
+            input: { label: "Motif du faux positif", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Déclarer faux positif",
+            onConfirm: (m) => agir(() => apiPost("/v1/cpsi/false-positives", { client: drill.client, scenario: drill.scenario, motif: m })) })}>
             Déclarer faux positif (motivé)</button>
           <button style={{ fontSize: 12 }} onClick={() => agir(async () => {
             const conv = await apiPost<{ id: string }>("/v1/olivia/conversations",
