@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiGet, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // ÉCRAN RUNS — Olivia v2 (R266, SW-17/18) : la supervision est un écran de PREMIÈRE CLASSE —
@@ -28,6 +29,7 @@ export function Runs() {
   const [detail, setDetail] = useState<(Run & { timeline: Etape[] }) | null>(null);
   const [agregat, setAgregat] = useState<Record<string, unknown> | null>(null);
   const [refus, setRefus] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const charger = async () => setRuns(await apiGet<Run[]>("/v1/olivia/runs", []));
   useEffect(() => {
@@ -60,6 +62,7 @@ export function Runs() {
     </div>;
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Runs — le swarm sous supervision (R266 : mesure, pas coercition)</h3>
     {refus && <p style={{ color: tokens.color.danger, fontSize: 12 }}>{refus}</p>}
@@ -75,7 +78,10 @@ export function Runs() {
         <td style={{ whiteSpace: "nowrap" }}>
           <button style={{ fontSize: 11 }} onClick={() => ouvrirDetail(r.id)}>Timeline</button>{" "}
           {(r.statut === "EN_COURS" || r.statut === "PAUSE_PORTE") &&
-            <button style={{ fontSize: 11 }} onClick={() => stopper(r.id)}>STOP</button>}
+            <button style={{ fontSize: 11 }} onClick={() => ask({
+              title: "Arrêter le run (STOP propre)", danger: true,
+              message: "L'arrêt est propre et tracé ; le serveur décide et le refus s'affiche tel quel (FE-04). Le run passera en INTERROMPU.",
+              confirmLabel: "Arrêter le run", onConfirm: () => stopper(r.id) })}>STOP</button>}
         </td></tr>)}
       </tbody></table>
 

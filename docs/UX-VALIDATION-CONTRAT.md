@@ -56,7 +56,21 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/crm/ContactReports` (R188) | enregistrer un compte rendu via modale + pré-vol | n/a | ✅ tranche 9 |
 | _Prospection, MobileBanking, TxRisk, Fx, Custody, SWIFT, dashboards, guides…_ | lecture seule → hors contrat | n/a | — |
 
-**Garde CI** : `screens.test.tsx` échoue si un `window.prompt`/`window.confirm` réapparaît dans `features/**`. `window.prompt` = **0 dans toute l'app** après tranche 9.
+| **tranche 10** (batch A) : `alertes/AlertsQueue`, `dossiers/DossiersRisque`, `oprisk/OpRisk`, `olivia/Runs`, `onboarding/Onboarding` | acte gouverné via modale (créer risk case / note+transition / incident+transition / stop run / ouvrir relation+créer KYC) | n/a | ✅ tranche 10 |
+| **tranche 10** (batch B) : `coc/CocParam`, `parametrage/ConfigGolive`, `parametrage/ParametrageRegistre`, `parametrage/ProfilsReview`, `parametrage/SdKyc`, `kyc/KycCreate`, `mobile/MobileAdmin`, `screening/ScreeningAvance` | config registre / go-live / valeur / profil / droit d'accès / création KYC / activation-partage-CoC / qualif hit — via modale | n/a | ✅ tranche 10 |
+
+**Garde CI** : `screens.test.tsx` échoue si un `window.prompt`/`window.confirm` réapparaît dans `features/**`. `window.prompt` = **0 dans toute l'app**.
+
+### Reliquat identifié (garde stricte à finaliser en tranche 11)
+
+Une garde CI *stricte* (tout écran mutant importe `ConfirmValidation`, sauf dry-runs listés) a
+révélé **8 écrans mutants encore à traiter** — à classer/câbler puis réactiver la garde :
+- **écritures gouvernées à câbler** : `builder/Builder` (publier), `businesstrip/BusinessTrip`
+  (créer/soumettre), `cpsi/CpsiRiskCases` (créer/rattacher), + à trancher : `audit/AuditEcran`
+  (export/accès), `legal/LegalRegistre` (tick/échéances), `txrisk/TxRisk` (alimenter) ;
+- **dry-runs à allowlister** : `onboarding/SandboxOnboarding`, `ports/Ports`.
+Dry-runs déjà hors contrat : `aml/SandboxAml`, `bi/BiReporting`, `islamic/FinanceIslamique`,
+`parametrage/Sandboxes`, `swift/SwiftLab`.
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme

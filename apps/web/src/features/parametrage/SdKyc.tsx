@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 import { GrilleMatrice } from "./GrilleMatrice";                    // R283/RW-04 : LE composant commun (sdkyc/sdar/sdgar)
 
@@ -21,6 +22,7 @@ export function SdKyc() {
   const [matrice, setMatrice] = useState<Matrice | null>(null);
   const [voirComme, setVoirComme] = useState<{ role: string; questions: number } | null>(null);
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmer chaque écriture d'accès
 
   const charger = async (c: string) => {
     setMsg(""); setVoirComme(null);
@@ -44,6 +46,7 @@ export function SdKyc() {
   };
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Sections & droits KYC (sdkyc) — la matrice, servie et gardée par le backend</h3>
     <p style={{ fontSize: 12, color: tokens.color.muted }}>Modèle ACTUEL par question (écart SD-04 consigné : pas de versionnage à date).
@@ -65,7 +68,10 @@ export function SdKyc() {
         celluleStyle={(q, r) => ({ background: COULEUR[(q as { droits?: Record<string, string> }).droits?.[r] ?? ""] ?? "#eee" })}
         cellule={(q, r) => {
           const droits = (q as { droits?: Record<string, string> }).droits ?? {};
-          return <select value={droits[r]} onChange={(e) => changer(q.code, r, e.target.value)}
+          return <select value={droits[r]} onChange={(e) => { const right = e.target.value; ask({
+              title: `Modifier l'accès — ${q.code} × ${r} → ${right}`,
+              message: "Écriture de la matrice de droits (événement au change tracker). Le backend applique les garde-fous (section sans éditeur, visa d'un rôle aveugle) et refuse tel quel (SD-02).",
+              confirmLabel: "Appliquer le droit", onConfirm: () => changer(q.code, r, right) }); }}
             disabled={isDemoMode()} style={{ fontSize: 10, border: "none", background: "transparent" }}>
             {DROITS.map((d) => <option key={d}>{d}</option>)}</select>;
         }}/>

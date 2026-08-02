@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Config à date & Go-live » (Vague 6). Reconstruit la configuration COMPLÈTE à une date
 // (GET /v1/parametres/config?date=, R127) et gouverne l'activation (POST /v1/parametres/activer,
@@ -16,6 +17,7 @@ export function ConfigGolive() {
   const [signataire, setSignataire] = useState("");
   const [msg, setMsg] = useState("");
   const [statut, setStatut] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmer l'activation (irréversible)
 
   async function reconstruire() {
     const q = date ? `?date=${date}` : "";
@@ -35,6 +37,7 @@ export function ConfigGolive() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Config à date & Go-live — activation gouvernée (R127/R128)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
@@ -50,7 +53,11 @@ export function ConfigGolive() {
     </div>}
     <div style={{ display: "flex", gap: 8, margin: "14px 0", flexWrap: "wrap", alignItems: "center" }}>
       <input style={{ ...inp, flex: 1 }} placeholder="signature du répondant bancaire (R128)" value={signataire} onChange={(e) => setSignataire(e.target.value)}/>
-      <button style={btn} onClick={activer} disabled={!signataire}>Prononcer le go-live</button>
+      <button style={btn} onClick={() => ask({ title: "Prononcer le go-live du tenant (R128)", danger: true,
+          message: "Activation gouvernée et IRRÉVERSIBLE : le tenant passe en production. La signature du répondant bancaire engage.",
+          items: [{ label: signataire.trim() ? `Signataire : ${signataire}` : "Signature du répondant bancaire manquante", ok: !!signataire.trim() }],
+          blockIfIncomplete: true, confirmLabel: "Activer le go-live", onConfirm: activer })}
+        disabled={!signataire}>Prononcer le go-live</button>
       {statut && <span style={{ padding: "4px 12px", borderRadius: 20, background: "#4A6B28", color: "#fff", fontWeight: 700 }}>{statut}</span>}
     </div>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: msg.startsWith("⛔") ? "#fbeaea" : "#f3f0e8", fontSize: 13 }}>{msg}</div>}

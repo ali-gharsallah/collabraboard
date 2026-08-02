@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « File d'alertes » (Vague 1). Liste les alertes AML d'un client (GET /v1/aml/clients/:id/signaux)
 // et permet la DÉCISION : ouvrir un dossier de risque rattaché à l'alerte (POST /v1/riskcases, R133).
@@ -17,6 +18,7 @@ export function AlertsQueue() {
   const [signaux, setSignaux] = useState<Signal[]>([]);
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() {
     setMsg("");
@@ -39,6 +41,7 @@ export function AlertsQueue() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>File d'alertes — instruire une alerte = ouvrir un dossier de risque (R133)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0" }}>
@@ -57,7 +60,12 @@ export function AlertsQueue() {
           <td align="center">{s.niveau}</td>
           <td align="center">{s.bloquant ? "⛔" : "—"}</td>
           <td>{s.motif}</td>
-          <td><button style={btn} onClick={() => ouvrir(s.id)}>Ouvrir un dossier</button></td>
+          <td><button style={btn} onClick={() => ask({
+            title: "Ouvrir un dossier de risque (R133)",
+            message: "Instruire cette alerte ouvre un dossier de risque rattaché au signal. Le service porte les invariants (R133).",
+            items: [{ label: `Signal : ${s.regle} (${s.type})`, ok: true },
+              { label: s.bloquant ? "Signal bloquant" : "Signal non bloquant", ok: true }],
+            confirmLabel: "Ouvrir", onConfirm: () => ouvrir(s.id) })}>Ouvrir un dossier</button></td>
         </tr>)}
         {signaux.length === 0 && <tr><td colSpan={6} style={{ padding: 6, color: "#666" }}>Aucune alerte chargée.</td></tr>}
       </tbody>

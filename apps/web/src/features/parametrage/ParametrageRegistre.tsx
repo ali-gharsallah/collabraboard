@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Registre de paramétrage » (Vague 6). Tout le paramétrage vit sous « Paramètres »
 // (R125). Le registre R-Q se GÉNÈRE du canon (GET /v1/parametres/registre) ; écrire une valeur
@@ -19,6 +20,7 @@ export function ParametrageRegistre() {
   const [effetAt, setEffetAt] = useState("");
   const [dateRelecture, setDateRelecture] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol valeur+motif
 
   async function charger() { setRegistre((await apiGetSourced<Entree[]>("/v1/parametres/registre", [])).data); }
   useEffect(() => { charger(); }, []);
@@ -49,6 +51,7 @@ export function ParametrageRegistre() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Registre de paramétrage (R-Q) — changer un paramètre = changer une règle (R125→R127)</h3>
     <div style={{ display: "flex", gap: 20, marginTop: 12, flexWrap: "wrap" }}>
@@ -72,7 +75,12 @@ export function ParametrageRegistre() {
           <input style={inp} placeholder={`nouvelle valeur (${sel.type})`} value={valeur} onChange={(e) => setValeur(e.target.value)}/>
           <input style={inp} placeholder="motif (obligatoire, R7)" value={motif} onChange={(e) => setMotif(e.target.value)}/>
           <input style={inp} placeholder="date d'effet (optionnelle, jamais passée — R126)" value={effetAt} onChange={(e) => setEffetAt(e.target.value)}/>
-          <button style={btn} onClick={ecrire} disabled={!valeur || !motif}>Écrire (motivé, daté)</button>
+          <button style={btn} onClick={() => ask({ title: `Écrire « ${sel.cle} » au registre (${sel.regle})`,
+              message: "Changer un paramètre = changer une règle : typé, motivé (R7/R126), daté, JAMAIS rétroactif.",
+              items: [{ label: valeur ? `Nouvelle valeur : ${valeur}` : "Nouvelle valeur manquante", ok: !!valeur },
+                { label: motif.trim() ? "Motif fourni (R7)" : "Motif manquant (R7)", ok: !!motif.trim() }],
+              blockIfIncomplete: true, confirmLabel: "Confirmer l'écriture", onConfirm: ecrire })}
+            disabled={!valeur || !motif}>Écrire (motivé, daté)</button>
           <hr style={{ border: "none", borderTop: "1px solid #eee" }}/>
           <input style={inp} placeholder="relire à la date (R127)" value={dateRelecture} onChange={(e) => setDateRelecture(e.target.value)}/>
           <button style={{ ...btn, background: "#777" }} onClick={relire}>Valeur d'alors</button>

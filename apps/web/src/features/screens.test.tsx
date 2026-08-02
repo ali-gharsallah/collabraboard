@@ -658,6 +658,7 @@ describe("FE-SD — partie 4 partielle : sdkyc rendu, paramfields annuaire (SD-0
     fireEvent.change(screen.getByPlaceholderText("typeCode"), { target: { value: "X" } });
     fireEvent.change(screen.getByPlaceholderText("libellé"), { target: { value: "Type X" } });
     fireEvent.click(screen.getByRole("button", { name: /Définir/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Enregistrer au registre$/ }));   // contrat UX : modale
     expect(await screen.findByTestId("msg-cocparam")).toHaveTextContent(/SD-06.*contrainte backend/);
   });
 });
@@ -728,6 +729,7 @@ describe("FE-RUNS — écran Runs Olivia v2 (R266, SW-17/18) : interrupteur, tim
     expect(screen.getAllByText(/agent-kyc/).length).toBeGreaterThan(0);
     expect(screen.getByText(/empreinte aaaaaaaaaa/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "STOP" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Arrêter le run$/ }));   // contrat UX : modale
     expect(await screen.findByText("INTERROMPU")).toBeInTheDocument();    // rechargé depuis le serveur, pas simulé
   });
 });
@@ -753,6 +755,7 @@ describe("FE-RW — R283 : sdar/sdgar rendent, ne dupliquent pas (RW-04)", () =>
     expect(screen.getByTestId("grille-matrice")).toBeInTheDocument();            // LE composant commun (sdkyc/sdar/sdgar)
     fireEvent.click(screen.getByLabelText("requise AML-Q1"));                    // sélection : question REQUISE
     fireEvent.click(screen.getByTestId("enregistrer"));
+    fireEvent.click(await screen.findByRole("button", { name: /^Versionner au registre$/ }));   // contrat UX : modale
     await screen.findByTestId("msg-sdar");
     const valeur = (ecrit as unknown as { valeur: { type: string; niveau: string; questionsRequises: string[] }[] }).valeur;
     const profil = valeur.find((p) => p.type === "AR" && p.niveau === "CDD");
@@ -1240,11 +1243,13 @@ describe("FE-MB — R316/R318 : face banque du canal mobile — activation trac�
     render(<MobileAdmin/>);
     fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
     fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'activation$/ }));   // contrat UX : modale
     expect(await screen.findByText(/code hors bande/)).toBeInTheDocument();
     expect(screen.getByText("A1B2C3D4")).toBeInTheDocument();          // remis UNE fois — jamais stocké
     fireEvent.click(screen.getByRole("button", { name: /^Messagerie$/ }));
     expect(await screen.findByText(/Merci de changer mon adresse/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Ouvrir un CoC/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'ouverture$/ }));   // contrat UX : modale
     expect(await screen.findByText(/CoC ouvert \(cccc0000\)/)).toBeInTheDocument();  // la voie R276
   });
 
@@ -1256,6 +1261,7 @@ describe("FE-MB — R316/R318 : face banque du canal mobile — activation trac�
     render(<MobileAdmin/>);
     fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
     fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'activation$/ }));   // contrat UX : modale
     expect(await screen.findByText(/Ressource introuvable/)).toBeInTheDocument();
   });
 });
@@ -1282,6 +1288,7 @@ describe("FE-OP — R321/R322 : incidents servis, heatmap RENDUE (jamais peinte)
     expect(screen.getByText(/EN RETARD/)).toBeInTheDocument();               // le fait calculé, rendu
     fireEvent.change(screen.getByPlaceholderText("titre de l'incident"), { target: { value: "Essai" } });
     fireEvent.click(screen.getByRole("button", { name: /^Déclarer$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Déclarer l'incident$/ }));   // contrat UX : modale
     expect(await screen.findByText(/R321 : classification OBLIGATOIRE/)).toBeInTheDocument();  // FE-04
   });
 });

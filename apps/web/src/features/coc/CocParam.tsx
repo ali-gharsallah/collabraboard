@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // `cocparam` (canon vague pilote partie 4 — séquencé APRÈS la PR CoC, comme ratifié : R276
@@ -19,6 +20,7 @@ export function CocParam() {
   const { data, isDemo, reload } = useApiOrSeed<typeof SEED>("/v1/coc/config", SEED);
   const [f, setF] = useState({ typeCode: "", libelle: "", materialite: "MOYENNE", actionRequise: "MAJ_CIBLEE", roleTraitant: "CO", severiteCpsi: "1" });
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation avant écriture au registre
 
   const definir = async () => {
     setMsg("");
@@ -30,6 +32,7 @@ export function CocParam() {
   const inp = { padding: 6, fontSize: 12, border: `1px solid ${tokens.color.border}`, borderRadius: 6 };
 
   return <div>
+    {modal}
     {isDemo && <DemoModeBanner/>}
     <h3>Types de CoC & sensibilité (cocparam) — le store COC_CONFIG, versionné à date (R276)</h3>
     <p style={{ fontSize: 12, color: tokens.color.muted }}>Reconfigurer un type ne requalifie JAMAIS un CoC ouvert
@@ -45,7 +48,10 @@ export function CocParam() {
       <select value={f.roleTraitant} onChange={(e) => setF({ ...f, roleTraitant: e.target.value })} style={inp}>
         {["RM", "CO", "CO_SR", "MLRO"].map((r) => <option key={r}>{r}</option>)}</select>
       <input placeholder="sévérité CPSI" value={f.severiteCpsi} onChange={(e) => setF({ ...f, severiteCpsi: e.target.value })} style={{ ...inp, width: 100 }}/>
-      <button onClick={definir} disabled={isDemoMode() || !f.typeCode.trim() || !f.libelle.trim()} style={{ fontSize: 12 }}>Définir (versionné)</button>
+      <button onClick={() => ask({ title: `Enregistrer le type « ${f.typeCode || "?"} » au registre CoC (R276)`,
+          message: "Versionné à date : reconfigurer un type ne requalifie JAMAIS un CoC ouvert (grandfathering R29/CC-02).",
+          confirmLabel: "Enregistrer au registre", onConfirm: definir })}
+        disabled={isDemoMode() || !f.typeCode.trim() || !f.libelle.trim()} style={{ fontSize: 12 }}>Définir (versionné)</button>
     </div>
     <table cellPadding={5} style={{ fontSize: 12 }}><thead><tr>
       <th align="left">Type</th><th align="left">Libellé</th><th>Matérialité</th><th>Action requise</th><th>Rôle</th><th>Sévérité CPSI</th><th>Source</th></tr></thead>

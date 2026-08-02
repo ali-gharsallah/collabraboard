@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 import { GrilleMatrice, SectionGrille } from "./GrilleMatrice";
 
@@ -24,6 +25,7 @@ export function ProfilsReview({ type, ecran }: { type: "AR" | "GAR"; ecran: stri
   const [profils, setProfils] = useState<Profil[]>([]);
   const [niveau, setNiveau] = useState("CDD");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmer l'écriture au registre
 
   const charger = async () => {
     setMsg("");
@@ -46,6 +48,7 @@ export function ProfilsReview({ type, ecran }: { type: "AR" | "GAR"; ecran: stri
   };
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Profils de review {type} ({ecran}) — la review SÉLECTIONNE dans le KYC, un seul modèle (R283)</h3>
     <p style={{ fontSize: 12, color: tokens.color.muted }}>Sections actives (re-réponse), questions REQUISES ajoutées, sections en re-confirmation simple.
@@ -54,7 +57,10 @@ export function ProfilsReview({ type, ecran }: { type: "AR" | "GAR"; ecran: stri
       <button onClick={charger} disabled={isDemoMode()} style={{ fontSize: 12 }}>Charger</button>
       {servi && NIVEAUX.map((n) => <button key={n} onClick={() => setNiveau(n)}
         style={{ fontSize: 12, fontWeight: n === niveau ? 700 : 400 }}>{n}</button>)}
-      {servi && <button data-testid="enregistrer" onClick={enregistrer} disabled={isDemoMode()} style={{ fontSize: 12 }}>Enregistrer les profils {type}</button>}
+      {servi && <button data-testid="enregistrer" onClick={() => ask({ title: `Enregistrer les profils de review ${type} (R283)`,
+          message: "Écriture unique de l'écran : le paramètre reviewProfiles, versionné au registre R-Q (motivé R7). Jamais la matrice de droits R282.",
+          confirmLabel: "Versionner au registre", onConfirm: enregistrer })}
+        disabled={isDemoMode()} style={{ fontSize: 12 }}>Enregistrer les profils {type}</button>}
     </div>
     {msg && <p data-testid={`msg-${ecran}`} style={{ fontSize: 12, color: tokens.color.olive700 }}>{msg}</p>}
     {servi && <GrilleMatrice sections={servi.gabarits[niveau] ?? []} colonnes={["REQUISE"]}
