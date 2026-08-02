@@ -152,6 +152,42 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
       console.log("SEED GWB — boucle KYC best-effort tolérée :", (e as any)?.message ?? e);
     }
 
+    // ── 3-ter. MÉCANISMES LOT B (démo) — matrice doc publiée (R26/R27), suspension (R17), process (R23).
+    // Par les VRAIES routes, best-effort + idempotent : n'altère pas l'histoire principale ni les
+    // comptes prouvés. Le CONTENU de matrice est de DÉMO (le vrai référentiel est arbitré banque —
+    // cf. GOUVERNANCE-LOTC.md : c'est précisément le point de saisie `publier()`).
+    try {
+      // R26/R27 : publier une matrice de démo si aucune n'est en vigueur (groupe d'équivalence par juridiction).
+      const mat = (await request(http).get("/v1/doc-matrix/en-vigueur").set(cosr())).body;
+      if (!mat || !mat.version) {
+        await request(http).post("/v1/doc-matrix").set(cosr()).send({
+          contenu: { exigences: {
+            PP: { entite: [{ groupe: "preuve_identite", parJuridiction: { CH: "PASSEPORT_CH", "*": "PASSEPORT" } }], personne_liee: ["PASSEPORT"], compte: [] },
+            SA: { entite: ["REGISTRE_COMMERCE", "STATUTS"], personne_liee: ["PASSEPORT"], compte: [] } } },
+          enVigueurLe: "2026-01-01T00:00:00.000Z" }).catch(() => {});
+      }
+      // R17 : le dossier Nordwind est SUSPENDU (alerte AML) — crée son KYC puis suspend (idempotent).
+      const cNord = clients["Nordwind Handel SA"];
+      let kNord = await prisma.kycFile.findFirst({ where: { tenantId: TENANT_GWB, clientId: cNord } });
+      if (!kNord) {
+        await request(http).post("/v1/kyc").set(rm())
+          .send({ clientId: cNord, legalStructure: "SA", accountType: "CURRENT", countryCode: "DE", rmId: ids.RM }).catch(() => {});
+        kNord = await prisma.kycFile.findFirst({ where: { tenantId: TENANT_GWB, clientId: cNord } });
+      }
+      if (kNord && kNord.status !== "SUSPENDED")
+        await request(http).post(`/v1/kyc/${kNord.code}/suspendre`).set(cosr()).send({ cause: "alerte:AML (démo)" }).catch(() => {});
+      // R23 : une recertification est ouverte sur le dossier validé Keller (idempotent : une seule).
+      const kKeller = await prisma.kycFile.findFirst({ where: { tenantId: TENANT_GWB, clientId: cKeller } });
+      if (kKeller) {
+        const procs = (await request(http).get(`/v1/kyc/${kKeller.code}/processes`).set(co())).body;
+        if (!Array.isArray(procs) || !procs.some((p: any) => p.type === "recertification"))
+          await request(http).post(`/v1/kyc/${kKeller.code}/processes`).set(cosr()).send({ type: "recertification" }).catch(() => {});
+      }
+      console.log("SEED GWB — mécanismes Lot B (démo) : matrice publiée · Nordwind suspendu (R17) · recert ouverte (R23)");
+    } catch (e) {
+      console.log("SEED GWB — bloc Lot B best-effort toléré :", (e as any)?.message ?? e);
+    }
+
     // ── 4. CPSI : client enregistré + signal + score (idempotent : registered une fois) ──
     const cpsiVu = await prisma.cpsiEvent.findFirst({ where: { tenantId: TENANT_GWB, clientId: cKeller, type: "cpsi.client.registered" } });
     if (!cpsiVu) {

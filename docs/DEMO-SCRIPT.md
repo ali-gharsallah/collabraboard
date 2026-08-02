@@ -25,6 +25,12 @@ MFA de démo : documentée à l'enrôlement (chaque persona enrôle un TOTP au p
    PROSPECT → COLLECTE → KYC_EN_COURS. La scène montre le tunnel, pas un état figé.
 3. **Clients & KYC** *(RM, écran Clients puis KYC, 120 s)* — 3 structures (personne physique,
    société op., trust) ; un dossier KYC multi-rôles servi par le moteur de règles.
+3-bis. **Cycle de vie du dossier & matrice documentaire (Lot B)** *(CO_SR, 75 s)* — le dossier
+   **Nordwind est SUSPENDU** sur alerte AML (R17 : opérations gelées, écritures métier refusées) ;
+   une **matrice documentaire de démo est publiée** (R26/R27 : documents × entité × juridiction,
+   groupe d'équivalence CH→PASSEPORT_CH) — le contenu réel est arbitré banque (GOUVERNANCE-LOTC.md) ;
+   une **recertification est ouverte** sur le dossier validé Keller (R23 : un événement de risque la
+   mettrait en pause, priorité). Tout par les vraies routes, ajouté au seed.
 4. **CPSI — le score perpétuel** *(CO, écran CPSI · Profil, 90 s)* — Famille Keller
    enregistrée (PEP), un signal `hit_screening` ; le score et ses drivers expliqués (R67),
    la jauge de rejeu R250 visible.
