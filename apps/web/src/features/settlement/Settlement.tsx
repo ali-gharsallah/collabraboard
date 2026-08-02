@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Settlement / exécution » (Vague 4). Le core banking est un PORT (R167→R169) : on
 // INTÈGRE, on ne réimplémente pas de moteur de portefeuille. Phase 1 LECTURE SEULE :
@@ -17,6 +18,7 @@ export function Settlement() {
   const [txId, setTxId] = useState("");
   const [statut, setStatut] = useState<string>("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() {
     const d = await apiGetSourced<Etat>("/v1/corebanking/etat", { lots: 0, enQuarantaine: 0 });
@@ -40,6 +42,7 @@ export function Settlement() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Settlement / exécution — le core est un PORT, pas un moteur (R167→R169)</h3>
     <p style={{ fontSize: 12, color: "#777" }}>Phase 1 : lecture seule. Avaloq/Temenos/Finnova/ERI s'intègrent via un
@@ -52,7 +55,9 @@ export function Settlement() {
       </div>
     </div>
     <div style={{ display: "flex", gap: 8, margin: "12px 0", flexWrap: "wrap", alignItems: "center" }}>
-      <button style={btn} onClick={importer}>Importer un lot (core)</button>
+      <button style={btn} onClick={() => ask({ title: "Importer un lot (core banking)",
+        message: "Ingestion d'un lot de positions depuis le port core banking (R167-R169). Aucune donnée simulée.",
+        confirmLabel: "Importer", onConfirm: importer })}>Importer un lot (core)</button>
       <span style={{ width: 12 }}/>
       <input style={inp} placeholder="verdictId d'une transaction" value={txId} onChange={(e) => setTxId(e.target.value)}/>
       <button style={{ ...btn, background: "#777" }} onClick={statutTx} disabled={!txId}>Statut d'exécution</button>

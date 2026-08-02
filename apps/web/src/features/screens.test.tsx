@@ -1065,8 +1065,10 @@ describe("FE-XB — R293-R295 : le country manual rendu, le check servi, rien de
     fireEvent.change(screen.getByPlaceholderText("voyageId"), { target: { value: "v1" } });
     fireEvent.change(screen.getByPlaceholderText(/motif \(R7\)/), { target: { value: "réunion existante" } });
     fireEvent.click(screen.getByRole("button", { name: /^Demander$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer la demande$/ }));   // contrat UX : modale
     expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/en attente du visa d'un second/);
     fireEvent.click(screen.getByRole("button", { name: /Viser \(second regard\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Viser$/ }));                  // contrat UX : modale
     expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/R13 : le visa de dérogation exige un SECOND regard/);
   });
 });

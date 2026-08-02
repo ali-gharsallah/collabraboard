@@ -37,7 +37,11 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/corroboration/CorroborationKyc` (R36) | signalement de divergence via modale + pré-vol | n/a | ✅ tranche 5 |
 | `features/review/AccountReview` (R103) | conduire la revue (re-screening) via modale | n/a | ✅ tranche 5 |
 | `features/coc/ChangementCirconstances` (R30/R42/R276) | changement + déclaration de dossier via modale | n/a | ✅ tranche 5 |
-| transactions, crossborder, settlement, iam, workflow, aml, olivia… (~65 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥6 |
+| `features/transactions/TransfertsOrdres` (R143/R7) | libérer/bloquer (motif) via modale | n/a | ✅ tranche 6 |
+| `features/crossborder/CrossBorder` (R7/R13) | demande de dérogation + visa second regard via modale | n/a | ✅ tranche 6 |
+| `features/settlement/Settlement` (R167-169) | import lot core banking via modale | n/a | ✅ tranche 6 |
+| _SWIFT_ (`swift/SwiftLab`) | analyse = parsing, PAS un commit gouverné → hors contrat (noté) | n/a | — |
+| iam, workflow, aml, olivia, custody, txrisk, fx… (~62 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥7 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme
