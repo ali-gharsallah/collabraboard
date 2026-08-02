@@ -26,8 +26,9 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 |---|---|---|---|
 | `features/kyc/KycDetail` | validation finale (pré-vol : questions obligatoires + visas), suspendre/abandonner/réactiver/recert | PATCH réponses `onBlur` (déjà) | ✅ tranche 1 |
 | `features/parametrage` matrice doc (R26/R27) | publier via modale + pré-vol (types d'entité complets) | brouillon persistant + publish = commit | ⏳ tranche 2 |
-| `features/tasks` routage (R38) | router une tâche via modale | n/a | ⏳ tranche 2 |
-| KYC / screening — gel sur hit (R46) | geler + décision comité via modale | n/a | ⏳ tranche 2 |
+| `features/tasks` (R38 + R241) | routage via modale + pré-vol (rôle/cible), complétion via modale | n/a | ✅ tranche 2 |
+| KYC / screening — gel sur hit (R46) | geler + décision comité via modale | n/a | ⏳ tranche 3 |
+| `features/parametrage` matrice doc (R26/R27) — écran dédié à créer | publier via modale + pré-vol | brouillon + publish | ⏳ tranche 3 |
 | CoC, offboarding, MROS, review, PMS, transactions… (~75 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥3 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
