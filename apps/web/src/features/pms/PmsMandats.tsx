@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « PMS » (Vague 7). INTÉGRER, pas refaire : couche COMPLIANCE sur les positions (importées
 // d'un core), jamais un moteur de portefeuille. Mandats (R107 : adéquation LSFin bornée par le
@@ -19,8 +20,8 @@ export function PmsMandats() {
   const [mandats, setMandats] = useState<Mandat[]>([]);
   const [breaches, setBreaches] = useState<Breach[]>([]);
   const [val, setVal] = useState<Val | null>(null);
-  const [motifs, setMotifs] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() {
     setMandats((await apiGetSourced<Mandat[]>(`/v1/pms/mandats${clientId ? "?clientId=" + clientId : ""}`, [])).data);
@@ -37,10 +38,10 @@ export function PmsMandats() {
     setVal(v.data); charger();
     setMsg(v.data.drifts.length ? `${v.data.drifts.length} drift(s) constaté(s) — breach(es) inscrit(s), positions intactes (R105).` : "Aucun drift — allocation dans les bornes.");
   }
-  async function clore(id: string) {
+  async function clore(id: string, motif: string) {
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
-    const r = await fetch(`${base}/v1/pms/breaches/${id}/clore`, { method: "POST", headers: auth(), body: JSON.stringify({ motif: motifs[id] ?? "" }) });
+    const r = await fetch(`${base}/v1/pms/breaches/${id}/clore`, { method: "POST", headers: auth(), body: JSON.stringify({ motif }) });
     const b = await r.json().catch(() => ({}));
     setMsg(r.ok ? "Breach clôturé (motivé)." : (b.message ?? "Motif requis (R7)."));
     if (r.ok) charger();
@@ -49,6 +50,7 @@ export function PmsMandats() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>PMS — mandats, adéquation & breaches (R105→R108) · intégrer, pas refaire</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap" }}>
@@ -81,15 +83,15 @@ export function PmsMandats() {
     <h4 style={{ marginTop: 16 }}>Registre des breaches — {breaches.length}</h4>
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
       <thead><tr style={{ textAlign: "left", borderBottom: "2px solid #4A6B28" }}>
-        <th style={{ padding: 6 }}>Type</th><th>Détail</th><th>Statut</th><th>Motif clôture</th><th/></tr></thead>
+        <th style={{ padding: 6 }}>Type</th><th>Détail</th><th>Statut</th><th/></tr></thead>
       <tbody>
         {breaches.map((b) => <tr key={b.id} style={{ borderBottom: "1px solid #eee" }}>
           <td style={{ padding: 6, fontWeight: 600 }}>{b.type}</td><td>{b.detail}</td>
           <td style={{ color: b.statut === "OUVERT" ? "#c33" : "#4A6B28", fontWeight: 700 }}>{b.statut}</td>
-          <td>{b.statut === "OUVERT" && <input style={{ ...inp, width: 150 }} placeholder="motif (R7)" value={motifs[b.id] ?? ""}
-            onChange={(e) => setMotifs({ ...motifs, [b.id]: e.target.value })}/>}</td>
-          <td>{b.statut === "OUVERT" && <button style={btn} onClick={() => clore(b.id)}>Clôturer</button>}</td></tr>)}
-        {breaches.length === 0 && <tr><td colSpan={5} style={{ padding: 6, color: "#666" }}>Aucun breach.</td></tr>}
+          <td>{b.statut === "OUVERT" && <button style={btn} onClick={() => ask({ title: "Clôturer le breach (R108/R7)",
+            message: "La clôture d'un breach est motivée et tracée.", input: { label: "Motif de clôture", placeholder: "obligatoire (R7)", required: true },
+            confirmLabel: "Clôturer", onConfirm: (motif) => clore(b.id, motif ?? "") })}>Clôturer</button>}</td></tr>)}
+        {breaches.length === 0 && <tr><td colSpan={4} style={{ padding: 6, color: "#666" }}>Aucun breach.</td></tr>}
       </tbody>
     </table>
   </div>;

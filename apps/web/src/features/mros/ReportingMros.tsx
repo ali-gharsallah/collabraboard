@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Reporting réglementaire (MROS) » (Vague 4). Le registre des communications
 // (GET /v1/mros) est habilité (art. 10a, R132). La relecture (GET /v1/mros/:id) est OPPOSABLE :
@@ -17,7 +18,7 @@ export function ReportingMros() {
   const [comms, setComms] = useState<Comm[]>([]);
   const [detail, setDetail] = useState<Relu>(null);
   const [msg, setMsg] = useState("");
-  const [motif, setMotif] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() { setComms((await apiGetSourced<Comm[]>("/v1/mros", [])).data); }
   async function relire(id: string) {
@@ -25,7 +26,7 @@ export function ReportingMros() {
     setDetail(d.data);
     setMsg(d.data ? `Relecture opposable — empreinte ${String(d.data.dossierSha256 ?? "").slice(0, 16)}…` : "");
   }
-  async function poserGel(id: string) {
+  async function poserGel(id: string, motif: string) {
     setMsg("");
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
@@ -45,6 +46,7 @@ export function ReportingMros() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Reporting réglementaire (MROS) — registre opposable & figé (R129→R132)</h3>
     <button style={btn} onClick={charger}>Charger le registre</button>
@@ -59,15 +61,16 @@ export function ReportingMros() {
           <td style={{ fontFamily: "monospace", fontSize: 11 }}>{c.dossierSha256?.slice(0, 12)}…</td>
           <td>{c.decideAt ? new Date(c.decideAt).toLocaleDateString() : "—"}</td>
           <td><button style={{ ...btn, background: "#777" }} onClick={() => relire(c.id)}>Relire</button>{" "}
-            <button style={btn} onClick={() => notifier(c.id, "TRANSMISSION_AUTORITE")}>Transmis</button>{" "}
-            <button style={{ ...btn, background: "#c33" }} onClick={() => poserGel(c.id)}>Geler</button></td>
+            <button style={btn} onClick={() => ask({ title: "Notifier — transmission à l'autorité",
+              message: "Acte opposable et tracé (art. 10a). Le dossier reste figé (R130).", confirmLabel: "Transmettre",
+              onConfirm: () => notifier(c.id, "TRANSMISSION_AUTORITE") })}>Transmis</button>{" "}
+            <button style={{ ...btn, background: "#c33" }} onClick={() => ask({ title: "Poser un gel (art. 10 LBA)", danger: true,
+              message: "Le gel est motivé (R7) et opposable.", input: { label: "Motif du gel", placeholder: "obligatoire", required: true },
+              confirmLabel: "Geler", onConfirm: (motif) => poserGel(c.id, motif ?? "") })}>Geler</button></td>
         </tr>)}
         {comms.length === 0 && <tr><td colSpan={6} style={{ padding: 6, color: "#666" }}>Registre vide (rôle habilité requis — art. 10a).</td></tr>}
       </tbody>
     </table>
-    <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-      <input style={{ ...inp, flex: 1 }} placeholder="motif du gel (R7)" value={motif} onChange={(e) => setMotif(e.target.value)}/>
-    </div>
     {detail && <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: "#f3f0e8", fontSize: 13 }}>
       <strong>Relecture opposable</strong> — décision {detail.decision}, motif « {detail.motif} »,
       empreinte <span style={{ fontFamily: "monospace" }}>{detail.dossierSha256}</span> (identique au dépôt, R130).

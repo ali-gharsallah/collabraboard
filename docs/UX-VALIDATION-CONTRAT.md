@@ -29,7 +29,11 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/tasks` (R38 + R241) | routage via modale + pré-vol (rôle/cible), complétion via modale | n/a | ✅ tranche 2 |
 | KYC — gel sur hit (R46) | geler + décision comité (poursuite/offboarding) via modale | n/a | ✅ tranche 3 |
 | `features/parametrage/MatriceDoc` (R26/R27) — écran créé + router | publier via modale + pré-vol (JSON valide + bloc exigences) | saisie + publish = commit | ✅ tranche 3 |
-| CoC, offboarding, MROS, review, PMS, transactions… (~75 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥3 |
+| `features/mros/ReportingMros` (R7/R129-132) | gel (motif) + transmission autorité via modale | n/a | ✅ tranche 4 |
+| `features/pms/PmsMandats` (R108/R7) | clôture de breach (motif) via modale | n/a | ✅ tranche 4 |
+| `features/nba/NextBestAction` (R244) | accepter/ajuster/rejeter via modale (fin de window.prompt) | n/a | ✅ tranche 4 |
+| `features/offboarding/Offboarding` (R267-271/R7) | EN_CLOTURE / clôture (pré-vol visas+obstacles, bloquant) / annulation via modale | n/a | ✅ tranche 4 |
+| CoC, review, transactions, screening, corroboration… (~70 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥5 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme
