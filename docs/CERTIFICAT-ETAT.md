@@ -16,6 +16,32 @@
 Tout le canon ratifié est codé, testé, poussé. Il ne reste AUCUN chantier de code
 bloquant — seulement des actes humains (§7) et un chantier de fond continu (i18n, §6).
 
+## 1-bis. Mise à jour 2026-08-02 — portage règles domain.py (Lot A/B) + parité 100 %
+
+Passe de portage fidèle du moteur de référence Python (`services/workflow-engine-py`) vers le
+backend NestJS, découpée et validée (`RULES-GAP.md`). Tout expand-only, specs autonomes (fakePrisma,
+sans DB), la frontière reste verte entre chaque règle.
+
+- **Lot A** ✅ — R6/R10, R9, R11, R12, R14, R24, R50 (gardes visa, révocation, engagement, exports).
+- **Lot B** ✅ — machine d'états dossier **R16–R23** (suspension/abandon/réactivation/effacement LPD/
+  changement de circonstances + processes concurrents avec priorité/pause/reprise/absorption),
+  matrice documentaire versionnée **R26/R27** (résolution par juridiction, union des porteurs,
+  grandfathering) — R28 = péremption→tâche déjà portée par `ged.tickPeremptions`, routage tâche
+  **R38** (rôle→personne in-scope), gel sur hit **R46** (`VisaStatus.GELE` + décision comité).
+  Migrations `IF NOT EXISTS`, tables tenantées ajoutées à la boucle RLS `post-deploy-v2.sql`.
+- **Lot C** ⏸ — les 9 R-Q ⚙ (R5, R17, R19, R25, R37, R41, R43, R45, R47) **non implémentées par
+  principe** : seuils/rôles/périmètres arbitrés banque. Bordereau de décision : `GOUVERNANCE-LOTC.md`.
+  Le mécanisme est prêt à recevoir les valeurs (config tenant / `publier()`), défaut neutre sinon.
+- **Parité écran** ✅ **100 %** — les 3 derniers écrans de `docs/reference/olive-demo.html`
+  (`formbuilder`, `accounts`, `signatories`) portés verbatim et câblés dans `Shell.tsx`.
+- **Seed démo** — bloc Lot B additif (matrice publiée, Nordwind suspendu, recertification ouverte)
+  par les vraies routes, idempotent (`DEMO-SCRIPT.md` scène 3-bis).
+
+**Nouvelles suites autonomes** (dans `run-rule-tests.sh`) : `kyc-lotA` **25/25**, `docmatrix`
+**13/13**, `tasks-r38` **6/6**, `rapports` **4/4** ; harnais **59 suites, exit 0** · web **80/80** ·
+`tsc --noEmit` vert · schéma Prisma valide. Validation e2e/DB (Postgres via Docker) **différée**
+(indisponible ici) — migrations expand-only prêtes.
+
 ## 2. Frontière verte (rejouée ce jour)
 
 | Suite | Résultat | Portée |
