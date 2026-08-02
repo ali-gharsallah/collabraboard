@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // Écran « Formations & Certifications » (MOD-43, R231→R238 · FE-FORM). Câblé au backend :
@@ -20,11 +21,10 @@ export function Formations() {
   const [msg, setMsg] = useState("");
   const [certUser, setCertUser] = useState(""); const [asOf, setAsOf] = useState("");
   const [cert, setCert] = useState<CertifRep | null>(null);
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
-  async function completer(id: string) {
+  async function completer(id: string, docId: string) {
     setMsg("");
-    const docId = window.prompt("Identifiant de l'attestation (pièce GED) :");
-    if (!docId) return;
     try { await apiPost(`/v1/formations/assignments/${id}/complete`, { attestationDocId: docId }); setMsg("Attestation déposée."); reload(); }
     catch (e) { setMsg((e as OliveError).message ?? "Erreur"); }
   }
@@ -43,6 +43,7 @@ export function Formations() {
   const th = { padding: 6, textAlign: "left" as const };
   const btn = (bg: string) => ({ padding: "4px 10px", borderRadius: tokens.radius.sm, border: "none", color: "#fff", background: bg, cursor: "pointer", fontSize: 12 });
   return <div>
+    {modal}
     {(isDemo || d2) && <DemoModeBanner/>}
     <h3>Formations & Certifications</h3>
     <p style={{ fontSize: tokens.font.sm, color: tokens.color.muted }}>Référentiel 100% tenant (R231). La complétion dépose une
@@ -65,8 +66,15 @@ export function Formations() {
           <td style={{ fontSize: 11 }}>{a.userId}</td><td>{a.echeance}</td>
           <td><span style={{ color: statutColor(a.statut), fontWeight: 700 }}>{a.statut}</span>{a.visaStatut === "PENDING" && <span style={{ marginLeft: 6, color: tokens.color.warn }}>· visa en attente</span>}</td>
           <td>
-            {a.statut !== "COMPLETED" && a.visaStatut !== "PENDING" && <button disabled={isDemoMode()} style={btn(tokens.color.olive700)} onClick={() => completer(a.id)}>Déposer l'attestation</button>}
-            {a.visaStatut === "PENDING" && <button disabled={isDemoMode()} style={btn(tokens.color.gold)} onClick={() => valider(a.id)}>Valider (visa)</button>}
+            {a.statut !== "COMPLETED" && a.visaStatut !== "PENDING" && <button disabled={isDemoMode()} style={btn(tokens.color.olive700)}
+              onClick={() => ask({ title: "Déposer l'attestation (R232)",
+                message: "La complétion est un événement tracé ; l'attestation part vers la GED (jamais un service externe).",
+                input: { label: "Identifiant de l'attestation (pièce GED)", required: true }, confirmLabel: "Déposer",
+                onConfirm: (docId) => completer(a.id, docId ?? "") })}>Déposer l'attestation</button>}
+            {a.visaStatut === "PENDING" && <button disabled={isDemoMode()} style={btn(tokens.color.gold)}
+              onClick={() => ask({ title: "Valider la complétion (visa, R235)",
+                message: "Validation par visa de la formation complétée.", confirmLabel: "Valider (visa)",
+                onConfirm: () => valider(a.id) })}>Valider (visa)</button>}
           </td>
         </tr>)}
         {!assigns.length && <tr><td colSpan={5} style={{ padding: 6, color: tokens.color.muted }}>Aucune assignation visible.</td></tr>}

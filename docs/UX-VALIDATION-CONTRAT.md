@@ -46,7 +46,11 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/workflow/WorkflowDesigner` (R171/R7) | publier (immuable, motif) via modale | n/a | ✅ tranche 7 |
 | `features/aml/AmlWorkspace` (R7) | créer/rattacher risk case + faux positif (motif) via modale | n/a | ✅ tranche 7 |
 | _Custody & TA_ (`custody/CustodyTa`) | lecture seule (charger/rapprocher = GET) → hors contrat (noté) | n/a | — |
-| olivia, txrisk, fx, mobile, oprisk, formations, regwatch… (~58 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥8 |
+| `features/regwatch/Regwatch` (R309/R7) | qualifier pertinent (règles) / écarter (motif) via modale | n/a | ✅ tranche 8 |
+| `features/formations/Formations` (R232/R235) | déposer attestation (id GED) / valider visa via modale | n/a | ✅ tranche 8 |
+| `features/aml/AmlParametres` (R7/R125) | enregistrer un seuil (pré-vol valeur+motif, bloquant) via modale | n/a | ✅ tranche 8 |
+| _TxRisk, Fx, ReferentielAml_ | lecture seule → hors contrat (noté) | n/a | — |
+| olivia, mobile, oprisk, prospection, legal, bi, crm… (~55 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥9 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme

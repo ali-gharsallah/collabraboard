@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiGetSourced } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Onglet « Paramétrages AML » (Bloc 48, R189→R206). Ce n'est PAS un module à part : les
 // seuils AML vivent dans le registre R-Q (préfixe `aml`), sous la même gouvernance que tout
@@ -23,6 +24,7 @@ export function AmlParametres() {
   const [edit, setEdit] = useState<Record<string, { valeur: string; motif: string }>>({});
   const [msg, setMsg] = useState("");
   const [demo, setDemo] = useState(false);
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   useEffect(() => {
     apiGetSourced<Entree[]>("/v1/parametres/registre", SEED)
@@ -49,6 +51,7 @@ export function AmlParametres() {
 
   const inp = { padding: 6, borderRadius: 6, border: "1px solid #ccc", fontSize: 13 };
   return <div>
+    {modal}
     {demo && <DemoModeBanner/>}
     <h3>Paramétrages AML — chaque seuil est une règle (R7/R125)</h3>
     <p style={{ color: "#666", fontSize: 13 }}>
@@ -67,7 +70,11 @@ export function AmlParametres() {
           <td><input style={inp} value={edit[e.cle]?.motif ?? ""} placeholder="obligatoire"
             onChange={(ev) => setEdit({ ...edit, [e.cle]: { valeur: edit[e.cle]?.valeur ?? "", motif: ev.target.value } })}/></td>
           <td><button style={{ ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" }}
-            onClick={() => enregistrer(e)}>Enregistrer</button></td>
+            onClick={() => ask({ title: `Enregistrer « ${e.cle} » (${e.regle})`,
+              message: "Le réglage passe par le registre : motivé, daté, jamais rétroactif.",
+              items: [{ label: (edit[e.cle]?.valeur ?? "") !== "" ? `Nouvelle valeur : ${edit[e.cle]?.valeur}` : "Nouvelle valeur manquante", ok: (edit[e.cle]?.valeur ?? "") !== "" },
+                { label: (edit[e.cle]?.motif ?? "").trim() ? "Motif fourni (R7)" : "Motif manquant (R7)", ok: !!(edit[e.cle]?.motif ?? "").trim() }],
+              blockIfIncomplete: true, confirmLabel: "Enregistrer", onConfirm: () => enregistrer(e) })}>Enregistrer</button></td>
         </tr>)}
       </tbody>
     </table>
