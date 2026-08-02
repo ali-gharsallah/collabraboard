@@ -88,7 +88,7 @@
 
 ---
 
-## Lot A — portables directement dans NestJS (aucune migration Prisma) — 9 items
+## Lot A — portables directement dans NestJS (aucune migration Prisma) — 9 items ✅ **LIVRÉ**
 
 Logique pure sur `KycFile`, `KycVisa`, `KycSection`, `KycQuestionHistory`, `DomainEvent`, `Client`,
 `OpRiskIncident` (déjà présents). Ordre proposé (R24 REF d'abord) :
@@ -105,14 +105,19 @@ Logique pure sur `KycFile`, `KycVisa`, `KycSection`, `KycQuestionHistory`, `Doma
 > Chiffrage : ~1 méthode service + 1 event + 1 spec autonome (fakePrisma) par règle, traduits
 > **fidèlement de domain.py** (nominal ⊕ violation). Faible risque, **506 restent verts**.
 
-## Lot B — extension du modèle Prisma (à chiffrer) — 11 items
+## Lot B — extension du modèle Prisma — 11 items ✅ **LIVRÉ**
 
-| Règle(s) | Extension Prisma | Coût |
-|---|---|---|
-| **R16, R18, R20, R21, R22, R23** | `KycFile`/`Dossier` state-machine enrichie (Suspendu/Abandonné/Clôturé…) + rétention/réouverture + table `process` (collision) | **L** |
-| **R26 (REF), R27, R28** | table `document_matrix` versionnée (documents × entité × juridiction × rôle, date de vigueur) | **L** |
-| **R38** | `task` enrichie (résolution rôle→personne in-scope) | **M** |
-| **R46** | `VisaStatus` + valeur `GELE` (enum expand) + décision comité | **S** (migration triviale) |
+| Règle(s) | Extension Prisma | Coût | Livraison (expand-only) |
+|---|---|---|---|
+| **R16–R23** | state-machine `KycStatus` enrichie (SUSPENDED/ABANDONED/EN_MAJ) + `restrictions`/`lectureSeule` + table `kyc_processes` (collision) | **L** | ✅ migrations `…_dossier_state_machine`, `…_kyc_process` ; `kyc.service.ts` (suspendre/abandonner/reactiver/effacement-lpd/changement-circonstances + ouvrir/cloturer/reprendre process) ; specs `kyc-lotA` |
+| **R26 (REF), R27, R28** | table `doc_matrix_versions` versionnée (documents × entité × juridiction, date de vigueur) | **L** | ✅ migration `…_doc_matrix` ; `docmatrix.service.ts` (resoudreDocument/enVigueur/evaluerCompletude) ; spec `docmatrix` 13/13. R28 = `ged.service.ts tickPeremptions` (tâche, pas suspension) |
+| **R38** | `task` enrichie (résolution rôle→personne in-scope) | **M** | ✅ migration `…_task_role_cible` ; `tasks.module.ts` (creerRoutee/deleguer) ; spec `tasks-r38` 6/6 |
+| **R46** | `VisaStatus` + valeur `GELE` (enum expand) + décision comité | **S** | ✅ migration `…_add_visastatus_gele` ; `kyc.service.ts` (gelerPourHit/deciderComite) ; specs `kyc-lotA` |
+
+> ⚠ **Contenu gouverné jamais inventé.** Le Lot B porte les *mécanismes* (états, versioning,
+> résolution juridiction, routage). Les *valeurs* — restrictions par état, exigences documentaires
+> par type d'entité, délais — proviennent de la config tenant / `publier()` ; absence ⇒ défaut neutre
+> (ne bloque rien). Voir Lot C pour l'arbitrage des seuils.
 
 ## Lot C — les 9 R-Q ⚙ (N'IMPLÉMENTE RIEN — question exacte, `spec/questionnaire-R-Q.md`)
 
@@ -144,10 +149,17 @@ visa/dossier — candidat au **port backend** (domain.py = source de vérité, p
 
 ---
 
-## Recommandation & attente de validation
+## État final
 
-1. **Lot A** (9 items, faible risque, 506 verts entre chaque règle), dans l'ordre listé.
-2. **Lot C** : instruire les 9 R-Q au registre gouverné — décision banque, pas de code.
-3. **Lot B** : après arbitrage du périmètre (états dossier + matrice doc), idéalement avec e2e Postgres.
+1. **Lot A** — ✅ **LIVRÉ** (R6/R10, R9, R11, R12, R14, R24, R50 ; specs `kyc-lotA` + `rapports`).
+2. **Lot B** — ✅ **LIVRÉ** (R16–R23, R26–R28, R38, R46 ; voir tableau ci-dessus). Mécanismes seuls,
+   expand-only, migrations `IF NOT EXISTS` ; les tables tenantées sont dans la boucle RLS de
+   `post-deploy-v2.sql`.
+3. **Lot C** — **NON IMPLÉMENTÉ par principe** : les 9 R-Q ⚙ restent à trancher par la banque
+   (`GOUVERNANCE-LOTC.md`). Aucune valeur codée sans arbitrage.
 
-**J'attends ta validation de ce découpage avant d'écrire la moindre ligne du Lot A.**
+**Vérification permanente** : harnais `run-rule-tests.sh` (specs autonomes fakePrisma, sans DB) +
+web `test:unit` restent **verts** entre chaque règle. Parité écran : 100 % de `olive-demo.html`.
+
+**Reste, côté règles :** uniquement du gouverné (Lot C). Le mécanisme est prêt à recevoir les
+valeurs (config tenant `settings` / `publier()`) dès l'arbitrage.
