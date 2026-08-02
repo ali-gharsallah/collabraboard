@@ -110,6 +110,23 @@ export function KycDetail({ code }: { code: string }) {
             message: "Un événement de risque ultérieur la mettrait en pause (priorité).", confirmLabel: "Ouvrir",
             onConfirm: () => call(`/v1/kyc/${code}/processes`, "POST", { type: "recertification" }) })}
           style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #4A6B28", background: "#fff", color: "#4A6B28", cursor: "pointer" }}>Ouvrir une recertification (R23)</button>}
+        {(kyc.visas ?? []).some((v: any) => v.status === "PENDING") && <button onClick={() => ask({ title: "Geler les visas sur hit (R46)", danger: true,
+            message: "Les visas en attente sont gelés le temps de l'analyse du hit ; le comité tranchera.",
+            input: { label: "Référence du hit", placeholder: "ex. HIT-2026-0007", required: true }, confirmLabel: "Geler",
+            onConfirm: (hit) => call(`/v1/kyc/${code}/geler-hit`, "POST", { hit }) })}
+          style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #B5483C", background: "#fff", color: "#B5483C", cursor: "pointer" }}>Geler sur hit (R46)</button>}
+        {(kyc.visas ?? []).some((v: any) => v.status === "GELE") && <>
+          <button onClick={() => ask({ title: "Décision comité — poursuite (R46)",
+            message: "Les visas gelés sont dégelés et l'instruction reprend.",
+            input: { label: "Référence du hit", placeholder: "ex. HIT-2026-0007", required: true }, confirmLabel: "Poursuivre",
+            onConfirm: (hit) => call(`/v1/kyc/${code}/comite`, "POST", { hit, decision: "poursuite" }) })}
+            style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #4A6B28", background: "#fff", color: "#4A6B28", cursor: "pointer" }}>Comité : poursuivre</button>
+          <button onClick={() => ask({ title: "Décision comité — offboarding (R46)", danger: true,
+            message: "Un offboarding est proposé ; les visas restent gelés.",
+            input: { label: "Référence du hit", placeholder: "ex. HIT-2026-0007", required: true }, confirmLabel: "Proposer l'offboarding",
+            onConfirm: (hit) => call(`/v1/kyc/${code}/comite`, "POST", { hit, decision: "offboarding" }) })}
+            style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6, border: "1px solid #B5483C", background: "#fff", color: "#B5483C", cursor: "pointer" }}>Comité : offboarding</button>
+        </>}
       </div>
       {procs.length > 0 && <table style={{ marginTop: 10, borderCollapse: "collapse", fontSize: 12 }}>
         <thead><tr style={{ textAlign: "left", color: "#888" }}><th style={{ padding: "2px 12px 2px 0" }}>Process</th><th style={{ padding: "2px 12px" }}>État</th><th style={{ padding: "2px 12px" }}>Ouvert le</th></tr></thead>

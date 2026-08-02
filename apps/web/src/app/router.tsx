@@ -68,6 +68,7 @@ const ParamNav = lazy(() => import("../features/iam/ParamNav").then((m) => ({ de
 const IamGuide = lazy(() => import("../features/iam/IamGuide").then((m) => ({ default: m.IamGuide })));
 const SsoParam = lazy(() => import("../features/iam/SsoParam").then((m) => ({ default: m.SsoParam })));
 const ParamFields = lazy(() => import("../features/parametrage/ParamFields").then((m) => ({ default: m.ParamFields })));
+const MatriceDoc = lazy(() => import("../features/parametrage/MatriceDoc").then((m) => ({ default: m.MatriceDoc })));
 const CocParam = lazy(() => import("../features/coc/CocParam").then((m) => ({ default: m.CocParam })));
 const Sandboxes = lazy(() => import("../features/parametrage/Sandboxes").then((m) => ({ default: m.Sandboxes })));
 const CrossBorder = lazy(() => import("../features/crossborder/CrossBorder").then((m) => ({ default: m.CrossBorder })));
@@ -83,7 +84,7 @@ const MobileAdmin = lazy(() => import("../features/mobile/MobileAdmin").then((m)
 const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ default: m.OpRisk })));
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
   // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
@@ -145,7 +146,7 @@ export function Router() {
     { id: "g_param", label: "Paramétrage", icon: "⚙", items: [
       ["parametrage", "Paramétrage", "⚙"], ["golive", "Config & Go-live", "🚦"],
       ["sdkyc", "Sections & droits", "◎"], ["sdar", "Profils AR", "↻"], ["sdgar", "Profils GAR", "▦"],
-      ["paramfields", "Registre paramètres", "▤"], ["cocparam", "Types de CoC", "⇆"],
+      ["paramfields", "Registre paramètres", "▤"], ["matricedoc", "Matrice documentaire", "▦"], ["cocparam", "Types de CoC", "⇆"],
       ["rejeu", "Rejeu KYC à date", "⏱"], ["bat", "Recette client (BAT)", "✅"],
       ["paramnav", "Utilisateurs & rôles", "👤"], ["iamguide", "Guide IAM", "📘"],
       ["ssoparam", "SSO / Fédération", "🔑"]] },
@@ -283,6 +284,7 @@ export function Router() {
     {screen === "iamguide" && <IamGuide/>}
     {screen === "ssoparam" && <SsoParam/>}
     {screen === "paramfields" && <ParamFields/>}
+    {screen === "matricedoc" && <MatriceDoc/>}
     {screen === "cocparam" && <CocParam/>}
     {/* Le hub Bacs à sable + 4 deep-links (sbkyc/sbbrm/sbcf/sbwf) qui l'ouvrent focalisé —
         la maquette (4 items de nav) est couverte 1:1, le hub reste UN écran (BS-01..06). */}
