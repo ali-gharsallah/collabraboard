@@ -33,7 +33,11 @@ Décision Ali (2026-08-02) : **généralisé à toute l'app**.
 | `features/pms/PmsMandats` (R108/R7) | clôture de breach (motif) via modale | n/a | ✅ tranche 4 |
 | `features/nba/NextBestAction` (R244) | accepter/ajuster/rejeter via modale (fin de window.prompt) | n/a | ✅ tranche 4 |
 | `features/offboarding/Offboarding` (R267-271/R7) | EN_CLOTURE / clôture (pré-vol visas+obstacles, bloquant) / annulation via modale | n/a | ✅ tranche 4 |
-| CoC, review, transactions, screening, corroboration… (~70 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥5 |
+| `features/screening/Screening` (R101/R7) | qualification VP/FP (motif) via modale | n/a | ✅ tranche 5 |
+| `features/corroboration/CorroborationKyc` (R36) | signalement de divergence via modale + pré-vol | n/a | ✅ tranche 5 |
+| `features/review/AccountReview` (R103) | conduire la revue (re-screening) via modale | n/a | ✅ tranche 5 |
+| `features/coc/ChangementCirconstances` (R30/R42/R276) | changement + déclaration de dossier via modale | n/a | ✅ tranche 5 |
+| transactions, crossborder, settlement, iam, workflow, aml, olivia… (~65 écrans) | à retrofiter par tranches | idem | ⏳ tranches ≥6 |
 
 > Convention d'adoption : remplacer chaque bouton d'action mutante par `ask({...})` + rendre `{modal}` ;
 > fournir un `items` de pré-vol quand une complétude est vérifiable ; garder la garde serveur comme

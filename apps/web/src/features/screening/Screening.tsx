@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Screening » (Vague 3). Lance un screening (POST /v1/screening/run — trace TOUJOURS
 // écrite, R103), liste les hits, qualifie un hit (POST /v1/screening/hits/:id/qualify — motif
@@ -16,7 +17,7 @@ export function Screening() {
   const [nom, setNom] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [msg, setMsg] = useState("");
-  const [motifs, setMotifs] = useState<Record<string, string>>({});
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function lancer() {
     setMsg("");
@@ -34,12 +35,12 @@ export function Screening() {
     const h = await apiGetSourced<Hit[]>("/v1/screening/hits", []);
     setHits(h.data);
   }
-  async function qualifier(id: string, verdict: string) {
+  async function qualifier(id: string, verdict: string, motif: string) {
     setMsg("");
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
     const r = await fetch(`${base}/v1/screening/hits/${id}/qualify`, { method: "POST", headers: auth(),
-      body: JSON.stringify({ verdict, motif: motifs[id] ?? "" }) });
+      body: JSON.stringify({ verdict, motif }) });
     const b = await r.json().catch(() => ({}));
     setMsg(r.ok ? `Hit qualifié ${verdict}${verdict === "VRAI_POSITIF" ? " — escalade PROPOSÉE (jamais exécutée)" : ""}.` : (b.message ?? "Erreur (motif requis ? R7)"));
     if (r.ok) charger();
@@ -48,6 +49,7 @@ export function Screening() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Screening (sanctions/PEP) — lancer & qualifier un hit (R100→R103)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap" }}>
@@ -59,19 +61,22 @@ export function Screening() {
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
       <thead><tr style={{ textAlign: "left", borderBottom: "2px solid #4A6B28" }}>
-        <th style={{ padding: 6 }}>Client</th><th>Entrée</th><th>Score</th><th>Statut</th><th>Motif</th><th/></tr></thead>
+        <th style={{ padding: 6 }}>Client</th><th>Entrée</th><th>Score</th><th>Statut</th><th/></tr></thead>
       <tbody>
         {hits.map((h) => <tr key={h.id} style={{ borderBottom: "1px solid #eee" }}>
           <td style={{ padding: 6 }}>{h.clientId.slice(0, 8)}</td><td>{h.entreeUid}</td>
           <td align="center">{h.score}</td><td>{h.statut}</td>
-          <td><input style={{ ...inp, width: 160 }} placeholder="motif (R7)" value={motifs[h.id] ?? ""}
-            onChange={(e) => setMotifs({ ...motifs, [h.id]: e.target.value })} disabled={h.statut === "QUALIFIE"}/></td>
           <td>{h.statut !== "QUALIFIE" && <>
-            <button style={{ ...btn, background: "#c33" }} onClick={() => qualifier(h.id, "VRAI_POSITIF")}>Vrai positif</button>{" "}
-            <button style={{ ...btn, background: "#3a7" }} onClick={() => qualifier(h.id, "FAUX_POSITIF")}>Faux positif</button>
+            <button style={{ ...btn, background: "#c33" }} onClick={() => ask({ title: "Qualifier — VRAI POSITIF (R101/R7)", danger: true,
+              message: "Escalade PROPOSÉE (gel/clarif/MROS), jamais exécutée automatiquement (R39/R44).",
+              input: { label: "Motif de qualification", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Vrai positif",
+              onConfirm: (motif) => qualifier(h.id, "VRAI_POSITIF", motif ?? "") })}>Vrai positif</button>{" "}
+            <button style={{ ...btn, background: "#3a7" }} onClick={() => ask({ title: "Qualifier — FAUX POSITIF (R101/R7)",
+              input: { label: "Motif de qualification", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Faux positif",
+              onConfirm: (motif) => qualifier(h.id, "FAUX_POSITIF", motif ?? "") })}>Faux positif</button>
           </>}</td>
         </tr>)}
-        {hits.length === 0 && <tr><td colSpan={6} style={{ padding: 6, color: "#666" }}>Aucun hit chargé.</td></tr>}
+        {hits.length === 0 && <tr><td colSpan={5} style={{ padding: 6, color: "#666" }}>Aucun hit chargé.</td></tr>}
       </tbody>
     </table>
   </div>;

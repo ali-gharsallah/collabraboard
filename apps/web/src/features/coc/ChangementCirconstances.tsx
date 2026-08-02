@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { isDemoMode, apiPost, OliveError } from "../../lib/api";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Change of Circumstances » (Vague 3). Enregistre un changement sur une personne
 // (POST /v1/personnes/:id/coc — R30). La donnée vit sur la personne ; les dossiers reçoivent des
@@ -31,6 +32,7 @@ export function ChangementCirconstances() {
   const [valeur, setValeur] = useState("");
   const [document, setDocument] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function enregistrer() {
     setMsg("");
@@ -55,6 +57,7 @@ export function ChangementCirconstances() {
   };
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Change of Circumstances — matérialité & circuit (R30/R42)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
@@ -64,7 +67,11 @@ export function ChangementCirconstances() {
       </select>
       <input style={inp} placeholder="nouvelle valeur" value={valeur} onChange={(e) => setValeur(e.target.value)}/>
       <input style={inp} placeholder="document (optionnel)" value={document} onChange={(e) => setDocument(e.target.value)}/>
-      <button style={btn} onClick={enregistrer} disabled={!personId || !valeur}>Enregistrer le changement</button>
+      <button style={btn} disabled={!personId || !valeur} onClick={() => ask({ title: "Enregistrer le changement (R30/R42)",
+        message: materiel ? "Champ d'IDENTITÉ : un re-screening sera DÉCLENCHÉ (R42, proposé jamais exécuté) + propagation aux dossiers."
+          : "Propagation tracée aux dossiers, sans re-screening automatique. Aucune bascule d'état par effet de bord.",
+        items: [{ label: `Champ : ${champ}${materiel ? " (identité — matériel)" : ""}`, ok: true }],
+        confirmLabel: "Enregistrer", onConfirm: enregistrer })}>Enregistrer le changement</button>
     </div>
     <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, fontSize: 13,
       background: materiel ? "#fbeaea" : "#eef3e8", border: `1px solid ${materiel ? "#c33" : "#4A6B28"}` }}>
@@ -78,7 +85,11 @@ export function ChangementCirconstances() {
       <input placeholder="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)} style={{ padding: 6, fontSize: 12, width: 240 }}/>
       <input placeholder="type (ex. UBO_CHANGE)" value={typeCode} onChange={(e) => setTypeCode(e.target.value)} style={{ padding: 6, fontSize: 12, width: 180 }}/>
       <input placeholder="description (obligatoire)" value={description} onChange={(e) => setDescription(e.target.value)} style={{ padding: 6, fontSize: 12, width: 260 }}/>
-      <button onClick={ouvrirDossier} disabled={isDemoMode() || !clientId.trim() || !description.trim()} style={{ fontSize: 12 }}>Déclarer (dossier)</button>
+      <button disabled={isDemoMode() || !clientId.trim() || !description.trim()} style={{ fontSize: 12 }}
+        onClick={() => ask({ title: "Déclarer un dossier CoC (R276)",
+          message: "La matérialité et l'action requise sont FIGÉES par le type (servies backend).",
+          items: [{ label: `Type : ${typeCode}`, ok: !!typeCode.trim() }, { label: description ? "Description fournie" : "Description manquante", ok: !!description.trim() }],
+          confirmLabel: "Déclarer", onConfirm: ouvrirDossier })}>Déclarer (dossier)</button>
     </div>
     <table cellPadding={5} style={{ fontSize: 12 }}><thead><tr>
       <th align="left">Type</th><th>Matérialité</th><th>Action requise (figée)</th><th>Statut</th><th>Rôle</th></tr></thead>
