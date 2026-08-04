@@ -761,6 +761,42 @@ def _rq_entrees(rules):
     return entrees
 
 
+ROOT_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "src", "aml"))
+
+
+def _emit_meta(rules):
+    """Émet les métadonnées de scénario consommées par le moteur (src/aml/engine.ts) et les
+    fixtures (backend-tests/aml-gap). Data pure — niveau/blocking/signal/params/then par scénario ;
+    le JUGEMENT de détection reste dans src/aml/detectors.ts (code, pas data). `deferred` = bloc 61
+    (Analytique 2G) : le moteur Nest REFUSE ces scénarios — détecteurs statistiques exécutés dans le
+    service CPSI Python, jamais réécrits en Nest (décision 4 du journal 2026-08-04)."""
+    os.makedirs(ROOT_AML_DIR, exist_ok=True)
+    meta = {}
+    for r in rules:
+        meta[r["id"]] = {
+            "scenarioId": r["id"], "ruleRef": r["ruleRef"], "bloc": r["bloc"],
+            "niveau": r["niveau"] if r["niveau"] is not None else 0,  # campagne/ops → 0
+            "blocking": r["blocking"], "signal": r["signal"], "deferred": r["bloc"] == 61,
+            "then": r["gherkin"]["then"],
+            "params": {p["key"]: p["default"] for p in r["params"]},
+        }
+    ts = (
+        "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.\n"
+        "// Métadonnées des 64 scénarios AML gap (R340–R403) : niveau/blocking/signal/params/then.\n"
+        "// Consommé par src/aml/engine.ts (moteur R44) + src/aml/detectors.ts. `deferred` = bloc 61\n"
+        "// (Analytique 2G, R399–R403) : le moteur Nest refuse — détection dans le service CPSI Python.\n\n"
+        "export interface AmlGapMeta {\n"
+        "  scenarioId: string; ruleRef: string; bloc: number; niveau: number; blocking: boolean;\n"
+        "  signal: string; deferred: boolean; then: string; params: Record<string, string | number | boolean>;\n"
+        "}\n\n"
+        "export const AML_GAP_META: Record<string, AmlGapMeta> = "
+        + json.dumps(meta, ensure_ascii=False, indent=2) + ";\n"
+    )
+    with open(os.path.join(ROOT_AML_DIR, "aml-gap.meta.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(ts)
+    return meta
+
+
 def _emit_rq(rules):
     """Émet le fragment R-Q consommé par parametres.service.ts (spread dans REGISTRE_RQ)."""
     entrees = _rq_entrees(rules)
@@ -806,12 +842,14 @@ def main():
         f.write("\n")
     _emit_ts(rules, gt)
     rq = _emit_rq(rules)
+    _emit_meta(rules)
     print("aml-gap généré : %d règles (%s, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
           % (len(rules), meta["ruleRange"], meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
     print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
     print("  + TS front   : apps/web/src/features/aml/aml-gap.seed.gen.ts")
     print("  + R-Q        : apps/api/src/modules/parametres/aml-gap.rq.gen.ts (%d paramètres tenant)"
           % len(rq))
+    print("  + Moteur     : src/aml/aml-gap.meta.gen.ts (métadonnées scénarios, bloc 61 deferred CPSI)")
 
 
 if __name__ == "__main__":

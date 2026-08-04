@@ -240,7 +240,26 @@ def main():
         check("AG-19 registre R-Q présent (aml-gap.rq.gen.ts)", False,
               "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    total = 14 + 3 + 2 + 1 + 2 + 1 + 1  # + AG-16 + AG-17/AG-17b + AG-18 + AG-19
+    # AG-20 — métadonnées moteur émises (src/aml/aml-gap.meta.gen.ts) : 64 scénarios, bloc 61
+    # (Analytique 2G, AN-*) marqué deferred (détecteur CPSI Python, jamais Nest), niveau None → 0.
+    meta_ts = os.path.join(HERE, "..", "..", "src", "aml", "aml-gap.meta.gen.ts")
+    if os.path.exists(meta_ts):
+        src = open(meta_ts, encoding="utf-8").read()
+        meta = json.loads(src[src.index("= {") + 2: src.rindex("}") + 1])
+        deferred = sorted(k for k, v in meta.items() if v["deferred"])
+        campagnes = [r["id"] for r in rules if r["niveau"] is None]
+        niveau0_ok = all(meta[i]["niveau"] == 0 for i in campagnes)
+        num_ok = all(isinstance(v["niveau"], int) and isinstance(v["blocking"], bool)
+                     and v["ruleRef"] and v["params"] is not None for v in meta.values())
+        check("AG-20 méta moteur : 64 scénarios, bloc 61 (AN-*) deferred CPSI, niveau campagne → 0",
+              len(meta) == 64 and deferred == ["AN-01", "AN-02", "AN-03", "AN-04", "AN-05"]
+              and niveau0_ok and num_ok,
+              "n=%d deferred=%s niveau0=%s wf=%s" % (len(meta), deferred, niveau0_ok, num_ok))
+    else:
+        check("AG-20 méta moteur présente (aml-gap.meta.gen.ts)", False,
+              "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
+
+    total = 14 + 3 + 2 + 1 + 2 + 1 + 1 + 1  # + AG-16 + AG-17/17b + AG-18 + AG-19 + AG-20
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:

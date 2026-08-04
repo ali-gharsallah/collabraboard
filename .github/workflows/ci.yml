@@ -221,10 +221,18 @@ jobs:
       # Invariants du générateur (R340–R377), fraîcheur des artefacts émis (TS backend/front),
       # parité avec le canon PO (data/aml-gap-dataset-gt.json) et régénération sans dérive du
       # canon PO runnable in-repo (tools/gen_aml_gap.py). Le générateur fait foi.
-      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 23/23)"
+      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 25/25)"
         run: |
           out=$(python3 tools/aml-gap/test_gen_aml_gap.py); echo "$out"
-          echo "$out" | grep -q "### 23/23 invariants AML Gap verts ###"
+          echo "$out" | grep -q "### 25/25 invariants AML Gap verts ###"
+
+      # ── AML Gap — moteur (blocs 50–60, R340–R398) : les suites Gherkin rouges deviennent vertes.
+      # evaluateScenario (src/aml/engine.ts) MESURE des faits contre les paramètres tenant (R44),
+      # ne décide rien. Le bloc 61 (Analytique 2G) reste EXCLU : détecteurs statistiques exécutés
+      # dans le service CPSI Python — jamais réécrits en Nest (décision 4). Rouge assumé, hors CI.
+      - name: "3e · AML Gap — moteur blocs 50–60 (attendu 11 suites / 179 verts, bloc 61 exclu)"
+        working-directory: apps/api
+        run: pnpm run test:aml-gap
 
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"

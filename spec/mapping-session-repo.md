@@ -127,10 +127,27 @@ coexistent, liés par un test de parité — pas deux vérités concurrentes :
   Vérifié : `parametres.wiring.spec` (RQ-01..07) et `apps/api` typecheck restent verts.
 - **Artefacts PO versés tels quels** (visa PO) : `data/registre-rq-aml-gap.{md,json}` (questionnaire
   des 80 params), `data/rules-catalog-aml-gap.json` (64 règles machine-readable : Gherkin, params, GT).
-- **Suites rouges** `backend-tests/aml-gap/` (12 blocs 50–61 + `contract.ts`/`fixtures.ts`/`README`) :
-  spécification exécutable, **rouge par construction** (`evaluateScenario` de `src/aml/engine.ts` et
-  les fixtures GT non implémentés). **Hors CI** — aucun `tsconfig`/`jest` du dépôt ne les inclut ;
-  elles balisent le DoD à venir (fixtures GT → moteur bloc par bloc). Le **bloc 61 (Analytique 2G,
-  R399–R403)** importe le même moteur mais reste rouge tant que le pont **CPSI Python** n'est pas
-  livré : l'invariant « détecteurs statistiques dans CPSI, jamais en Nest » prime (Postgres/Redis/CPSI
-  requis).
+- **Suites Gherkin** `backend-tests/aml-gap/` (12 blocs 50–61 + `contract.ts`/`fixtures.ts`/`README`) :
+  spécification exécutable. Livrées rouges par construction, **rendues vertes pour les blocs 50–60**
+  (voir §4.3).
+
+### 4.3 — Moteur d'évaluation (blocs 50–60) + Analytique 2G déférée CPSI
+
+- **`src/aml/engine.ts` — `evaluateScenario(scenarioId, facts, params?)`** : MESURE des faits contre
+  les paramètres tenant effectifs (registre R-Q, défauts surchargés par la valeur tenant), retourne
+  un `ScenarioResult` explicable. **N'exécute rien, ne décide rien (R44)** — l'appelant en fait un
+  événement qu'un humain qualifie (TP/FP). `blocking` n'est vrai que si le signal est levé.
+- **`src/aml/detectors.ts`** : le JUGEMENT de détection (code, pas data) — un détecteur par scénario
+  (R340–R398), comparant la mesure au paramètre dans le SENS de son Gherkin (gte/lte/gt, ou match de
+  référentiel/liste tenant). **`src/aml/aml-gap.meta.gen.ts`** (généré) porte niveau/blocking/signal/
+  params/`deferred` ; niveau `None` (campagnes GV) → `0`.
+- **Fixtures GT** (`backend-tests/aml-gap/fixtures.ts`) : les faits déclencheurs proviennent du
+  détecteur du scénario — moteur et fixtures **ne peuvent pas diverger**. TP ET FP déclenchent (le FP
+  est une alerte légitime écartée en investigation, pas une non-alerte — décision 5).
+- **État : blocs 50–60 VERTS** (11 suites, **179 tests**) — `pnpm --filter @olive/api test:aml-gap`,
+  step CI **3e**. **Bloc 61 (Analytique 2G, R399–R403) RESTE ROUGE, à dessein** : `meta.deferred` →
+  le moteur lève `CpsiDeferredError`, la fixture échoue avec le motif CPSI. Les détecteurs
+  statistiques (z-score robuste, changepoint, dormance) **s'exécutent dans le service CPSI Python —
+  jamais réécrits en Nest** (décision 4) ; le bloc 61 est **exclu du step CI** et le sera jusqu'à la
+  livraison du pont CPSI (Postgres/Redis/CPSI). Garde générateur : invariant **AG-20** (méta émise,
+  AN-* deferred) — `test_gen_aml_gap.py` 25/25.
