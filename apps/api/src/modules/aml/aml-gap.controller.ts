@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { AmlGapService } from "./aml-gap.service";
+import { AmlEvalService } from "./aml-eval.service";
 import { AML_GAP_GT } from "./aml-gap.gt.gen";
 
 /**
@@ -14,7 +15,7 @@ import { AML_GAP_GT } from "./aml-gap.gt.gen";
  */
 @Controller("aml")
 export class AmlGapController {
-  constructor(private svc: AmlGapService) {}
+  constructor(private svc: AmlGapService, private worker: AmlEvalService) {}
 
   @Get("scenarios") scenarios() { return this.svc.referentiel(); }
 
@@ -40,4 +41,8 @@ export class AmlGapController {
   @Get("ground-truth/db") groundTruthDb(@Req() r: any, @Query() q: any) {
     return this.svc.groundTruthDb(r.ctx, { fam: q.fam, label: q.label, scenarioCode: q.scenarioCode });
   }
+
+  // Worker aml-eval — backtest du corpus semé (blocs 50–60) : mesure le rappel (R39), n'inonde pas
+  // l'inbox. Bloc 61 (2G) différé (observation absente du corpus). → rapport { recall, parFamille… }.
+  @Post("eval/backtest") backtest(@Req() r: any) { return this.worker.backtest(r.ctx); }
 }

@@ -187,8 +187,19 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   colonne `client_id` (uuid) reste null. `GET /v1/aml/ground-truth/db?fam=&label=&scenarioCode=` lit
   le corpus semé. Vérifié : e2e `fat-aml-gap-gt.e2e-spec.ts` **5/5** (seed, idempotence, filtres,
   isolation tenant, refus RM) contre le vrai Postgres.
-- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges — elles
-  importent `evaluateScenario` (moteur Nest, meta.deferred) et NON la porte 2G ; le pont passe par
-  HTTP/DI, pas par cet import direct. Au-dessus du pont + du corpus semé : le worker **`aml-eval`
-  asynchrone** (BullMQ/outbox — évaluation de masse du corpus → recall/précision), le **backtest**
-  par version, le **BTL** (below-the-line) et le statut **DQ** — chacun un lot dédié.
+- **Worker aml-eval (backtest / rappel)** : `AmlEvalService.backtest` rejoue le corpus GT semé à
+  travers le moteur de détection blocs 50–60 **côté serveur** — le moteur (`src/aml/engine` +
+  `detectors`) est IMPORTÉ, pas redéfini (source unique, partagée avec les suites backend-tests).
+  Faits déclencheurs = `detector.trigger()` du scénario ; paramètres tenant en vigueur (R29). Mesure
+  le rappel global + par famille : sémantique du corpus (décision 5) ⇒ **TP ET FP déclenchent**,
+  rappel attendu **100 %** — un miss = régression de détecteur/paramètre. **R39 (mesurer, pas
+  coercer)** : le backtest N'INONDE PAS l'inbox — il émet `aml.eval.completed` (auditable) et rend
+  un rapport `{ recall, parFamille, deferred2G, misses }`. Bloc 61 **différé** (le corpus ne porte
+  pas d'observation statistique). `POST /v1/aml/eval/backtest`. Vérifié : e2e `fat-aml-eval` **3/3**
+  (rappel 100 %, 0 signal inbox + événement émis, 400 si corpus non semé) contre Postgres réel.
+- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (elles
+  importent `evaluateScenario`/meta.deferred, pas la porte 2G — le pont passe par HTTP/DI). Au-dessus
+  de ce cœur d'évaluation : **détection LIVE** (faits réels d'un client → signaux persistés),
+  **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit),
+  **backtest par version** + **BTL** (below-the-line) + statut **DQ** — chacun un lot dédié ; et,
+  pour verdir le bloc 61 en masse, des **fixtures d'observation 2G** par cas GT.
