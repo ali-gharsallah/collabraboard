@@ -1221,3 +1221,21 @@ Garde de non-régression : test corpus d'unicité des codes de scénario du réf
 (aucun `console.warn` en parcours nominal = source saine). **E-FB-1 backend** : la collision peut
 exister aussi dans le seed GWB — vérification tracée pour le lot backend AML (test corpus d'unicité
 à ajouter côté API).
+
+## Écart — remplacement de l'oracle de parité par la démo PO (2026-08-04)
+
+**Décision Ali (ratifiée) : `docs/reference/olive-demo.html` remplacé par la démo canonique PO**
+(journal `docs/SESSION-2026-08-04.md` décision 7 — « remplace l'ancienne » : FilterBar sur 10 écrans,
+64 règles gap au référentiel unifié, cas GT rendus TP/FP). Le contenu fonctionnel (règles gap +
+FilterBar) est **déjà implémenté** au repo (waves 1+2 + composant FilterBar R404).
+
+**Conséquences consignées (aucune n'est gatée CI — vérifié : `ci.yml` n'exécute ni `test:demo`,
+ni `test:smoke`, ni `extract_demo_data`) :**
+- Les **84 clones de parité** (`apps/web/src/parity/*.tsx`) citent des numéros de ligne de l'ancien
+  oracle en commentaire (« porté verbatim de olive-demo.html L… »). Ces citations sont désormais
+  **périmées** (dérive documentaire, pas une rupture de build — les clones sont des `.tsx`
+  autonomes qui compilent/tournent). **Re-port de parité = lot ultérieur.**
+- Les outils démo (`tests/demo/*.mjs`, `scripts/extract_demo_data.mjs`) importent Playwright depuis
+  un chemin de l'env PO (`/home/claude/.npm-global/…`) et ciblent la structure de l'ancien oracle —
+  à repointer (chemin Playwright repo + sélecteurs de la nouvelle démo) lors du re-port. Non gatés CI.
+- Suites gatées **inchangées et vertes** après le remplacement : web 99/99, build, canon-master 8/8.
