@@ -577,6 +577,45 @@ def build():
     return rules, gt
 
 
+API_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "aml"))
+
+_TS_HEADER = (
+    "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.\n"
+    "// Source de vérité de la vague AML Gap Wave 1 (R340–R377, blocs 50–56). Toute évolution\n"
+    "// d'une règle passe par le générateur ; le test de fraîcheur (test_gen_aml_gap.py) rougit\n"
+    "// si ce fichier dérive. Consommé par aml-gap.service.ts et aml-gap.wiring.spec.ts.\n"
+)
+
+
+def _emit_ts(rules, gt):
+    """Émet le référentiel + le corpus GT en TS dans apps/api (le générateur reste la source de
+    vérité ; le backend et son spec consomment ces artefacts, jamais des JSON hors apps/api)."""
+    ref_types = (
+        "export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }\n"
+        "export interface AmlGapRule {\n"
+        "  id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;\n"
+        "  titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';\n"
+        "  blocking: boolean; signal: string;\n"
+        "  gherkin: { given: string; when: string; then: string };\n"
+        "  params: AmlGapParam[]; gtCount: { tp: number; fp: number };\n"
+        "}\n"
+    )
+    gt_types = (
+        "export interface AmlGapGtCase {\n"
+        "  caseId: string; scenarioId: string; ruleRef: string; famille: string;\n"
+        "  label: 'TP' | 'FP'; clientId: string; narrative: string;\n"
+        "  ecartement?: string; placeholder?: boolean; note?: string;\n"
+        "  payload?: Record<string, unknown>;\n"
+        "}\n"
+    )
+    ref_json = json.dumps(rules, ensure_ascii=False, indent=2)
+    gt_json = json.dumps(gt, ensure_ascii=False, indent=2)
+    with open(os.path.join(API_AML_DIR, "aml-gap.referentiel.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(_TS_HEADER + "\n" + ref_types + "\nexport const AML_GAP_REFERENTIEL: AmlGapRule[] = " + ref_json + ";\n")
+    with open(os.path.join(API_AML_DIR, "aml-gap.gt.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(_TS_HEADER + "\n" + gt_types + "\nexport const AML_GAP_GT: AmlGapGtCase[] = " + gt_json + ";\n")
+
+
 def main():
     rules, gt = build()
     tp = sum(1 for c in gt if c["label"] == "TP")
@@ -600,8 +639,10 @@ def main():
     with open(os.path.join(HERE, "aml-gap-dataset-gt.json"), "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "cases": gt}, f, ensure_ascii=False, indent=2)
         f.write("\n")
+    _emit_ts(rules, gt)
     print("aml-gap généré : %d règles (R340–R377, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
           % (len(rules), meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
+    print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
 
 
 if __name__ == "__main__":

@@ -362,6 +362,8 @@ model ScreeningHit {
   score         Int
   listeVersion  String   @map("liste_version")            // R100 : produit CONTRE cette version
   statut        String   @default("BRUT")                 // BRUT | QUALIFIE
+  channel       String?                                    // AML Gap bloc 50 : ONBOARDING|FLOW|PERPETUAL|CFT
+  matchScript   String?  @map("match_script")             // AML Gap R345 : script normalisé du match (multi-scripts)
   at            DateTime @default(now())
   qualification ScreeningQualification?
   @@index([tenantId, statut])
@@ -883,6 +885,81 @@ model AmlSignal {
   at       DateTime @default(now())
   @@index([tenantId, clientId])
   @@map("aml_signals")
+}
+
+// ── AML Gap Wave 1 (R340–R377, blocs 50–56) — step-0 2026-08-04 ──
+// Définition VERSIONNÉE par date de vigueur (R29, grandfathering) — même idiome que
+// DocMatrixVersion. L'AmlSignal existant (R189–R206) reste intact ; la vague gap a ses propres
+// tables (écart consigné : deux familles de signaux coexistent, jamais fusionnées à chaud).
+model AmlScenario {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  code          String                                    // "SF-01"
+  ruleRef       String   @map("rule_ref")                 // "R340"
+  fam           String                                    // bloc fonctionnel (SF/QO/GU/IP/CR/FT/GV)
+  version       Int
+  effectiveFrom DateTime @map("effective_from")           // date de mise en vigueur (R29)
+  params        Json     @default("{}")                   // paramètres tenant (registre R-Q)
+  niveau        Int?                                       // 1|2 ; null pour campagnes/ops
+  blocking      Boolean  @default(false)                  // émet aml.block.requested (jamais d'exécution)
+  active        Boolean  @default(true)
+  @@unique([tenantId, code, version])
+  @@index([tenantId, code, effectiveFrom])
+  @@map("aml_scenarios")
+}
+
+// Signal append-only (immutabilité par trigger post-deploy, comme aml_signals). Écrit UNIQUEMENT
+// via le service ; le statut évolue par événement (aml.signal.qualified), la ligne en est la projection.
+model AmlGapSignal {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  scenarioCode String   @map("scenario_code")             // "SF-01"
+  scenarioVer  Int      @map("scenario_ver")              // version en vigueur au déclenchement
+  ruleRef      String   @map("rule_ref")                  // R340..R377
+  clientId     String?  @map("client_id") @db.Uuid        // null pour la gouvernance (bloc 56)
+  uboGroupId   String?  @map("ubo_group_id") @db.Uuid     // bloc 52 — périmètre consolidé
+  payload      Json     @default("{}")                    // faits déclencheurs
+  niveau       Int?
+  blocking     Boolean  @default(false)
+  status       String   @default("NEW")                   // NEW | UNDER_REVIEW | TP | FP | ESCALATED
+  outcome      String?                                     // TP | FP (qualification humaine)
+  motif        String?                                     // motif obligatoire à la qualification (R7)
+  idemKey      String   @map("idem_key")                  // (scenario,client,hash faits) — dédoublonnage
+  emisPar      String   @map("emis_par")                  // jeton — jamais le corps
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, idemKey])
+  @@index([tenantId, status])
+  @@index([tenantId, clientId])
+  @@map("aml_gap_signals")
+}
+
+// Corpus Ground Truth (78 cas) — seedé depuis tools/aml-gap/aml-gap-dataset-gt.json (générateur).
+model GroundTruthCase {
+  id           String  @id @default(uuid()) @db.Uuid
+  tenantId     String  @map("tenant_id") @db.Uuid
+  caseId       String  @map("case_id")                    // "GT-SF-01-TP-1"
+  scenarioCode String  @map("scenario_code")
+  ruleRef      String  @map("rule_ref")
+  fam          String
+  label        String                                      // TP | FP
+  clientId     String? @map("client_id") @db.Uuid          // null pour la gouvernance
+  narrative    String
+  ecartement   String?                                     // cause d'écartement documentée (FP)
+  payload      Json?
+  @@unique([tenantId, caseId])
+  @@index([tenantId, scenarioCode])
+  @@map("ground_truth_cases")
+}
+
+// Bloc 52 — matérialisation du périmètre UBO (recalculé sur événement du graphe personnes liées).
+model UboGroup {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  uboPersonId     String   @map("ubo_person_id") @db.Uuid
+  memberClientIds String[] @map("member_client_ids") @db.Uuid
+  updatedAt       DateTime @default(now()) @map("updated_at")
+  @@index([tenantId, uboPersonId])
+  @@map("ubo_groups")
 }
 
 // Couche de conformité Shariah — R207→R221 (Bloc 49, IS-01..IS-15). Un signal est un FAIT

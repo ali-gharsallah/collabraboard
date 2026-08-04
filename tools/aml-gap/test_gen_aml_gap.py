@@ -137,7 +137,28 @@ def main():
               on_disk is not None and on_disk.get(key) == fresh,
               "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    total = 14 + 3  # sous-tests b inclus
+    # AG-15 — artefacts TS backend à jour (le générateur alimente aussi apps/api).
+    api_dir = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "aml"))
+
+    def _embedded_json(path, marker):
+        if not os.path.exists(path):
+            return None
+        txt = open(path, encoding="utf-8").read()
+        i = txt.find(marker + ":")  # la déclaration `export const <marker>: <Type>[] = [...]`
+        if i < 0:
+            return None
+        start = txt.index("[", txt.index("=", i))  # 1er « [ » après le « = », pas le [] du type
+        end = txt.rindex("]")
+        return json.loads(txt[start:end + 1])
+
+    ref_ts = _embedded_json(os.path.join(api_dir, "aml-gap.referentiel.gen.ts"), "AML_GAP_REFERENTIEL")
+    gt_ts = _embedded_json(os.path.join(api_dir, "aml-gap.gt.gen.ts"), "AML_GAP_GT")
+    check("AG-15 aml-gap.referentiel.gen.ts à jour (aucune dérive)", ref_ts == rules,
+          "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
+    check("AG-15 aml-gap.gt.gen.ts à jour (aucune dérive)", gt_ts == gt,
+          "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
+
+    total = 14 + 3 + 2  # sous-tests b + AG-15 (2 fichiers TS)
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:
