@@ -32,31 +32,32 @@ def check(name, cond, detail=""):
 def main():
     rules, gt = G.build()
 
-    # AG-01 — 38 règles contiguës R340..R377, une par scénario, ordre stable par ruleRef.
+    # AG-01 — 64 règles contiguës R340..R403 (Waves 1+2), une par scénario, ordre stable par ruleRef.
     refs = [r["ruleRef"] for r in rules]
-    expected = ["R%d" % n for n in range(340, 378)]
-    check("AG-01 38 règles contiguës R340–R377 (identité step-0), triées",
+    expected = ["R%d" % n for n in range(340, 404)]
+    check("AG-01 64 règles contiguës R340–R403 (Waves 1+2), triées",
           refs == expected, "refs=%s" % refs)
 
-    # AG-02 — familles = 7 blocs, comptes attendus par famille.
-    fam_expected = {"SF": 7, "QO": 5, "GU": 4, "IP": 7, "CR": 6, "FT": 5, "GV": 4}
+    # AG-02 — 12 familles (7 Wave 1 + 5 Wave 2), comptes attendus par famille.
+    fam_expected = {"SF": 7, "QO": 5, "GU": 4, "IP": 7, "CR": 6, "FT": 5, "GV": 4,
+                    "TB": 8, "CB": 7, "PF": 3, "IA": 3, "AN": 5}
     fam_seen = {}
     for r in rules:
         fam_seen[r["famille"]] = fam_seen.get(r["famille"], 0) + 1
-    check("AG-02 7 familles SF/QO/GU/IP/CR/FT/GV aux effectifs de la spec",
+    check("AG-02 12 familles (SF/QO/GU/IP/CR/FT/GV + TB/CB/PF/IA/AN) aux effectifs de la spec",
           fam_seen == fam_expected, "seen=%s" % fam_seen)
 
     # AG-03 — ids scénario uniques et bien formés (XX-NN).
     ids = [r["id"] for r in rules]
     check("AG-03 ids scénario uniques et bien formés (XX-NN)",
-          len(set(ids)) == 38 and all(re.match(r"^[A-Z]{2}-\d{2}$", i) for i in ids),
+          len(set(ids)) == 64 and all(re.match(r"^[A-Z]{2}-\d{2}$", i) for i in ids),
           "ids=%s" % ids)
 
-    # AG-04 — corpus GT : 78 cas, 40 TP / 38 FP (contrat de l'en-tête de spec).
+    # AG-04 — corpus GT : 130 cas, 66 TP / 64 FP (Waves 1+2).
     tp = [c for c in gt if c["label"] == "TP"]
     fp = [c for c in gt if c["label"] == "FP"]
-    check("AG-04 78 cas GT = 40 TP / 38 FP",
-          len(gt) == 78 and len(tp) == 40 and len(fp) == 38,
+    check("AG-04 130 cas GT = 66 TP / 64 FP",
+          len(gt) == 130 and len(tp) == 66 and len(fp) == 64,
           "gt=%d tp=%d fp=%d" % (len(gt), len(tp), len(fp)))
 
     # AG-05 — chaque règle a >= 1 TP et >= 1 FP (TP et FP déclenchent : corpus de recall).
@@ -70,14 +71,14 @@ def main():
     # AG-06 — caseId uniques + rattachés à une règle existante.
     case_ids = [c["caseId"] for c in gt]
     refset = set(expected)
-    check("AG-06 caseId uniques, rattachés à une règle R340–R377",
-          len(set(case_ids)) == 78 and all(c["ruleRef"] in refset for c in gt),
+    check("AG-06 caseId uniques, rattachés à une règle R340–R403",
+          len(set(case_ids)) == 130 and all(c["ruleRef"] in refset for c in gt),
           "uniq=%d" % len(set(case_ids)))
 
-    # AG-07 — exactement 6 règles BLOQUANTES = liste §1.2 (R344,R346,R363,R365,R367,R373).
+    # AG-07 — 8 règles BLOQUANTES = 6 Wave 1 + R390 (shell bank) + R393 (sanctions sectorielles).
     blocking = sorted(r["ruleRef"] for r in rules if r["blocking"])
-    check("AG-07 6 bloquantes = {R344,R346,R363,R365,R367,R373}",
-          blocking == ["R344", "R346", "R363", "R365", "R367", "R373"], "bloc=%s" % blocking)
+    check("AG-07 8 bloquantes = {R344,R346,R363,R365,R367,R373,R390,R393}",
+          blocking == ["R344", "R346", "R363", "R365", "R367", "R373", "R390", "R393"], "bloc=%s" % blocking)
 
     # AG-08 — niveau cohérent : détection ∈ {1,2} ; campagnes/ops de gouvernance = None sauf R376 (N1).
     bad = []
@@ -111,9 +112,12 @@ def main():
           len(placeholders) == 1 and placeholders[0]["ruleRef"] == "R377"
           and placeholders[0]["narrative"] == "",
           "ph=%s" % [(c["ruleRef"], c["caseId"]) for c in placeholders])
-    check("AG-11b tout FP non-placeholder a une cause d'écartement documentée",
-          all(c.get("ecartement", "").strip() for c in fp_documented),
-          "sans_ecartement=%s" % [c["caseId"] for c in fp_documented if not c.get("ecartement")])
+    # ecartement = enrichissement de l'émetteur porté sur la Wave 1 (les narratifs Wave 2, dérivés
+    # du canon PO plus mince, portent la cause dans le narratif lui-même — pas de champ séparé).
+    fp_w1 = [c for c in fp_documented if c["ruleRef"] <= "R377"]
+    check("AG-11b tout FP Wave 1 non-placeholder a une cause d'écartement documentée",
+          all(c.get("ecartement", "").strip() for c in fp_w1),
+          "sans_ecartement=%s" % [c["caseId"] for c in fp_w1 if not c.get("ecartement")])
 
     # AG-12 — TP concrets portent un payload synthétique déterministe ; placeholder n'en a pas.
     tp_no_payload = [c["caseId"] for c in tp if "payload" not in c]
@@ -165,32 +169,31 @@ def main():
     check("AG-15 aml-gap.gt.gen.ts à jour (aucune dérive)", gt_ts == gt,
           "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    # AG-16 — seed front (web) présent et cohérent (38 scénarios + 78 cas GT).
+    # AG-16 — seed front (web) présent et cohérent (64 scénarios + 130 cas GT, Waves 1+2).
     web_dir = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "features", "aml"))
     web_path = os.path.join(web_dir, "aml-gap.seed.gen.ts")
     scen_seed = _embedded_json(web_path, "AML_GAP_SCENARIOS")
     gt_seed = _embedded_json(web_path, "AML_GAP_GT_SEED")
-    check("AG-16 seed front à jour (38 scénarios + 78 cas GT)",
-          scen_seed is not None and len(scen_seed) == 38 and gt_seed is not None and len(gt_seed) == 78,
+    check("AG-16 seed front à jour (64 scénarios + 130 cas GT)",
+          scen_seed is not None and len(scen_seed) == 64 and gt_seed is not None and len(gt_seed) == 130,
           "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
     # AG-17 — parité avec le canon PO (source de vérité ratifiée data/aml-gap-dataset-gt.json,
-    # générée par tools/gen_aml_gap.py). L'émetteur Nest/React (ce fichier) doit rester en phase
-    # avec la tranche Wave 1 du canon : mêmes règles, mêmes cas GT (narratifs). Les enrichissements
-    # propres à l'émetteur (ecartement, payloads) ne sont pas dans le canon — hors comparaison.
-    # Divergence documentée : GV-04/FP est un placeholder vide côté émetteur (« ») et « — » au canon.
+    # générée par tools/gen_aml_gap.py). L'émetteur Nest/React couvre désormais Waves 1+2 : Wave 1
+    # transcrite (BLOCS), Wave 2 DÉRIVÉE du canon. La parité porte sur les 130 cas (scénario/label/
+    # narratif). Enrichissements de l'émetteur (ecartement, payloads) hors comparaison. Divergence
+    # documentée : GV-04/FP = placeholder vide côté émetteur (« ») et « — » au canon.
     po_path = os.path.normpath(os.path.join(HERE, "..", "..", "data", "aml-gap-dataset-gt.json"))
     if os.path.exists(po_path):
         po_all = json.load(open(po_path, encoding="utf-8"))["cases"]
-        po_w1 = [c for c in po_all if c["rule"] <= "R377"]
         norm = lambda n: n if n else "—"  # noqa: E731
         mine_key = sorted((c["scenarioId"], c["label"], norm(c["narrative"])) for c in gt)
-        po_key = sorted((c["scenarioId"], c["label"], c["narrative"]) for c in po_w1)
-        check("AG-17 parité canon PO (Wave 1) : mêmes cas GT (scénario/label/narratif)",
+        po_key = sorted((c["scenarioId"], c["label"], c["narrative"]) for c in po_all)
+        check("AG-17 parité canon PO (Waves 1+2) : mêmes 130 cas GT (scénario/label/narratif)",
               mine_key == po_key,
               "l'émetteur diverge du canon data/aml-gap-dataset-gt.json — réconcilier via le générateur PO")
-        check("AG-17b parité canon PO (Wave 1) : mêmes règles R340–R377",
-              sorted({c["ruleRef"] for c in gt}) == sorted({c["rule"] for c in po_w1}),
+        check("AG-17b parité canon PO (Waves 1+2) : mêmes règles R340–R403",
+              sorted({c["ruleRef"] for c in gt}) == sorted({c["rule"] for c in po_all}),
               "jeu de règles divergent du canon PO")
     else:
         check("AG-17 canon PO présent (data/aml-gap-dataset-gt.json)", False,

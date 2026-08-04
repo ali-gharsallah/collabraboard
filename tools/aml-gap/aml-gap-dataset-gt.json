@@ -4,7 +4,7 @@
     "spec": "SPEC-AMLGAP-WAVE1.md (ratifiée PO 04.08.2026)",
     "mapping": "spec/mapping-session-repo.md §4 (step-0)",
     "seed": 20260804,
-    "ruleRange": "R340–R377",
+    "ruleRange": "R340–R403",
     "blocs": [
       50,
       51,
@@ -12,24 +12,34 @@
       53,
       54,
       55,
-      56
+      56,
+      57,
+      58,
+      59,
+      60,
+      61
     ],
     "familles": [
+      "AN",
+      "CB",
       "CR",
       "FT",
       "GU",
       "GV",
+      "IA",
       "IP",
+      "PF",
       "QO",
-      "SF"
+      "SF",
+      "TB"
     ],
     "counts": {
-      "rules": 38,
-      "gt": 78,
-      "tp": 40,
-      "fp": 38,
+      "rules": 64,
+      "gt": 130,
+      "tp": 66,
+      "fp": 64,
       "placeholders": 1,
-      "blocking": 6
+      "blocking": 8
     },
     "note": "Artefacts GÉNÉRÉS — ne jamais éditer à la main ; toute évolution passe par le générateur."
   },
@@ -1467,6 +1477,942 @@
       "narrative": "",
       "placeholder": true,
       "note": "FP déclaré par la spec (1 TP · 1 FP) mais contenu laissé vide « — — — » ; en attente PO."
+    },
+    {
+      "caseId": "GT-TB-01-TP-1",
+      "scenarioId": "TB-01",
+      "ruleRef": "R378",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Import de composants payés +22% vs benchmark sur 8 factures du même fournisseur lié — transfert de valeur confirmé.",
+      "payload": {
+        "seed": 915672685,
+        "montantChf": 145000,
+        "valueDate": "2026-01-05",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-10527",
+        "declencheur": "OVER_INVOICING",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-01-FP-1",
+      "scenarioId": "TB-01",
+      "ruleRef": "R378",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00101",
+      "narrative": "Surcoût de +18% documenté par une clause d'urgence logistique (fret aérien vs maritime, contrat fourni) — FP.",
+      "payload": {
+        "seed": 888524011,
+        "montantChf": 51000,
+        "valueDate": "2026-02-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-87904",
+        "declencheur": "OVER_INVOICING",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-02-TP-1",
+      "scenarioId": "TB-02",
+      "ruleRef": "R379",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Même connaissement financé deux fois via deux banques — double financement frauduleux confirmé.",
+      "payload": {
+        "seed": 839930584,
+        "montantChf": 77000,
+        "valueDate": "2026-01-03",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-16868",
+        "declencheur": "MULTIPLE_INVOICING",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-02-FP-1",
+      "scenarioId": "TB-02",
+      "ruleRef": "R379",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00193",
+      "narrative": "Facture d'acompte puis facture de solde portant la même référence commande (schéma 30/70 contractuel) — FP.",
+      "payload": {
+        "seed": 812650854,
+        "montantChf": 191000,
+        "valueDate": "2026-12-11",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-85973",
+        "declencheur": "MULTIPLE_INVOICING",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-03-TP-1",
+      "scenarioId": "TB-03",
+      "ruleRef": "R380",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Biens sous-facturés à 5% du prix de marché pour exfiltrer de la valeur au pays d'origine — TP.",
+      "payload": {
+        "seed": 798811979,
+        "montantChf": 147000,
+        "valueDate": "2026-05-26",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-85009",
+        "declencheur": "UNIT_PRICE_ANOMALY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-03-FP-1",
+      "scenarioId": "TB-03",
+      "ruleRef": "R380",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00037",
+      "narrative": "Lot déclassé vendu à prix cassé avec certificat de non-conformité joint — décote documentée, FP.",
+      "payload": {
+        "seed": 771532241,
+        "montantChf": 28000,
+        "valueDate": "2026-07-18",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-42517",
+        "declencheur": "UNIT_PRICE_ANOMALY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-04-TP-1",
+      "scenarioId": "TB-04",
+      "ruleRef": "R381",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00039",
+      "narrative": "Machines classées double usage routées via un intermédiaire vers une destination sous embargo — licence absente, TP.",
+      "payload": {
+        "seed": 723200966,
+        "montantChf": 4000,
+        "valueDate": "2026-07-09",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-73872",
+        "declencheur": "DUAL_USE",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-04-FP-1",
+      "scenarioId": "TB-04",
+      "ruleRef": "R381",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00142",
+      "narrative": "Bien listé mais licence d'exportation SECO valide fournie et destinataire final vérifié — conforme, FP.",
+      "payload": {
+        "seed": 695790156,
+        "montantChf": 79000,
+        "valueDate": "2026-12-17",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-96291",
+        "declencheur": "DUAL_USE",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-05-TP-1",
+      "scenarioId": "TB-05",
+      "ruleRef": "R382",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Intermédiaire des Caïmans intercalé entre acheteur et vendeur réels, marge de 12% sans fonction — écran, TP.",
+      "payload": {
+        "seed": 612855985,
+        "montantChf": 39000,
+        "valueDate": "2026-09-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-31418",
+        "declencheur": "BACK_TO_BACK_LC",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-05-FP-1",
+      "scenarioId": "TB-05",
+      "ruleRef": "R382",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00150",
+      "narrative": "Maison de négoce établie jouant un rôle réel de contrepartie centrale (contrats et assurances au dossier) — FP.",
+      "payload": {
+        "seed": 585580351,
+        "montantChf": 159000,
+        "valueDate": "2026-01-25",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-89557",
+        "declencheur": "BACK_TO_BACK_LC",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-06-TP-1",
+      "scenarioId": "TB-06",
+      "ruleRef": "R383",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Trois « expéditions » payées 1.1M au total, aucun conteneur n'a jamais quitté le port déclaré — TP.",
+      "payload": {
+        "seed": 537101612,
+        "montantChf": 107000,
+        "valueDate": "2026-05-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-20577",
+        "declencheur": "PHANTOM_SHIPMENT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-06-FP-1",
+      "scenarioId": "TB-06",
+      "ruleRef": "R383",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00193",
+      "narrative": "Retard de mise à jour du tracking d'un transporteur secondaire (mouvement confirmé à J+4 par le B/L) — FP.",
+      "payload": {
+        "seed": 509821866,
+        "montantChf": 83000,
+        "valueDate": "2026-06-09",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-78044",
+        "declencheur": "PHANTOM_SHIPMENT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-07-TP-1",
+      "scenarioId": "TB-07",
+      "ruleRef": "R384",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00039",
+      "narrative": "Détour par un port connu pour le maquillage d'origine (certificats réémis) — contournement d'embargo, TP.",
+      "payload": {
+        "seed": 495962527,
+        "montantChf": 181000,
+        "valueDate": "2026-12-21",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-42268",
+        "declencheur": "ROUTE_ANOMALY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-07-FP-1",
+      "scenarioId": "TB-07",
+      "ruleRef": "R384",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00150",
+      "narrative": "Réacheminement dû à une congestion portuaire majeure documentée par l'armateur (avis publié) — FP.",
+      "payload": {
+        "seed": 468682789,
+        "montantChf": 87000,
+        "valueDate": "2026-02-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-55626",
+        "declencheur": "ROUTE_ANOMALY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-TB-08-TP-1",
+      "scenarioId": "TB-08",
+      "ruleRef": "R385",
+      "famille": "TB",
+      "label": "TP",
+      "clientId": "CLI-00101",
+      "narrative": "Boucle de revente à valeur +15% par tour entre trois entités liées au même bénéficiaire — carrousel confirmé.",
+      "payload": {
+        "seed": 420093450,
+        "montantChf": 6000,
+        "valueDate": "2026-05-12",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-28148",
+        "declencheur": "TRADE_CAROUSEL",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-TB-08-FP-1",
+      "scenarioId": "TB-08",
+      "ruleRef": "R385",
+      "famille": "TB",
+      "label": "FP",
+      "clientId": "CLI-00037",
+      "narrative": "Négoce légitime de matières premières où les rôles s'inversent selon les cours (positions documentées) — FP.",
+      "payload": {
+        "seed": 392944784,
+        "montantChf": 181000,
+        "valueDate": "2026-07-07",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-66397",
+        "declencheur": "TRADE_CAROUSEL",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-03-TP-1",
+      "scenarioId": "CB-03",
+      "ruleRef": "R386",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Correspondant supprimant systématiquement le nom d'ordonnateurs iraniens (initiales seules) — stripping confirmé, relation revue.",
+      "payload": {
+        "seed": 475803448,
+        "montantChf": 74000,
+        "valueDate": "2026-10-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-87479",
+        "declencheur": "WIRE_STRIPPING",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-03-FP-1",
+      "scenarioId": "CB-03",
+      "ruleRef": "R386",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00018",
+      "narrative": "Troncature technique de caractères non-latins par un système legacy (données complètes en pièce jointe MT199) — FP, correctif demandé.",
+      "payload": {
+        "seed": 448654662,
+        "montantChf": 109000,
+        "valueDate": "2026-05-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-70328",
+        "declencheur": "WIRE_STRIPPING",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-04-TP-1",
+      "scenarioId": "CB-04",
+      "ruleRef": "R387",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00070",
+      "narrative": "Détour par deux correspondants pour masquer une contrepartie russe restreinte — contournement confirmé.",
+      "payload": {
+        "seed": 433615787,
+        "montantChf": 154000,
+        "valueDate": "2026-06-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-34676",
+        "declencheur": "U_TURN",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-04-FP-1",
+      "scenarioId": "CB-04",
+      "ruleRef": "R387",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00164",
+      "narrative": "Paiement rejeté par la banque bénéficiaire (IBAN erroné) et retourné par une autre route — retour technique documenté, FP.",
+      "payload": {
+        "seed": 372781617,
+        "montantChf": 50000,
+        "valueDate": "2026-05-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-94807",
+        "declencheur": "U_TURN",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-05-TP-1",
+      "scenarioId": "CB-05",
+      "ruleRef": "R388",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Répondant offrant à ses clients un accès quasi direct au nostro (milliers de micro-ordres) — PTA confirmé, convention résiliée.",
+      "payload": {
+        "seed": 356825126,
+        "montantChf": 117000,
+        "valueDate": "2026-02-11",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-39933",
+        "declencheur": "PAYABLE_THROUGH",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-05-FP-1",
+      "scenarioId": "CB-05",
+      "ruleRef": "R388",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00018",
+      "narrative": "Pic de petits ordres dû à une migration de paie groupée du répondant (préavisée par MT199) — usage propre, FP.",
+      "payload": {
+        "seed": 329533100,
+        "montantChf": 184000,
+        "valueDate": "2026-11-07",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-01341",
+        "declencheur": "PAYABLE_THROUGH",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-06-TP-1",
+      "scenarioId": "CB-06",
+      "ruleRef": "R389",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Répondant « retail domestique » devenu hub régional de flux vers zones grises sans mise à jour CBDDQ — dérive confirmée.",
+      "payload": {
+        "seed": 247516305,
+        "montantChf": 196000,
+        "valueDate": "2026-03-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-00643",
+        "declencheur": "RESPONDENT_PROFILE_DRIFT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-06-FP-1",
+      "scenarioId": "CB-06",
+      "ruleRef": "R389",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00150",
+      "narrative": "Croissance de corridor liée à l'acquisition documentée d'une banque voisine (communiqué + CBDDQ mis à jour) — FP.",
+      "payload": {
+        "seed": 253791007,
+        "montantChf": 135000,
+        "valueDate": "2026-10-02",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-16616",
+        "declencheur": "RESPONDENT_PROFILE_DRIFT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-07-TP-1",
+      "scenarioId": "CB-07",
+      "ruleRef": "R390",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Établissement caribéen sans licence vérifiable ni locaux (adresse = boîte postale d'un agent) — shell bank, blocage.",
+      "payload": {
+        "seed": 172953868,
+        "montantChf": 159000,
+        "valueDate": "2026-03-07",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-47140",
+        "declencheur": "",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-07-FP-1",
+      "scenarioId": "CB-07",
+      "ruleRef": "R390",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00164",
+      "narrative": "Banque digitale licenciée sans agences mais dûment supervisée (registre du régulateur consulté) — présence légale établie, FP.",
+      "payload": {
+        "seed": 145547146,
+        "montantChf": 189000,
+        "valueDate": "2026-07-27",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-87814",
+        "declencheur": "",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-08-TP-1",
+      "scenarioId": "CB-08",
+      "ruleRef": "R391",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "RMA dormant réactivé soudainement pour une série de MT202 vers une zone grise — le canal oublié servait de porte dérobée.",
+      "payload": {
+        "seed": 130786815,
+        "montantChf": 47000,
+        "valueDate": "2026-02-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-75959",
+        "declencheur": "RMA_DORMANT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-08-FP-1",
+      "scenarioId": "CB-08",
+      "ruleRef": "R391",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00018",
+      "narrative": "RMA maintenu par exigence contractuelle d'un schéma de garantie multilatéral (convention au dossier) — justifié, FP.",
+      "payload": {
+        "seed": 69952517,
+        "montantChf": 197000,
+        "valueDate": "2026-02-16",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-76101",
+        "declencheur": "RMA_DORMANT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CB-09-TP-1",
+      "scenarioId": "CB-09",
+      "ruleRef": "R392",
+      "famille": "CB",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Nouvel actionnaire de contrôle d'un répondant apparu sur liste de sanctions — relation suspendue après comité.",
+      "payload": {
+        "seed": 62384746,
+        "montantChf": 53000,
+        "valueDate": "2026-08-03",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-20309",
+        "declencheur": "RESPONDENT_HIT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CB-09-FP-1",
+      "scenarioId": "CB-09",
+      "ruleRef": "R392",
+      "famille": "CB",
+      "label": "FP",
+      "clientId": "CLI-00150",
+      "narrative": "Adverse media visant l'homonyme d'une autre banque du même groupe de presse — établissement distinct, FP.",
+      "payload": {
+        "seed": 26716400,
+        "montantChf": 159000,
+        "valueDate": "2026-06-05",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-21134",
+        "declencheur": "RESPONDENT_HIT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-PF-01-TP-1",
+      "scenarioId": "PF-01",
+      "ruleRef": "R393",
+      "famille": "PF",
+      "label": "TP",
+      "clientId": "CLI-00039",
+      "narrative": "Cargaison d'origine russe payée au-dessus du price cap via un négociant intermédiaire — violation confirmée, blocage.",
+      "payload": {
+        "seed": 1304337765,
+        "montantChf": 145000,
+        "valueDate": "2026-04-18",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-27406",
+        "declencheur": "",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-PF-01-FP-1",
+      "scenarioId": "PF-01",
+      "ruleRef": "R393",
+      "famille": "PF",
+      "label": "FP",
+      "clientId": "CLI-00037",
+      "narrative": "Pétrole d'origine certifiée kazakhe transitant par un port russe (certificat d'origine et pipeline documentés) — hors périmètre du plafond, FP.",
+      "payload": {
+        "seed": 1268669411,
+        "montantChf": 45000,
+        "valueDate": "2026-01-09",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-24949",
+        "declencheur": "",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-PF-02-TP-1",
+      "scenarioId": "PF-02",
+      "ruleRef": "R394",
+      "famille": "PF",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Chaîne de trois écrans hongkongais récents aboutissant à une entité liée à un programme sous sanctions — TP.",
+      "payload": {
+        "seed": 1227170256,
+        "montantChf": 124000,
+        "valueDate": "2026-09-06",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-87221",
+        "declencheur": "PROLIF_CHAIN",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-PF-02-FP-1",
+      "scenarioId": "PF-02",
+      "ruleRef": "R394",
+      "famille": "PF",
+      "label": "FP",
+      "clientId": "CLI-00045",
+      "narrative": "Jeunes filiales de distribution d'un groupe industriel établi (organigramme et comptes consolidés fournis) — substance démontrée, FP.",
+      "payload": {
+        "seed": 1192943710,
+        "montantChf": 190000,
+        "valueDate": "2026-02-01",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-28271",
+        "declencheur": "PROLIF_CHAIN",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-PF-03-TP-1",
+      "scenarioId": "PF-03",
+      "ruleRef": "R395",
+      "famille": "PF",
+      "label": "TP",
+      "clientId": "CLI-00080",
+      "narrative": "Négociant horloger multipliant par 6 ses exports vers un relais notoire de réexportation — contournement confirmé.",
+      "payload": {
+        "seed": 1117877827,
+        "montantChf": 153000,
+        "valueDate": "2026-09-10",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-69583",
+        "declencheur": "LUXURY_EMBARGO",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-PF-03-FP-1",
+      "scenarioId": "PF-03",
+      "ruleRef": "R395",
+      "famille": "PF",
+      "label": "FP",
+      "clientId": "CLI-00063",
+      "narrative": "Croissance liée à l'ouverture documentée d'une boutique franchisée locale (bail et licence fournis) — marché réel, FP.",
+      "payload": {
+        "seed": 1082209481,
+        "montantChf": 58000,
+        "valueDate": "2026-10-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-51485",
+        "declencheur": "LUXURY_EMBARGO",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IA-01-TP-1",
+      "scenarioId": "IA-01",
+      "ruleRef": "R396",
+      "famille": "IA",
+      "label": "TP",
+      "clientId": "CLI-00005",
+      "narrative": "Surpaiement de 60% via structure BVI : la survaleur revenait au vendeur complice — intégration confirmée.",
+      "payload": {
+        "seed": 90428163,
+        "montantChf": 50000,
+        "valueDate": "2026-07-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-51903",
+        "declencheur": "REAL_ESTATE_ANOMALY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IA-01-FP-1",
+      "scenarioId": "IA-01",
+      "ruleRef": "R396",
+      "famille": "IA",
+      "label": "FP",
+      "clientId": "CLI-00152",
+      "narrative": "Prime de 30% pour un bien de prestige off-market avec deux expertises concordantes au dossier — marché de niche, FP.",
+      "payload": {
+        "seed": 54759817,
+        "montantChf": 149000,
+        "valueDate": "2026-11-08",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-86864",
+        "declencheur": "REAL_ESTATE_ANOMALY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IA-02-TP-1",
+      "scenarioId": "IA-02",
+      "ruleRef": "R397",
+      "famille": "IA",
+      "label": "TP",
+      "clientId": "CLI-00034",
+      "narrative": "Aller-retour d'une œuvre entre deux entités du même bénéficiaire avec +40% — transfert de valeur habillé, TP.",
+      "payload": {
+        "seed": 2129553406,
+        "montantChf": 176000,
+        "valueDate": "2026-06-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-26967",
+        "declencheur": "ART_FREEPORT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IA-02-FP-1",
+      "scenarioId": "IA-02",
+      "ruleRef": "R397",
+      "famille": "IA",
+      "label": "FP",
+      "clientId": "CLI-00016",
+      "narrative": "Collectionneur établi cédant une pièce via une maison de vente publique (adjudication tierce, catalogue) — vente de marché, FP.",
+      "payload": {
+        "seed": 2093884932,
+        "montantChf": 91000,
+        "valueDate": "2026-08-27",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-02676",
+        "declencheur": "ART_FREEPORT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IA-03-TP-1",
+      "scenarioId": "IA-03",
+      "ruleRef": "R398",
+      "famille": "IA",
+      "label": "TP",
+      "clientId": "CLI-00080",
+      "narrative": "Rotation de véhicules de collection exportés vers un marchand relais, marges incohérentes — circulation de valeur, TP.",
+      "payload": {
+        "seed": 2053811305,
+        "montantChf": 130000,
+        "valueDate": "2026-02-25",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-70881",
+        "declencheur": "VALUE_VEHICLE",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IA-03-FP-1",
+      "scenarioId": "IA-03",
+      "ruleRef": "R398",
+      "famille": "IA",
+      "label": "FP",
+      "clientId": "CLI-00063",
+      "narrative": "Passionné documenté (assurances, expertises, participation à des concours d'élégance) constituant sa collection — FP.",
+      "payload": {
+        "seed": 2018142967,
+        "montantChf": 37000,
+        "valueDate": "2026-08-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-55547",
+        "declencheur": "VALUE_VEHICLE",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-AN-01-TP-1",
+      "scenarioId": "AN-01",
+      "ruleRef": "R399",
+      "famille": "AN",
+      "label": "TP",
+      "clientId": "CLI-00072",
+      "narrative": "Cash à 4.2σ du groupe sans changement déclaré de situation — activité non expliquée, TP.",
+      "payload": {
+        "seed": 716657944,
+        "montantChf": 105000,
+        "valueDate": "2026-03-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-23737",
+        "declencheur": "PEER_DEVIATION",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-AN-01-FP-1",
+      "scenarioId": "AN-01",
+      "ruleRef": "R399",
+      "famille": "AN",
+      "label": "FP",
+      "clientId": "CLI-00104",
+      "narrative": "Pic à 3.8σ expliqué par la vente documentée d'une entreprise (CoC ouvert en amont) — événement de vie, FP.",
+      "payload": {
+        "seed": 680989606,
+        "montantChf": 36000,
+        "valueDate": "2026-08-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-41668",
+        "declencheur": "PEER_DEVIATION",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-AN-02-TP-1",
+      "scenarioId": "AN-02",
+      "ruleRef": "R400",
+      "famille": "AN",
+      "label": "TP",
+      "clientId": "CLI-00099",
+      "narrative": "Bascule complète du profil (nouveaux corridors, volumes ×3) après un changement de mandataire — compte repris en main par un tiers, TP.",
+      "payload": {
+        "seed": 640915851,
+        "montantChf": 184000,
+        "valueDate": "2026-01-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-45931",
+        "declencheur": "BEHAVIOR_SHIFT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-AN-02-FP-1",
+      "scenarioId": "AN-02",
+      "ruleRef": "R400",
+      "famille": "AN",
+      "label": "FP",
+      "clientId": "CLI-00016",
+      "narrative": "Montée en charge annoncée d'un mandat de gestion élargi (avenant signé) — changement contractualisé, FP.",
+      "payload": {
+        "seed": 605247505,
+        "montantChf": 71000,
+        "valueDate": "2026-11-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-12944",
+        "declencheur": "BEHAVIOR_SHIFT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-AN-03-TP-1",
+      "scenarioId": "AN-03",
+      "ruleRef": "R401",
+      "famille": "AN",
+      "label": "TP",
+      "clientId": "CLI-00069",
+      "narrative": "Premier international du compte : 180k vers une fiduciaire offshore inconnue, dossier à 2% de complétude — TP.",
+      "payload": {
+        "seed": 599666182,
+        "montantChf": 66000,
+        "valueDate": "2026-09-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-83091",
+        "declencheur": "FIRST_TIME",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-AN-03-FP-1",
+      "scenarioId": "AN-03",
+      "ruleRef": "R401",
+      "famille": "AN",
+      "label": "FP",
+      "clientId": "CLI-00121",
+      "narrative": "Premier virement France→UK pour l'inscription universitaire d'un enfant (attestation jointe) — vie courante, FP.",
+      "payload": {
+        "seed": 564128908,
+        "montantChf": 147000,
+        "valueDate": "2026-10-02",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-04824",
+        "declencheur": "FIRST_TIME",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-AN-04-TP-1",
+      "scenarioId": "AN-04",
+      "ruleRef": "R402",
+      "famille": "AN",
+      "label": "TP",
+      "clientId": "CLI-00156",
+      "narrative": "Segment cash réactivé par des dépôts fractionnés après 3 ans — le canal oublié sert au placement, TP.",
+      "payload": {
+        "seed": 523924209,
+        "montantChf": 197000,
+        "valueDate": "2026-11-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-38341",
+        "declencheur": "SEGMENT_REACTIVATION",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-AN-04-FP-1",
+      "scenarioId": "AN-04",
+      "ruleRef": "R402",
+      "famille": "AN",
+      "label": "FP",
+      "clientId": "CLI-00053",
+      "narrative": "Retraits cash réactivés pour des travaux payés en espèces à des artisans (devis et factures fournis) — usage ponctuel expliqué, FP.",
+      "payload": {
+        "seed": 488255871,
+        "montantChf": 97000,
+        "valueDate": "2026-07-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-17410",
+        "declencheur": "SEGMENT_REACTIVATION",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-AN-05-TP-1",
+      "scenarioId": "AN-05",
+      "ruleRef": "R403",
+      "famille": "AN",
+      "label": "TP",
+      "clientId": "CLI-00080",
+      "narrative": "« Salaires » de 45k versés par une société sans lien avec l'employeur déclaré — canal de distribution occulte, TP.",
+      "payload": {
+        "seed": 413566828,
+        "montantChf": 102000,
+        "valueDate": "2026-04-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-64416",
+        "declencheur": "INCOME_MISMATCH",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-AN-05-FP-1",
+      "scenarioId": "AN-05",
+      "ruleRef": "R403",
+      "famille": "AN",
+      "label": "FP",
+      "clientId": "CLI-00035",
+      "narrative": "Bonus exceptionnel documenté par le certificat de salaire annuel (élément variable déclaré) — rémunération réelle, FP.",
+      "payload": {
+        "seed": 377898474,
+        "montantChf": 40000,
+        "valueDate": "2026-05-18",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-91801",
+        "declencheur": "INCOME_MISMATCH",
+        "attendu": "FP"
+      }
     }
   ]
 }

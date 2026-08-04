@@ -7,7 +7,9 @@
 import json, os
 _HERE = os.path.dirname(os.path.abspath(__file__))          # tools/
 _ROOT = os.path.dirname(_HERE)                              # racine du dépôt
-_GEN = os.path.join(_ROOT, "spec", "generated")            # sections de spec régénérées
+# Sections de spec régénérées sous data/ (PAS spec/) : redondantes avec SPEC-AML-GAP-WAVE{1,2}.md
+# versées ; les mettre sous spec/ les ferait compter par CANON-MASTER (non déterministe en CI).
+_GEN = os.path.join(_ROOT, "data", "aml-gap-sections")
 os.makedirs(_GEN, exist_ok=True)
 os.makedirs(os.path.join(_ROOT, "data"), exist_ok=True)
 

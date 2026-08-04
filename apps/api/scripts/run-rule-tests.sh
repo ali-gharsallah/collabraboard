@@ -109,7 +109,7 @@ echo "── Câblage KYC↔Workflow (KW-01..05, clause R172) ──"; run kyc-w
 echo "── Câblage OCR typé (OC-01..06, R174→R176) ──"; run ocr-extraction.wiring.spec.js
 echo "── Câblage Licence vendor (LC-01..05, R177→R179) ──"; run vendor-license.wiring.spec.js
 echo "── Câblage Surveillance AML (A-69..A-86, R189→R206) ──"; run aml-scoring.wiring.spec.js
-echo "── Câblage AML Gap Wave 1 (blocs 50–56, R340→R377) ──"; run aml-gap.wiring.spec.js
+echo "── Câblage AML Gap Waves 1+2 (blocs 50–61, R340→R403) ──"; run aml-gap.wiring.spec.js
 echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run islamic-screening.wiring.spec.js
 echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js

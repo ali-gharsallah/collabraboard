@@ -119,7 +119,7 @@ export function Router() {
       ["compliance", "Compliance Center", "🛡"], ["screening", "Screening", "⌖"],
       ["screeningadv", "Screening avancé", "⌖"], ["alertes", "File d'alertes", "▤"],
       ["dossiers", "Dossiers de risque", "▤"], ["amlws", "AML Investigation", "◬"],
-      ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["amlgap", "AML Gap Wave 1", "🌊"], ["mros", "Reporting MROS", "📄"],
+      ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["amlgap", "AML Gap", "🌊"], ["mros", "Reporting MROS", "📄"],
       ["corroboration", "Corroboration KYC", "⚖"], ["legalreg", "Legal — Contrats", "§"],
       ["oprisk", "Octopulse OpRisk", "🐙"], ["formations", "Formations", "🎓"],
       ["veille", "Veille réglementaire", "📡"], ["registrelba", "Registre LBA", "📖"]] },

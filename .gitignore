@@ -29,4 +29,4 @@ venv/
 # AML Gap — artefacts générés par tools/gen_aml_gap.py, non encore consommés (démo/sections).
 # Le dataset data/aml-gap-dataset-gt.json, lui, est versé et gardé no-drift (CI 3d).
 data/c50gap.gen.js
-spec/generated/
+data/aml-gap-sections/

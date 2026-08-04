@@ -15,8 +15,11 @@ import { AML_GAP_SCENARIOS, AML_GAP_GT_SEED, AmlGapScenarioSeed, AmlGapGtSeed } 
 // useApiOrSeed relit le backend quand il est présent, retombe sur ce seed sinon (source jamais masquée).
 
 const FAM_LABEL: Record<string, string> = {
+  // Wave 1 (R340–R377)
   SF: "Screening en flux", QO: "Indices OBA-FINMA", GU: "Vision groupe UBO", IP: "Instruments PB",
   CR: "Crypto / VASP", FT: "CFT", GV: "Gouvernance",
+  // Wave 2 (R378–R403) — Analytique 2G : détecteurs statistiques exécutés dans le service Python CPSI
+  TB: "TBML", CB: "Correspondent Banking", PF: "Prolifération", IA: "Immobilier & Art", AN: "Analytique 2G",
 };
 const GREEN = "#4A6B28", AMBER = "#C9A227", RED = "#B5483C", INK = "#1A2410", MUTE = "#8A8F82", LINE = "#E6E9DF";
 
@@ -55,10 +58,11 @@ export function AmlGap() {
   return (
     <div>
       {isDemoMode() && <DemoModeBanner />}
-      <h3 style={{ marginBottom: 4 }}>AML Gap Wave 1 — screening en flux, groupe UBO, crypto, CFT (R340→R377)</h3>
+      <h3 style={{ marginBottom: 4 }}>AML Gap Waves 1+2 — flux, UBO, crypto, CFT, TBML, correspondent banking, prolifération (R340→R403)</h3>
       <p style={{ fontSize: 12, color: MUTE, marginTop: 0 }}>
-        38 scénarios en 7 familles. Le moteur SIGNALE, il ne décide jamais seul ; un scénario bloquant émet
-        une demande de blocage (décision humaine requise, R44/R39). Seuils pilotés par le registre R-Q.</p>
+        64 scénarios en 12 familles. Le moteur SIGNALE, il ne décide jamais seul ; un scénario bloquant émet
+        une demande de blocage (décision humaine requise, R44/R39). Seuils pilotés par le registre R-Q.
+        L'Analytique 2G (z-score robuste, changepoint) s'exécute dans le service Python CPSI — jamais en Nest.</p>
       <div style={{ display: "flex", gap: 4, margin: "12px 0 16px", background: "#F7F9F3", padding: 5, borderRadius: 12, border: `1px solid ${LINE}`, width: "fit-content" }}>
         {tabBtn("regles", "▤ Règles & cas GT")}
         {tabBtn("signaux", "🔔 Signaux")}

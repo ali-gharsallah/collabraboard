@@ -46,15 +46,18 @@ const CO_SR = { tenantId: "t1", userId: "co.sr", role: "CO_SR" };
 const RM = { tenantId: "t1", userId: "rm.1", role: "RM" };
 const mk = (seed: any = {}) => { const p = fakePrisma(seed); return { p, s: new AmlGapService(p, fakeAudit()) }; };
 
-const BLOCKING = ["R344", "R346", "R363", "R365", "R367", "R373"];
-const FAMILLES: Record<string, number> = { SF: 7, QO: 5, GU: 4, IP: 7, CR: 6, FT: 5, GV: 4 };
+const BLOCKING = ["R344", "R346", "R363", "R365", "R367", "R373", "R390", "R393"];
+const FAMILLES: Record<string, number> = {
+  SF: 7, QO: 5, GU: 4, IP: 7, CR: 6, FT: 5, GV: 4,          // Wave 1 (R340–R377)
+  TB: 8, CB: 7, PF: 3, IA: 3, AN: 5,                        // Wave 2 (R378–R403)
+};
 
 (async () => {
   // ── Corpus GT (contrat de l'en-tête de spec) ──
-  await it("GT-CORPUS : 78 cas, 40 TP / 38 FP, chacun rattaché à un scénario du référentiel", async () => {
-    eq(AML_GAP_GT.length, 78, "total GT");
-    eq(AML_GAP_GT.filter((c) => c.label === "TP").length, 40, "TP");
-    eq(AML_GAP_GT.filter((c) => c.label === "FP").length, 38, "FP");
+  await it("GT-CORPUS : 130 cas, 66 TP / 64 FP, chacun rattaché à un scénario du référentiel", async () => {
+    eq(AML_GAP_GT.length, 130, "total GT");
+    eq(AML_GAP_GT.filter((c) => c.label === "TP").length, 66, "TP");
+    eq(AML_GAP_GT.filter((c) => c.label === "FP").length, 64, "FP");
     const codes = new Set(AML_GAP_REFERENTIEL.map((r) => r.id));
     ok(AML_GAP_GT.every((c) => codes.has(c.scenarioId)), "tout cas GT pointe un scénario connu");
     // chaque scénario a ≥ 1 TP et ≥ 1 FP (TP et FP déclenchent — corpus de recall)
@@ -67,8 +70,8 @@ const FAMILLES: Record<string, number> = { SF: 7, QO: 5, GU: 4, IP: 7, CR: 6, FT
     eq(ph.length, 1, "placeholders"); eq(ph[0].ruleRef, "R377", "placeholder = R377");
   });
 
-  await it("REFERENTIEL : 38 règles R340–R377, familles aux effectifs, 6 bloquantes exactes", async () => {
-    eq(AML_GAP_REFERENTIEL.length, 38, "règles");
+  await it("REFERENTIEL : 64 règles R340–R403 (Waves 1+2), familles aux effectifs, 8 bloquantes exactes", async () => {
+    eq(AML_GAP_REFERENTIEL.length, 64, "règles");
     const seen: Record<string, number> = {};
     for (const r of AML_GAP_REFERENTIEL) seen[r.famille] = (seen[r.famille] || 0) + 1;
     for (const [f, n] of Object.entries(FAMILLES)) eq(seen[f], n, `famille ${f}`);
@@ -107,6 +110,15 @@ const FAMILLES: Record<string, number> = { SF: 7, QO: 5, GU: 4, IP: 7, CR: 6, FT
     const { p, s } = mk();
     await s.enregistrerSignal(CO_SR, { scenarioCode: "SF-01", clientId: "cli-3", faits: { score: 91 } });
     eq(evts(p, "aml.block.requested").length, 0, "aucun block.requested");
+  });
+
+  // ── Wave 2 : R390 (CB-07 shell bank) BLOQUANT — même mécanisme générique, dérivé du référentiel ──
+  await it("R390 (Wave 2, shell bank, bloquant) : raised + block.requested", async () => {
+    const { p, s } = mk();
+    const sig: any = await s.enregistrerSignal(CO_SR, { scenarioCode: "CB-07", clientId: "cli-cb", faits: { bic: "SHELLXX" } });
+    eq(sig.ruleRef, "R390", "ruleRef"); eq(sig.blocking, true, "bloquant");
+    eq(evts(p, "aml.signal.raised").length, 1, "raised");
+    eq(evts(p, "aml.block.requested").length, 1, "block.requested");
   });
 
   // ── Idempotence (R48) : même déclenchement rejoué → un seul signal ──
@@ -169,6 +181,6 @@ const FAMILLES: Record<string, number> = { SF: 7, QO: 5, GU: 4, IP: 7, CR: 6, FT
     eq(cr.length, 1, "un signal famille CR"); eq((cr[0] as any).ruleRef, "R363", "ruleRef CR-01");
   });
 
-  console.log(`\nCâblage AML Gap Wave 1 (blocs 50–56, R340→R377) — ${passed}/${passed + failed} tests verts`);
+  console.log(`\nCâblage AML Gap Waves 1+2 (blocs 50–61, R340→R403) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

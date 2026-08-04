@@ -532,6 +532,77 @@ def _payload(case_id, rule, label):
     }
 
 
+import re
+
+# ── Wave 2 (R378–R403, blocs 57–61) : DÉRIVÉE du canon PO tools/gen_aml_gap.py (jamais transcrite) ──
+_WAVE2_BLOCNUM = {"TBML": 57, "Correspondent Banking": 58, "Prolifération": 59,
+                  "Immobilier & Art": 60, "Analytique 2G": 61}
+
+
+def _parse_default(d):
+    s = str(d)
+    try:
+        return int(s)
+    except ValueError:
+        pass
+    try:
+        return float(s)
+    except ValueError:
+        pass
+    if s.lower() in ("true", "false"):
+        return s.lower() == "true"
+    return s
+
+
+def _po_signal(then):
+    m = re.search(r"Signal ([A-Z_]+)", then or "")
+    return m.group(1) if m else ""
+
+
+def _load_po_rules():
+    """Charge les 64 RULES du canon PO (tools/gen_aml_gap.py) SANS déclencher son émission :
+    on n'exécute que la partie AVANT le marqueur d'émission (construction des règles + wave2)."""
+    po_gen = os.path.normpath(os.path.join(HERE, "..", "gen_aml_gap.py"))
+    src = open(po_gen, encoding="utf-8").read().split("# ════════ ÉMISSION")[0]
+    ns = {"__file__": po_gen}  # le canon PO résout ses chemins via __file__
+    exec(compile(src, po_gen, "exec"), ns)
+    return ns["RULES"]
+
+
+def _wave2_rules_gt():
+    """Mappe la tranche Wave 2 du canon PO (R378–R403) vers la forme de l'émetteur (référentiel +
+    GT enrichi de payloads déterministes). Le canon fait foi ; aucune donnée transcrite ici."""
+    po = [r for r in _load_po_rules() if r["rule"] > "R377"]
+    byfam = {}
+    for r in po:
+        byfam.setdefault(r["fam"], []).append(r["rule"])
+    plage = {fam: refs[0] + "–" + refs[-1] for fam, refs in byfam.items()}
+    rules, gt = [], []
+    for r in po:
+        fam2 = r["id"][:2]
+        rule = {
+            "id": r["id"], "ruleRef": r["rule"], "bloc": _WAVE2_BLOCNUM[r["fam"]],
+            "blocTitre": r["fam"], "plage": plage[r["fam"]], "famille": fam2, "titre": r["nom"],
+            "desc": r["desc"], "niveau": r["niveau"], "kind": "detection", "blocking": bool(r["block"]),
+            "signal": _po_signal(r["then"]),
+            "gherkin": {"given": r["given"], "when": r["when"], "then": r["then"]},
+            "params": [{"key": p[0], "label": p[1], "default": _parse_default(p[2])} for p in r["params"]],
+            "gtCount": {"tp": sum(1 for c in r["cases"] if c["label"] == "TP"),
+                        "fp": sum(1 for c in r["cases"] if c["label"] == "FP")},
+        }
+        rules.append(rule)
+        counters = {"TP": 0, "FP": 0}
+        for c in r["cases"]:
+            counters[c["label"]] += 1
+            case_id = "GT-%s-%s-%d" % (r["id"], c["label"], counters[c["label"]])
+            gt.append({
+                "caseId": case_id, "scenarioId": r["id"], "ruleRef": r["rule"], "famille": fam2,
+                "label": c["label"], "clientId": c["client"], "narrative": c["txt"],
+                "payload": _payload(case_id, rule, c["label"]),
+            })
+    return rules, gt
+
+
 def build():
     rules = []
     gt = []
@@ -574,6 +645,10 @@ def build():
                     else:
                         case["payload"] = _payload(case_id, r, label)
                     gt.append(case)
+    # ── Wave 2 (R378–R403) appendue depuis le canon PO — Wave 1 (BLOCS) inchangée ──
+    w2_rules, w2_gt = _wave2_rules_gt()
+    rules += w2_rules
+    gt += w2_gt
     return rules, gt
 
 
@@ -658,9 +733,9 @@ def main():
         "spec": "SPEC-AMLGAP-WAVE1.md (ratifiée PO 04.08.2026)",
         "mapping": "spec/mapping-session-repo.md §4 (step-0)",
         "seed": SEED,
-        "ruleRange": "R340–R377",
-        "blocs": [b[0] for b in BLOCS],
-        "familles": sorted({b[3] for b in BLOCS}),
+        "ruleRange": rules[0]["ruleRef"] + "–" + rules[-1]["ruleRef"],
+        "blocs": sorted({r["bloc"] for r in rules}),
+        "familles": sorted({r["famille"] for r in rules}),
         "counts": {"rules": len(rules), "gt": len(gt), "tp": tp, "fp": fp,
                    "placeholders": placeholders, "blocking": sum(1 for r in rules if r["blocking"])},
         "note": "Artefacts GÉNÉRÉS — ne jamais éditer à la main ; toute évolution passe par le générateur.",
@@ -672,8 +747,8 @@ def main():
         json.dump({"meta": meta, "cases": gt}, f, ensure_ascii=False, indent=2)
         f.write("\n")
     _emit_ts(rules, gt)
-    print("aml-gap généré : %d règles (R340–R377, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
-          % (len(rules), meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
+    print("aml-gap généré : %d règles (%s, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
+          % (len(rules), meta["ruleRange"], meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
     print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
     print("  + TS front   : apps/web/src/features/aml/aml-gap.seed.gen.ts")
 

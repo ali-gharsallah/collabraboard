@@ -1024,6 +1024,676 @@ export const AML_GAP_SCENARIOS: AmlGapScenarioSeed[] = [
       "when": "La revue consolide couverture (matrice typologies GAFI × scénarios), performance et écarts.",
       "then": "Rapport de calibrage annuel généré, visé four-eyes, archivé GED — section dédiée du rapport Direction."
     }
+  },
+  {
+    "code": "TB-01",
+    "ruleRef": "R378",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Surfacturation (over-invoicing)",
+    "desc": "Factures systématiquement payées au-dessus de la valeur de marché des biens — miroir sortant de R201 : la survaleur transfère du blanchiment sous couvert commercial.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "OVER_INVOICING",
+    "params": [
+      {
+        "key": "ecart_prix_seuil",
+        "label": "écart au prix de référence",
+        "default": 15
+      },
+      {
+        "key": "nb_factures_min",
+        "label": "factures concernées / 90j",
+        "default": 3
+      }
+    ],
+    "gherkin": {
+      "given": "8 paiements de factures d'import présentent un écart constant de +22% vs le prix de référence des biens (code HS).",
+      "when": "Écart récurrent ≥ seuil entre montant payé et valeur de référence, sur ≥ N factures / 90j.",
+      "then": "Signal OVER_INVOICING (Niveau 2) — analyse trade finance, justificatifs contractuels et incoterms demandés."
+    }
+  },
+  {
+    "code": "TB-02",
+    "ruleRef": "R379",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Facturation multiple",
+    "desc": "Le même bien ou la même expédition est facturé et payé plusieurs fois, via un ou plusieurs financeurs.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "MULTIPLE_INVOICING",
+    "params": [
+      {
+        "key": "fenetre_dedup",
+        "label": "fenêtre de déduplication",
+        "default": 180
+      }
+    ],
+    "gherkin": {
+      "given": "Deux paiements de CHF 140k référencent le même connaissement (B/L) à 3 semaines d'écart.",
+      "when": "Déduplication des références documentaires (B/L, facture, conteneur) sur les paiements trade / 180j.",
+      "then": "Signal MULTIPLE_INVOICING (Niveau 2) — documents originaux exigés, vérification auprès du transporteur."
+    }
+  },
+  {
+    "code": "TB-03",
+    "ruleRef": "R380",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Prix hors benchmark (unit price)",
+    "desc": "Analyse du prix unitaire par code HS contre des référentiels de prix de marché — les écarts extrêmes signent la mis-invoicing.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "UNIT_PRICE_ANOMALY",
+    "params": [
+      {
+        "key": "percentile_bas",
+        "label": "percentile bas",
+        "default": 5
+      },
+      {
+        "key": "percentile_haut",
+        "label": "percentile haut",
+        "default": 95
+      },
+      {
+        "key": "referentiel_hs",
+        "label": "référentiel de prix HS",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Des « composants électroniques » sont facturés CHF 2 pièce alors que le référentiel HS donne 40-60.",
+      "when": "Prix unitaire vs distribution de référence du code HS ; écart au-delà des percentiles paramétrés.",
+      "then": "Signal UNIT_PRICE_ANOMALY (Niveau 2) — nature réelle des biens à corroborer."
+    }
+  },
+  {
+    "code": "TB-04",
+    "ruleRef": "R381",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Biens à double usage",
+    "desc": "Paiements liés à des biens à double usage (annexes du contrôle des exportations) vers des destinations sensibles.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "DUAL_USE",
+    "params": [
+      {
+        "key": "listes_controle",
+        "label": "listes de contrôle actives",
+        "default": "SECO,EU"
+      }
+    ],
+    "gherkin": {
+      "given": "Un paiement finance des machines-outils de précision classées double usage vers un intermédiaire au pays tiers.",
+      "when": "Classification des biens (HS + libellés) croisée avec les listes de contrôle des exportations et la destination finale.",
+      "then": "Signal DUAL_USE (Niveau 1) — licence d'exportation SECO à exiger avant exécution, escalade sanctions."
+    }
+  },
+  {
+    "code": "TB-05",
+    "ruleRef": "R382",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "LC back-to-back / crédits doc HRJ",
+    "desc": "Lettres de crédit adossées (back-to-back) ou crédits documentaires dont la chaîne implique des juridictions à risque sans logique commerciale.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BACK_TO_BACK_LC",
+    "params": [
+      {
+        "key": "hrj_trade",
+        "label": "liste juridictions trade à risque",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Une LC est adossée à une seconde LC émise pour un intermédiaire offshore qui ne touche jamais la marchandise.",
+      "when": "Détection de LC adossées × intermédiaires sans rôle logistique × juridictions de la chaîne.",
+      "then": "Signal BACK_TO_BACK_LC (Niveau 2) — substance de l'intermédiaire à démontrer."
+    }
+  },
+  {
+    "code": "TB-06",
+    "ruleRef": "R383",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Phantom shipping",
+    "desc": "Paiement sans mouvement de marchandise vérifiable : documents absents, navires inexistants, conteneurs fantômes.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PHANTOM_SHIPMENT",
+    "params": [
+      {
+        "key": "seuil_verif_tracking",
+        "label": "seuil de vérification",
+        "default": 100000
+      }
+    ],
+    "gherkin": {
+      "given": "Un paiement de CHF 380k référence un conteneur dont le tracking ne montre aucun mouvement.",
+      "when": "Vérification d'existence du voyage (API tracking conteneurs/navires) pour les paiements trade ≥ seuil.",
+      "then": "Signal PHANTOM_SHIPMENT (Niveau 1) — fonds gelés en attente de preuve d'expédition, EDD."
+    }
+  },
+  {
+    "code": "TB-07",
+    "ruleRef": "R384",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Routes & transbordements atypiques",
+    "desc": "Routes maritimes incohérentes avec la géographie commerciale : détours, transbordements multiples, pavillons changés en cours de voyage.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ROUTE_ANOMALY",
+    "params": [
+      {
+        "key": "transbordements_max",
+        "label": "transbordements tolérés",
+        "default": 1
+      }
+    ],
+    "gherkin": {
+      "given": "Une cargaison Rotterdam→Genève transite par 3 ports hors route avec 2 transbordements.",
+      "when": "Score d'anomalie de route (détour, transbordements, arrêts en zones sensibles) sur les documents de transport.",
+      "then": "Signal ROUTE_ANOMALY (Niveau 2) — justification logistique demandée."
+    }
+  },
+  {
+    "code": "TB-08",
+    "ruleRef": "R385",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "famille": "TB",
+    "titre": "Carrousel documentaire",
+    "desc": "Les mêmes contreparties échangent des rôles acheteur/vendeur sur des biens similaires en boucle — chiffre d'affaires artificiel.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "TRADE_CAROUSEL",
+    "params": [
+      {
+        "key": "duree_cycle_trade",
+        "label": "fenêtre de détection",
+        "default": 180
+      }
+    ],
+    "gherkin": {
+      "given": "A vend à B, B revend à C, C revend à A des lots similaires à valeur croissante sur 4 mois.",
+      "when": "Détection de cycles sur le graphe des contreparties trade × similarité des biens × inflation des montants.",
+      "then": "Signal TRADE_CAROUSEL (Niveau 2) — logique économique de la chaîne à démontrer."
+    }
+  },
+  {
+    "code": "CB-03",
+    "ruleRef": "R386",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "Wire stripping / transparence",
+    "desc": "Champs ordonnateur/bénéficiaire (50/59) incomplets, tronqués ou altérés dans la chaîne — GAFI R.16, Wolfsberg Payment Transparency.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "WIRE_STRIPPING",
+    "params": [
+      {
+        "key": "taux_incomplet_max",
+        "label": "taux d'incomplétude toléré par correspondant",
+        "default": 2
+      }
+    ],
+    "gherkin": {
+      "given": "Une série de MT103 d'un correspondant arrive avec le champ 50 réduit à des initiales.",
+      "when": "Contrôle de complétude et de cohérence des champs de transparence par message et par correspondant (taux agrégé).",
+      "then": "Signal WIRE_STRIPPING (Niveau 1) — messages retenus, demande de complément au correspondant, taux suivi par répondant."
+    }
+  },
+  {
+    "code": "CB-04",
+    "ruleRef": "R387",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "U-turn payments",
+    "desc": "Fonds sortant vers un correspondant tiers et revenant à la même partie via une autre chaîne — contournement de restrictions.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "U_TURN",
+    "params": [
+      {
+        "key": "fenetre_uturn",
+        "label": "fenêtre d'appariement",
+        "default": 30
+      }
+    ],
+    "gherkin": {
+      "given": "CHF 500k partent vers une banque du Golfe et reviennent 9 jours après via un correspondant européen, même bénéficiaire final.",
+      "when": "Appariement sortie/entrée (montant, parties finales, fenêtre) à travers des chaînes de correspondance distinctes.",
+      "then": "Signal U_TURN (Niveau 2) — finalité du détour à justifier, analyse sanctions."
+    }
+  },
+  {
+    "code": "CB-05",
+    "ruleRef": "R388",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "Payable-through accounts",
+    "desc": "Clients du répondant accédant directement au compte de correspondance (payable-through) — diligence impossible sur l'utilisateur final.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PAYABLE_THROUGH",
+    "params": [
+      {
+        "key": "indicateurs_pta",
+        "label": "indicateurs d'usage direct",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Des ordres au format client final (références retail) transitent par le compte nostro d'un répondant.",
+      "when": "Détection de patterns d'usage direct (volumétrie retail, références client final) sur comptes de correspondance.",
+      "then": "Signal PAYABLE_THROUGH (Niveau 1) — clarification contractuelle avec le répondant, restriction possible après décision."
+    }
+  },
+  {
+    "code": "CB-06",
+    "ruleRef": "R389",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "Volumétrie répondant vs profil (KYCC)",
+    "desc": "Volumes et corridors d'un répondant incohérents avec son profil déclaré (questionnaire Wolfsberg CBDDQ).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RESPONDENT_PROFILE_DRIFT",
+    "params": [
+      {
+        "key": "derive_max",
+        "label": "dérive tolérée vs profil",
+        "default": 20
+      }
+    ],
+    "gherkin": {
+      "given": "Un répondant déclaré « domestique retail » envoie 40% de ses flux vers des corridors HRJ.",
+      "when": "Comparaison flux réels (corridors, volumes, devises) vs profil CBDDQ déclaré, par période.",
+      "then": "Signal RESPONDENT_PROFILE_DRIFT (Niveau 2) — mise à jour du questionnaire exigée, revue de la relation."
+    }
+  },
+  {
+    "code": "CB-07",
+    "ruleRef": "R390",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "Shell bank",
+    "desc": "Détection de banques fictives (sans présence physique ni groupe régulé) dans les chaînes — interdiction LBA.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "",
+    "params": [
+      {
+        "key": "registres_supervision",
+        "label": "registres de superviseurs consultés",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Un BIC de la chaîne appartient à un établissement sans adresse physique vérifiable ni superviseur identifiable.",
+      "when": "Croisement BIC × registres de supervision × indicateurs de présence physique (référentiel tenant).",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — interdiction légale, aucune dérogation, dossier sanctions/MROS selon le cas."
+    }
+  },
+  {
+    "code": "CB-08",
+    "ruleRef": "R391",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "RMA sans flux ni justification",
+    "desc": "Autorisations d'échange SWIFT (RMA) actives sans flux ni besoin documenté — surface d'attaque et de contournement inutile.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RMA_DORMANT",
+    "params": [
+      {
+        "key": "periode_revue_rma",
+        "label": "période de revue",
+        "default": 12
+      }
+    ],
+    "gherkin": {
+      "given": "Un RMA bilatéral est actif depuis 3 ans avec zéro message échangé.",
+      "when": "Revue périodique des RMA : flux sur la période × justification métier enregistrée.",
+      "then": "Signal RMA_DORMANT (Niveau 1, ops) — proposition de résiliation, décision tracée."
+    }
+  },
+  {
+    "code": "CB-09",
+    "ruleRef": "R392",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "famille": "CB",
+    "titre": "Screening des répondantes (CBDDQ)",
+    "desc": "Screening périodique des banques répondantes elles-mêmes : sanctions, adverse media, rating pays, actionnariat.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RESPONDENT_HIT",
+    "params": [
+      {
+        "key": "frequence_screen_respondants",
+        "label": "fréquence",
+        "default": 30
+      }
+    ],
+    "gherkin": {
+      "given": "L'actionnaire majoritaire d'un répondant est placé sous sanctions.",
+      "when": "Re-screening périodique du répondant + UBO bancaires + dirigeants ; delta → revue.",
+      "then": "Signal RESPONDENT_HIT (Niveau 2) — comité correspondance, suspension possible après décision humaine."
+    }
+  },
+  {
+    "code": "PF-01",
+    "ruleRef": "R393",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "famille": "PF",
+    "titre": "Sanctions sectorielles & plafonds",
+    "desc": "Contournement des sanctions sectorielles : plafonds de prix (pétrole), embargos or/luxe, services interdits (assurance, shipping) vers RU/BY/IR/KP.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "",
+    "params": [
+      {
+        "key": "plafonds_sectoriels",
+        "label": "référentiel plafonds/embargos",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Un paiement pétrole affiche un prix au baril supérieur au plafond, assuré par un assureur non autorisé.",
+      "when": "Contrôle sectoriel : produit × origine × prix vs plafond × services associés autorisés.",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — violation sectorielle, escalade sanctions, décision humaine tracée."
+    }
+  },
+  {
+    "code": "PF-02",
+    "ruleRef": "R394",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "famille": "PF",
+    "titre": "Chaînes d'écrans corridors KP/IR",
+    "desc": "Patterns d'intermédiation typiques du financement de la prolifération : sociétés jeunes, capital minimal, secteurs génériques, en chaîne vers corridors sensibles.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PROLIF_CHAIN",
+    "params": [
+      {
+        "key": "age_entite_min",
+        "label": "âge minimal sans surrisque",
+        "default": 24
+      }
+    ],
+    "gherkin": {
+      "given": "Trois sociétés de trading créées < 12 mois s'intercalent entre un exportateur européen et un acheteur final opaque.",
+      "when": "Score de chaîne : âge des entités × substance × secteur générique × corridor final.",
+      "then": "Signal PROLIF_CHAIN (Niveau 1) — identification du destinataire final exigée, escalade."
+    }
+  },
+  {
+    "code": "PF-03",
+    "ruleRef": "R395",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "famille": "PF",
+    "titre": "Biens de luxe vers zones embargo",
+    "desc": "Exportation de biens de luxe (montres, joaillerie, véhicules) vers des juridictions sous embargo de luxe, souvent via pays relais.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "LUXURY_EMBARGO",
+    "params": [
+      {
+        "key": "categories_luxe",
+        "label": "catégories surveillées",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Des paiements de montres de haute horlogerie partent vers un relais d'Asie centrale, volume ×6 depuis l'embargo.",
+      "when": "Volume par corridor relais × catégorie de biens embargo × croissance anormale post-sanctions.",
+      "then": "Signal LUXURY_EMBARGO (Niveau 2) — destinataire final et usage à corroborer."
+    }
+  },
+  {
+    "code": "IA-01",
+    "ruleRef": "R396",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "famille": "IA",
+    "titre": "Immobilier via structure + prix hors marché",
+    "desc": "Acquisition immobilière via structure (SCI, trust, offshore) à un prix significativement hors marché.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "REAL_ESTATE_ANOMALY",
+    "params": [
+      {
+        "key": "ecart_marche_max",
+        "label": "écart au marché toléré",
+        "default": 25
+      }
+    ],
+    "gherkin": {
+      "given": "Un bien estimé CHF 2.1M est acquis 3.4M via une société des BVI financée depuis le compte.",
+      "when": "Écart au prix de référence (m², registre) × acquisition via structure × origine du financement.",
+      "then": "Signal REAL_ESTATE_ANOMALY (Niveau 2) — expertise indépendante et SOW exigées."
+    }
+  },
+  {
+    "code": "IA-02",
+    "ruleRef": "R397",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "famille": "IA",
+    "titre": "Art & ports francs",
+    "desc": "Achat d'œuvres, dépôt en port franc, revente rapide — valeur mobile, opaque et transfrontalière.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ART_FREEPORT",
+    "params": [
+      {
+        "key": "delai_revente_min",
+        "label": "revente considérée rapide si <",
+        "default": 36
+      }
+    ],
+    "gherkin": {
+      "given": "Une œuvre achetée CHF 900k est déposée en port franc puis revendue 15 mois après à une partie liée, +40%.",
+      "when": "Cycle achat→port franc→revente × délai × lien entre parties × écart de prix.",
+      "then": "Signal ART_FREEPORT (Niveau 2) — provenance de l'œuvre et indépendance de l'acheteur à établir."
+    }
+  },
+  {
+    "code": "IA-03",
+    "ruleRef": "R398",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "famille": "IA",
+    "titre": "Véhicules de valeur (luxe, NFT)",
+    "desc": "Biens de luxe et actifs numériques de collection utilisés comme véhicules de transfert de valeur.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "VALUE_VEHICLE",
+    "params": [
+      {
+        "key": "seuil_biens_valeur",
+        "label": "équivalent CHF / 180j",
+        "default": 200000
+      }
+    ],
+    "gherkin": {
+      "given": "Trois véhicules de collection achetés et réexpédiés à l'étranger en 4 mois, revendus à des parties inconnues.",
+      "when": "Fréquence d'achat/revente de biens de valeur × export × contreparties.",
+      "then": "Signal VALUE_VEHICLE (Niveau 2) — finalité patrimoniale vs circulation de valeur à clarifier."
+    }
+  },
+  {
+    "code": "AN-01",
+    "ruleRef": "R399",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "famille": "AN",
+    "titre": "Déviation au groupe de pairs",
+    "desc": "Écart statistique du client à son groupe de pairs CPSI (z-score sur les attributs surveillés), au-delà des seuils fixes de 1re génération.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PEER_DEVIATION",
+    "params": [
+      {
+        "key": "zscore_seuil",
+        "label": "z-score de déclenchement",
+        "default": 3.5
+      }
+    ],
+    "gherkin": {
+      "given": "Un client du groupe « Affluent CH » présente un volume cash à 4.2 écarts-types de la médiane de son groupe.",
+      "when": "Z-score robuste (médiane/MAD) par attribut et par groupe, recalculé au fil de l'eau.",
+      "then": "Signal PEER_DEVIATION (Niveau 2) — explicable par construction : attribut, valeur, distribution du groupe joints (R44 : l'IA éclaire)."
+    }
+  },
+  {
+    "code": "AN-02",
+    "ruleRef": "R400",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "famille": "AN",
+    "titre": "Rupture de comportement (baseline propre)",
+    "desc": "Changement soudain vs la baseline historique du client lui-même (pas du groupe) : régime transactionnel qui bascule.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BEHAVIOR_SHIFT",
+    "params": [
+      {
+        "key": "sensibilite_rupture",
+        "label": "sensibilité du détecteur",
+        "default": "tenant"
+      }
+    ],
+    "gherkin": {
+      "given": "Un compte stable depuis 4 ans triple sa volumétrie et change de corridors en 3 semaines.",
+      "when": "Détection de rupture (changepoint) sur volume, fréquence, corridors, contreparties vs baseline 12 mois.",
+      "then": "Signal BEHAVIOR_SHIFT (Niveau 2) — comparatif avant/après joint au signal."
+    }
+  },
+  {
+    "code": "AN-03",
+    "ruleRef": "R401",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "famille": "AN",
+    "titre": "First-time patterns",
+    "desc": "Premières occurrences sensibles : premier virement international, premier cash, première contrepartie HRJ, premier produit à risque.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "FIRST_TIME",
+    "params": [
+      {
+        "key": "dimensions_ft",
+        "label": "dimensions surveillées",
+        "default": "international,cash,HRJ,produit_risque"
+      },
+      {
+        "key": "materialite_ft",
+        "label": "matérialité minimale",
+        "default": 25000
+      }
+    ],
+    "gherkin": {
+      "given": "Un client 100% domestique depuis 6 ans émet son premier virement vers une juridiction à risque, montant élevé.",
+      "when": "Détection de première occurrence par dimension sensible × matérialité du montant.",
+      "then": "Signal FIRST_TIME (Niveau 1) — friction douce : revue rapide, pas de blocage (R39 : mesurer, pas coercer)."
+    }
+  },
+  {
+    "code": "AN-04",
+    "ruleRef": "R402",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "famille": "AN",
+    "titre": "Dormance partielle par segment",
+    "desc": "Réactivation d'un segment d'activité dormant (ex. le cash après 3 ans d'inactivité cash) même si le compte global reste actif — complète la règle « compte dormant » existante.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "SEGMENT_REACTIVATION",
+    "params": [
+      {
+        "key": "dormance_segment",
+        "label": "dormance du segment",
+        "default": 24
+      }
+    ],
+    "gherkin": {
+      "given": "Un compte actif en titres n'a fait aucun cash depuis 3 ans ; 3 dépôts espèces surviennent en 2 semaines.",
+      "when": "Dormance mesurée par segment (cash, international, produit) ; réactivation = première activité du segment après N mois.",
+      "then": "Signal SEGMENT_REACTIVATION (Niveau 2) — contexte de réactivation demandé."
+    }
+  },
+  {
+    "code": "AN-05",
+    "ruleRef": "R403",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "famille": "AN",
+    "titre": "Revenus entrants incohérents (mismatch)",
+    "desc": "Entrées récurrentes libellées « salaire/honoraires » incohérentes avec l'employeur et la rémunération déclarés au KYC — pendant entrant de R201/AML-WC-01.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "INCOME_MISMATCH",
+    "params": [
+      {
+        "key": "ecart_revenu_max",
+        "label": "écart toléré vs déclaré",
+        "default": 50
+      }
+    ],
+    "gherkin": {
+      "given": "Un « salaire » mensuel de CHF 45k est crédité alors que le KYC déclare 12k et un autre employeur.",
+      "when": "Croisement libellé/ordonnateur des entrées récurrentes × rémunération et employeur déclarés.",
+      "then": "Signal INCOME_MISMATCH (Niveau 2) — mise à jour KYC ou justification exigée (CoC)."
+    }
   }
 ];
 
@@ -1767,5 +2437,473 @@ export const AML_GAP_GT_SEED: AmlGapGtSeed[] = [
     "clientId": "—",
     "narrative": "",
     "placeholder": true
+  },
+  {
+    "caseId": "GT-TB-01-TP-1",
+    "scenarioId": "TB-01",
+    "ruleRef": "R378",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Import de composants payés +22% vs benchmark sur 8 factures du même fournisseur lié — transfert de valeur confirmé."
+  },
+  {
+    "caseId": "GT-TB-01-FP-1",
+    "scenarioId": "TB-01",
+    "ruleRef": "R378",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00101",
+    "narrative": "Surcoût de +18% documenté par une clause d'urgence logistique (fret aérien vs maritime, contrat fourni) — FP."
+  },
+  {
+    "caseId": "GT-TB-02-TP-1",
+    "scenarioId": "TB-02",
+    "ruleRef": "R379",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Même connaissement financé deux fois via deux banques — double financement frauduleux confirmé."
+  },
+  {
+    "caseId": "GT-TB-02-FP-1",
+    "scenarioId": "TB-02",
+    "ruleRef": "R379",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00193",
+    "narrative": "Facture d'acompte puis facture de solde portant la même référence commande (schéma 30/70 contractuel) — FP."
+  },
+  {
+    "caseId": "GT-TB-03-TP-1",
+    "scenarioId": "TB-03",
+    "ruleRef": "R380",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Biens sous-facturés à 5% du prix de marché pour exfiltrer de la valeur au pays d'origine — TP."
+  },
+  {
+    "caseId": "GT-TB-03-FP-1",
+    "scenarioId": "TB-03",
+    "ruleRef": "R380",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00037",
+    "narrative": "Lot déclassé vendu à prix cassé avec certificat de non-conformité joint — décote documentée, FP."
+  },
+  {
+    "caseId": "GT-TB-04-TP-1",
+    "scenarioId": "TB-04",
+    "ruleRef": "R381",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00039",
+    "narrative": "Machines classées double usage routées via un intermédiaire vers une destination sous embargo — licence absente, TP."
+  },
+  {
+    "caseId": "GT-TB-04-FP-1",
+    "scenarioId": "TB-04",
+    "ruleRef": "R381",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00142",
+    "narrative": "Bien listé mais licence d'exportation SECO valide fournie et destinataire final vérifié — conforme, FP."
+  },
+  {
+    "caseId": "GT-TB-05-TP-1",
+    "scenarioId": "TB-05",
+    "ruleRef": "R382",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00043",
+    "narrative": "Intermédiaire des Caïmans intercalé entre acheteur et vendeur réels, marge de 12% sans fonction — écran, TP."
+  },
+  {
+    "caseId": "GT-TB-05-FP-1",
+    "scenarioId": "TB-05",
+    "ruleRef": "R382",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00150",
+    "narrative": "Maison de négoce établie jouant un rôle réel de contrepartie centrale (contrats et assurances au dossier) — FP."
+  },
+  {
+    "caseId": "GT-TB-06-TP-1",
+    "scenarioId": "TB-06",
+    "ruleRef": "R383",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Trois « expéditions » payées 1.1M au total, aucun conteneur n'a jamais quitté le port déclaré — TP."
+  },
+  {
+    "caseId": "GT-TB-06-FP-1",
+    "scenarioId": "TB-06",
+    "ruleRef": "R383",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00193",
+    "narrative": "Retard de mise à jour du tracking d'un transporteur secondaire (mouvement confirmé à J+4 par le B/L) — FP."
+  },
+  {
+    "caseId": "GT-TB-07-TP-1",
+    "scenarioId": "TB-07",
+    "ruleRef": "R384",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00039",
+    "narrative": "Détour par un port connu pour le maquillage d'origine (certificats réémis) — contournement d'embargo, TP."
+  },
+  {
+    "caseId": "GT-TB-07-FP-1",
+    "scenarioId": "TB-07",
+    "ruleRef": "R384",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00150",
+    "narrative": "Réacheminement dû à une congestion portuaire majeure documentée par l'armateur (avis publié) — FP."
+  },
+  {
+    "caseId": "GT-TB-08-TP-1",
+    "scenarioId": "TB-08",
+    "ruleRef": "R385",
+    "famille": "TB",
+    "label": "TP",
+    "clientId": "CLI-00101",
+    "narrative": "Boucle de revente à valeur +15% par tour entre trois entités liées au même bénéficiaire — carrousel confirmé."
+  },
+  {
+    "caseId": "GT-TB-08-FP-1",
+    "scenarioId": "TB-08",
+    "ruleRef": "R385",
+    "famille": "TB",
+    "label": "FP",
+    "clientId": "CLI-00037",
+    "narrative": "Négoce légitime de matières premières où les rôles s'inversent selon les cours (positions documentées) — FP."
+  },
+  {
+    "caseId": "GT-CB-03-TP-1",
+    "scenarioId": "CB-03",
+    "ruleRef": "R386",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Correspondant supprimant systématiquement le nom d'ordonnateurs iraniens (initiales seules) — stripping confirmé, relation revue."
+  },
+  {
+    "caseId": "GT-CB-03-FP-1",
+    "scenarioId": "CB-03",
+    "ruleRef": "R386",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00018",
+    "narrative": "Troncature technique de caractères non-latins par un système legacy (données complètes en pièce jointe MT199) — FP, correctif demandé."
+  },
+  {
+    "caseId": "GT-CB-04-TP-1",
+    "scenarioId": "CB-04",
+    "ruleRef": "R387",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00070",
+    "narrative": "Détour par deux correspondants pour masquer une contrepartie russe restreinte — contournement confirmé."
+  },
+  {
+    "caseId": "GT-CB-04-FP-1",
+    "scenarioId": "CB-04",
+    "ruleRef": "R387",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00164",
+    "narrative": "Paiement rejeté par la banque bénéficiaire (IBAN erroné) et retourné par une autre route — retour technique documenté, FP."
+  },
+  {
+    "caseId": "GT-CB-05-TP-1",
+    "scenarioId": "CB-05",
+    "ruleRef": "R388",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Répondant offrant à ses clients un accès quasi direct au nostro (milliers de micro-ordres) — PTA confirmé, convention résiliée."
+  },
+  {
+    "caseId": "GT-CB-05-FP-1",
+    "scenarioId": "CB-05",
+    "ruleRef": "R388",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00018",
+    "narrative": "Pic de petits ordres dû à une migration de paie groupée du répondant (préavisée par MT199) — usage propre, FP."
+  },
+  {
+    "caseId": "GT-CB-06-TP-1",
+    "scenarioId": "CB-06",
+    "ruleRef": "R389",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Répondant « retail domestique » devenu hub régional de flux vers zones grises sans mise à jour CBDDQ — dérive confirmée."
+  },
+  {
+    "caseId": "GT-CB-06-FP-1",
+    "scenarioId": "CB-06",
+    "ruleRef": "R389",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00150",
+    "narrative": "Croissance de corridor liée à l'acquisition documentée d'une banque voisine (communiqué + CBDDQ mis à jour) — FP."
+  },
+  {
+    "caseId": "GT-CB-07-TP-1",
+    "scenarioId": "CB-07",
+    "ruleRef": "R390",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00043",
+    "narrative": "Établissement caribéen sans licence vérifiable ni locaux (adresse = boîte postale d'un agent) — shell bank, blocage."
+  },
+  {
+    "caseId": "GT-CB-07-FP-1",
+    "scenarioId": "CB-07",
+    "ruleRef": "R390",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00164",
+    "narrative": "Banque digitale licenciée sans agences mais dûment supervisée (registre du régulateur consulté) — présence légale établie, FP."
+  },
+  {
+    "caseId": "GT-CB-08-TP-1",
+    "scenarioId": "CB-08",
+    "ruleRef": "R391",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "RMA dormant réactivé soudainement pour une série de MT202 vers une zone grise — le canal oublié servait de porte dérobée."
+  },
+  {
+    "caseId": "GT-CB-08-FP-1",
+    "scenarioId": "CB-08",
+    "ruleRef": "R391",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00018",
+    "narrative": "RMA maintenu par exigence contractuelle d'un schéma de garantie multilatéral (convention au dossier) — justifié, FP."
+  },
+  {
+    "caseId": "GT-CB-09-TP-1",
+    "scenarioId": "CB-09",
+    "ruleRef": "R392",
+    "famille": "CB",
+    "label": "TP",
+    "clientId": "CLI-00130",
+    "narrative": "Nouvel actionnaire de contrôle d'un répondant apparu sur liste de sanctions — relation suspendue après comité."
+  },
+  {
+    "caseId": "GT-CB-09-FP-1",
+    "scenarioId": "CB-09",
+    "ruleRef": "R392",
+    "famille": "CB",
+    "label": "FP",
+    "clientId": "CLI-00150",
+    "narrative": "Adverse media visant l'homonyme d'une autre banque du même groupe de presse — établissement distinct, FP."
+  },
+  {
+    "caseId": "GT-PF-01-TP-1",
+    "scenarioId": "PF-01",
+    "ruleRef": "R393",
+    "famille": "PF",
+    "label": "TP",
+    "clientId": "CLI-00039",
+    "narrative": "Cargaison d'origine russe payée au-dessus du price cap via un négociant intermédiaire — violation confirmée, blocage."
+  },
+  {
+    "caseId": "GT-PF-01-FP-1",
+    "scenarioId": "PF-01",
+    "ruleRef": "R393",
+    "famille": "PF",
+    "label": "FP",
+    "clientId": "CLI-00037",
+    "narrative": "Pétrole d'origine certifiée kazakhe transitant par un port russe (certificat d'origine et pipeline documentés) — hors périmètre du plafond, FP."
+  },
+  {
+    "caseId": "GT-PF-02-TP-1",
+    "scenarioId": "PF-02",
+    "ruleRef": "R394",
+    "famille": "PF",
+    "label": "TP",
+    "clientId": "CLI-00043",
+    "narrative": "Chaîne de trois écrans hongkongais récents aboutissant à une entité liée à un programme sous sanctions — TP."
+  },
+  {
+    "caseId": "GT-PF-02-FP-1",
+    "scenarioId": "PF-02",
+    "ruleRef": "R394",
+    "famille": "PF",
+    "label": "FP",
+    "clientId": "CLI-00045",
+    "narrative": "Jeunes filiales de distribution d'un groupe industriel établi (organigramme et comptes consolidés fournis) — substance démontrée, FP."
+  },
+  {
+    "caseId": "GT-PF-03-TP-1",
+    "scenarioId": "PF-03",
+    "ruleRef": "R395",
+    "famille": "PF",
+    "label": "TP",
+    "clientId": "CLI-00080",
+    "narrative": "Négociant horloger multipliant par 6 ses exports vers un relais notoire de réexportation — contournement confirmé."
+  },
+  {
+    "caseId": "GT-PF-03-FP-1",
+    "scenarioId": "PF-03",
+    "ruleRef": "R395",
+    "famille": "PF",
+    "label": "FP",
+    "clientId": "CLI-00063",
+    "narrative": "Croissance liée à l'ouverture documentée d'une boutique franchisée locale (bail et licence fournis) — marché réel, FP."
+  },
+  {
+    "caseId": "GT-IA-01-TP-1",
+    "scenarioId": "IA-01",
+    "ruleRef": "R396",
+    "famille": "IA",
+    "label": "TP",
+    "clientId": "CLI-00005",
+    "narrative": "Surpaiement de 60% via structure BVI : la survaleur revenait au vendeur complice — intégration confirmée."
+  },
+  {
+    "caseId": "GT-IA-01-FP-1",
+    "scenarioId": "IA-01",
+    "ruleRef": "R396",
+    "famille": "IA",
+    "label": "FP",
+    "clientId": "CLI-00152",
+    "narrative": "Prime de 30% pour un bien de prestige off-market avec deux expertises concordantes au dossier — marché de niche, FP."
+  },
+  {
+    "caseId": "GT-IA-02-TP-1",
+    "scenarioId": "IA-02",
+    "ruleRef": "R397",
+    "famille": "IA",
+    "label": "TP",
+    "clientId": "CLI-00034",
+    "narrative": "Aller-retour d'une œuvre entre deux entités du même bénéficiaire avec +40% — transfert de valeur habillé, TP."
+  },
+  {
+    "caseId": "GT-IA-02-FP-1",
+    "scenarioId": "IA-02",
+    "ruleRef": "R397",
+    "famille": "IA",
+    "label": "FP",
+    "clientId": "CLI-00016",
+    "narrative": "Collectionneur établi cédant une pièce via une maison de vente publique (adjudication tierce, catalogue) — vente de marché, FP."
+  },
+  {
+    "caseId": "GT-IA-03-TP-1",
+    "scenarioId": "IA-03",
+    "ruleRef": "R398",
+    "famille": "IA",
+    "label": "TP",
+    "clientId": "CLI-00080",
+    "narrative": "Rotation de véhicules de collection exportés vers un marchand relais, marges incohérentes — circulation de valeur, TP."
+  },
+  {
+    "caseId": "GT-IA-03-FP-1",
+    "scenarioId": "IA-03",
+    "ruleRef": "R398",
+    "famille": "IA",
+    "label": "FP",
+    "clientId": "CLI-00063",
+    "narrative": "Passionné documenté (assurances, expertises, participation à des concours d'élégance) constituant sa collection — FP."
+  },
+  {
+    "caseId": "GT-AN-01-TP-1",
+    "scenarioId": "AN-01",
+    "ruleRef": "R399",
+    "famille": "AN",
+    "label": "TP",
+    "clientId": "CLI-00072",
+    "narrative": "Cash à 4.2σ du groupe sans changement déclaré de situation — activité non expliquée, TP."
+  },
+  {
+    "caseId": "GT-AN-01-FP-1",
+    "scenarioId": "AN-01",
+    "ruleRef": "R399",
+    "famille": "AN",
+    "label": "FP",
+    "clientId": "CLI-00104",
+    "narrative": "Pic à 3.8σ expliqué par la vente documentée d'une entreprise (CoC ouvert en amont) — événement de vie, FP."
+  },
+  {
+    "caseId": "GT-AN-02-TP-1",
+    "scenarioId": "AN-02",
+    "ruleRef": "R400",
+    "famille": "AN",
+    "label": "TP",
+    "clientId": "CLI-00099",
+    "narrative": "Bascule complète du profil (nouveaux corridors, volumes ×3) après un changement de mandataire — compte repris en main par un tiers, TP."
+  },
+  {
+    "caseId": "GT-AN-02-FP-1",
+    "scenarioId": "AN-02",
+    "ruleRef": "R400",
+    "famille": "AN",
+    "label": "FP",
+    "clientId": "CLI-00016",
+    "narrative": "Montée en charge annoncée d'un mandat de gestion élargi (avenant signé) — changement contractualisé, FP."
+  },
+  {
+    "caseId": "GT-AN-03-TP-1",
+    "scenarioId": "AN-03",
+    "ruleRef": "R401",
+    "famille": "AN",
+    "label": "TP",
+    "clientId": "CLI-00069",
+    "narrative": "Premier international du compte : 180k vers une fiduciaire offshore inconnue, dossier à 2% de complétude — TP."
+  },
+  {
+    "caseId": "GT-AN-03-FP-1",
+    "scenarioId": "AN-03",
+    "ruleRef": "R401",
+    "famille": "AN",
+    "label": "FP",
+    "clientId": "CLI-00121",
+    "narrative": "Premier virement France→UK pour l'inscription universitaire d'un enfant (attestation jointe) — vie courante, FP."
+  },
+  {
+    "caseId": "GT-AN-04-TP-1",
+    "scenarioId": "AN-04",
+    "ruleRef": "R402",
+    "famille": "AN",
+    "label": "TP",
+    "clientId": "CLI-00156",
+    "narrative": "Segment cash réactivé par des dépôts fractionnés après 3 ans — le canal oublié sert au placement, TP."
+  },
+  {
+    "caseId": "GT-AN-04-FP-1",
+    "scenarioId": "AN-04",
+    "ruleRef": "R402",
+    "famille": "AN",
+    "label": "FP",
+    "clientId": "CLI-00053",
+    "narrative": "Retraits cash réactivés pour des travaux payés en espèces à des artisans (devis et factures fournis) — usage ponctuel expliqué, FP."
+  },
+  {
+    "caseId": "GT-AN-05-TP-1",
+    "scenarioId": "AN-05",
+    "ruleRef": "R403",
+    "famille": "AN",
+    "label": "TP",
+    "clientId": "CLI-00080",
+    "narrative": "« Salaires » de 45k versés par une société sans lien avec l'employeur déclaré — canal de distribution occulte, TP."
+  },
+  {
+    "caseId": "GT-AN-05-FP-1",
+    "scenarioId": "AN-05",
+    "ruleRef": "R403",
+    "famille": "AN",
+    "label": "FP",
+    "clientId": "CLI-00035",
+    "narrative": "Bonus exceptionnel documenté par le certificat de salaire annuel (élément variable déclaré) — rémunération réelle, FP."
   }
 ];
