@@ -89,3 +89,25 @@ Attribution définitive (visa PO au merge) :
 > (`docs/CANON-MASTER.md`, généré) fait foi et **ne montrera ces numéros qu'à mesure de leur
 > implémentation réelle** au repo (familles + suites de tests) — le repo fait foi, la table
 > ci-dessus est l'attribution, pas l'implémentation.
+
+### 4.1 Réconciliation des générateurs AML Gap (2026-08-04)
+
+Le drop PO ratifie **`tools/gen_aml_gap.py` + `tools/wave2_rules.py`** comme *source de vérité
+unique* des règles (Waves 1+2, 64 règles R340–R403) et le corpus **`data/aml-gap-dataset-gt.json`**
+(130 cas GT : 66 TP / 64 FP). Ces fichiers sont **versés tels quels** (visa PO). Deux rôles
+coexistent, liés par un test de parité — pas deux vérités concurrentes :
+
+| Fichier | Rôle | Portée |
+|---|---|---|
+| `tools/gen_aml_gap.py` · `tools/wave2_rules.py` · `data/aml-gap-dataset-gt.json` | **Canon PO ratifié** (définitions de règles + corpus GT) | Waves 1+2 (R340–R403) |
+| `tools/aml-gap/gen_aml_gap.py` (+ `.gen.ts` émis) | **Émetteur Nest/React** in-repo (référentiel + GT + seed web, enrichi de `ecartement` + payloads déterministes) | Wave 1 (R340–R377) |
+
+- **Parité prouvée** : `test_gen_aml_gap.py` AG-17/AG-17b vérifie que la tranche Wave 1 de l'émetteur
+  (mêmes règles, mêmes cas GT scénario/label/narratif) **égale le canon PO** — toute dérive rougit.
+- **Divergence documentée** : GV-04/FP est un *placeholder vide* côté émetteur (« ») et « — » au canon
+  (même sémantique : cas laissé vide par la spec). Les enrichissements de l'émetteur (`ecartement`,
+  payloads synthétiques) n'existent pas au canon PO — ils servent le backend/front implémentés.
+- **Non runnable in-repo tel quel** : le générateur PO écrit vers des chemins absolus `/home/claude/olive/`
+  (env PO) — c'est un **record canonique**, pas encore l'émetteur du pipeline. Le portage de ses chemins
+  (pour « brancher la ré-émission », action 6 du journal) et le **backend/front Wave 2** (détecteurs
+  statistiques exécutés dans le service Python CPSI — jamais réécrits en Nest) restent des lots ultérieurs.

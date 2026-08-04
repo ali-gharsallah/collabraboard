@@ -31,6 +31,20 @@ python3 tools/aml-gap/test_gen_aml_gap.py   # 17 invariants — rouge = régress
 - Chaque règle porte ≥ 1 **paramètre tenant** (registre R-Q), clés globalement uniques.
 - **Déterminisme** (graine fixe `20260804`) et **fraîcheur** : les `.json` sur disque doivent correspondre au générateur (CI rouge sinon).
 
+## Réconciliation avec le canon PO (2026-08-04)
+
+Le PO a ratifié **`tools/gen_aml_gap.py` + `tools/wave2_rules.py`** comme *source de vérité unique*
+des règles (Waves 1+2, R340–R403) et **`data/aml-gap-dataset-gt.json`** (130 cas GT). Ces fichiers
+sont versés tels quels. Ce dossier (`tools/aml-gap/`) est **l'émetteur Nest/React in-repo** pour la
+**Wave 1** : il produit les artefacts TS consommés par le backend (`apps/api/.../aml-gap.*.gen.ts`)
+et le front (`apps/web/.../aml-gap.seed.gen.ts`), enrichis de `ecartement` (cause d'écartement FP) et
+de payloads synthétiques déterministes — absents du canon PO plus mince.
+
+La **parité** entre les deux est verrouillée par `test_gen_aml_gap.py` (AG-17/AG-17b) : la tranche
+Wave 1 de cet émetteur doit égaler le canon PO (mêmes règles, mêmes cas GT). Toute dérive rougit.
+Le générateur PO écrit vers des chemins absolus de l'env PO (`/home/claude/olive/`) : c'est un record
+canonique, pas encore l'émetteur du pipeline. Voir `spec/mapping-session-repo.md §4.1`.
+
 ## Données
 
 100 % **synthétiques**, aucune personne réelle. Les `CLI-xxxxx` réutilisent les clients du seed démo

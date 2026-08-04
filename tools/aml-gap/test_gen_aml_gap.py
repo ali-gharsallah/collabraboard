@@ -174,7 +174,29 @@ def main():
           scen_seed is not None and len(scen_seed) == 38 and gt_seed is not None and len(gt_seed) == 78,
           "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    total = 14 + 3 + 2 + 1  # sous-tests b + AG-15 (2 fichiers) + AG-16
+    # AG-17 — parité avec le canon PO (source de vérité ratifiée data/aml-gap-dataset-gt.json,
+    # générée par tools/gen_aml_gap.py). L'émetteur Nest/React (ce fichier) doit rester en phase
+    # avec la tranche Wave 1 du canon : mêmes règles, mêmes cas GT (narratifs). Les enrichissements
+    # propres à l'émetteur (ecartement, payloads) ne sont pas dans le canon — hors comparaison.
+    # Divergence documentée : GV-04/FP est un placeholder vide côté émetteur (« ») et « — » au canon.
+    po_path = os.path.normpath(os.path.join(HERE, "..", "..", "data", "aml-gap-dataset-gt.json"))
+    if os.path.exists(po_path):
+        po_all = json.load(open(po_path, encoding="utf-8"))["cases"]
+        po_w1 = [c for c in po_all if c["rule"] <= "R377"]
+        norm = lambda n: n if n else "—"  # noqa: E731
+        mine_key = sorted((c["scenarioId"], c["label"], norm(c["narrative"])) for c in gt)
+        po_key = sorted((c["scenarioId"], c["label"], c["narrative"]) for c in po_w1)
+        check("AG-17 parité canon PO (Wave 1) : mêmes cas GT (scénario/label/narratif)",
+              mine_key == po_key,
+              "l'émetteur diverge du canon data/aml-gap-dataset-gt.json — réconcilier via le générateur PO")
+        check("AG-17b parité canon PO (Wave 1) : mêmes règles R340–R377",
+              sorted({c["ruleRef"] for c in gt}) == sorted({c["rule"] for c in po_w1}),
+              "jeu de règles divergent du canon PO")
+    else:
+        check("AG-17 canon PO présent (data/aml-gap-dataset-gt.json)", False,
+              "verser le canon PO pour activer la parité")
+
+    total = 14 + 3 + 2 + 1 + 2  # + AG-16 + AG-17/AG-17b
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:

@@ -2,17 +2,17 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-04 · commit `6dd8210`.** Ce document se périme visiblement :
+> **Généré le 2026-08-04 · commit `4317978`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-**Aucune anomalie à traiter.** Les cas connus sont classés & justifiés ci-dessous.
+**1 anomalie(s) à traiter.**
 
 - **Doublons de numéro à titres divergents** : 0
-- **Familles de scénarios sans suite de test** : 0
+- **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 0
-- **Numéros R absents dans [1..339]** (plafond = sommet de l'amas contigu, hors réserves) : 0
+- **Numéros R absents dans [1..404]** (plafond = sommet de l'amas contigu, hors réserves) : 0
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -50,7 +50,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-96 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+100 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
@@ -75,7 +75,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1, R177–R182 | Catalogue O-Live — Patch v4.18 → v4.19 (RATIFICATION du 21.07.2026) | PROPOSÉ | GX, LC | ged-externe.wiring.spec.ts, vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
 | R1, R183–R185 | Catalogue O-Live — Patch v4.19 → v4.20 (RATIFICATION du 21.07.2026) | PROPOSÉ | WK | workload.wiring.spec.ts |
 | R1, R117–R120 | Catalogue O-Live — Patch v4.2 → v4.3 (RATIFICATION du 19.07.2026, soirée) | PROPOSÉ | OB | onboarding.wiring.spec.ts |
-| R1, R186–R188 | Catalogue O-Live — Patch v4.20 → v4.21 (RATIFICATION du 21.07.2026) | PROPOSÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R1, R186–R188 | Catalogue O-Live — Patch v4.20 → v4.21 (RATIFICATION du 21.07.2026) | PROPOSÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R1, R119, R121–R124 | Catalogue O-Live — Patch v4.3 → v4.4 (RATIFICATION du 19.07.2026, nuit) | PROPOSÉ | AG | prerevue.wiring.spec.ts |
 | R1, R48–R49, R124–R128 | Catalogue O-Live — Patch v4.4 → v4.5 (RATIFICATION du 19.07.2026, nuit — 2e vague) | PROPOSÉ | RQ | parametres.wiring.spec.ts |
 | R1, R83, R125, R129–R133 | Catalogue O-Live — Patch v4.5 → v4.6 (RATIFICATION du 19.07.2026, fin de nuit) | PROPOSÉ | MR | mros.wiring.spec.ts |
@@ -120,31 +120,35 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R7, R36, R138, R171–R173, R186–R188 | language: fr | PROPOSÉ | — | — |
 | R7, R93, R99, R125–R128 | language: fr | PROPOSÉ | — | — |
 | R7, R44, R105–R108 | language: fr | PROPOSÉ | — | — |
+| R13, R15, R29, R39, R44, R48–R49, R328, R340–R377 | SPEC — AML Gap Wave 1 : blocs 50–56 (R340–R377 provisoires) | RATIFIÉ | CR, FT, GU, GV, IP, QO, SF | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts, AmlGap.test.tsx |
+| R13, R39, R44, R201, R340–R403 | SPEC — AML Gap Wave 2 : blocs 57–61 (R378–R403 provisoires) | RATIFIÉ | AN, CB, IA, PF, TB, WC | annotation.wiring.spec.ts, chaines.wiring.spec.ts, FilterBar.test.tsx, fat-vague10.e2e-spec.ts |
 | R13, R15, R48–R49, R76, R89–R90, R104, R255, R266–R267, R270, R284–R287 | O-Live — Canon des DEUX DERNIERS ÉCARTS | RATIFIÉ | AS, AU, HO, OF, OL, PC, SO, UC | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R13, R15, R39, R48, R222, R230–R238 | language: fr | RATIFIÉ | FO | fat-vague13.e2e-spec.ts |
 | R13, R15, R29, R39, R48, R221–R230, R238 | language: fr | PROPOSÉ | BT | fat-vague14.e2e-spec.ts |
-| R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, test.mjs, test.mjs, test.mjs |
+| R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, FilterBar.test.tsx, test.mjs, test.mjs |
 | R167–R169 | Catalogue O-Live — Amendement PROPOSÉ (R167 → R169) · Bloc 33 « Le core banking est un port » | RATIFIÉ | SY | core-sync.wiring.spec.ts |
 | R288 | O-Live — PROPOSITION R288 : les barèmes de scoring KYC sont des RÈGLES gouvernées | RATIFIÉ | BS, PA | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-cpsi.e2e-spec.ts |
 | R29, R70, R94, R126, R189, R206 | language: fr | PROPOSÉ | — | — |
+| R39, R404 | SPEC — FilterBar uniforme (filtres rétractables + combobox) | RATIFIÉ | CB, FB, WC | chaines.wiring.spec.ts, FilterBar.test.tsx, test.mjs, test.mjs |
 | R137–R139 | Catalogue O-Live — Amendement PROPOSÉ (R137 → R139) · Bloc 24 « Capture & ingestion GED » | RATIFIÉ | IG | ged-ingestion.wiring.spec.ts |
 | R148–R151 | Catalogue O-Live — Amendement PROPOSÉ (R148 → R151) · Bloc 27 « La recherche — trouver sans trahir » | RATIFIÉ | RS | recherche.wiring.spec.ts |
 | R174–R176 | Catalogue O-Live — Amendement PROPOSÉ (R174 → R176) · Bloc 36 « L'extraction comprend le document » | RATIFIÉ | OC | ocr-extraction.wiring.spec.ts |
-| R186–R188 | Catalogue O-Live — Amendement PROPOSÉ (R186 → R188) · Bloc 40 « La relation se lit, le geste se motive, le conseil se tr | RATIFIÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R186–R188 | Catalogue O-Live — Amendement PROPOSÉ (R186 → R188) · Bloc 40 « La relation se lit, le geste se motive, le conseil se tr | RATIFIÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R248–R252 | Catalogue O-Live — Amendement (R248 → R252) · Bloc « La porte CPSI est un rejeu » | PROPOSÉ | AW, CP, PA, PC, RC | fat-cpsi.e2e-spec.ts, screens.test.tsx, fat-charge-cpsi.e2e-spec.ts, fat-canon-anciens.e2e-spec.ts |
 | R39, R239–R242, R246 | language: fr | RATIFIÉ | TA | fat-vague16.e2e-spec.ts, fat-vague17.e2e-spec.ts |
+| R44, R48, R189–R221 | GAP ANALYSIS — Règles AML absentes d'O-Live (tous contextes) | PROPOSÉ | CB, WC | chaines.wiring.spec.ts, FilterBar.test.tsx |
 | R44, R56, R104–R116 | Catalogue O-Live — Patch v4.1 → v4.2 (RATIFICATION du 19.07.2026) | PROPOSÉ | GD, GR, PF | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, golden-record.projector.spec.ts |
 | R44, R48, R239, R243–R246 | language: fr | RATIFIÉ | NB, TA | fat-vague17.e2e-spec.ts, fat-vague16.e2e-spec.ts |
 | R177–R179 | Catalogue O-Live — Amendement PROPOSÉ (R177 → R179) · Bloc 37 « Le module est une licence » | RATIFIÉ | LC | vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
 | R70, R94–R95, R316–R317, R319–R320 | CANON — DÉCISIONS PO : BACS À SABLE + CONSOLE ÉDITEUR (enregistré 2026-07-29, RATIFIÉ) | PROPOSÉ | BS, VE | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-degel-v8.e2e-spec.ts |
-| R115, R138–R139, R144, R146, R148–R151, R156–R159 | Note de câblage — Les chaînes (CB-01..06) · Lot 30 | PROPOSÉ | CB | chaines.wiring.spec.ts |
+| R115, R138–R139, R144, R146, R148–R151, R156–R159 | Note de câblage — Les chaînes (CB-01..06) · Lot 30 | PROPOSÉ | CB | chaines.wiring.spec.ts, FilterBar.test.tsx |
 | R119 | Erratum R119 — `APPROVED` → `VALIDATED` (19.07.2026, soir) | PROPOSÉ | OB | onboarding.wiring.spec.ts |
 | R125–R127, R189, R206 | language: fr | PROPOSÉ | — | — |
 | R127, R133 | language: fr | PROPOSÉ | — | — |
 | R180–R182 | Catalogue O-Live — Amendement PROPOSÉ (R180 → R182) · Bloc 38 « L'hébergeur est un choix, la preuve n'en est pas un » | RATIFIÉ | CV, GX | coffre.wiring.spec.ts, ged-externe.wiring.spec.ts |
 | R172 | Note de câblage — KYC ↔ Workflow gouverné (KW-01..05) · Lot 35 | PROPOSÉ | KW | kyc-workflow.chaine.wiring.spec.ts |
 | R177, R179 | Erratum E3 — 22.07.2026 · Dates relatives dans le spec Licence vendor (R177→R179) | PROPOSÉ | LC | vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
-| R186–R187 | Erratum E1 — 21.07.2026 · Nommage du RM dans le module CRM (R186) | PROPOSÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R186–R187 | Erratum E1 — 21.07.2026 · Nommage du RM dans le module CRM (R186) | PROPOSÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R189–R206 | language: fr | PROPOSÉ | — | — |
 | R207–R221 | language: fr | PROPOSÉ | IS | islamic-screening.wiring.spec.ts |
 | R221–R222, R230–R231, R238 | Règles PROPOSÉES R222..R238 — GELÉES (attente validation Ali) | RATIFIÉ | BT, FO | fat-vague14.e2e-spec.ts, fat-vague13.e2e-spec.ts |
