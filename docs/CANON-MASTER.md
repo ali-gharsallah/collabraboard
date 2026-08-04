@@ -2,7 +2,7 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-07-29 · commit `83310b6`.** Ce document se périme visiblement :
+> **Généré le 2026-08-04 · commit `c7d58b2`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
