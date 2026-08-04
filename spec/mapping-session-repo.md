@@ -180,7 +180,15 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   d'invariant (SF-01 refusé), observation incomplète → 4xx typé. CPSI e2e `fat-cpsi` **28/28**.
   Postgres 16 (schéma + RLS post-deploy, `aml_gap_signals`/`cpsi_events`) + Redis + worker CPSI
   montés localement pour la recette.
+- **Corpus GT en base** (matière du worker aml-eval + Olivia) : `POST /v1/aml/ground-truth/seed`
+  (`AmlGapService.seedGroundTruth`) sème les **130 cas** (66 TP / 64 FP) du corpus généré dans
+  `ground_truth_cases` — **idempotent** par (tenant, caseId), **RBAC** (rôles qualif, R13),
+  **tenant-scopé** (RLS). Le clientId synthétique du corpus (« CLI-… », non-UUID) va au payload, la
+  colonne `client_id` (uuid) reste null. `GET /v1/aml/ground-truth/db?fam=&label=&scenarioCode=` lit
+  le corpus semé. Vérifié : e2e `fat-aml-gap-gt.e2e-spec.ts` **5/5** (seed, idempotence, filtres,
+  isolation tenant, refus RM) contre le vrai Postgres.
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges — elles
   importent `evaluateScenario` (moteur Nest, meta.deferred) et NON la porte 2G ; le pont passe par
-  HTTP/DI, pas par cet import direct. Le chemin de production (worker `aml-eval` asynchrone,
-  backtest/BTL/DQ, seed GT en base) reste à instrumenter au-dessus de ce pont désormais fonctionnel.
+  HTTP/DI, pas par cet import direct. Au-dessus du pont + du corpus semé : le worker **`aml-eval`
+  asynchrone** (BullMQ/outbox — évaluation de masse du corpus → recall/précision), le **backtest**
+  par version, le **BTL** (below-the-line) et le statut **DQ** — chacun un lot dédié.

@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 import { AML_GAP_REFERENTIEL, AmlGapRule } from "./aml-gap.referentiel.gen";
+import { AML_GAP_GT } from "./aml-gap.gt.gen";
 
 /**
  * Port de délégation Analytique 2G (bloc 61) — la mesure statistique vit dans le service CPSI
@@ -204,6 +205,45 @@ export class AmlGapService {
       });
     }
     return { detection, signal };
+  }
+
+  /**
+   * Seed du corpus GT en base (ground_truth_cases, tenant-scopé, RLS) — matière du worker aml-eval
+   * (recall/précision) et d'Olivia. IDEMPOTENT par (tenant, caseId) : re-semer ne crée aucun
+   * doublon. Rôles CO/CO_SR/MLRO/ADMIN (acte de configuration). Le clientId synthétique du corpus
+   * (« CLI-00016 », non-UUID) est conservé dans le payload — la colonne client_id (uuid) reste null.
+   */
+  async seedGroundTruth(ctx: Ctx) {
+    if (!ROLES_QUALIF.has(ctx.role))
+      throw new ForbiddenException(`[R13] rôle « ${ctx.role} » non habilité à semer le corpus GT`);
+    let inserts = 0;
+    for (const c of AML_GAP_GT) {
+      const res = await this.prisma.groundTruthCase.upsert({
+        where: { tenantId_caseId: { tenantId: ctx.tenantId, caseId: c.caseId } },
+        create: {
+          tenantId: ctx.tenantId, caseId: c.caseId, scenarioCode: c.scenarioId, ruleRef: c.ruleRef,
+          fam: c.famille, label: c.label, clientId: null, narrative: c.narrative,
+          ecartement: c.ecartement ?? null,
+          payload: { clientRef: c.clientId, ...(c.payload ?? {}), placeholder: c.placeholder ?? false },
+        },
+        update: {}, // append-only de fait : le corpus est régénéré par le générateur, jamais muté ici
+      });
+      if (res) inserts++;
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_GAP_GT_SEED", `${inserts} cas`);
+    const total = await this.prisma.groundTruthCase.count({ where: { tenantId: ctx.tenantId } });
+    return { seeded: AML_GAP_GT.length, total };
+  }
+
+  /** Corpus GT en base (tenant-scopé), filtrable par famille / label / scénario — lecture worker. */
+  async groundTruthDb(ctx: Ctx, filtre: { fam?: string; label?: string; scenarioCode?: string } = {}) {
+    const where: any = { tenantId: ctx.tenantId };
+    if (filtre.fam) where.fam = filtre.fam;
+    if (filtre.label) where.label = filtre.label;
+    if (filtre.scenarioCode) where.scenarioCode = filtre.scenarioCode;
+    const rows = await this.prisma.groundTruthCase.findMany({ where });
+    const tp = rows.filter((r: any) => r.label === "TP").length;
+    return { total: rows.length, tp, fp: rows.length - tp, cases: rows };
   }
 
   /** Inbox des signaux (tenant-scopé), filtrable par statut / famille / client. */

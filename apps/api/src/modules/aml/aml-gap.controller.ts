@@ -33,4 +33,11 @@ export class AmlGapController {
   }
 
   @Get("ground-truth") groundTruth() { return AML_GAP_GT; }
+
+  // Corpus GT en base (matière du worker aml-eval). Seed idempotent (rôles qualif) + lecture tenant-scopée.
+  @Post("ground-truth/seed") seedGt(@Req() r: any) { return this.svc.seedGroundTruth(r.ctx); }
+
+  @Get("ground-truth/db") groundTruthDb(@Req() r: any, @Query() q: any) {
+    return this.svc.groundTruthDb(r.ctx, { fam: q.fam, label: q.label, scenarioCode: q.scenarioCode });
+  }
 }
