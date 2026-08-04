@@ -13104,6 +13104,26 @@ return React.createElement("span", { style: { fontSize: 10, fontWeight: 700, col
 function Badge({ text, color, bg }) {
 return React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color, background: bg, padding: "3px 10px", borderRadius: 6 } }, text);
 }
+// Filtre unifié « combo box + puce active » — remplace les rangées de puces sur tous les écrans.
+// options : [{ value, label, count? }]. allValue = valeur « tout » (défaut « Tous »). Compact,
+// friendly, et le filtrage est contrôlé (onChange), donc toujours fonctionnel.
+function FilterCombo({ label, value, options, onChange, allValue }) {
+allValue = allValue == null ? "Tous" : allValue;
+const opts = options || [];
+const current = opts.filter(function (o) { return o.value === value; })[0];
+const actif = value !== allValue;
+return React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12 } },
+  label && React.createElement("span", { style: { fontSize: 10.5, color: T.inkSoft, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 } }, label),
+  React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } },
+    React.createElement("select", { value: value, onChange: function (e) { onChange(e.target.value); },
+      style: { appearance: "none", WebkitAppearance: "none", MozAppearance: "none", padding: "7px 30px 7px 12px", borderRadius: 8, border: "1px solid " + (actif ? T.olive600 : T.line), background: "#fff", color: T.inkMid, fontSize: 12, fontWeight: 700, cursor: "pointer", maxWidth: 320 } },
+      opts.map(function (o) { return React.createElement("option", { key: String(o.value), value: o.value }, o.label + (o.count != null ? " · " + o.count : "")); })),
+    React.createElement("span", { style: { position: "absolute", right: 11, pointerEvents: "none", fontSize: 9, color: T.inkSoft } }, "▾")),
+  actif && React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 6px 4px 12px", borderRadius: 20, background: T.oliveSoft, color: T.olive700, fontSize: 11, fontWeight: 700 } },
+    (current ? current.label : String(value)),
+    React.createElement("button", { onClick: function () { onChange(allValue); }, title: "Retirer le filtre",
+      style: { border: "none", background: "transparent", color: T.olive700, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 0, fontWeight: 800 } }, "✕")));
+}
 function KpiCard({ label, value, sub, trend, color, icon }) {
 return (React.createElement("div", { style: { background: T.surface, borderRadius: 12, padding: "15px 17px", border: `1px solid ${T.line}`, borderLeft: `3px solid ${color}` } },
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 } },
@@ -27055,16 +27075,13 @@ function AmlEncyclopediaScreen({ user }) {
             "Règles AML"),
         React.createElement("div", { style: { fontSize: 11.5, color: T.inkSoft, marginTop: -8, marginBottom: 14 } },
             "Tous les scénarios AML de la banque, en langage humain, groupés par thème bancaire. Survolez un nom pour comprendre ce que fait le scénario ; cliquez pour le détail complet. Seuils, poids et activation se règlent ici — chaque modification est tracée."),
-        React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 } },
-            THEMES.map(function (t) {
-                var on = theme === t; var n = t === "Tous" ? rows.length : (themeCounts[t] || 0);
-                return React.createElement("button", { key: t, onClick: function () { setTheme(t); }, style: { padding: "6px 12px", borderRadius: 20, border: "1px solid " + (on ? T.olive600 : T.line), background: on ? T.olive600 : "#fff", color: on ? "#fff" : T.inkMid, fontSize: 11, fontWeight: 700, cursor: "pointer" } }, t + " · " + n);
-            })),
+        React.createElement(FilterCombo, { label: "Filtrer par thème", value: theme, allValue: "Tous", onChange: setTheme,
+            options: THEMES.map(function (t) { return { value: t, label: t, count: t === "Tous" ? rows.length : (themeCounts[t] || 0) }; }) }),
         React.createElement("input", { placeholder: "Rechercher un scénario par son nom ou un mot-clé (structuring, zakat, sanctions…)", value: q, onChange: function (e) { setQ(e.target.value); }, style: { width: "100%", boxSizing: "border-box", padding: "10px 13px", borderRadius: 10, border: "1px solid " + T.line, fontSize: 12.5, background: "#fff", marginBottom: 14 } }),
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(430px,1fr))", gap: 12, marginBottom: 16 } },
-            view.map(function (r) {
+            view.map(function (r, ri) {
                 var open = openCode === r.code;
-                return React.createElement("div", { key: r.code, style: { background: T.surface, border: "1px solid " + (open ? T.sage : T.line), borderRadius: 12, padding: 14, borderLeft: "4px solid " + (r.block ? T.red : r.theme === "Islamic Finance" ? T.violet : r.theme === "Private Banking" ? T.gold : T.olive500) } },
+                return React.createElement("div", { key: (r.theme || "") + "|" + r.code + "|" + ri, style: { background: T.surface, border: "1px solid " + (open ? T.sage : T.line), borderRadius: 12, padding: 14, borderLeft: "4px solid " + (r.block ? T.red : r.theme === "Islamic Finance" ? T.violet : r.theme === "Private Banking" ? T.gold : T.olive500) } },
                     // ── En-tête : nom humain (hover = description) ──
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
                         React.createElement("span", { style: { fontSize: 15 } }, r.ico),
