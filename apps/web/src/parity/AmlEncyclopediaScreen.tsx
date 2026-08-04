@@ -7,8 +7,11 @@ import { AML_SCORING_RULES, AML_PARAMS } from "./aml";
 import { AML_SCENARIOS } from "./aml-workspace-support";
 import { C48_AML, C48_ISL, AML_NOMS_FR, amlCleanName, amlThemeOf, amlHitsSeries, RULE_PARAM_KEY } from "./aml-catalog-support";
 import { CPSI_SCENARIOS, CPSI_GROUPES } from "./cpsi-data-support";
+import { FilterBar } from "../components/FilterBar";
+import { dedupeKeys } from "../lib/dedupeKeys";
 
-// Source : docs/reference/olive-demo.html 26972–27122 — porté verbatim.
+// Source : docs/reference/olive-demo.html 26972–27122. Filtres portés sur FilterBar (R404, R-FB.1) ;
+// clés de cartes dédupliquées défensivement (R-FB.4) — la source AML est corrigée, le warn reste un filet.
 export function AmlEncyclopediaScreen({ user }: { user?: any }) {
   const [, force] = useState(0);
   const [theme, setTheme] = useState("Tous");
@@ -81,18 +84,21 @@ export function AmlEncyclopediaScreen({ user }: { user?: any }) {
     <div>
       <SectionTitle right={<ExportBtn filename="regles-aml.csv" headers={["Scénario", "Thème", "Type", "Description", "Calcul", "Seuil", "Unité", "Actif", "Blocage", "Hits 6 mois"]} rows={() => rows.map(r => [r.nom, r.theme, r.kind, r.descH, r.calc || "", r.threshold != null ? r.threshold : (r.param ? r.param.value : ""), r.unit || (r.param ? r.param.unit : ""), r.on ? "Oui" : "Non", r.block ? "AUTO" : "", r.hitsTotal])} />}>Règles AML</SectionTitle>
       <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: -8, marginBottom: 14 }}>Tous les scénarios AML de la banque, en langage humain, groupés par thème bancaire. Survolez un nom pour comprendre ce que fait le scénario ; cliquez pour le détail complet. Seuils, poids et activation se règlent ici — chaque modification est tracée.</div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-        {THEMES.map(function (t) {
-          const on = theme === t; const n = t === "Tous" ? rows.length : (themeCounts[t] || 0);
-          return <button key={t} onClick={() => setTheme(t)} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid " + (on ? T.olive600 : T.line), background: on ? T.olive600 : "#fff", color: on ? "#fff" : T.inkMid, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{t + " · " + n}</button>;
-        })}
-      </div>
-      <input placeholder="Rechercher un scénario par son nom ou un mot-clé (structuring, zakat, sanctions…)" value={q} onChange={e => setQ(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: "10px 13px", borderRadius: 10, border: "1px solid " + T.line, fontSize: 12.5, background: "#fff", marginBottom: 14 }} />
+      <FilterBar
+        search={{ value: q, onChange: setQ, placeholder: "Rechercher un scénario par son nom ou un mot-clé (structuring, zakat, sanctions…)" }}
+        filters={[{
+          id: "theme", label: "Thème bancaire", value: theme, allValue: "Tous", onChange: setTheme,
+          options: THEMES.map(function (t): [string, string] { return [t, t + " · " + (t === "Tous" ? rows.length : (themeCounts[t] || 0))]; }),
+        }]}
+        shown={view.length}
+        total={rows.length}
+        onReset={() => { setTheme("Tous"); setQ(""); }}
+      />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(430px,1fr))", gap: 12, marginBottom: 16 }}>
-        {view.map(function (r) {
+        {dedupeKeys(view, (r: any) => r.code, "Règles AML — référentiel").items.map(function ({ item: r, key }) {
           const open = openCode === r.code;
           return (
-            <div key={r.code} style={{ background: T.surface, border: "1px solid " + (open ? T.sage : T.line), borderRadius: 12, padding: 14, borderLeft: "4px solid " + (r.block ? T.red : r.theme === "Islamic Finance" ? T.violet : r.theme === "Private Banking" ? T.gold : T.olive500) }}>
+            <div key={key} style={{ background: T.surface, border: "1px solid " + (open ? T.sage : T.line), borderRadius: 12, padding: 14, borderLeft: "4px solid " + (r.block ? T.red : r.theme === "Islamic Finance" ? T.violet : r.theme === "Private Banking" ? T.gold : T.olive500) }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <span style={{ fontSize: 15 }}>{r.ico}</span>
                 <div title={r.descH} onClick={() => setOpenCode(open ? null : r.code)} style={{ flex: 1, fontSize: 13.5, fontWeight: 800, color: T.ink, cursor: "help", lineHeight: 1.3 }}>{r.nom}</div>

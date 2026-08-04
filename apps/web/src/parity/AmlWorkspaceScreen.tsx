@@ -3,8 +3,11 @@ import { T } from "./tokens";
 import { Badge } from "./components";
 import { pushParamAudit } from "./param-audit-support";
 import { AML_ALERTS, aiContextualizeAlert, AML_ACTIONS, amlActionColor, amlStatusStyle, amlTypeStyle, amlSignalColor, AML_SCENARIOS } from "./aml-workspace-support";
+import { FilterBar } from "../components/FilterBar";
+import { dedupeKeys } from "../lib/dedupeKeys";
 
-// Source : docs/reference/olive-demo.html 14822–14969 — porté verbatim.
+// Source : docs/reference/olive-demo.html 14822–14969. Filtres de la file portés sur FilterBar
+// (R404, R-FB.1) ; clés de la bibliothèque de scénarios dédupliquées défensivement (R-FB.4).
 export function AmlWorkspaceScreen() {
   const [view, setView] = useState("inbox");
   const [selId, setSelId] = useState<any>(null);
@@ -174,8 +177,8 @@ export function AmlWorkspaceScreen() {
         <div style={{ background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: T.ink, marginBottom: 2 }}>⚗ Bibliothèque de scénarios — {AML_SCENARIOS.filter(x => x.on).length}/{AML_SCENARIOS.length} actifs</div>
           <div style={{ fontSize: 10.5, color: T.inkSoft, marginBottom: 12 }}>Correspondent banking, white collar, pays à risque, structuring, layering — mêmes scénarios que le paramétrage Admin → Scoring, activation tracée.</div>
-          {AML_SCENARIOS.map(sc => (
-            <div key={sc.code} style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid " + T.lineSoft, background: sc.on ? T.cream : T.surface, marginBottom: 8, opacity: sc.on ? 1 : 0.6 }}>
+          {dedupeKeys(AML_SCENARIOS, (sc: any) => sc.code, "Bibliothèque de scénarios AML").items.map(({ item: sc, key }) => (
+            <div key={key} style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid " + T.lineSoft, background: sc.on ? T.cream : T.surface, marginBottom: 8, opacity: sc.on ? 1 : 0.6 }}>
               <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 4 }}>
                 <button onClick={() => { sc.on = !sc.on; pushParamAudit("Compliance Officer", "Scénario AML " + sc.code + " — " + (sc.on ? "activé" : "désactivé")); setState((prev: any) => { const ns: any = {}; Object.keys(prev).forEach(k => ns[k] = prev[k]); return ns; }); }} style={{ width: 34, height: 19, borderRadius: 10, border: "none", cursor: "pointer", background: sc.on ? T.olive600 : T.line, position: "relative", flexShrink: 0 }}>
                   <span style={{ position: "absolute", top: 2, left: sc.on ? 17 : 2, width: 15, height: 15, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
@@ -252,16 +255,17 @@ export function AmlWorkspaceScreen() {
     <div>
       {Header}
       {Tabs}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-        {([["all", "Toutes"], ["NEW", "Nouvelles"], ["CLEARED", "Clôturées"], ["ESCALATED", "Escaladées"]] as [string, string][]).map(([id, label]) => (
-          <button key={id} onClick={() => setFStatus(id)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${fStatus === id ? T.olive600 : T.line}`, background: fStatus === id ? T.oliveSoft : T.surface, color: fStatus === id ? T.olive700 : T.inkMid, fontSize: 12, fontWeight: fStatus === id ? 700 : 500, cursor: "pointer" }}>{label}</button>
-        ))}
-        <div style={{ width: 1, background: T.line, margin: "0 4px" }} />
-        {([["all", "Tous types"], ["SANCTIONS", "Sanctions"], ["PEP", "PEP"], ["ADVERSE_MEDIA", "Presse"]] as [string, string][]).map(([id, label]) => (
-          <button key={id} onClick={() => setFType(id)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${fType === id ? T.olive600 : T.line}`, background: fType === id ? T.oliveSoft : T.surface, color: fType === id ? T.olive700 : T.inkMid, fontSize: 12, fontWeight: fType === id ? 700 : 500, cursor: "pointer" }}>{label}</button>
-        ))}
-        <div style={{ marginLeft: "auto", fontSize: 12, color: T.inkSoft, alignSelf: "center" }}>{alerts.length} alerte(s)</div>
-      </div>
+      <FilterBar
+        filters={[
+          { id: "status", label: "Statut alerte", value: fStatus, allValue: "all", onChange: setFStatus,
+            options: [["all", "Toutes"], ["NEW", "Nouvelles"], ["CLEARED", "Clôturées"], ["ESCALATED", "Escaladées"]] },
+          { id: "type", label: "Type d'alerte", value: fType, allValue: "all", onChange: setFType,
+            options: [["all", "Tous types"], ["SANCTIONS", "Sanctions"], ["PEP", "PEP"], ["ADVERSE_MEDIA", "Presse"]] },
+        ]}
+        shown={alerts.length}
+        total={AML_ALERTS.length}
+        onReset={() => { setFStatus("all"); setFType("all"); }}
+      />
       <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>

@@ -126,7 +126,11 @@ export function amlTypeStyle(t: string): any {
 }
 export function amlSignalColor(sig: string) { return sig === "negative" ? T.red : sig === "positive" ? T.green : T.inkSoft; }
 
-// Source : docs/reference/olive-demo.html 18085-18122 — porté verbatim (dont doublons de codes AML-10/11/12, fidèles à la source).
+// Source : docs/reference/olive-demo.html 18085-18122. E-FB-1 (R-FB.4, spec/SPEC-FILTERBAR.md) :
+// la source portait des codes dupliqués AML-10/11/12 entre la série CBK/White-collar et la série
+// Retail → clés React en collision (cartes orphelines au filtrage). Corrigé À LA SOURCE comme la
+// démo (drop PO 2026-08-04) : la série CBK/White-collar devient AML-CB-01/AML-CB-02/AML-WC-01 ;
+// la série Retail conserve AML-10/11/12. Le garde-fou dedupeKeys (#n + console.warn) reste un filet.
 export const AML_SCENARIOS: any[] = [
     { code: "AML-PB-69", name: "Structuring PB (R189)", logic: "≥ N dépôts sous le seuil de déclaration sur fenêtre glissante — somme > seuil agrégé tenant", threshold: 95000, unit: "CHF agrégé / 7j", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
     { code: "AML-PB-70", name: "Cross-Border circulaire (R190)", logic: "Flux A→B→C→A transfrontalier sans justification économique documentée au KYC", threshold: 3, unit: "sauts / 30j", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
@@ -147,9 +151,9 @@ export const AML_SCENARIOS: any[] = [
     { code: "AML-PB-85", name: "Tax minimization scheme (R205)", logic: "Schéma multi-juridictions à finalité fiscale exclusive (signal Niveau 1)", threshold: 100000, unit: "CHF structuré", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
     { code: "AML-PB-86", name: "Concentration risk (R206)", logic: "≥ x% des flux du compte vers une contrepartie unique / 90j", threshold: 60, unit: "% flux / 90j", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
 { code: "AML-01", name: "Structuring / smurfing", logic: "N dépôts < seuil unitaire sur fenêtre glissante 7j dont la somme dépasse le seuil agrégé", threshold: 100000, unit: "CHF agrégé / 7j", on: true, cat: "Structuring", hits: 5 },
-{ code: "AML-10", name: "CBK — Nested relationships", logic: "Usage d'une relation de correspondance par des banques tierces non déclarées : ≥ 3 BIC ordonnateurs distincts derrière un même correspondant / 30j, MT202COV sans MT103 apparié", threshold: 3, unit: "BIC distincts / 30j", on: true, cat: "Correspondent Banking", hits: 4 },
-{ code: "AML-11", name: "CBK — Downstream juridiction à risque", logic: "Correspondant dont les flux aval touchent une juridiction de la liste pays à risque (Admin → Pays à risque)", threshold: 250000, unit: "CHF cumulé / 7j", on: true, cat: "Correspondent Banking", hits: 2 },
-{ code: "AML-12", name: "White collar — Détournement", logic: "Dirigeant/signataire transférant vers des comptes personnels des montants incohérents avec la rémunération déclarée au KYC (> 3× salaire mensuel, récurrence ≥ 2)", threshold: 3, unit: "× salaire mensuel", on: true, cat: "White collar", hits: 3 },
+{ code: "AML-CB-01", name: "CBK — Nested relationships", logic: "Usage d'une relation de correspondance par des banques tierces non déclarées : ≥ 3 BIC ordonnateurs distincts derrière un même correspondant / 30j, MT202COV sans MT103 apparié", threshold: 3, unit: "BIC distincts / 30j", on: true, cat: "Correspondent Banking", hits: 4 },
+{ code: "AML-CB-02", name: "CBK — Downstream juridiction à risque", logic: "Correspondant dont les flux aval touchent une juridiction de la liste pays à risque (Admin → Pays à risque)", threshold: 250000, unit: "CHF cumulé / 7j", on: true, cat: "Correspondent Banking", hits: 2 },
+{ code: "AML-WC-01", name: "White collar — Détournement", logic: "Dirigeant/signataire transférant vers des comptes personnels des montants incohérents avec la rémunération déclarée au KYC (> 3× salaire mensuel, récurrence ≥ 2)", threshold: 3, unit: "× salaire mensuel", on: true, cat: "White collar", hits: 3 },
 { code: "AML-13", name: "White collar — Délit d'initié", logic: "Achats concentrés d'un titre en fenêtre J-10 avant annonce (croisement Market Abuse), revente < 5j puis sortie de fonds", threshold: 20, unit: "% du mandat", on: true, cat: "White collar", hits: 1 },
 { code: "AML-14", name: "Pays à risque — corridor pondéré", logic: "Flux sortant vers liste GAFI/interne, seuil pondéré par niveau : noire CHF 0 · grise 100k · interne 250k", threshold: 0, unit: "CHF (pondéré)", on: true, cat: "Pays à risque", hits: 9 },
 { code: "AML-15", name: "Réactivation de compte dormant", logic: "Compte sans mouvement > 24 mois recevant soudainement > seuil — alerte enrichie du profil KYC", threshold: 100000, unit: "CHF", on: false, cat: "Comportement", hits: 1 },
