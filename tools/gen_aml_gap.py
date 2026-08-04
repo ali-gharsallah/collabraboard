@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 # GEN-AML-GAP — source de vérité unique wave 1 (blocs 50-56, R340-R377 provisoires)
 # Émet : SPEC-AML-GAP-WAVE1.md (sections règles), aml-gap-dataset-gt.json, c50gap.js (bloc démo)
-import json
+# Chemins portés en-repo (2026-08-04) : le générateur PO écrivait vers /home/claude/olive/ (env PO) ;
+# résolus ci-dessous en chemins relatifs au dépôt pour brancher la ré-émission dans le pipeline
+# (journal action 6 : toute évolution de règle = régénération + commit). Logique inchangée.
+import json, os
+_HERE = os.path.dirname(os.path.abspath(__file__))          # tools/
+_ROOT = os.path.dirname(_HERE)                              # racine du dépôt
+_GEN = os.path.join(_ROOT, "spec", "generated")            # sections de spec régénérées
+os.makedirs(_GEN, exist_ok=True)
+os.makedirs(os.path.join(_ROOT, "data"), exist_ok=True)
 
 def R(id, rule, fam, nom, ico, niv, block, desc, given, when, then, params, cases):
     return dict(id=id, rule=rule, fam=fam, nom=nom, ico=ico, niveau=niv, block=block,
@@ -333,7 +341,7 @@ R("GV-04","R377","Gouvernance du dispositif","Revue annuelle de calibrage","📋
 ]
 
 # ── Wave 2 (blocs 57-61) ──
-exec(open('/home/claude/olive/wave2_rules.py', encoding='utf-8').read())
+exec(open(os.path.join(_HERE, 'wave2_rules.py'), encoding='utf-8').read())
 RULES += WAVE2
 
 # ════════ ÉMISSION ════════
@@ -350,7 +358,7 @@ ds = dict(dataset="aml-gap-gt", version="1.0", generated="2026-08-04",
           stats=dict(rules=len(RULES), cases=len(cases),
                      tp=sum(1 for c in cases if c["label"]=="TP"), fp=sum(1 for c in cases if c["label"]=="FP")),
           cases=cases)
-open('/home/claude/olive/aml-gap-dataset-gt.json','w',encoding='utf-8').write(json.dumps(ds, ensure_ascii=False, indent=1))
+open(os.path.join(_ROOT, 'data', 'aml-gap-dataset-gt.json'),'w',encoding='utf-8').write(json.dumps(ds, ensure_ascii=False, indent=1))
 
 # 2) Bloc JS pour la démo
 def js(o): return json.dumps(o, ensure_ascii=False)
@@ -363,7 +371,7 @@ for r in RULES:
              params=r["params"], cases=r["cases"])
     lines.append("    " + js(e) + ",")
 lines.append("];")
-open('/home/claude/olive/c50gap.js','w',encoding='utf-8').write("\n".join(lines))
+open(os.path.join(_ROOT, 'data', 'c50gap.gen.js'),'w',encoding='utf-8').write("\n".join(lines))
 
 # 3) Sections règles pour la SPEC
 out = io.StringIO()
@@ -390,6 +398,7 @@ for fam, rs in fams.items():
         for c in r["cases"]:
             dest.write(f"- [{c['label']}] {c['client']} — {c['txt']}\n")
         dest.write("\n")
-open('/home/claude/olive/spec-rules-sections.md','w',encoding='utf-8').write(out.getvalue())
-open('/home/claude/olive/spec-rules-sections-w2.md','w',encoding='utf-8').write(out2.getvalue())
+open(os.path.join(_GEN, 'aml-gap-wave1-sections.md'),'w',encoding='utf-8').write(out.getvalue())
+open(os.path.join(_GEN, 'aml-gap-wave2-sections.md'),'w',encoding='utf-8').write(out2.getvalue())
 print("OK — règles:", len(RULES), "| cas GT:", len(cases), "| TP:", ds["stats"]["tp"], "| FP:", ds["stats"]["fp"])
+print("  → data/aml-gap-dataset-gt.json · data/c50gap.gen.js · spec/generated/aml-gap-wave{1,2}-sections.md")

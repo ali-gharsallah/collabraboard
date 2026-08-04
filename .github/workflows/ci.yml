@@ -217,6 +217,15 @@ jobs:
           echo "$out" | grep -q "### 8/8 tests canon-master verts ###"
           node tools/canon-master/run.mjs --check
 
+      # ── AML Gap Wave 1 — générateur source de vérité + parité canon PO + no-drift ──
+      # Invariants du générateur (R340–R377), fraîcheur des artefacts émis (TS backend/front),
+      # parité avec le canon PO (data/aml-gap-dataset-gt.json) et régénération sans dérive du
+      # canon PO runnable in-repo (tools/gen_aml_gap.py). Le générateur fait foi.
+      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 23/23)"
+        run: |
+          out=$(python3 tools/aml-gap/test_gen_aml_gap.py); echo "$out"
+          echo "$out" | grep -q "### 23/23 invariants AML Gap verts ###"
+
       # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
       - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
         working-directory: apps/api

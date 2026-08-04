@@ -107,7 +107,10 @@ coexistent, liés par un test de parité — pas deux vérités concurrentes :
 - **Divergence documentée** : GV-04/FP est un *placeholder vide* côté émetteur (« ») et « — » au canon
   (même sémantique : cas laissé vide par la spec). Les enrichissements de l'émetteur (`ecartement`,
   payloads synthétiques) n'existent pas au canon PO — ils servent le backend/front implémentés.
-- **Non runnable in-repo tel quel** : le générateur PO écrit vers des chemins absolus `/home/claude/olive/`
-  (env PO) — c'est un **record canonique**, pas encore l'émetteur du pipeline. Le portage de ses chemins
-  (pour « brancher la ré-émission », action 6 du journal) et le **backend/front Wave 2** (détecteurs
-  statistiques exécutés dans le service Python CPSI — jamais réécrits en Nest) restent des lots ultérieurs.
+- **Runnable in-repo (2026-08-04, action 6 « brancher la ré-émission »)** : les chemins absolus
+  `/home/claude/olive/` du générateur PO ont été **portés en chemins relatifs au dépôt** (logique
+  inchangée). `python3 tools/gen_aml_gap.py` régénère `data/aml-gap-dataset-gt.json` (byte-identique
+  au versé — no-drift prouvé), `data/c50gap.gen.js` (bloc démo) et `spec/generated/aml-gap-wave{1,2}-sections.md`.
+  Garde CI **3d** (`test_gen_aml_gap.py`, 23/23) : invariants + fraîcheur des artefacts émis + parité
+  canon PO + régénération sans dérive. Le **backend/front Wave 2** (détecteurs statistiques exécutés
+  dans le service Python CPSI — jamais réécrits en Nest) reste un lot ultérieur.

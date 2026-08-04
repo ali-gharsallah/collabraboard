@@ -196,7 +196,24 @@ def main():
         check("AG-17 canon PO présent (data/aml-gap-dataset-gt.json)", False,
               "verser le canon PO pour activer la parité")
 
-    total = 14 + 3 + 2 + 1 + 2  # + AG-16 + AG-17/AG-17b
+    # AG-18 — le générateur PO (tools/gen_aml_gap.py) est runnable in-repo et le corpus versé ne
+    # dérive pas (« brancher la ré-émission dans le pipeline », journal action 6). On régénère et on
+    # exige que data/aml-gap-dataset-gt.json soit inchangé (déterministe ⇒ no-drift).
+    import subprocess
+    root = os.path.normpath(os.path.join(HERE, "..", ".."))
+    po_gen = os.path.join(root, "tools", "gen_aml_gap.py")
+    ds_committed = os.path.join(root, "data", "aml-gap-dataset-gt.json")
+    if os.path.exists(po_gen) and os.path.exists(ds_committed):
+        before = open(ds_committed, encoding="utf-8").read()
+        r = subprocess.run([sys.executable, po_gen], cwd=root, capture_output=True, text=True)
+        after = open(ds_committed, encoding="utf-8").read()
+        check("AG-18 générateur PO runnable + corpus stable (no-drift)",
+              r.returncode == 0 and before == after,
+              "régénérez : python3 tools/gen_aml_gap.py (et committez si intentionnel)")
+    else:
+        check("AG-18 générateur PO présent (tools/gen_aml_gap.py)", False, "verser le générateur PO")
+
+    total = 14 + 3 + 2 + 1 + 2 + 1  # + AG-16 + AG-17/AG-17b + AG-18
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:
