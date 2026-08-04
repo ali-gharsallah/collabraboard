@@ -5,8 +5,10 @@ import { clientById } from "./components-data";
 import ACCOUNT_REVIEWS_DATA from "../fixtures/ACCOUNT_REVIEWS_DATA.json";
 import CLIENTS from "../fixtures/CLIENTS.json";
 import DS_STATS from "../fixtures/DS_STATS.json";
+import { FilterBar } from "../components/FilterBar";
 
-// AccountReviewScreen — PORT de docs/reference/olive-demo.html 42173–42340. Câblé sur
+// AccountReviewScreen — Filtres statut/déclencheur + recherche portés sur FilterBar (R404, R-FB.1).
+// PORT de docs/reference/olive-demo.html 42173–42340. Câblé sur
 // ACCOUNT_REVIEWS_DATA (113). StatsToggle → null (B.6). Détail (AccountReviewDetailScreen) consigné.
 const clients = CLIENTS as any[];
 const AR_STATUS_CFG: Record<string, [string, string, string]> = {
@@ -89,20 +91,18 @@ export function AccountReviewScreen({ user }: { user?: any }) {
         <div style={{ fontSize: 12, color: T.red, fontWeight: 600 }}>{kOver} révision(s) en retard — action Compliance requise sous 30 jours (FINMA)</div>
       </div>}
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ position: "relative", flex: "1 1 180px" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: T.inkSoft, fontSize: 13 }}>🔍</span>
-          <input type="search" placeholder="ID, client, reviewer…" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 12, background: T.surface, color: T.ink, outline: "none", boxSizing: "border-box" }} onFocus={e => (e.target.style.borderColor = T.olive600)} onBlur={e => (e.target.style.borderColor = T.line)} />
-        </div>
-        {([["ALL", "Tous"], ["OVERDUE", "En retard"], ["IN_PROGRESS", "En cours"], ["PENDING", "En attente"], ["COMPLETED", "Complétée"]] as const).map(([v, l]) => {
-          const cfg = AR_STATUS_CFG[v]; const on = filterStatus === v;
-          return <button key={v} onClick={() => { setFilterStatus(v); setPage(0); }} style={{ padding: "6px 11px", borderRadius: 7, border: `1px solid ${on ? (cfg ? cfg[0] : T.olive600) : T.line}`, background: on ? (cfg ? cfg[1] : T.oliveSoft) : "transparent", color: on ? (cfg ? cfg[0] : T.olive700) : T.inkMid, fontSize: 11, fontWeight: on ? 700 : 400, cursor: "pointer" }}>{l}</button>;
-        })}
-        <select value={filterTrigger} onChange={e => { setFilterTrigger(e.target.value); setPage(0); }} style={{ padding: "6px 10px", borderRadius: 7, border: `1px solid ${T.line}`, fontSize: 11, color: T.inkMid, background: T.surface, cursor: "pointer", maxWidth: 200 }}>
-          <option value="ALL">Tous les déclencheurs</option>
-          {triggers.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: v => { setSearch(v); setPage(0); }, placeholder: "ID, client, reviewer…" }}
+        filters={[
+          { id: "statut", label: "Statut", value: filterStatus, allValue: "ALL", onChange: v => { setFilterStatus(v); setPage(0); },
+            options: [["ALL", "Tous"], ["OVERDUE", "En retard"], ["IN_PROGRESS", "En cours"], ["PENDING", "En attente"], ["COMPLETED", "Complétée"]] },
+          { id: "declencheur", label: "Déclencheur", value: filterTrigger, allValue: "ALL", onChange: v => { setFilterTrigger(v); setPage(0); },
+            options: ([["ALL", "Tous les déclencheurs"]] as [string, string][]).concat(triggers.map(t => [t, t] as [string, string])) },
+        ]}
+        shown={filtered.length}
+        total={rows.length}
+        onReset={() => { setFilterStatus("ALL"); setFilterTrigger("ALL"); setSearch(""); setPage(0); }}
+      />
 
       {selIds.length > 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: T.oliveSoft, border: `1px solid ${T.olive600}66`, borderRadius: 12, padding: "10px 14px", marginBottom: 12 }}>
         <span style={{ fontSize: 12.5, fontWeight: 800, color: T.olive700 }}>☑ {selIds.length} review(s) sélectionnée(s)</span>

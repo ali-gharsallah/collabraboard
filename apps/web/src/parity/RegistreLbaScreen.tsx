@@ -6,8 +6,10 @@ import { ExportBtn } from "./components-data";
 import { wfNomColor, wfNomBg } from "./kyc-support";
 import { pushParamAudit } from "./param-audit-support";
 import { regRelationRow, regFiche, regAuditSample } from "./registre-support";
+import { FilterBar } from "../components/FilterBar";
 
-// Source : docs/reference/olive-demo.html 29252–29400 — porté verbatim.
+// Source : docs/reference/olive-demo.html 29252–29400. Filtres risque + « revues en retard » portés
+// sur FilterBar (R404 ; le booléen devient une combobox binaire ALL/ON — R-FB.5).
 export function RegistreLbaScreen({ user }: { user?: any }) {
   const [tab, setTab] = useState("reg");
   const [riskF, setRiskF] = useState("ALL");
@@ -41,12 +43,19 @@ export function RegistreLbaScreen({ user }: { user?: any }) {
       </div>
       {tab === "reg" && (
         <div style={card}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
-            {["ALL", "HIGH", "MEDIUM", "LOW"].map(function (v) {
-              return <button key={v} onClick={function () { setRiskF(v); }} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid " + (riskF === v ? T.olive600 : T.line), background: riskF === v ? T.oliveSoft : T.surface, color: riskF === v ? T.olive700 : T.inkMid, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{v === "ALL" ? "Tous risques" : v}</button>;
-            })}
-            <button onClick={function () { setLateOnly(!lateOnly); }} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid " + (lateOnly ? T.red : T.line), background: lateOnly ? T.redSoft : T.surface, color: lateOnly ? T.red : T.inkMid, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>⏰ Revues en retard</button>
-            <span style={{ fontSize: 11, color: T.inkSoft, marginLeft: "auto" }}>{rows.length} relation(s)</span>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap" }}>
+            <FilterBar
+              filters={[
+                { id: "risque", label: "Risque", value: riskF, allValue: "ALL", onChange: setRiskF,
+                  options: ["ALL", "HIGH", "MEDIUM", "LOW"].map(function (v): [string, string] { return [v, v === "ALL" ? "Tous risques" : v]; }) },
+                { id: "late", label: "Revues en retard", value: lateOnly ? "ON" : "ALL", allValue: "ALL",
+                  onChange: function (v) { setLateOnly(v === "ON"); },
+                  options: [["ALL", "Indifférent"], ["ON", "Oui"]] },
+              ]}
+              shown={rows.length}
+              total={allRows.length}
+              onReset={function () { setRiskF("ALL"); setLateOnly(false); }}
+            />
             <ExportBtn filename="registre-relations-affaires-art7-LBA.csv" headers={["Relation", "Cocontractant", "Structure", "Pays", "Ouverture", "UBO", "Risque", "Gabarit", "Complétude", "Hits", "Alertes NEW", "MROS", "Revue en retard"]} rows={function () { return rows.map(function (r) { return [r.c.id, r.c.name, r.c.typeLabel || "—", r.c.country || "—", r.opened, (r.c.uboName || "—"), r.c.risk, r.wn.code, r.pct + "%", r.hits.join("/") || "—", r.alertsOpen, r.mros, r.reviewLate ? "OUI" : "non"]; }); }} />
           </div>
           <div style={{ overflowX: "auto" }}>

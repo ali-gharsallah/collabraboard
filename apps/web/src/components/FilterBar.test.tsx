@@ -5,6 +5,15 @@ import { FilterBar, type FilterSpec } from "./FilterBar";
 import { dedupeKeys, keysAreUnique } from "../lib/dedupeKeys";
 import { AmlEncyclopediaScreen } from "../parity/AmlEncyclopediaScreen";
 import { AML_SCENARIOS } from "../parity/aml-workspace-support";
+import { AmlWorkspaceScreen } from "../parity/AmlWorkspaceScreen";
+import { KycListScreen } from "../parity/KycListScreen";
+import { ClientsScreen } from "../parity/ClientsScreen";
+import { TasksScreen } from "../parity/TasksScreen";
+import { TransactionsRiskScreen } from "../parity/TransactionsRiskScreen";
+import { RegistreLbaScreen } from "../parity/RegistreLbaScreen";
+import { AccountReviewScreen } from "../parity/AccountReviewScreen";
+import { LegalScreen } from "../parity/LegalScreen";
+import CrmScreen from "../parity/CrmScreen";
 
 // Scénarios Gherkin FB-01..FB-07 de spec/SPEC-FILTERBAR.md (R404), assertions DOM par comptage.
 // Le composant est thin : l'état reste dans un hôte de test contrôlé.
@@ -132,6 +141,34 @@ describe("E-FB-1 (corpus) — codes de scénario AML uniques à la source", () =
     // les anciens doublons sont désormais distincts
     expect(codes).toContain("AML-CB-01");
     expect(codes).toContain("AML-WC-01");
+  });
+});
+
+describe("R-FB.1 — écrans parité migrés montent une FilterBar", () => {
+  const user = { id: "USR-001", name: "Test CO", role: "CO" };
+  const hasBar = (c: HTMLElement) => !!c.querySelector('[data-testid="filterbar"]');
+
+  it("les écrans à vue liste par défaut rendent une FilterBar", () => {
+    for (const el of [
+      <AmlWorkspaceScreen key="aw" />,
+      <KycListScreen key="kl" />,
+      <ClientsScreen key="cl" />,
+      <TasksScreen key="ts" user={user} />,
+      <TransactionsRiskScreen key="tx" />,
+      <RegistreLbaScreen key="rl" user={user} />,
+      <AccountReviewScreen key="ar" user={user} />,
+      <LegalScreen key="lg" user={user} />,
+    ]) {
+      const { container, unmount } = render(el);
+      expect(hasBar(container)).toBe(true);
+      unmount();
+    }
+  });
+
+  it("CrmScreen rend la FilterBar dans l'onglet Journal", () => {
+    const { container } = render(<CrmScreen user={user} />);
+    fireEvent.click(within(container).getByText(/Journal/));
+    expect(hasBar(container)).toBe(true);
   });
 });
 

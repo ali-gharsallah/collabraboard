@@ -3,8 +3,10 @@ import { T } from "./tokens";
 import { Badge, KpiCard, StatsToggle, Donut, colOn, colLabel, KYC_STATUS_STYLE, KYC_STATUS_LABEL } from "./components";
 import { ScorePopover, LifecycleBadge, ExportBtn, ClientTimelineModal, kycsByClientId } from "./components-data";
 import CLIENTS from "../fixtures/CLIENTS.json";
+import { FilterBar } from "../components/FilterBar";
 
-// ClientsScreen — PORT VERBATIM de docs/reference/olive-demo.html (13642–13754).
+// ClientsScreen — PORT de docs/reference/olive-demo.html (13642–13754). Filtres (segment/risque/
+// structure) + recherche portés sur FilterBar (R404, R-FB.1) ; la barre « Mes clients » reste un scope.
 // Câblé sur la fixture CLIENTS (60 clients). onOpen (ouverture du dossier) = no-op en
 // mode parité isolé ; le 🪪 ouvre la Vue 360° (ClientTimelineModal). StatsToggle → null (B.6).
 const clients = CLIENTS as any[];
@@ -58,21 +60,21 @@ export function ClientsScreen({ onOpen = () => {} }: { onOpen?: (c: any) => void
         </div>
       </StatsToggle>
 
-      {/* Barre de filtres */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ position: "relative", flex: "1 1 180px" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: T.inkSoft, fontSize: 13 }}>🔍</span>
-          <input type="search" placeholder="Nom, ID, pays, RM…" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 12, background: T.surface, color: T.ink, outline: "none", boxSizing: "border-box" }} onFocus={e => (e.target.style.borderColor = T.olive600)} onBlur={e => (e.target.style.borderColor = T.line)} />
-        </div>
-        {([["ALL", "Tous"], ["UHNWI", "UHNWI"], ["HNWI", "HNWI"], ["Affluent", "Affluent"], ["Mass Affluent", "Mass Aff."]] as const).map(([v, l]) => (
-          <button key={v} onClick={() => { setFilterSeg(v); setPage(0); }} style={{ padding: "6px 11px", borderRadius: 7, border: `1px solid ${filterSeg === v ? T.olive600 : T.line}`, background: filterSeg === v ? T.oliveSoft : "transparent", color: filterSeg === v ? T.olive700 : T.inkMid, fontSize: 11, fontWeight: filterSeg === v ? 700 : 400, cursor: "pointer" }}>{l}</button>))}
-        {([["ALL", "Tout risque"], ["LOW", "Faible"], ["MEDIUM", "Moyen"], ["HIGH", "Élevé"]] as const).map(([v, l]) => (
-          <button key={v} onClick={() => { setFilterRisk(v); setPage(0); }} style={{ padding: "6px 11px", borderRadius: 7, border: `1px solid ${filterRisk === v ? (v === "HIGH" ? T.red : v === "MEDIUM" ? T.amber : T.green) : T.line}`, background: filterRisk === v ? (v === "HIGH" ? T.redSoft : v === "MEDIUM" ? T.amberSoft : T.greenSoft) : "transparent", color: filterRisk === v ? (v === "HIGH" ? T.red : v === "MEDIUM" ? T.amber : T.green) : T.inkMid, fontSize: 11, fontWeight: filterRisk === v ? 700 : 400, cursor: "pointer" }}>{l}</button>))}
-        <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(0); }} style={{ padding: "6px 10px", borderRadius: 7, border: `1px solid ${T.line}`, fontSize: 11, color: T.inkMid, background: T.surface, cursor: "pointer" }}>
-          <option value="ALL">Toutes structures</option>
-          {structTypes.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
+      {/* Barre de filtres — FilterBar uniforme (R404) */}
+      <FilterBar
+        search={{ value: search, onChange: v => { setSearch(v); setPage(0); }, placeholder: "Nom, ID, pays, RM…" }}
+        filters={[
+          { id: "segment", label: "Segment", value: filterSeg, allValue: "ALL", onChange: v => { setFilterSeg(v); setPage(0); },
+            options: [["ALL", "Tous"], ["UHNWI", "UHNWI"], ["HNWI", "HNWI"], ["Affluent", "Affluent"], ["Mass Affluent", "Mass Aff."]] },
+          { id: "risque", label: "Risque", value: filterRisk, allValue: "ALL", onChange: v => { setFilterRisk(v); setPage(0); },
+            options: [["ALL", "Tout risque"], ["LOW", "Faible"], ["MEDIUM", "Moyen"], ["HIGH", "Élevé"]] },
+          { id: "structure", label: "Structure", value: filterType, allValue: "ALL", onChange: v => { setFilterType(v); setPage(0); },
+            options: ([["ALL", "Toutes structures"]] as [string, string][]).concat(structTypes.map(t => [t, t] as [string, string])) },
+        ]}
+        shown={filtered.length}
+        total={ALL.length}
+        onReset={() => { setFilterSeg("ALL"); setFilterRisk("ALL"); setFilterType("ALL"); setSearch(""); setPage(0); }}
+      />
 
       {/* Tableau */}
       <div style={{ background: T.surface, borderRadius: 14, border: `1px solid ${T.line}`, overflow: "hidden" }}>

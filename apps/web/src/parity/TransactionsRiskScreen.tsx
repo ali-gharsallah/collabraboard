@@ -4,9 +4,10 @@ import { Badge, SectionTitle } from "./components";
 import { AML_SCENARIOS } from "./aml-workspace-support";
 import { TX_HUBS, TX_HUB_CC, TX_DATA, TX_RISK_C, TX_CONTINENTS } from "./tx-support";
 import { CPSI_PAYS_RISQUE } from "./cpsi-engine-support";
+import { FilterBar } from "../components/FilterBar";
 
 // Source : docs/reference/olive-demo.html 43589-43909 — TransactionsRiskScreen (carte corridors / top flux / liste).
-// Porté verbatim en React.createElement.
+// Porté en React.createElement. Filtre « Risque » porté sur FilterBar (R404, R-FB.1).
 
 export function TransactionsRiskScreen() {
 const [txView, setTxView] = useState("carte");
@@ -89,7 +90,7 @@ txView === "carte" && React.createElement(React.Fragment, null,
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 } },
 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 6 } },
 React.createElement(SectionTitle, null, "Flux de transactions internationaux"),
-React.createElement("div", { style: { display: "flex", gap: 4, background: T.cream, padding: 4, borderRadius: 9, border: `1px solid ${T.line}` } }, [["ALL", "Tous"], ["HIGH", "Élevé"], ["MEDIUM", "Moyen"], ["LOW", "Faible"]].map(([k, l]) => (React.createElement("button", { key: k, onClick: () => setRiskFilter(k), style: { padding: "5px 11px", borderRadius: 7, border: "none", cursor: "pointer", background: riskFilter === k ? T.olive600 : "transparent", color: riskFilter === k ? "#fff" : T.inkMid, fontSize: 11.5, fontWeight: riskFilter === k ? 700 : 500 } }, l))))),
+React.createElement(FilterBar, { filters: [{ id: "risque", label: "Risque", value: riskFilter, allValue: "ALL", onChange: setRiskFilter, options: [["ALL", "Tous"], ["HIGH", "Élevé"], ["MEDIUM", "Moyen"], ["LOW", "Faible"]] }], shown: txs.length, total: TX_DATA.length, onReset: () => setRiskFilter("ALL"), style: { marginBottom: 0, flex: "0 0 auto", minWidth: 0 } })),
 React.createElement("div", { style: { overflowX: "auto" } },
 React.createElement("svg", { width: "100%", viewBox: `0 0 ${W} ${H}`, style: { minWidth: 640, borderRadius: 12, boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)" } },
 React.createElement("defs", null,

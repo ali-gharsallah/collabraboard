@@ -5,8 +5,9 @@ import { clientById } from "./components-data";
 import { clientVisibleTo } from "./cloison-support";
 import { pushParamAudit } from "./param-audit-support";
 import { LEGAL_TYPES, LEGAL_STATUS, LEGAL_CONTRACTS, legalGenerate, GED_DOCS } from "./legal-support";
+import { FilterBar } from "../components/FilterBar";
 
-// Source : docs/reference/olive-demo.html 31951–32036 — porté verbatim.
+// Source : docs/reference/olive-demo.html 31951–32036. Filtre statut porté sur FilterBar (R404, R-FB.1).
 export function LegalScreen({ user }: { user?: any }) {
   const [tab, setTab] = useState("contrats");
   const [fSt, setFSt] = useState("ALL");
@@ -35,12 +36,15 @@ export function LegalScreen({ user }: { user?: any }) {
       </div>
       {tab === "contrats" && (
         <div style={card}>
-          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            {["ALL", "ACTIVE", "EXPIRING", "NEGO", "DRAFT", "TERMINATED"].map(function (v) {
-              return <button key={v} onClick={function () { setFSt(v); }} style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid " + (fSt === v ? T.olive600 : T.line), background: fSt === v ? T.oliveSoft : T.surface, color: fSt === v ? T.olive700 : T.inkMid, fontSize: 10.5, fontWeight: 700, cursor: "pointer" }}>{v === "ALL" ? "Tous" : LEGAL_STATUS[v][0]}</button>;
-            })}
-            <span style={{ marginLeft: "auto", alignSelf: "center", fontSize: 11, color: T.inkSoft }}>{rows.length} contrat(s)</span>
-          </div>
+          <FilterBar
+            filters={[{
+              id: "statut", label: "Statut contrat", value: fSt, allValue: "ALL", onChange: setFSt,
+              options: ["ALL", "ACTIVE", "EXPIRING", "NEGO", "DRAFT", "TERMINATED"].map(function (v): [string, string] { return [v, v === "ALL" ? "Tous" : LEGAL_STATUS[v][0]]; }),
+            }]}
+            shown={rows.length}
+            total={visible.length}
+            onReset={function () { setFSt("ALL"); }}
+          />
           {rows.slice(0, 30).map(function (k) {
             const c = clientById[k.clientId] || {};
             const st = LEGAL_STATUS[k.status];

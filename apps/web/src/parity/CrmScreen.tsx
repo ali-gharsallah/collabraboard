@@ -9,6 +9,7 @@ import { clientVisibleTo } from "./cloison-support";
 import { LEGAL_CONTRACTS, GED_DOCS } from "./legal-support";
 import { pushParamAudit } from "./param-audit-support";
 import { crmRelances, crmOpportunities, crmCoverage, crmNnmPlan, crmTierOf } from "./crm-support";
+import { FilterBar } from "../components/FilterBar";
 
 // Source : docs/reference/olive-demo.html 30049-30332 — CrmScreen + Crm360 (CRM Banque). Porté verbatim.
 // GED_DOCS importé du module Legal (seed vide, alimenté par génération de contrats) — le seed documentaire
@@ -178,13 +179,7 @@ re();
 } }, disabled: !(nf.clientId && nf.subject), style: { padding: "9px 16px", borderRadius: 9, border: "none", background: (nf.clientId && nf.subject) ? T.olive600 : T.line, color: "#fff", fontSize: 11.5, fontWeight: 800, cursor: (nf.clientId && nf.subject) ? "pointer" : "not-allowed" } }, "✓ Consigner")),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, marginTop: 8 } }, "Pour la rédaction assistée par IA (brouillon, similaires), utilisez l'écran Contact Reports.")),
 React.createElement("div", { style: card },
-React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" } },
-["ALL", "Rendez-vous", "Appel téléphonique", "Email", "Visioconférence", "Business Trip"].map(function (v) {
-return (React.createElement("button", { key: v, onClick: function () { setChF(v); }, style: { padding: "5px 11px", borderRadius: 8, border: "1px solid " + (chF === v ? T.olive600 : T.line), background: chF === v ? T.oliveSoft : T.surface, color: chF === v ? T.olive700 : T.inkMid, fontSize: 10.5, fontWeight: 700, cursor: "pointer" } }, v === "ALL" ? "Tous canaux" : v));
-}),
-React.createElement("span", { style: { fontSize: 11, color: T.inkSoft, marginLeft: "auto", alignSelf: "center" } },
-rows.length,
-" contact(s)")),
+React.createElement(FilterBar, { filters: [{ id: "canal", label: "Canal", value: chF, allValue: "ALL", onChange: setChF, options: [["ALL", "Tous canaux"], ["Rendez-vous", "Rendez-vous"], ["Appel téléphonique", "Appel téléphonique"], ["Email", "Email"], ["Visioconférence", "Visioconférence"], ["Business Trip", "Business Trip"]] }], shown: rows.length, total: (CONTACT_REPORTS as any[]).length, onReset: function () { setChF("ALL"); } }),
 rows.slice(0, 40).map(function (r: any) {
 var c = clientById[r.clientId] || {};
 return (React.createElement("div", { key: r.id, style: { display: "flex", gap: 9, alignItems: "baseline", fontSize: 10.5, padding: "5px 0", borderBottom: "1px solid " + T.lineSoft } },

@@ -5,8 +5,10 @@ import CLIENTS from "../fixtures/CLIENTS.json";
 import TASKS_DATA from "../fixtures/TASKS_DATA.json";
 import TASK_TYPE_LABELS from "../fixtures/TASK_TYPE_LABELS.json";
 import TASK_ASSIGNEES from "../fixtures/TASK_ASSIGNEES.json";
+import { FilterBar } from "../components/FilterBar";
 
-// Source : docs/reference/olive-demo.html 42503–42656 — porté verbatim.
+// Source : docs/reference/olive-demo.html 42503–42656. Filtres statut/priorité portés sur FilterBar
+// (R404, R-FB.1 ; statut allValue="OPEN" car le défaut métier ≠ ALL) ; « Mes tâches » reste un scope.
 export function TasksScreen({ user }: { user?: any }) {
   const TODAY = "2026-06-29";
   const [rows, setRows] = useState<any[]>(() => (TASKS_DATA as any[]).map(r => ({ ...r })));
@@ -80,9 +82,17 @@ export function TasksScreen({ user }: { user?: any }) {
           <button onClick={() => setView("mine")} style={chip(view === "mine", T.olive700)}>Mes tâches</button>
         </div>
         <span style={{ width: 1, height: 18, background: T.line }} />
-        <div style={{ display: "flex", gap: 6 }}>{([["OPEN", "Ouvertes"], ["ALL", "Tout statut"], ["DONE", "Terminées"]] as any[]).map(([k, l]) => (<button key={k} onClick={() => setStFilter(k)} style={chip(stFilter === k, T.blue)}>{l}</button>))}</div>
-        <span style={{ width: 1, height: 18, background: T.line }} />
-        <div style={{ display: "flex", gap: 6 }}>{["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map(p => (<button key={p} onClick={() => setPriFilter(p)} style={chip(priFilter === p, priColor(p).c || T.amber)}>{p === "ALL" ? "Toute priorité" : priLabel(p)}</button>))}</div>
+        <FilterBar
+          filters={[
+            { id: "statut", label: "Statut", value: stFilter, allValue: "OPEN", onChange: setStFilter,
+              options: [["OPEN", "Ouvertes"], ["ALL", "Tout statut"], ["DONE", "Terminées"]] },
+            { id: "priorite", label: "Priorité", value: priFilter, allValue: "ALL", onChange: setPriFilter,
+              options: ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((p): [string, string] => [p, p === "ALL" ? "Toute priorité" : priLabel(p)]) },
+          ]}
+          shown={list.length}
+          total={scope.length}
+          onReset={() => { setStFilter("OPEN"); setPriFilter("ALL"); }}
+        />
       </div>
       {creating && (
         <div style={{ background: T.oliveSoft, border: `1px solid ${T.sage}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>

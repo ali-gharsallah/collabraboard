@@ -8,8 +8,10 @@ import KYCS_DATA from "../fixtures/KYCS_DATA.json";
 import CLIENTS from "../fixtures/CLIENTS.json";
 import USERS from "../fixtures/USERS.json";
 import DS_STATS from "../fixtures/DS_STATS.json";
+import { FilterBar } from "../components/FilterBar";
 
-// KycListScreen — PORT VERBATIM de docs/reference/olive-demo.html (13280–13474).
+// KycListScreen — PORT de docs/reference/olive-demo.html (13280–13474). Filtres (workflow/statut/RM)
+// + recherche portés sur FilterBar (R404, R-FB.1) ; barre « Mes KYC »/ouverture = scope conservé.
 // Câblé sur KYCS_DATA (81) + CLIENTS (60). StatsToggle → null (B.6). onOpen = no-op isolé.
 const kycs = KYCS_DATA as any[];
 const clients = CLIENTS as any[];
@@ -62,9 +64,7 @@ export function KycListScreen({ onOpen = () => {} }: { onOpen?: (k: any) => void
   const kpiRev = kycs.filter(k => k.revision > 1).length;
 
   const th = { padding: "9px 16px", textAlign: "left" as const, fontSize: 10, color: T.inkSoft, textTransform: "uppercase" as const, letterSpacing: 0.5, whiteSpace: "nowrap" as const };
-  const sel = { padding: "6px 10px", borderRadius: 7, border: `1px solid ${T.line}`, fontSize: 11, color: T.inkMid, background: T.surface, cursor: "pointer" };
   const mb = (on: boolean) => ({ padding: "7px 14px", borderRadius: 8, border: `1px solid ${on ? T.olive600 : T.line}`, background: on ? T.oliveSoft : T.surface, color: on ? T.olive700 : T.inkMid, fontSize: 12, fontWeight: on ? 700 : 500, cursor: "pointer" });
-  const chip = (on: boolean) => ({ padding: "6px 12px", borderRadius: 7, border: `1px solid ${on ? T.olive600 : T.line}`, background: on ? T.oliveSoft : "transparent", color: on ? T.olive700 : T.inkMid, fontSize: 11, fontWeight: on ? 700 : 400, cursor: "pointer" } as const);
 
   return (
     <div>
@@ -87,19 +87,21 @@ export function KycListScreen({ onOpen = () => {} }: { onOpen?: (k: any) => void
         </div>
       </StatsToggle>
 
-      {/* Filtres */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ position: "relative", flex: "1 1 180px" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: T.inkSoft, fontSize: 13 }}>🔍</span>
-          <input type="search" placeholder="Code KYC, client, RM…" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 12, background: T.surface, color: T.ink, outline: "none", boxSizing: "border-box" }} onFocus={e => (e.target.style.borderColor = T.olive600)} onBlur={e => (e.target.style.borderColor = T.line)} />
-        </div>
-        {["ALL", "SOW", "HOW", "POW", "SKW", "HKW", "PKW"].map(v => <button key={v} onClick={() => { setFilterWf(v); setPage(0); }} style={chip(filterWf === v)}>{v === "ALL" ? "Tous" : v}</button>)}
-        {([["ALL", "Tous statuts"], ["APPROVED", "Approuvé"], ["IN_PROGRESS", "En cours"], ["UNDER_REVIEW", "En revue"], ["PENDING_APPROVAL", "Att. appro."], ["DRAFT", "Brouillon"], ["REJECTED", "Rejeté"]] as const).map(([v, l]) => <button key={v} onClick={() => { setFilterStatus(v); setPage(0); }} style={chip(filterStatus === v)}>{l}</button>)}
-        <select value={filterRm} onChange={e => { setFilterRm(e.target.value); setPage(0); }} style={sel}>
-          <option value="ALL">Tous les RM</option>
-          {rmList.map(rm => <option key={rm} value={rm}>{rm}</option>)}
-        </select>
-      </div>
+      {/* Filtres — FilterBar uniforme (R404) */}
+      <FilterBar
+        search={{ value: search, onChange: v => { setSearch(v); setPage(0); }, placeholder: "Code KYC, client, RM…" }}
+        filters={[
+          { id: "workflow", label: "Workflow", value: filterWf, allValue: "ALL", onChange: v => { setFilterWf(v); setPage(0); },
+            options: ["ALL", "SOW", "HOW", "POW", "SKW", "HKW", "PKW"].map((v): [string, string] => [v, v === "ALL" ? "Tous" : v]) },
+          { id: "statut", label: "Statut", value: filterStatus, allValue: "ALL", onChange: v => { setFilterStatus(v); setPage(0); },
+            options: [["ALL", "Tous statuts"], ["APPROVED", "Approuvé"], ["IN_PROGRESS", "En cours"], ["UNDER_REVIEW", "En revue"], ["PENDING_APPROVAL", "Att. appro."], ["DRAFT", "Brouillon"], ["REJECTED", "Rejeté"]] },
+          { id: "rm", label: "RM", value: filterRm, allValue: "ALL", onChange: v => { setFilterRm(v); setPage(0); },
+            options: ([["ALL", "Tous les RM"]] as [string, string][]).concat(rmList.map(rm => [rm, rm] as [string, string])) },
+        ]}
+        shown={filtered.length}
+        total={kycs.length}
+        onReset={() => { setFilterWf("ALL"); setFilterStatus("ALL"); setFilterRm("ALL"); setSearch(""); setPage(0); }}
+      />
 
       {/* Table */}
       <div style={{ background: T.surface, borderRadius: 14, border: `1px solid ${T.line}`, overflow: "hidden" }}>
