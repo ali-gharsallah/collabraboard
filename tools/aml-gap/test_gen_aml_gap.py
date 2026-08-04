@@ -216,7 +216,31 @@ def main():
     else:
         check("AG-18 générateur PO présent (tools/gen_aml_gap.py)", False, "verser le générateur PO")
 
-    total = 14 + 3 + 2 + 1 + 2 + 1  # + AG-16 + AG-17/AG-17b + AG-18
+    # AG-19 — registre R-Q émis (action 5) : 80 paramètres tenant des 64 règles, étalables dans
+    # REGISTRE_RQ. Chaque entrée bien formée (cle/type/regle Rxx/requis/défaut) ; les `tenant`
+    # sont requis + json + exemple (pas de défaut silencieux ⇒ bonType passe à l'écriture du test).
+    rq_ts = os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "parametres",
+                         "aml-gap.rq.gen.ts")
+    if os.path.exists(rq_ts):
+        src = open(rq_ts, encoding="utf-8").read()
+        arr = json.loads(src[src.index("= [") + 2: src.rindex("]") + 1])
+        expected = [p["key"] for r in rules for p in r["params"]]
+        wellformed = all(e.get("cle") and e.get("type") in {"int", "bool", "json", "string"}
+                         and "defaut" in e and re.match(r"^R\d+", e.get("regle", ""))
+                         and isinstance(e.get("requis"), bool) for e in arr)
+        tenant_ok = all(e["requis"] and e["type"] == "json" and "exemple" in e
+                        for e in arr if e["defaut"] is None)
+        cles = [e["cle"] for e in arr]
+        check("AG-19 registre R-Q émis : 80 paramètres bien formés, clés uniques, `tenant` requis",
+              len(arr) == 80 and len(arr) == len(expected) and len(cles) == len(set(cles))
+              and wellformed and tenant_ok,
+              "n=%d attendu=%d uniq=%s wf=%s tenant=%s"
+              % (len(arr), len(expected), len(cles) == len(set(cles)), wellformed, tenant_ok))
+    else:
+        check("AG-19 registre R-Q présent (aml-gap.rq.gen.ts)", False,
+              "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
+
+    total = 14 + 3 + 2 + 1 + 2 + 1 + 1  # + AG-16 + AG-17/AG-17b + AG-18 + AG-19
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:

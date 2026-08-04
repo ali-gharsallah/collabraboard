@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
+import { AML_GAP_RQ } from "./aml-gap.rq.gen";
 
 /**
  * Gouvernance des paramètres tenant — R125→R128 (RQ-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
@@ -294,6 +295,10 @@ export const REGISTRE_RQ: Entree[] = [
     exemple: [{ type: "AR", niveau: "CDD", sectionsActives: ["SOF", "AML"],
       questionsRequises: ["SOF-Q2"], sectionsReconfirmation: ["IDENTITY"] }],
     description: "Profils de review (AR|GAR × SDD|CDD|EDD) : la review N'A PAS son propre questionnaire — elle SÉLECTIONNE dans le gabarit KYC (sections actives, questions requises ajoutées, sections en re-confirmation simple). Versionné par le registre, figé au lancement (R29) ; droits = matrice R282, jamais une matrice parallèle." },
+  // ── AML gap waves 1+2 (R340→R403) — 80 paramètres tenant des 64 règles (action 5 du journal
+  //    2026-08-04). GÉNÉRÉS du référentiel par tools/aml-gap/gen_aml_gap.py : le questionnaire
+  //    d'onboarding se génère, jamais saisi à la main. `tenant` = requis, pas de défaut silencieux. ──
+  ...AML_GAP_RQ,
 ];
 
 const bonType = (t: Entree["type"], v: any) =>

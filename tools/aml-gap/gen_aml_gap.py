@@ -653,6 +653,7 @@ def build():
 
 
 API_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "aml"))
+API_PARAM_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "parametres"))
 WEB_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "features", "aml"))
 
 _TS_HEADER = (
@@ -723,6 +724,63 @@ def _emit_ts(rules, gt):
         f.write(web)
 
 
+def _rq_entrees(rules):
+    """Registre R-Q (action 5 du journal 2026-08-04) : chaque paramètre tenant des 64 règles
+    devient une entrée du questionnaire exécutable (parametres.service.ts). Rattachée à sa règle
+    (R125), typée pour le contrôle d'écriture (bonType), datée/motivée à l'écriture (R7/R29/R126).
+    Les défauts `tenant` n'ont PAS de valeur chiffrée silencieuse (requis=true, exemple=[]) : le
+    tenant DOIT répondre au questionnaire. Dérivé des params du référentiel — jamais saisi à la main."""
+    seen = set()
+    entrees = []
+    for r in rules:
+        for p in r["params"]:
+            key = p["key"]
+            if key in seen:
+                continue  # une clé = une question ; première occurrence fait foi (déterministe)
+            seen.add(key)
+            d = p["default"]
+            exemple = None
+            if isinstance(d, bool):                 # AVANT int (bool est un int en Python)
+                typ, defaut, requis = "bool", d, False
+            elif isinstance(d, int):
+                typ, defaut, requis = "int", d, False
+            elif isinstance(d, float):              # décimal non représentable en int → string
+                typ, defaut, requis = "string", repr(d), False
+            elif d == "tenant":                     # référentiel/liste tenant : pas de défaut silencieux
+                typ, defaut, requis, exemple = "json", None, True, []
+            else:                                   # listes/plages énumérées ("OFAC,SECO", "80-100"…)
+                typ, defaut, requis = "string", d, False
+            e = {
+                "cle": key, "type": typ, "defaut": defaut, "regle": r["ruleRef"], "requis": requis,
+                "description": "%s — %s / %s (paramètre tenant AML gap, registre R-Q)."
+                               % (p["label"], r["id"], r["blocTitre"]),
+            }
+            if exemple is not None:
+                e["exemple"] = exemple
+            entrees.append(e)
+    return entrees
+
+
+def _emit_rq(rules):
+    """Émet le fragment R-Q consommé par parametres.service.ts (spread dans REGISTRE_RQ)."""
+    entrees = _rq_entrees(rules)
+    ts = (
+        "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.\n"
+        "// Registre R-Q des paramètres tenant AML gap (waves 1+2, R340–R403). Étalé dans\n"
+        "// REGISTRE_RQ (parametres.service.ts) : le questionnaire d'onboarding se génère de ces\n"
+        "// entrées. Toute évolution passe par le générateur (test_gen_aml_gap.py rougit sinon).\n\n"
+        "export interface AmlGapRqEntree {\n"
+        "  cle: string; type: 'int' | 'bool' | 'json' | 'string'; defaut: string | number | boolean | null;\n"
+        "  regle: string; requis: boolean; exemple?: unknown; description: string;\n"
+        "}\n\n"
+        "export const AML_GAP_RQ: AmlGapRqEntree[] = "
+        + json.dumps(entrees, ensure_ascii=False, indent=2) + ";\n"
+    )
+    with open(os.path.join(API_PARAM_DIR, "aml-gap.rq.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(ts)
+    return entrees
+
+
 def main():
     rules, gt = build()
     tp = sum(1 for c in gt if c["label"] == "TP")
@@ -747,10 +805,13 @@ def main():
         json.dump({"meta": meta, "cases": gt}, f, ensure_ascii=False, indent=2)
         f.write("\n")
     _emit_ts(rules, gt)
+    rq = _emit_rq(rules)
     print("aml-gap généré : %d règles (%s, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
           % (len(rules), meta["ruleRange"], meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
     print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
     print("  + TS front   : apps/web/src/features/aml/aml-gap.seed.gen.ts")
+    print("  + R-Q        : apps/api/src/modules/parametres/aml-gap.rq.gen.ts (%d paramètres tenant)"
+          % len(rq))
 
 
 if __name__ == "__main__":

@@ -111,6 +111,26 @@ coexistent, liés par un test de parité — pas deux vérités concurrentes :
   `/home/claude/olive/` du générateur PO ont été **portés en chemins relatifs au dépôt** (logique
   inchangée). `python3 tools/gen_aml_gap.py` régénère `data/aml-gap-dataset-gt.json` (byte-identique
   au versé — no-drift prouvé), `data/c50gap.gen.js` (bloc démo) et `spec/generated/aml-gap-wave{1,2}-sections.md`.
-  Garde CI **3d** (`test_gen_aml_gap.py`, 23/23) : invariants + fraîcheur des artefacts émis + parité
-  canon PO + régénération sans dérive. Le **backend/front Wave 2** (détecteurs statistiques exécutés
-  dans le service Python CPSI — jamais réécrits en Nest) reste un lot ultérieur.
+  Garde CI **3d** (`test_gen_aml_gap.py`, 24/24) : invariants + fraîcheur des artefacts émis + parité
+  canon PO + régénération sans dérive + registre R-Q (AG-19). Le **backend/front Wave 2** (détecteurs
+  statistiques exécutés dans le service Python CPSI — jamais réécrits en Nest) reste un lot ultérieur.
+
+### 4.2 — Registre R-Q + spécification exécutable (Addendum 2 du 2026-08-04)
+
+- **Action 5 « inscrire les paramètres tenant au registre R-Q » : FAIT.** Les 80 paramètres tenant
+  des 64 règles (R340–R403) sont **émis par le générateur** dans
+  `apps/api/src/modules/parametres/aml-gap.rq.gen.ts` (`AML_GAP_RQ`) puis **étalés dans `REGISTRE_RQ`**
+  (`parametres.service.ts`). Le questionnaire R-Q les expose donc directement (write-path typé, motivé,
+  daté, jamais rétroactif — R125/R7/R29/R126). Défauts `tenant` → `requis: true`, `type: json`,
+  `exemple: []` : **pas de défaut silencieux** (bonType exige une réponse au go-live). Dérivé des
+  params du référentiel — jamais saisi à la main ; invariant **AG-19** au test du générateur.
+  Vérifié : `parametres.wiring.spec` (RQ-01..07) et `apps/api` typecheck restent verts.
+- **Artefacts PO versés tels quels** (visa PO) : `data/registre-rq-aml-gap.{md,json}` (questionnaire
+  des 80 params), `data/rules-catalog-aml-gap.json` (64 règles machine-readable : Gherkin, params, GT).
+- **Suites rouges** `backend-tests/aml-gap/` (12 blocs 50–61 + `contract.ts`/`fixtures.ts`/`README`) :
+  spécification exécutable, **rouge par construction** (`evaluateScenario` de `src/aml/engine.ts` et
+  les fixtures GT non implémentés). **Hors CI** — aucun `tsconfig`/`jest` du dépôt ne les inclut ;
+  elles balisent le DoD à venir (fixtures GT → moteur bloc par bloc). Le **bloc 61 (Analytique 2G,
+  R399–R403)** importe le même moteur mais reste rouge tant que le pont **CPSI Python** n'est pas
+  livré : l'invariant « détecteurs statistiques dans CPSI, jamais en Nest » prime (Postgres/Redis/CPSI
+  requis).
