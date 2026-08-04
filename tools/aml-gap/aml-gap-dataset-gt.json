@@ -1,0 +1,1472 @@
+{
+  "meta": {
+    "generator": "tools/aml-gap/gen_aml_gap.py",
+    "spec": "SPEC-AMLGAP-WAVE1.md (ratifiée PO 04.08.2026)",
+    "mapping": "spec/mapping-session-repo.md §4 (step-0)",
+    "seed": 20260804,
+    "ruleRange": "R340–R377",
+    "blocs": [
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+    ],
+    "familles": [
+      "CR",
+      "FT",
+      "GU",
+      "GV",
+      "IP",
+      "QO",
+      "SF"
+    ],
+    "counts": {
+      "rules": 38,
+      "gt": 78,
+      "tp": 40,
+      "fp": 38,
+      "placeholders": 1,
+      "blocking": 6
+    },
+    "note": "Artefacts GÉNÉRÉS — ne jamais éditer à la main ; toute évolution passe par le générateur."
+  },
+  "cases": [
+    {
+      "caseId": "GT-SF-01-TP-1",
+      "scenarioId": "SF-01",
+      "ruleRef": "R340",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00016",
+      "narrative": "Virement de 180k reçu du frère d'un ministre en exercice (liste PEP, match 91%) — investigation confirme l'origine politique des fonds.",
+      "payload": {
+        "seed": 1228585230,
+        "montantChf": 147000,
+        "valueDate": "2026-03-25",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-93685",
+        "declencheur": "PEP_COUNTERPARTY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-01-TP-2",
+      "scenarioId": "SF-01",
+      "ruleRef": "R340",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00039",
+      "narrative": "Sortie de 95k vers une société détenue par un PEP régional sanctionnable — lien confirmé au registre.",
+      "payload": {
+        "seed": 1228585231,
+        "montantChf": 147000,
+        "valueDate": "2026-03-27",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-54805",
+        "declencheur": "PEP_COUNTERPARTY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-01-FP-1",
+      "scenarioId": "SF-01",
+      "ruleRef": "R340",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00003",
+      "narrative": "Homonyme parfait d'un PEP brésilien ; la date de naissance et le pays divergent — clôturé FP après vérification documentaire.",
+      "ecartement": "homonymie (DDN + pays divergents)",
+      "payload": {
+        "seed": 1192904596,
+        "montantChf": 180000,
+        "valueDate": "2026-01-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-72538",
+        "declencheur": "PEP_COUNTERPARTY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-02-TP-1",
+      "scenarioId": "SF-02",
+      "ruleRef": "R341",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00075",
+      "narrative": "Paiement fournisseur vers une société mise en accusation pour corruption d'agents publics (3 sources de rang 1) — TP confirmé.",
+      "payload": {
+        "seed": 1118227961,
+        "montantChf": 188000,
+        "valueDate": "2026-12-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-65671",
+        "declencheur": "ADVERSE_COUNTERPARTY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-02-FP-1",
+      "scenarioId": "SF-02",
+      "ruleRef": "R341",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00041",
+      "narrative": "Match sur un article concernant une société homonyme d'un autre canton — secteur et IDE différents, clôturé FP.",
+      "ecartement": "homonymie d'entité (secteur + IDE différents)",
+      "payload": {
+        "seed": 1082559495,
+        "montantChf": 78000,
+        "valueDate": "2026-01-21",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-39717",
+        "declencheur": "ADVERSE_COUNTERPARTY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-03-TP-1",
+      "scenarioId": "SF-03",
+      "ruleRef": "R342",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00034",
+      "narrative": "Client nommé au conseil d'administration d'une entreprise publique — delta PEP détecté à J+1, CoC ouvert, EDD déclenchée.",
+      "payload": {
+        "seed": 1043141236,
+        "montantChf": 26000,
+        "valueDate": "2026-07-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-32706",
+        "declencheur": "SCREENING_DELTA",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-03-TP-2",
+      "scenarioId": "SF-03",
+      "ruleRef": "R342",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00070",
+      "narrative": "UBO ajouté à la liste SECO lors d'un train de sanctions — delta détecté, relation gelée après décision humaine.",
+      "payload": {
+        "seed": 1043141237,
+        "montantChf": 26000,
+        "valueDate": "2026-07-26",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-18801",
+        "declencheur": "SCREENING_DELTA",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-03-FP-1",
+      "scenarioId": "SF-03",
+      "ruleRef": "R342",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00005",
+      "narrative": "Mise à jour de format du fournisseur de listes régénère un hit déjà écarté (même ID de profil) — dédoublonné puis clôturé FP ; correctif de mapping consigné.",
+      "ecartement": "hit déjà écarté régénéré par changement de format (même ID profil)",
+      "payload": {
+        "seed": 1006817522,
+        "montantChf": 59000,
+        "valueDate": "2026-12-26",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-75668",
+        "declencheur": "SCREENING_DELTA",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-04-TP-1",
+      "scenarioId": "SF-04",
+      "ruleRef": "R343",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00130",
+      "narrative": "Paiement vers Singapour routé via une intermédiaire filiale d'un groupe sous sanctions sectorielles — re-routé après alerte.",
+      "payload": {
+        "seed": 1000974055,
+        "montantChf": 153000,
+        "valueDate": "2026-09-16",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-47200",
+        "declencheur": "INTERMEDIARY_HIT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-04-FP-1",
+      "scenarioId": "SF-04",
+      "ruleRef": "R343",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00018",
+      "narrative": "BIC matché sur l'ancien code d'une banque assainie et retirée des listes depuis 2024 — référentiel BIC mis à jour, FP.",
+      "ecartement": "référentiel BIC obsolète (banque délistée depuis 2024)",
+      "payload": {
+        "seed": 965305709,
+        "montantChf": 78000,
+        "valueDate": "2026-10-20",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-90647",
+        "declencheur": "INTERMEDIARY_HIT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-05-TP-1",
+      "scenarioId": "SF-05",
+      "ruleRef": "R344",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00070",
+      "narrative": "Bénéficiaire domicilié dans une région sous embargo — blocage confirmé, déclaration préparée.",
+      "payload": {
+        "seed": 924183378,
+        "montantChf": 109000,
+        "valueDate": "2026-06-08",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-26228",
+        "declencheur": "GEO_SANCTION",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-05-FP-1",
+      "scenarioId": "SF-05",
+      "ruleRef": "R344",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00035",
+      "narrative": "Rue « Crimée » à Paris 19e matchée par le parseur — règle affinée (ville+pays requis), FP documenté.",
+      "ecartement": "faux match toponymique (rue « Crimée » à Paris)",
+      "payload": {
+        "seed": 896903640,
+        "montantChf": 16000,
+        "valueDate": "2026-02-17",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-75942",
+        "declencheur": "GEO_SANCTION",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-06-TP-1",
+      "scenarioId": "SF-06",
+      "ruleRef": "R345",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00045",
+      "narrative": "Contrepartie en caractères chinois matchant un profil OFAC translittéré — non détectable sans normalisation, TP.",
+      "payload": {
+        "seed": 814759885,
+        "montantChf": 142000,
+        "valueDate": "2026-03-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-90660",
+        "declencheur": "MULTISCRIPT_HIT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-06-FP-1",
+      "scenarioId": "SF-06",
+      "ruleRef": "R345",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00193",
+      "narrative": "Translittération agressive rapproche deux patronymes arabes courants distincts — seuil par script relevé, FP.",
+      "ecartement": "translittération trop agressive (patronymes distincts)",
+      "payload": {
+        "seed": 787611211,
+        "montantChf": 85000,
+        "valueDate": "2026-01-11",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-01429",
+        "declencheur": "MULTISCRIPT_HIT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-SF-07-TP-1",
+      "scenarioId": "SF-07",
+      "ruleRef": "R346",
+      "famille": "SF",
+      "label": "TP",
+      "clientId": "CLI-00039",
+      "narrative": "LC référençant un tanker de la flotte fantôme (IMO sanctionné, pavillon changé 3× en 12 mois) — blocage confirmé.",
+      "payload": {
+        "seed": 740050104,
+        "montantChf": 85000,
+        "valueDate": "2026-03-26",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-53971",
+        "declencheur": "VESSEL_HIT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-SF-07-FP-1",
+      "scenarioId": "SF-07",
+      "ruleRef": "R346",
+      "famille": "SF",
+      "label": "FP",
+      "clientId": "CLI-00130",
+      "narrative": "Navire homonyme d'une unité sanctionnée mais IMO distinct et pavillon UE — libéré après vérification IMO, FP.",
+      "ecartement": "homonymie de navire (IMO distinct, pavillon UE)",
+      "payload": {
+        "seed": 712770246,
+        "montantChf": 174000,
+        "valueDate": "2026-07-01",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-53655",
+        "declencheur": "VESSEL_HIT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-QO-01-TP-1",
+      "scenarioId": "QO-01",
+      "ruleRef": "R347",
+      "famille": "QO",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Refus réitéré de documenter un apport de 500k malgré 2 relances écrites — relation dénoncée après comité.",
+      "payload": {
+        "seed": 13166953,
+        "montantChf": 53000,
+        "valueDate": "2026-12-17",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-90310",
+        "declencheur": "INFO_REFUSAL",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-QO-01-FP-1",
+      "scenarioId": "QO-01",
+      "ruleRef": "R347",
+      "famille": "QO",
+      "label": "FP",
+      "clientId": "CLI-00053",
+      "narrative": "Retard de 3 semaines dû à une succession en cours chez le notaire — documents fournis, signal clôturé FP.",
+      "ecartement": "retard légitime (succession chez le notaire)",
+      "payload": {
+        "seed": 19445751,
+        "montantChf": 171000,
+        "valueDate": "2026-02-19",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-26408",
+        "declencheur": "INFO_REFUSAL",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-QO-02-TP-1",
+      "scenarioId": "QO-02",
+      "ruleRef": "R348",
+      "famille": "QO",
+      "label": "TP",
+      "clientId": "CLI-00072",
+      "narrative": "11 ordonnateurs inconnus en 3 semaines, fonds ressortis sous 48h — typologie mule/passage confirmée.",
+      "payload": {
+        "seed": 2092383716,
+        "montantChf": 192000,
+        "valueDate": "2026-11-25",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-31462",
+        "declencheur": "TRANSIT_ACCOUNT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-QO-02-FP-1",
+      "scenarioId": "QO-02",
+      "ruleRef": "R348",
+      "famille": "QO",
+      "label": "FP",
+      "clientId": "CLI-00110",
+      "narrative": "Fondation caritative recevant des dons multiples pendant sa campagne annuelle déclarée au KYC — but documenté, FP.",
+      "ecartement": "but documenté au KYC (campagne caritative)",
+      "payload": {
+        "seed": 2056584290,
+        "montantChf": 110000,
+        "valueDate": "2026-10-16",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-32587",
+        "declencheur": "TRANSIT_ACCOUNT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-QO-03-TP-1",
+      "scenarioId": "QO-03",
+      "ruleRef": "R349",
+      "famille": "QO",
+      "label": "TP",
+      "clientId": "CLI-00080",
+      "narrative": "Aller-retour titres à perte de 4% en 48h répété 3× — habillage de transferts de valeur confirmé.",
+      "payload": {
+        "seed": 2016625239,
+        "montantChf": 49000,
+        "valueDate": "2026-12-24",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-23874",
+        "declencheur": "NO_ECON_RATIONALE",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-QO-03-FP-1",
+      "scenarioId": "QO-03",
+      "ruleRef": "R349",
+      "famille": "QO",
+      "label": "FP",
+      "clientId": "CLI-00104",
+      "narrative": "Vente à perte fin décembre puis rachat en janvier — tax-loss harvesting documenté par le gérant, FP.",
+      "ecartement": "tax-loss harvesting documenté",
+      "payload": {
+        "seed": 1980956893,
+        "montantChf": 137000,
+        "valueDate": "2026-08-01",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-69243",
+        "declencheur": "NO_ECON_RATIONALE",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-QO-04-TP-1",
+      "scenarioId": "QO-04",
+      "ruleRef": "R350",
+      "famille": "QO",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "14 sociétés clientes domiciliées à la même adresse d'un prestataire offshore — requalification en sociétés de domicile.",
+      "payload": {
+        "seed": 1975490242,
+        "montantChf": 169000,
+        "valueDate": "2026-09-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-90487",
+        "declencheur": "SHARED_ADDRESS",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-QO-04-FP-1",
+      "scenarioId": "QO-04",
+      "ruleRef": "R350",
+      "famille": "QO",
+      "label": "FP",
+      "clientId": "CLI-00018",
+      "narrative": "Membres d'une même famille (grand-parents, enfants, holding familiale) à l'adresse du family office — liens déclarés, FP.",
+      "ecartement": "liens familiaux déclarés (family office)",
+      "payload": {
+        "seed": 1939821896,
+        "montantChf": 100000,
+        "valueDate": "2026-10-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-10964",
+        "declencheur": "SHARED_ADDRESS",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-QO-05-TP-1",
+      "scenarioId": "QO-05",
+      "ruleRef": "R351",
+      "famille": "QO",
+      "label": "TP",
+      "clientId": "CLI-00034",
+      "narrative": "Rotation de 4 mandataires en 5 mois masquant l'opérateur réel du compte — ADE requalifié.",
+      "payload": {
+        "seed": 1899748285,
+        "montantChf": 106000,
+        "valueDate": "2026-12-14",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-97409",
+        "declencheur": "GOVERNANCE_CHURN",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-QO-05-FP-1",
+      "scenarioId": "QO-05",
+      "ruleRef": "R351",
+      "famille": "QO",
+      "label": "FP",
+      "clientId": "CLI-00016",
+      "narrative": "Réorganisation du family office documentée (départ CFO, arrivée de deux successeurs) — actes fournis, FP.",
+      "ecartement": "réorganisation documentée (départ CFO)",
+      "payload": {
+        "seed": 1864079931,
+        "montantChf": 38000,
+        "valueDate": "2026-12-03",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-29399",
+        "declencheur": "GOVERNANCE_CHURN",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GU-01-TP-1",
+      "scenarioId": "GU-01",
+      "ruleRef": "R352",
+      "famille": "GU",
+      "label": "TP",
+      "clientId": "CLI-00005",
+      "narrative": "4 dépôts de 18-19k via holding, SCI et deux comptes personnels du même UBO en 6 jours — structuring de groupe confirmé.",
+      "payload": {
+        "seed": 1396049233,
+        "montantChf": 151000,
+        "valueDate": "2026-04-01",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-43455",
+        "declencheur": "GROUP_STRUCTURING",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GU-01-FP-1",
+      "scenarioId": "GU-01",
+      "ruleRef": "R352",
+      "famille": "GU",
+      "label": "FP",
+      "clientId": "CLI-00152",
+      "narrative": "Distributions de dividendes simultanées des filiales vers la holding, calendrier d'AG documenté — flux légitimes, FP.",
+      "ecartement": "distributions de dividendes documentées (calendrier d'AG)",
+      "payload": {
+        "seed": 1360511967,
+        "montantChf": 8000,
+        "valueDate": "2026-05-23",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-84955",
+        "declencheur": "GROUP_STRUCTURING",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GU-02-TP-1",
+      "scenarioId": "GU-02",
+      "ruleRef": "R353",
+      "famille": "GU",
+      "label": "TP",
+      "clientId": "CLI-00101",
+      "narrative": "Rotation de 300k entre 3 entités pour gonfler artificiellement les bilans avant une demande de crédit — TP.",
+      "payload": {
+        "seed": 1286752716,
+        "montantChf": 83000,
+        "valueDate": "2026-09-11",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-85543",
+        "declencheur": "GROUP_CIRCULAR",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GU-02-FP-1",
+      "scenarioId": "GU-02",
+      "ruleRef": "R353",
+      "famille": "GU",
+      "label": "FP",
+      "clientId": "CLI-00016",
+      "narrative": "Cash pooling intra-groupe documenté par convention de trésorerie — mécanique déclarée au KYC, FP.",
+      "ecartement": "cash pooling documenté (convention de trésorerie)",
+      "payload": {
+        "seed": 1251084362,
+        "montantChf": 189000,
+        "valueDate": "2026-08-27",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-07261",
+        "declencheur": "GROUP_CIRCULAR",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GU-03-TP-1",
+      "scenarioId": "GU-03",
+      "ruleRef": "R354",
+      "famille": "GU",
+      "label": "TP",
+      "clientId": "CLI-00033",
+      "narrative": "45k/mois d'espèces répartis sur 5 entités d'un même bénéficiaire, activité déclarée sans lien avec le cash — TP.",
+      "payload": {
+        "seed": 1212063423,
+        "montantChf": 161000,
+        "valueDate": "2026-06-12",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-93749",
+        "declencheur": "GROUP_CASH_INTENSITY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GU-03-FP-1",
+      "scenarioId": "GU-03",
+      "ruleRef": "R354",
+      "famille": "GU",
+      "label": "FP",
+      "clientId": "CLI-00041",
+      "narrative": "Groupe de restaurants du même propriétaire : intensité cash cohérente avec le secteur déclaré de chaque entité, FP.",
+      "ecartement": "intensité cash cohérente au secteur déclaré (restauration)",
+      "payload": {
+        "seed": 1176394949,
+        "montantChf": 96000,
+        "valueDate": "2026-07-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-70440",
+        "declencheur": "GROUP_CASH_INTENSITY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GU-04-TP-1",
+      "scenarioId": "GU-04",
+      "ruleRef": "R355",
+      "famille": "GU",
+      "label": "TP",
+      "clientId": "CLI-00072",
+      "narrative": "Combinaison cash + in-specie + lombard totalisant 85k/semaine en contournement des seuils unitaires — TP.",
+      "payload": {
+        "seed": 1168450346,
+        "montantChf": 141000,
+        "valueDate": "2026-02-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-68262",
+        "declencheur": "CROSS_PRODUCT_AGGREGATE",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GU-04-FP-1",
+      "scenarioId": "GU-04",
+      "ruleRef": "R355",
+      "famille": "GU",
+      "label": "FP",
+      "clientId": "CLI-00164",
+      "narrative": "Rééquilibrage trimestriel de portefeuille documenté par le mandat de gestion (mouvements multi-produits simultanés), FP.",
+      "ecartement": "rééquilibrage documenté (mandat de gestion)",
+      "payload": {
+        "seed": 1134223792,
+        "montantChf": 166000,
+        "valueDate": "2026-01-10",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-32909",
+        "declencheur": "CROSS_PRODUCT_AGGREGATE",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-01-TP-1",
+      "scenarioId": "IP-01",
+      "ruleRef": "R356",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Lombard soldé par une société panaméenne étrangère au dossier — le crédit servait à donner une apparence bancaire aux fonds, TP.",
+      "payload": {
+        "seed": 2104438514,
+        "montantChf": 23000,
+        "valueDate": "2026-04-16",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-26342",
+        "declencheur": "LOMBARD_THIRD_PARTY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-01-FP-1",
+      "scenarioId": "IP-01",
+      "ruleRef": "R356",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00152",
+      "narrative": "Remboursement par la holding mère de l'emprunteur, convention de trésorerie au dossier — lien documenté, FP.",
+      "ecartement": "lien documenté (holding mère, convention de trésorerie)",
+      "payload": {
+        "seed": 2068639096,
+        "montantChf": 92000,
+        "valueDate": "2026-03-08",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-13808",
+        "declencheur": "LOMBARD_THIRD_PARTY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-02-TP-1",
+      "scenarioId": "IP-02",
+      "ruleRef": "R357",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00033",
+      "narrative": "Dépôt offshore non corroboré garantissant un prêt à l'entité opérationnelle suisse du même bénéficiaire — schéma B2B confirmé.",
+      "payload": {
+        "seed": 1995141997,
+        "montantChf": 14000,
+        "valueDate": "2026-08-02",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-55190",
+        "declencheur": "BACK_TO_BACK",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-02-FP-1",
+      "scenarioId": "IP-02",
+      "ruleRef": "R357",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00016",
+      "narrative": "Garantie intra-groupe standard d'un family office, origine des fonds corroborée à l'ouverture — structure déclarée, FP.",
+      "ecartement": "structure déclarée + SOF corroborée à l'ouverture",
+      "payload": {
+        "seed": 1959473643,
+        "montantChf": 120000,
+        "valueDate": "2026-07-08",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-18385",
+        "declencheur": "BACK_TO_BACK",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-03-TP-1",
+      "scenarioId": "IP-03",
+      "ruleRef": "R358",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00048",
+      "narrative": "Prime de 1.5M financée par trois virements de sociétés tierces, patrimoine déclaré 900k — support d'intégration, TP.",
+      "payload": {
+        "seed": 1918339032,
+        "montantChf": 137000,
+        "valueDate": "2026-10-25",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-62355",
+        "declencheur": "WRAPPER_PREMIUM",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-03-FP-1",
+      "scenarioId": "IP-03",
+      "ruleRef": "R358",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00005",
+      "narrative": "Prime élevée financée par la vente documentée d'un bien immobilier (acte notarié au dossier) — SOW corroborée, FP.",
+      "ecartement": "SOW corroborée (vente immobilière, acte notarié)",
+      "payload": {
+        "seed": 1891059302,
+        "montantChf": 37000,
+        "valueDate": "2026-04-07",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-66295",
+        "declencheur": "WRAPPER_PREMIUM",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-04-TP-1",
+      "scenarioId": "IP-04",
+      "ruleRef": "R359",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00043",
+      "narrative": "Rachat à 7 mois versé sur un compte tiers à Dubaï, pénalité assumée — la police n'a servi que de sas, TP.",
+      "payload": {
+        "seed": 1876151371,
+        "montantChf": 146000,
+        "valueDate": "2026-03-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-03651",
+        "declencheur": "EARLY_SURRENDER",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-04-FP-1",
+      "scenarioId": "IP-04",
+      "ruleRef": "R359",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00110",
+      "narrative": "Rachat à 10 mois pour financer une acquisition immobilière urgente (compromis de vente fourni) — besoin réel, FP.",
+      "ecartement": "besoin réel documenté (acquisition immobilière)",
+      "payload": {
+        "seed": 1815317201,
+        "montantChf": 76000,
+        "valueDate": "2026-06-01",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-99623",
+        "declencheur": "EARLY_SURRENDER",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-05-TP-1",
+      "scenarioId": "IP-05",
+      "ruleRef": "R360",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00034",
+      "narrative": "Bénéficiaire basculé vers une fondation panaméenne contrôlée par un tiers — transfert de valeur déguisé, TP.",
+      "payload": {
+        "seed": 1801326790,
+        "montantChf": 3000,
+        "valueDate": "2026-09-17",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-59346",
+        "declencheur": "BENEFICIARY_SWITCH",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-05-FP-1",
+      "scenarioId": "IP-05",
+      "ruleRef": "R360",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00053",
+      "narrative": "Changement vers les enfants suite à un divorce (jugement au dossier) — événement de vie documenté, FP.",
+      "ecartement": "événement de vie documenté (divorce, jugement)",
+      "payload": {
+        "seed": 1774182220,
+        "montantChf": 139000,
+        "valueDate": "2026-05-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-31077",
+        "declencheur": "BENEFICIARY_SWITCH",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-06-TP-1",
+      "scenarioId": "IP-06",
+      "ruleRef": "R361",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00072",
+      "narrative": "6 séquences coffre→dépôt sous 24h totalisant 100k — le coffre alimente les dépôts, TP.",
+      "payload": {
+        "seed": 1692050865,
+        "montantChf": 97000,
+        "valueDate": "2026-08-17",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-19092",
+        "declencheur": "VAULT_CASH_PATTERN",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-06-FP-1",
+      "scenarioId": "IP-06",
+      "ruleRef": "R361",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00063",
+      "narrative": "Numismate déclaré accédant au coffre avant chaque vente aux enchères documentée (bordereaux fournis) — activité déclarée, FP.",
+      "ecartement": "activité déclarée (numismate, bordereaux de vente)",
+      "payload": {
+        "seed": 1698325567,
+        "montantChf": 47000,
+        "valueDate": "2026-03-16",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-35677",
+        "declencheur": "VAULT_CASH_PATTERN",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-IP-07-TP-1",
+      "scenarioId": "IP-07",
+      "ruleRef": "R362",
+      "famille": "IP",
+      "label": "TP",
+      "clientId": "CLI-00080",
+      "narrative": "Achats répétés d'or livré à un tiers non documenté à l'étranger — conversion de valeur portable, TP.",
+      "payload": {
+        "seed": 1615260204,
+        "montantChf": 46000,
+        "valueDate": "2026-01-18",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-36020",
+        "declencheur": "PHYSICAL_METALS",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-IP-07-FP-1",
+      "scenarioId": "IP-07",
+      "ruleRef": "R362",
+      "famille": "IP",
+      "label": "FP",
+      "clientId": "CLI-00164",
+      "narrative": "Allocation or de 5% du portefeuille en garde bancaire, conforme au mandat de gestion — investissement standard, FP.",
+      "ecartement": "investissement standard (allocation or en garde, mandat)",
+      "payload": {
+        "seed": 1587980458,
+        "montantChf": 197000,
+        "valueDate": "2026-01-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-49547",
+        "declencheur": "PHYSICAL_METALS",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-01-TP-1",
+      "scenarioId": "CR-01",
+      "ruleRef": "R363",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "Sortie vers un exchange non coopératif refusant l'échange travel rule — blocage maintenu, relation revue.",
+      "payload": {
+        "seed": 910289890,
+        "montantChf": 170000,
+        "valueDate": "2026-12-05",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-75685",
+        "declencheur": "TRAVEL_RULE_GAP",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-01-FP-1",
+      "scenarioId": "CR-01",
+      "ruleRef": "R363",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Message travel rule retardé par une panne du protocole d'échange du VASP partenaire (reçu à H+6) — libéré, FP.",
+      "ecartement": "panne technique du protocole (message reçu à H+6)",
+      "payload": {
+        "seed": 883010152,
+        "montantChf": 95000,
+        "valueDate": "2026-10-27",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-12730",
+        "declencheur": "TRAVEL_RULE_GAP",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-02-TP-1",
+      "scenarioId": "CR-02",
+      "ruleRef": "R364",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "64% de provenance mixer sur un dépôt de 2.1 BTC, client incapable d'expliquer la chaîne — fonds refusés, TP.",
+      "payload": {
+        "seed": 869019741,
+        "montantChf": 21000,
+        "valueDate": "2026-01-03",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-69686",
+        "declencheur": "MIXER_EXPOSURE",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-02-FP-1",
+      "scenarioId": "CR-02",
+      "ruleRef": "R364",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Exposition indirecte de 3% à 2 hops via un exchange majeur (pollution de cluster) — sous matérialité, FP.",
+      "ecartement": "sous matérialité (3% indirect via exchange majeur)",
+      "payload": {
+        "seed": 808320731,
+        "montantChf": 177000,
+        "valueDate": "2026-03-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-78937",
+        "declencheur": "MIXER_EXPOSURE",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-03-TP-1",
+      "scenarioId": "CR-03",
+      "ruleRef": "R365",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "Destination = adresse SDN d'un groupe ransomware — blocage, déclaration effectuée.",
+      "payload": {
+        "seed": 793265352,
+        "montantChf": 147000,
+        "valueDate": "2026-09-19",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-06329",
+        "declencheur": "ONCHAIN_SANCTION",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-03-FP-1",
+      "scenarioId": "CR-03",
+      "ruleRef": "R365",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Adresse retirée de la liste SDN au dernier délisting, cache local obsolète — synchronisation corrigée, FP.",
+      "ecartement": "cache de liste obsolète (adresse délistée)",
+      "payload": {
+        "seed": 765985622,
+        "montantChf": 34000,
+        "valueDate": "2026-04-19",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-35797",
+        "declencheur": "ONCHAIN_SANCTION",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-04-TP-1",
+      "scenarioId": "CR-04",
+      "ruleRef": "R366",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "30% de provenance darknet sur un dépôt, historique d'adresses cohérent avec du peel chaining — TP.",
+      "payload": {
+        "seed": 724863419,
+        "montantChf": 192000,
+        "valueDate": "2026-03-22",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-73226",
+        "declencheur": "ILLICIT_CLUSTER",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-04-FP-1",
+      "scenarioId": "CR-04",
+      "ruleRef": "R366",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Étiquetage erroné d'un cluster par le fournisseur (corrigé dans sa release suivante) — FP documenté fournisseur.",
+      "ecartement": "étiquetage fournisseur erroné (corrigé en release suivante)",
+      "payload": {
+        "seed": 689199041,
+        "montantChf": 148000,
+        "valueDate": "2026-01-06",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-96511",
+        "declencheur": "ILLICIT_CLUSTER",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-05-TP-1",
+      "scenarioId": "CR-05",
+      "ruleRef": "R367",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "Adresse prétendument personnelle appartenant en réalité à un tiers (échec du test de signature) — TP.",
+      "payload": {
+        "seed": 615570998,
+        "montantChf": 128000,
+        "valueDate": "2026-10-18",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-86713",
+        "declencheur": "UNHOSTED_NOPROOF",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-05-FP-1",
+      "scenarioId": "CR-05",
+      "ruleRef": "R367",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Preuve expirée de 2 semaines pour une adresse déjà vérifiée 3× — re-signée le jour même, FP.",
+      "ecartement": "preuve expirée récemment (adresse déjà vérifiée 3×)",
+      "payload": {
+        "seed": 579902652,
+        "montantChf": 28000,
+        "valueDate": "2026-08-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-52925",
+        "declencheur": "UNHOSTED_NOPROOF",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-CR-06-TP-1",
+      "scenarioId": "CR-06",
+      "ruleRef": "R368",
+      "famille": "CR",
+      "label": "TP",
+      "clientId": "CLI-00022",
+      "narrative": "14 cycles/mois avec marge négative systématique — le coût de conversion est le prix du layering, TP.",
+      "payload": {
+        "seed": 541024929,
+        "montantChf": 102000,
+        "valueDate": "2026-07-28",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-70269",
+        "declencheur": "RAMP_VELOCITY",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-CR-06-FP-1",
+      "scenarioId": "CR-06",
+      "ruleRef": "R368",
+      "famille": "CR",
+      "label": "FP",
+      "clientId": "CLI-00068",
+      "narrative": "Trader actif déclaré avec profil « trading fréquent » validé à l'onboarding — comportement conforme, FP.",
+      "ecartement": "profil « trading fréquent » validé à l'onboarding",
+      "payload": {
+        "seed": 505356591,
+        "montantChf": 96000,
+        "valueDate": "2026-09-24",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-67200",
+        "declencheur": "RAMP_VELOCITY",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-FT-01-TP-1",
+      "scenarioId": "FT-01",
+      "ruleRef": "R369",
+      "famille": "FT",
+      "label": "TP",
+      "clientId": "CLI-00084",
+      "narrative": "23 micro-transferts vers des collecteurs relais identifiés par la suite dans une enquête — TP.",
+      "payload": {
+        "seed": 1680743509,
+        "montantChf": 130000,
+        "valueDate": "2026-10-13",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-49733",
+        "declencheur": "CFT_MICRO_PATTERN",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-FT-01-FP-1",
+      "scenarioId": "FT-01",
+      "ruleRef": "R369",
+      "famille": "FT",
+      "label": "FP",
+      "clientId": "CLI-00035",
+      "narrative": "Soutien familial mensuel régulier vers le pays d'origine, bénéficiaire unique documenté (famille au KYC) — remittance légitime, FP.",
+      "ecartement": "remittance légitime (soutien familial, bénéficiaire unique au KYC)",
+      "payload": {
+        "seed": 1645206227,
+        "montantChf": 82000,
+        "valueDate": "2026-07-24",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-74867",
+        "declencheur": "CFT_MICRO_PATTERN",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-FT-02-TP-1",
+      "scenarioId": "FT-02",
+      "ruleRef": "R370",
+      "famille": "FT",
+      "label": "TP",
+      "clientId": "CLI-00084",
+      "narrative": "Dons répétés vers une association-écran dissoute 8 mois plus tard, dirigeants condamnés — TP.",
+      "payload": {
+        "seed": 1638572224,
+        "montantChf": 7000,
+        "valueDate": "2026-04-15",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-86698",
+        "declencheur": "NPO_RISK",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-FT-02-FP-1",
+      "scenarioId": "FT-02",
+      "ruleRef": "R370",
+      "famille": "FT",
+      "label": "FP",
+      "clientId": "CLI-00110",
+      "narrative": "Dons vers une ONG certifiée ZEWO opérant en zone à risque avec audit de distribution publié — organisation vérifiée, FP.",
+      "ecartement": "organisation vérifiée (ONG certifiée ZEWO, audit publié)",
+      "payload": {
+        "seed": 1602907982,
+        "montantChf": 148000,
+        "valueDate": "2026-09-12",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-69638",
+        "declencheur": "NPO_RISK",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-FT-03-TP-1",
+      "scenarioId": "FT-03",
+      "ruleRef": "R371",
+      "famille": "FT",
+      "label": "TP",
+      "clientId": "CLI-00084",
+      "narrative": "Carte financée par 5 tiers et vidée en cash à la frontière turco-syrienne — TP.",
+      "payload": {
+        "seed": 1561785779,
+        "montantChf": 188000,
+        "valueDate": "2026-04-07",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-53070",
+        "declencheur": "PREPAID_FUNDING",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-FT-03-FP-1",
+      "scenarioId": "FT-03",
+      "ruleRef": "R371",
+      "famille": "FT",
+      "label": "FP",
+      "clientId": "CLI-00121",
+      "narrative": "Carte d'étudiant rechargée par ses deux parents et un grand-parent (liens familiaux au dossier), retraits sur le lieu d'études — FP.",
+      "ecartement": "liens familiaux au dossier (carte étudiant)",
+      "payload": {
+        "seed": 1534506041,
+        "montantChf": 81000,
+        "valueDate": "2026-03-06",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-42438",
+        "declencheur": "PREPAID_FUNDING",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-FT-04-TP-1",
+      "scenarioId": "FT-04",
+      "ruleRef": "R372",
+      "famille": "FT",
+      "label": "TP",
+      "clientId": "CLI-00084",
+      "narrative": "Retraits de 18k en 10 jours avant un déplacement vers une zone frontalière, sans explication — TP.",
+      "payload": {
+        "seed": 1453144622,
+        "montantChf": 117000,
+        "valueDate": "2026-11-08",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-76887",
+        "declencheur": "TRAVEL_FLOW_MISMATCH",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-FT-04-FP-1",
+      "scenarioId": "FT-04",
+      "ruleRef": "R372",
+      "famille": "FT",
+      "label": "FP",
+      "clientId": "CLI-00007",
+      "narrative": "Retraits avant un pèlerinage documenté avec agence de voyage agréée et itinéraire fourni — motif religieux légitime, FP.",
+      "ecartement": "motif documenté (pèlerinage, agence agréée, itinéraire)",
+      "payload": {
+        "seed": 1425209524,
+        "montantChf": 187000,
+        "valueDate": "2026-06-12",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-25696",
+        "declencheur": "TRAVEL_FLOW_MISMATCH",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-FT-05-TP-1",
+      "scenarioId": "FT-05",
+      "ruleRef": "R373",
+      "famille": "FT",
+      "label": "TP",
+      "clientId": "CLI-00084",
+      "narrative": "Match exact (nom + date de naissance) sur une liste d'ordonnance fédérale — gel et déclaration.",
+      "payload": {
+        "seed": 1377390233,
+        "montantChf": 4000,
+        "valueDate": "2026-04-12",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-90189",
+        "declencheur": "CFT_LIST_HIT",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-FT-05-FP-1",
+      "scenarioId": "FT-05",
+      "ruleRef": "R373",
+      "famille": "FT",
+      "label": "FP",
+      "clientId": "CLI-00099",
+      "narrative": "Homonymie sur un nom très courant, date de naissance divergente de 30 ans — levé après vérification, FP.",
+      "ecartement": "homonymie (DDN divergente de 30 ans)",
+      "payload": {
+        "seed": 1350110503,
+        "montantChf": 117000,
+        "valueDate": "2026-09-04",
+        "canal": "FLOW",
+        "contrepartieRef": "CP-06976",
+        "declencheur": "CFT_LIST_HIT",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GV-01-TP-1",
+      "scenarioId": "GV-01",
+      "ruleRef": "R374",
+      "famille": "GV",
+      "label": "TP",
+      "clientId": "—",
+      "narrative": "Campagne T2 : 2 cas suspects trouvés à 85% du seuil structuring → seuil abaissé de 20k à 18k (version v1.3, simulée puis déployée).",
+      "payload": {
+        "seed": 1780568050,
+        "montantChf": 88000,
+        "valueDate": "2026-08-15",
+        "canal": "CAMPAIGN",
+        "contrepartieRef": "CP-45360",
+        "declencheur": "tuning.btl.campagne",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GV-01-FP-1",
+      "scenarioId": "GV-01",
+      "ruleRef": "R374",
+      "famille": "GV",
+      "label": "FP",
+      "clientId": "—",
+      "narrative": "Campagne T3 : 0 TP sous seuil sur 25 dossiers échantillonnés → calibrage confirmé, rapport archivé.",
+      "ecartement": "calibrage confirmé (0 TP sous seuil sur l'échantillon)",
+      "payload": {
+        "seed": 1744899704,
+        "montantChf": 176000,
+        "valueDate": "2026-12-23",
+        "canal": "CAMPAIGN",
+        "contrepartieRef": "CP-26828",
+        "declencheur": "tuning.btl.campagne",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GV-02-TP-1",
+      "scenarioId": "GV-02",
+      "ruleRef": "R375",
+      "famille": "GV",
+      "label": "TP",
+      "clientId": "—",
+      "narrative": "v1.2 du velocity : -40% de FP, 0 TP manqué sur 90j — changement validé et documenté.",
+      "payload": {
+        "seed": 1739428973,
+        "montantChf": 177000,
+        "valueDate": "2026-04-16",
+        "canal": "CAMPAIGN",
+        "contrepartieRef": "CP-33324",
+        "declencheur": "tuning.backtest.run",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GV-02-FP-1",
+      "scenarioId": "GV-02",
+      "ruleRef": "R375",
+      "famille": "GV",
+      "label": "FP",
+      "clientId": "—",
+      "narrative": "v2.0 du round-amounts aurait manqué 1 TP historique — rollback v1.4 exécuté, écart consigné.",
+      "ecartement": "dégradation du rappel détectée (rollback v1.4)",
+      "payload": {
+        "seed": 1703760619,
+        "montantChf": 85000,
+        "valueDate": "2026-02-10",
+        "canal": "CAMPAIGN",
+        "contrepartieRef": "CP-28063",
+        "declencheur": "tuning.backtest.run",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GV-03-TP-1",
+      "scenarioId": "GV-03",
+      "ruleRef": "R376",
+      "famille": "GV",
+      "label": "TP",
+      "clientId": "—",
+      "narrative": "Champ 50 vide sur 8% des messages d'un correspondant pendant 3 jours : le wire-stripping était indétectable — corrigé, période re-screenée.",
+      "payload": {
+        "seed": 1663686872,
+        "montantChf": 148000,
+        "valueDate": "2026-05-04",
+        "canal": "PERPETUAL",
+        "contrepartieRef": "CP-93249",
+        "declencheur": "DQ_DEGRADED",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GV-03-FP-1",
+      "scenarioId": "GV-03",
+      "ruleRef": "R376",
+      "famille": "GV",
+      "label": "FP",
+      "clientId": "—",
+      "narrative": "Chute de complétude due à un nouveau format ISO 20022 mal mappé (données présentes, parsing KO) — mapping corrigé, FP.",
+      "ecartement": "parsing KO mais données présentes (mapping ISO 20022 corrigé)",
+      "payload": {
+        "seed": 1628039014,
+        "montantChf": 152000,
+        "valueDate": "2026-04-11",
+        "canal": "PERPETUAL",
+        "contrepartieRef": "CP-24833",
+        "declencheur": "DQ_DEGRADED",
+        "attendu": "FP"
+      }
+    },
+    {
+      "caseId": "GT-GV-04-TP-1",
+      "scenarioId": "GV-04",
+      "ruleRef": "R377",
+      "famille": "GV",
+      "label": "TP",
+      "clientId": "—",
+      "narrative": "Revue 2026 : 3 angles morts identifiés (TBML, CBK, prolifération) → wave 2 planifiée et arbitrée en comité.",
+      "payload": {
+        "seed": 1553231179,
+        "montantChf": 186000,
+        "valueDate": "2026-11-07",
+        "canal": "CAMPAIGN",
+        "contrepartieRef": "CP-52388",
+        "declencheur": "tuning.calibrage.annuel",
+        "attendu": "TP"
+      }
+    },
+    {
+      "caseId": "GT-GV-04-FP-1",
+      "scenarioId": "GV-04",
+      "ruleRef": "R377",
+      "famille": "GV",
+      "label": "FP",
+      "clientId": "—",
+      "narrative": "",
+      "placeholder": true,
+      "note": "FP déclaré par la spec (1 TP · 1 FP) mais contenu laissé vide « — — — » ; en attente PO."
+    }
+  ]
+}
