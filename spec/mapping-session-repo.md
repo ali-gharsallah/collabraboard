@@ -148,6 +148,16 @@ coexistent, liés par un test de parité — pas deux vérités concurrentes :
   step CI **3e**. **Bloc 61 (Analytique 2G, R399–R403) RESTE ROUGE, à dessein** : `meta.deferred` →
   le moteur lève `CpsiDeferredError`, la fixture échoue avec le motif CPSI. Les détecteurs
   statistiques (z-score robuste, changepoint, dormance) **s'exécutent dans le service CPSI Python —
-  jamais réécrits en Nest** (décision 4) ; le bloc 61 est **exclu du step CI** et le sera jusqu'à la
-  livraison du pont CPSI (Postgres/Redis/CPSI). Garde générateur : invariant **AG-20** (méta émise,
-  AN-* deferred) — `test_gen_aml_gap.py` 25/25.
+  jamais réécrits en Nest** (décision 4) ; le bloc 61 est **exclu du step CI Nest** et le sera
+  jusqu'à la livraison du pont CPSI (Postgres/Redis/CPSI). Garde générateur : invariant **AG-20**
+  (méta émise, AN-* deferred) — `test_gen_aml_gap.py` 25/25.
+- **Détecteurs 2G livrés côté CPSI Python** (là où l'invariant les place) :
+  `services/cpsi-server-py/olive_cpsi/analytique_2g.py` — les 5 détecteurs R399–R403 en **statistiques
+  robustes, NumPy-free** : AN-01 z-score médiane/MAD (dispersion insensible aux outliers), AN-02
+  changepoint baseline↔fenêtre récente, AN-03 first-time × matérialité (Niveau 1, non bloquant, R39),
+  AN-04 réactivation de segment dormant, AN-05 mismatch revenus entrants ↔ KYC. Chaque détecteur
+  MESURE et retourne un résultat explicable (R44). Tests : `tests/test_cpsi_bloc20.py` — 13 tests qui
+  vérifient la **discrimination** (le déviant déclenche, le normal NON — contrairement au corpus GT).
+  Exécutés par `run_tests.py` (step CI **5c**, désormais **20/20**). Ce qui reste pour rendre les
+  suites Gherkin Nest du bloc 61 vertes = le **pont** Nest↔CPSI (appel du service depuis
+  `evaluateScenario`), qui exige CPSI en ligne (Postgres/Redis) — hors de ce lot.

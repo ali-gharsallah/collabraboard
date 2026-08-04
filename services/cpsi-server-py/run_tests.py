@@ -19,7 +19,8 @@ mods = [("CPSI bloc 1 — R63..R67 (PS-01..05 · SG-01..03 · BD-01..02)", "test
         ("CPSI bloc 16 — R84 edition exclusive du dossier KYC / la main (CK-01..05)", "tests.test_cpsi_bloc16"),
         ("CPSI bloc 17 — R85 passage de main entre validateurs / Next step / Revenir (HM-01..06)", "tests.test_cpsi_bloc17"),
         ("CPSI bloc 18 — R86 visa qualifie / verdict OK-CONDITIONAL-NOK + message (VQ-01..06)", "tests.test_cpsi_bloc18"),
-        ("CPSI bloc 19 — PC-20 equivalence permanente des chemins d hydratation (R324 dormant)", "tests.test_cpsi_bloc19")]
+        ("CPSI bloc 19 — PC-20 equivalence permanente des chemins d hydratation (R324 dormant)", "tests.test_cpsi_bloc19"),
+        ("CPSI bloc 20 — Analytique 2G AML gap (R399..R403 · AN-01..05, jamais en Nest)", "tests.test_cpsi_bloc20")]
 total_ok = 0
 for label, modname in mods:
     print(f"=== {label} ===")

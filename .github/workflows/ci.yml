@@ -267,10 +267,10 @@ jobs:
           out=$(python3 services/workflow-engine-py/run_tests_sql.py); echo "$out"
           echo "$out" | grep -q "suites vertes ###"
 
-      - name: "5c · cpsi-server-py (attendu 19/19 — garde grep, le runner rend 0 à tort)"
+      - name: "5c · cpsi-server-py (attendu 20/20 — garde grep, le runner rend 0 à tort)"
         run: |
           out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
-          echo "$out" | grep -q "### 19/19 suites vertes ###"
+          echo "$out" | grep -q "### 20/20 suites vertes ###"
 
       # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
       # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
