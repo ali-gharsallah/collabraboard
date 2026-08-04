@@ -5,11 +5,13 @@ import { AmlController } from "./aml.controller";
 import { AmlService } from "./aml.service";
 import { AmlGapController } from "./aml-gap.controller";
 import { AmlGapService } from "./aml-gap.service";
+import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
 
 // Câblage Nest de la surveillance AML (Bloc 48, R189→R206) + vague AML Gap Wave 1 (blocs 50–56,
 // R340→R377). AmlService n'a pas de port optionnel → useFactory simple ; exporté pour un futur
 // branchement au portail transactionnel (le verdict TX pourra consulter les signaux bloquants).
 @Module({
+  imports: [CpsiModule],                                                 // pont Analytique 2G (bloc 61 → CPSI Python)
   controllers: [AmlController, AmlGapController],
   providers: [
     {
@@ -19,8 +21,8 @@ import { AmlGapService } from "./aml-gap.service";
     },
     {
       provide: AmlGapService,
-      useFactory: (p: PrismaService, a: AuditService) => new AmlGapService(p, a),
-      inject: [PrismaService, AuditService],
+      useFactory: (p: PrismaService, a: AuditService, c: CpsiService) => new AmlGapService(p, a, c),
+      inject: [PrismaService, AuditService, CpsiService],
     }],
   exports: [AmlService, AmlGapService],
 })

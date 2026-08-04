@@ -165,6 +165,19 @@ export class CpsiService implements OnApplicationShutdown {
     return { clientId, asOf: asOf ?? null, contractVersion: r.contract_version, meta: r.meta, ...r.resultat };
   }
 
+  // ── AML gap bloc 61 (Analytique 2G, R399–R403) — DÉLÉGATION au moteur CPSI Python (les détecteurs
+  //    statistiques n'existent QUE là, jamais en Nest — décision 4). La porte MESURE une observation
+  //    (distribution de pairs, séries, dimensions…) contre les seuils tenant (R-Q) et retourne la
+  //    détection explicable (R44) ; elle ne décide rien, ne persiste rien ici. ──
+  async evaluerAmlGap2G(ctx: Ctx, scenario: string, observation: any, params: any = {}, asOf?: string) {
+    const r = await this.call(ctx, "aml_gap_2g", { scenario, observation, params }, { asOf });
+    if (r.erreur_typee) throw new BadRequestException(r.erreur_typee.message);   // scénario/observation invalide → 4xx
+    return r.resultat as {
+      scenarioId: string; ruleRef: string; signal: string; niveau: number;
+      blocking: boolean; raised: boolean; payload: Record<string, unknown>; explanation: string;
+    };
+  }
+
   // Lecture générique : rejeu (borné ≤ as_of) puis commande de lecture du moteur. Erreur typée → 4xx.
   private async lire(ctx: Ctx, commande: string, payload: any = {}, asOf?: string) {
     const r = await this.call(ctx, commande, payload, { asOf });

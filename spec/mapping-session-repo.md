@@ -158,6 +158,29 @@ coexistent, liés par un test de parité — pas deux vérités concurrentes :
   AN-04 réactivation de segment dormant, AN-05 mismatch revenus entrants ↔ KYC. Chaque détecteur
   MESURE et retourne un résultat explicable (R44). Tests : `tests/test_cpsi_bloc20.py` — 13 tests qui
   vérifient la **discrimination** (le déviant déclenche, le normal NON — contrairement au corpus GT).
-  Exécutés par `run_tests.py` (step CI **5c**, désormais **20/20**). Ce qui reste pour rendre les
-  suites Gherkin Nest du bloc 61 vertes = le **pont** Nest↔CPSI (appel du service depuis
-  `evaluateScenario`), qui exige CPSI en ligne (Postgres/Redis) — hors de ce lot.
+  Exécutés par `run_tests.py` (step CI **5c**, désormais **20/20**, 17 tests au bloc 20 : 13
+  discrimination + 4 pont).
+
+### 4.4 — Pont Nest↔CPSI (bloc 61) + couche de détection (Postgres/Redis/CPSI réels)
+
+Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le moteur CPSI Python réels.
+
+- **Transport** : la commande d'enveloppe CPSI **`aml_gap_2g`** (R248, contrat 1.1, PC-17) est ajoutée
+  au pont `services/cpsi-server-py/bridge.py` — elle dispatche vers `DETECTEURS_2G` (aucune règle
+  dupliquée). Scénario/observation invalide → `erreur_typee` (default-deny), jamais un 500.
+- **Porte Nest** : `CpsiService.evaluerAmlGap2G(ctx, scenario, observation, params, asOf?)` délègue au
+  moteur via le worker NDJSON existant (`bridge.py --serve`). `AmlGapService.evaluer2G` résout les
+  seuils tenant (R-Q, version en vigueur R29), délègue à CPSI, et — si le signal est levé — le
+  PERSISTE par le chemin commun (`enregistrerSignal` : append-only, idempotent, RLS, événement,
+  blocage éventuel). Un scénario des blocs 50–60 est REFUSÉ ici (garde d'invariant : il s'évalue en
+  Nest). Endpoint **`POST /v1/aml/signals/evaluate-2g`**. Le service dépend d'un PORT minimal
+  (`AmlGap2GPort`), pas du module CPSI concret — le harnais fakePrisma reste léger.
+- **Vérifié (infra réelle)** : e2e `fat-aml-gap-2g.e2e-spec.ts` **5/5** — AN-01 déviant lève et
+  persiste un signal explicable (R44), AN-05 cohérent ne déclenche rien, idempotence (R48), garde
+  d'invariant (SF-01 refusé), observation incomplète → 4xx typé. CPSI e2e `fat-cpsi` **28/28**.
+  Postgres 16 (schéma + RLS post-deploy, `aml_gap_signals`/`cpsi_events`) + Redis + worker CPSI
+  montés localement pour la recette.
+- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges — elles
+  importent `evaluateScenario` (moteur Nest, meta.deferred) et NON la porte 2G ; le pont passe par
+  HTTP/DI, pas par cet import direct. Le chemin de production (worker `aml-eval` asynchrone,
+  backtest/BTL/DQ, seed GT en base) reste à instrumenter au-dessus de ce pont désormais fonctionnel.

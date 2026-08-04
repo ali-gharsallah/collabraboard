@@ -112,3 +112,35 @@ def test_an05_revenu_coherent_ne_declenche_pas():
 def test_couverture_5_detecteurs_2g():
     _ok(set(DETECTEURS_2G) == {"AN-01", "AN-02", "AN-03", "AN-04", "AN-05"},
         "bloc 61 couvert : AN-01..05 (R399–R403) implémentés en CPSI Python")
+
+
+# ── Pont (commande d'enveloppe aml_gap_2g) : le chemin exact appelé par la porte NestJS ──
+def _env(commande, payload, cv="1.1"):
+    import bridge
+    return bridge.traiter({"contract_version": cv, "tenant_id": "t", "as_of": "2026-12-31T00:00:00",
+                           "config": {}, "journal": [], "commande": commande, "payload": payload})
+
+
+def test_bridge_aml_gap_2g_deviant_leve_le_signal():
+    r = _env("aml_gap_2g", {"scenario": "AN-01",
+                            "observation": {"value": 40, "group_values": [10, 11, 9, 10, 12, 8, 11, 10, 9, 11]},
+                            "params": {"zscore_seuil": 3.5}})
+    _ok("resultat" in r and r["resultat"]["raised"] is True, "pont AN-01 : signal levé via l'enveloppe")
+    _ok(r["resultat"]["ruleRef"] == "R399", "pont : ruleRef R399 remonté")
+
+
+def test_bridge_aml_gap_2g_scenario_inconnu_default_deny():
+    r = _env("aml_gap_2g", {"scenario": "AN-99", "observation": {}, "params": {}})
+    _ok("erreur_typee" in r and r["erreur_typee"]["code"] == "CPSI_ERROR",
+        "pont : scénario 2G inconnu → erreur TYPÉE (default-deny), jamais 500")
+
+
+def test_bridge_aml_gap_2g_observation_incomplete_typee():
+    r = _env("aml_gap_2g", {"scenario": "AN-01", "observation": {"value": 40}, "params": {}})
+    _ok("erreur_typee" in r, "pont : observation incomplète → erreur typée")
+
+
+def test_bridge_aml_gap_2g_refuse_en_contrat_1_0():
+    r = _env("aml_gap_2g", {"scenario": "AN-01", "observation": {}, "params": {}}, cv="1")
+    _ok("erreur_typee" in r and r["erreur_typee"]["code"] == "CPSI_CONTRACT_VERSION",
+        "pont : commande 2G exige le contrat 1.1 (PC-17)")

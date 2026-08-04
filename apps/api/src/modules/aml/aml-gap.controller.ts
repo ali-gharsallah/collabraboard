@@ -24,6 +24,10 @@ export class AmlGapController {
 
   @Post("signals") enregistrer(@Req() r: any, @Body() b: any) { return this.svc.enregistrerSignal(r.ctx, b); }
 
+  // Pont Analytique 2G (bloc 61, R399–R403) : délègue la mesure au moteur CPSI Python, persiste le
+  // signal si levé. { scenarioCode, clientId?, observation, date? } → { detection, signal }.
+  @Post("signals/evaluate-2g") evaluer2G(@Req() r: any, @Body() b: any) { return this.svc.evaluer2G(r.ctx, b); }
+
   @Post("signals/:id/qualify") qualify(@Req() r: any, @Param("id") id: string, @Body() b: any) {
     return this.svc.qualifier(r.ctx, id, b);
   }

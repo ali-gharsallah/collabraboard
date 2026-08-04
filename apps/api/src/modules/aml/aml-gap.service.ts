@@ -6,6 +6,21 @@ import { Tx } from "../../common/tx";
 import { AML_GAP_REFERENTIEL, AmlGapRule } from "./aml-gap.referentiel.gen";
 
 /**
+ * Port de délégation Analytique 2G (bloc 61) — la mesure statistique vit dans le service CPSI
+ * Python (décision 4). On dépend d'un PORT minimal, pas du module CPSI concret : le harnais de
+ * règles (fakePrisma) n'a rien à charger, et la DI Nest injecte le CpsiService réel (structurel).
+ */
+export interface AmlGap2GPort {
+  evaluerAmlGap2G(
+    ctx: { tenantId: string; userId: string; role: string },
+    scenario: string, observation: any, params: any, asOf?: string,
+  ): Promise<{
+    scenarioId: string; ruleRef: string; signal: string; niveau: number;
+    blocking: boolean; raised: boolean; payload: Record<string, unknown>; explanation: string;
+  }>;
+}
+
+/**
  * AmlGapService — orchestration de la vague AML Gap Wave 1 (R340–R377, blocs 50–56). Même
  * doctrine que AmlService : le service ORCHESTRE, il ne détecte pas. Le worker `aml-eval`
  * (différé — BullMQ/outbox) décide qu'un scénario s'est déclenché ; ce service PERSISTE le
@@ -43,9 +58,13 @@ function hashFaits(faits: unknown): string {
   return h.toString(16);
 }
 
+// Familles/blocs de l'Analytique 2G (bloc 61, R399–R403) : détecteurs statistiques exécutés dans
+// le service CPSI Python — JAMAIS en Nest (décision 4). Le service DÉLÈGUE, il ne détecte pas.
+const BLOC_ANALYTIQUE_2G = 61;
+
 @Injectable()
 export class AmlGapService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private cpsi: AmlGap2GPort) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
@@ -147,6 +166,44 @@ export class AmlGapService {
       await this.audit.log(ctx.tenantId, ctx.userId, "AML_GAP_QUALIFY", `${signalId}:${outcome}`);
       return updated;
     });
+  }
+
+  /**
+   * Évalue un scénario Analytique 2G (bloc 61, R399–R403) — le pont Nest↔CPSI (décision 4). Le
+   * détecteur statistique vit dans le service CPSI Python : ce service DÉLÈGUE la mesure au moteur
+   * CPSI (via la porte, rejeu à date + seuils tenant R-Q), puis — si le signal est levé — PERSISTE
+   * un signal append-only (même chemin que les blocs 50–60 : enregistrerSignal, idempotent, RLS).
+   * R44/R39 : CPSI mesure et explique, Nest orchestre, l'humain qualifie. Un scénario hors bloc 61
+   * est refusé ici (il s'évalue dans le moteur Nest, src/aml/engine.ts).
+   */
+  async evaluer2G(
+    ctx: Ctx,
+    dto: { scenarioCode: string; clientId?: string | null; observation?: any; date?: string },
+  ) {
+    if (!dto?.scenarioCode) throw new BadRequestException("scenarioCode requis");
+    const def = defOf(dto.scenarioCode);
+    if (!def) throw new NotFoundException(`[R340] scénario inconnu : ${dto.scenarioCode}`);
+    if (def.bloc !== BLOC_ANALYTIQUE_2G)
+      throw new BadRequestException(
+        `[décision 4] ${dto.scenarioCode} n'est pas un scénario Analytique 2G (bloc 61) — ` +
+        `les blocs 50–60 s'évaluent dans le moteur Nest, pas via CPSI`,
+      );
+    const date = dto.date ? new Date(dto.date) : new Date();
+    const v = await this.versionEnVigueur(ctx, dto.scenarioCode, date);
+    // Délégation CPSI : les seuils tenant (R-Q) en vigueur sont passés comme paramètres du détecteur.
+    const detection = await this.cpsi.evaluerAmlGap2G(
+      ctx, dto.scenarioCode, dto.observation ?? {}, v.params, date.toISOString(),
+    );
+    let signal: any = null;
+    if (detection.raised) {
+      // Le signal levé emprunte le chemin commun (append-only, idempotent, événement, blocage éventuel).
+      signal = await this.enregistrerSignal(ctx, {
+        scenarioCode: dto.scenarioCode, clientId: dto.clientId ?? null,
+        faits: { observation: dto.observation ?? {}, detection: detection.payload, explanation: detection.explanation },
+        date: dto.date,
+      });
+    }
+    return { detection, signal };
   }
 
   /** Inbox des signaux (tenant-scopé), filtrable par statut / famille / client. */

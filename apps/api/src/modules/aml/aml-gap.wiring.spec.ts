@@ -44,7 +44,10 @@ const fakeAudit = () => ({ log: async () => undefined } as any);
 const evts = (p: any, t: string) => p._db.events.filter((e: any) => e.type === t);
 const CO_SR = { tenantId: "t1", userId: "co.sr", role: "CO_SR" };
 const RM = { tenantId: "t1", userId: "rm.1", role: "RM" };
-const mk = (seed: any = {}) => { const p = fakePrisma(seed); return { p, s: new AmlGapService(p, fakeAudit()) }; };
+// Port CPSI stub : le pont Analytique 2G (bloc 61) est couvert par l'e2e réel (Postgres+CPSI) ;
+// ici (fakePrisma, blocs 50–60) il n'est jamais appelé — un stub qui lève suffit à la construction.
+const fakeCpsi: any = { evaluerAmlGap2G: async () => { throw new Error("CPSI non câblé dans le harnais fakePrisma"); } };
+const mk = (seed: any = {}) => { const p = fakePrisma(seed); return { p, s: new AmlGapService(p, fakeAudit(), fakeCpsi) }; };
 
 const BLOCKING = ["R344", "R346", "R363", "R365", "R367", "R373", "R390", "R393"];
 const FAMILLES: Record<string, number> = {
