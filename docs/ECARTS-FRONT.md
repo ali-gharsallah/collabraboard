@@ -1200,3 +1200,24 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   décoratif en dur — la palette passe par tokens.ts.
 - **Cliquet tranche 3** : Regwatch converti (10 clés × 3 langues) — 5 fichiers au cliquet,
   0 texte en dur, rapport nav 0 écart.
+
+## Écarts — FilterBar (R404, 2026-08-04, drop PO SESSION-2026-08-04)
+
+Ratification FilterBar (`spec/SPEC-FILTERBAR.md`, R-FB → **R404** au step-0 révisé). Le système
+**notifie, il ne masque pas** (esprit R39) : un écart consigné reste ouvert tant que la **source**
+n'est pas corrigée, même avec un garde-fou défensif en place.
+
+| Écart | Nature | Statut repo |
+|---|---|---|
+| **E-FB-1** | Collision de codes de scénario (`AML-10/11/12` en double : série CBK/White-collar vs série Retail dans la démo) → clés React dupliquées → cartes orphelines au filtrage (18 rendues pour un compteur de 15). | Vérifié + durci côté React (lot FilterBar) — voir R-FB.4. |
+| **E-FB-2** | `AmlCatalogueScreen` (démo) : `return;` orphelin dans le `.map()` des KPI → les 3 cartes KPI ne se rendent jamais. | Vérifié côté React (lot FilterBar) — état consigné au commit. |
+| **E-FB-3** | Barres « Déclenchements par catégorie » (Dashboard Compliance Center) non cliquables. | **Décision PO ouverte** : drill-down → FilterBar pré-remplie, ou affichage seul. Non bloquant. |
+
+**R-FB.4 — invariant clés uniques (non-régression du bug corrigé).** Dans toute liste rendue, la
+clé React de chaque item est **unique**. Tout référentiel affiché déduplique **défensivement**
+(suffixe déterministe `#n` + `console.warn` pointant la source). La source doit être corrigée ; le
+`warn` est l'écart à consigner, pas le correctif. Utilitaire repo : `apps/web/src/lib/dedupeKeys.ts`.
+Garde de non-régression : test corpus d'unicité des codes de scénario du référentiel AML React
+(aucun `console.warn` en parcours nominal = source saine). **E-FB-1 backend** : la collision peut
+exister aussi dans le seed GWB — vérification tracée pour le lot backend AML (test corpus d'unicité
+à ajouter côté API).

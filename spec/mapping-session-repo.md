@@ -47,21 +47,30 @@ des specs. Résultat : ni l'un ni l'autre n'est un décalage session→repo.
 
 | Session | Repo | Nature |
 |---------|------|--------|
-| R332–R334 (On-premise PK-01..06) | **réservé R379+** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB, R336=LK, R337=IDM, R338=PJ, R339=EV. **DÉCISION Ali (2026-07-29) : PK renuméroté > R339.** **Step-0 (2026-08-04, §4) : la plage R340–R377 est attribuée à AML Gap Wave 1 (spec ratifiée, implémentée) et R378 à la FilterBar (R-FB) — deux specs ratifiées qui prennent la suite contiguë de l'amas. La réservation PK (non implémentée) est donc repoussée à R379+** (même règle que le déplacement R335→R340 : l'implémenté prend le créneau, la réservation glisse). Réservation notée ici jusqu'à la spec PK. |
+| R332–R334 (On-premise PK-01..06) | **réservé R405+** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB, R336=LK, R337=IDM, R338=PJ, R339=EV. **DÉCISION Ali (2026-07-29) : PK renuméroté > R339.** **Step-0 (2026-08-04, §4) — révisé par le drop PO `SESSION-2026-08-04.md` : R340–R377 = AML Gap Wave 1, R378–R403 = AML Gap Wave 2 (26 règles, blocs 57–61), R404 = FilterBar (R-FB). La réservation PK (non implémentée) glisse donc à R405+** (même règle que le déplacement R335→R340 : l'implémenté/ratifié prend le créneau contigu, la réservation glisse). Réservation notée ici jusqu'à la spec PK. |
 | Industrialisation « R328–R331 » (§4 session) | R331–R334 | La borne haute session (R331) et repo (R334) diffèrent : même décalage +3, mais la plage session couvre 4 numéros pour 4 objets → cohérent une fois décalée. |
 | i18n « R323–R324 » (session) | R324–R327 région | `spec/canon-solde-4-ecarts-R324-R327.md` couvre le solde d'écarts + i18n cliquet côté repo aux R324–R327 ; mapping fin à confirmer par relecture du canon. |
 
-## 4. STEP-0 (2026-08-04) — attribution des deux specs ratifiées PO (04.08.2026)
+## 4. STEP-0 (2026-08-04) — attribution des specs ratifiées PO (04.08.2026)
 
-**Résolution de collision.** Les numéros *provisoires* de `SPEC-AMLGAP-WAVE1` (R340–R377) et de la
-FilterBar (symbole `R-FB`) heurtaient la **réservation *soft*** « R340+ » de l'On-premise (PK),
-**non implémentée**. Règle appliquée (déjà employée pour PK en 2026-07-29) : *l'implémenté/ratifié
-prend le créneau contigu, la réservation glisse*. Attribution définitive (visa PO au merge) :
+**Résolution de collision.** Les numéros *provisoires* des specs AML Gap (Wave 1 `R340–R377`,
+Wave 2 `R378–R403`) et de la FilterBar (symbole `R-FB`) heurtaient la **réservation *soft***
+« R340+ » de l'On-premise (PK), **non implémentée**. Règle appliquée (déjà employée pour PK en
+2026-07-29) : *l'implémenté/ratifié prend le créneau contigu, la réservation glisse*.
+
+> **Révision (drop PO `docs/SESSION-2026-08-04.md`, action 1).** Le premier jet de ce step-0 avait
+> attribué **R378** à la FilterBar. Le drop PO du même jour introduit **AML Gap Wave 2** (blocs
+> 57–61, 26 règles) et lui assigne explicitement **R378–R403**. La FilterBar glisse donc à **R404**
+> (numéro non pris par les deux vagues ratifiées), et PK à **R405+**. C'est la seule attribution
+> ci-dessous qui fait foi.
+
+Attribution définitive (visa PO au merge) :
 
 | Spec (provisoire) | Repo (définitif) | Objet | Familles | Preuve / source |
 |---|---|---|---|---|
-| FilterBar `R-FB` | **R378** | Barre de filtres uniforme (combobox + puce active + clés uniques R-FB.4) | FB-01..07 | `SPEC-FILTERBAR.md` (ratifiée) · `docs/reference/olive-demo.html` bloc `FilterCombo` |
-| AML Gap Wave 1 R340–R377 | **R340–R377** (identité) | 38 scénarios AML, blocs 50–56 | SF-01..07, QO-01..05, GU-01..04, IP-01..07, CR-01..06, FT-01..05, GV-01..04 | `SPEC-AMLGAP-WAVE1.md` (ratifiée) · `gen_aml_gap.py` (à produire) |
+| AML Gap Wave 1 R340–R377 | **R340–R377** (identité) | 38 scénarios AML, blocs 50–56 | SF-01..07, QO-01..05, GU-01..04, IP-01..07, CR-01..06, FT-01..05, GV-01..04 | `spec/SPEC-AML-GAP-WAVE1.md` (ratifiée) · `tools/aml-gap/gen_aml_gap.py` |
+| AML Gap Wave 2 R378–R403 | **R378–R403** (identité) | 26 scénarios AML, blocs 57–61 (TBML, correspondent banking, prolifération, immobilier & art, analytique 2G) | (blocs 57–61) | `spec/SPEC-AML-GAP-WAVE2.md` (ratifiée) · `tools/wave2_rules.py` |
+| FilterBar `R-FB` | **R404** | Barre de filtres uniforme (panneau rétractable + combobox + chips actifs + reset + clés uniques R-FB.4) | FB-01..07 | `spec/SPEC-FILTERBAR.md` (ratifiée) · `apps/web/src/components/FilterBar.tsx` |
 
 **Détail AML Gap Wave 1 (identité provisoire = repo — aucun remap du générateur/dataset/démo) :**
 
@@ -75,7 +84,8 @@ prend le créneau contigu, la réservation glisse*. Attribution définitive (vis
 | 55 — CFT | R369–R373 | FT-01..05 |
 | 56 — Gouvernance du dispositif | R374–R377 | GV-01..04 |
 
-> **Amas contigu après step-0** : R339 (robustesse EV) → **R340–R377** (AML Gap Wave 1) → **R378**
-> (FilterBar). PK réservé **R379+**. CANON-MASTER (`docs/CANON-MASTER.md`, généré) fait foi et
-> **ne montrera ces numéros qu'à mesure de leur implémentation réelle** au repo (familles + suites de
-> tests) — le repo fait foi, la table ci-dessus est l'attribution, pas l'implémentation.
+> **Amas contigu après step-0 (révisé)** : R339 (robustesse EV) → **R340–R377** (AML Gap Wave 1)
+> → **R378–R403** (AML Gap Wave 2) → **R404** (FilterBar). PK réservé **R405+**. CANON-MASTER
+> (`docs/CANON-MASTER.md`, généré) fait foi et **ne montrera ces numéros qu'à mesure de leur
+> implémentation réelle** au repo (familles + suites de tests) — le repo fait foi, la table
+> ci-dessus est l'attribution, pas l'implémentation.
