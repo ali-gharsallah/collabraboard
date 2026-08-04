@@ -36,6 +36,7 @@ const ParametrageRegistre = lazy(() => import("../features/parametrage/Parametra
 const ConfigGolive = lazy(() => import("../features/parametrage/ConfigGolive").then((m) => ({ default: m.ConfigGolive })));
 const PmsMandats = lazy(() => import("../features/pms/PmsMandats").then((m) => ({ default: m.PmsMandats })));
 const ReferentielAml = lazy(() => import("../features/aml/ReferentielAml").then((m) => ({ default: m.ReferentielAml })));
+const AmlGap = lazy(() => import("../features/aml/AmlGap").then((m) => ({ default: m.AmlGap })));
 const SandboxAml = lazy(() => import("../features/aml/SandboxAml").then((m) => ({ default: m.SandboxAml })));
 const Ports = lazy(() => import("../features/ports/Ports").then((m) => ({ default: m.Ports })));
 const NextBestAction = lazy(() => import("../features/nba/NextBestAction").then((m) => ({ default: m.NextBestAction })));
@@ -84,7 +85,7 @@ const MobileAdmin = lazy(() => import("../features/mobile/MobileAdmin").then((m)
 const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ default: m.OpRisk })));
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
   // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
@@ -118,7 +119,7 @@ export function Router() {
       ["compliance", "Compliance Center", "🛡"], ["screening", "Screening", "⌖"],
       ["screeningadv", "Screening avancé", "⌖"], ["alertes", "File d'alertes", "▤"],
       ["dossiers", "Dossiers de risque", "▤"], ["amlws", "AML Investigation", "◬"],
-      ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["mros", "Reporting MROS", "📄"],
+      ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["amlgap", "AML Gap Wave 1", "🌊"], ["mros", "Reporting MROS", "📄"],
       ["corroboration", "Corroboration KYC", "⚖"], ["legalreg", "Legal — Contrats", "§"],
       ["oprisk", "Octopulse OpRisk", "🐙"], ["formations", "Formations", "🎓"],
       ["veille", "Veille réglementaire", "📡"], ["registrelba", "Registre LBA", "📖"]] },
@@ -240,6 +241,7 @@ export function Router() {
     {screen === "golive" && <ConfigGolive/>}
     {screen === "pms" && <PmsMandats/>}
     {screen === "amlref" && <ReferentielAml/>}
+    {screen === "amlgap" && <AmlGap/>}
     {screen === "sbaml" && <SandboxAml/>}
     {screen === "ports" && <Ports/>}
     {screen === "nba" && <NextBestAction/>}

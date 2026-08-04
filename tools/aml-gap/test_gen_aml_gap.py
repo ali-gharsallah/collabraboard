@@ -148,8 +148,15 @@ def main():
         if i < 0:
             return None
         start = txt.index("[", txt.index("=", i))  # 1er « [ » après le « = », pas le [] du type
-        end = txt.rindex("]")
-        return json.loads(txt[start:end + 1])
+        depth = 0                                    # « ] » appariée par comptage (arrays imbriqués : params)
+        for j in range(start, len(txt)):
+            if txt[j] == "[":
+                depth += 1
+            elif txt[j] == "]":
+                depth -= 1
+                if depth == 0:
+                    return json.loads(txt[start:j + 1])
+        return None
 
     ref_ts = _embedded_json(os.path.join(api_dir, "aml-gap.referentiel.gen.ts"), "AML_GAP_REFERENTIEL")
     gt_ts = _embedded_json(os.path.join(api_dir, "aml-gap.gt.gen.ts"), "AML_GAP_GT")
@@ -158,7 +165,16 @@ def main():
     check("AG-15 aml-gap.gt.gen.ts à jour (aucune dérive)", gt_ts == gt,
           "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    total = 14 + 3 + 2  # sous-tests b + AG-15 (2 fichiers TS)
+    # AG-16 — seed front (web) présent et cohérent (38 scénarios + 78 cas GT).
+    web_dir = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "features", "aml"))
+    web_path = os.path.join(web_dir, "aml-gap.seed.gen.ts")
+    scen_seed = _embedded_json(web_path, "AML_GAP_SCENARIOS")
+    gt_seed = _embedded_json(web_path, "AML_GAP_GT_SEED")
+    check("AG-16 seed front à jour (38 scénarios + 78 cas GT)",
+          scen_seed is not None and len(scen_seed) == 38 and gt_seed is not None and len(gt_seed) == 78,
+          "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
+
+    total = 14 + 3 + 2 + 1  # sous-tests b + AG-15 (2 fichiers) + AG-16
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:

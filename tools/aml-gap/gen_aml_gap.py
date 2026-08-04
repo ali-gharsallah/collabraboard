@@ -578,6 +578,7 @@ def build():
 
 
 API_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "aml"))
+WEB_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "features", "aml"))
 
 _TS_HEADER = (
     "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.\n"
@@ -614,6 +615,37 @@ def _emit_ts(rules, gt):
         f.write(_TS_HEADER + "\n" + ref_types + "\nexport const AML_GAP_REFERENTIEL: AmlGapRule[] = " + ref_json + ";\n")
     with open(os.path.join(API_AML_DIR, "aml-gap.gt.gen.ts"), "w", encoding="utf-8") as f:
         f.write(_TS_HEADER + "\n" + gt_types + "\nexport const AML_GAP_GT: AmlGapGtCase[] = " + gt_json + ";\n")
+    # Seed front (web) : même source, utilisé en repli par useApiOrSeed quand le backend est absent.
+    web = (
+        _TS_HEADER + "\n"
+        "export interface AmlGapScenarioSeed {\n"
+        "  code: string; ruleRef: string; bloc: number; blocTitre: string; famille: string;\n"
+        "  titre: string; desc: string; niveau: number | null; kind: string; blocking: boolean;\n"
+        "  signal: string; params: { key: string; label: string; default: string | number | boolean }[];\n"
+        "  gherkin: { given: string; when: string; then: string };\n"
+        "}\n"
+        "export interface AmlGapGtSeed {\n"
+        "  caseId: string; scenarioId: string; ruleRef: string; famille: string; label: 'TP' | 'FP';\n"
+        "  clientId: string; narrative: string; ecartement?: string; placeholder?: boolean;\n"
+        "}\n"
+    )
+    scen_seed = [{
+        "code": r["id"], "ruleRef": r["ruleRef"], "bloc": r["bloc"], "blocTitre": r["blocTitre"],
+        "famille": r["famille"], "titre": r["titre"], "desc": r["desc"], "niveau": r["niveau"],
+        "kind": r["kind"], "blocking": r["blocking"], "signal": r["signal"], "params": r["params"],
+        "gherkin": r["gherkin"],
+    } for r in rules]
+    gt_seed = [{k: c[k] for k in ("caseId", "scenarioId", "ruleRef", "famille", "label", "clientId",
+                                  "narrative") if k in c}
+               | ({"ecartement": c["ecartement"]} if c.get("ecartement") else {})
+               | ({"placeholder": True} if c.get("placeholder") else {})
+               for c in gt]
+    web += ("\nexport const AML_GAP_SCENARIOS: AmlGapScenarioSeed[] = "
+            + json.dumps(scen_seed, ensure_ascii=False, indent=2) + ";\n")
+    web += ("\nexport const AML_GAP_GT_SEED: AmlGapGtSeed[] = "
+            + json.dumps(gt_seed, ensure_ascii=False, indent=2) + ";\n")
+    with open(os.path.join(WEB_AML_DIR, "aml-gap.seed.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(web)
 
 
 def main():
@@ -643,6 +675,7 @@ def main():
     print("aml-gap généré : %d règles (R340–R377, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
           % (len(rules), meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
     print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
+    print("  + TS front   : apps/web/src/features/aml/aml-gap.seed.gen.ts")
 
 
 if __name__ == "__main__":
