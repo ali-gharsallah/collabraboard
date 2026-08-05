@@ -347,6 +347,7 @@ model ScreeningRun {
   prefiltre    Json                                       // R103 : le réglage fait partie de la trace
   perimetre    Int                                        // combien de clients confrontés
   nbHits       Int      @map("nb_hits")
+  config       Json?                                      // R269 : config moteur EFFECTIVE + scénario/version en vigueur (replay R48/R49)
   at           DateTime @default(now())
   hits         ScreeningHit[]
   @@index([tenantId, at])

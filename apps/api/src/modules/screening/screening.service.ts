@@ -22,8 +22,15 @@ import { construireIndex, construireIdf, candidats, rapprocherDetail } from "@ol
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
+  // R269 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
+  // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
+  // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
+  scenarioCode?: string; moteurConfig?: Record<string, number>;
 }
 type Ctx = { tenantId: string; userId: string; role: string };
+// Config EFFECTIVE d'un run + sa provenance (persistée sur le run pour le rejeu R48/R49).
+type ConfigRun = { moteur: Record<string, number>; prefiltre: Record<string, number>;
+  source: { scenarioCode: string; scenarioVersion: number } | null };
 
 // Decomposition explicable persistee (R266) - prepare R44 (le systeme explique, il ne decide pas).
 type HitDetail = { via: string; nameScore: number; typePenalty: number; dobContribution: number };
@@ -34,6 +41,33 @@ export class ScreeningService {
   private domain = new ScreeningQualificationService();
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
+  /**
+   * R269 — résout la config EFFECTIVE d'un run. Base : le scénario VERSIONNÉ en vigueur à la date
+   * (plus haute version active, effet ≤ date — R29), qui porte params.moteur / params.prefiltre.
+   * Override : les paramètres d'appel (moteurConfig, prefiltre) priment, pour tuning/urgence — et
+   * la config effective + la provenance sont TRACÉES sur le run (rejeu). Sans scénario ni override :
+   * moteur vide → défauts R268 (comportement inchangé), pré-filtre = celui de l'appel.
+   */
+  private async resoudreConfig(tx: Tx, tenantId: string, dto: RunDto, at: string): Promise<ConfigRun> {
+    let scMoteur: Record<string, number> = {}, scPrefiltre: Record<string, number> = {};
+    let source: ConfigRun["source"] = null;
+    if (dto.scenarioCode) {
+      const rows: any[] = await tx.amlScenario.findMany({
+        where: { tenantId, code: dto.scenarioCode, active: true } });
+      // Effet daté en JS (compatible faux Prisma) : version la plus haute dont effectiveFrom ≤ date.
+      const env = rows.filter((r) => new Date(r.effectiveFrom) <= new Date(at))
+        .sort((a, b) => b.version - a.version)[0];
+      if (env) {
+        const p = (env.params ?? {}) as any;
+        scMoteur = p.moteur ?? {}; scPrefiltre = p.prefiltre ?? {};
+        source = { scenarioCode: env.code, scenarioVersion: env.version };
+      }
+    }
+    const moteur = { ...scMoteur, ...(dto.moteurConfig ?? {}) };        // l'appel prime sur le scénario
+    const prefiltre = { ...scPrefiltre, ...(dto.prefiltre ?? {}) };
+    return { moteur, prefiltre, source };
+  }
+
   // -- R100 hits bruts persistes . R102 whitelist par empreinte . R103 trace meme sans hit --
   async run(ctx: Ctx, dto: RunDto) {
     if (!dto?.liste || !dto?.version || !Array.isArray(dto?.entries))
@@ -42,6 +76,9 @@ export class ScreeningService {
       const clients = await tx.client.findMany({ where: {
         tenantId: ctx.tenantId, ...(dto.clientIds ? { id: { in: dto.clientIds } } : {}) } });
       const at = new Date().toISOString();
+
+      // R269 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
+      const cfg = await this.resoudreConfig(tx, ctx.tenantId, dto, at);
 
       // R264 - index trigramme construit UNE FOIS au chargement de la liste. IDF : n<2 donnerait
       // log(1)=0 -> NaN ; on ne le construit qu'a partir de 2 entrees (sinon repli poids=1 du moteur).
@@ -55,8 +92,8 @@ export class ScreeningService {
         const st = (c as any).structure ?? (c as any).type;      // clients réels : structure (PP/PM/…) ; harnais : type
         const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
           est_entite: st ? st !== "PP" : false };
-        const cand = candidats(idx, c.name, dto.prefiltre);           // R264 - pre-filtre trigramme
-        const r = rapprocherDetail(requete, cand, dto.seuil);         // R263 - score fin composite
+        const cand = candidats(idx, c.name, cfg.prefiltre);           // R264/R269 - pre-filtre (config en vigueur)
+        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R263/R269 - score fin (knobs en vigueur)
         if (!r) continue;
         trouves.push({ client: c, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
@@ -80,8 +117,9 @@ export class ScreeningService {
       // R103 - la trace de passage s'ecrit TOUJOURS, hits ou pas, pre-filtre inclus
       const run = await tx.screeningRun.create({ data: {
         tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version,
-        seuil: dto.seuil, prefiltre: dto.prefiltre ?? {}, perimetre: clients.length,
-        nbHits: hits.length, at } });
+        seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: clients.length,
+        nbHits: hits.length, at,
+        config: cfg as any } });   // R269 - config effective + scenario/version en vigueur (rejeu)
       for (const h of hits) await tx.screeningHit.update({ where: { id: h.id }, data: { runId: run.id } });
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_RUN",
         `${dto.liste}@${dto.version}:${clients.length} clients, ${hits.length} hits`);

@@ -23,9 +23,9 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 }
 
 // ── Faux Prisma : tables en mémoire, filtres tenant réellement appliqués ──
-function fakePrisma(clients: any[]) {
+function fakePrisma(clients: any[], scenarios: any[] = []) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { clients, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
+  const db = { clients, scenarios, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'hit') return match(db.hits.find((h) => h.id === row.hitId) ?? {}, v);
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -40,6 +40,7 @@ function fakePrisma(clients: any[]) {
   const p: any = { _db: db,
     client: table(db.clients, 'CLI'), screeningRun: table(db.runs, 'RUN'),
     screeningHit: table(db.hits, 'HIT'), screeningQualification: table(db.quals, 'Q'),
+    amlScenario: table(db.scenarios, 'SCN'),                    // R269 : config versionnée du moteur
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -142,6 +143,47 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(a.entries.some((e: any) => e.action === 'SCREENING_RUN'), 'passage audité');
   });
 
-  console.log(`\nCâblage screening (SC-01..04, R100→R103) — ${passed}/${passed + failed} tests verts`);
+  // ── R269 — la config du moteur vient d'un SCÉNARIO VERSIONNÉ (AmlScenario.params), effet daté ──
+  // Un scénario dont params.moteur.echelle=50 fait tomber un appariement EXACT (nameScore 50) sous le
+  // seuil 85 → 0 hit : preuve que le réglage gouverné pilote réellement le run.
+  const scn = (version: number, effectiveFrom: string, moteur: any) => ({
+    id: `SCN-${version}`, tenantId: 't1', code: 'SCN-SCREEN', ruleRef: 'R269', fam: 'GV',
+    version, effectiveFrom, params: { moteur }, active: true,
+  });
+  const mkS = (scenarios: any[]) => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), scenarios);
+    const a = fakeAudit(); return { p, s: new ScreeningService(p, a) }; };
+
+  await it('R269 sans scénario ni override → config par défaut, source null, comportement inchangé', async () => {
+    const { p, s } = mk();
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE] });
+    ok(r.hits.length === 1, 'hit par défaut (echelle 100)');
+    ok(p._db.runs[0].config.source === null, 'aucune provenance de scénario');
+    ok(Object.keys(p._db.runs[0].config.moteur).length === 0, 'moteur vide → défauts R268');
+  });
+  await it('R269 scénario en vigueur (echelle 50) → l\'appariement exact tombe sous le seuil : 0 hit', async () => {
+    const { p, s } = mkS([scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })]);
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN' });
+    ok(r.hits.length === 0, 'le réglage gouverné écarte le hit');
+    ok(p._db.runs[0].config.source.scenarioVersion === 1, 'provenance tracée (scénario v1)');
+    ok(p._db.runs[0].config.moteur.echelle === 50, 'config effective tracée sur le run (rejeu)');
+  });
+  await it('R269 effet daté (R29) : une V2 à effet FUTUR n\'est pas appliquée → V1 en vigueur', async () => {
+    const { p, s } = mkS([
+      scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 }),
+      scn(2, '2999-01-01T00:00:00.000Z', { echelle: 100 }),    // ratifiée mais pas encore en vigueur
+    ]);
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN' });
+    ok(r.hits.length === 0, 'la V2 future ne s\'applique pas (grandfathering)');
+    ok(p._db.runs[0].config.source.scenarioVersion === 1, 'c\'est la V1 qui gouverne');
+  });
+  await it('R269 override d\'appel prime sur le scénario, et reste tracé', async () => {
+    const { p, s } = mkS([scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })]);
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN', moteurConfig: { echelle: 100 } });
+    ok(r.hits.length === 1, 'l\'override rétablit l\'échelle 100 → hit');
+    ok(p._db.runs[0].config.moteur.echelle === 100, 'la config effective (override) est tracée');
+    ok(p._db.runs[0].config.source.scenarioVersion === 1, 'le scénario de base reste tracé');
+  });
+
+  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R269) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();
