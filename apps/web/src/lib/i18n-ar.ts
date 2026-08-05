@@ -59,5 +59,58 @@ const EXT_AR: Record<string, string> = {
   "SSO / Fédération": "SSO / الاتحاد",
 };
 
+// Contenus d'ÉCRANS (48 chaînes — `ECRANS` côté i18n.ts : login, BI, OpRisk, Mobile Banking).
+// Passe MACHINE MSA (SPEC-I18N §2). Réf. règles/produits conservées (R318, R276, GED, CoC, RM).
+const ECRANS_AR: Record<string, string> = {
+ "Session expirée — reconnectez-vous (votre brouillon en cours est conservé).": "انتهت الجلسة — أعد الاتصال (تُحفَظ مسودتك الحالية).",
+ "e-mail": "البريد الإلكتروني",
+ "mot de passe": "كلمة المرور",
+ "Se reconnecter": "إعادة الاتصال",
+ "Connexion impossible — vérifiez le réseau.": "تعذّر الاتصال — تحقّق من الشبكة.",
+ "BI — Reporting sur mesure (projections déclarées seulement — zéro SQL libre)": "ذكاء الأعمال — تقارير مخصّصة (إسقاطات معلنة فقط — لا SQL حر)",
+ "Charger l'annuaire": "تحميل الدليل",
+ "Interroger": "استعلام",
+ "ligne(s) source (scopées BACKEND) · sensibilité": "سطر/أسطر المصدر (بنطاق الخادم) · الحساسية",
+ "Chargement de l'écran…": "جارٍ تحميل الشاشة…",
+ "Octopulse OpRisk — incidents opérationnels (dossiers tracés, taxonomie Bâle du tenant)": "Octopulse OpRisk — الحوادث التشغيلية (ملفات متتبَّعة، تصنيف بازل الخاص بالمستأجر)",
+ "Charger": "تحميل",
+ "titre de l'incident": "عنوان الحادث",
+ "catégorie Bâle": "فئة بازل",
+ "Déclarer": "الإبلاغ",
+ "Heatmap (CALCULÉE serveur — fréquence × sévérité, rejouable à date ; aucune cellule ne se saisit)": "خريطة حرارية (محسوبة على الخادم — التكرار × الخطورة، قابلة لإعادة التشغيل بتاريخ ؛ لا تُدخَل أي خلية)",
+ "catégorie": "الفئة",
+ "fréquence": "التكرار",
+ "sévérité max": "أقصى خطورة",
+ "score": "النتيجة",
+ "Incidents": "الحوادث",
+ "sévérité": "الخطورة",
+ "Analyser": "تحليل",
+ "Clore (motivé)": "إغلاق (مع تعليل)",
+ "Plan d'action (le retard est un fait calculé — notifié, jamais bloquant)": "خطة العمل (التأخّر واقعة محسوبة — يُخطَر بها، دون أن تحجب أبدًا)",
+ "EN RETARD": "متأخّر",
+ "document": "مستند",
+ "compte": "حساب",
+ "Mobile Banking — face banque (population cliente DISTINCTE, jamais un rôle interne)": "الخدمات المصرفية عبر الهاتف — جانب البنك (فئة عملاء منفصلة، وليست دورًا داخليًا أبدًا)",
+ "v1 = lecture + messagerie côté client. Le client ne voit QUE le partagé (rien par défaut) ; aucune donnée compliance ne sort — contrôle SERVEUR, l'app est un rendu.": "الإصدار 1 = قراءة + مراسلة على جانب العميل. لا يرى العميل إلا ما تمّت مشاركته (لا شيء افتراضيًا) ؛ لا تخرج أي بيانات امتثال — التحكّم على الخادم، والتطبيق مجرّد عرض.",
+ "Activer le canal (RM)": "تفعيل القناة (RM)",
+ "Messagerie": "المراسلة",
+ "Identité": "الهوية",
+ "code hors bande": "رمز خارج القناة",
+ "remis UNE fois, à transmettre HORS canal (l'événement ne le porte jamais).": "يُسلَّم مرّة واحدة، ويُنقَل خارج القناة (لا يحمله الحدث أبدًا).",
+ "documentId (GED)": "معرّف المستند (إدارة الوثائق)",
+ "référence du compte": "مرجع الحساب",
+ "Marqué « partagé client » — acte tracé.": "معلَّم «مُشارَك مع العميل» — إجراء متتبَّع.",
+ "Marquer partagé": "وضع علامة مُشارَك",
+ "rien n'est partagé par défaut (R318)": "لا شيء يُشارَك افتراضيًا (R318)",
+ "Fil du client": "سلسلة العميل",
+ "Aucun message.": "لا رسائل.",
+ "CoC ouvert": "CoC مفتوح",
+ "la demande suit la voie R276, jamais un second circuit.": "يتّبع الطلب مسار R276، وليس دائرة ثانية أبدًا.",
+ "Ouvrir un CoC": "فتح CoC",
+ "répondre au client": "الرد على العميل",
+ "Réponse envoyée.": "تمّ إرسال الرد.",
+ "Envoyer": "إرسال"
+};
+
 // Dictionnaire AR complet (clés FR → AR) fusionné dans DICT.AR au chargement.
-export const AR_PACK: Record<string, string> = { ...NAV_AR, ...EXT_AR, ...AMLGAP_FAMILLES_AR, ...AMLGAP_UI_AR };
+export const AR_PACK: Record<string, string> = { ...NAV_AR, ...EXT_AR, ...ECRANS_AR, ...AMLGAP_FAMILLES_AR, ...AMLGAP_UI_AR };

@@ -460,3 +460,18 @@ paresseux). Reste sans AR : écrans (`ECRANS`) + contenu des règles → repli F
 - **Gardes** : FE-I18N (sous-nav AR servie : `Profilage CPSI`→تنميط CPSI ; `ECRANS` toujours repli
   FR — `Se reconnecter`). vitest **104/104**, **core 219,4/220** + **pack langue 2,9 kB gz** (à la
   demande), cliquet EN/DE/IT **0 écart**, `vite build` OK, eslint OK.
+
+### 5.8 — AR des CONTENUS D'ÉCRANS (`ECRANS`) dans le pack paresseux (machine, 2026-08-05)
+
+Extension du pack (§5.7) : les **48 chaînes de contenus d'écrans** (`ECRANS` — login, BI, Octopulse
+OpRisk, Mobile Banking, CoC) passent en arabe. Le CHROME complet (nav base + sous-nav éditeur + UI
+AML gap + écrans du dictionnaire) est désormais couvert en AR. Passe **MACHINE (MSA)** ; références
+règles/produits conservées (R318, R276, GED, CoC, RM). **Coût bundle core = 0** (chunk paresseux).
+
+- **Clés byte-exactes** : `ECRANS_AR` est apparié aux clés FR par EXTRACTION (guillemets « », espaces
+  insécables, `×`, `…` conservés à l'octet) → aucune traduction silencieusement orpheline.
+- **Reste sans AR** : le CONTENU des RÈGLES (nom/desc, servi par l'API — à ajouter au pack) et toute
+  chaîne hors dictionnaire → repli FR PROPRE (testé par une clé synthétique hors-dictionnaire).
+- **Gardes** : FE-I18N (`Se reconnecter`→إعادة الاتصال ; repli FR d'une clé hors-dico). vitest
+  **104/104**, **core 219,3/220** + **pack langue 4,5 kB gz** (à la demande), cliquet EN/DE/IT
+  **0 écart**, `vite build` OK, eslint OK.

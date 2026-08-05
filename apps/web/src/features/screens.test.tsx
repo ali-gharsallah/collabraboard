@@ -1329,8 +1329,9 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(i18n.traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
     expect(i18n.traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
     expect(i18n.traduire("AR", { dev: false })("Profilage CPSI")).toBe("تنميط CPSI");               // sous-nav ÉDITEUR (EXT)
-    // Hors périmètre de cette passe (contenus d'écrans ECRANS, contenu des règles) → repli FR (jamais un trou).
-    expect(i18n.traduire("AR", { dev: false })("Se reconnecter")).toBe("Se reconnecter");
+    expect(i18n.traduire("AR", { dev: false })("Se reconnecter")).toBe("إعادة الاتصال");            // contenu d'écran (ECRANS)
+    // Toute clé HORS dictionnaire (ex. contenu de règle, chaîne non couverte) → repli FR PROPRE (jamais un trou).
+    expect(i18n.traduire("AR", { dev: false })("Chaîne hors dictionnaire AR (repli)")).toBe("Chaîne hors dictionnaire AR (repli)");
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
