@@ -17,6 +17,9 @@
     "screening:portefeuille": "node services/screening/bench-portefeuille.mjs",
     "screening:gate": "node services/screening/gate.test.mjs"
   },
+  "dependencies": {
+    "@olive/screening-engine": "workspace:*"
+  },
   "devDependencies": {
     "eslint": "^9.9.0",
     "@eslint/js": "^9.9.0",

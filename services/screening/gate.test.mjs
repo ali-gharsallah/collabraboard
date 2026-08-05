@@ -19,8 +19,8 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { rapprocher, construireIdf } from "./baseline-engine.mjs";
-import { construireIndex, candidats } from "./blocking.mjs";
+import { rapprocher, construireIdf } from "@olive/screening-engine";
+import { construireIndex, candidats } from "@olive/screening-engine";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const lire = (f) => JSON.parse(readFileSync(join(DIR, f), "utf8"));

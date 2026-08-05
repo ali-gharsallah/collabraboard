@@ -1,12 +1,18 @@
 /**
- * Moteur de rapprochement — LIGNE DE BASE, volontairement simple.
- * Son rôle n'est pas d'être bon : c'est de donner un point de comparaison chiffré.
- * Tout moteur ultérieur (pg_trgm, phonétique, commercial) se juge contre ces chiffres.
+ * Moteur de rapprochement — LIGNE DE BASE (extrait de services/screening/baseline-engine.mjs, R263).
+ * ALGORITHMES INCHANGÉS : Jaro-Winkler + pondération IDF + discriminants type/DOB. Format CommonJS
+ * pour être importable par apps/api (Nest/CJS) ET par les bancs ESM (import de nommés CJS).
+ *
+ * `scorer(requete, entree)` renvoie exactement le même nombre qu'avant. `scorerDetail(...)` expose
+ * LA MÊME décomposition (nom/alias, contribution DOB, pénalité type) sans recalcul divergent — c'est
+ * la matière de l'explicabilité (R266), pas un nouvel algorithme.
  */
-const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;
+"use strict";
+
+const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;   // NB : déclarée, non appliquée (parité avec l'origine)
 const SUFFIXES = /\b(sa|ag|ltd|llc|gmbh|inc|plc|sarl|holding|holdings)\b/g;
 
-export function normaliser(s) {
+function normaliser(s) {
   return String(s || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // diacritiques
     .toLowerCase()
@@ -15,10 +21,10 @@ export function normaliser(s) {
     .replace(/\s+/g, " ").trim();
 }
 /** Tri des jetons : « Volkov Dmitri » et « Dmitri Volkov » deviennent identiques. */
-export function jetonsTries(s) { return normaliser(s).split(" ").filter(Boolean).sort().join(" "); }
+function jetonsTries(s) { return normaliser(s).split(" ").filter(Boolean).sort().join(" "); }
 
 /** Jaro-Winkler — classique du rapprochement de noms. */
-export function jaroWinkler(a, b) {
+function jaroWinkler(a, b) {
   if (a === b) return 1;
   if (!a.length || !b.length) return 0;
   const d = Math.floor(Math.max(a.length, b.length) / 2) - 1;
@@ -45,14 +51,8 @@ export function jaroWinkler(a, b) {
   return jaro + p * 0.1 * (1 - jaro);
 }
 
-/**
- * Pondération IDF : un jeton présent partout ne discrimine rien.
- * « Invest », « Trading », « Partners » apparaissent dans des centaines d'entrées : les compter comme
- * un nom de famille produit « Keller Invest » → « Petrov Invest » à 88. C'est le défaut le plus
- * classique du rapprochement de noms — et le banc l'a rendu visible en une ligne.
- */
 let _idf = null;
-export function construireIdf(entries) {
+function construireIdf(entries) {
   const df = new Map(); const n = entries.length;
   for (const e of entries) {
     const vus = new Set();
@@ -80,7 +80,6 @@ function simPonderee(qTok, cTok) {
     const w = poids(q);
     num += best * w; den += w;
   }
-  // symétrie : un jeton du candidat non couvert par la requête pénalise aussi
   let num2 = 0, den2 = 0;
   for (const c of cTok) {
     let best = 0;
@@ -91,39 +90,51 @@ function simPonderee(qTok, cTok) {
   return ((num / (den || 1)) + (num2 / (den2 || 1))) / 2;
 }
 
-/** Score 0-100 d'une requête contre une entrée (nom principal + alias). */
-export function scorer(requete, entree) {
+const aliasNom = (a) => (typeof a === "string" ? a : a.nom);
+
+/**
+ * DÉCOMPOSITION du score 0-100 (R266) — reproduit EXACTEMENT la logique de l'origine, en exposant
+ * les intermédiaires : meilleur nom/alias apparié, pénalité de type, contribution DOB.
+ */
+function scorerDetail(requete, entree) {
   const qTok = normaliser(requete.nom).split(" ").filter(Boolean);
-  const candidats = [entree.nom_complet, ...(entree.alias || []).map((a) => (typeof a === "string" ? a : a.nom))];
-  let best = 0;
+  const candidats = [entree.nom_complet, ...(entree.alias || []).map(aliasNom)];
+  let best = 0, via = entree.nom_complet;
   for (const c of candidats) {
     const cTok = normaliser(c).split(" ").filter(Boolean);
-    best = Math.max(best, simPonderee(qTok, cTok));
+    const s = simPonderee(qTok, cTok);
+    if (s > best) { best = s; via = c; }
   }
-  let score = best * 100;
+  const nameScore = best * 100;
+  let score = nameScore;
 
   // Discriminant de TYPE — dans les DEUX sens.
-  // Une requête avec date de naissance vise une personne ; une requête sans date, pour un client
-  // qui est une société, ne doit pas se rapprocher d'une personne physique.
-  if (requete.dob && entree.type === "entite") score -= 40;
-  if (requete.est_entite && entree.type === "individu") score -= 40;
+  let typePenalty = 0;
+  if (requete.dob && entree.type === "entite") typePenalty -= 40;
+  if (requete.est_entite && entree.type === "individu") typePenalty -= 40;
+  score += typePenalty;
 
   // Discriminant date de naissance : c'est lui qui écarte les homonymes.
+  let dobContribution = 0;
   if (requete.dob && entree.date_naissance) {
-    if (requete.dob === entree.date_naissance) score = Math.min(100, score + 6);
+    if (requete.dob === entree.date_naissance) { dobContribution = 6; score = Math.min(100, score + 6); }
     else {
       const anQ = +requete.dob.slice(0, 4), anE = +entree.date_naissance.slice(0, 4);
       const ecart = Math.abs(anQ - anE);
-      if (ecart === 0) score += 2;              // même année, jour différent : tolérance
-      else if (ecart <= 2) score -= 12;         // proche : doute
-      else score -= 45;                          // incompatible : ce n'est pas la même personne
+      if (ecart === 0) { dobContribution = 2; score += 2; }
+      else if (ecart <= 2) { dobContribution = -12; score -= 12; }
+      else { dobContribution = -45; score -= 45; }
     }
   }
-  return Math.max(0, Math.min(100, score));
+  score = Math.max(0, Math.min(100, score));
+  return { score, via, nameScore, typePenalty, dobContribution };
 }
 
+/** Score 0-100 d'une requête contre une entrée — IDENTIQUE à l'origine (délègue à scorerDetail). */
+function scorer(requete, entree) { return scorerDetail(requete, entree).score; }
+
 /** Meilleur candidat au-dessus du seuil, ou null. */
-export function rapprocher(requete, entries, seuil) {
+function rapprocher(requete, entries, seuil) {
   let best = null, bestScore = 0;
   for (const e of entries) {
     const s = scorer(requete, e);
@@ -131,3 +142,19 @@ export function rapprocher(requete, entries, seuil) {
   }
   return bestScore >= seuil ? { uid: best.uid, score: Math.round(bestScore), entree: best } : null;
 }
+
+/** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R266). */
+function rapprocherDetail(requete, entries, seuil) {
+  let best = null, bestDetail = null;
+  for (const e of entries) {
+    const d = scorerDetail(requete, e);
+    if (!bestDetail || d.score > bestDetail.score) { bestDetail = d; best = e; }
+  }
+  if (!best || bestDetail.score < seuil) return null;
+  return { uid: best.uid, score: Math.round(bestDetail.score), entree: best, detail: bestDetail };
+}
+
+module.exports = {
+  PARTICULES, SUFFIXES, normaliser, jetonsTries, jaroWinkler,
+  construireIdf, scorer, scorerDetail, rapprocher, rapprocherDetail,
+};

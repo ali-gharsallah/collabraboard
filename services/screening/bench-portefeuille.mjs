@@ -8,7 +8,7 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { rapprocher, construireIdf } from "./baseline-engine.mjs";
+import { rapprocher, construireIdf } from "@olive/screening-engine";
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const san = JSON.parse(readFileSync(join(DIR, "sanctions-synth.json"), "utf8"));
 const pep = JSON.parse(readFileSync(join(DIR, "pep-synth.json"), "utf8"));

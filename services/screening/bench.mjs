@@ -10,7 +10,7 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { rapprocher, construireIdf } from "./baseline-engine.mjs";
+import { rapprocher, construireIdf } from "@olive/screening-engine";
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const liste = JSON.parse(readFileSync(join(DIR, "sanctions-synth.json"), "utf8"));
 const golden = JSON.parse(readFileSync(join(DIR, "golden-set.json"), "utf8"));
