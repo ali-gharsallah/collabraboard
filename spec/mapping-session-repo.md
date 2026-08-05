@@ -223,8 +223,17 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   `{ recallBefore, recallAfter, degradation, rollbackPropose, regressions, improvements, scenariosTouches }`.
   Vérifié : e2e `fat-aml-tuning` **3/3** (seuil PEP relevé 78→95 ⇒ SF-01 régresse, rappel 100→98 %,
   rollback proposé ; seuil abaissé ⇒ rappel stable ; overrides vide ⇒ 400).
-- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (elles
-  importent `evaluateScenario`/meta.deferred, pas la porte 2G — c'est le pont HTTP/DI qui couvre le
-  bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Au-dessus du cœur d'évaluation : **dispatch
-  asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit), **BTL**
-  (below-the-line, GV-01) + statut **DQ** (GV-03) — chacun un lot dédié.
+- **Gouvernance du tuning — campagne Below-The-Line (GV-01, R374)** : `AmlEvalService.campagneBTL`
+  (`POST /v1/aml/eval/btl`) échantillonne les transactions JUSTE SOUS le seuil d'un scénario pour
+  revue Compliance. Config de campagne = paramètres GV-01 (bande `bande_btl` en % du seuil, taux
+  `taux_echantillon_btl`) ; seuil = premier paramètre numérique du scénario cible (R29). Bande
+  `[80 % du seuil, seuil)` (au-delà = déjà en alerte). Échantillon **stratifié déterministe**
+  (couverture régulière de la bande triée, aucun RNG → rejouable). R44/R39 : la campagne PROPOSE un
+  échantillon, l'humain revoit ; un TP sous seuil ⇒ proposition de baisse via `backtest-version`
+  (boucle fermée avec GV-02). Émet `tuning.btl.campagne`. Bloc 61 refusé (campagne CPSI). Vérifié :
+  e2e `fat-aml-btl` **4/4** (bande seule échantillonnée, taille `ceil(inBand×taux)`, déterminisme,
+  bande vide ⇒ échantillon vide, garde 2G).
+- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (le pont
+  HTTP/DI couvre le bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Au-dessus du cœur
+  d'évaluation : **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine
+  du rate-limit) et le statut **DQ** (data-quality pré-conditions, GV-03) — chacun un lot dédié.

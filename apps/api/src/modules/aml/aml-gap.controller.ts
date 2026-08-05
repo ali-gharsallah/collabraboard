@@ -53,4 +53,8 @@ export class AmlGapController {
   // Backtesting par version (GV-02, R375) : mesure l'impact d'une version candidate de seuils sur
   // le rappel AVANT application ; propose un rollback si dégradation (R44, décision humaine).
   @Post("eval/backtest-version") backtestVersion(@Req() r: any, @Body() b: any) { return this.worker.backtestVersion(r.ctx, b); }
+
+  // Campagne below-the-line (GV-01, R374) : échantillon stratifié des transactions sous seuil pour
+  // revue Compliance. { scenarioCode, population:[{ref,metric}] } → échantillon + tuning.btl.campagne.
+  @Post("eval/btl") btl(@Req() r: any, @Body() b: any) { return this.worker.campagneBTL(r.ctx, b); }
 }

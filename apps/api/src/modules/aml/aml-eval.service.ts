@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
@@ -77,6 +77,66 @@ export class AmlEvalService {
     }
     await this.audit.log(ctx.tenantId, ctx.userId, "AML_EVAL_CLIENT", `${dto.clientId}: ${signals.length}/${results.length}`);
     return { clientId: dto.clientId, evaluated: results.length, raised: signals.length, signals, results };
+  }
+
+  /**
+   * Campagne Below-The-Line (GV-01, R374) : échantillonne les transactions JUSTE SOUS le seuil d'un
+   * scénario pour revue Compliance — si des TP se cachent sous la ligne, le calibrage est trop haut.
+   * Config de campagne = paramètres tenant de GV-01 (bande, taux d'échantillon) ; seuil = paramètre
+   * du scénario CIBLE (R29). Échantillon STRATIFIÉ DÉTERMINISTE (couverture régulière de la bande,
+   * aucun RNG) → traçable et rejouable. R44/R39 : la campagne PROPOSE un échantillon, elle ne décide
+   * rien ; un TP sous seuil alimente une proposition de baisse (backtest-version), décision humaine.
+   * Émet `tuning.btl.campagne`. Le bloc 61 (2G) relève d'une campagne CPSI — refusé ici.
+   */
+  async campagneBTL(ctx: Ctx, dto: { scenarioCode: string; population?: { ref: string; metric: number }[] }) {
+    if (!dto?.scenarioCode) throw new BadRequestException("scenarioCode requis");
+    const def = AML_GAP_REFERENTIEL.find((r) => r.id === dto.scenarioCode);
+    if (!def) throw new NotFoundException(`[R340] scénario inconnu : ${dto.scenarioCode}`);
+    if (def.bloc === BLOC_ANALYTIQUE_2G)
+      throw new BadRequestException(`[décision 4] ${dto.scenarioCode} (2G) relève d'une campagne BTL côté CPSI`);
+    const population = dto.population ?? [];
+
+    // Seuil du scénario cible = premier paramètre NUMÉRIQUE en vigueur (le seuil de déclenchement).
+    const target = await this.gap.versionEnVigueur(ctx, dto.scenarioCode);
+    const seuilKey = def.params.map((p) => p.key).find((k) => typeof (target.params as any)[k] === "number");
+    if (!seuilKey) throw new BadRequestException(`${dto.scenarioCode} n'a pas de seuil numérique — BTL non applicable`);
+    const seuil = Number((target.params as any)[seuilKey]);
+
+    // Config de campagne = paramètres GV-01 (bande % du seuil, taux d'échantillonnage).
+    const gv = await this.gap.versionEnVigueur(ctx, "GV-01");
+    const [lowPct, highPct] = String((gv.params as any).bande_btl ?? "80-100").split("-").map((s) => Number(s));
+    const taux = Number((gv.params as any).taux_echantillon_btl ?? 2);
+    const low = (lowPct / 100) * seuil, high = (highPct / 100) * seuil;         // [80% du seuil, seuil)
+
+    const inBand = population
+      .filter((x) => Number(x.metric) >= low && Number(x.metric) < high)         // sous la ligne, pas déjà en alerte
+      .sort((a, b) => a.metric - b.metric);
+    const sampleSize = inBand.length ? Math.max(1, Math.ceil((inBand.length * taux) / 100)) : 0;
+    const sample = this.stratifie(inBand, sampleSize);                           // couverture régulière de la bande
+
+    await this.prisma.$transaction(async (tx: Tx) => {
+      await emitEvent(tx, ctx.tenantId, "tuning.btl.campagne", dto.scenarioCode, {
+        scenarioCode: dto.scenarioCode, seuilKey, seuil, bande: [low, high], bandePct: [lowPct, highPct],
+        taux, populationInBand: inBand.length, sampleSize, par: ctx.userId,
+      });
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_BTL_CAMPAGNE",
+      `${dto.scenarioCode}: ${sampleSize}/${inBand.length} sous seuil ${seuil}`);
+    return {
+      scenarioCode: dto.scenarioCode, seuilKey, seuil, bandePct: [lowPct, highPct], bande: { low, high }, taux,
+      populationTotal: population.length, populationInBand: inBand.length, sampleSize, sample,
+      next: "revue Compliance — un TP sous seuil ⇒ proposer une baisse via backtest-version (décision humaine)",
+    };
+  }
+
+  /** Échantillon stratifié déterministe : k éléments régulièrement espacés sur la bande triée. */
+  private stratifie<T>(sorted: T[], k: number): T[] {
+    if (k <= 0 || sorted.length === 0) return [];
+    if (k >= sorted.length) return [...sorted];
+    if (k === 1) return [sorted[Math.floor((sorted.length - 1) / 2)]];          // médiane = plus représentatif
+    const picked = new Set<number>();
+    for (let i = 0; i < k; i++) picked.add(Math.round((i * (sorted.length - 1)) / (k - 1)));
+    return [...picked].sort((a, b) => a - b).map((i) => sorted[i]);
   }
 
   /**
