@@ -10,6 +10,7 @@ import { AML_GAP_REFERENTIEL } from "./aml-gap.referentiel.gen";
 import { evaluateScenario } from "../../../../../src/aml/engine";
 import { DETECTORS } from "../../../../../src/aml/detectors";
 import { OBSERVATIONS_2G } from "./aml-2g-fixtures";
+import { AmlEvalQueue, defaultQueue, makeJob } from "./aml-eval.queue";
 
 /**
  * AmlEvalService — le worker `aml-eval` (backtest / recall). Il ÉVALUE le corpus GT semé en base à
@@ -35,7 +36,41 @@ const ROLES_GOUV = new Set(["CO", "CO_SR", "MLRO", "ADMIN"]);
 
 @Injectable()
 export class AmlEvalService {
+  // File de dispatch (singleton du provider) : mémoire par défaut, Redis si REDIS_URL (doctrine rate-limit).
+  private queue: AmlEvalQueue = defaultQueue();
   constructor(private prisma: PrismaService, private audit: AuditService, private gap: AmlGapService) {}
+
+  /**
+   * Dispatch ASYNCHRONE (R39 : mesurer, ne pas bloquer le flux appelant) : met une évaluation client
+   * EN FILE (par tenant) sans rien calculer. Le `drain` (tick du worker) la traite plus tard →
+   * signaux persistés. In-process (mémoire) ou distribué (Redis) selon `REDIS_URL`, sans changer le
+   * contrat. Le job porte l'auteur (jeton) pour l'attribution à la reprise.
+   */
+  async enqueueClient(ctx: Ctx, dto: { clientId: string; facts?: Record<string, unknown>; scenarios?: string[]; date?: string }) {
+    if (!dto?.clientId) throw new BadRequestException("clientId requis");
+    const job = makeJob("client", ctx.userId, ctx.role, dto);
+    await this.queue.enqueue(ctx.tenantId, job);
+    return { jobId: job.id, status: "queued", backend: this.queue.backend, pending: await this.queue.size(ctx.tenantId) };
+  }
+
+  /**
+   * Tick du worker : draine la file DU TENANT appelant (jamais celle d'un autre — scope R44) et
+   * traite chaque job via le cœur d'évaluation. Borné par `max` (pas de boucle infinie). L'auteur
+   * du signal reste celui qui a mis en file (job.userId), pas le drainer.
+   */
+  async drain(ctx: Ctx, max = 100) {
+    const results: { jobId: string; clientId: string; raised: number }[] = [];
+    for (let i = 0; i < max; i++) {
+      const job = await this.queue.dequeue(ctx.tenantId);
+      if (!job) break;
+      if (job.kind !== "client") continue;
+      const jobCtx: Ctx = { tenantId: ctx.tenantId, userId: job.userId, role: job.role };
+      const res = await this.evaluerClient(jobCtx, job.payload as any);
+      results.push({ jobId: job.id, clientId: res.clientId, raised: res.raised });
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_EVAL_DRAIN", `${results.length} job(s) traité(s)`);
+    return { processed: results.length, restant: await this.queue.size(ctx.tenantId), backend: this.queue.backend, results };
+  }
 
   /**
    * Détection LIVE : évalue les FAITS RÉELS d'un client contre les scénarios de détection des blocs

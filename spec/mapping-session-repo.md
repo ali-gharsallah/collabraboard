@@ -260,7 +260,19 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   la vérité append-only étant le journal `domain_events` (aml.signal.raised/qualified). Isolation RLS
   d'`aml_gap_signals` inchangée ; recette `rls-runtime` verte.
 
-- **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (le pont
-  HTTP/DI couvre le bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Lots dédiés restants :
-  **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit)
-  et **GV-04** (revue annuelle de calibrage : matrice de couverture typologique × scénarios).
+- **Dispatch asynchrone** (`aml-eval.queue.ts`) : file de travail **PAR TENANT** — `MemoryQueue`
+  par défaut (mono-instance), `RedisQueue` dès que `REDIS_URL` est posé (ioredis chargé
+  dynamiquement, sous-ensemble `RedisQueueMinimal` — MÊME doctrine que le rate-limit login-rate).
+  `enqueueClient` met en file sans rien calculer (R39 : ne bloque pas le flux) ; `drain` (tick du
+  worker) traite la file DU TENANT (jamais celle d'un autre) → signaux persistés, borné par `max`.
+  L'auteur du signal reste le jeton qui a mis en file. `POST /v1/aml/eval/client-async` +
+  `POST /v1/aml/eval/drain`. Vérifié : e2e `fat-aml-async` **4/4** (enqueue ne calcule rien puis
+  drain → 3 signaux ; drain à vide ; isolation tenant ; borne `max`). Le chemin Redis est présent
+  mais non exercé ici (ioredis absent du store, comme pour le rate-limit — seul le chemin mémoire est
+  testé en CI).
+
+Couche détection AML gap **complète** sur infra réelle : seed → détection (live + backtest, blocs
+50–60 en Nest + bloc 61 via CPSI) → qualification → mesure de rappel → tuning (BTL / backtest par
+version / DQ) → revue de calibrage → dispatch async. Il ne reste que les **suites Gherkin Nest du
+bloc 61**, volontairement rouges (le pont HTTP/DI les couvre, prouvé par `fat-aml-gap-2g` + le
+backtest).

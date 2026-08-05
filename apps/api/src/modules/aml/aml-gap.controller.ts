@@ -65,4 +65,11 @@ export class AmlGapController {
   // Revue annuelle de calibrage (GV-04, R377) : matrice de couverture × performance × écarts.
   // Rôles compliance (four-eyes) ; le visa + l'archivage GED restent des actes humains.
   @Post("eval/calibrage-annuel") calibrage(@Req() r: any) { return this.worker.revueCalibrageAnnuelle(r.ctx); }
+
+  // Dispatch asynchrone : met une évaluation client EN FILE (mémoire, ou Redis si REDIS_URL) ; le
+  // drain la traite. Le flux appelant n'est pas bloqué (R39).
+  @Post("eval/client-async") evalClientAsync(@Req() r: any, @Body() b: any) { return this.worker.enqueueClient(r.ctx, b); }
+
+  // Tick du worker : draine la file du tenant → signaux persistés.
+  @Post("eval/drain") drain(@Req() r: any, @Body() b: any) { return this.worker.drain(r.ctx, b?.max); }
 }
