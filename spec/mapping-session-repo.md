@@ -405,3 +405,21 @@ chaque clé absente (« jamais un trou »).
 
 *Reste (relecture pro AR avant BAT)* : validation du chrome AR par un locuteur ; AR de la nav générale
 (EXT/ECRANS) + du contenu des règles ; colonne AR au glossaire ; audit RTL par écran.
+
+### 5.5 — PASSE ARABE de la NAV PRINCIPALE (machine, SPEC-I18N §2, 2026-08-05 — « skip review »)
+
+Suite du §5.4 : la **navigation principale** (barre latérale) devient arabe. Sélectionner AR
+transforme désormais le chrome de tête de l'app (au-delà des seules familles AML gap). Toujours une
+passe **MACHINE (MSA)** en attente de relecture pro — provenance en clair dans `lib/i18n.ts`.
+
+- **`lib/i18n.ts`** : `DICT.AR` (jusqu'ici `{}` → repli FR) reçoit les **53 libellés de nav de base**
+  (Accueil→الرئيسية, Clients & Relations→العملاء والعلاقات, Compliance & Risque→الامتثال والمخاطر, …).
+  Noms de produits/acronymes internationaux conservés (Octopulse, PMS, Olivia, KYC, API). Édition d'un
+  fichier **source** (hand-authored, pas un artefact généré) — cohérent avec la doctrine « clé FR ».
+- **Périmètre** : base nav uniquement. La sous-nav ÉDITEUR (`EXT`) et les contenus d'écrans (`ECRANS`)
+  restent sans AR → **repli FR PROPRE** (« jamais un trou »), prochaine passe.
+- **Garde** : FE-I18N mis à jour (nav AR servie : `Accueil`/`Compliance & Risque` ; EXT/ECRANS toujours
+  repli FR — assertions ciblées `Profilage CPSI`/`Se reconnecter`). vitest **104/104**, cliquet
+  EN/DE/IT **0 écart** (l'AR n'est pas dans le cliquet ratifié — c'est une passe machine, pas la garde
+  EN/DE/IT). **Budget 220,6/224 kB gz** (sous le plafond relevé au §5.4 ; pas de nouvelle relève).
+  `vite build` OK, eslint `i18n.ts` OK.

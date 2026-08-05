@@ -1316,12 +1316,14 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(LANGUES).toContain("AR");
     expect(estRTL("AR")).toBe(true);
     expect(estRTL("FR")).toBe(false);
-    // CHROME AML gap (familles + UI) : passe de traduction MACHINE AR (SPEC-I18N §2) — désormais servie.
-    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");
-    expect(traduire("AR", { dev: false })("Seuil")).toBe("العتبة");
-    // Hors périmètre AR (nav générale, contenu des règles) : aucun contenu AR → repli FR PROPRE (jamais un trou).
-    expect(traduire("AR", { dev: false })("Accueil")).toBe("Accueil");
-    expect(traduire("AR", { dev: false })("Reporting réglementaire")).toBe("Reporting réglementaire");
+    // CHROME AML gap (familles + UI) + NAV principale : passe de traduction MACHINE AR (SPEC-I18N §2) — servie.
+    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
+    expect(traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
+    expect(traduire("AR", { dev: false })("Accueil")).toBe("الرئيسية");                         // NAV principale
+    expect(traduire("AR", { dev: false })("Compliance & Risque")).toBe("الامتثال والمخاطر");    // NAV principale
+    // Hors périmètre de cette passe (sous-nav ÉDITEUR/écrans, contenu des règles) → repli FR PROPRE (jamais un trou).
+    expect(traduire("AR", { dev: false })("Profilage CPSI")).toBe("Profilage CPSI");           // EXT éditeur : pas encore AR
+    expect(traduire("AR", { dev: false })("Se reconnecter")).toBe("Se reconnecter");           // ECRANS : pas encore AR
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
