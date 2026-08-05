@@ -23,23 +23,24 @@ describe("FAT AML eval — worker backtest (backend + Postgres + moteur réels)"
   });
   afterAll(async () => { await app.close(); });
 
-  it("backtest : rappel 100 % sur les blocs 50–60, bloc 61 différé, aucune règle non mappée", async () => {
+  it("backtest : rappel 100 % sur TOUT le corpus — blocs 50–60 (Nest) ET bloc 61 (2G via CPSI)", async () => {
     const r = await request(http).post("/v1/aml/eval/backtest").set(bearer(T, U, "CO"));
     expect(r.status).toBe(201);
     const b = r.body;
     expect(b.corpus).toBe(130);
-    expect(b.evaluated + b.deferred2G).toBe(130);   // tout cas est évalué OU différé (2G)
-    expect(b.deferred2G).toBeGreaterThan(0);          // bloc 61 (AN-*) présent et différé
+    expect(b.evaluated).toBe(130);                    // tout cas est évalué (aucun différé)
+    expect(b.deferred2G).toBe(0);                     // bloc 61 couvert par les fixtures d'observation 2G
+    expect(b.via2G).toBeGreaterThan(0);               // des cas ont été mesurés via le pont CPSI
     expect(b.unmapped).toBe(0);                       // tout scénario 50–60 a un détecteur
     expect(b.misses).toEqual([]);                     // corpus : TP ET FP déclenchent (recall 100 %)
     expect(b.recall).toBe(1);
-    // Rappel par famille : 100 % partout où des cas ont été évalués.
-    for (const [fam, s] of Object.entries<any>(b.parFamille)) {
+    // La famille Analytique 2G (AN) apparaît désormais, rappel 100 % (mesurée via CPSI).
+    expect(b.parFamille.AN).toBeTruthy();
+    for (const [, s] of Object.entries<any>(b.parFamille)) {
       expect(s.recall).toBe(1);
       expect(s.raised).toBe(s.total);
-      expect(fam).not.toBe("AN");                     // la famille 2G n'apparaît pas (différée)
     }
-    console.log("EVAL-1 PASS — rappel", (b.recall * 100).toFixed(0) + "%", "évalués", b.evaluated, "différés 2G", b.deferred2G);
+    console.log("EVAL-1 PASS — rappel", (b.recall * 100).toFixed(0) + "%", "évalués", b.evaluated, "dont 2G via CPSI", b.via2G);
   });
 
   it("mesure, pas coercition (R39) : le backtest N'INONDE PAS l'inbox des signaux", async () => {

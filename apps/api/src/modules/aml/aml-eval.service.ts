@@ -9,6 +9,7 @@ import { AML_GAP_REFERENTIEL } from "./aml-gap.referentiel.gen";
 // worker l'exécute CÔTÉ SERVEUR sur le corpus semé — les détecteurs ne sont PAS redéfinis ici.
 import { evaluateScenario } from "../../../../../src/aml/engine";
 import { DETECTORS } from "../../../../../src/aml/detectors";
+import { OBSERVATIONS_2G } from "./aml-2g-fixtures";
 
 /**
  * AmlEvalService — le worker `aml-eval` (backtest / recall). Il ÉVALUE le corpus GT semé en base à
@@ -94,14 +95,23 @@ export class AmlEvalService {
     const misses: { caseId: string; scenarioCode: string; label: string }[] = [];
     let evaluated = 0, raised = 0, deferred = 0, unmapped = 0;
 
+    let via2G = 0;
     for (const c of cases) {
-      if (bloc(c.scenarioCode) === BLOC_ANALYTIQUE_2G) { deferred++; continue; }  // 2G → pont CPSI, observation requise
-      const detector = DETECTORS[c.scenarioCode];
-      if (!detector) { unmapped++; continue; }                                    // garde : scénario sans détecteur
-      const v = await this.gap.versionEnVigueur(ctx, c.scenarioCode);
-      const clientRef = (c.payload && (c.payload as any).clientRef) || c.caseId;
-      const facts = { clientId: String(clientRef), asOf: new Date().toISOString(), tenantId: ctx.tenantId, ...detector.trigger() };
-      const res = await evaluateScenario(c.scenarioCode, facts, v.params);
+      let res: { raised: boolean };
+      if (bloc(c.scenarioCode) === BLOC_ANALYTIQUE_2G) {
+        // Bloc 61 : observation de backtest (fixture 2G) → mesure via le pont CPSI (jamais en Nest).
+        const fixture = OBSERVATIONS_2G[c.scenarioCode];
+        if (!fixture) { deferred++; continue; }                                   // AN sans fixture → différé
+        res = await this.gap.mesurer2G(ctx, c.scenarioCode, fixture());
+        via2G++;
+      } else {
+        const detector = DETECTORS[c.scenarioCode];
+        if (!detector) { unmapped++; continue; }                                  // garde : scénario sans détecteur
+        const v = await this.gap.versionEnVigueur(ctx, c.scenarioCode);
+        const clientRef = (c.payload && (c.payload as any).clientRef) || c.caseId;
+        const facts = { clientId: String(clientRef), asOf: new Date().toISOString(), tenantId: ctx.tenantId, ...detector.trigger() };
+        res = await evaluateScenario(c.scenarioCode, facts, v.params);
+      }
       evaluated++;
       const fam = parFamille[c.fam] ?? (parFamille[c.fam] = { total: 0, raised: 0 });
       fam.total++;
@@ -114,11 +124,11 @@ export class AmlEvalService {
     );
     const report = {
       corpus: cases.length, evaluated, raised, recall,
-      deferred2G: deferred, unmapped, parFamille: parFamilleView, misses,
+      via2G, deferred2G: deferred, unmapped, parFamille: parFamilleView, misses,
     };
     await this.prisma.$transaction(async (tx: Tx) => {
       await emitEvent(tx, ctx.tenantId, "aml.eval.completed", "backtest", {
-        corpus: report.corpus, evaluated, raised, recall, deferred2G: deferred, par: ctx.userId,
+        corpus: report.corpus, evaluated, raised, recall, via2G, deferred2G: deferred, par: ctx.userId,
       });
     });
     await this.audit.log(ctx.tenantId, ctx.userId, "AML_EVAL_BACKTEST",

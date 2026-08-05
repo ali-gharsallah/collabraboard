@@ -207,8 +207,16 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   évaluations identiques créeraient deux signaux). Bloc 61 refusé ici (→ `evaluate-2g`). Vérifié :
   e2e `fat-aml-live` **6/6** (déclenchement + inbox, sous-seuil silencieux, bloquant → block.requested,
   idempotence, balayage multi-scénarios, garde 2G).
+- **Backtest complet (bloc 61 inclus)** : les **fixtures d'observation 2G** (`aml-2g-fixtures.ts`)
+  fournissent une observation déterministe et déclenchante par scénario AN — l'analogue 2G du
+  `detector.trigger()`. Le backtest route désormais les cas du bloc 61 par `AmlGapService.mesurer2G`
+  (MESURE seule, sans persistance, R39) → pont CPSI. `mesurer2G` ne passe au détecteur que les seuils
+  tenant **numériques** en vigueur ; les paramètres `list`/`tenant` (chaînes non renseignées ou
+  référentiels) retombent sur le défaut du détecteur CPSI. Résultat : `fat-aml-eval` mesure **130/130
+  cas, rappel 100 %** dont **10 via CPSI** (`via2G`), `deferred2G = 0`, la famille **AN** apparaît au
+  rapport. `evaluer2G` (détection live) partage `mesurer2G` (DRY). CPSI 20/20, AML e2e 4 suites 19/19.
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (elles
-  importent `evaluateScenario`/meta.deferred, pas la porte 2G). Au-dessus du cœur d'évaluation :
-  **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit),
-  **backtest par version** + **BTL** (below-the-line) + statut **DQ** (gouvernance GV) — chacun un
-  lot dédié ; et, pour verdir le bloc 61 en masse, des **fixtures d'observation 2G** par cas GT.
+  importent `evaluateScenario`/meta.deferred, pas la porte 2G — c'est le pont HTTP/DI qui couvre le
+  bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Au-dessus du cœur d'évaluation : **dispatch
+  asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit), **backtest
+  par version** + **BTL** (below-the-line) + statut **DQ** (gouvernance GV) — chacun un lot dédié.

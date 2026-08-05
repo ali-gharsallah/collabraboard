@@ -177,24 +177,34 @@ export class AmlGapService {
    * R44/R39 : CPSI mesure et explique, Nest orchestre, l'humain qualifie. Un scénario hors bloc 61
    * est refusé ici (il s'évalue dans le moteur Nest, src/aml/engine.ts).
    */
+  /**
+   * MESURE seule d'un scénario 2G (sans persistance) — délègue au moteur CPSI Python. Les seuils
+   * tenant NUMÉRIQUES en vigueur (R-Q) surchargent les défauts du détecteur ; les paramètres
+   * `list`/`tenant` (chaînes — non renseignés ou référentiels) NE sont PAS passés : le détecteur
+   * CPSI porte leur défaut. Réutilisé par `evaluer2G` (détection live) et le backtest (rappel).
+   */
+  async mesurer2G(ctx: Ctx, scenarioCode: string, observation: any, date: Date = new Date()) {
+    const def = defOf(scenarioCode);
+    if (!def) throw new NotFoundException(`[R340] scénario inconnu : ${scenarioCode}`);
+    if (def.bloc !== BLOC_ANALYTIQUE_2G)
+      throw new BadRequestException(
+        `[décision 4] ${scenarioCode} n'est pas un scénario Analytique 2G (bloc 61) — ` +
+        `les blocs 50–60 s'évaluent dans le moteur Nest, pas via CPSI`,
+      );
+    const v = await this.versionEnVigueur(ctx, scenarioCode, date);
+    const params = Object.fromEntries(
+      Object.entries(v.params).filter(([, val]) => typeof val === "number"),  // seuils numériques uniquement
+    );
+    return this.cpsi.evaluerAmlGap2G(ctx, scenarioCode, observation ?? {}, params, date.toISOString());
+  }
+
   async evaluer2G(
     ctx: Ctx,
     dto: { scenarioCode: string; clientId?: string | null; observation?: any; date?: string },
   ) {
     if (!dto?.scenarioCode) throw new BadRequestException("scenarioCode requis");
-    const def = defOf(dto.scenarioCode);
-    if (!def) throw new NotFoundException(`[R340] scénario inconnu : ${dto.scenarioCode}`);
-    if (def.bloc !== BLOC_ANALYTIQUE_2G)
-      throw new BadRequestException(
-        `[décision 4] ${dto.scenarioCode} n'est pas un scénario Analytique 2G (bloc 61) — ` +
-        `les blocs 50–60 s'évaluent dans le moteur Nest, pas via CPSI`,
-      );
     const date = dto.date ? new Date(dto.date) : new Date();
-    const v = await this.versionEnVigueur(ctx, dto.scenarioCode, date);
-    // Délégation CPSI : les seuils tenant (R-Q) en vigueur sont passés comme paramètres du détecteur.
-    const detection = await this.cpsi.evaluerAmlGap2G(
-      ctx, dto.scenarioCode, dto.observation ?? {}, v.params, date.toISOString(),
-    );
+    const detection = await this.mesurer2G(ctx, dto.scenarioCode, dto.observation ?? {}, date);
     let signal: any = null;
     if (detection.raised) {
       // Le signal levé emprunte le chemin commun (append-only, idempotent, événement, blocage éventuel).
