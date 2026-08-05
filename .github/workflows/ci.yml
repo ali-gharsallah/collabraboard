@@ -176,6 +176,17 @@ jobs:
           out=$(node tools/api-contract/test.mjs); echo "$out"
           echo "$out" | grep -q "### 2/2 tests surface-api verts ###"
 
+      # ── Gate matcher screening (R260-R262) — porte BLOQUANTE, filet de non-régression ──
+      # Le golden set (127 cas, graine 20260715) devient ASSERTÉ, plus print-only. Planchers figés
+      # sur la mesure réelle (ratchet) : rappel ≥ 0.90, précision ≥ 0.95, exact/alias/diacritiques
+      # = 1.0, typo ≥ 0.65 (faiblesse figée, pas améliorée ici). R261 : jauge perf (blocking actif,
+      # ×3 min vs force brute). R262 : le blocking ne perd AUCUN vrai positif. Échoue si le moteur
+      # (services/screening) régresse OU si le blocking est désactivé.
+      - name: "3s · Gate matcher screening (R260-R262, attendu 3/3)"
+        run: |
+          out=$(node services/screening/gate.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 3/3 gate matcher verts (R260-R262) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille

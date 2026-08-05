@@ -14,7 +14,8 @@
     "screening:data": "node services/screening/generate.mjs",
     "screening:bench": "node services/screening/bench.mjs",
     "screening:blocking": "node services/screening/bench-blocking.mjs",
-    "screening:portefeuille": "node services/screening/bench-portefeuille.mjs"
+    "screening:portefeuille": "node services/screening/bench-portefeuille.mjs",
+    "screening:gate": "node services/screening/gate.test.mjs"
   },
   "devDependencies": {
     "eslint": "^9.9.0",
