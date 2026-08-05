@@ -306,20 +306,39 @@ def main():
             return None
 
         fam_ts, ui_ts = _emb("AMLGAP_FAMILLES"), _emb("AMLGAP_UI")
+        # Le fichier STATIQUE ne porte QUE EN/DE/IT (l'AR part avec le pack de langue paresseux → « pull ar out »).
         attendu = {sec: {L: {fr: e[lg] for fr, e in src[sec].items() if e.get(lg)}
-                         for L, lg in (("EN", "en"), ("DE", "de"), ("IT", "it"), ("AR", "ar"))}
+                         for L, lg in (("EN", "en"), ("DE", "de"), ("IT", "it"))}
                    for sec in ("familles", "ui")}
         frais = fam_ts == attendu["familles"] and ui_ts == attendu["ui"]
-        # AR complet sur tout le chrome (aucune clé oubliée dans la passe machine).
-        ar_complet = (fam_ts is not None and ui_ts is not None
-                      and set(fam_ts["AR"]) == set(src["familles"])
-                      and set(ui_ts["AR"]) == set(src["ui"])
-                      and all(v.strip() for v in list(fam_ts["AR"].values()) + list(ui_ts["AR"].values())))
-        type_ar = "AmlGapLang = 'EN' | 'DE' | 'IT' | 'AR'" in txt
-        check("AG-22 chrome i18n front à jour (EN/DE/IT), AR (passe machine) complet sur familles+UI",
-              frais and ar_complet and type_ar,
-              "frais=%s arComplet=%s typeAR=%s (régénérez : python3 tools/aml-gap/gen_aml_gap.py)"
-              % (frais, ar_complet, type_ar))
+        type_eu = "AmlGapLang = 'EN' | 'DE' | 'IT'" in txt and "'AR'" not in txt
+        pas_ar_statique = fam_ts is not None and "AR" not in fam_ts and "AR" not in ui_ts
+
+        # Le fichier AR PARESSEUX (i18n-aml-gap.ar.gen.ts) porte l'AR complet, HORS bundle de base.
+        ar_ts = os.path.normpath(os.path.join(
+            HERE, "..", "..", "apps", "web", "src", "lib", "i18n-aml-gap.ar.gen.ts"))
+        ar_ok = False
+        if os.path.exists(ar_ts):
+            at = open(ar_ts, encoding="utf-8").read()
+
+            def _emb2(marker):
+                i = at.index("=", at.index(marker)); s = at.index("{", i); depth = 0
+                for j in range(s, len(at)):
+                    if at[j] == "{":
+                        depth += 1
+                    elif at[j] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            return json.loads(at[s:j + 1])
+                return None
+            fam_ar, ui_ar = _emb2("AMLGAP_FAMILLES_AR"), _emb2("AMLGAP_UI_AR")
+            ar_ok = (fam_ar == {fr: e["ar"] for fr, e in src["familles"].items() if e.get("ar")}
+                     and ui_ar == {fr: e["ar"] for fr, e in src["ui"].items() if e.get("ar")}
+                     and set(fam_ar) == set(src["familles"]) and set(ui_ar) == set(src["ui"]))
+        check("AG-22 chrome front : statique EN/DE/IT (sans AR) + pack AR paresseux complet (hors bundle base)",
+              frais and type_eu and pas_ar_statique and ar_ok,
+              "frais=%s typeEU=%s pasArStatique=%s arPack=%s (régénérez : python3 tools/aml-gap/gen_aml_gap.py)"
+              % (frais, type_eu, pas_ar_statique, ar_ok))
     else:
         check("AG-22 chrome i18n front présent (i18n-aml-gap.gen.ts)", False,
               "régénérez : python3 tools/aml-gap/gen_aml_gap.py")

@@ -1311,19 +1311,26 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("EN")("Seuil")).toBe("Threshold");                       // libellé UI AML gap
   });
 
-  it("AR (5e langue « Both », E-FB-4) : ratifiée + RTL ; CHROME AML gap traduit (passe machine), reste → repli FR", async () => {
-    const { LANGUES, estRTL, traduire } = await import("../lib/i18n");
-    expect(LANGUES).toContain("AR");
-    expect(estRTL("AR")).toBe(true);
-    expect(estRTL("FR")).toBe(false);
-    // CHROME AML gap (familles + UI) + NAV principale : passe de traduction MACHINE AR (SPEC-I18N §2) — servie.
-    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
-    expect(traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
-    expect(traduire("AR", { dev: false })("Accueil")).toBe("الرئيسية");                         // NAV principale
-    expect(traduire("AR", { dev: false })("Compliance & Risque")).toBe("الامتثال والمخاطر");    // NAV principale
-    // Hors périmètre de cette passe (sous-nav ÉDITEUR/écrans, contenu des règles) → repli FR PROPRE (jamais un trou).
-    expect(traduire("AR", { dev: false })("Profilage CPSI")).toBe("Profilage CPSI");           // EXT éditeur : pas encore AR
-    expect(traduire("AR", { dev: false })("Se reconnecter")).toBe("Se reconnecter");           // ECRANS : pas encore AR
+  it("AR (5e langue « Both », E-FB-4) : PACK PARESSEUX — repli FR avant chargement, servi après chargerAR()", async () => {
+    const i18n = await import("../lib/i18n");
+    expect(i18n.LANGUES).toContain("AR");
+    expect(i18n.estRTL("AR")).toBe(true);
+    expect(i18n.estRTL("FR")).toBe(false);
+    // AVANT chargement du pack (hors bundle de base, « pull ar out ») : l'AR retombe sur le FR.
+    if (!i18n.arEstCharge()) {
+      expect(i18n.traduire("AR", { dev: false })("Accueil")).toBe("Accueil");
+    }
+    // On charge le pack de langue AR (import dynamique) puis on vérifie qu'il est servi.
+    await i18n.chargerAR();
+    expect(i18n.arEstCharge()).toBe(true);
+    // NAV principale + CHROME AML gap (passe MACHINE MSA, SPEC-I18N §2) : désormais servis.
+    expect(i18n.traduire("AR", { dev: false })("Accueil")).toBe("الرئيسية");                       // NAV
+    expect(i18n.traduire("AR", { dev: false })("Compliance & Risque")).toBe("الامتثال والمخاطر");  // NAV
+    expect(i18n.traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
+    expect(i18n.traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
+    // Hors périmètre de cette passe (sous-nav ÉDITEUR/écrans, contenu règles) → repli FR (jamais un trou).
+    expect(i18n.traduire("AR", { dev: false })("Profilage CPSI")).toBe("Profilage CPSI");
+    expect(i18n.traduire("AR", { dev: false })("Se reconnecter")).toBe("Se reconnecter");
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {

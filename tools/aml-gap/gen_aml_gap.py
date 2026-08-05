@@ -850,36 +850,29 @@ def _attach_i18n(rules):
 
 
 def _emit_web_chrome_i18n():
-    """Émet le CHROME i18n front (apps/web/src/lib/i18n-aml-gap.gen.ts) depuis data/i18n-aml-gap.json :
-    familles + libellés UI, clés FR (le seul contenu BUNDLÉ — SPEC-I18N §3 : le contenu des RÈGLES,
-    lui, est servi par l'API, jamais bundlé). Périmètre EN/DE/IT + AR (passe MACHINE, SPEC-I18N §2 :
-    relecture pro AR à venir avant BAT — provenance dans l'en-tête). Repli FR pour toute clé/langue
-    manquante côté i18n.ts (jamais un trou). Une seule source : ce générateur ; garde AG-22."""
+    """Émet le CHROME i18n front (familles + libellés UI, clés FR) depuis data/i18n-aml-gap.json.
+    Le contenu des RÈGLES n'est PAS ici (servi par l'API, SPEC-I18N §3). Deux sorties :
+      • i18n-aml-gap.gen.ts     — EN/DE/IT, importé STATIQUEMENT par i18n.ts (bundle de base).
+      • i18n-aml-gap.ar.gen.ts  — AR seul (passe MACHINE, SPEC-I18N §2), importé DYNAMIQUEMENT par le
+        pack de langue i18n-ar.ts → sort du bundle de BASE (budget 220 préservé, « pull ar out »).
+    Repli FR pour toute clé/langue manquante côté i18n.ts (jamais un trou). Garde AG-22."""
     if not os.path.exists(DATA_I18N):
         return 0
     src = json.load(open(DATA_I18N, encoding="utf-8"))
-    langs = ["EN", "DE", "IT", "AR"]
 
-    def bloc(section):
-        # {LANG: {cléFR: traduction}} — n'émet une langue que si la section la porte (AR = passe machine).
-        out = {}
-        for L in langs:
-            lg = L.lower()
-            out[L] = {fr: e[lg] for fr, e in src[section].items() if e.get(lg)}
-        return out
+    def bloc(section, langs):
+        return {L: {fr: e[L.lower()] for fr, e in src[section].items() if e.get(L.lower())} for L in langs}
 
-    fam, ui = bloc("familles"), bloc("ui")
+    # ── 1. EN/DE/IT : statique (bundle de base) ──
+    fam, ui = bloc("familles", ["EN", "DE", "IT"]), bloc("ui", ["EN", "DE", "IT"])
     header = (
         "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py depuis data/i18n-aml-gap.json — NE PAS ÉDITER À LA MAIN.\n"
-        "// PÉRIMÈTRE FRONT = CHROME uniquement (familles + libellés UI). Le CONTENU des règles (nom/desc\n"
-        "// des 64 scénarios) N'EST PAS bundlé (SPEC-I18N §3 : « le front ne traduit pas le contenu métier,\n"
-        "// il l'affiche ») — il est servi par l'API (AmlScenario.i18n versionné, R29).\n"
-        "//\n"
-        "// LANGUES : FR (= clé, repli) + EN/DE/IT (terminologie PO, glossaire GLOSSAIRE-AML-4L.md\n"
-        "// CONTRAIGNANT) + AR (5e langue « Both », E-FB-4). L'AR du chrome est une PASSE MACHINE (MSA,\n"
-        "// SPEC-I18N §2) en attente de relecture pro avant BAT — fusion autorisée PO (skip review).\n"
-        "// Toute clé/langue absente retombe proprement sur le FR (i18n.ts, « jamais un trou »).\n\n"
-        "export type AmlGapLang = 'EN' | 'DE' | 'IT' | 'AR';\n"
+        "// CHROME AML gap (familles + libellés UI, clés FR). Le CONTENU des règles n'est PAS bundlé\n"
+        "// (servi par l'API, SPEC-I18N §3). LANGUES ICI : EN/DE/IT (terminologie PO, glossaire\n"
+        "// GLOSSAIRE-AML-4L.md CONTRAIGNANT) — importées STATIQUEMENT. L'ARABE vit dans le pack de\n"
+        "// langue à chargement PARESSEUX (i18n-aml-gap.ar.gen.ts + i18n-ar.ts) → hors bundle de base\n"
+        "// (budget). Toute clé/langue absente retombe sur le FR (i18n.ts, « jamais un trou »).\n\n"
+        "export type AmlGapLang = 'EN' | 'DE' | 'IT';\n"
     )
     ts = (
         header
@@ -890,7 +883,23 @@ def _emit_web_chrome_i18n():
     )
     with open(os.path.join(WEB_LIB_DIR, "i18n-aml-gap.gen.ts"), "w", encoding="utf-8") as f:
         f.write(ts)
-    return sum(len(fam[L]) + len(ui[L]) for L in langs)
+
+    # ── 2. AR : chargé PARESSEUSEMENT (pack de langue), passe MACHINE MSA (SPEC-I18N §2) ──
+    fam_ar = {fr: e["ar"] for fr, e in src["familles"].items() if e.get("ar")}
+    ui_ar = {fr: e["ar"] for fr, e in src["ui"].items() if e.get("ar")}
+    header_ar = (
+        "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py depuis data/i18n-aml-gap.json — NE PAS ÉDITER À LA MAIN.\n"
+        "// CHROME AML gap en ARABE (familles + UI, clés FR → AR). PASSE MACHINE (MSA, SPEC-I18N §2) en\n"
+        "// attente de relecture pro avant BAT — fusion autorisée PO (skip review). Importé UNIQUEMENT\n"
+        "// par le pack de langue à chargement paresseux i18n-ar.ts → HORS bundle de base (budget 220).\n\n"
+        "export const AMLGAP_FAMILLES_AR: Record<string, string> = "
+        + json.dumps(fam_ar, ensure_ascii=False, indent=1) + ";\n\n"
+        "export const AMLGAP_UI_AR: Record<string, string> = "
+        + json.dumps(ui_ar, ensure_ascii=False, indent=1) + ";\n"
+    )
+    with open(os.path.join(WEB_LIB_DIR, "i18n-aml-gap.ar.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(header_ar)
+    return sum(len(fam[L]) + len(ui[L]) for L in ("EN", "DE", "IT")) + len(fam_ar) + len(ui_ar)
 
 
 def main():

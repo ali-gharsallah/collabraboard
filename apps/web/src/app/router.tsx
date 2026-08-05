@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { traduire, langue, setLangue, LANGUES, Langue, estRTL } from "../lib/i18n";
+import { traduire, langue, setLangue, LANGUES, Langue, estRTL, chargerAR } from "../lib/i18n";
 import { apiBase } from "../lib/api";
 import { OliveLogo } from "../components/OliveLogo";
 
@@ -101,6 +101,12 @@ export function Router() {
       document.documentElement.lang = lang.toLowerCase();
     } catch { /* pas de document (SSR/test sans DOM) — sans effet */ }
   }, [lang]);
+  // AR persistée au démarrage (pack de langue paresseux, « pull ar out ») : on le charge puis on
+  // re-rend. Avant chargement, l'AR retombe sur le FR (jamais un trou) ; après, le shell s'affiche en AR.
+  const [, forcer] = useState(0);
+  useEffect(() => {
+    if (lang === "AR") chargerAR().then(() => forcer((n) => n + 1));
+  }, [lang]);
   useEffect(() => {
     const h = () => setSessionExpiree(true);
     window.addEventListener("olive:session-expiree", h);
@@ -187,7 +193,7 @@ export function Router() {
       background: "#FFFFFF", borderRight: "1px solid #E7EBDD", padding: "16px 10px" }}>
       <div style={{ padding: "2px 8px 12px" }}><OliveLogo/></div>
       <div style={{ display: "flex", gap: 3, padding: "0 6px 10px" }}>
-        {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`} onClick={() => { setLangue(l); setLang(l); }}
+        {LANGUES.map((l) => <button key={l} aria-label={`langue ${l}`} onClick={async () => { if (l === "AR") await chargerAR(); setLangue(l); setLang(l); }}
           style={{ fontSize: 11, padding: "3px 9px", border: "1px solid " + (lang === l ? "#4A6B28" : "#E7EBDD"),
             borderRadius: 6, cursor: "pointer", fontWeight: lang === l ? 700 : 400,
             background: lang === l ? "#EEF3E4" : "#fff", color: lang === l ? "#3B5323" : "#5b6650" }}>{l}</button>)}

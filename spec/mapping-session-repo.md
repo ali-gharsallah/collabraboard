@@ -423,3 +423,28 @@ passe **MACHINE (MSA)** en attente de relecture pro — provenance en clair dans
   EN/DE/IT **0 écart** (l'AR n'est pas dans le cliquet ratifié — c'est une passe machine, pas la garde
   EN/DE/IT). **Budget 220,6/224 kB gz** (sous le plafond relevé au §5.4 ; pas de nouvelle relève).
   `vite build` OK, eslint `i18n.ts` OK.
+
+### 5.6 — « PULL AR OUT » : pack de langue arabe à CHARGEMENT PARESSEUX (décision PO, 2026-08-05)
+
+Le PO a choisi de **sortir l'AR du bundle de base** plutôt que de relever le budget (§5.4). Le budget
+revient à **220** ; l'arabe reste la 5e langue mais son contenu ne pèse plus sur le **chargement
+initial** — il est téléchargé **à la demande** par les seuls utilisateurs qui choisissent l'arabe.
+
+- **Split** : le CHROME AML gap AR quitte `i18n-aml-gap.gen.ts` (redevenu **EN/DE/IT statique**) pour
+  un fichier généré dédié `i18n-aml-gap.ar.gen.ts` (import **dynamique** seulement). La NAV AR quitte
+  `DICT.AR` (redevenu `{}`) pour `lib/i18n-ar.ts`. Ce pack `AR_PACK` (nav + chrome) est le **seul**
+  importeur du fichier AR généré → il forme un **chunk séparé** (`i18n-ar-*.js`, ~2,0 kB gz).
+- **Chargement** : `i18n.ts::chargerAR()` (idempotent) `import()`e le pack et fusionne dans `DICT.AR` ;
+  `arEstCharge()` expose l'état. Le shell l'attend **au clic langue** (`onClick` async) et **au montage**
+  si l'AR est déjà persistée (puis re-rend). Avant chargement → repli FR PROPRE (« jamais un trou »).
+- **Budget** : `verifier-budget-bundle.js` **revient à 220** ; il **exclut** les packs de langue
+  paresseux (`i18n-ar-*`) du total **core**, les **mesure et affiche à part** (transparence, pas un
+  contournement). Résultat : **core 219,3/220** + **packs langue 2,0 kB** (à la demande). Ajouter une
+  langue paresseuse n'inflate plus le core. *(La relève 220→224 du §5.4 est ainsi ANNULÉE.)*
+- **Gardes** : self-test **AG-22** ré-outillé (statique EN/DE/IT **sans AR** + pack AR généré complet)
+  → **27/27**. FE-I18N réécrit (repli FR **avant** `chargerAR()`, servi **après**). vitest **104/104**,
+  cliquet EN/DE/IT **0 écart**, `vite build` OK, eslint OK.
+
+*Reste (relecture pro AR avant BAT)* : validation des passes machine ; AR de la sous-nav ÉDITEUR
+(`EXT`) + écrans (`ECRANS`) + contenu des règles (à ajouter dans le même pack paresseux) ; colonne AR
+au glossaire ; audit RTL par écran.

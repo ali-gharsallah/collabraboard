@@ -10,23 +10,25 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 
-// 2026-08-05 : relevé 220 → 224 (commit MOTIVÉ, pas un contournement — cf. doctrine ci-dessus).
-// Motif : l'arabe, 5e langue d'UI ratifiée (« Both », E-FB-4), fait entrer son CHROME (familles +
-// libellés UI AML gap) dans le bundle ; le contenu des RÈGLES reste servi par l'API (SPEC-I18N §3,
-// jamais bundlé). +4 kB de marge couvre la passe AR du chrome (et sa relecture pro à venir). À
-// faire viser par le PO. Le reste du dispositif anti-dérive (mesure gzip réelle, blocage CI) intact.
-const BUDGET_TOTAL_KB = 224;   // somme gzip de tous les chunks JS
+// 2026-08-05 : budget maintenu à 220 (« pull ar out », décision PO). Les PACKS DE LANGUE à
+// chargement PARESSEUX (import dynamique, ex. l'arabe `i18n-ar-*.js`) sont téléchargés À LA DEMANDE
+// par les seuls utilisateurs qui choisissent la langue — ils ne pèsent PAS sur le chargement INITIAL
+// que ce budget garde. On les MESURE et on les AFFICHE (transparence, pas un trou), mais on les
+// EXCLUT du total de base. Ajouter un pack de langue n'inflate donc plus le bundle core.
+const BUDGET_TOTAL_KB = 220;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
+const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 
 const dir = path.join(__dirname, "..", "dist", "assets");
 if (!fs.existsSync(dir)) { console.error("dist/assets absent — lancer `vite build` d'abord"); process.exit(1); }
 
-let total = 0; const horsBudget = [];
+let total = 0, packsLangue = 0; const horsBudget = [];
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
   const kb = zlib.gzipSync(fs.readFileSync(path.join(dir, f))).length / 1024;
+  if (EST_PACK_LANGUE(f)) { packsLangue += kb; continue; }   // pack de langue paresseux : hors budget core
   total += kb;
   if (kb > BUDGET_CHUNK_KB) horsBudget.push(`${f} : ${kb.toFixed(1)} kB gz > ${BUDGET_CHUNK_KB} kB`);
 }
-console.log(`budget bundle — total ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}), pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
-if (total > BUDGET_TOTAL_KB) horsBudget.push(`TOTAL : ${total.toFixed(1)} kB gz > ${BUDGET_TOTAL_KB} kB`);
+console.log(`budget bundle — core ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}) + packs langue ${packsLangue.toFixed(1)} kB gz (paresseux, à la demande), pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
+if (total > BUDGET_TOTAL_KB) horsBudget.push(`CORE : ${total.toFixed(1)} kB gz > ${BUDGET_TOTAL_KB} kB`);
 if (horsBudget.length) { horsBudget.forEach((l) => console.error("HORS BUDGET —", l)); process.exit(1); }
