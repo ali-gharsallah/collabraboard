@@ -495,3 +495,26 @@ z-score, CPSI, corridors RU/BY/IR/KP…). **Le Gherkin reste FR** (langue normat
 **AR : couverture désormais complète** (chrome sidebar + écrans + contenu des règles). *Reste avant
 BAT* : **relecture pro** de toutes les passes machine ; colonne AR au glossaire CONTRAIGNANT ; audit
 RTL écran par écran.
+
+### 5.10 — i18n de la MAQUETTE HTML (runtime chrome + AR RTL, SPEC-I18N §1, 2026-08-05)
+
+La maquette `demo/olive-demo.html` (3,3 Mo, statique) n'avait **AUCUN** i18n (le « runtime v2 » décrit
+en SPEC-I18N §1 n'avait jamais été versé — claim du drop, absent du repo). Livré ici, sur choix PO
+(« Chrome runtime + AR RTL ») : un **traducteur DOM** injecté, **sélecteur FR/EN/DE/AR**, **RTL auto**
+en arabe. Le vrai i18n reste le front React (SPEC-I18N §3) ; la maquette en est un rétrofit de démo.
+
+- **Source unique / zéro réinvention** : `scripts/gen-demo-i18n.mjs` **extrait les dictionnaires du
+  front** (`i18n.ts` DICT/EXT/ECRANS EN/DE/IT, `i18n-ar.ts` AR, `i18n-aml-gap.json` chrome) et injecte
+  un runtime + dictionnaire **184 clés/langue** (EN/DE/AR, clés FR = texte DOM). Injection
+  **IDEMPOTENTE** entre marqueurs `OLIVE-I18N:START/END` (re-run = remplace). Aucune traduction n'est
+  ré-écrite dans la maquette : elle réutilise le travail produit déjà fait.
+- **Runtime** (vanilla) : TreeWalker (nœuds texte) + attributs `placeholder`/`title`, `__frSrc`
+  (restauration FR sans perte), **MutationObserver** (contenu injecté après bascule), `dir=rtl`/`lang`
+  en AR, repli FR pour toute clé non couverte. Ne touche QUE le chrome — aucune donnée métier traduite.
+- **Garde** : `demo-i18n.test.ts` (jsdom) charge le **VRAI bloc injecté** et prouve EN/DE/AR (nav +
+  sous-nav éditeur + famille AML gap), RTL en AR, repli FR d'une chaîne non couverte, restauration FR,
+  et la traduction à la volée d'un nœud injecté (MutationObserver) → **5/5**. Front vitest **109/109**,
+  budget **inchangé** (la maquette n'est pas dans le bundle Vite), eslint des fichiers touchés OK.
+
+*Reste (SPEC-I18N §2/§4)* : longue traîne du catalogue démo (≥95 % par écran) ; relecture pro AR ;
+Playwright par langue (le harnais jsdom couvre la logique ; le visuel RTL par écran reste manuel).
