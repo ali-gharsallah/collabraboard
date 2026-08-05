@@ -67,7 +67,24 @@ jobs:
         run: |
           pnpm exec prisma generate
           pnpm exec prisma migrate deploy
-          pnpm run prisma:post
+
+      # ── Garde NO-DRIFT (migrations ↔ schema.prisma) — BLOQUANT ────────────────
+      # Empêche le retour de la dérive `db push` : si un objet vit dans schema.prisma
+      # sans migration correspondante, `migrate deploy` bâtit une base incomplète et
+      # l'app 500 (colonne/table absente). On compare la base FRAÎCHE (état migrations)
+      # au datamodel : tout écart casse la CI. Réconcilié le 2026-08-05 (20260805000002).
+      - name: "0b · No-drift migrations ↔ schema (BLOQUANT)"
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code && echo "✓ migrations et schema.prisma en phase" \
+            || { echo "✗ DÉRIVE : schema.prisma diverge des migrations (db push non versionné ?)"; exit 1; }
+
+      - name: "0c · Post-deploy (RLS FORCE + immuabilité R48)"
+        working-directory: apps/api
+        run: pnpm run prisma:post
 
       # ── RUNBOOK §2 · 1 — Lint + types (BLOQUANT) ─────────────────────────────
       # Promu bloquant (chantier B) : eslint.config.mjs (racine) + apps/api/tsconfig.json
@@ -250,11 +267,14 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:rules
 
-      # ── RUNBOOK §2 · 4 — e2e Postgres réel (336/336) ─────────────────────────
-      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky
-      # sous charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake
-      # (vert au 2e) est absorbé — jamais un masquage d'échec persistant.
-      - name: "4 · e2e API réelle + Postgres (336/336, 1 retry anti-flake §8)"
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (53 suites, 348/348) ──────────────
+      # Reproductible depuis la réconciliation de la dérive `db push` (20260805000002) : sans elle
+      # `migrate deploy` bâtissait une base incomplète et la voie e2e était rouge en CI (colonnes/
+      # tables absentes → 500). 9 suites non hermétiques restent en QUARANTAINE (test/e2e/
+      # QUARANTINE.md + jest-e2e.config.js) — dette pré-existante, motivée, versionnée, pas masquée.
+      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky sous
+      # charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake est absorbé.
+      - name: "4 · e2e API réelle + Postgres (53 suites 348/348, 9 en quarantaine, 1 retry §8)"
         working-directory: apps/api
         run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 
