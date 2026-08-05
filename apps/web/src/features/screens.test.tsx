@@ -1311,14 +1311,17 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("EN")("Seuil")).toBe("Threshold");                       // libellé UI AML gap
   });
 
-  it("AR (5e langue « Both », E-FB-4) : ratifiée + RTL, contenu non traduit → repli FR (jamais un trou)", async () => {
+  it("AR (5e langue « Both », E-FB-4) : ratifiée + RTL ; CHROME AML gap traduit (passe machine), reste → repli FR", async () => {
     const { LANGUES, estRTL, traduire } = await import("../lib/i18n");
     expect(LANGUES).toContain("AR");
     expect(estRTL("AR")).toBe(true);
     expect(estRTL("FR")).toBe(false);
-    // pas de contenu AR (glossaire sans colonne AR) : toute clé replie proprement sur le FR
+    // CHROME AML gap (familles + UI) : passe de traduction MACHINE AR (SPEC-I18N §2) — désormais servie.
+    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");
+    expect(traduire("AR", { dev: false })("Seuil")).toBe("العتبة");
+    // Hors périmètre AR (nav générale, contenu des règles) : aucun contenu AR → repli FR PROPRE (jamais un trou).
     expect(traduire("AR", { dev: false })("Accueil")).toBe("Accueil");
-    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("Screening en flux");
+    expect(traduire("AR", { dev: false })("Reporting réglementaire")).toBe("Reporting réglementaire");
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {

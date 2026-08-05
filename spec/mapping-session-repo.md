@@ -376,3 +376,32 @@ arabes occidentaux par défaut ») + DoD §2 (« formats fr-CH/de-CH/en-GB/ar co
 **Reste (lots dédiés, relecture humaine CONTRAIGNANTE avant BAT — SPEC-I18N §4) :** contenu AR (UI +
 familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; audit RTL écran
 par écran + formats `ar` (Intl). *(i18n des règles servi par l'API : LIVRÉ — cf. §5.1.)*
+
+### 5.4 — PASSE ARABE du CHROME AML gap (machine, SPEC-I18N §2, 2026-08-05 — décision PO « skip review »)
+
+Le PO a levé la garde de relecture humaine pour AVANCER (« skip human review and next »). SPEC-I18N §2
+prévoit explicitement une **« passe de traduction Claude Code »** suivie de relecture. Livré ici : la
+passe **MACHINE (MSA)** du **CHROME AML gap** — 12 familles + 18 libellés UI — l'arabe devient une
+langue d'UI effective (plus seulement un repli FR). **Provenance conservée honnêtement** : ces chaînes
+sont étiquetées *traduction machine en attente de relecture pro avant BAT* (en-tête généré + note de
+la source PO) — le repo ne PRÉTEND à aucune ratification qui n'a pas eu lieu ; le repli FR reste sous
+chaque clé absente (« jamais un trou »).
+
+- **Source unique** : `data/i18n-aml-gap.json` gagne la clé `ar` par entrée `familles`/`ui` (add-only,
+  30 chaînes). Le **CONTENU des règles reste sans AR** (repli FR) — hors périmètre de cette passe.
+- **Générateur** : le chrome `apps/web/src/lib/i18n-aml-gap.gen.ts` (jusqu'ici émis par un one-off
+  **non versionné**) est désormais produit par `gen_aml_gap.py::_emit_web_chrome_i18n` — dette « pas de
+  générateur » **résorbée**, source unique rétablie. `AmlGapLang` = `EN|DE|IT|AR`. EN/DE/IT **byte-à-byte
+  inchangés** (régénération additive).
+- **`lib/i18n.ts`** : la boucle de fusion AML gap inclut désormais `AR` → le chrome AR alimente `DICT.AR`.
+- **Garde** : self-test **AG-22** (chrome à jour + AR complet sur familles+UI + type à 4 langues) →
+  **27/27**. FE-I18N mis à jour (AR chrome traduit ; nav générale + contenu règles toujours repli FR).
+  vitest **104/104**, cliquet EN/DE/IT **0 écart**, `vite build` OK.
+- **⚠ Budget bundle relevé 220 → 224 kB gz** (`verifier-budget-bundle.js`) : l'AR, **5e langue d'UI
+  ratifiée**, fait entrer son chrome dans le bundle (à 220,003 kB, 3 octets au-dessus). Relève **motivée
+  et visible** (mécanisme prévu par la doctrine du script : « relever = commit motivé qui édite CES
+  constantes, jamais un contournement ») — le contenu des règles reste servi par l'API, jamais bundlé.
+  **À viser par le PO.** Mesure gzip réelle + blocage CI intacts (nouveau plafond 224).
+
+*Reste (relecture pro AR avant BAT)* : validation du chrome AR par un locuteur ; AR de la nav générale
+(EXT/ECRANS) + du contenu des règles ; colonne AR au glossaire ; audit RTL par écran.

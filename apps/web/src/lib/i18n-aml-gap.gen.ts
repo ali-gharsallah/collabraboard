@@ -1,14 +1,14 @@
-// GÉNÉRÉ depuis data/i18n-aml-gap.json (traductions PO, glossaire GLOSSAIRE-AML-4L.md CONTRAIGNANT) —
-// NE PAS ÉDITER À LA MAIN. Périmètre FR/EN/DE/IT ; l'ARABE (5e langue ratifiée « Both », E-FB-4)
-// n'a PAS de contenu ici : le glossaire contraignant n'a pas de colonne AR → repli FR (jamais un
-// trou) tant que la relecture humaine AR (SPEC-I18N §4) n'est pas livrée. Le Gherkin reste FR.
+// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py depuis data/i18n-aml-gap.json — NE PAS ÉDITER À LA MAIN.
+// PÉRIMÈTRE FRONT = CHROME uniquement (familles + libellés UI). Le CONTENU des règles (nom/desc
+// des 64 scénarios) N'EST PAS bundlé (SPEC-I18N §3 : « le front ne traduit pas le contenu métier,
+// il l'affiche ») — il est servi par l'API (AmlScenario.i18n versionné, R29).
 //
-// PÉRIMÈTRE FRONT = CHROME uniquement (familles + libellés UI). Le CONTENU des règles (nom/desc des
-// 64 scénarios) N'EST PAS bundlé (SPEC-I18N §3 : « le front ne traduit pas le contenu métier, il
-// l'affiche ») — il sera servi par l'API (AmlScenario.i18n versionné, R29) ; en attendant, le front
-// affiche le FR du seed. Les traductions de règles restent dans data/i18n-aml-gap.json (source PO).
+// LANGUES : FR (= clé, repli) + EN/DE/IT (terminologie PO, glossaire GLOSSAIRE-AML-4L.md
+// CONTRAIGNANT) + AR (5e langue « Both », E-FB-4). L'AR du chrome est une PASSE MACHINE (MSA,
+// SPEC-I18N §2) en attente de relecture pro avant BAT — fusion autorisée PO (skip review).
+// Toute clé/langue absente retombe proprement sur le FR (i18n.ts, « jamais un trou »).
 
-export type AmlGapLang = 'EN' | 'DE' | 'IT';
+export type AmlGapLang = 'EN' | 'DE' | 'IT' | 'AR';
 export const AMLGAP_FAMILLES: Record<AmlGapLang, Record<string, string>> = {
  "EN": {
   "Screening en flux": "In-flow screening",
@@ -51,6 +51,20 @@ export const AMLGAP_FAMILLES: Record<AmlGapLang, Record<string, string>> = {
   "Prolifération": "Finanziamento della proliferazione",
   "Immobilier & Art": "Immobili & arte",
   "Analytique 2G": "Analitica di seconda generazione"
+ },
+ "AR": {
+  "Screening en flux": "الفرز أثناء التدفّق",
+  "Indices OBA-FINMA": "مؤشّرات OBA-FINMA",
+  "Vision groupe UBO": "رؤية مجموعة المستفيدين الحقيقيين",
+  "Instruments PB": "أدوات الخدمات المصرفية الخاصة",
+  "Crypto / VASP": "العملات المشفّرة / VASP",
+  "CFT": "مكافحة تمويل الإرهاب (CFT)",
+  "Gouvernance du dispositif": "حوكمة النظام",
+  "TBML": "غسل الأموال القائم على التجارة (TBML)",
+  "Correspondent Banking": "الصيرفة المراسِلة",
+  "Prolifération": "تمويل الانتشار",
+  "Immobilier & Art": "العقارات والفنون",
+  "Analytique 2G": "تحليلات الجيل الثاني"
  }
 };
 
@@ -114,5 +128,25 @@ export const AMLGAP_UI: Record<AmlGapLang, Record<string, string>> = {
   "Statut alerte": "Stato allerta",
   "Déclencheur": "Fattore scatenante",
   "paramètre tenant (registre R-Q)": "parametro tenant (registro R-Q)"
+ },
+ "AR": {
+  "Filtres": "عوامل التصفية",
+  "Réinitialiser": "إعادة التعيين",
+  "résultat(s)": "نتيجة/نتائج",
+  "Thème bancaire": "الموضوع المصرفي",
+  "Seuil": "العتبة",
+  "Comment c'est calculé": "كيفية الاحتساب",
+  "Situation de départ": "الوضع الابتدائي",
+  "Ce que le moteur observe": "ما يرصده المحرّك",
+  "Ce qui se passe": "ما يحدث",
+  "Cas plantés — dataset GT": "الحالات المزروعة — مجموعة بيانات GT",
+  "Simuler ce scénario": "محاكاة هذا السيناريو",
+  "BLOQUE": "يحظر",
+  "Vraie alerte (TP)": "تنبيه صحيح (TP)",
+  "Fausse alerte (FP)": "تنبيه كاذب (FP)",
+  "Revues en retard": "المراجعات المتأخّرة",
+  "Statut alerte": "حالة التنبيه",
+  "Déclencheur": "المُطلِق",
+  "paramètre tenant (registre R-Q)": "معلمة المستأجر (سجل R-Q)"
  }
 };

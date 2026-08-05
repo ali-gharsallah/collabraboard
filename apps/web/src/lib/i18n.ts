@@ -58,8 +58,9 @@ const ECRANS: Record<Exclude<Langue, "FR">, Record<string, string>> = {
 };
 for (const l of ["EN", "DE", "IT"] as const) Object.assign(DICT[l], ECRANS[l]);
 // ── AML gap (waves 1+2) : familles + libellés UI, traductions PO (glossaire CONTRAIGNANT). Le
-//    contenu des règles (nom/desc) vit dans le seed/API (SPEC-I18N §3), pas ici. AR = repli FR. ──
-for (const l of ["EN", "DE", "IT"] as const) { Object.assign(DICT[l], AMLGAP_FAMILLES[l], AMLGAP_UI[l]); }
+//    contenu des règles (nom/desc) vit dans le seed/API (SPEC-I18N §3), pas ici. L'AR du CHROME est
+//    une passe MACHINE (SPEC-I18N §2, relecture pro à venir) ; toute clé AR absente retombe sur FR. ──
+for (const l of ["EN", "DE", "IT", "AR"] as const) { Object.assign(DICT[l], AMLGAP_FAMILLES[l], AMLGAP_UI[l]); }
 
 export function langue(): Langue {
   try {

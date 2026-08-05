@@ -656,6 +656,8 @@ def build():
 API_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "aml"))
 API_PARAM_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "api", "src", "modules", "parametres"))
 WEB_AML_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "features", "aml"))
+WEB_LIB_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "apps", "web", "src", "lib"))
+DATA_I18N = os.path.normpath(os.path.join(HERE, "..", "..", "data", "i18n-aml-gap.json"))
 
 _TS_HEADER = (
     "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.\n"
@@ -847,6 +849,50 @@ def _attach_i18n(rules):
     return n
 
 
+def _emit_web_chrome_i18n():
+    """Émet le CHROME i18n front (apps/web/src/lib/i18n-aml-gap.gen.ts) depuis data/i18n-aml-gap.json :
+    familles + libellés UI, clés FR (le seul contenu BUNDLÉ — SPEC-I18N §3 : le contenu des RÈGLES,
+    lui, est servi par l'API, jamais bundlé). Périmètre EN/DE/IT + AR (passe MACHINE, SPEC-I18N §2 :
+    relecture pro AR à venir avant BAT — provenance dans l'en-tête). Repli FR pour toute clé/langue
+    manquante côté i18n.ts (jamais un trou). Une seule source : ce générateur ; garde AG-22."""
+    if not os.path.exists(DATA_I18N):
+        return 0
+    src = json.load(open(DATA_I18N, encoding="utf-8"))
+    langs = ["EN", "DE", "IT", "AR"]
+
+    def bloc(section):
+        # {LANG: {cléFR: traduction}} — n'émet une langue que si la section la porte (AR = passe machine).
+        out = {}
+        for L in langs:
+            lg = L.lower()
+            out[L] = {fr: e[lg] for fr, e in src[section].items() if e.get(lg)}
+        return out
+
+    fam, ui = bloc("familles"), bloc("ui")
+    header = (
+        "// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py depuis data/i18n-aml-gap.json — NE PAS ÉDITER À LA MAIN.\n"
+        "// PÉRIMÈTRE FRONT = CHROME uniquement (familles + libellés UI). Le CONTENU des règles (nom/desc\n"
+        "// des 64 scénarios) N'EST PAS bundlé (SPEC-I18N §3 : « le front ne traduit pas le contenu métier,\n"
+        "// il l'affiche ») — il est servi par l'API (AmlScenario.i18n versionné, R29).\n"
+        "//\n"
+        "// LANGUES : FR (= clé, repli) + EN/DE/IT (terminologie PO, glossaire GLOSSAIRE-AML-4L.md\n"
+        "// CONTRAIGNANT) + AR (5e langue « Both », E-FB-4). L'AR du chrome est une PASSE MACHINE (MSA,\n"
+        "// SPEC-I18N §2) en attente de relecture pro avant BAT — fusion autorisée PO (skip review).\n"
+        "// Toute clé/langue absente retombe proprement sur le FR (i18n.ts, « jamais un trou »).\n\n"
+        "export type AmlGapLang = 'EN' | 'DE' | 'IT' | 'AR';\n"
+    )
+    ts = (
+        header
+        + "export const AMLGAP_FAMILLES: Record<AmlGapLang, Record<string, string>> = "
+        + json.dumps(fam, ensure_ascii=False, indent=1) + ";\n\n"
+        + "export const AMLGAP_UI: Record<AmlGapLang, Record<string, string>> = "
+        + json.dumps(ui, ensure_ascii=False, indent=1) + ";\n"
+    )
+    with open(os.path.join(WEB_LIB_DIR, "i18n-aml-gap.gen.ts"), "w", encoding="utf-8") as f:
+        f.write(ts)
+    return sum(len(fam[L]) + len(ui[L]) for L in langs)
+
+
 def main():
     rules, gt = build()  # build() attache déjà les traductions PO au référentiel
     tp = sum(1 for c in gt if c["label"] == "TP")
@@ -873,6 +919,7 @@ def main():
     _emit_ts(rules, gt)
     rq = _emit_rq(rules)
     _emit_meta(rules)
+    chrome = _emit_web_chrome_i18n()
     print("aml-gap généré : %d règles (%s, %d bloquantes) · %d cas GT (%d TP / %d FP, %d placeholder)"
           % (len(rules), meta["ruleRange"], meta["counts"]["blocking"], len(gt), tp, fp, placeholders))
     print("  + TS backend : apps/api/src/modules/aml/aml-gap.referentiel.gen.ts · aml-gap.gt.gen.ts")
@@ -880,6 +927,7 @@ def main():
     print("  + R-Q        : apps/api/src/modules/parametres/aml-gap.rq.gen.ts (%d paramètres tenant)"
           % len(rq))
     print("  + Moteur     : src/aml/aml-gap.meta.gen.ts (métadonnées scénarios, bloc 61 deferred CPSI)")
+    print("  + Chrome i18n: apps/web/src/lib/i18n-aml-gap.gen.ts (%d entrées familles+UI, EN/DE/IT/AR)" % chrome)
 
 
 if __name__ == "__main__":

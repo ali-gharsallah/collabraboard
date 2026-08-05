@@ -1,159 +1,189 @@
 {
  "i18n": "aml-gap waves 1+2",
  "version": "1.0",
- "note": "Traductions terminologiques (pas littérales) — DE = terminologie bancaire suisse (Geldwäscherei, GwG/GwV-FINMA, ss→ss), IT = terminologie LRD/ORD-FINMA, EN = AMLA/FATF/Wolfsberg. Le Gherkin (given/when/then) reste en FRANÇAIS : langue normative unique du contrat d'implémentation — décision à ratifier (proposition, cf. session log). Le glossaire GLOSSAIRE-AML-4L.md est CONTRAIGNANT pour toute traduction future.",
+ "note": "Traductions terminologiques (pas littérales) — DE = terminologie bancaire suisse (Geldwäscherei, GwG/GwV-FINMA, ss→ss), IT = terminologie LRD/ORD-FINMA, EN = AMLA/FATF/Wolfsberg. Le Gherkin (given/when/then) reste en FRANÇAIS : langue normative unique du contrat d'implémentation — décision à ratifier (proposition, cf. session log). Le glossaire GLOSSAIRE-AML-4L.md est CONTRAIGNANT pour toute traduction future. | PASSE ARABE (chrome familles+UI) = traduction MACHINE (SPEC-I18N §2), MSA, en attente de relecture pro avant BAT — fusion autorisée PO (skip review). Le contenu des règles reste sans AR (repli FR).",
  "familles": {
   "Screening en flux": {
    "en": "In-flow screening",
    "de": "Transaktionsbegleitendes Screening",
-   "it": "Screening nei flussi"
+   "it": "Screening nei flussi",
+   "ar": "الفرز أثناء التدفّق"
   },
   "Indices OBA-FINMA": {
    "en": "AMLO-FINMA indicators",
    "de": "GwV-FINMA-Anhaltspunkte",
-   "it": "Indizi ORD-FINMA"
+   "it": "Indizi ORD-FINMA",
+   "ar": "مؤشّرات OBA-FINMA"
   },
   "Vision groupe UBO": {
    "en": "UBO group view",
    "de": "Gruppensicht wirtschaftlich Berechtigte",
-   "it": "Vista di gruppo ADE"
+   "it": "Vista di gruppo ADE",
+   "ar": "رؤية مجموعة المستفيدين الحقيقيين"
   },
   "Instruments PB": {
    "en": "Private banking instruments",
    "de": "Private-Banking-Instrumente",
-   "it": "Strumenti di private banking"
+   "it": "Strumenti di private banking",
+   "ar": "أدوات الخدمات المصرفية الخاصة"
   },
   "Crypto / VASP": {
    "en": "Crypto / VASP",
    "de": "Krypto / VASP",
-   "it": "Crypto / VASP"
+   "it": "Crypto / VASP",
+   "ar": "العملات المشفّرة / VASP"
   },
   "CFT": {
    "en": "Counter-terrorist financing (CFT)",
    "de": "Bekämpfung der Terrorismusfinanzierung",
-   "it": "Contrasto al finanziamento del terrorismo (CFT)"
+   "it": "Contrasto al finanziamento del terrorismo (CFT)",
+   "ar": "مكافحة تمويل الإرهاب (CFT)"
   },
   "Gouvernance du dispositif": {
    "en": "Programme governance",
    "de": "Governance des Dispositivs",
-   "it": "Governance del dispositivo"
+   "it": "Governance del dispositivo",
+   "ar": "حوكمة النظام"
   },
   "TBML": {
    "en": "Trade-based money laundering (TBML)",
    "de": "Handelsbasierte Geldwäscherei (TBML)",
-   "it": "Riciclaggio basato sul commercio (TBML)"
+   "it": "Riciclaggio basato sul commercio (TBML)",
+   "ar": "غسل الأموال القائم على التجارة (TBML)"
   },
   "Correspondent Banking": {
    "en": "Correspondent banking",
    "de": "Korrespondenzbankgeschäft",
-   "it": "Attività di banca corrispondente"
+   "it": "Attività di banca corrispondente",
+   "ar": "الصيرفة المراسِلة"
   },
   "Prolifération": {
    "en": "Proliferation financing",
    "de": "Proliferationsfinanzierung",
-   "it": "Finanziamento della proliferazione"
+   "it": "Finanziamento della proliferazione",
+   "ar": "تمويل الانتشار"
   },
   "Immobilier & Art": {
    "en": "Real estate & art",
    "de": "Immobilien & Kunst",
-   "it": "Immobili & arte"
+   "it": "Immobili & arte",
+   "ar": "العقارات والفنون"
   },
   "Analytique 2G": {
    "en": "2nd-generation analytics",
    "de": "Analytik der 2. Generation",
-   "it": "Analitica di seconda generazione"
+   "it": "Analitica di seconda generazione",
+   "ar": "تحليلات الجيل الثاني"
   }
  },
  "ui": {
   "Filtres": {
    "en": "Filters",
    "de": "Filter",
-   "it": "Filtri"
+   "it": "Filtri",
+   "ar": "عوامل التصفية"
   },
   "Réinitialiser": {
    "en": "Reset",
    "de": "Zurücksetzen",
-   "it": "Reimposta"
+   "it": "Reimposta",
+   "ar": "إعادة التعيين"
   },
   "résultat(s)": {
    "en": "result(s)",
    "de": "Ergebnis(se)",
-   "it": "risultato/i"
+   "it": "risultato/i",
+   "ar": "نتيجة/نتائج"
   },
   "Thème bancaire": {
    "en": "Banking theme",
    "de": "Bankfachliches Thema",
-   "it": "Tema bancario"
+   "it": "Tema bancario",
+   "ar": "الموضوع المصرفي"
   },
   "Seuil": {
    "en": "Threshold",
    "de": "Schwellenwert",
-   "it": "Soglia"
+   "it": "Soglia",
+   "ar": "العتبة"
   },
   "Comment c'est calculé": {
    "en": "How it is computed",
    "de": "Berechnungslogik",
-   "it": "Come viene calcolato"
+   "it": "Come viene calcolato",
+   "ar": "كيفية الاحتساب"
   },
   "Situation de départ": {
    "en": "Given (starting situation)",
    "de": "Ausgangslage",
-   "it": "Situazione di partenza"
+   "it": "Situazione di partenza",
+   "ar": "الوضع الابتدائي"
   },
   "Ce que le moteur observe": {
    "en": "What the engine observes",
    "de": "Was die Engine beobachtet",
-   "it": "Cosa osserva il motore"
+   "it": "Cosa osserva il motore",
+   "ar": "ما يرصده المحرّك"
   },
   "Ce qui se passe": {
    "en": "What happens",
    "de": "Was geschieht",
-   "it": "Cosa succede"
+   "it": "Cosa succede",
+   "ar": "ما يحدث"
   },
   "Cas plantés — dataset GT": {
    "en": "Planted cases — GT dataset",
    "de": "Hinterlegte Fälle — GT-Datensatz",
-   "it": "Casi predisposti — dataset GT"
+   "it": "Casi predisposti — dataset GT",
+   "ar": "الحالات المزروعة — مجموعة بيانات GT"
   },
   "Simuler ce scénario": {
    "en": "Simulate this scenario",
    "de": "Szenario simulieren",
-   "it": "Simula questo scenario"
+   "it": "Simula questo scenario",
+   "ar": "محاكاة هذا السيناريو"
   },
   "BLOQUE": {
    "en": "BLOCKS",
    "de": "BLOCKIERT",
-   "it": "BLOCCA"
+   "it": "BLOCCA",
+   "ar": "يحظر"
   },
   "Vraie alerte (TP)": {
    "en": "True positive (TP)",
    "de": "Echter Treffer (TP)",
-   "it": "Vero positivo (TP)"
+   "it": "Vero positivo (TP)",
+   "ar": "تنبيه صحيح (TP)"
   },
   "Fausse alerte (FP)": {
    "en": "False positive (FP)",
    "de": "Fehlalarm (FP)",
-   "it": "Falso positivo (FP)"
+   "it": "Falso positivo (FP)",
+   "ar": "تنبيه كاذب (FP)"
   },
   "Revues en retard": {
    "en": "Overdue reviews",
    "de": "Überfällige Überprüfungen",
-   "it": "Revisioni in ritardo"
+   "it": "Revisioni in ritardo",
+   "ar": "المراجعات المتأخّرة"
   },
   "Statut alerte": {
    "en": "Alert status",
    "de": "Alert-Status",
-   "it": "Stato allerta"
+   "it": "Stato allerta",
+   "ar": "حالة التنبيه"
   },
   "Déclencheur": {
    "en": "Trigger",
    "de": "Auslöser",
-   "it": "Fattore scatenante"
+   "it": "Fattore scatenante",
+   "ar": "المُطلِق"
   },
   "paramètre tenant (registre R-Q)": {
    "en": "tenant parameter (R-Q register)",
    "de": "mandantenspezifischer Parameter (R-Q-Register)",
-   "it": "parametro tenant (registro R-Q)"
+   "it": "parametro tenant (registro R-Q)",
+   "ar": "معلمة المستأجر (سجل R-Q)"
   }
  },
  "rules": {

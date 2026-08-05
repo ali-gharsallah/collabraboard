@@ -10,7 +10,12 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 
-const BUDGET_TOTAL_KB = 220;   // somme gzip de tous les chunks JS
+// 2026-08-05 : relevé 220 → 224 (commit MOTIVÉ, pas un contournement — cf. doctrine ci-dessus).
+// Motif : l'arabe, 5e langue d'UI ratifiée (« Both », E-FB-4), fait entrer son CHROME (familles +
+// libellés UI AML gap) dans le bundle ; le contenu des RÈGLES reste servi par l'API (SPEC-I18N §3,
+// jamais bundlé). +4 kB de marge couvre la passe AR du chrome (et sa relecture pro à venir). À
+// faire viser par le PO. Le reste du dispositif anti-dérive (mesure gzip réelle, blocage CI) intact.
+const BUDGET_TOTAL_KB = 224;   // somme gzip de tous les chunks JS
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 
 const dir = path.join(__dirname, "..", "dist", "assets");
