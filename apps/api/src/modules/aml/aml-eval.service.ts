@@ -80,6 +80,62 @@ export class AmlEvalService {
   }
 
   /**
+   * Backtesting PAR VERSION (GV-02, R375) : mesure l'impact d'un changement de seuils tenant AVANT
+   * de l'appliquer. Rejoue le corpus (blocs 50–60) sous les paramètres EN VIGUEUR (baseline) puis
+   * sous une VERSION CANDIDATE (baseline + surcharges) et compare le rappel. R44/R39 : le moteur
+   * MESURE et PROPOSE un rollback si le rappel se dégrade — il n'applique rien, la décision est
+   * humaine. `overrides` = { cléParam: valeur } appliqué à tout scénario portant cette clé. Le bloc
+   * 61 (2G) n'entre pas dans la comparaison de version ici (seuils côté CPSI — lot dédié).
+   */
+  async backtestVersion(ctx: Ctx, dto: { overrides?: Record<string, unknown> }) {
+    const overrides = dto?.overrides ?? {};
+    if (!Object.keys(overrides).length) throw new BadRequestException("overrides requis (au moins un seuil candidat)");
+    const cases: any[] = await this.prisma.groundTruthCase.findMany({ where: { tenantId: ctx.tenantId } });
+    if (!cases.length) throw new BadRequestException("corpus GT non semé — POST /v1/aml/ground-truth/seed d'abord");
+
+    const bloc = (code: string) => AML_GAP_REFERENTIEL.find((r) => r.id === code)?.bloc ?? null;
+    let evaluated = 0, baseRaised = 0, candRaised = 0;
+    const regressions: { caseId: string; scenarioCode: string; label: string }[] = [];   // rappel PERDU
+    const improvements: { caseId: string; scenarioCode: string; label: string }[] = [];   // rappel GAGNÉ
+    const touched = new Set<string>();
+
+    for (const c of cases) {
+      if (bloc(c.scenarioCode) === BLOC_ANALYTIQUE_2G) continue;                  // 2G hors comparaison ici
+      const detector = DETECTORS[c.scenarioCode];
+      if (!detector) continue;
+      const v = await this.gap.versionEnVigueur(ctx, c.scenarioCode);
+      const baseParams = v.params as Record<string, unknown>;
+      const candParams: Record<string, unknown> = { ...baseParams };
+      for (const [k, val] of Object.entries(overrides)) if (k in candParams) { candParams[k] = val; touched.add(c.scenarioCode); }
+      const facts = { clientId: c.caseId, asOf: new Date().toISOString(), tenantId: ctx.tenantId, ...detector.trigger() };
+      const rb = await evaluateScenario(c.scenarioCode, facts, baseParams);
+      const rc = await evaluateScenario(c.scenarioCode, facts, candParams);
+      evaluated++;
+      if (rb.raised) baseRaised++;
+      if (rc.raised) candRaised++;
+      if (rb.raised && !rc.raised) regressions.push({ caseId: c.caseId, scenarioCode: c.scenarioCode, label: c.label });
+      if (!rb.raised && rc.raised) improvements.push({ caseId: c.caseId, scenarioCode: c.scenarioCode, label: c.label });
+    }
+
+    const recallBefore = evaluated ? baseRaised / evaluated : 0;
+    const recallAfter = evaluated ? candRaised / evaluated : 0;
+    const degradation = recallAfter < recallBefore;                              // R375 : perte de rappel
+    const report = {
+      overrides, scenariosTouches: [...touched].sort(), evaluated,
+      recallBefore, recallAfter, degradation, rollbackPropose: degradation,       // R44 : proposition, pas décision
+      regressions, improvements,
+    };
+    await this.prisma.$transaction(async (tx: Tx) => {
+      await emitEvent(tx, ctx.tenantId, "aml.eval.version_compared", "backtest-version", {
+        overrides, recallBefore, recallAfter, degradation, regressions: regressions.length, par: ctx.userId,
+      });
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_EVAL_VERSION",
+      `rappel ${(recallBefore * 100).toFixed(1)}%→${(recallAfter * 100).toFixed(1)}% (${degradation ? "DÉGRADÉ, rollback proposé" : "OK"})`);
+    return report;
+  }
+
+  /**
    * Backtest du corpus GT semé (blocs 50–60) : rejoue chaque cas à travers le moteur avec les
    * paramètres tenant en vigueur (R29) et mesure le rappel global + par famille. Les faits
    * déclencheurs proviennent du détecteur du scénario (source unique des suites) — le worker ne

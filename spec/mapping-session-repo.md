@@ -215,8 +215,16 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   référentiels) retombent sur le défaut du détecteur CPSI. Résultat : `fat-aml-eval` mesure **130/130
   cas, rappel 100 %** dont **10 via CPSI** (`via2G`), `deferred2G = 0`, la famille **AN** apparaît au
   rapport. `evaluer2G` (détection live) partage `mesurer2G` (DRY). CPSI 20/20, AML e2e 4 suites 19/19.
+- **Gouvernance du tuning — backtest par version (GV-02, R375)** : `AmlEvalService.backtestVersion`
+  (`POST /v1/aml/eval/backtest-version`) rejoue le corpus (blocs 50–60) sous les seuils EN VIGUEUR
+  (baseline) puis sous une VERSION CANDIDATE (`overrides`) et compare le rappel. R44/R39 : il MESURE
+  et PROPOSE un rollback si le rappel se dégrade (`rollbackPropose`), il n'applique rien — la décision
+  est humaine ; la comparaison émet `aml.eval.version_compared` (auditable). Rapport :
+  `{ recallBefore, recallAfter, degradation, rollbackPropose, regressions, improvements, scenariosTouches }`.
+  Vérifié : e2e `fat-aml-tuning` **3/3** (seuil PEP relevé 78→95 ⇒ SF-01 régresse, rappel 100→98 %,
+  rollback proposé ; seuil abaissé ⇒ rappel stable ; overrides vide ⇒ 400).
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (elles
   importent `evaluateScenario`/meta.deferred, pas la porte 2G — c'est le pont HTTP/DI qui couvre le
   bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Au-dessus du cœur d'évaluation : **dispatch
-  asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit), **backtest
-  par version** + **BTL** (below-the-line) + statut **DQ** (gouvernance GV) — chacun un lot dédié.
+  asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit), **BTL**
+  (below-the-line, GV-01) + statut **DQ** (GV-03) — chacun un lot dédié.

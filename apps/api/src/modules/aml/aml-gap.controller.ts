@@ -49,4 +49,8 @@ export class AmlGapController {
   // Détection LIVE : faits réels d'un client → signaux persistés (blocs 50–60). Le bloc 61 passe par
   // evaluate-2g. { clientId, facts, scenarios?, date? } → { evaluated, raised, signals, results }.
   @Post("eval/client") evalClient(@Req() r: any, @Body() b: any) { return this.worker.evaluerClient(r.ctx, b); }
+
+  // Backtesting par version (GV-02, R375) : mesure l'impact d'une version candidate de seuils sur
+  // le rappel AVANT application ; propose un rollback si dégradation (R44, décision humaine).
+  @Post("eval/backtest-version") backtestVersion(@Req() r: any, @Body() b: any) { return this.worker.backtestVersion(r.ctx, b); }
 }
