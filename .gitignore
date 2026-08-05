@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# Claude Code — worktrees d'agents en arrière-plan (espaces de travail transitoires, jamais versionnés)
+.claude/worktrees/
+
 # Env & secrets
 .env
 .env.*
