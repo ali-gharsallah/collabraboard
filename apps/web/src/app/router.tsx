@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { traduire, langue, setLangue, LANGUES, Langue } from "../lib/i18n";
+import { traduire, langue, setLangue, LANGUES, Langue, estRTL } from "../lib/i18n";
 import { apiBase } from "../lib/api";
 import { OliveLogo } from "../components/OliveLogo";
 
@@ -93,6 +93,14 @@ export function Router() {
   const [sessionExpiree, setSessionExpiree] = useState(false);
   const [loginEmail, setLoginEmail] = useState(""); const [loginMdp, setLoginMdp] = useState("");
   const [loginErreur, setLoginErreur] = useState("");
+  // AR (5e langue, RTL) : le shell pose `dir`/`lang` sur <html> — géométrie logique, pas de
+  // réécriture des écrans (les données restent LTR verbatim). LTR pour FR/EN/DE/IT.
+  useEffect(() => {
+    try {
+      document.documentElement.dir = estRTL(lang) ? "rtl" : "ltr";
+      document.documentElement.lang = lang.toLowerCase();
+    } catch { /* pas de document (SSR/test sans DOM) — sans effet */ }
+  }, [lang]);
   useEffect(() => {
     const h = () => setSessionExpiree(true);
     window.addEventListener("olive:session-expiree", h);

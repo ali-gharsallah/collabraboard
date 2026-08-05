@@ -276,3 +276,32 @@ Couche détection AML gap **complète** sur infra réelle : seed → détection 
 version / DQ) → revue de calibrage → dispatch async. Il ne reste que les **suites Gherkin Nest du
 bloc 61**, volontairement rouges (le pont HTTP/DI les couvre, prouvé par `fat-aml-gap-2g` + le
 backtest).
+
+## 5 — i18n AML gap + 5e langue (arabe) — drop du 2026-08-04
+
+**Contradiction du drop, arbitrée PO.** Le drop portait trois définitions incompatibles de la 4e
+langue : IT (repo live R323–R327 + `GLOSSAIRE-AML-4L.md` CONTRAIGNANT + `i18n-aml-gap.json` +
+`_quarantine-a-arbitrer/README.md`) vs **AR** (`SPEC-I18N.md`, se disant « ratifié », dégradant l'IT).
+Écart NON résolu silencieusement (surfacé au PO). **Décision PO : « Both »** — l'IT reste, l'**arabe
+devient la 5e langue** (résout E-FB-4, décision produit/marché au-delà de R323–R327).
+
+**Livré (front) :**
+- Artefacts versés : `data/GLOSSAIRE-AML-4L.md` (glossaire CONTRAIGNANT), `data/i18n-aml-gap.json`
+  (traductions PO), `spec/SPEC-I18N.md` ; la quarantaine → `tools/i18n-ar-extraction/` (extraction AR
+  partielle, non fusionnée au runtime — matière de la relecture AR).
+- `lib/i18n.ts` : **AR ajouté en 5e langue** (`Langue`, `LANGUES`) + helper `estRTL`. L'arabe n'a PAS
+  de contenu (le glossaire contraignant n'a pas de colonne AR) → **repli FR propre** (jamais un trou),
+  exactement comme une clé manquante. Le cliquet `rapport-i18n.js`/FE-I18N-2 reste **0 écart** (il
+  contrôle EN/DE/IT ; l'AR est une langue neuve dont le contenu relève d'une relecture humaine).
+- `lib/i18n-aml-gap.gen.ts` (généré de `data/i18n-aml-gap.json`) : **familles + libellés UI** (chrome)
+  EN/DE/IT, fusionnés au dictionnaire. Le **contenu des 64 règles (nom/desc) N'EST PAS bundlé**
+  (SPEC-I18N §3 : le front affiche le contenu métier, il ne le traduit pas ; budget bundle tenu,
+  219/220 kB gz) — servi à terme par l'API (`AmlScenario.i18n` versionné R29).
+- Shell (`router.tsx`) : `dir=rtl`/`lang` sur `<html>` en arabe (géométrie logique, données LTR
+  verbatim intactes) ; le sélecteur expose AR via `LANGUES`. `AmlGap.tsx` : familles traduites (`famLbl`).
+- Tests : FE-I18N étendu (familles EN/DE/IT ; AR ratifiée + RTL + repli FR). vitest **99/99**, budget +
+  cliquet i18n verts, `vite build` OK, eslint OK.
+
+**Reste (lots dédiés, relecture humaine CONTRAIGNANTE avant BAT — SPEC-I18N §4) :** contenu AR (UI +
+familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; i18n des règles
+servi par l'API (`AmlScenario.i18n`, §3) ; audit RTL écran par écran + formats `ar` (Intl).

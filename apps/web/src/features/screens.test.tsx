@@ -1303,6 +1303,24 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("EN", { dev: false })("Clé hors dictionnaire ξ")).toBe("Clé hors dictionnaire ξ");  // écart par clé — le FR reste (prod : propre, LN-02)
   });
 
+  it("AML gap : les familles (chrome) sont traduites par le dictionnaire — EN/DE/IT", async () => {
+    const { traduire } = await import("../lib/i18n");
+    expect(traduire("EN")("Screening en flux")).toBe("In-flow screening");
+    expect(traduire("DE")("Correspondent Banking")).toBe("Korrespondenzbankgeschäft");
+    expect(traduire("IT")("Analytique 2G")).toBe("Analitica di seconda generazione");
+    expect(traduire("EN")("Seuil")).toBe("Threshold");                       // libellé UI AML gap
+  });
+
+  it("AR (5e langue « Both », E-FB-4) : ratifiée + RTL, contenu non traduit → repli FR (jamais un trou)", async () => {
+    const { LANGUES, estRTL, traduire } = await import("../lib/i18n");
+    expect(LANGUES).toContain("AR");
+    expect(estRTL("AR")).toBe(true);
+    expect(estRTL("FR")).toBe(false);
+    // pas de contenu AR (glossaire sans colonne AR) : toute clé replie proprement sur le FR
+    expect(traduire("AR", { dev: false })("Accueil")).toBe("Accueil");
+    expect(traduire("AR", { dev: false })("Screening en flux")).toBe("Screening en flux");
+  });
+
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
     window.localStorage.removeItem("OLIVE_LANG");
     const { Router } = await import("../app/router");

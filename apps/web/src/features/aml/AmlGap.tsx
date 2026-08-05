@@ -6,6 +6,7 @@ import { FilterBar } from "../../components/FilterBar";
 import { dedupeKeys } from "../../lib/dedupeKeys";
 import { useConfirmGate } from "../../components/ConfirmValidation";
 import { AML_GAP_SCENARIOS, AML_GAP_GT_SEED, AmlGapScenarioSeed, AmlGapGtSeed } from "./aml-gap.seed.gen";
+import { traduire, langue } from "../../lib/i18n";
 
 // Écran AML Gap Wave 1 (R340–R377, blocs 50–56) — onglet du Compliance Center. Trois vues :
 //  • Règles : le référentiel des 38 scénarios (familles = thèmes FilterBar) + cas GT enrichis (R-FB) ;
@@ -22,6 +23,11 @@ const FAM_LABEL: Record<string, string> = {
   TB: "TBML", CB: "Correspondent Banking", PF: "Prolifération", IA: "Immobilier & Art", AN: "Analytique 2G",
 };
 const GREEN = "#4A6B28", AMBER = "#C9A227", RED = "#B5483C", INK = "#1A2410", MUTE = "#8A8F82", LINE = "#E6E9DF";
+
+// i18n (R323–R327 + AR « Both ») : la FAMILLE (chrome) est traduite par le dictionnaire ; lu à chaque
+// rendu (langue()) — le shell re-rend au changement de langue ; AR → repli FR. Le CONTENU des règles
+// (nom/desc) reste affiché tel quel (FR seed) — traduction servie par l'API à venir (SPEC-I18N §3).
+const famLbl = (fam: string) => traduire(langue())(FAM_LABEL[fam] || fam);
 
 type Signal = {
   id: string; scenarioCode: string; ruleRef: string; famille: string; clientId: string | null;
@@ -103,7 +109,7 @@ function ReglesTab() {
         filters={[
           { id: "fam", label: "Famille", value: fam, allValue: "ALL", onChange: setFam,
             options: ([["ALL", "Toutes familles"]] as [string, string][]).concat(
-              Object.keys(FAM_LABEL).map((f) => [f, `${FAM_LABEL[f]} · ${famCount[f] || 0}`] as [string, string])) },
+              Object.keys(FAM_LABEL).map((f) => [f, `${famLbl(f)} · ${famCount[f] || 0}`] as [string, string])) },
           { id: "niveau", label: "Niveau", value: niveau, allValue: "ALL", onChange: setNiveau,
             options: [["ALL", "Tous niveaux"], ["1", "Niveau 1"], ["2", "Niveau 2"]] },
           { id: "bloq", label: "Bloquant", value: bloq, allValue: "ALL", onChange: setBloq,
@@ -130,7 +136,7 @@ function ReglesTab() {
               <div style={{ fontSize: 11.5, color: "#555", lineHeight: 1.5, marginBottom: 8 }}>{s.desc}</div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 10.5, color: MUTE }}>
                 <span style={{ fontFamily: "monospace", color: GREEN, fontWeight: 700 }}>{s.ruleRef}</span>
-                <span>· {FAM_LABEL[s.famille]}</span>
+                <span>· {famLbl(s.famille)}</span>
                 <span style={{ marginLeft: "auto" }}>{badge(`${tp} TP · ${fp} FP`, "#EEF3E6", GREEN)}</span>
               </div>
               {open && (
@@ -206,7 +212,7 @@ function SignauxTab() {
             options: [["ALL", "Tous statuts"], ["NEW", "Nouveau"], ["UNDER_REVIEW", "En revue"], ["TP", "TP"], ["FP", "FP"], ["ESCALATED", "Escaladé"]] },
           { id: "fam", label: "Famille", value: fam, allValue: "ALL", onChange: setFam,
             options: ([["ALL", "Toutes familles"]] as [string, string][]).concat(
-              Object.keys(FAM_LABEL).map((f) => [f, FAM_LABEL[f]] as [string, string])) },
+              Object.keys(FAM_LABEL).map((f) => [f, famLbl(f)] as [string, string])) },
           { id: "niveau", label: "Niveau", value: niveau, allValue: "ALL", onChange: setNiveau,
             options: [["ALL", "Tous niveaux"], ["1", "Niveau 1"], ["2", "Niveau 2"]] },
           { id: "bloq", label: "Bloquant", value: bloq, allValue: "ALL", onChange: setBloq,
@@ -227,7 +233,7 @@ function SignauxTab() {
               <tr key={s.id} style={{ borderBottom: `1px solid #F0F0EA` }}>
                 <td style={{ padding: "9px 12px", fontFamily: "monospace", fontWeight: 700, color: GREEN }}>{s.ruleRef}{s.blocking && " ⛔"}</td>
                 <td style={{ padding: "9px 12px" }}>{s.scenarioCode}</td>
-                <td style={{ padding: "9px 12px", color: "#555" }}>{FAM_LABEL[s.famille] || s.famille}</td>
+                <td style={{ padding: "9px 12px", color: "#555" }}>{famLbl(s.famille)}</td>
                 <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 11, color: MUTE }}>{s.clientId || "—"}</td>
                 <td style={{ padding: "9px 12px" }}>{s.niveau != null ? "N" + s.niveau : "—"}</td>
                 <td style={{ padding: "9px 12px" }}>{
