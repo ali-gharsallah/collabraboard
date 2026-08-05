@@ -61,4 +61,8 @@ export class AmlGapController {
   // Contrôle data-quality (GV-03, R376) : complétude des champs critiques ; sous le seuil → signal
   // DQ_DEGRADED visible (jamais silencieux). { flux:[…], champsCritiques:[…], dependances? } → rapport.
   @Post("eval/dq") dq(@Req() r: any, @Body() b: any) { return this.worker.controleDQ(r.ctx, b); }
+
+  // Revue annuelle de calibrage (GV-04, R377) : matrice de couverture × performance × écarts.
+  // Rôles compliance (four-eyes) ; le visa + l'archivage GED restent des actes humains.
+  @Post("eval/calibrage-annuel") calibrage(@Req() r: any) { return this.worker.revueCalibrageAnnuelle(r.ctx); }
 }

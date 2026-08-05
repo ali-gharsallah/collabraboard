@@ -242,8 +242,23 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   `fat-aml-dq` **4/4** (ordonnateur 92 %<98 % ⇒ DQ_DEGRADED + scénarios dépendants ; 100 % ⇒ aucun
   signal, rapport rendu ; idempotence ; `champsCritiques` vide ⇒ 400).
 
-Bloc 56 (gouvernance du tuning) désormais opérationnel : **GV-01 BTL** ✓, **GV-02 backtest par
-version** ✓, **GV-03 DQ** ✓ — reste GV-04 (revue annuelle de calibrage, consolidation de rapport).
+- **Revue annuelle de calibrage (GV-04, R377)** : `AmlEvalService.revueCalibrageAnnuelle`
+  (`POST /v1/aml/eval/calibrage-annuel`, rôles compliance four-eyes) consolide la COUVERTURE (64
+  scénarios × 12 familles, matrice `matrice_couverture` = GAFI+OBA-FINMA), la PERFORMANCE par
+  scénario (corpus GT + signaux live TP/FP/NEW/ESCALATED, version en vigueur) et les ÉCARTS (angles
+  morts sans matière ; **placeholders documentés** laissés vides par la spec — surfacés, jamais
+  comblés ni comptés comme perf). R44 : le système consolide et propose ; le visa four-eyes +
+  l'archivage GED restent humains. Émet `tuning.calibrage.annuel`. Vérifié : e2e `fat-aml-calibrage`
+  **4/4** (couverture 64/64 · 12 familles, placeholder GV-04 surfacé hors perf, TP live remonté, RM
+  refusé). **Bloc 56 gouvernance COMPLET** : GV-01 BTL ✓, GV-02 backtest-version ✓, GV-03 DQ ✓,
+  GV-04 calibrage ✓.
+- **Correctif d'intégrité (append-only) mis au jour par l'e2e réel** : `aml_gap_signals` avait été
+  ajouté à tort à la boucle d'immuabilité append-only (post-deploy-v2.sql), mais le signal
+  TRANSITIONNE (NEW→TP/FP à la qualification humaine R44) — l'`UPDATE` du qualificateur était donc
+  bloqué au niveau DB (jamais détecté : le harnais fakePrisma n'a pas les triggers, aucun e2e ne
+  qualifiait). Corrigé comme `risk_cases`/`tx_verdicts` : la table est un agrégat qui transitionne,
+  la vérité append-only étant le journal `domain_events` (aml.signal.raised/qualified). Isolation RLS
+  d'`aml_gap_signals` inchangée ; recette `rls-runtime` verte.
 
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (le pont
   HTTP/DI couvre le bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Lots dédiés restants :

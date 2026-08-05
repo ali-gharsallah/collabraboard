@@ -30,6 +30,8 @@ import { OBSERVATIONS_2G } from "./aml-2g-fixtures";
 
 type Ctx = { tenantId: string; userId: string; role: string };
 const BLOC_ANALYTIQUE_2G = 61;
+// Rôles habilités à générer la revue de calibrage (acte de gouvernance, four-eyes — R13).
+const ROLES_GOUV = new Set(["CO", "CO_SR", "MLRO", "ADMIN"]);
 
 @Injectable()
 export class AmlEvalService {
@@ -179,6 +181,76 @@ export class AmlEvalService {
       scenarioCode: dto.scenarioCode, seuilKey, seuil, bandePct: [lowPct, highPct], bande: { low, high }, taux,
       populationTotal: population.length, populationInBand: inBand.length, sampleSize, sample,
       next: "revue Compliance — un TP sous seuil ⇒ proposer une baisse via backtest-version (décision humaine)",
+    };
+  }
+
+  /**
+   * Revue annuelle de calibrage (GV-04, R377) : consolide la COUVERTURE (matrice typologies ×
+   * scénarios, par famille), la PERFORMANCE par scénario (corpus GT + signaux live TP/FP) et les
+   * ÉCARTS (angles morts sans matière ; placeholders documentés laissés vides par la spec — jamais
+   * comblés, R « never invent »). R44 : le système CONSOLIDE et propose un rapport ; le visa
+   * four-eyes + l'archivage GED restent des actes humains. Émet `tuning.calibrage.annuel`.
+   */
+  async revueCalibrageAnnuelle(ctx: Ctx) {
+    if (!ROLES_GOUV.has(ctx.role))
+      throw new BadRequestException(`[R13] rôle « ${ctx.role} » non habilité à générer la revue de calibrage`);
+    const gv = await this.gap.versionEnVigueur(ctx, "GV-04");
+    const matriceReference = String((gv.params as any).matrice_couverture ?? "GAFI+OBA-FINMA");
+
+    const [gtRows, sigRows, scenRows] = await Promise.all([
+      this.prisma.groundTruthCase.findMany({ where: { tenantId: ctx.tenantId } }),
+      this.prisma.amlGapSignal.findMany({ where: { tenantId: ctx.tenantId } }),
+      this.prisma.amlScenario.findMany({ where: { tenantId: ctx.tenantId, active: true } }),
+    ]);
+    const versionOf = new Map<string, number>();
+    for (const s of scenRows as any[]) versionOf.set(s.code, Math.max(versionOf.get(s.code) ?? 1, s.version));
+
+    const scenarios = AML_GAP_REFERENTIEL.map((r) => {
+      const gt = gtRows.filter((g: any) => g.scenarioCode === r.id);
+      const placeholders = gt.filter((g: any) => (g.payload as any)?.placeholder === true).length;
+      const gtReels = gt.length - placeholders;
+      const gtTp = gt.filter((g: any) => g.label === "TP" && (g.payload as any)?.placeholder !== true).length;
+      const sig = sigRows.filter((s: any) => s.scenarioCode === r.id);
+      const live = {
+        total: sig.length,
+        tp: sig.filter((s: any) => s.status === "TP").length,
+        fp: sig.filter((s: any) => s.status === "FP").length,
+        nouveaux: sig.filter((s: any) => s.status === "NEW").length,
+        escalades: sig.filter((s: any) => s.status === "ESCALATED").length,
+      };
+      return {
+        code: r.id, ruleRef: r.ruleRef, famille: r.famille, bloc: r.bloc, niveau: r.niveau, blocking: r.blocking,
+        version: versionOf.get(r.id) ?? 1,
+        gt: { total: gtReels, tp: gtTp, fp: gtReels - gtTp, placeholders },
+        live, couvert: gtReels > 0 || sig.length > 0,
+      };
+    });
+
+    const parFamille: Record<string, { total: number; couverts: number; gtTp: number; gtFp: number; liveTp: number; liveFp: number }> = {};
+    for (const s of scenarios) {
+      const f = parFamille[s.famille] ?? (parFamille[s.famille] = { total: 0, couverts: 0, gtTp: 0, gtFp: 0, liveTp: 0, liveFp: 0 });
+      f.total++; if (s.couvert) f.couverts++;
+      f.gtTp += s.gt.tp; f.gtFp += s.gt.fp; f.liveTp += s.live.tp; f.liveFp += s.live.fp;
+    }
+    const anglesMorts = scenarios.filter((s) => !s.couvert).map((s) => s.code);
+    const placeholdersDocumentes = scenarios.filter((s) => s.gt.placeholders > 0)
+      .map((s) => ({ code: s.code, ruleRef: s.ruleRef, count: s.gt.placeholders }));
+    const couverts = scenarios.filter((s) => s.couvert).length;
+    const couverture = { totalScenarios: scenarios.length, couverts, sansMatiere: anglesMorts.length,
+      tauxCouverture: scenarios.length ? couverts / scenarios.length : 0, familles: Object.keys(parFamille).length };
+
+    await this.prisma.$transaction(async (tx: Tx) => {
+      await emitEvent(tx, ctx.tenantId, "tuning.calibrage.annuel", "GV-04", {
+        matriceReference, ...couverture, anglesMorts: anglesMorts.length,
+        placeholders: placeholdersDocumentes.length, par: ctx.userId,
+      });
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_CALIBRAGE_ANNUEL",
+      `${couverts}/${scenarios.length} scénarios couverts, ${anglesMorts.length} angle(s) mort(s)`);
+    return {
+      matriceReference, generePar: ctx.userId, couverture, parFamille,
+      anglesMorts, placeholdersDocumentes, scenarios,
+      visa: { requis: true, note: "revue à VISER four-eyes puis ARCHIVER en GED — acte humain (R44)" },
     };
   }
 

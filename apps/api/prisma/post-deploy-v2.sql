@@ -25,7 +25,9 @@ DO $$ DECLARE t text; BEGIN
     'tenant_param_changes',                               -- R126 (un paramètre est une règle)
     'risk_case_notes',                                    -- R134 (l'instruction append-only)
     'aml_signals',                                        -- R189→R206 (le signal AML est un fait)
-    'aml_gap_signals',                                    -- R340→R377 (AML Gap Wave 1 : le signal est un fait append-only)
+    -- NB : aml_gap_signals N'EST PAS append-only — c'est un agrégat qui TRANSITIONNE (NEW→TP/FP à
+    -- la qualification humaine R44, comme risk_cases/tx_verdicts). La vérité append-only est le
+    -- journal domain_events (aml.signal.raised, aml.signal.qualified), lui immuable.
     'islamic_signals',                                    -- R207→R221 (le signal Shariah est un fait)
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (ledgers Shariah, append-only)
     'certifications', 'training_attestations',            -- R234 (MOD-43 : certifs & attestations append-only)
