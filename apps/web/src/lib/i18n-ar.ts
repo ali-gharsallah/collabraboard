@@ -34,5 +34,30 @@ const NAV_AR: Record<string, string> = {
   "Administration Éditeur": "إدارة المحرّر",
 };
 
+// Sous-nav ÉDITEUR/ADMIN (53 libellés — `EXT` côté i18n.ts). Passe MACHINE MSA (SPEC-I18N §2).
+// Produits/acronymes internationaux conservés (CPSI, Olivia, MROS, KYC, BRM, SSO, IAM, BAT, AML Gap).
+const EXT_AR: Record<string, string> = {
+  "Profilage CPSI": "تنميط CPSI", "Transactions & Marchés": "المعاملات والأسواق", "Audit": "التدقيق",
+  "Recette client (BAT)": "قبول العميل (BAT)", "Bac à sable KYC": "بيئة اختبار KYC",
+  "Bac à sable BRM": "بيئة اختبار BRM", "Bac à sable Central File": "بيئة اختبار الملف المركزي",
+  "Bac à sable Workflow": "بيئة اختبار سير العمل", "Command Center": "مركز القيادة", "Onboarding": "الإدماج",
+  "Screening avancé": "الفرز المتقدّم", "File d'alertes": "قائمة التنبيهات", "Dossiers de risque": "ملفات المخاطر",
+  "Personnes / UBO": "الأشخاص / المستفيد الحقيقي", "Chgt circonstances": "تغيّر الظروف",
+  "Custody & TA": "الحفظ ووكيل التحويل", "Settlement": "التسوية", "Reporting MROS": "إبلاغ MROS",
+  "Pièces (GED)": "المستندات (إدارة الوثائق)", "GED / coffre": "إدارة الوثائق / الخزنة", "Workflow": "سير العمل",
+  "Paramétrage": "الإعداد", "Config & Go-live": "التهيئة والإطلاق",
+  "Référentiel AML": "المرجعية لمكافحة غسل الأموال", "Bac à sable AML": "بيئة اختبار مكافحة غسل الأموال",
+  "Bac à sable Onboarding": "بيئة اختبار الإدماج", "Ports": "المنافذ", "Workflow Instances": "حالات سير العمل",
+  "Formations": "التدريب", "Octopulse OpRisk": "Octopulse OpRisk", "Rejeu KYC à date": "إعادة تشغيل KYC بتاريخ",
+  "Règles AML": "قواعد مكافحة غسل الأموال", "AML Gap": "AML Gap", "Finance Islamique": "التمويل الإسلامي",
+  "CPSI · Profil": "CPSI · الملف", "CPSI · Segmentation": "CPSI · التقسيم", "CPSI · Risk cases": "CPSI · ملفات المخاطر",
+  "CPSI · Barèmes": "CPSI · المقاييس", "CPSI · Guide": "CPSI · الدليل", "Olivia": "Olivia",
+  "Olivia · Runs": "Olivia · التشغيلات", "Sections & droits": "الأقسام والصلاحيات", "Profils AR": "ملفات AR",
+  "Profils GAR": "ملفات GAR", "Registre paramètres": "سجل المعلمات", "Matrice documentaire": "مصفوفة المستندات",
+  "Types de CoC": "أنواع CoC", "Bacs à sable": "بيئات الاختبار", "Audit & transport": "التدقيق والنقل",
+  "Audit IT": "تدقيق تقنية المعلومات", "Utilisateurs & rôles": "المستخدمون والأدوار", "Guide IAM": "دليل IAM",
+  "SSO / Fédération": "SSO / الاتحاد",
+};
+
 // Dictionnaire AR complet (clés FR → AR) fusionné dans DICT.AR au chargement.
-export const AR_PACK: Record<string, string> = { ...NAV_AR, ...AMLGAP_FAMILLES_AR, ...AMLGAP_UI_AR };
+export const AR_PACK: Record<string, string> = { ...NAV_AR, ...EXT_AR, ...AMLGAP_FAMILLES_AR, ...AMLGAP_UI_AR };

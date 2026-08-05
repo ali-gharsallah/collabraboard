@@ -448,3 +448,15 @@ initial** — il est téléchargé **à la demande** par les seuls utilisateurs 
 *Reste (relecture pro AR avant BAT)* : validation des passes machine ; AR de la sous-nav ÉDITEUR
 (`EXT`) + écrans (`ECRANS`) + contenu des règles (à ajouter dans le même pack paresseux) ; colonne AR
 au glossaire ; audit RTL par écran.
+
+### 5.7 — AR de la sous-nav ÉDITEUR (`EXT`) dans le pack paresseux (machine, 2026-08-05)
+
+Extension du pack de langue paresseux (§5.6) : les **53 libellés de la sous-nav ÉDITEUR/ADMIN**
+(`EXT`) passent en arabe → **le sidebar complet** (nav de base §5.5 + sous-nav éditeur) s'affiche en
+arabe. Passe **MACHINE (MSA)**, produits/acronymes conservés (CPSI, Olivia, MROS, KYC, BRM, SSO, IAM,
+BAT, AML Gap). **Coût bundle core = 0** : `EXT_AR` rejoint `AR_PACK` dans `lib/i18n-ar.ts` (chunk
+paresseux). Reste sans AR : écrans (`ECRANS`) + contenu des règles → repli FR (prochaine passe).
+
+- **Gardes** : FE-I18N (sous-nav AR servie : `Profilage CPSI`→تنميط CPSI ; `ECRANS` toujours repli
+  FR — `Se reconnecter`). vitest **104/104**, **core 219,4/220** + **pack langue 2,9 kB gz** (à la
+  demande), cliquet EN/DE/IT **0 écart**, `vite build` OK, eslint OK.

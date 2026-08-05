@@ -1328,8 +1328,8 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(i18n.traduire("AR", { dev: false })("Compliance & Risque")).toBe("الامتثال والمخاطر");  // NAV
     expect(i18n.traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
     expect(i18n.traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
-    // Hors périmètre de cette passe (sous-nav ÉDITEUR/écrans, contenu règles) → repli FR (jamais un trou).
-    expect(i18n.traduire("AR", { dev: false })("Profilage CPSI")).toBe("Profilage CPSI");
+    expect(i18n.traduire("AR", { dev: false })("Profilage CPSI")).toBe("تنميط CPSI");               // sous-nav ÉDITEUR (EXT)
+    // Hors périmètre de cette passe (contenus d'écrans ECRANS, contenu des règles) → repli FR (jamais un trou).
     expect(i18n.traduire("AR", { dev: false })("Se reconnecter")).toBe("Se reconnecter");
   });
 
