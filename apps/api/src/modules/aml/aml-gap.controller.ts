@@ -45,4 +45,8 @@ export class AmlGapController {
   // Worker aml-eval — backtest du corpus semé (blocs 50–60) : mesure le rappel (R39), n'inonde pas
   // l'inbox. Bloc 61 (2G) différé (observation absente du corpus). → rapport { recall, parFamille… }.
   @Post("eval/backtest") backtest(@Req() r: any) { return this.worker.backtest(r.ctx); }
+
+  // Détection LIVE : faits réels d'un client → signaux persistés (blocs 50–60). Le bloc 61 passe par
+  // evaluate-2g. { clientId, facts, scenarios?, date? } → { evaluated, raised, signals, results }.
+  @Post("eval/client") evalClient(@Req() r: any, @Body() b: any) { return this.worker.evaluerClient(r.ctx, b); }
 }

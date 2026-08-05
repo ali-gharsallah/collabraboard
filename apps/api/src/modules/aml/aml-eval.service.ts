@@ -35,6 +35,50 @@ export class AmlEvalService {
   constructor(private prisma: PrismaService, private audit: AuditService, private gap: AmlGapService) {}
 
   /**
+   * Détection LIVE : évalue les FAITS RÉELS d'un client contre les scénarios de détection des blocs
+   * 50–60 (paramètres tenant en vigueur, R29) et PERSISTE un signal pour chaque déclenchement
+   * (chemin commun `enregistrerSignal` : append-only, idempotent, événement, `aml.block.requested`
+   * pour un scénario bloquant). R44 : le moteur mesure et explique, l'humain qualifie (TP/FP dans
+   * l'inbox). Un scénario dont les faits requis sont absents ne déclenche pas (NaN → false) — aucun
+   * faux positif par omission. Le bloc 61 (2G) s'évalue par `evaluer2G` (observation + pont CPSI),
+   * pas ici ; les campagnes/gouvernance (GV) ne sont pas per-client.
+   */
+  async evaluerClient(ctx: Ctx, dto: { clientId: string; facts?: Record<string, unknown>; scenarios?: string[]; date?: string }) {
+    if (!dto?.clientId) throw new BadRequestException("clientId requis");
+    const codes = dto.scenarios?.length
+      ? dto.scenarios
+      : AML_GAP_REFERENTIEL.filter((r) => r.bloc >= 50 && r.bloc <= 60 && r.kind === "detection").map((r) => r.id);
+    const facts = { clientId: dto.clientId, asOf: new Date().toISOString(), tenantId: ctx.tenantId, ...(dto.facts ?? {}) };
+    const results: { code: string; ruleRef: string; raised: boolean; blocking: boolean; explanation: string }[] = [];
+    const signals: any[] = [];
+
+    for (const code of codes) {
+      const def = AML_GAP_REFERENTIEL.find((r) => r.id === code);
+      if (!def) throw new BadRequestException(`[R340] scénario inconnu : ${code}`);
+      if (def.bloc === BLOC_ANALYTIQUE_2G)
+        throw new BadRequestException(`[décision 4] ${code} (Analytique 2G) s'évalue par POST /v1/aml/signals/evaluate-2g`);
+      const detector = DETECTORS[code];
+      if (!detector) continue;                                   // gouvernance/campagne sans détecteur per-client
+      const v = await this.gap.versionEnVigueur(ctx, code, dto.date ? new Date(dto.date) : new Date());
+      const res = await evaluateScenario(code, facts, v.params);
+      results.push({ code, ruleRef: res.ruleRef, raised: res.raised, blocking: res.blocking, explanation: res.explanation });
+      if (res.raised) {
+        // Idempotence stable : les faits scellés dérivent des FAITS D'ENTRÉE + de la mesure, jamais
+        // de l'instant d'évaluation. On retire `asOf` (horodatage volatile) du payload de détection
+        // — sinon deux évaluations des mêmes faits produiraient deux idemKey distincts (doublon).
+        const { asOf: _asOf, ...detection } = res.payload as Record<string, unknown>;
+        const signal = await this.gap.enregistrerSignal(ctx, {
+          scenarioCode: code, clientId: dto.clientId,
+          faits: { facts: dto.facts ?? {}, detection, explanation: res.explanation }, date: dto.date,
+        });
+        signals.push(signal);
+      }
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_EVAL_CLIENT", `${dto.clientId}: ${signals.length}/${results.length}`);
+    return { clientId: dto.clientId, evaluated: results.length, raised: signals.length, signals, results };
+  }
+
+  /**
    * Backtest du corpus GT semé (blocs 50–60) : rejoue chaque cas à travers le moteur avec les
    * paramètres tenant en vigueur (R29) et mesure le rappel global + par famille. Les faits
    * déclencheurs proviennent du détecteur du scénario (source unique des suites) — le worker ne

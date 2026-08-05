@@ -197,9 +197,18 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   un rapport `{ recall, parFamille, deferred2G, misses }`. Bloc 61 **différé** (le corpus ne porte
   pas d'observation statistique). `POST /v1/aml/eval/backtest`. Vérifié : e2e `fat-aml-eval` **3/3**
   (rappel 100 %, 0 signal inbox + événement émis, 400 si corpus non semé) contre Postgres réel.
+- **Détection LIVE** (`AmlEvalService.evaluerClient`, `POST /v1/aml/eval/client`) : les FAITS RÉELS
+  d'un client sont évalués contre les scénarios de détection des blocs 50–60 (paramètres tenant en
+  vigueur, R29) et chaque déclenchement PERSISTE un signal dans l'inbox par le chemin commun
+  (`enregistrerSignal` — append-only, idempotent, `aml.block.requested` si bloquant). Un scénario
+  dont les faits requis sont absents ne déclenche pas (NaN → false, aucun faux positif par omission).
+  Idempotence **stable** : les faits scellés dérivent des faits d'entrée + de la mesure, jamais de
+  l'instant d'évaluation (l'`asOf` volatile est retiré du payload avant le hash — sinon deux
+  évaluations identiques créeraient deux signaux). Bloc 61 refusé ici (→ `evaluate-2g`). Vérifié :
+  e2e `fat-aml-live` **6/6** (déclenchement + inbox, sous-seuil silencieux, bloquant → block.requested,
+  idempotence, balayage multi-scénarios, garde 2G).
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (elles
-  importent `evaluateScenario`/meta.deferred, pas la porte 2G — le pont passe par HTTP/DI). Au-dessus
-  de ce cœur d'évaluation : **détection LIVE** (faits réels d'un client → signaux persistés),
+  importent `evaluateScenario`/meta.deferred, pas la porte 2G). Au-dessus du cœur d'évaluation :
   **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit),
-  **backtest par version** + **BTL** (below-the-line) + statut **DQ** — chacun un lot dédié ; et,
-  pour verdir le bloc 61 en masse, des **fixtures d'observation 2G** par cas GT.
+  **backtest par version** + **BTL** (below-the-line) + statut **DQ** (gouvernance GV) — chacun un
+  lot dédié ; et, pour verdir le bloc 61 en masse, des **fixtures d'observation 2G** par cas GT.
