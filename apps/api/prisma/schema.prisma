@@ -59,6 +59,7 @@ model Client {
   externalRef String?  @map("external_ref")
   name        String
   structure   String
+  dateNaissance String? @map("date_naissance")            // R263 : DOB du client — discriminant d'homonymie du screening
   country     String   @db.Char(2)
   riskLevel   String   @default("MEDIUM") @map("risk_level")
   rmUserId    String?  @map("rm_user_id") @db.Uuid
@@ -364,6 +365,7 @@ model ScreeningHit {
   statut        String   @default("BRUT")                 // BRUT | QUALIFIE
   channel       String?                                    // AML Gap bloc 50 : ONBOARDING|FLOW|PERPETUAL|CFT
   matchScript   String?  @map("match_script")             // AML Gap R345 : script normalisé du match (multi-scripts)
+  detail        Json?                                      // R266 : décomposition explicable {via, nameScore, typePenalty, dobContribution}
   at            DateTime @default(now())
   qualification ScreeningQualification?
   @@index([tenantId, statut])

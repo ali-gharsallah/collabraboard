@@ -1,30 +1,21 @@
 /**
  * Workflow de qualification du screening — R100 → R103 (ratifiées le 15.07.2026).
  *
- * Le rapprochement de noms est un problème résolu ; ce module traite ce qui ne l'est pas :
- * ce qu'on FAIT d'un hit, et comment on le prouve trois ans plus tard.
- *
- * Rien ici n'est propre au screening : événement tracé, motif obligatoire (R7), date d'effet (R29),
- * rejeu (R48/R49). C'est le moteur existant, branché sur un déclencheur de plus.
+ * Le rapprochement de noms délègue au moteur fin (@olive/screening-engine, R263) ; ce module traite
+ * ce qui n'est pas résolu par un algorithme : ce qu'on FAIT d'un hit, et comment on le prouve trois
+ * ans plus tard. Rien ici n'est propre au screening : événement tracé, motif obligatoire (R7), date
+ * d'effet (R29), rejeu (R48/R49). C'est le moteur existant, branché sur un déclencheur de plus.
  */
 import { createHash } from "crypto";
+import { rapprocherDetail } from "@olive/screening-engine";
 
 export type Verdict = "VRAI_POSITIF" | "FAUX_POSITIF";
 export interface EntreeListe { uid: string; nom_complet: string; alias?: string[]; date_naissance?: string | null; type?: string; }
-export interface Hit { id: string; clientId: string; entreeUid: string; score: number; listeVersion: string; entreeHash: string; at: string; statut: "BRUT" | "QUALIFIE"; }
+export interface HitDetail { via: string; nameScore: number; typePenalty: number; dobContribution: number; }
+export interface Hit { id: string; clientId: string; entreeUid: string; score: number; listeVersion: string; entreeHash: string; at: string; statut: "BRUT" | "QUALIFIE"; detail?: HitDetail; }
 export interface Qualification { hitId: string; verdict: Verdict; motif: string; par: string; at: string; entreeHash: string; listeVersion: string; }
 export interface Run { id: string; perimetre: number; liste: string; listeVersion: string; at: string; seuil: number; prefiltre: Record<string, number>; nbHits: number; }
 export interface Proposition { type: string; hitId: string; motif: string; }
-
-/** Rapprochement minimal — le moteur fin vit ailleurs (services/screening). */
-function scoreSimple(nom: string, e: EntreeListe): number {
-  const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  const q = norm(nom).split(" ").sort().join(" ");
-  const candidats = [e.nom_complet, ...(e.alias || [])];
-  let best = 0;
-  for (const c of candidats) if (norm(c).split(" ").sort().join(" ") === q) best = 100;
-  return best;
-}
 
 export class ScreeningQualificationService {
   hits: Hit[] = [];
@@ -47,19 +38,21 @@ export class ScreeningQualificationService {
   /**
    * R100 — produit des hits BRUTS (ni alertes, ni cases).
    * R103 — enregistre la trace de passage, même sans aucun hit, avec le réglage du pré-filtre.
+   * R263 — le score est le COMPOSITE du moteur fin (rapprocherDetail : meilleur candidat de la liste).
    */
   screener(clients: any[], entries: EntreeListe[], cfg: { seuil: number; prefiltre: Record<string, number>; liste: string; version: string }): { run: Run; hits: Hit[] } {
     const at = new Date().toISOString();
     const produits: Hit[] = [];
     for (const c of clients) {
-      for (const e of entries) {
-        const score = scoreSimple(c.name, e);
-        if (score < cfg.seuil) continue;
-        const hash = this.hashEntree(e);
-        if (this.estEcarte(c.id, e, cfg.version)) continue;      // R102 : whitelist encore valable
-        const h: Hit = { id: "HIT-" + ++this.seq, clientId: c.id, entreeUid: e.uid, score, listeVersion: cfg.version, entreeHash: hash, at, statut: "BRUT" };
-        produits.push(h); this.hits.push(h);
-      }
+      const requete = { nom: c.name, dob: c.date_naissance ?? undefined, est_entite: c.type ? c.type !== "PP" : false };
+      const r = rapprocherDetail(requete, entries as any, cfg.seuil);   // R263 : délègue au moteur fin
+      if (!r) continue;
+      const e = r.entree as unknown as EntreeListe;
+      const hash = this.hashEntree(e);
+      if (this.estEcarte(c.id, e, cfg.version)) continue;              // R102 : whitelist encore valable
+      const detail: HitDetail = { via: r.detail.via, nameScore: Math.round(r.detail.nameScore), typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution };
+      const h: Hit = { id: "HIT-" + ++this.seq, clientId: c.id, entreeUid: e.uid, score: r.score, listeVersion: cfg.version, entreeHash: hash, at, statut: "BRUT", detail };
+      produits.push(h); this.hits.push(h);
     }
     const run: Run = { id: "RUN-" + ++this.seq, perimetre: clients.length, liste: cfg.liste, listeVersion: cfg.version, at, seuil: cfg.seuil, prefiltre: { ...cfg.prefiltre }, nbHits: produits.length };
     this.runs.push(run);
