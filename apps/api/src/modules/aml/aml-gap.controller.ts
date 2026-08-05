@@ -57,4 +57,8 @@ export class AmlGapController {
   // Campagne below-the-line (GV-01, R374) : échantillon stratifié des transactions sous seuil pour
   // revue Compliance. { scenarioCode, population:[{ref,metric}] } → échantillon + tuning.btl.campagne.
   @Post("eval/btl") btl(@Req() r: any, @Body() b: any) { return this.worker.campagneBTL(r.ctx, b); }
+
+  // Contrôle data-quality (GV-03, R376) : complétude des champs critiques ; sous le seuil → signal
+  // DQ_DEGRADED visible (jamais silencieux). { flux:[…], champsCritiques:[…], dependances? } → rapport.
+  @Post("eval/dq") dq(@Req() r: any, @Body() b: any) { return this.worker.controleDQ(r.ctx, b); }
 }

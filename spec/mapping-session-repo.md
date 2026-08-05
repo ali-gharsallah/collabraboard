@@ -233,7 +233,19 @@ Le **pont** est livré et vérifié de bout en bout contre Postgres + Redis + le
   (boucle fermée avec GV-02). Émet `tuning.btl.campagne`. Bloc 61 refusé (campagne CPSI). Vérifié :
   e2e `fat-aml-btl` **4/4** (bande seule échantillonnée, taille `ceil(inBand×taux)`, déterminisme,
   bande vide ⇒ échantillon vide, garde 2G).
+- **Gouvernance du dispositif — contrôle Data-Quality (GV-03, R376)** : `AmlEvalService.controleDQ`
+  (`POST /v1/aml/eval/dq`) mesure la COMPLÉTUDE des champs critiques d'un lot de flux ; sous
+  `completude_min` (R-Q GV-03, 98 %), les scénarios DÉPENDANTS (`dependances` tenant) sont marqués
+  « dégradés » et un signal **DQ_DEGRADED (Niveau 1, ops)** est PERSISTÉ dans l'inbox — visible,
+  JAMAIS silencieux (R39 : un scénario aveugle = faux négatif silencieux). Le rapport `parChamp` est
+  toujours rendu (mesure), dégradation ou non ; idempotent (R48). Émet `dq.degraded`. Vérifié : e2e
+  `fat-aml-dq` **4/4** (ordonnateur 92 %<98 % ⇒ DQ_DEGRADED + scénarios dépendants ; 100 % ⇒ aucun
+  signal, rapport rendu ; idempotence ; `champsCritiques` vide ⇒ 400).
+
+Bloc 56 (gouvernance du tuning) désormais opérationnel : **GV-01 BTL** ✓, **GV-02 backtest par
+version** ✓, **GV-03 DQ** ✓ — reste GV-04 (revue annuelle de calibrage, consolidation de rapport).
+
 - **Ce qui reste** : les suites **Gherkin Nest du bloc 61** restent volontairement rouges (le pont
-  HTTP/DI couvre le bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Au-dessus du cœur
-  d'évaluation : **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine
-  du rate-limit) et le statut **DQ** (data-quality pré-conditions, GV-03) — chacun un lot dédié.
+  HTTP/DI couvre le bloc 61, prouvé par `fat-aml-gap-2g` + le backtest). Lots dédiés restants :
+  **dispatch asynchrone** (file Redis quand `REDIS_URL`, in-process sinon — doctrine du rate-limit)
+  et **GV-04** (revue annuelle de calibrage : matrice de couverture typologique × scénarios).

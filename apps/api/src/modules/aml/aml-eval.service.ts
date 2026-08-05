@@ -80,6 +80,59 @@ export class AmlEvalService {
   }
 
   /**
+   * Contrôle Data-Quality (GV-03, R376) : pré-condition des scénarios. Mesure la COMPLÉTUDE des
+   * champs critiques d'un lot de flux ; sous `completude_min` (R-Q GV-03), les scénarios DÉPENDANTS
+   * sont marqués « dégradés » et un signal DQ_DEGRADED (Niveau 1, ops) est PERSISTÉ dans l'inbox —
+   * visible au dashboard Compliance, JAMAIS silencieux (esprit dead-letters, R39 : un scénario
+   * aveugle est un faux négatif silencieux). Le rapport est toujours rendu (mesure), qu'il y ait
+   * dégradation ou non. `dependances` = { champ: [scénarios] } (config tenant) — sinon la dégradation
+   * est signalée au niveau flux sans imputation par scénario.
+   */
+  async controleDQ(ctx: Ctx, dto: { flux?: Record<string, unknown>[]; champsCritiques?: string[]; dependances?: Record<string, string[]> }) {
+    const flux = dto?.flux ?? [];
+    const champs = dto?.champsCritiques ?? [];
+    if (!champs.length) throw new BadRequestException("champsCritiques requis (au moins un champ)");
+    const gv = await this.gap.versionEnVigueur(ctx, "GV-03");
+    const completudeMin = Number((gv.params as any).completude_min ?? 98);
+    const total = flux.length;
+    const present = (r: Record<string, unknown>, champ: string) => {
+      const v = r[champ];
+      return v !== null && v !== undefined && String(v).trim() !== "";
+    };
+    const parChamp = champs.map((champ) => {
+      const n = flux.filter((r) => present(r, champ)).length;
+      const completude = total ? (n / total) * 100 : 100;                        // lot vide → réputé complet
+      return { champ, present: n, total, completude, degrade: completude < completudeMin };
+    });
+    const degrades = parChamp.filter((c) => c.degrade);
+    const scenariosDegrades = [...new Set(degrades.flatMap((c) => dto.dependances?.[c.champ] ?? []))].sort();
+
+    let signal: any = null;
+    if (degrades.length) {
+      // « Jamais silencieux » : le flux dégradé DEVIENT un signal visible (Niveau 1 ops), pas un log.
+      signal = await this.gap.enregistrerSignal(ctx, {
+        scenarioCode: "GV-03", clientId: null,
+        faits: {
+          completudeMin, scenariosDegrades,
+          champsDegrades: degrades.map((c) => ({ champ: c.champ, completude: Number(c.completude.toFixed(2)) })),
+        },
+      });
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await emitEvent(tx, ctx.tenantId, "dq.degraded", "GV-03", {
+          champsDegrades: degrades.map((c) => c.champ), scenariosDegrades, completudeMin, par: ctx.userId,
+        });
+      });
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "AML_DQ_CONTROLE",
+      `${degrades.length} champ(s) dégradé(s) < ${completudeMin}% sur ${total} flux`);
+    return {
+      total, completudeMin, parChamp,
+      champsDegrades: degrades.map((c) => c.champ), scenariosDegrades,
+      degraded: degrades.length > 0, signal,
+    };
+  }
+
+  /**
    * Campagne Below-The-Line (GV-01, R374) : échantillonne les transactions JUSTE SOUS le seuil d'un
    * scénario pour revue Compliance — si des TP se cachent sous la ligne, le calibrage est trop haut.
    * Config de campagne = paramètres tenant de GV-01 (bande, taux d'échantillon) ; seuil = paramètre
