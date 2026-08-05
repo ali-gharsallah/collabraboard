@@ -1376,6 +1376,44 @@ describe("FE-LN — R326/R327 (solde 4 écarts, ratifié 2026-07-29) : marqueur 
     expect(deCH).toMatch(/['’]/);                                           // de-CH : apostrophe de groupement (variante ICU)
     expect(frCH).toMatch(/[\s ]/);                                     // fr-CH : espace de groupement (ICU ; le décimal CHF suisse reste le point)
   });
+
+  it("SPEC-I18N §3 : localeDe mappe la langue d'affichage sur sa locale de formatage (fr-CH/en-GB/de-CH/it-CH/ar)", async () => {
+    const { localeDe } = await import("../lib/i18n");
+    expect(localeDe("FR")).toBe("fr-CH");
+    expect(localeDe("EN")).toBe("en-GB");
+    expect(localeDe("DE")).toBe("de-CH");
+    expect(localeDe("IT")).toBe("it-CH");
+    // AR : chiffres arabes OCCIDENTAUX par défaut (spec) ; ORIENTAUX seulement sur opt-in tenant.
+    expect(localeDe("AR")).toBe("ar-u-nu-latn");
+    expect(localeDe("AR", { chiffresArabesOrientaux: true })).toBe("ar-u-nu-arab");
+  });
+
+  it("SPEC-I18N §3 : le NOMBRE suit la locale d'affichage — séparateurs par langue, AR en chiffres occidentaux", async () => {
+    const { formatNombre } = await import("../lib/i18n");
+    // en-GB : virgule de milliers ; de-CH : apostrophe ; fr-CH : espace (insécable/étroit).
+    expect(formatNombre(1234567, "EN")).toBe("1,234,567");
+    expect(formatNombre(1234567, "DE")).toMatch(/1['’]234['’]567/);
+    expect(formatNombre(1234567, "FR")).toMatch(/1[\s ]234[\s ]567/);
+    // AR par défaut : chiffres OCCIDENTAUX (0-9), jamais arabes-orientaux (٠-٩) — « jamais fabriqué ».
+    const arDefaut = formatNombre(2026, "AR");
+    expect(arDefaut).toMatch(/[0-9]/);                           // des chiffres occidentaux
+    expect(arDefaut).not.toMatch(/[٠-٩]/);                       // aucun chiffre arabe-oriental
+    // Opt-in tenant : chiffres arabes ORIENTAUX (٠١٢…).
+    expect(formatNombre(2026, "AR", { chiffresArabesOrientaux: true })).toMatch(/[٠-٩]/);
+  });
+
+  it("SPEC-I18N §3 : la DATE suit la locale d'affichage (ordre des champs par langue), AR en chiffres occidentaux", async () => {
+    const { formatDate } = await import("../lib/i18n");
+    const iso = "2026-03-09T00:00:00Z";
+    const en = formatDate(iso, "EN", { dateStyle: "short", timeZone: "UTC" });   // en-GB : jour/mois/année, séparateur « / »
+    const de = formatDate(iso, "DE", { dateStyle: "short", timeZone: "UTC" });   // de-CH : jour.mois.année, séparateur « . »
+    // On atteste l'ORDRE (jour, mois) et le SÉPARATEUR par locale — robuste au nombre de chiffres de l'année (ICU).
+    expect(en).toMatch(/^09\/03\/\d{2,4}$/);
+    expect(de).toMatch(/^09\.03\.\d{2,4}$/);
+    expect(en).not.toBe(de);                                               // la locale gouverne l'ordre/les séparateurs
+    // AR par défaut : chiffres occidentaux dans la date aussi.
+    expect(formatDate(iso, "AR", { dateStyle: "short", timeZone: "UTC" })).not.toMatch(/[٠-٩]/);
+  });
 });
 
 describe("FE-I18N-2 — tour 2 du cliquet (R326) : la NAV est COMPLÈTE — 0 clé manquante au rapport", () => {

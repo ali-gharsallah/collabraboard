@@ -93,3 +93,36 @@ export function traduire(l: Langue, opts?: { dev?: boolean }): (cle: string) => 
 export function formatMontant(montant: number, devise: string, locale: string): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency: devise }).format(montant);
 }
+
+/**
+ * Locale de FORMATAGE (BCP-47) par langue d'AFFICHAGE — SPEC-I18N §3 : fr-CH, en-GB, de-CH, ar.
+ * L'IT d'affichage → it-CH (socle suisse cohérent). L'arabe formate en CHIFFRES ARABES OCCIDENTAUX
+ * PAR DÉFAUT (spec : « chiffres arabes occidentaux par défaut ») via l'extension Unicode `-u-nu-latn` ;
+ * une banque peut activer les chiffres arabes ORIENTAUX (٠١٢…) par le paramètre tenant
+ * `chiffres_arabes_orientaux` → locale `ar` nue. Le formatage ≠ contenu : l'AR est ici un socle de
+ * NOMBRES/DATES (pas de traduction fabriquée — la relecture AR reste sur le CONTENU, SPEC-I18N §4).
+ */
+const LOCALE_FMT: Record<Langue, string> = {
+  FR: "fr-CH", EN: "en-GB", DE: "de-CH", IT: "it-CH", AR: "ar-u-nu-latn",
+};
+export function localeDe(l: Langue, opts?: { chiffresArabesOrientaux?: boolean }): string {
+  if (l === "AR" && opts?.chiffresArabesOrientaux) return "ar-u-nu-arab";  // opt-in tenant : chiffres arabes orientaux (٠١٢…)
+  return LOCALE_FMT[l];
+}
+
+/** Nombre localisé (séparateurs par locale ; chiffres occidentaux par défaut en AR). */
+export function formatNombre(
+  n: number, l: Langue, opts?: Intl.NumberFormatOptions & { chiffresArabesOrientaux?: boolean },
+): string {
+  const { chiffresArabesOrientaux, ...nf } = opts ?? {};
+  return new Intl.NumberFormat(localeDe(l, { chiffresArabesOrientaux }), nf).format(n);
+}
+
+/** Date/heure localisée (calendrier grégorien Intl par défaut ; chiffres occidentaux en AR). */
+export function formatDate(
+  d: Date | string, l: Langue, opts?: Intl.DateTimeFormatOptions & { chiffresArabesOrientaux?: boolean },
+): string {
+  const { chiffresArabesOrientaux, ...df } = opts ?? {};
+  const date = typeof d === "string" ? new Date(d) : d;
+  return new Intl.DateTimeFormat(localeDe(l, { chiffresArabesOrientaux }), df).format(date);
+}

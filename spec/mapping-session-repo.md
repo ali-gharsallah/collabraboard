@@ -349,6 +349,30 @@ par date** (même mécanique que `params`, R29).
 *Reste inchangé (relecture humaine, SPEC-I18N §4)* : contenu AR pro, colonne AR glossaire, audit RTL
 par écran + formats `ar`.
 
+### 5.3 — Formats localisés (nombres/dates) par langue d'affichage (SPEC-I18N §3 + DoD §2, 2026-08-05)
+
+SPEC-I18N §3 (« Locales de formatage : fr-CH, en-GB, de-CH, ar — dates, nombres, CHF ; chiffres
+arabes occidentaux par défaut ») + DoD §2 (« formats fr-CH/de-CH/en-GB/ar corrects »). Constat :
+`formatMontant` existait mais **sans aucun appelant**, et les surfaces dynamiques figeaient `"fr-CH"`
+(voire, `VisaBadge`, un `toLocaleString()` **sans locale** — non déterministe, ignorant la langue).
+
+- **`lib/i18n.ts`** : `localeDe(l, {chiffresArabesOrientaux?})` mappe la langue d'affichage sur sa
+  locale BCP-47 (FR→fr-CH, EN→en-GB, DE→de-CH, IT→it-CH, AR→**`ar-u-nu-latn`**). L'arabe formate en
+  **chiffres occidentaux par défaut** (spec) ; l'opt-in tenant `chiffres_arabes_orientaux` →
+  `ar-u-nu-arab` (٠١٢…). Helpers `formatNombre` / `formatDate` (Intl, options passthrough). Le
+  formatage ≠ contenu : l'AR ici est un socle **nombres/dates**, aucune traduction fabriquée (la
+  relecture AR reste sur le CONTENU, §4).
+- **`VisaBadge`** : l'horodatage du visa suit désormais la langue (`formatDate(signeAt, langue(),
+  {dateStyle,timeStyle})`) — corrige le `toLocaleString()` sans locale.
+- **Périmètre** : les écrans `src/parity/*` gardent `fr-CH` **à dessein** (parité VERBATIM maquette,
+  tests de parité) — ils ne sont pas retouchés. Le socle sert les surfaces câblées i18n.
+- **Tests** : FE-LN **+3** — `localeDe` (5 langues + opt-in oriental) ; nombre par locale (virgule
+  en-GB / apostrophe de-CH / espace fr-CH ; AR en chiffres occidentaux, orientaux sur opt-in) ; date
+  par locale (ordre/séparateur EN vs DE ; AR occidental). vitest **104/104**, budget **219,4/220**,
+  `vite build` OK, eslint des fichiers touchés OK.
+  *(Gate lint/typecheck web = `continue-on-error` en CI et rouge au baseline — 2093 erreurs
+  pré-existantes, pas de tsconfig web ; les vraies portes web sont `vite build` + `vitest`.)*
+
 **Reste (lots dédiés, relecture humaine CONTRAIGNANTE avant BAT — SPEC-I18N §4) :** contenu AR (UI +
 familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; audit RTL écran
 par écran + formats `ar` (Intl). *(i18n des règles servi par l'API : LIVRÉ — cf. §5.1.)*
