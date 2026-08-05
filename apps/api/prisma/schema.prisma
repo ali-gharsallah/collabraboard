@@ -900,6 +900,7 @@ model AmlScenario {
   version       Int
   effectiveFrom DateTime @map("effective_from")           // date de mise en vigueur (R29)
   params        Json     @default("{}")                   // paramètres tenant (registre R-Q)
+  i18n          Json?                                      // traductions nom/desc {en,de,it} versionnées (R29, SPEC-I18N §3)
   niveau        Int?                                       // 1|2 ; null pour campagnes/ops
   blocking      Boolean  @default(false)                  // émet aml.block.requested (jamais d'exécution)
   active        Boolean  @default(true)

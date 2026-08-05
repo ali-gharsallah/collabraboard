@@ -17,7 +17,11 @@ import { AML_GAP_GT } from "./aml-gap.gt.gen";
 export class AmlGapController {
   constructor(private svc: AmlGapService, private worker: AmlEvalService) {}
 
-  @Get("scenarios") scenarios() { return this.svc.referentiel(); }
+  // Référentiel en vigueur à date (R29) : les traductions (nom/desc) sont grandfathered par tenant
+  // (SPEC-I18N §3) ; défaut PO si le tenant n'a rien versionné. `?date=` optionnel (défaut : now).
+  @Get("scenarios") scenarios(@Req() r: any, @Query("date") date?: string) {
+    return this.svc.referentielEnVigueur(r.ctx, date ? new Date(date) : new Date());
+  }
 
   @Get("signals") signals(@Req() r: any, @Query() q: any) {
     return this.svc.signaux(r.ctx, { status: q.status, fam: q.fam, clientId: q.clientId });

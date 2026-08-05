@@ -324,6 +324,31 @@ référentiel servi par l'API**, jamais bundlé au front (budget), jamais fabriq
 - **e2e réel** : `fat-aml-i18n.e2e-spec.ts` (2) — `GET /v1/aml/scenarios` porte les traductions
   EN/DE/IT ; Gherkin FR conservé ; AR absent. Suite AML e2e **10 suites / 40 tests** vertes.
 
+### 5.2 — i18n VERSIONNÉE sur `AmlScenario`, servie à date (SPEC-I18N §3 pt 4 + DoD §3, 2026-08-05)
+
+SPEC-I18N §3 point 4 (« `AmlScenario` gagne un champ `i18n Json` versionné avec la règle — une
+traduction de règle est un changement versionné par date de vigueur, R29 ») + DoD §3 point 3
+(« Backend : `i18n` versionné sur les scénarios, servi par l'API ») appliqués. Le §5.1 servait la
+traduction PO *par défaut* (constante générée) ; ce lot ajoute la **surcharge tenant grandfatherée
+par date** (même mécanique que `params`, R29).
+
+- **Schéma** : `AmlScenario.i18n Json?` (nullable, expand-only ; `aml_scenarios` déjà couvert RLS
+  post-deploy-v2.sql). Appliqué par `prisma db push` — chemin établi de toute la vague AML gap
+  (aucune migration dédiée : la table elle-même n'en a pas, cohérence préservée).
+- **Service** : `referentielEnVigueur(ctx, date)` — base = référentiel généré (défaut PO) ; pour
+  chaque code, la version active la plus haute dont `effectiveFrom ≤ date` **qui porte un `i18n`**
+  surcharge la traduction (nom/desc) et remonte `version`. Surcharge **ciblée** (un code à la fois),
+  Gherkin FR intact, jamais inventé. `versionEnVigueur` remonte aussi l'`i18n` en vigueur.
+- **API** : `GET /v1/aml/scenarios?date=` (défaut : now) → `referentielEnVigueur(r.ctx, date)`. Le
+  front (`useApiOrSeed`) consomme l'API en ligne (i18n live) et retombe sur le seed FR hors-ligne.
+- **Gardes** : wiring fakePrisma **+3** (défaut PO servi ; override grandfatheré avant/après vigueur ;
+  `versionEnVigueur` porte l'i18n) → **28/28**. e2e `fat-aml-i18n` **+1** (I18N-3 : override tenant
+  versionné servi à date contre Postgres réel, surcharge ciblée) → **10 suites / 41 tests**.
+- Front : budget/vitest inchangés (réponse API gagne `version`, champ additif inoffensif). tsc OK.
+
+*Reste inchangé (relecture humaine, SPEC-I18N §4)* : contenu AR pro, colonne AR glossaire, audit RTL
+par écran + formats `ar`.
+
 **Reste (lots dédiés, relecture humaine CONTRAIGNANTE avant BAT — SPEC-I18N §4) :** contenu AR (UI +
 familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; audit RTL écran
 par écran + formats `ar` (Intl). *(i18n des règles servi par l'API : LIVRÉ — cf. §5.1.)*

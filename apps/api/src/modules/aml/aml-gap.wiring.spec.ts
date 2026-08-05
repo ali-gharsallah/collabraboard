@@ -151,6 +151,51 @@ const FAMILLES: Record<string, number> = {
     eq(v.version, 1, "v1 par défaut"); eq((v.params as any).nb_correlations_seuil, 3, "défaut R-Q");
   });
 
+  // ── SPEC-I18N §3 : une traduction de règle est un changement VERSIONNÉ par date de vigueur (R29).
+  // Le référentiel servi grandfather la traduction tenant ; défaut PO sinon. Jamais fabriqué. ──
+  await it("R29/i18n : sans version tenant → référentiel sert la traduction PO par défaut (EN/DE/IT)", async () => {
+    const { s } = mk();
+    const ref = await s.referentielEnVigueur(CO_SR, new Date("2026-08-05T00:00:00.000Z"));
+    const sf01 = ref.find((r) => r.code === "SF-01")!;
+    ok(!!sf01.i18n?.en?.nom && !!sf01.i18n?.de?.nom && !!sf01.i18n?.it?.nom, "défaut PO EN/DE/IT servi");
+    eq(sf01.version, 1, "version défaut = 1");
+  });
+
+  await it("R29/i18n : traduction tenant versionnée grandfathered à la date (défaut avant vigueur)", async () => {
+    const trad = { en: { nom: "Tenant override EN", desc: "d" }, de: { nom: "de", desc: "d" }, it: { nom: "it", desc: "d" } };
+    const seed = { scenarios: [
+      { id: "i1", tenantId: "t1", code: "SF-01", version: 2, active: true,
+        effectiveFrom: "2026-06-01T00:00:00.000Z", params: {}, i18n: trad },
+    ] };
+    const { s } = mk(seed);
+    // AVANT la vigueur (mars) → défaut PO, PAS l'override tenant.
+    const avant = await s.referentielEnVigueur(CO_SR, new Date("2026-03-01T00:00:00.000Z"));
+    const sfAvant = avant.find((r) => r.code === "SF-01")!;
+    ok(sfAvant.i18n?.en?.nom !== "Tenant override EN", "avant vigueur → défaut PO");
+    eq(sfAvant.version, 1, "avant → v1");
+    // APRÈS la vigueur (septembre) → override tenant servi, version portée.
+    const apres = await s.referentielEnVigueur(CO_SR, new Date("2026-09-01T00:00:00.000Z"));
+    const sfApres = apres.find((r) => r.code === "SF-01")!;
+    eq(sfApres.i18n?.en?.nom, "Tenant override EN", "après → override tenant");
+    eq(sfApres.version, 2, "après → v2");
+    // Les AUTRES scénarios (non versionnés) gardent le défaut PO — surcharge ciblée, pas globale.
+    const qo = apres.find((r) => r.code === "QO-01")!;
+    ok(!!qo.i18n?.en?.nom && qo.version === 1, "QO-01 → défaut PO intact");
+  });
+
+  await it("R29/i18n : versionEnVigueur porte l'i18n en vigueur (override tenant → sinon défaut PO)", async () => {
+    const trad = { en: { nom: "Override", desc: "d" } };
+    const seed = { scenarios: [
+      { id: "i2", tenantId: "t1", code: "GU-01", version: 3, active: true,
+        effectiveFrom: "2026-01-01T00:00:00.000Z", params: { seuil_agrege_ubo: 40000 }, i18n: trad },
+    ] };
+    const { s } = mk(seed);
+    const v: any = await s.versionEnVigueur(CO_SR, "GU-01", new Date("2026-09-01T00:00:00.000Z"));
+    eq(v.i18n?.en?.nom, "Override", "i18n override tenant porté");
+    const d: any = await s.versionEnVigueur(CO_SR, "SF-01"); // non versionné → défaut PO
+    ok(!!d.i18n?.en?.nom && d.i18n.en.nom !== "Override", "SF-01 → défaut PO");
+  });
+
   // ── Qualification 4-yeux + motif (R7/R13/R44) ──
   await it("QUALIF : CO_SR + motif → statut TP + aml.signal.qualified", async () => {
     const { p, s } = mk();

@@ -52,4 +52,39 @@ describe("FAT AML gap i18n — référentiel servi par l'API (SPEC-I18N §3, bac
     expect(s.i18n.ar).toBeUndefined();
     console.log("I18N-2 PASS — Gherkin FR conservé, AR absent (jamais fabriqué)");
   });
+
+  it("R29 : une traduction tenant VERSIONNÉE est grandfathered à la date (défaut PO avant vigueur)", async () => {
+    // Le tenant re-traduit SF-01 (ex. terminologie régulateur), en vigueur au 2026-06-01. Une
+    // traduction de règle est un changement VERSIONNÉ par date de vigueur (SPEC-I18N §3, R29).
+    const trad = {
+      en: { nom: "SF-01 (tenant wording)", desc: "tenant-specific EN description" },
+      de: { nom: "SF-01 (Mandanten-Wortlaut)", desc: "de" },
+      it: { nom: "SF-01 (dicitura tenant)", desc: "it" },
+    };
+    await prisma.$executeRaw`INSERT INTO tenants (id, name, created_at)
+      VALUES (${T}::uuid, 'GWB', NOW()) ON CONFLICT (id) DO NOTHING`;
+    await prisma.amlScenario.create({
+      data: {
+        tenantId: T, code: "SF-01", ruleRef: "R340", fam: "SF", version: 2,
+        effectiveFrom: new Date("2026-06-01T00:00:00.000Z"), params: {}, i18n: trad, active: true,
+      },
+    });
+
+    // AVANT vigueur (mars) → défaut PO généré, PAS l'override tenant ; version 1.
+    const avant = await request(http).get("/v1/aml/scenarios?date=2026-03-01").set(bearer(T, U, "CO"));
+    const aSF = (avant.body as any[]).find((x) => x.code === "SF-01");
+    expect(aSF.i18n.en.nom).not.toBe("SF-01 (tenant wording)");
+    expect(aSF.version).toBe(1);
+
+    // APRÈS vigueur (septembre) → override tenant servi, version 2 portée.
+    const apres = await request(http).get("/v1/aml/scenarios?date=2026-09-01").set(bearer(T, U, "CO"));
+    const pSF = (apres.body as any[]).find((x) => x.code === "SF-01");
+    expect(pSF.i18n.en.nom).toBe("SF-01 (tenant wording)");
+    expect(pSF.i18n.de.nom).toBe("SF-01 (Mandanten-Wortlaut)");
+    expect(pSF.version).toBe(2);
+    // Surcharge CIBLÉE : les autres scénarios gardent le défaut PO (version 1).
+    const other = (apres.body as any[]).find((x) => x.code !== "SF-01" && x.i18n?.en);
+    expect(other.version).toBe(1);
+    console.log("I18N-3 PASS — traduction tenant grandfatherée par date (R29), surcharge ciblée");
+  });
 });

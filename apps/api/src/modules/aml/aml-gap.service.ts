@@ -71,14 +71,43 @@ export class AmlGapService {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
-  /** Référentiel (projection lisible) — GET /v1/aml/scenarios. Aucune règle nouvelle. */
+  /**
+   * Référentiel (projection lisible) — défaut GÉNÉRÉ, sans surcharge tenant. L'i18n porté ici est
+   * la traduction PO par défaut (nom/desc EN/DE/IT, SPEC-I18N §3 : servi par l'API, jamais bundlé
+   * au front). Base commune de `referentielEnVigueur` (qui surcharge à la date, R29).
+   */
   referentiel() {
     return AML_GAP_REFERENTIEL.map((r) => ({
       code: r.id, ruleRef: r.ruleRef, bloc: r.bloc, blocTitre: r.blocTitre, famille: r.famille,
       titre: r.titre, desc: r.desc, niveau: r.niveau, kind: r.kind, blocking: r.blocking, signal: r.signal,
-      params: r.params, gherkin: r.gherkin,
-      i18n: r.i18n,  // traductions nom/desc EN/DE/IT (SPEC-I18N §3 : servi par l'API, pas bundlé au front)
+      params: r.params, gherkin: r.gherkin, version: 1, i18n: r.i18n,
     }));
+  }
+
+  /**
+   * Référentiel EN VIGUEUR À DATE (R29) — GET /v1/aml/scenarios. Une traduction de règle est un
+   * changement VERSIONNÉ par date de vigueur (SPEC-I18N §3 point 4) : si le tenant a versionné un
+   * scénario (table aml_scenarios) avec un `i18n` propre, on sert CETTE traduction (la plus haute
+   * version active dont effectiveFrom ≤ date) ; sinon on retombe sur la traduction PO par défaut du
+   * référentiel généré — neutre, jamais inventé. Le Gherkin (FR normatif) et le reste de la
+   * projection ne bougent pas : seul le contenu traduit (nom/desc) est grandfathered.
+   */
+  async referentielEnVigueur(ctx: Ctx, date: Date = new Date()) {
+    const base = this.referentiel();
+    const rows: any[] = await this.prisma.amlScenario.findMany({
+      where: { tenantId: ctx.tenantId, active: true, effectiveFrom: { lte: date.toISOString() } },
+    });
+    // Par code : la version la plus haute en vigueur qui PORTE une traduction (i18n non nul).
+    const parCode = new Map<string, any>();
+    for (const row of rows) {
+      if (!row.i18n) continue;
+      const prev = parCode.get(row.code);
+      if (!prev || row.version > prev.version) parCode.set(row.code, row);
+    }
+    return base.map((r) => {
+      const ov = parCode.get(r.code);
+      return ov ? { ...r, version: ov.version, i18n: ov.i18n } : r;
+    });
   }
 
   /**
@@ -95,10 +124,11 @@ export class AmlGapService {
     const enVigueur = rows.sort((a, b) => b.version - a.version)[0];
     if (enVigueur) {
       return { code, version: enVigueur.version, params: enVigueur.params ?? defautsParams(def),
-        niveau: def.niveau, blocking: def.blocking, ruleRef: def.ruleRef };
+        niveau: def.niveau, blocking: def.blocking, ruleRef: def.ruleRef,
+        i18n: enVigueur.i18n ?? def.i18n };  // traduction versionnée (R29) → sinon défaut PO
     }
     return { code, version: 1, params: defautsParams(def), niveau: def.niveau,
-      blocking: def.blocking, ruleRef: def.ruleRef };
+      blocking: def.blocking, ruleRef: def.ruleRef, i18n: def.i18n };
   }
 
   /**
