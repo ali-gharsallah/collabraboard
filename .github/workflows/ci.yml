@@ -276,14 +276,15 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:rules
 
-      # ── RUNBOOK §2 · 4 — e2e Postgres réel (53 suites, 348/348) ──────────────
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (62 suites, 411/411) ──────────────
       # Reproductible depuis la réconciliation de la dérive `db push` (20260805000002) : sans elle
       # `migrate deploy` bâtissait une base incomplète et la voie e2e était rouge en CI (colonnes/
-      # tables absentes → 500). 9 suites non hermétiques restent en QUARANTAINE (test/e2e/
-      # QUARANTINE.md + jest-e2e.config.js) — dette pré-existante, motivée, versionnée, pas masquée.
+      # tables absentes → 500). Quarantaine VIDÉE le 2026-08-05 : les 9 suites autrefois exclues sont
+      # hermétisées et réintégrées (garde R14 `engagement`, signed_by uuid, clés R-Q requises, grep
+      # DM-03 affiné) — cf. test/e2e/QUARANTINE.md. `testPathIgnorePatterns` = /node_modules/ seul.
       # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky sous
       # charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake est absorbé.
-      - name: "4 · e2e API réelle + Postgres (53 suites 348/348, 9 en quarantaine, 1 retry §8)"
+      - name: "4 · e2e API réelle + Postgres (62 suites 411/411, 0 quarantaine, 1 retry §8)"
         working-directory: apps/api
         run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 
