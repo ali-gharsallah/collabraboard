@@ -259,7 +259,30 @@ def main():
         check("AG-20 méta moteur présente (aml-gap.meta.gen.ts)", False,
               "régénérez : python3 tools/aml-gap/gen_aml_gap.py")
 
-    total = 14 + 3 + 2 + 1 + 2 + 1 + 1 + 1  # + AG-16 + AG-17/17b + AG-18 + AG-19 + AG-20
+    # AG-21 — i18n des règles SERVIE PAR L'API, jamais bundlée au front (SPEC-I18N §3, budget).
+    # Le référentiel BACKEND porte les traductions PO (EN/DE/IT, nom+desc non vides) ; le seed WEB
+    # NE les porte PAS (émis par sélection de champs). Le Gherkin reste FR ; l'AR n'existe pas
+    # (glossaire CONTRAIGNANT sans colonne AR → jamais fabriqué). La source PO fait foi.
+    src_po = os.path.normpath(os.path.join(HERE, "..", "..", "data", "i18n-aml-gap.json"))
+    if ref_ts is not None and scen_seed is not None and os.path.exists(src_po):
+        po = json.load(open(src_po, encoding="utf-8")).get("rules", {})
+        attendus = {rid for rid, e in po.items() if e.get("en") and e.get("de") and e.get("it")}
+        ref_i18n = {r["id"] for r in ref_ts if r.get("i18n")}
+        forme_ok = all(
+            all(r["i18n"].get(lg, {}).get("nom") and r["i18n"].get(lg, {}).get("desc")
+                for lg in ("en", "de", "it"))
+            and "ar" not in r["i18n"]
+            for r in ref_ts if r.get("i18n"))
+        seed_sans_i18n = all(not s.get("i18n") for s in scen_seed)  # budget bundle : aucune trad au front
+        check("AG-21 i18n PO au référentiel API (EN/DE/IT), absente du seed web, AR jamais fabriqué",
+              ref_i18n == attendus and len(attendus) > 0 and forme_ok and seed_sans_i18n,
+              "ref=%d attendus=%d forme=%s seedVide=%s"
+              % (len(ref_i18n), len(attendus), forme_ok, seed_sans_i18n))
+    else:
+        check("AG-21 source PO i18n présente (data/i18n-aml-gap.json)", False,
+              "verser la source PO puis régénérer : python3 tools/aml-gap/gen_aml_gap.py")
+
+    total = 14 + 3 + 2 + 1 + 2 + 1 + 1 + 1 + 1  # + AG-16 + AG-17/17b + AG-18 + AG-19 + AG-20 + AG-21
     passed = total - len(FAILS)
     print("\n### %d/%d invariants AML Gap verts ###" % (passed, total))
     if FAILS:

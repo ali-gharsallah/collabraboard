@@ -8,6 +8,9 @@ export interface AmlGapScenarioSeed {
   titre: string; desc: string; niveau: number | null; kind: string; blocking: boolean;
   signal: string; params: { key: string; label: string; default: string | number | boolean }[];
   gherkin: { given: string; when: string; then: string };
+  // i18n (nom/desc EN/DE/IT) : ABSENT du seed (contenu servi par l'API, SPEC-I18N §3 —
+  // budget bundle) ; le type l'accepte pour les scénarios venant de l'API (jamais bundlé).
+  i18n?: { en?: { nom: string; desc: string }; de?: { nom: string; desc: string }; it?: { nom: string; desc: string } };
 }
 export interface AmlGapGtSeed {
   caseId: string; scenarioId: string; ruleRef: string; famille: string; label: 'TP' | 'FP';

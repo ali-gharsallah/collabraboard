@@ -302,6 +302,28 @@ devient la 5e langue** (résout E-FB-4, décision produit/marché au-delà de R3
 - Tests : FE-I18N étendu (familles EN/DE/IT ; AR ratifiée + RTL + repli FR). vitest **99/99**, budget +
   cliquet i18n verts, `vite build` OK, eslint OK.
 
+### 5.1 — i18n des règles SERVIE PAR L'API (SPEC-I18N §3, 2026-08-05)
+
+SPEC-I18N §3 (« le front ne traduit pas le contenu métier, il l'affiche ») appliqué : le **contenu
+des règles** (nom/desc EN/DE/IT, source PO `data/i18n-aml-gap.json`) voyage désormais **avec le
+référentiel servi par l'API**, jamais bundlé au front (budget), jamais fabriqué à la main.
+
+- **Générateur** (source unique) : `_attach_i18n(rules)` — appelé DANS `build()` (déterminisme :
+  même sortie à chaque build, freshness AG-15/AG-18 intacte) — lit la source PO et attache
+  `rule.i18n = { en, de, it }` (nom+desc) au **référentiel backend** (`aml-gap.referentiel.gen.ts`
+  + `aml-gap-rules.json`). Le **seed web** (`aml-gap.seed.gen.ts`, émis par sélection de champs) ne
+  reçoit **PAS** `i18n` → bundle inchangé (**219,1/220 kB gz**). Le Gherkin reste **FR** (normatif) ;
+  l'**AR n'a aucun contenu** (glossaire CONTRAIGNANT sans colonne AR) et n'est jamais posé.
+- **Types** : `AmlGapRule.i18n?` (interfaces `AmlGapI18nEntry`/`AmlGapI18n`) ; `AmlGapScenarioSeed.i18n?`
+  (déclaré pour les scénarios venant de l'API, jamais bundlé).
+- **API** : `AmlGapService.referentiel()` projette `i18n: r.i18n` ; `GET /v1/aml/scenarios` le sert.
+- **Front** : `AmlGap.tsx` — `ruleNom`/`ruleDesc` consomment `s.i18n?.[langue]?.nom ?? s.titre`
+  (repli FR/AR sur le libellé normatif — « jamais un trou »). Aucune donnée de traduction bundlée.
+- **Garde générateur** : **AG-21** — i18n PO présente au référentiel (EN/DE/IT nom+desc non vides),
+  **absente** du seed web, **AR jamais** posé. Self-test **26/26**.
+- **e2e réel** : `fat-aml-i18n.e2e-spec.ts` (2) — `GET /v1/aml/scenarios` porte les traductions
+  EN/DE/IT ; Gherkin FR conservé ; AR absent. Suite AML e2e **10 suites / 40 tests** vertes.
+
 **Reste (lots dédiés, relecture humaine CONTRAIGNANTE avant BAT — SPEC-I18N §4) :** contenu AR (UI +
-familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; i18n des règles
-servi par l'API (`AmlScenario.i18n`, §3) ; audit RTL écran par écran + formats `ar` (Intl).
+familles + règles) traduit et relu par un locuteur pro ; colonne AR au glossaire ; audit RTL écran
+par écran + formats `ar` (Intl). *(i18n des règles servi par l'API : LIVRÉ — cf. §5.1.)*

@@ -75,8 +75,9 @@ export class AmlGapService {
   referentiel() {
     return AML_GAP_REFERENTIEL.map((r) => ({
       code: r.id, ruleRef: r.ruleRef, bloc: r.bloc, blocTitre: r.blocTitre, famille: r.famille,
-      titre: r.titre, niveau: r.niveau, kind: r.kind, blocking: r.blocking, signal: r.signal,
-      params: r.params,
+      titre: r.titre, desc: r.desc, niveau: r.niveau, kind: r.kind, blocking: r.blocking, signal: r.signal,
+      params: r.params, gherkin: r.gherkin,
+      i18n: r.i18n,  // traductions nom/desc EN/DE/IT (SPEC-I18N §3 : servi par l'API, pas bundlé au front)
     }));
   }
 

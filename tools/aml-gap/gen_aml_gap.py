@@ -649,6 +649,7 @@ def build():
     w2_rules, w2_gt = _wave2_rules_gt()
     rules += w2_rules
     gt += w2_gt
+    _attach_i18n(rules)  # traductions PO au référentiel (déterministe : même sortie à chaque build)
     return rules, gt
 
 
@@ -669,12 +670,15 @@ def _emit_ts(rules, gt):
     vérité ; le backend et son spec consomment ces artefacts, jamais des JSON hors apps/api)."""
     ref_types = (
         "export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }\n"
+        "export interface AmlGapI18nEntry { nom: string; desc: string; }\n"
+        "export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; }\n"
         "export interface AmlGapRule {\n"
         "  id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;\n"
         "  titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';\n"
         "  blocking: boolean; signal: string;\n"
         "  gherkin: { given: string; when: string; then: string };\n"
         "  params: AmlGapParam[]; gtCount: { tp: number; fp: number };\n"
+        "  i18n?: AmlGapI18n;  // traductions PO (nom/desc EN/DE/IT) — servi par l'API (SPEC-I18N §3)\n"
         "}\n"
     )
     gt_types = (
@@ -699,6 +703,9 @@ def _emit_ts(rules, gt):
         "  titre: string; desc: string; niveau: number | null; kind: string; blocking: boolean;\n"
         "  signal: string; params: { key: string; label: string; default: string | number | boolean }[];\n"
         "  gherkin: { given: string; when: string; then: string };\n"
+        "  // i18n (nom/desc EN/DE/IT) : ABSENT du seed (contenu servi par l'API, SPEC-I18N §3 —\n"
+        "  // budget bundle) ; le type l'accepte pour les scénarios venant de l'API (jamais bundlé).\n"
+        "  i18n?: { en?: { nom: string; desc: string }; de?: { nom: string; desc: string }; it?: { nom: string; desc: string } };\n"
         "}\n"
         "export interface AmlGapGtSeed {\n"
         "  caseId: string; scenarioId: string; ruleRef: string; famille: string; label: 'TP' | 'FP';\n"
@@ -817,8 +824,31 @@ def _emit_rq(rules):
     return entrees
 
 
+def _attach_i18n(rules):
+    """Attache les traductions PO (data/i18n-aml-gap.json) au RÉFÉRENTIEL BACKEND (nom/desc EN/DE/IT
+    par règle) — SPEC-I18N §3 : le contenu des règles est SERVI PAR L'API, pas bundlé au front. Le
+    seed web (émis par sélection de champs) NE reçoit PAS `i18n` → budget bundle intact. Le Gherkin
+    reste FR (langue normative). L'arabe n'a pas de contenu (glossaire CONTRAIGNANT sans colonne AR)
+    → repli FR côté front. Jamais traduit à la main : la source PO fait foi."""
+    path = os.path.normpath(os.path.join(HERE, "..", "..", "data", "i18n-aml-gap.json"))
+    if not os.path.exists(path):
+        return 0
+    tr = json.load(open(path, encoding="utf-8")).get("rules", {})
+    n = 0
+    for r in rules:
+        e = tr.get(r["id"])
+        if not e:
+            continue
+        block = {lg: {"nom": e[lg]["nom"], "desc": e[lg]["desc"]}
+                 for lg in ("en", "de", "it") if e.get(lg)}
+        if block:
+            r["i18n"] = block
+            n += 1
+    return n
+
+
 def main():
-    rules, gt = build()
+    rules, gt = build()  # build() attache déjà les traductions PO au référentiel
     tp = sum(1 for c in gt if c["label"] == "TP")
     fp = sum(1 for c in gt if c["label"] == "FP")
     placeholders = sum(1 for c in gt if c.get("placeholder"))

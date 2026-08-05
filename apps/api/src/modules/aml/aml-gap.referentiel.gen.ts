@@ -4,12 +4,15 @@
 // si ce fichier dérive. Consommé par aml-gap.service.ts et aml-gap.wiring.spec.ts.
 
 export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }
+export interface AmlGapI18nEntry { nom: string; desc: string; }
+export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; }
 export interface AmlGapRule {
   id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;
   titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';
   blocking: boolean; signal: string;
   gherkin: { given: string; when: string; then: string };
   params: AmlGapParam[]; gtCount: { tp: number; fp: number };
+  i18n?: AmlGapI18n;  // traductions PO (nom/desc EN/DE/IT) — servi par l'API (SPEC-I18N §3)
 }
 
 export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
@@ -46,6 +49,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 2,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "PEP counterparty (in-flow)",
+        "desc": "PEP screening of each transaction counterparty, inbound and outbound — not only the client at onboarding."
+      },
+      "de": {
+        "nom": "PEP-Gegenpartei im Zahlungsfluss",
+        "desc": "PEP-Screening der Gegenpartei jeder ein- und ausgehenden Transaktion – nicht nur des Kunden bei Aufnahme der Geschäftsbeziehung."
+      },
+      "it": {
+        "nom": "Controparte PEP nei flussi",
+        "desc": "Screening PEP della controparte di ogni transazione in entrata e in uscita — non solo del cliente all'apertura della relazione."
+      }
     }
   },
   {
@@ -81,6 +98,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Adverse media on counterparty",
+        "desc": "Negative news (money laundering, fraud, corruption) on the transaction counterparty at the time of the flow."
+      },
+      "de": {
+        "nom": "Adverse Media zur Gegenpartei",
+        "desc": "Negative Medienberichte (Geldwäscherei, Betrug, Korruption) über die Gegenpartei zum Zeitpunkt der Transaktion."
+      },
+      "it": {
+        "nom": "Adverse media sulla controparte",
+        "desc": "Notizie negative (riciclaggio, frode, corruzione) sulla controparte al momento del flusso."
+      }
     }
   },
   {
@@ -116,6 +147,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 2,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Periodic re-screening (perpetual)",
+        "desc": "Automatic periodic re-screening of the entire client base and related parties (sanctions/PEP/adverse media), delta-only."
+      },
+      "de": {
+        "nom": "Periodisches Re-Screening (perpetual)",
+        "desc": "Automatisches periodisches Re-Screening des gesamten Kundenbestands inkl. verbundener Personen (Sanktionen/PEP/Adverse Media), nur Deltas."
+      },
+      "it": {
+        "nom": "Re-screening periodico (perpetuo)",
+        "desc": "Re-screening automatico periodico dell'intero portafoglio clienti e delle persone collegate (sanzioni/PEP/adverse media), solo differenziale."
+      }
     }
   },
   {
@@ -146,6 +191,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Intermediary banks (BIC)",
+        "desc": "Screening of every BIC in the payment chain (fields 56/57), not only the end parties."
+      },
+      "de": {
+        "nom": "Zwischengeschaltete Banken (BIC)",
+        "desc": "Screening aller BIC der Zahlungskette (Felder 56/57), nicht nur der Endparteien."
+      },
+      "it": {
+        "nom": "Banche intermediarie (BIC)",
+        "desc": "Screening di tutti i BIC della catena di pagamento (campi 56/57), non solo delle parti finali."
+      }
     }
   },
   {
@@ -176,6 +235,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sanctioned address / location",
+        "desc": "Location-based sanctions: addresses and cities in embargoed regions (Crimea, occupied territories), beyond name screening."
+      },
+      "de": {
+        "nom": "Sanktionierte Adresse / Ortschaft",
+        "desc": "Ortsbezogene Sanktionen: Adressen und Städte in embargobelegten Regionen (Krim, besetzte Gebiete), über das reine Namens-Screening hinaus."
+      },
+      "it": {
+        "nom": "Indirizzo / località sanzionati",
+        "desc": "Sanzioni per localizzazione: indirizzi e città di regioni sotto embargo (Crimea, territori occupati), oltre il solo screening dei nomi."
+      }
     }
   },
   {
@@ -206,6 +279,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Multi-script transliteration",
+        "desc": "Extended Arabic/Cyrillic/Chinese matching: transliteration variants normalised before screening (the baseline engine is Latin-centric)."
+      },
+      "de": {
+        "nom": "Transliteration über mehrere Schriftsysteme",
+        "desc": "Erweitertes Matching für Arabisch/Kyrillisch/Chinesisch: Transliterationsvarianten werden vor dem Screening normalisiert (Basis-Engine ist lateinzentriert)."
+      },
+      "it": {
+        "nom": "Traslitterazione multi-alfabeto",
+        "desc": "Matching esteso arabo/cirillico/cinese: varianti di traslitterazione normalizzate prima dello screening (il motore di base è latino-centrico)."
+      }
     }
   },
   {
@@ -236,6 +323,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Vessels & IMO",
+        "desc": "Vessel screening (name, IMO number, flag) on trade- and shipping-related payments."
+      },
+      "de": {
+        "nom": "Schiffe & IMO",
+        "desc": "Screening von Schiffen (Name, IMO-Nummer, Flagge) bei handels- und schifffahrtsbezogenen Zahlungen."
+      },
+      "it": {
+        "nom": "Navi & IMO",
+        "desc": "Screening delle navi (nome, numero IMO, bandiera) sui pagamenti legati a commercio e shipping."
+      }
     }
   },
   {
@@ -266,6 +367,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Refusal to provide information",
+        "desc": "A client's refusal to provide customary information (source of funds, supporting documents) becomes a structured signal, not a free-text note."
+      },
+      "de": {
+        "nom": "Verweigerung von Auskünften",
+        "desc": "Die Weigerung des Kunden, übliche Angaben zu machen (Herkunft der Gelder, Belege), wird zum strukturierten Signal statt zur Freitextnotiz."
+      },
+      "it": {
+        "nom": "Rifiuto di fornire informazioni",
+        "desc": "Il rifiuto del cliente di fornire le informazioni usuali (origine dei fondi, giustificativi) diventa un segnale strutturato, non una nota libera."
+      }
     }
   },
   {
@@ -296,6 +411,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Transit account, multiple third parties",
+        "desc": "Account used as a pass-through by numerous unrelated persons (AMLO-FINMA annex indicator), beyond the purely temporal criterion."
+      },
+      "de": {
+        "nom": "Durchlaufkonto mit vielen Dritten",
+        "desc": "Konto wird von zahlreichen nicht verbundenen Personen als Durchlaufkonto genutzt (Anhaltspunkt gemäss Anhang GwV-FINMA), über das rein zeitliche Kriterium hinaus."
+      },
+      "it": {
+        "nom": "Conto di passaggio multi-terzi",
+        "desc": "Conto usato come conto di passaggio da numerose persone senza legami (indizio dell'allegato ORD-FINMA), oltre il solo criterio temporale."
+      }
     }
   },
   {
@@ -326,6 +455,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "No apparent economic rationale",
+        "desc": "Advisor-declared red flag: transaction observed without apparent economic justification, logged and routed (never silent)."
+      },
+      "de": {
+        "nom": "Fehlende wirtschaftliche Begründung",
+        "desc": "Deklaratives Warnsignal des Beraters: Transaktion ohne erkennbaren wirtschaftlichen Zweck, erfasst und weitergeleitet (nie stillschweigend)."
+      },
+      "it": {
+        "nom": "Operazione senza giustificazione economica",
+        "desc": "Red flag dichiarativo del consulente: operazione senza giustificazione economica apparente, tracciata e instradata (mai silenziosa)."
+      }
     }
   },
   {
@@ -356,6 +499,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shared address across clients",
+        "desc": "c/o domiciliation or identical address shared by numerous clients with no declared link."
+      },
+      "de": {
+        "nom": "Geteilte Adresse mehrerer Kunden",
+        "desc": "c/o-Domizilierung oder identische Adresse bei zahlreichen Kunden ohne deklarierten Zusammenhang."
+      },
+      "it": {
+        "nom": "Indirizzo condiviso tra più clienti",
+        "desc": "Domiciliazione c/o o indirizzo identico condiviso da numerosi clienti senza legame dichiarato."
+      }
     }
   },
   {
@@ -386,6 +543,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Churn of powers of attorney / instructions",
+        "desc": "Frequent changes of powers of attorney, signatories or standing instructions without justification."
+      },
+      "de": {
+        "nom": "Häufige Wechsel von Vollmachten / Instruktionen",
+        "desc": "Häufige Änderungen von Vollmachten, Zeichnungsberechtigten oder Daueraufträgen ohne Begründung."
+      },
+      "it": {
+        "nom": "Rotazione di procure / istruzioni",
+        "desc": "Cambi frequenti di procure, firmatari o istruzioni permanenti senza giustificazione."
+      }
     }
   },
   {
@@ -421,6 +592,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Group-wide structuring across accounts",
+        "desc": "Flow aggregation over the beneficial owner's consolidated perimeter (all accounts, all entities): smurfing spread across entities becomes visible."
+      },
+      "de": {
+        "nom": "Strukturierung über Konten der Gruppe",
+        "desc": "Aggregation der Flüsse über den konsolidierten Perimeter der wirtschaftlich berechtigten Person (alle Konten, alle Einheiten): auf mehrere Einheiten verteiltes Smurfing wird sichtbar."
+      },
+      "it": {
+        "nom": "Structuring tra conti del gruppo",
+        "desc": "Aggregazione dei flussi sul perimetro consolidato dell'avente economicamente diritto (tutti i conti, tutte le entità): il frazionamento distribuito tra entità diventa visibile."
+      }
     }
   },
   {
@@ -451,6 +636,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Intra-group circular flows",
+        "desc": "Funds circulating between entities of the same beneficial owner without substance (A→B→C→A within the perimeter)."
+      },
+      "de": {
+        "nom": "Zirkuläre Flüsse innerhalb der Gruppe",
+        "desc": "Gelder zirkulieren ohne Substanz zwischen Einheiten derselben wirtschaftlich berechtigten Person (A→B→C→A innerhalb des Perimeters)."
+      },
+      "it": {
+        "nom": "Flussi circolari intra-gruppo",
+        "desc": "Fondi che circolano senza sostanza tra entità dello stesso avente economicamente diritto (A→B→C→A entro il perimetro)."
+      }
     }
   },
   {
@@ -481,6 +680,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Consolidated cash intensity",
+        "desc": "Cash intensity measured at the level of the beneficial owner's perimeter: each entity stays under the radar, the group does not."
+      },
+      "de": {
+        "nom": "Konsolidierte Bargeldintensität",
+        "desc": "Bargeldintensität auf Ebene des Perimeters der wirtschaftlich berechtigten Person: jede Einheit bleibt unter dem Radar, die Gruppe nicht."
+      },
+      "it": {
+        "nom": "Contante consolidato del perimetro",
+        "desc": "Intensità di contante misurata a livello del perimetro dell'ADE: ogni entità resta sotto i radar, il gruppo no."
+      }
     }
   },
   {
@@ -511,6 +724,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Cross-product aggregated thresholds",
+        "desc": "Aggregation across cash, securities, FX and credit: a pattern split across products (cash deposit, FOP transfer, Lombard drawdown) is detected globally."
+      },
+      "de": {
+        "nom": "Produktübergreifende aggregierte Schwellenwerte",
+        "desc": "Aggregation über Bargeld, Wertschriften, FX und Kredit: ein über Produkte verteiltes Muster (Bareinzahlung, FOP-Übertrag, Lombardbezug) wird gesamthaft erkannt."
+      },
+      "it": {
+        "nom": "Soglie aggregate cross-prodotto",
+        "desc": "Aggregazione tra contante, titoli, FX e credito: uno schema ripartito tra prodotti (deposito contante, trasferimento FOP, utilizzo lombard) viene rilevato globalmente."
+      }
     }
   },
   {
@@ -541,6 +768,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Lombard loan repaid by a third party",
+        "desc": "Lombard loan repaid early by a third party with no documented link to the borrower."
+      },
+      "de": {
+        "nom": "Lombardkredit – Rückzahlung durch Dritte",
+        "desc": "Vorzeitige Rückzahlung eines Lombardkredits durch einen Dritten ohne dokumentierte Verbindung zum Kreditnehmer."
+      },
+      "it": {
+        "nom": "Lombard — rimborso da terzi",
+        "desc": "Credito lombard rimborsato anticipatamente da un terzo senza legame documentato con il mutuatario."
+      }
     }
   },
   {
@@ -571,6 +812,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Back-to-back loan",
+        "desc": "A (often offshore) deposit pledged against a loan to a related entity: artificial separation from the origin of funds."
+      },
+      "de": {
+        "nom": "Back-to-back-Kredit",
+        "desc": "Ein (oft Offshore-)Depot als Pfand für einen Kredit an eine verbundene Einheit: künstliche Trennung von der Herkunft der Gelder."
+      },
+      "it": {
+        "nom": "Back-to-back loan",
+        "desc": "Deposito (spesso offshore) costituito in pegno a garanzia di un prestito a un'entità collegata: separazione artificiale dall'origine dei fondi."
+      }
     }
   },
   {
@@ -601,6 +856,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Insurance wrapper — premium out of profile",
+        "desc": "Single-premium life-insurance subscription inconsistent with declared wealth and income."
+      },
+      "de": {
+        "nom": "Versicherungsmantel – Prämie ausserhalb des Profils",
+        "desc": "Zeichnung einer Lebensversicherung mit hoher Einmalprämie, unvereinbar mit deklariertem Vermögen und Einkommen."
+      },
+      "it": {
+        "nom": "Polizza wrapper — premio fuori profilo",
+        "desc": "Sottoscrizione di assicurazione vita a premio unico elevato, incoerente con patrimonio e redditi dichiarati."
+      }
     }
   },
   {
@@ -631,6 +900,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Insurance wrapper — early surrender",
+        "desc": "Policy surrendered shortly after subscription, penalties accepted without discussion (the cost of laundering is priced in)."
+      },
+      "de": {
+        "nom": "Versicherungsmantel – vorzeitiger Rückkauf",
+        "desc": "Rückkauf der Police kurz nach Abschluss; Strafgebühren werden diskussionslos akzeptiert (die Kosten der Geldwäscherei werden in Kauf genommen)."
+      },
+      "it": {
+        "nom": "Polizza wrapper — riscatto precoce",
+        "desc": "Riscatto della polizza poco dopo la sottoscrizione, penali accettate senza discussione (il costo del riciclaggio è messo in conto)."
+      }
     }
   },
   {
@@ -661,6 +944,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Beneficiary change after subscription",
+        "desc": "Change of the policy beneficiary shortly after subscription, to an unrelated third party."
+      },
+      "de": {
+        "nom": "Begünstigtenwechsel nach Abschluss",
+        "desc": "Änderung des Begünstigten der Police kurz nach Abschluss zugunsten eines nicht verbundenen Dritten."
+      },
+      "it": {
+        "nom": "Cambio di beneficiario post-sottoscrizione",
+        "desc": "Modifica del beneficiario della polizza poco dopo la sottoscrizione, a favore di un terzo senza legami."
+      }
     }
   },
   {
@@ -696,6 +993,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Safe deposit box — cash correlation",
+        "desc": "Safe deposit box visits temporally correlated with cash deposits or withdrawals."
+      },
+      "de": {
+        "nom": "Schrankfach – Korrelation mit Bargeld",
+        "desc": "Schrankfachzugriffe zeitlich korreliert mit Bareinzahlungen oder -bezügen."
+      },
+      "it": {
+        "nom": "Cassette di sicurezza — correlazione contante",
+        "desc": "Accessi alla cassetta di sicurezza correlati temporalmente a depositi o prelievi di contante."
+      }
     }
   },
   {
@@ -726,6 +1037,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Physical precious metals",
+        "desc": "Purchases/sales/deliveries of physical metals outside the declared profile (AMLO rules on precious metals trading)."
+      },
+      "de": {
+        "nom": "Physische Edelmetalle",
+        "desc": "Kauf/Verkauf/Lieferung physischer Edelmetalle ausserhalb des deklarierten Profils (GwV-Bestimmungen zum Edelmetallhandel)."
+      },
+      "it": {
+        "nom": "Metalli preziosi fisici",
+        "desc": "Acquisti/vendite/consegne di metalli fisici fuori dal profilo dichiarato (disposizioni ORD sul commercio di metalli preziosi)."
+      }
     }
   },
   {
@@ -756,6 +1081,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "DLT travel rule",
+        "desc": "DLT transfers lacking complete originator/beneficiary information (FINMA Guidance 02/2019, FATF R.16)."
+      },
+      "de": {
+        "nom": "Travel Rule für DLT",
+        "desc": "DLT-Übertragungen ohne vollständige Angaben zu Auftraggeber/Begünstigtem (FINMA-Aufsichtsmitteilung 02/2019, FATF R.16)."
+      },
+      "it": {
+        "nom": "Travel rule DLT",
+        "desc": "Trasferimenti DLT privi di informazioni complete su ordinante/beneficiario (comunicazione FINMA 02/2019, GAFI R.16)."
+      }
     }
   },
   {
@@ -791,6 +1130,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Mixer / tumbler exposure",
+        "desc": "Incoming funds whose on-chain analysis shows direct or one-hop exposure to a mixer."
+      },
+      "de": {
+        "nom": "Mixer-/Tumbler-Exposition",
+        "desc": "Eingehende Gelder, deren On-Chain-Analyse eine direkte oder 1-Hop-Exposition gegenüber einem Mixer zeigt."
+      },
+      "it": {
+        "nom": "Esposizione a mixer / tumbler",
+        "desc": "Fondi in entrata la cui analisi on-chain rivela un'esposizione diretta o a 1 hop verso un mixer."
+      }
     }
   },
   {
@@ -821,6 +1174,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sanctioned on-chain address",
+        "desc": "On-chain counterparty appearing among OFAC SDN crypto addresses."
+      },
+      "de": {
+        "nom": "Sanktionierte On-Chain-Adresse",
+        "desc": "On-Chain-Gegenpartei auf der Liste der OFAC-SDN-Kryptoadressen."
+      },
+      "it": {
+        "nom": "Indirizzo on-chain sanzionato",
+        "desc": "Controparte on-chain presente tra gli indirizzi crypto della lista SDN OFAC."
+      }
     }
   },
   {
@@ -851,6 +1218,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Darknet / ransomware cluster",
+        "desc": "Provenance exposure to darknet-market or ransomware clusters (outside formal lists)."
+      },
+      "de": {
+        "nom": "Darknet-/Ransomware-Cluster",
+        "desc": "Herkunftsexposition gegenüber Darknet-Markt- oder Ransomware-Clustern (ausserhalb formeller Listen)."
+      },
+      "it": {
+        "nom": "Cluster darknet / ransomware",
+        "desc": "Esposizione di provenienza a cluster di darknet market o ransomware (fuori dalle liste formali)."
+      }
     }
   },
   {
@@ -886,6 +1267,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Self-hosted wallet without proof of control",
+        "desc": "Transfers to/from a self-hosted wallet without a valid proof of control (satoshi test / message signature)."
+      },
+      "de": {
+        "nom": "Self-hosted Wallet ohne Kontrollnachweis",
+        "desc": "Übertragungen an/von einer selbstverwahrten Wallet ohne gültigen Kontrollnachweis (Satoshi-Test / Nachrichtensignatur)."
+      },
+      "it": {
+        "nom": "Wallet self-hosted senza prova di controllo",
+        "desc": "Trasferimenti da/verso un wallet self-hosted senza prova di controllo valida (satoshi test / firma di un messaggio)."
+      }
     }
   },
   {
@@ -916,6 +1311,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "On/off-ramp inconsistent with profile",
+        "desc": "Fiat↔crypto conversion frequency and volumes inconsistent with the declared investor profile."
+      },
+      "de": {
+        "nom": "On-/Off-Ramp inkonsistent zum Profil",
+        "desc": "Häufigkeit und Volumen der Fiat↔Krypto-Konversionen unvereinbar mit dem deklarierten Anlegerprofil."
+      },
+      "it": {
+        "nom": "On/off-ramp incoerente col profilo",
+        "desc": "Frequenza e volumi di conversione fiat↔crypto incoerenti con il profilo d'investitore dichiarato."
+      }
     }
   },
   {
@@ -956,6 +1365,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Micro-transactions to sensitive corridors",
+        "desc": "Small amounts at high frequency towards sensitive geographic corridors (terrorist financing does not look like laundering: amounts are small)."
+      },
+      "de": {
+        "nom": "Mikrotransaktionen in sensible Korridore",
+        "desc": "Kleine Beträge in hoher Frequenz in sensible geografische Korridore (Terrorismusfinanzierung sieht nicht aus wie Geldwäscherei: die Beträge sind klein)."
+      },
+      "it": {
+        "nom": "Micro-transazioni verso corridoi sensibili",
+        "desc": "Piccoli importi ad alta frequenza verso corridoi geografici sensibili (il finanziamento del terrorismo non assomiglia al riciclaggio: importi ridotti)."
+      }
     }
   },
   {
@@ -986,6 +1409,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "At-risk collections / NPOs",
+        "desc": "Atypical donations and collections towards at-risk non-profit organisations (FATF R.8), untraced crowdfunding."
+      },
+      "de": {
+        "nom": "Sammlungen / NPO mit Risiko",
+        "desc": "Atypische Spenden und Sammlungen an risikobehaftete Non-Profit-Organisationen (FATF R.8), nicht nachvollziehbares Crowdfunding."
+      },
+      "it": {
+        "nom": "Raccolte / ONG a rischio",
+        "desc": "Donazioni e raccolte atipiche verso organizzazioni senza scopo di lucro a rischio (GAFI R.8), crowdfunding non tracciato."
+      }
     }
   },
   {
@@ -1016,6 +1453,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Prepaid cards, multiple funders",
+        "desc": "Prepaid card top-ups from multiple sources, withdrawals in border areas or abroad."
+      },
+      "de": {
+        "nom": "Prepaid-Karten mit mehreren Einzahlern",
+        "desc": "Aufladungen von Prepaid-Karten aus mehreren Quellen, Bezüge in Grenzregionen oder im Ausland."
+      },
+      "it": {
+        "nom": "Carte prepagate multi-fonte",
+        "desc": "Ricariche di carte prepagate da fonti multiple, prelievi in zone di frontiera o all'estero."
+      }
     }
   },
   {
@@ -1046,6 +1497,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Travel ↔ flow consistency",
+        "desc": "Cross-checking the client's known trips against cash withdrawals and flows towards conflict zones."
+      },
+      "de": {
+        "nom": "Kohärenz Reisen ↔ Zahlungsflüsse",
+        "desc": "Abgleich bekannter Reisen des Kunden mit atypischen Barbezügen und Flüssen in Konfliktzonen."
+      },
+      "it": {
+        "nom": "Coerenza viaggi ↔ flussi",
+        "desc": "Incrocio dei viaggi noti del cliente con prelievi di contante atipici e flussi verso zone di conflitto."
+      }
     }
   },
   {
@@ -1076,6 +1541,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dedicated terrorist lists",
+        "desc": "Separate screening against terrorist ordinances/lists (distinct from economic sanctions: governance, escalation and reporting differ)."
+      },
+      "de": {
+        "nom": "Dedizierte Terrorlisten",
+        "desc": "Separates Screening gegen Terrorismus-Verordnungen/-Listen (getrennt von Wirtschaftssanktionen: Governance, Eskalation und Meldung unterscheiden sich)."
+      },
+      "it": {
+        "nom": "Liste terroristiche dedicate",
+        "desc": "Screening distinto contro ordinanze/liste antiterrorismo (separato dalle sanzioni economiche: governance, escalation e comunicazione differiscono)."
+      }
     }
   },
   {
@@ -1116,6 +1595,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Below-the-line sampling",
+        "desc": "Periodic sampling campaign below the active thresholds: transactions just under the thresholds are reviewed to validate calibration."
+      },
+      "de": {
+        "nom": "Below-the-line-Stichproben",
+        "desc": "Periodische Stichprobenkampagne unterhalb der aktiven Schwellenwerte: Transaktionen knapp unter den Schwellen werden zur Validierung der Kalibrierung geprüft."
+      },
+      "it": {
+        "nom": "Campionamento below-the-line",
+        "desc": "Campagna periodica di campionamento sotto le soglie attive: transazioni appena sotto soglia riesaminate per validare la calibrazione."
+      }
     }
   },
   {
@@ -1151,6 +1644,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Backtesting per version",
+        "desc": "Formal backtesting of each scenario version: TP/FP historised per version, before/after comparison of every threshold change."
+      },
+      "de": {
+        "nom": "Backtesting pro Version",
+        "desc": "Formelles Backtesting jeder Szenario-Version: TP/FP je Version historisiert, Vorher-Nachher-Vergleich bei jeder Schwellenwertänderung."
+      },
+      "it": {
+        "nom": "Backtesting per versione",
+        "desc": "Backtesting formale di ogni versione di scenario: TP/FP storicizzati per versione, confronto prima/dopo ogni modifica di soglia."
+      }
     }
   },
   {
@@ -1181,6 +1688,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Data-quality preconditions",
+        "desc": "Upstream data-quality controls as scenario preconditions: a blind scenario (incomplete SWIFT fields, missing currencies) is a silent false negative."
+      },
+      "de": {
+        "nom": "Datenqualität als Vorbedingung",
+        "desc": "Vorgelagerte Datenqualitätskontrollen als Vorbedingung der Szenarien: ein blindes Szenario (unvollständige SWIFT-Felder, fehlende Währungen) ist ein stilles False Negative."
+      },
+      "it": {
+        "nom": "Pre-condizioni di data quality",
+        "desc": "Controlli di qualità dei dati a monte come pre-condizione degli scenari: uno scenario cieco (campi SWIFT incompleti, valute mancanti) è un falso negativo silenzioso."
+      }
     }
   },
   {
@@ -1211,6 +1732,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Annual calibration review",
+        "desc": "Documented annual review of the programme: typology coverage, per-scenario performance, calibration decisions — annexed to the AMLA report to executive management."
+      },
+      "de": {
+        "nom": "Jährliche Kalibrierungsüberprüfung",
+        "desc": "Dokumentierte Jahresüberprüfung des Dispositivs: Typologie-Abdeckung, Performance je Szenario, Kalibrierungsentscheide – als Anhang zum GwG-Bericht an die Geschäftsleitung."
+      },
+      "it": {
+        "nom": "Revisione annuale della calibrazione",
+        "desc": "Revisione annuale documentata del dispositivo: copertura tipologica, performance per scenario, decisioni di calibrazione — allegata al rapporto LRD alla Direzione."
+      }
     }
   },
   {
@@ -1246,6 +1781,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Over-invoicing",
+        "desc": "Invoices systematically paid above the market value of the goods — the excess transfers laundering value under commercial cover."
+      },
+      "de": {
+        "nom": "Überfakturierung (Over-Invoicing)",
+        "desc": "Rechnungen werden systematisch über dem Marktwert der Waren bezahlt – der Mehrbetrag transferiert Geldwäschereiwert unter kommerziellem Deckmantel."
+      },
+      "it": {
+        "nom": "Sovrafatturazione (over-invoicing)",
+        "desc": "Fatture pagate sistematicamente sopra il valore di mercato dei beni — il sovrapprezzo trasferisce valore sotto copertura commerciale."
+      }
     }
   },
   {
@@ -1276,6 +1825,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Multiple invoicing",
+        "desc": "The same goods or shipment invoiced and paid several times, through one or more financiers."
+      },
+      "de": {
+        "nom": "Mehrfachfakturierung",
+        "desc": "Dieselbe Ware oder Sendung wird mehrfach fakturiert und bezahlt, über einen oder mehrere Finanzierer."
+      },
+      "it": {
+        "nom": "Fatturazione multipla",
+        "desc": "Lo stesso bene o la stessa spedizione fatturati e pagati più volte, tramite uno o più finanziatori."
+      }
     }
   },
   {
@@ -1316,6 +1879,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Unit price vs benchmark",
+        "desc": "Unit-price analysis per HS code against market reference data — extreme deviations signal trade mis-invoicing."
+      },
+      "de": {
+        "nom": "Einheitspreis vs. Benchmark",
+        "desc": "Einheitspreisanalyse je HS-Code gegen Marktreferenzen – extreme Abweichungen deuten auf Mis-Invoicing hin."
+      },
+      "it": {
+        "nom": "Prezzo unitario vs benchmark",
+        "desc": "Analisi del prezzo unitario per codice HS contro riferimenti di mercato — scostamenti estremi segnalano mis-invoicing."
+      }
     }
   },
   {
@@ -1346,6 +1923,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dual-use goods",
+        "desc": "Payments linked to dual-use goods (export-control annexes) towards sensitive destinations."
+      },
+      "de": {
+        "nom": "Dual-Use-Güter",
+        "desc": "Zahlungen im Zusammenhang mit Dual-Use-Gütern (Anhänge der Exportkontrolle) in sensible Destinationen."
+      },
+      "it": {
+        "nom": "Beni a duplice impiego",
+        "desc": "Pagamenti legati a beni a duplice impiego (allegati del controllo delle esportazioni) verso destinazioni sensibili."
+      }
     }
   },
   {
@@ -1376,6 +1967,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Back-to-back LCs / documentary credits via HRJ",
+        "desc": "Back-to-back letters of credit or documentary credits whose chain involves high-risk jurisdictions with no commercial logic."
+      },
+      "de": {
+        "nom": "Back-to-back-Akkreditive / Dokumentenakkreditive über HRJ",
+        "desc": "Back-to-back-Akkreditive oder Dokumentenakkreditive, deren Kette Hochrisikojurisdiktionen ohne kommerzielle Logik einbezieht."
+      },
+      "it": {
+        "nom": "LC back-to-back / crediti documentari via HRJ",
+        "desc": "Lettere di credito back-to-back o crediti documentari la cui catena coinvolge giurisdizioni ad alto rischio senza logica commerciale."
+      }
     }
   },
   {
@@ -1406,6 +2011,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Phantom shipping",
+        "desc": "Payment with no verifiable movement of goods: missing documents, non-existent vessels, ghost containers."
+      },
+      "de": {
+        "nom": "Phantom-Shipping",
+        "desc": "Zahlung ohne nachprüfbare Warenbewegung: fehlende Dokumente, nicht existierende Schiffe, Geistercontainer."
+      },
+      "it": {
+        "nom": "Phantom shipping",
+        "desc": "Pagamento senza movimento di merce verificabile: documenti assenti, navi inesistenti, container fantasma."
+      }
     }
   },
   {
@@ -1436,6 +2055,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Atypical routes & transshipments",
+        "desc": "Shipping routes inconsistent with commercial geography: detours, multiple transshipments, flags changed mid-voyage."
+      },
+      "de": {
+        "nom": "Atypische Routen & Umladungen",
+        "desc": "Seerouten ohne Bezug zur kommerziellen Geografie: Umwege, mehrfache Umladungen, Flaggenwechsel während der Reise."
+      },
+      "it": {
+        "nom": "Rotte e trasbordi atipici",
+        "desc": "Rotte marittime incoerenti con la geografia commerciale: deviazioni, trasbordi multipli, cambi di bandiera in viaggio."
+      }
     }
   },
   {
@@ -1466,6 +2099,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Documentary carousel",
+        "desc": "The same counterparties swap buyer/seller roles on similar goods in a loop — artificial turnover."
+      },
+      "de": {
+        "nom": "Dokumentenkarussell",
+        "desc": "Dieselben Gegenparteien tauschen in einer Schleife Käufer-/Verkäuferrollen für ähnliche Waren – künstlicher Umsatz."
+      },
+      "it": {
+        "nom": "Carosello documentario",
+        "desc": "Le stesse controparti si scambiano in circolo i ruoli di acquirente/venditore su beni simili — fatturato artificiale."
+      }
     }
   },
   {
@@ -1496,6 +2143,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Wire stripping / payment transparency",
+        "desc": "Originator/beneficiary fields (50/59) incomplete, truncated or altered along the chain — FATF R.16, Wolfsberg Payment Transparency."
+      },
+      "de": {
+        "nom": "Wire Stripping / Zahlungstransparenz",
+        "desc": "Felder Auftraggeber/Begünstigter (50/59) unvollständig, gekürzt oder verändert in der Kette – FATF R.16, Wolfsberg Payment Transparency."
+      },
+      "it": {
+        "nom": "Wire stripping / trasparenza dei pagamenti",
+        "desc": "Campi ordinante/beneficiario (50/59) incompleti, troncati o alterati lungo la catena — GAFI R.16, Wolfsberg Payment Transparency."
+      }
     }
   },
   {
@@ -1526,6 +2187,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "U-turn payments",
+        "desc": "Funds leaving via a third correspondent and returning to the same party through another chain — circumvention of restrictions."
+      },
+      "de": {
+        "nom": "U-Turn-Zahlungen",
+        "desc": "Gelder fliessen über einen Drittkorrespondenten ab und kehren über eine andere Kette zur selben Partei zurück – Umgehung von Restriktionen."
+      },
+      "it": {
+        "nom": "Pagamenti U-turn",
+        "desc": "Fondi in uscita verso un corrispondente terzo che ritornano alla stessa parte tramite un'altra catena — elusione di restrizioni."
+      }
     }
   },
   {
@@ -1556,6 +2231,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Payable-through accounts",
+        "desc": "The respondent's customers access the correspondent account directly — due diligence on the end user is impossible."
+      },
+      "de": {
+        "nom": "Payable-Through-Konten",
+        "desc": "Kunden der Respondenzbank greifen direkt auf das Korrespondenzkonto zu – Sorgfaltspflichten gegenüber dem Endnutzer sind nicht erfüllbar."
+      },
+      "it": {
+        "nom": "Conti payable-through",
+        "desc": "I clienti della banca rispondente accedono direttamente al conto di corrispondenza — diligenza sull'utente finale impossibile."
+      }
     }
   },
   {
@@ -1586,6 +2275,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Respondent volume vs profile (KYCC)",
+        "desc": "A respondent bank's volumes and corridors inconsistent with its declared profile (Wolfsberg CBDDQ)."
+      },
+      "de": {
+        "nom": "Volumen der Respondenzbank vs. Profil (KYCC)",
+        "desc": "Volumen und Korridore einer Respondenzbank unvereinbar mit ihrem deklarierten Profil (Wolfsberg CBDDQ)."
+      },
+      "it": {
+        "nom": "Volumetria del rispondente vs profilo (KYCC)",
+        "desc": "Volumi e corridoi di una banca rispondente incoerenti con il profilo dichiarato (Wolfsberg CBDDQ)."
+      }
     }
   },
   {
@@ -1616,6 +2319,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shell bank",
+        "desc": "Detection of fictitious banks (no physical presence, no regulated group) in the chains — prohibited under the AMLA."
+      },
+      "de": {
+        "nom": "Briefkastenbank (Shell Bank)",
+        "desc": "Erkennung fiktiver Banken (ohne physische Präsenz, ohne reguliertes Gruppenumfeld) in den Ketten – nach GwG verboten."
+      },
+      "it": {
+        "nom": "Banca fittizia (shell bank)",
+        "desc": "Individuazione di banche fittizie (senza presenza fisica né gruppo regolamentato) nelle catene — vietate dalla LRD."
+      }
     }
   },
   {
@@ -1646,6 +2363,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dormant RMAs",
+        "desc": "Active SWIFT relationship authorisations (RMA) with no flows and no documented business need — unnecessary attack and circumvention surface."
+      },
+      "de": {
+        "nom": "Ruhende RMA",
+        "desc": "Aktive SWIFT-RMA ohne Flüsse und ohne dokumentierten Geschäftsbedarf – unnötige Angriffs- und Umgehungsfläche."
+      },
+      "it": {
+        "nom": "RMA dormienti",
+        "desc": "Autorizzazioni SWIFT (RMA) attive senza flussi né esigenza documentata — inutile superficie di attacco e di elusione."
+      }
     }
   },
   {
@@ -1676,6 +2407,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Respondent screening (CBDDQ)",
+        "desc": "Periodic screening of respondent banks themselves: sanctions, adverse media, country rating, ownership."
+      },
+      "de": {
+        "nom": "Screening der Respondenzbanken (CBDDQ)",
+        "desc": "Periodisches Screening der Respondenzbanken selbst: Sanktionen, Adverse Media, Länderrating, Eigentümerschaft."
+      },
+      "it": {
+        "nom": "Screening delle banche rispondenti (CBDDQ)",
+        "desc": "Screening periodico delle stesse banche rispondenti: sanzioni, adverse media, rating paese, assetto proprietario."
+      }
     }
   },
   {
@@ -1706,6 +2451,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sectoral sanctions & price caps",
+        "desc": "Circumvention of sectoral sanctions: price caps (oil), gold/luxury embargoes, prohibited services (insurance, shipping) towards RU/BY/IR/KP."
+      },
+      "de": {
+        "nom": "Sektorale Sanktionen & Preisobergrenzen",
+        "desc": "Umgehung sektoraler Sanktionen: Preisobergrenzen (Öl), Gold-/Luxus-Embargos, verbotene Dienstleistungen (Versicherung, Schifffahrt) Richtung RU/BY/IR/KP."
+      },
+      "it": {
+        "nom": "Sanzioni settoriali & price cap",
+        "desc": "Elusione delle sanzioni settoriali: tetti di prezzo (petrolio), embarghi oro/lusso, servizi vietati (assicurazione, shipping) verso RU/BY/IR/KP."
+      }
     }
   },
   {
@@ -1736,6 +2495,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shell chains on KP/IR corridors",
+        "desc": "Intermediation patterns typical of proliferation financing: young companies, minimal capital, generic sectors, chained towards sensitive corridors."
+      },
+      "de": {
+        "nom": "Ketten von Scheinfirmen auf KP/IR-Korridoren",
+        "desc": "Für Proliferationsfinanzierung typische Vermittlungsmuster: junge Gesellschaften, Minimalkapital, generische Sektoren, in Ketten Richtung sensibler Korridore."
+      },
+      "it": {
+        "nom": "Catene di società schermo su corridoi KP/IR",
+        "desc": "Schemi di intermediazione tipici del finanziamento della proliferazione: società giovani, capitale minimo, settori generici, in catena verso corridoi sensibili."
+      }
     }
   },
   {
@@ -1766,6 +2539,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Luxury goods to embargoed zones",
+        "desc": "Export of luxury goods (watches, jewellery, vehicles) towards luxury-embargoed jurisdictions, often via transit countries."
+      },
+      "de": {
+        "nom": "Luxusgüter in Embargozonen",
+        "desc": "Export von Luxusgütern (Uhren, Schmuck, Fahrzeuge) in Jurisdiktionen mit Luxusgüter-Embargo, oft über Transitländer."
+      },
+      "it": {
+        "nom": "Beni di lusso verso zone sotto embargo",
+        "desc": "Esportazione di beni di lusso (orologi, gioielleria, veicoli) verso giurisdizioni sotto embargo, spesso tramite paesi di transito."
+      }
     }
   },
   {
@@ -1796,6 +2583,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Real estate via structures, off-market price",
+        "desc": "Real-estate acquisition through a structure (property company, trust, offshore) at a price significantly off market."
+      },
+      "de": {
+        "nom": "Immobilien über Strukturen, marktferner Preis",
+        "desc": "Immobilienerwerb über eine Struktur (Immobiliengesellschaft, Trust, Offshore) zu deutlich marktfernem Preis."
+      },
+      "it": {
+        "nom": "Immobili via strutture, prezzo fuori mercato",
+        "desc": "Acquisizione immobiliare tramite struttura (società immobiliare, trust, offshore) a un prezzo significativamente fuori mercato."
+      }
     }
   },
   {
@@ -1826,6 +2627,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Art & freeports",
+        "desc": "Artwork purchase, freeport storage, quick resale — mobile, opaque, cross-border value."
+      },
+      "de": {
+        "nom": "Kunst & Zollfreilager",
+        "desc": "Kauf von Kunstwerken, Einlagerung im Zollfreilager, rasche Weiterveräusserung – mobile, intransparente, grenzüberschreitende Werte."
+      },
+      "it": {
+        "nom": "Arte & porti franchi",
+        "desc": "Acquisto di opere, deposito in porto franco, rivendita rapida — valore mobile, opaco e transfrontaliero."
+      }
     }
   },
   {
@@ -1856,6 +2671,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Value vehicles (luxury, NFT)",
+        "desc": "Luxury goods and collectible digital assets used as value-transfer vehicles."
+      },
+      "de": {
+        "nom": "Wertvehikel (Luxus, NFT)",
+        "desc": "Luxusgüter und digitale Sammlerwerte als Vehikel für Werttransfers."
+      },
+      "it": {
+        "nom": "Veicoli di valore (lusso, NFT)",
+        "desc": "Beni di lusso e asset digitali da collezione usati come veicoli di trasferimento di valore."
+      }
     }
   },
   {
@@ -1886,6 +2715,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Peer-group deviation",
+        "desc": "Statistical deviation of the client from its CPSI peer group (z-score on monitored attributes), beyond fixed first-generation thresholds."
+      },
+      "de": {
+        "nom": "Abweichung von der Peer-Group",
+        "desc": "Statistische Abweichung des Kunden von seiner CPSI-Peer-Group (Z-Score auf überwachten Attributen), über die fixen Schwellen der 1. Generation hinaus."
+      },
+      "it": {
+        "nom": "Deviazione dal gruppo di pari",
+        "desc": "Scostamento statistico del cliente dal suo gruppo di pari CPSI (z-score sugli attributi monitorati), oltre le soglie fisse di prima generazione."
+      }
     }
   },
   {
@@ -1916,6 +2759,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Behavioural break (own baseline)",
+        "desc": "Sudden change versus the client's own historical baseline (not the group's): the transaction regime shifts."
+      },
+      "de": {
+        "nom": "Verhaltensbruch (eigene Baseline)",
+        "desc": "Plötzliche Veränderung gegenüber der eigenen historischen Baseline des Kunden (nicht der Gruppe): das Transaktionsregime kippt."
+      },
+      "it": {
+        "nom": "Rottura di comportamento (baseline propria)",
+        "desc": "Cambiamento improvviso rispetto alla baseline storica del cliente stesso (non del gruppo): il regime transazionale cambia."
+      }
     }
   },
   {
@@ -1951,6 +2808,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "First-time patterns",
+        "desc": "Sensitive first occurrences: first international wire, first cash, first HRJ counterparty, first higher-risk product."
+      },
+      "de": {
+        "nom": "First-Time-Muster",
+        "desc": "Sensible Erstereignisse: erste Auslandsüberweisung, erstes Bargeld, erste HRJ-Gegenpartei, erstes Produkt mit erhöhtem Risiko."
+      },
+      "it": {
+        "nom": "Pattern first-time",
+        "desc": "Prime occorrenze sensibili: primo bonifico internazionale, primo contante, prima controparte HRJ, primo prodotto a rischio."
+      }
     }
   },
   {
@@ -1981,6 +2852,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Partial dormancy by segment",
+        "desc": "Reactivation of a dormant activity segment (e.g. cash after three years of cash inactivity) even if the account overall remains active."
+      },
+      "de": {
+        "nom": "Partielle Inaktivität nach Segment",
+        "desc": "Reaktivierung eines ruhenden Aktivitätssegments (z. B. Bargeld nach drei Jahren Bargeld-Inaktivität), auch wenn das Konto insgesamt aktiv bleibt."
+      },
+      "it": {
+        "nom": "Dormienza parziale per segmento",
+        "desc": "Riattivazione di un segmento di attività dormiente (es. contante dopo tre anni di inattività) anche se il conto nel complesso resta attivo."
+      }
     }
   },
   {
@@ -2011,6 +2896,20 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
     "gtCount": {
       "tp": 1,
       "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Recurring inbound income mismatch",
+        "desc": "Recurring credits labelled 'salary/fees' inconsistent with the employer and remuneration declared in the KYC."
+      },
+      "de": {
+        "nom": "Wiederkehrende Einkommensinkonsistenz (eingehend)",
+        "desc": "Wiederkehrende Gutschriften als 'Lohn/Honorar' deklariert, unvereinbar mit Arbeitgeber und Vergütung gemäss KYC."
+      },
+      "it": {
+        "nom": "Redditi in entrata incoerenti (ricorrenti)",
+        "desc": "Accrediti ricorrenti etichettati 'stipendio/onorari' incoerenti con datore di lavoro e remunerazione dichiarati nel KYC."
+      }
     }
   }
 ];

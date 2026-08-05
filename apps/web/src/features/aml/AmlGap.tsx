@@ -26,8 +26,13 @@ const GREEN = "#4A6B28", AMBER = "#C9A227", RED = "#B5483C", INK = "#1A2410", MU
 
 // i18n (R323–R327 + AR « Both ») : la FAMILLE (chrome) est traduite par le dictionnaire ; lu à chaque
 // rendu (langue()) — le shell re-rend au changement de langue ; AR → repli FR. Le CONTENU des règles
-// (nom/desc) reste affiché tel quel (FR seed) — traduction servie par l'API à venir (SPEC-I18N §3).
+// (nom/desc) est SERVI PAR L'API (SPEC-I18N §3, cf. ruleNom/ruleDesc) — jamais bundlé au front.
 const famLbl = (fam: string) => traduire(langue())(FAM_LABEL[fam] || fam);
+// Contenu d'une règle : traduction PO servie par l'API (SPEC-I18N §3) quand présente, sinon FR
+// (seed/démo). L'arabe n'a pas de contenu (glossaire sans colonne AR) → repli FR (jamais un trou).
+const ruleLc = () => langue().toLowerCase() as "en" | "de" | "it";
+const ruleNom = (s: AmlGapScenarioSeed) => s.i18n?.[ruleLc()]?.nom ?? s.titre;
+const ruleDesc = (s: AmlGapScenarioSeed) => s.i18n?.[ruleLc()]?.desc ?? s.desc;
 
 type Signal = {
   id: string; scenarioCode: string; ruleRef: string; famille: string; clientId: string | null;
@@ -129,11 +134,11 @@ function ReglesTab() {
             <div key={key} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 12, padding: 14,
               borderLeft: `4px solid ${s.blocking ? RED : s.niveau === 1 ? AMBER : GREEN}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <div onClick={() => setOpenCode(open ? null : s.code)} style={{ flex: 1, fontSize: 13.5, fontWeight: 800, color: INK, cursor: "pointer" }}>{s.titre}</div>
+                <div onClick={() => setOpenCode(open ? null : s.code)} style={{ flex: 1, fontSize: 13.5, fontWeight: 800, color: INK, cursor: "pointer" }}>{ruleNom(s)}</div>
                 {s.blocking && badge("⛔ BLOQUE", RED)}
                 {s.niveau != null && badge("N" + s.niveau, s.niveau === 1 ? AMBER : GREEN)}
               </div>
-              <div style={{ fontSize: 11.5, color: "#555", lineHeight: 1.5, marginBottom: 8 }}>{s.desc}</div>
+              <div style={{ fontSize: 11.5, color: "#555", lineHeight: 1.5, marginBottom: 8 }}>{ruleDesc(s)}</div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 10.5, color: MUTE }}>
                 <span style={{ fontFamily: "monospace", color: GREEN, fontWeight: 700 }}>{s.ruleRef}</span>
                 <span>· {famLbl(s.famille)}</span>
@@ -273,10 +278,10 @@ function GouvTab() {
         {gv.map((s) => (
           <div key={s.code} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 12, padding: 14, borderLeft: `4px solid ${MUTE}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 800, color: INK }}>{s.titre}</div>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 800, color: INK }}>{ruleNom(s)}</div>
               <span style={{ fontFamily: "monospace", fontSize: 10.5, color: GREEN, fontWeight: 700 }}>{s.ruleRef}</span>
             </div>
-            <div style={{ fontSize: 11.5, color: "#555", lineHeight: 1.5 }}>{s.desc}</div>
+            <div style={{ fontSize: 11.5, color: "#555", lineHeight: 1.5 }}>{ruleDesc(s)}</div>
             <div style={{ marginTop: 8 }}>{badge("différé — worker aml-eval", "#EDEDE7", MUTE)}</div>
           </div>
         ))}
