@@ -113,7 +113,7 @@ describe("FAT COC — R276→R278 : le CoC est un dossier à cycle de vie (CC-01
       await request(http).patch(`/v1/kyc/${kyc.code}/questions/${q.code}`).set(bearer(T, RM, "RM")).send({ answer: "ok" });
     for (const v of kyc.visas)
       await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({});
-    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).send({ engagement: true }).expect(201);   // R14
     const avant = await prisma.reviewDeadline.findFirst({ where: { tenantId: T, clientId, statut: "PLANIFIEE" } });
     // Ouverture d'un CoC HAUTE → l'échéance est ANTICIPÉE (événement RV-04, déclencheur tracé)
     await request(http).post("/v1/coc").set(bearer(T, RM, "RM"))

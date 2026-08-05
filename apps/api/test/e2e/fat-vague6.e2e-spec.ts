@@ -63,11 +63,20 @@ describe("FAT Vague 6 — Paramétrage & Gouvernance (backend réel)", () => {
     const troue = await request(http).post("/v1/parametres/activer").set(bearer(TID, CO, "CO")).send({ signataire: "Dr. Banquier" });
     expect(troue.status).toBe(400);
     expect(jstr(troue)).toContain("gedDocTypes");
-    // On renseigne les clés requises (gedDocTypes + rqRepondant) puis on active → ACTIF
-    await request(http).post("/v1/parametres/valeur/gedDocTypes").set(bearer(TID, CO, "CO"))
-      .send({ valeur: [{ code: "PASSEPORT", rolesAutorises: ["CO"] }], motif: "Référentiel documentaire minimal." }).expect(201);
-    await request(http).post("/v1/parametres/valeur/rqRepondant").set(bearer(TID, CO, "CO"))
-      .send({ valeur: "Dr. Banquier", motif: "Répondant bancaire du questionnaire R-Q." }).expect(201);
+    // On renseigne TOUTES les clés requises du registre R-Q (le canon inclut, en plus de
+    // gedDocTypes/rqRepondant, les référentiels AML-gap requis R340→R403) puis on active → ACTIF.
+    // Seed piloté par le registre lui-même (robuste à l'ajout de nouvelles clés requises).
+    const valeurParDefautSelonType = (e: any) =>
+      e.exemple !== undefined ? e.exemple
+      : e.type === "json" ? [] : e.type === "int" ? 0 : e.type === "bool" ? true : "seed";
+    const registre = await request(http).get("/v1/parametres/registre").set(bearer(TID, CO, "CO"));
+    const requises = (registre.body as any[]).filter((e) => e.requis);
+    for (const e of requises) {
+      const rs = await request(http).post(`/v1/parametres/valeur/${e.cle}`).set(bearer(TID, CO, "CO"))
+        .send({ valeur: e.cle === "rqRepondant" ? "Dr. Banquier" : valeurParDefautSelonType(e),
+                motif: "Recette : seed de la clé requise R-Q." });
+      expect(rs.status).toBe(201);
+    }
     const actif = await request(http).post("/v1/parametres/activer").set(bearer(TID, CO, "CO")).send({ signataire: "Dr. Banquier" });
     expect(actif.status).toBeLessThan(300);
     expect(actif.body.statut).toBe("ACTIF");

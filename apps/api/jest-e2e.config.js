@@ -7,25 +7,14 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["<rootDir>/test/e2e/**/*.e2e-spec.ts"],
   moduleFileExtensions: ["ts", "js", "json"],
-  // QUARANTAINE e2e (voir test/e2e/QUARANTINE.md). Ces 9 suites échouent de façon PRÉ-EXISTANTE,
-  // à l'identique sur base sale (olive_test accumulée) ET sur base FRAÎCHE reconstruite par
-  // `migrate deploy` — donc indépendamment de la dérive de migrations réconciliée en 2026-08-05 et
-  // du câblage screening (Phase 1). Causes : dépendance d'ordre / non-hermétisme (four-eyes, visas
-  // concurrents, événements chaînés) et, pour cloture-demo, un grep de source à raffiner (l'état
-  // d'AFFICHAGE isDemoMode est légitime). Exclues pour rendre la voie e2e VERTE et REPRODUCTIBLE en
-  // CI ; chaque suite sort de cette liste dès qu'elle est rendue hermétique. Rien n'est masqué : la
-  // liste et ses motifs sont versionnés, et l'étape CI journalise le nombre de suites en quarantaine.
+  // QUARANTAINE e2e (voir test/e2e/QUARANTINE.md). Les 9 suites autrefois exclues ont été
+  // HERMÉTISÉES le 2026-08-05 et RÉINTÉGRÉES : 8 échouaient sur la garde R14 (engagement de
+  // responsabilité désormais requis à la validation finale — le test ne l'envoyait pas), sur un
+  // signed_by devenu uuid, ou sur les nouvelles clés requises R-Q (AML-gap) du go-live ; la 9e
+  // (cloture-demo) avait un grep de source trop large (il confondait l'onglet d'AFFICHAGE
+  // « demo » avec une branche de logique métier). Aucune suite ne reste en quarantaine.
   testPathIgnorePatterns: [
     "/node_modules/",
-    "<rootDir>/test/e2e/kyc-rules.e2e-spec.ts",        // R52/R2/R13 four-eyes — beforeAll non hermétique (6/6 seul)
-    "<rootDir>/test/e2e/optimistic-lock.e2e-spec.ts",  // LK-VISA-02 double signature concurrente (réussites=0)
-    "<rootDir>/test/e2e/fat-vague1.e2e-spec.ts",       // FAT-KYC-01 four-eyes 409 · FAT-REJEU statutADate
-    "<rootDir>/test/e2e/fat-vague6.e2e-spec.ts",        // FAT-GOLIVE-01 config reconstruite → 400
-    "<rootDir>/test/e2e/fat-canon-anciens.e2e-spec.ts",// VD-02 / RW-01..05 : payload null (événements chaînés)
-    "<rootDir>/test/e2e/fat-coc.e2e-spec.ts",          // CC-04 REVIEW_DEADLINE_ANTICIPEE (dépend de reviews)
-    "<rootDir>/test/e2e/fat-reviews.e2e-spec.ts",      // RV-01..08 échéances chaînées non hermétiques
-    "<rootDir>/test/e2e/fat-degel-v3.e2e-spec.ts",     // WB-06 exécution workflow builder (état atelier)
-    "<rootDir>/test/e2e/fat-cloture-demo.e2e-spec.ts", // DM-03 grep source `demo` — raffiner l'état isDemoMode
   ],
   setupFiles: ["<rootDir>/test/e2e/env.ts"],
   transform: {

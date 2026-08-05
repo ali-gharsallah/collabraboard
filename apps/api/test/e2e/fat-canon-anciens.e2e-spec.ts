@@ -270,7 +270,7 @@ describe("FAT CANON ANCIENS — Partie 3 : R282 matrice de droits versionnée (V
     await preparer(avant, ["IDE-Q2"]);
     await preparer(apres, ["IDE-Q2"]);
     // J-10 : la matrice de SA création ne portait pas ce REQUIRED → se valide (R29)
-    await request(http).post(`/v1/kyc/${avant.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    await request(http).post(`/v1/kyc/${avant.code}/validate`).set(bearer(T, COSR, "CO_SR")).send({ engagement: true }).expect(201);
     // J+1 : l'exige — le refus LISTE la contribution manquante
     const refus = await request(http).post(`/v1/kyc/${apres.code}/validate`).set(bearer(T, COSR, "CO_SR"));
     expect(refus.status).toBe(400);
@@ -333,7 +333,7 @@ describe("FAT CANON ANCIENS — Partie 4 : R283 questionnaires de review, UN SEU
       }
     for (const v of kyc.visas)
       await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({}).expect(201);
-    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).send({ engagement: true }).expect(201);
     return (await prisma.reviewDeadline.findFirst({ where: { tenantId: T, clientId: kyc.clientId, statut: "PLANIFIEE" } }))!;
   };
   const ecrireProfils = (valeur: any[], motif: string) =>
@@ -454,7 +454,7 @@ describe("FAT CANON ANCIENS — Partie 4 : R283 questionnaires de review, UN SEU
     expect(JSON.stringify(refus.body)).toContain("UBO-Q1");               // R282 : la complétude LISTE ce qui manque
     await request(http).patch(`/v1/kyc/${review!.code}/questions/UBO-Q1`).set(bearer(T, RM, "RM")).send({ answer: "formulaire A re-signé" }).expect(200);
     // Validation → RV-07 : l'échéance lancée passe REALISEE (référence au Rn+1), la SUIVANTE repart
-    await request(http).post(`/v1/kyc/${review!.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    await request(http).post(`/v1/kyc/${review!.code}/validate`).set(bearer(T, COSR, "CO_SR")).send({ engagement: true }).expect(201);
     const realisee = await prisma.reviewDeadline.findFirst({ where: { id: ev.deadlineId } });
     expect(realisee!.statut).toBe("REALISEE");
     expect(realisee!.realiseeKycId).toBe(review!.id);

@@ -58,7 +58,8 @@ describe("FAT Vague 1 — recette métier (backend réel)", () => {
     expect(creator.status).toBe(409);
     expect(jstr(creator)).toContain("Four-eyes");
     // un tiers habilité (CO_SR) valide → VALIDATED, et l'événement kyc.validated est émis (déclencheur golden record)
-    const done = await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR"));
+    // R14 : engagement de responsabilité requis à la signature finale.
+    const done = await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR")).send({ engagement: true });
     expect(done.status).toBeLessThan(300);
     expect(done.body.status).toBe("VALIDATED");
     const evt = await prisma.domainEvent.findMany({ where: { tenantId: TID, type: "kyc.validated" } });
@@ -149,7 +150,7 @@ describe("FAT Vague 1 — recette métier (backend réel)", () => {
     const code = res.body.code;
     await request(http).patch(`/v1/kyc/${code}/questions/IDE-Q3`).set(bearer(TID, CO_A, "CO")).send({ answer: "x" }).expect(200);
     await request(http).post(`/v1/kyc/${code}/visas/IDENTITY`).set(bearer(TID, CO_B, "CO")).send({ verdict: "OK" });
-    await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR"));
+    await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR")).send({ engagement: true });   // R14
     // état AUJOURD'HUI reconstruit depuis le journal → VALIDE, avec les 2 événements
     const auj = await request(http).get(`/v1/kyc/${code}/a-date`).set(bearer(TID, AUDIT, "AUDIT"));
     expect(auj.body.statutADate).toBe("VALIDE");

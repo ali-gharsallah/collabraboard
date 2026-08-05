@@ -100,7 +100,9 @@ describe("KYC — règles moteur (e2e)", () => {
     expect(contrib.status).toBe(409);
     expect(body(contrib)).toContain("R52");
     // tiers non-contributeur habilité → VALIDATED (visa IDENTITY signé OK)
-    const done = await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR"));
+    // R14 : l'engagement de responsabilité est requis pour la signature finale (gardé APRÈS
+    // four-eyes/R52, d'où les 409 ci-dessus sans engagement) — le tiers signe avec engagement.
+    const done = await request(http).post(`/v1/kyc/${code}/validate`).set(bearer(TID, CO_SR, "CO_SR")).send({ engagement: true });
     expect(done.status).toBeLessThan(300);
     expect(done.body.status).toBe("VALIDATED");
   });

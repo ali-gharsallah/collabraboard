@@ -228,7 +228,7 @@ describe("FAT DÉGEL V3 — R308 : zéro runtime propre, les moteurs ratifiés e
       }
     for (const v of kyc.visas)
       await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({});
-    const val = await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, randomUUID(), "CO_SR")).send({});
+    const val = await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, randomUUID(), "CO_SR")).send({ engagement: true });   // R14
     expect([200, 201]).toContain(val.status);
     console.log("WB-06 PASS — atelier résout la def Builder, dossier validé sur le moteur");
   });

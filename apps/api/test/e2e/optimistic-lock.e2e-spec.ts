@@ -42,9 +42,11 @@ describe("VERROU OPTIMISTE — concurrence réelle (Bloc A)", () => {
     const k = await mkKyc();
     const visa = await prisma.kycVisa.create({ data: { kycFileId: k.id, sectionCode: "IDENT",
       requiredRole: "CO", status: "PENDING" } });                   // version = 0 (défaut)
+    // Deux signataires DISTINCTS (signed_by est un uuid en base) : four-eyes concurrent réel.
+    const premier = randomUUID(), second = randomUUID();
     const [r1, r2] = await Promise.allSettled([
-      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: "premier", verdict: "OK" }, { enforce: true }),
-      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: "second", verdict: "NOK" }, { enforce: true }),
+      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: premier, verdict: "OK" }, { enforce: true }),
+      majVersionnee(prisma.kycVisa as any, visa.id, 0, { status: "SIGNED", signedBy: second, verdict: "NOK" }, { enforce: true }),
     ]);
     const reussites = [r1, r2].filter((r) => r.status === "fulfilled").length;
     const conflits = [r1, r2].filter((r) => r.status === "rejected"

@@ -36,10 +36,22 @@ describe("FAT CLÔTURE — R329 : la démo est un tenant ordinaire (DM-01/03, re
         if (f.isDirectory()) { marcher(p); continue; }
         if (!/\.(ts|tsx)$/.test(f.name)) continue;
         const src = fs.readFileSync(p, "utf8");
-        // `if (demo)` / `=== "demo"` / `isDemo` d'AUTORISATION — le mode démo front (isDemoMode =
-        // API absente) est un état d'AFFICHAGE légitime, distinct d'une branche de logique métier.
-        for (const l of src.split("\n"))
-          if (/\bif\s*\(\s*demo\b|===\s*["']demo["']|tenant.*===.*demo/i.test(l)) hits.push(`${p}: ${l.trim().slice(0, 80)}`);
+        // On cherche une branche de LOGIQUE MÉTIER / AUTORISATION propre à la démo, PAS un état
+        // d'AFFICHAGE. Sont légitimes et donc ignorés :
+        //   • `isDemoMode` / `isDemo` (front useApiOrSeed : « API absente ⇒ données de seed »),
+        //     un état d'affichage explicité par le commentaire même du test ;
+        //   • `<onglet> === "demo"` où l'opérande gauche est un sélecteur de VUE/ONGLET (l'onglet
+        //     « Scénario de démo » d'un écran-guide) — c'est de l'affichage, pas une voie spéciale.
+        // Restent BLOQUANTS : `if (demo)` (branche booléenne), et `<identité métier> === "demo"`
+        // (tenant / mode / env / plan / rôle / compte / contexte === "demo") = une voie spéciale.
+        const SELECTEURS_AFFICHAGE = /^(ong|onglet|onglets|tab|tabs|activetab|selectedtab|vue|view|panel|pane|section|screen|ecran|step|etape|nav|menu)$/;
+        for (const l of src.split("\n")) {
+          if (/\bif\s*\(\s*demo\s*\)/.test(l)) { hits.push(`${p}: ${l.trim().slice(0, 80)}`); continue; }
+          if (/\btenant\w*\b[^=]*===[^=]*["']demo["']/i.test(l)) { hits.push(`${p}: ${l.trim().slice(0, 80)}`); continue; }
+          const m = l.match(/\b(\w+)\s*===\s*["']demo["']/);
+          if (m && !SELECTEURS_AFFICHAGE.test(m[1].toLowerCase()))
+            hits.push(`${p}: ${l.trim().slice(0, 80)}`);
+        }
       }
     };
     racines.forEach((r) => marcher(path.join(__dirname, r)));

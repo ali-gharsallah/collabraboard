@@ -25,7 +25,7 @@ describe("FAT REVIEWS — R272→R275 : échéances calculées, versionnées, re
           .send({ answer: "renseigné" });
     for (const v of kyc.visas)
       await request(http).post(`/v1/kyc/${kyc.code}/visas/${v.sectionCode}`).set(bearer(T, randomUUID(), v.requiredRole)).send({});
-    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).expect(201);
+    await request(http).post(`/v1/kyc/${kyc.code}/validate`).set(bearer(T, COSR, "CO_SR")).send({ engagement: true }).expect(201);   // R14
     return kyc;
   };
 
