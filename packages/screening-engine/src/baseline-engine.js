@@ -12,6 +12,23 @@
 const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;   // NB : déclarée, non appliquée (parité avec l'origine)
 const SUFFIXES = /\b(sa|ag|ltd|llc|gmbh|inc|plc|sarl|holding|holdings)\b/g;
 
+/**
+ * R268 — les CONSTANTES du score, jusqu'ici en dur, deviennent des paramètres. Les VALEURS par
+ * défaut sont EXACTEMENT les littéraux de l'origine : sans `config`, le score est identique au bit
+ * près (prouvé par config-equivalence.test.mjs, 127/127). Phase 2 : un appelant (ou un scénario
+ * versionné) pourra durcir/assouplir un discriminant sans toucher au code — le moteur ne décide
+ * toujours pas (R44), il applique le réglage qu'on lui passe.
+ */
+const DEFAUTS_MOTEUR = Object.freeze({
+  echelle: 100,                    // amplitude du score (nameScore = sim × échelle ; borne du plafond)
+  penaliteTypeIncompatible: 40,    // PP interrogée vs entité listée (et l'inverse)
+  bonusDobExact: 6,                // date de naissance identique au jour
+  bonusDobMemeAnnee: 2,            // même année, jour différent
+  ecartAnneesProche: 2,            // seuil (années) sous lequel un écart de DOB est « proche »
+  penaliteDobProche: 12,           // écart d'années ≤ seuil : doute, on pénalise
+  penaliteDobIncompatible: 45,     // écart d'années > seuil : incompatible (écarte l'homonyme)
+});
+
 function normaliser(s) {
   return String(s || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // diacritiques
@@ -96,58 +113,59 @@ const aliasNom = (a) => (typeof a === "string" ? a : a.nom);
  * DÉCOMPOSITION du score 0-100 (R266) — reproduit EXACTEMENT la logique de l'origine, en exposant
  * les intermédiaires : meilleur nom/alias apparié, pénalité de type, contribution DOB.
  */
-function scorerDetail(requete, entree) {
+function scorerDetail(requete, entree, config) {
+  const c = config ? { ...DEFAUTS_MOTEUR, ...config } : DEFAUTS_MOTEUR;   // défauts = comportement d'origine
   const qTok = normaliser(requete.nom).split(" ").filter(Boolean);
   const candidats = [entree.nom_complet, ...(entree.alias || []).map(aliasNom)];
   let best = 0, via = entree.nom_complet;
-  for (const c of candidats) {
-    const cTok = normaliser(c).split(" ").filter(Boolean);
+  for (const cand of candidats) {
+    const cTok = normaliser(cand).split(" ").filter(Boolean);
     const s = simPonderee(qTok, cTok);
-    if (s > best) { best = s; via = c; }
+    if (s > best) { best = s; via = cand; }
   }
-  const nameScore = best * 100;
+  const nameScore = best * c.echelle;
   let score = nameScore;
 
   // Discriminant de TYPE — dans les DEUX sens.
   let typePenalty = 0;
-  if (requete.dob && entree.type === "entite") typePenalty -= 40;
-  if (requete.est_entite && entree.type === "individu") typePenalty -= 40;
+  if (requete.dob && entree.type === "entite") typePenalty -= c.penaliteTypeIncompatible;
+  if (requete.est_entite && entree.type === "individu") typePenalty -= c.penaliteTypeIncompatible;
   score += typePenalty;
 
   // Discriminant date de naissance : c'est lui qui écarte les homonymes.
   let dobContribution = 0;
   if (requete.dob && entree.date_naissance) {
-    if (requete.dob === entree.date_naissance) { dobContribution = 6; score = Math.min(100, score + 6); }
+    if (requete.dob === entree.date_naissance) { dobContribution = c.bonusDobExact; score = Math.min(c.echelle, score + c.bonusDobExact); }
     else {
       const anQ = +requete.dob.slice(0, 4), anE = +entree.date_naissance.slice(0, 4);
       const ecart = Math.abs(anQ - anE);
-      if (ecart === 0) { dobContribution = 2; score += 2; }
-      else if (ecart <= 2) { dobContribution = -12; score -= 12; }
-      else { dobContribution = -45; score -= 45; }
+      if (ecart === 0) { dobContribution = c.bonusDobMemeAnnee; score += c.bonusDobMemeAnnee; }
+      else if (ecart <= c.ecartAnneesProche) { dobContribution = -c.penaliteDobProche; score -= c.penaliteDobProche; }
+      else { dobContribution = -c.penaliteDobIncompatible; score -= c.penaliteDobIncompatible; }
     }
   }
-  score = Math.max(0, Math.min(100, score));
+  score = Math.max(0, Math.min(c.echelle, score));
   return { score, via, nameScore, typePenalty, dobContribution };
 }
 
-/** Score 0-100 d'une requête contre une entrée — IDENTIQUE à l'origine (délègue à scorerDetail). */
-function scorer(requete, entree) { return scorerDetail(requete, entree).score; }
+/** Score d'une requête contre une entrée — sans `config`, IDENTIQUE à l'origine (délègue à scorerDetail). */
+function scorer(requete, entree, config) { return scorerDetail(requete, entree, config).score; }
 
-/** Meilleur candidat au-dessus du seuil, ou null. */
-function rapprocher(requete, entries, seuil) {
+/** Meilleur candidat au-dessus du seuil, ou null. `config` optionnel (R268). */
+function rapprocher(requete, entries, seuil, config) {
   let best = null, bestScore = 0;
   for (const e of entries) {
-    const s = scorer(requete, e);
+    const s = scorer(requete, e, config);
     if (s > bestScore) { bestScore = s; best = e; }
   }
   return bestScore >= seuil ? { uid: best.uid, score: Math.round(bestScore), entree: best } : null;
 }
 
-/** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R266). */
-function rapprocherDetail(requete, entries, seuil) {
+/** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R266). `config` optionnel (R268). */
+function rapprocherDetail(requete, entries, seuil, config) {
   let best = null, bestDetail = null;
   for (const e of entries) {
-    const d = scorerDetail(requete, e);
+    const d = scorerDetail(requete, e, config);
     if (!bestDetail || d.score > bestDetail.score) { bestDetail = d; best = e; }
   }
   if (!best || bestDetail.score < seuil) return null;
@@ -155,6 +173,6 @@ function rapprocherDetail(requete, entries, seuil) {
 }
 
 module.exports = {
-  PARTICULES, SUFFIXES, normaliser, jetonsTries, jaroWinkler,
+  PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler,
   construireIdf, scorer, scorerDetail, rapprocher, rapprocherDetail,
 };

@@ -23,13 +23,26 @@ export interface ResultatDetaille extends Resultat { detail: Decomposition; }
 export interface IndexTrigramme { index: Map<string, number[]>; entries: EntreeMoteur[]; n: number; }
 export interface OptionsBlocking { maxTrigrammes?: number; minPartages?: number; plafond?: number; }
 
+// R268 — réglage optionnel du score. Omis → comportement d'origine (défauts = littéraux figés).
+export interface ConfigMoteur {
+  echelle?: number;                  // amplitude du score (défaut 100)
+  penaliteTypeIncompatible?: number; // pénalité PP↔entité (défaut 40)
+  bonusDobExact?: number;            // DOB identique (défaut 6)
+  bonusDobMemeAnnee?: number;        // même année, jour différent (défaut 2)
+  ecartAnneesProche?: number;        // seuil d'années « proche » (défaut 2)
+  penaliteDobProche?: number;        // écart ≤ seuil (défaut 12)
+  penaliteDobIncompatible?: number;  // écart > seuil (défaut 45)
+}
+export declare const DEFAUTS_MOTEUR: Readonly<Required<ConfigMoteur>>;
+export declare const DEFAUTS_BLOCKING: Readonly<Required<OptionsBlocking>>;
+
 export function normaliser(s: string): string;
 export function jetonsTries(s: string): string;
 export function jaroWinkler(a: string, b: string): number;
 export function construireIdf(entries: EntreeMoteur[]): { df: Map<string, number>; n: number };
-export function scorer(requete: Requete, entree: EntreeMoteur): number;
-export function scorerDetail(requete: Requete, entree: EntreeMoteur): Decomposition;
-export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number): Resultat | null;
-export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number): ResultatDetaille | null;
+export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): number;
+export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): Decomposition;
+export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): Resultat | null;
+export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): ResultatDetaille | null;
 export function construireIndex(entries: EntreeMoteur[]): IndexTrigramme;
 export function candidats(idx: IndexTrigramme, nom: string, opts?: OptionsBlocking): EntreeMoteur[];

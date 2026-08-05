@@ -6,6 +6,12 @@
 "use strict";
 const { normaliser } = require("./baseline-engine");
 
+/**
+ * R268 — les cutoffs du pré-filtre, jusqu'ici en dur dans la signature, sont exposés comme défauts
+ * NOMMÉS (fin des nombres magiques). Sans `opts`, `candidats` se comporte à l'identique.
+ */
+const DEFAUTS_BLOCKING = Object.freeze({ maxTrigrammes: 12, minPartages: 2, plafond: 400 });
+
 const trigrammes = (s) => {
   const t = " " + normaliser(s).replace(/\s+/g, " ") + " ";
   const out = new Set();
@@ -27,7 +33,8 @@ function construireIndex(entries) {
   return { index, entries, n: entries.length };
 }
 
-function candidats(idx, nom, { maxTrigrammes = 12, minPartages = 2, plafond = 400 } = {}) {
+function candidats(idx, nom, opts = {}) {
+  const { maxTrigrammes, minPartages, plafond } = { ...DEFAUTS_BLOCKING, ...opts };
   const gs = [...trigrammes(nom)]
     .map((g) => ({ g, df: (idx.index.get(g) || []).length }))
     .filter((x) => x.df > 0)
@@ -43,4 +50,4 @@ function candidats(idx, nom, { maxTrigrammes = 12, minPartages = 2, plafond = 40
   return retenus.slice(0, plafond).map((x) => idx.entries[x.i]);
 }
 
-module.exports = { construireIndex, candidats };
+module.exports = { construireIndex, candidats, DEFAUTS_BLOCKING };

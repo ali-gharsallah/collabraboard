@@ -204,6 +204,15 @@ jobs:
           out=$(node services/screening/gate.test.mjs); echo "$out"
           echo "$out" | grep -q "### 3/3 gate matcher verts (R260-R262) ###"
 
+      # ── Équivalence-aux-défauts du moteur configurable (R268) — porte BLOQUANTE ──
+      # Prouve que les knobs Phase 2 (DEFAUTS_MOTEUR/DEFAUTS_BLOCKING) reproduisent, sans config, le
+      # comportement d'origine (127/127) ET qu'un réglage changé change bien un verdict. Toute dérive
+      # d'un défaut casse la CI avant qu'elle n'atteigne la voie de production.
+      - name: "3t · Config-equivalence screening (R268, attendu 6/6)"
+        run: |
+          out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 config-equivalence verts (R268) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille
