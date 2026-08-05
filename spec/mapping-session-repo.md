@@ -475,3 +475,23 @@ règles/produits conservées (R318, R276, GED, CoC, RM). **Coût bundle core = 0
 - **Gardes** : FE-I18N (`Se reconnecter`→إعادة الاتصال ; repli FR d'une clé hors-dico). vitest
   **104/104**, **core 219,3/220** + **pack langue 4,5 kB gz** (à la demande), cliquet EN/DE/IT
   **0 écart**, `vite build` OK, eslint OK.
+
+### 5.9 — AR du CONTENU des RÈGLES (nom+desc), SERVI PAR L'API (machine, 2026-08-05)
+
+Dernier maillon de la couverture AR : le **contenu des 64 règles** (nom + desc) passe en arabe. Servi
+par l'API (`GET /v1/aml/scenarios`, SPEC-I18N §3), **jamais bundlé** → **coût bundle = 0** (pas de
+pack paresseux nécessaire). Passe **MACHINE (MSA)** en attente de relecture pro ; réfs
+réglementaires/produits conservées (FINMA, GAFI, OFAC SDN, BIC, IMO, HS, LC, RMA, CBDDQ, KYCC,
+z-score, CPSI, corridors RU/BY/IR/KP…). **Le Gherkin reste FR** (langue normative unique du contrat).
+
+- **Source unique** : `data/i18n-aml-gap.json` gagne `ar: {nom, desc}` sur les 64 règles (add-only).
+  `_attach_i18n` inclut `ar` → référentiel backend + `aml-gap-rules.json`. Interfaces `AmlGapI18n`/seed
+  gagnent `ar?`. Le front (`AmlGap.tsx::ruleLc`) élargi à `ar` : `s.i18n?.ar?.nom ?? s.titre`.
+- **Gardes** : **AG-21 inversé** (exige désormais l'AR nom+desc au référentiel, plus « AR jamais
+  fabriqué ») → self-test **27/27**. e2e réel `fat-aml-i18n` : les 4 langues servent nom+desc, l'AR
+  porte bien de l'écriture arabe (regex bloc Unicode arabe), le Gherkin **reste FR** même en AR →
+  **10 suites / 41 tests**. Câblage AML **28/28**, `tsc` OK, front vitest OK, budget inchangé.
+
+**AR : couverture désormais complète** (chrome sidebar + écrans + contenu des règles). *Reste avant
+BAT* : **relecture pro** de toutes les passes machine ; colonne AR au glossaire CONTRAIGNANT ; audit
+RTL écran par écran.

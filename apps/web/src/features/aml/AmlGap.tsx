@@ -30,7 +30,7 @@ const GREEN = "#4A6B28", AMBER = "#C9A227", RED = "#B5483C", INK = "#1A2410", MU
 const famLbl = (fam: string) => traduire(langue())(FAM_LABEL[fam] || fam);
 // Contenu d'une règle : traduction PO servie par l'API (SPEC-I18N §3) quand présente, sinon FR
 // (seed/démo). L'arabe n'a pas de contenu (glossaire sans colonne AR) → repli FR (jamais un trou).
-const ruleLc = () => langue().toLowerCase() as "en" | "de" | "it";
+const ruleLc = () => langue().toLowerCase() as "en" | "de" | "it" | "ar";
 const ruleNom = (s: AmlGapScenarioSeed) => s.i18n?.[ruleLc()]?.nom ?? s.titre;
 const ruleDesc = (s: AmlGapScenarioSeed) => s.i18n?.[ruleLc()]?.desc ?? s.desc;
 

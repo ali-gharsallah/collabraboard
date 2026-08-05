@@ -266,15 +266,16 @@ def main():
     src_po = os.path.normpath(os.path.join(HERE, "..", "..", "data", "i18n-aml-gap.json"))
     if ref_ts is not None and scen_seed is not None and os.path.exists(src_po):
         po = json.load(open(src_po, encoding="utf-8")).get("rules", {})
-        attendus = {rid for rid, e in po.items() if e.get("en") and e.get("de") and e.get("it")}
+        # EN/DE/IT (terminologie PO) + AR (passe MACHINE, SPEC-I18N §2) : nom+desc servis par l'API.
+        attendus = {rid for rid, e in po.items()
+                    if e.get("en") and e.get("de") and e.get("it") and e.get("ar")}
         ref_i18n = {r["id"] for r in ref_ts if r.get("i18n")}
         forme_ok = all(
             all(r["i18n"].get(lg, {}).get("nom") and r["i18n"].get(lg, {}).get("desc")
-                for lg in ("en", "de", "it"))
-            and "ar" not in r["i18n"]
+                for lg in ("en", "de", "it", "ar"))
             for r in ref_ts if r.get("i18n"))
         seed_sans_i18n = all(not s.get("i18n") for s in scen_seed)  # budget bundle : aucune trad au front
-        check("AG-21 i18n PO au référentiel API (EN/DE/IT), absente du seed web, AR jamais fabriqué",
+        check("AG-21 i18n PO au référentiel API (EN/DE/IT + AR machine, nom+desc), absente du seed web",
               ref_i18n == attendus and len(attendus) > 0 and forme_ok and seed_sans_i18n,
               "ref=%d attendus=%d forme=%s seedVide=%s"
               % (len(ref_i18n), len(attendus), forme_ok, seed_sans_i18n))

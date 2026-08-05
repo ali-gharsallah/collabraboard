@@ -5,7 +5,7 @@
 
 export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }
 export interface AmlGapI18nEntry { nom: string; desc: string; }
-export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; }
+export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; ar?: AmlGapI18nEntry; }
 export interface AmlGapRule {
   id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;
   titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';
@@ -62,6 +62,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Controparte PEP nei flussi",
         "desc": "Screening PEP della controparte di ogni transazione in entrata e in uscita — non solo del cliente all'apertura della relazione."
+      },
+      "ar": {
+        "nom": "الطرف المقابل من فئة الأشخاص المعرّضين سياسيًا (في التدفق)",
+        "desc": "فرز الأشخاص المعرّضين سياسيًا للطرف المقابل في كل معاملة واردة/صادرة، وليس فقط للعميل عند بدء العلاقة."
       }
     }
   },
@@ -111,6 +115,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Adverse media sulla controparte",
         "desc": "Notizie negative (riciclaggio, frode, corruzione) sulla controparte al momento del flusso."
+      },
+      "ar": {
+        "nom": "أخبار سلبية عن الطرف المقابل",
+        "desc": "تغطية إعلامية سلبية (غسل أموال، احتيال، فساد) عن الطرف المقابل لمعاملة وقت حدوث التدفق."
       }
     }
   },
@@ -160,6 +168,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Re-screening periodico (perpetuo)",
         "desc": "Re-screening automatico periodico dell'intero portafoglio clienti e delle persone collegate (sanzioni/PEP/adverse media), solo differenziale."
+      },
+      "ar": {
+        "nom": "إعادة الفرز الدورية (مستمرة)",
+        "desc": "إعادة فرز آلية دورية لكامل قاعدة العملاء والأشخاص المرتبطين (عقوبات/أشخاص معرّضون سياسيًا/أخبار سلبية)، بالفروقات فقط."
       }
     }
   },
@@ -204,6 +216,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Banche intermediarie (BIC)",
         "desc": "Screening di tutti i BIC della catena di pagamento (campi 56/57), non solo delle parti finali."
+      },
+      "ar": {
+        "nom": "البنوك الوسيطة (BIC)",
+        "desc": "فرز رموز BIC في سلسلة الدفع (الحقل 56/57)، وليس فقط الأطراف النهائية."
       }
     }
   },
@@ -248,6 +264,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Indirizzo / località sanzionati",
         "desc": "Sanzioni per localizzazione: indirizzi e città di regioni sotto embargo (Crimea, territori occupati), oltre il solo screening dei nomi."
+      },
+      "ar": {
+        "nom": "عنوان / موقع خاضع للعقوبات",
+        "desc": "عقوبات حسب الموقع: عناوين ومدن في مناطق خاضعة للحظر (القرم، المناطق المحتلة)، إلى ما هو أبعد من الاسم وحده."
       }
     }
   },
@@ -292,6 +312,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Traslitterazione multi-alfabeto",
         "desc": "Matching esteso arabo/cirillico/cinese: varianti di traslitterazione normalizzate prima dello screening (il motore di base è latino-centrico)."
+      },
+      "ar": {
+        "nom": "الكتابة الصوتية متعدّدة الأنظمة",
+        "desc": "مطابقة موسّعة للعربية/السيريلية/الصينية: تُوحَّد صيغ الكتابة الصوتية قبل الفرز (محرّك IDF+trigram متمحور حول اللاتينية)."
       }
     }
   },
@@ -336,6 +360,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Navi & IMO",
         "desc": "Screening delle navi (nome, numero IMO, bandiera) sui pagamenti legati a commercio e shipping."
+      },
+      "ar": {
+        "nom": "السفن وأرقام IMO",
+        "desc": "فرز السفن (الاسم، رقم IMO، العلم) على المدفوعات المرتبطة بالتجارة والشحن."
       }
     }
   },
@@ -380,6 +408,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Rifiuto di fornire informazioni",
         "desc": "Il rifiuto del cliente di fornire le informazioni usuali (origine dei fondi, giustificativi) diventa un segnale strutturato, non una nota libera."
+      },
+      "ar": {
+        "nom": "رفض تقديم المعلومات",
+        "desc": "يصبح رفض العميل تقديم المعلومات المعتادة (مصدر الأموال، المستندات) إشارة مهيكلة، لا ملاحظة حرة."
       }
     }
   },
@@ -424,6 +456,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Conto di passaggio multi-terzi",
         "desc": "Conto usato come conto di passaggio da numerose persone senza legami (indizio dell'allegato ORD-FINMA), oltre il solo criterio temporale."
+      },
+      "ar": {
+        "nom": "حساب عبور متعدّد الأصحاب",
+        "desc": "حساب يُستخدَم كحساب عبور من قِبل عدد كبير من الأشخاص المختلفين (مؤشّر ملحق OBA-FINMA)، إلى ما هو أبعد من المعيار الزمني وحده."
       }
     }
   },
@@ -468,6 +504,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Operazione senza giustificazione economica",
         "desc": "Red flag dichiarativo del consulente: operazione senza giustificazione economica apparente, tracciata e instradata (mai silenziosa)."
+      },
+      "ar": {
+        "nom": "عملية دون مبرّر اقتصادي",
+        "desc": "علَم أحمر تصريحي من المستشار: عملية مرصودة دون مبرّر اقتصادي ظاهر، متتبَّعة وموجَّهة (لا تُترَك صامتة أبدًا)."
       }
     }
   },
@@ -512,6 +552,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Indirizzo condiviso tra più clienti",
         "desc": "Domiciliazione c/o o indirizzo identico condiviso da numerosi clienti senza legame dichiarato."
+      },
+      "ar": {
+        "nom": "عنوان مشترك بين عدة عملاء",
+        "desc": "توطين عناية (c/o) أو عنوان مطابق يتقاسمه عدد كبير من العملاء دون علاقة معلنة."
       }
     }
   },
@@ -556,6 +600,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Rotazione di procure / istruzioni",
         "desc": "Cambi frequenti di procure, firmatari o istruzioni permanenti senza giustificazione."
+      },
+      "ar": {
+        "nom": "تبدّل الوكالات / التعليمات",
+        "desc": "تغييرات متكرّرة في الوكالات أو المفوَّضين بالتوقيع أو التعليمات الدائمة دون مبرّر."
       }
     }
   },
@@ -605,6 +653,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Structuring tra conti del gruppo",
         "desc": "Aggregazione dei flussi sul perimetro consolidato dell'avente economicamente diritto (tutti i conti, tutte le entità): il frazionamento distribuito tra entità diventa visibile."
+      },
+      "ar": {
+        "nom": "تجزئة عبر حسابات المجموعة",
+        "desc": "تجميع التدفقات على النطاق الموحَّد للمستفيد الحقيقي (كل الحسابات، كل الكيانات): يصبح التجزيء الموزَّع على عدة كيانات مرئيًا."
       }
     }
   },
@@ -649,6 +701,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Flussi circolari intra-gruppo",
         "desc": "Fondi che circolano senza sostanza tra entità dello stesso avente economicamente diritto (A→B→C→A entro il perimetro)."
+      },
+      "ar": {
+        "nom": "تدفقات دائرية داخل المجموعة",
+        "desc": "أموال تدور بين كيانات المستفيد الحقيقي نفسه دون جوهر (A→B→C→A داخل النطاق)."
       }
     }
   },
@@ -693,6 +749,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Contante consolidato del perimetro",
         "desc": "Intensità di contante misurata a livello del perimetro dell'ADE: ogni entità resta sotto i radar, il gruppo no."
+      },
+      "ar": {
+        "nom": "النقد الموحَّد للنطاق",
+        "desc": "كثافة نقدية مقاسة على مستوى نطاق المستفيد الحقيقي: يبقى كل كيان تحت الرادار، أما المجموعة فلا."
       }
     }
   },
@@ -737,6 +797,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Soglie aggregate cross-prodotto",
         "desc": "Aggregazione tra contante, titoli, FX e credito: uno schema ripartito tra prodotti (deposito contante, trasferimento FOP, utilizzo lombard) viene rilevato globalmente."
+      },
+      "ar": {
+        "nom": "عتبات مجمَّعة عبر المنتجات",
+        "desc": "تجميع النقد + الأوراق المالية + الصرف الأجنبي + الائتمان: نمط موزَّع بين المنتجات (إيداع نقدي، شراء أوراق FOP، سحب لومبارد) يُكتشَف إجماليًا."
       }
     }
   },
@@ -781,6 +845,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Lombard — rimborso da terzi",
         "desc": "Credito lombard rimborsato anticipatamente da un terzo senza legame documentato con il mutuatario."
+      },
+      "ar": {
+        "nom": "قرض لومبارد — سداد من طرف ثالث",
+        "desc": "قرض لومبارد يُسدَّد مسبقًا من طرف ثالث دون علاقة موثَّقة بالمقترض."
       }
     }
   },
@@ -825,6 +893,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Back-to-back loan",
         "desc": "Deposito (spesso offshore) costituito in pegno a garanzia di un prestito a un'entità collegata: separazione artificiale dall'origine dei fondi."
+      },
+      "ar": {
+        "nom": "قرض ظهر لظهر (back-to-back)",
+        "desc": "وديعة (غالبًا خارجية) ترهن قرضًا مُنِح لكيان مرتبط: فصل مصطنع لمصدر الأموال."
       }
     }
   },
@@ -869,6 +941,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Polizza wrapper — premio fuori profilo",
         "desc": "Sottoscrizione di assicurazione vita a premio unico elevato, incoerente con patrimonio e redditi dichiarati."
+      },
+      "ar": {
+        "nom": "غلاف تأميني — قسط خارج الملف",
+        "desc": "اكتتاب تأمين على الحياة بقسط وحيد مرتفع، غير متسق مع الثروة والدخل المصرَّح بهما."
       }
     }
   },
@@ -913,6 +989,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Polizza wrapper — riscatto precoce",
         "desc": "Riscatto della polizza poco dopo la sottoscrizione, penali accettate senza discussione (il costo del riciclaggio è messo in conto)."
+      },
+      "ar": {
+        "nom": "غلاف تأميني — استرداد مبكّر",
+        "desc": "استرداد الوثيقة بُعيد الاكتتاب، مع قبول الغرامات دون نقاش (تُتحمَّل كلفة غسل الأموال)."
       }
     }
   },
@@ -957,6 +1037,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Cambio di beneficiario post-sottoscrizione",
         "desc": "Modifica del beneficiario della polizza poco dopo la sottoscrizione, a favore di un terzo senza legami."
+      },
+      "ar": {
+        "nom": "تغيير المستفيد بعد الاكتتاب",
+        "desc": "تعديل المستفيد من الوثيقة بُعيد الاكتتاب، نحو طرف ثالث دون علاقة."
       }
     }
   },
@@ -1006,6 +1090,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Cassette di sicurezza — correlazione contante",
         "desc": "Accessi alla cassetta di sicurezza correlati temporalmente a depositi o prelievi di contante."
+      },
+      "ar": {
+        "nom": "الخزائن — ارتباط بالنقد",
+        "desc": "دخول إلى الخزنة مرتبط زمنيًا بإيداعات أو سحوبات نقدية."
       }
     }
   },
@@ -1050,6 +1138,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Metalli preziosi fisici",
         "desc": "Acquisti/vendite/consegne di metalli fisici fuori dal profilo dichiarato (disposizioni ORD sul commercio di metalli preziosi)."
+      },
+      "ar": {
+        "nom": "المعادن الثمينة المادية",
+        "desc": "شراء/بيع/تسليم معادن مادية خارج الملف المصرَّح (OBA تجارة الذهب)."
       }
     }
   },
@@ -1094,6 +1186,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Travel rule DLT",
         "desc": "Trasferimenti DLT privi di informazioni complete su ordinante/beneficiario (comunicazione FINMA 02/2019, GAFI R.16)."
+      },
+      "ar": {
+        "nom": "قاعدة السفر DLT",
+        "desc": "تحويلات DLT دون معلومات كاملة عن الآمر/المستفيد (بلاغ FINMA 02/2019، توصية GAFI رقم 16)."
       }
     }
   },
@@ -1143,6 +1239,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Esposizione a mixer / tumbler",
         "desc": "Fondi in entrata la cui analisi on-chain rivela un'esposizione diretta o a 1 hop verso un mixer."
+      },
+      "ar": {
+        "nom": "التعرّض لخالط (mixer/tumbler)",
+        "desc": "أموال واردة يكشف تحليلها على السلسلة تعرّضًا مباشرًا أو على بُعد قفزة واحدة لخالط."
       }
     }
   },
@@ -1187,6 +1287,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Indirizzo on-chain sanzionato",
         "desc": "Controparte on-chain presente tra gli indirizzi crypto della lista SDN OFAC."
+      },
+      "ar": {
+        "nom": "عنوان خاضع للعقوبات على السلسلة",
+        "desc": "طرف مقابل على السلسلة مدرَج ضمن عناوين العملات المشفّرة في قائمة SDN التابعة لـ OFAC."
       }
     }
   },
@@ -1231,6 +1335,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Cluster darknet / ransomware",
         "desc": "Esposizione di provenienza a cluster di darknet market o ransomware (fuori dalle liste formali)."
+      },
+      "ar": {
+        "nom": "عنقود دارك نت / برامج فدية",
+        "desc": "تعرّض المصدر لعناقيد أسواق الدارك نت أو برامج الفدية (خارج القوائم الرسمية)."
       }
     }
   },
@@ -1280,6 +1388,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Wallet self-hosted senza prova di controllo",
         "desc": "Trasferimenti da/verso un wallet self-hosted senza prova di controllo valida (satoshi test / firma di un messaggio)."
+      },
+      "ar": {
+        "nom": "محفظة ذاتية الاستضافة دون إثبات",
+        "desc": "تحويلات من/إلى محفظة ذاتية الاستضافة دون إثبات للتحكّم (اختبار ساتوشي / توقيع رسالة)."
       }
     }
   },
@@ -1324,6 +1436,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "On/off-ramp incoerente col profilo",
         "desc": "Frequenza e volumi di conversione fiat↔crypto incoerenti con il profilo d'investitore dichiarato."
+      },
+      "ar": {
+        "nom": "دخول/خروج غير متسق مع الملف",
+        "desc": "وتيرة وأحجام التحويل بين العملة النقدية والمشفّرة غير متسقة مع ملف المستثمر المصرَّح."
       }
     }
   },
@@ -1378,6 +1494,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Micro-transazioni verso corridoi sensibili",
         "desc": "Piccoli importi ad alta frequenza verso corridoi geografici sensibili (il finanziamento del terrorismo non assomiglia al riciclaggio: importi ridotti)."
+      },
+      "ar": {
+        "nom": "معاملات صغيرة نحو ممرّات حسّاسة",
+        "desc": "مبالغ صغيرة عالية التكرار نحو ممرّات جغرافية حسّاسة (تمويل الإرهاب لا يشبه غسل الأموال: مبالغ ضئيلة)."
       }
     }
   },
@@ -1422,6 +1542,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Raccolte / ONG a rischio",
         "desc": "Donazioni e raccolte atipiche verso organizzazioni senza scopo di lucro a rischio (GAFI R.8), crowdfunding non tracciato."
+      },
+      "ar": {
+        "nom": "تبرّعات / منظمات غير ربحية عالية الخطر",
+        "desc": "تبرّعات وحملات غير نمطية نحو منظمات غير ربحية عالية الخطر (توصية GAFI رقم 8)، وتمويل جماعي غير متتبَّع."
       }
     }
   },
@@ -1466,6 +1590,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Carte prepagate multi-fonte",
         "desc": "Ricariche di carte prepagate da fonti multiple, prelievi in zone di frontiera o all'estero."
+      },
+      "ar": {
+        "nom": "بطاقات مسبقة الدفع متعدّدة المموّلين",
+        "desc": "شحن بطاقات مسبقة الدفع من مصادر متعدّدة، وسحوبات في مناطق حدودية أو بالخارج."
       }
     }
   },
@@ -1510,6 +1638,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Coerenza viaggi ↔ flussi",
         "desc": "Incrocio dei viaggi noti del cliente con prelievi di contante atipici e flussi verso zone di conflitto."
+      },
+      "ar": {
+        "nom": "اتساق الأسفار ↔ التدفقات",
+        "desc": "تقاطع رحلات العمل/أسفار العميل المعروفة مع تدفقات نحو مناطق نزاع (وحدة الأسفار موجودة لدى مدير العلاقة؛ تقاطع تمويل الإرهاب غير موجود)."
       }
     }
   },
@@ -1554,6 +1686,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Liste terroristiche dedicate",
         "desc": "Screening distinto contro ordinanze/liste antiterrorismo (separato dalle sanzioni economiche: governance, escalation e comunicazione differiscono)."
+      },
+      "ar": {
+        "nom": "قوائم إرهابية مخصّصة",
+        "desc": "فرز منفصل مقابل الأوامر/القوائم الإرهابية (منفصل عن العقوبات الاقتصادية: تختلف الحوكمة والتصعيد والإبلاغ)."
       }
     }
   },
@@ -1608,6 +1744,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Campionamento below-the-line",
         "desc": "Campagna periodica di campionamento sotto le soglie attive: transazioni appena sotto soglia riesaminate per validare la calibrazione."
+      },
+      "ar": {
+        "nom": "معاينة تحت الخط (below-the-line)",
+        "desc": "حملة معاينة دورية تحت العتبات: تُراجَع معاملات أقل بقليل من العتبات الفعّالة للتحقّق من المعايرة."
       }
     }
   },
@@ -1657,6 +1797,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Backtesting per versione",
         "desc": "Backtesting formale di ogni versione di scenario: TP/FP storicizzati per versione, confronto prima/dopo ogni modifica di soglia."
+      },
+      "ar": {
+        "nom": "الاختبار الرجعي حسب الإصدار",
+        "desc": "اختبار رجعي رسمي لكل إصدار سيناريو: أرشفة الإيجابيات الصحيحة/الكاذبة حسب الإصدار، ومقارنة قبل/بعد أي تغيير عتبة."
       }
     }
   },
@@ -1701,6 +1845,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Pre-condizioni di data quality",
         "desc": "Controlli di qualità dei dati a monte come pre-condizione degli scenari: uno scenario cieco (campi SWIFT incompleti, valute mancanti) è un falso negativo silenzioso."
+      },
+      "ar": {
+        "nom": "شروط مسبقة لجودة البيانات",
+        "desc": "ضوابط جودة بيانات أوّلية كشرط مسبق للسيناريوهات: سيناريو أعمى (حقول SWIFT ناقصة، عملات مفقودة) هو سلب كاذب صامت."
       }
     }
   },
@@ -1745,6 +1893,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Revisione annuale della calibrazione",
         "desc": "Revisione annuale documentata del dispositivo: copertura tipologica, performance per scenario, decisioni di calibrazione — allegata al rapporto LRD alla Direzione."
+      },
+      "ar": {
+        "nom": "مراجعة سنوية للمعايرة",
+        "desc": "مراجعة سنوية موثَّقة للنظام: التغطية التصنيفية، الأداء حسب السيناريو، قرارات المعايرة — مرفقة بتقرير LBA للإدارة (المادة 25a من OBA-FINMA)."
       }
     }
   },
@@ -1794,6 +1946,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Sovrafatturazione (over-invoicing)",
         "desc": "Fatture pagate sistematicamente sopra il valore di mercato dei beni — il sovrapprezzo trasferisce valore sotto copertura commerciale."
+      },
+      "ar": {
+        "nom": "المبالغة في الفوترة (over-invoicing)",
+        "desc": "فواتير تُدفَع بانتظام فوق القيمة السوقية للبضائع — مرآة صادرة لـ R201: تنقل القيمة الزائدة غسل الأموال تحت غطاء تجاري."
       }
     }
   },
@@ -1838,6 +1994,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Fatturazione multipla",
         "desc": "Lo stesso bene o la stessa spedizione fatturati e pagati più volte, tramite uno o più finanziatori."
+      },
+      "ar": {
+        "nom": "الفوترة المتعدّدة",
+        "desc": "تُفوتَر وتُدفَع البضاعة أو الشحنة نفسها عدة مرات، عبر مموّل واحد أو أكثر."
       }
     }
   },
@@ -1892,6 +2052,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Prezzo unitario vs benchmark",
         "desc": "Analisi del prezzo unitario per codice HS contro riferimenti di mercato — scostamenti estremi segnalano mis-invoicing."
+      },
+      "ar": {
+        "nom": "سعر خارج المرجع (سعر الوحدة)",
+        "desc": "تحليل سعر الوحدة حسب رمز النظام المنسّق (HS) مقابل مراجع أسعار السوق — الفوارق القصوى تشير إلى الفوترة الخاطئة."
       }
     }
   },
@@ -1936,6 +2100,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Beni a duplice impiego",
         "desc": "Pagamenti legati a beni a duplice impiego (allegati del controllo delle esportazioni) verso destinazioni sensibili."
+      },
+      "ar": {
+        "nom": "بضائع ثنائية الاستخدام",
+        "desc": "مدفوعات مرتبطة ببضائع ثنائية الاستخدام (ملاحق مراقبة الصادرات) نحو وجهات حسّاسة."
       }
     }
   },
@@ -1980,6 +2148,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "LC back-to-back / crediti documentari via HRJ",
         "desc": "Lettere di credito back-to-back o crediti documentari la cui catena coinvolge giurisdizioni ad alto rischio senza logica commerciale."
+      },
+      "ar": {
+        "nom": "اعتمادات ظهر لظهر / اعتمادات مستندية عبر ولايات عالية الخطر",
+        "desc": "اعتمادات مستندية مسنَدة (back-to-back) أو اعتمادات تشمل سلسلتها ولايات قضائية عالية الخطر دون منطق تجاري."
       }
     }
   },
@@ -2024,6 +2196,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Phantom shipping",
         "desc": "Pagamento senza movimento di merce verificabile: documenti assenti, navi inesistenti, container fantasma."
+      },
+      "ar": {
+        "nom": "الشحن الوهمي",
+        "desc": "دفع دون حركة بضاعة يمكن التحقّق منها: مستندات غائبة، سفن غير موجودة، حاويات وهمية."
       }
     }
   },
@@ -2068,6 +2244,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Rotte e trasbordi atipici",
         "desc": "Rotte marittime incoerenti con la geografia commerciale: deviazioni, trasbordi multipli, cambi di bandiera in viaggio."
+      },
+      "ar": {
+        "nom": "مسارات وإعادات شحن غير نمطية",
+        "desc": "مسارات بحرية غير متسقة مع الجغرافيا التجارية: تحويلات، إعادات شحن متعدّدة، أعلام تُغيَّر أثناء الرحلة."
       }
     }
   },
@@ -2112,6 +2292,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Carosello documentario",
         "desc": "Le stesse controparti si scambiano in circolo i ruoli di acquirente/venditore su beni simili — fatturato artificiale."
+      },
+      "ar": {
+        "nom": "دوّامة مستندية",
+        "desc": "تتبادل الأطراف نفسها أدوار المشتري/البائع على بضائع متشابهة في حلقة — رقم أعمال مصطنع."
       }
     }
   },
@@ -2156,6 +2340,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Wire stripping / trasparenza dei pagamenti",
         "desc": "Campi ordinante/beneficiario (50/59) incompleti, troncati o alterati lungo la catena — GAFI R.16, Wolfsberg Payment Transparency."
+      },
+      "ar": {
+        "nom": "تجريد التحويلات / الشفافية",
+        "desc": "حقول الآمر/المستفيد (50/59) ناقصة أو مبتورة أو مُحرَّفة في السلسلة — توصية GAFI رقم 16، شفافية مدفوعات Wolfsberg."
       }
     }
   },
@@ -2200,6 +2388,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Pagamenti U-turn",
         "desc": "Fondi in uscita verso un corrispondente terzo che ritornano alla stessa parte tramite un'altra catena — elusione di restrizioni."
+      },
+      "ar": {
+        "nom": "مدفوعات المنعطف (U-turn)",
+        "desc": "أموال تخرج نحو مراسل ثالث وتعود إلى الطرف نفسه عبر سلسلة أخرى — التفاف على القيود."
       }
     }
   },
@@ -2244,6 +2436,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Conti payable-through",
         "desc": "I clienti della banca rispondente accedono direttamente al conto di corrispondenza — diligenza sull'utente finale impossibile."
+      },
+      "ar": {
+        "nom": "حسابات قابلة للدفع من خلالها",
+        "desc": "عملاء المراسَل يصلون مباشرة إلى حساب المراسلة (payable-through) — العناية الواجبة على المستخدم النهائي مستحيلة."
       }
     }
   },
@@ -2288,6 +2484,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Volumetria del rispondente vs profilo (KYCC)",
         "desc": "Volumi e corridoi di una banca rispondente incoerenti con il profilo dichiarato (Wolfsberg CBDDQ)."
+      },
+      "ar": {
+        "nom": "حجم المراسَل مقابل الملف (KYCC)",
+        "desc": "أحجام وممرّات مراسَل غير متسقة مع ملفه المصرَّح (استبيان Wolfsberg CBDDQ)."
       }
     }
   },
@@ -2332,6 +2532,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Banca fittizia (shell bank)",
         "desc": "Individuazione di banche fittizie (senza presenza fisica né gruppo regolamentato) nelle catene — vietate dalla LRD."
+      },
+      "ar": {
+        "nom": "بنك صوري (shell bank)",
+        "desc": "اكتشاف بنوك صورية (دون حضور مادي أو مجموعة خاضعة للتنظيم) في السلاسل — محظور بموجب LBA."
       }
     }
   },
@@ -2376,6 +2580,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "RMA dormienti",
         "desc": "Autorizzazioni SWIFT (RMA) attive senza flussi né esigenza documentata — inutile superficie di attacco e di elusione."
+      },
+      "ar": {
+        "nom": "اتفاقيات RMA خاملة",
+        "desc": "أذونات تبادل SWIFT (RMA) فعّالة دون تدفق أو حاجة موثَّقة — سطح هجوم والتفاف لا لزوم له."
       }
     }
   },
@@ -2420,6 +2628,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Screening delle banche rispondenti (CBDDQ)",
         "desc": "Screening periodico delle stesse banche rispondenti: sanzioni, adverse media, rating paese, assetto proprietario."
+      },
+      "ar": {
+        "nom": "فرز المراسِلات (CBDDQ)",
+        "desc": "فرز دوري للبنوك المراسِلة نفسها: عقوبات، أخبار سلبية، تصنيف الدولة، هيكل المساهمة."
       }
     }
   },
@@ -2464,6 +2676,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Sanzioni settoriali & price cap",
         "desc": "Elusione delle sanzioni settoriali: tetti di prezzo (petrolio), embarghi oro/lusso, servizi vietati (assicurazione, shipping) verso RU/BY/IR/KP."
+      },
+      "ar": {
+        "nom": "عقوبات قطاعية وسقوف الأسعار",
+        "desc": "الالتفاف على العقوبات القطاعية: سقوف الأسعار (النفط)، حظر الذهب/الترف، خدمات محظورة (تأمين، شحن) نحو RU/BY/IR/KP."
       }
     }
   },
@@ -2508,6 +2724,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Catene di società schermo su corridoi KP/IR",
         "desc": "Schemi di intermediazione tipici del finanziamento della proliferazione: società giovani, capitale minimo, settori generici, in catena verso corridoi sensibili."
+      },
+      "ar": {
+        "nom": "سلاسل شركات صورية على ممرّات KP/IR",
+        "desc": "أنماط وساطة نمطية لتمويل الانتشار: شركات حديثة، رأس مال أدنى، قطاعات عامة، متسلسلة نحو ممرّات حسّاسة."
       }
     }
   },
@@ -2552,6 +2772,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Beni di lusso verso zone sotto embargo",
         "desc": "Esportazione di beni di lusso (orologi, gioielleria, veicoli) verso giurisdizioni sotto embargo, spesso tramite paesi di transito."
+      },
+      "ar": {
+        "nom": "سلع فاخرة نحو مناطق محظورة",
+        "desc": "تصدير سلع فاخرة (ساعات، مجوهرات، مركبات) نحو ولايات خاضعة لحظر الترف، غالبًا عبر دول عبور."
       }
     }
   },
@@ -2596,6 +2820,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Immobili via strutture, prezzo fuori mercato",
         "desc": "Acquisizione immobiliare tramite struttura (società immobiliare, trust, offshore) a un prezzo significativamente fuori mercato."
+      },
+      "ar": {
+        "nom": "عقارات عبر هيكل + سعر خارج السوق",
+        "desc": "اقتناء عقاري عبر هيكل (شركة مدنية، صندوق ائتماني، خارجي) بسعر خارج السوق بشكل ملحوظ."
       }
     }
   },
@@ -2640,6 +2868,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Arte & porti franchi",
         "desc": "Acquisto di opere, deposito in porto franco, rivendita rapida — valore mobile, opaco e transfrontaliero."
+      },
+      "ar": {
+        "nom": "الفن والموانئ الحرة",
+        "desc": "شراء أعمال فنية، إيداعها في ميناء حر، إعادة بيعها بسرعة — قيمة متنقّلة وغامضة وعابرة للحدود."
       }
     }
   },
@@ -2684,6 +2916,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Veicoli di valore (lusso, NFT)",
         "desc": "Beni di lusso e asset digitali da collezione usati come veicoli di trasferimento di valore."
+      },
+      "ar": {
+        "nom": "أوعية قيمة (ترف، NFT)",
+        "desc": "سلع فاخرة وأصول رقمية قابلة للاقتناء تُستخدَم كأوعية لنقل القيمة."
       }
     }
   },
@@ -2728,6 +2964,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Deviazione dal gruppo di pari",
         "desc": "Scostamento statistico del cliente dal suo gruppo di pari CPSI (z-score sugli attributi monitorati), oltre le soglie fisse di prima generazione."
+      },
+      "ar": {
+        "nom": "الانحراف عن مجموعة النظراء",
+        "desc": "انحراف إحصائي للعميل عن مجموعة نظرائه في CPSI (درجة z على السمات المراقَبة)، إلى ما هو أبعد من عتبات الجيل الأول الثابتة."
       }
     }
   },
@@ -2772,6 +3012,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Rottura di comportamento (baseline propria)",
         "desc": "Cambiamento improvviso rispetto alla baseline storica del cliente stesso (non del gruppo): il regime transazionale cambia."
+      },
+      "ar": {
+        "nom": "انقطاع سلوكي (خط الأساس الخاص)",
+        "desc": "تغيّر مفاجئ مقابل خط الأساس التاريخي للعميل نفسه (لا المجموعة): نظام معاملاتي ينقلب."
       }
     }
   },
@@ -2821,6 +3065,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Pattern first-time",
         "desc": "Prime occorrenze sensibili: primo bonifico internazionale, primo contante, prima controparte HRJ, primo prodotto a rischio."
+      },
+      "ar": {
+        "nom": "أنماط أولى الحدوث",
+        "desc": "أول حدوث لحالات حسّاسة: أول تحويل دولي، أول نقد، أول طرف مقابل عالي الخطر، أول منتج عالي المخاطر."
       }
     }
   },
@@ -2865,6 +3113,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Dormienza parziale per segmento",
         "desc": "Riattivazione di un segmento di attività dormiente (es. contante dopo tre anni di inattività) anche se il conto nel complesso resta attivo."
+      },
+      "ar": {
+        "nom": "خمول جزئي حسب القطاع",
+        "desc": "إعادة تنشيط قطاع نشاط خامل (مثلًا النقد بعد 3 سنوات من الخمول النقدي) حتى لو بقي الحساب الإجمالي نشطًا — يُكمِّل قاعدة «الحساب الخامل» القائمة."
       }
     }
   },
@@ -2909,6 +3161,10 @@ export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
       "it": {
         "nom": "Redditi in entrata incoerenti (ricorrenti)",
         "desc": "Accrediti ricorrenti etichettati 'stipendio/onorari' incoerenti con datore di lavoro e remunerazione dichiarati nel KYC."
+      },
+      "ar": {
+        "nom": "دخل وارد غير متسق (mismatch)",
+        "desc": "مدخلات متكرّرة موسومة «راتب/أتعاب» غير متسقة مع صاحب العمل والأجر المصرَّحين في KYC — مقابل وارد لـ R201/AML-WC-01."
       }
     }
   }

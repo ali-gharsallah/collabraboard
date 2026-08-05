@@ -673,7 +673,7 @@ def _emit_ts(rules, gt):
     ref_types = (
         "export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }\n"
         "export interface AmlGapI18nEntry { nom: string; desc: string; }\n"
-        "export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; }\n"
+        "export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; ar?: AmlGapI18nEntry; }\n"
         "export interface AmlGapRule {\n"
         "  id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;\n"
         "  titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';\n"
@@ -707,7 +707,7 @@ def _emit_ts(rules, gt):
         "  gherkin: { given: string; when: string; then: string };\n"
         "  // i18n (nom/desc EN/DE/IT) : ABSENT du seed (contenu servi par l'API, SPEC-I18N §3 —\n"
         "  // budget bundle) ; le type l'accepte pour les scénarios venant de l'API (jamais bundlé).\n"
-        "  i18n?: { en?: { nom: string; desc: string }; de?: { nom: string; desc: string }; it?: { nom: string; desc: string } };\n"
+        "  i18n?: { en?: { nom: string; desc: string }; de?: { nom: string; desc: string }; it?: { nom: string; desc: string }; ar?: { nom: string; desc: string } };\n"
         "}\n"
         "export interface AmlGapGtSeed {\n"
         "  caseId: string; scenarioId: string; ruleRef: string; famille: string; label: 'TP' | 'FP';\n"
@@ -842,7 +842,7 @@ def _attach_i18n(rules):
         if not e:
             continue
         block = {lg: {"nom": e[lg]["nom"], "desc": e[lg]["desc"]}
-                 for lg in ("en", "de", "it") if e.get(lg)}
+                 for lg in ("en", "de", "it", "ar") if e.get(lg)}
         if block:
             r["i18n"] = block
             n += 1

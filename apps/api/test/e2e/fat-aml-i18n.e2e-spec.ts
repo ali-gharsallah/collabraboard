@@ -27,30 +27,33 @@ describe("FAT AML gap i18n — référentiel servi par l'API (SPEC-I18N §3, bac
     const scen = r.body as any[];
     expect(scen.length).toBeGreaterThan(0);
 
-    // Toute règle des blocs 50–61 présente dans la source PO doit exposer son i18n via l'API.
+    // Toute règle des blocs 50–61 présente dans la source PO doit exposer son i18n via l'API — les 4
+    // langues (EN/DE/IT + AR passe machine, SPEC-I18N §2) portent nom+desc non vides.
     const avecI18n = scen.filter((s) => s.i18n && s.i18n.en && s.i18n.en.nom);
     expect(avecI18n.length).toBeGreaterThan(0);
     for (const s of avecI18n) {
-      for (const lg of ["en", "de", "it"] as const) {
+      for (const lg of ["en", "de", "it", "ar"] as const) {
         expect(typeof s.i18n[lg]?.nom).toBe("string");
         expect(s.i18n[lg].nom.length).toBeGreaterThan(0);
         expect(typeof s.i18n[lg]?.desc).toBe("string");
         expect(s.i18n[lg].desc.length).toBeGreaterThan(0);
       }
     }
-    console.log("I18N-1 PASS —", avecI18n.length, "règles avec traductions EN/DE/IT servies");
+    // L'AR porte bien de l'écriture arabe (pas un repli latin silencieux).
+    expect(avecI18n.some((s) => /[؀-ۿ]/.test(s.i18n.ar.nom))).toBe(true);
+    console.log("I18N-1 PASS —", avecI18n.length, "règles avec traductions EN/DE/IT/AR servies");
   });
 
-  it("le Gherkin reste FR (langue normative), l'arabe n'a AUCUN contenu (repli FR côté front)", async () => {
+  it("le Gherkin reste FR (langue normative) même en AR ; seuls nom/desc sont traduits", async () => {
     const r = await request(http).get("/v1/aml/scenarios").set(bearer(T, U, "CO"));
     const s = (r.body as any[]).find((x) => x.i18n && x.i18n.en);
     expect(s).toBeTruthy();
-    // R44/normativité : le Gherkin n'est pas traduit — il reste la formulation FR figée.
+    // R44/normativité : le Gherkin n'est pas traduit — il reste la formulation FR figée, MÊME en AR
+    // (langue normative unique : seul le contenu descriptif nom/desc est traduit, jamais le contrat).
     expect(s.gherkin).toBeTruthy();
     expect(typeof s.gherkin.given).toBe("string");
-    // L'AR n'existe pas dans la source PO (pas de fabrication) : le bloc i18n ne le porte jamais.
-    expect(s.i18n.ar).toBeUndefined();
-    console.log("I18N-2 PASS — Gherkin FR conservé, AR absent (jamais fabriqué)");
+    expect(/[؀-ۿ]/.test(s.gherkin.given)).toBe(false);   // le Gherkin reste FR, pas d'arabe
+    console.log("I18N-2 PASS — Gherkin FR conservé (langue normative), contenu nom/desc traduit en AR");
   });
 
   it("R29 : une traduction tenant VERSIONNÉE est grandfathered à la date (défaut PO avant vigueur)", async () => {
