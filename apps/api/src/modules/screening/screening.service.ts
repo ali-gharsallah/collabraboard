@@ -157,7 +157,15 @@ export class ScreeningService {
       // R409 - index trigramme MÉMOÏSÉ par liste@version (PERF : le rescreening répété d'un portefeuille
       // contre la même liste ne le reconstruit plus). L'index ne porte que des données de LISTE (jamais
       // tenant) → cache partageable sans fuite. IDF : n<2 donnerait log(1)=0 -> NaN ; construit à partir de 2.
-      const idx = construireIndexCache(`${dto.liste}@${dto.version}`, dto.entries as any);
+      // R416 — canal PHONÉTIQUE du pré-filtre : quand le moteur en vigueur utilise la phonétique, on le
+      // branche AUSSI sur le blocking, sinon une translittération n'entre jamais dans les candidats et le
+      // score fin phonétique ne s'exécute pas. OFF (défaut) → index/candidats trigramme inchangés (bit pour
+      // bit). La clé de cache varie par méthode (index phonétique distinct par méthode).
+      const phon = cfg.moteur && (cfg.moteur as any).phonetique
+        ? { phonetique: true as const, phonetiqueMethode: (((cfg.moteur as any).phonetiqueMethode as string) === "double" ? "double" : "metaphone") as "metaphone" | "double" }
+        : null;
+      const cacheKey = `${dto.liste}@${dto.version}${phon ? `#${phon.phonetiqueMethode}` : ""}`;
+      const idx = construireIndexCache(cacheKey, dto.entries as any, phon ?? undefined);
       if (dto.entries.length >= 2) construireIdf(dto.entries as any);
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
@@ -165,7 +173,7 @@ export class ScreeningService {
       const trouves: { sujetId: string; uid: string; score: number; entree: EntreeListe; detail: HitDetail }[] = [];
       for (const s of sujets) {
         const requete = { nom: s.name, dob: s.dob, est_entite: s.est_entite, nationalites: s.nationalites }; // R417 - nationalité
-        const cand = candidats(idx, s.name, cfg.prefiltre);           // R409/R414 - pre-filtre (config en vigueur)
+        const cand = candidats(idx, s.name, { ...cfg.prefiltre, ...(phon ?? {}) }); // R409/R414/R416 - pre-filtre (config + phonétique en vigueur)
         const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R408/R414 - score fin (knobs en vigueur)
         if (!r) continue;
         trouves.push({ sujetId: s.id, uid: r.uid, score: r.score, entree: r.entree as any,
@@ -323,14 +331,19 @@ export class ScreeningService {
     const clientIds: string[] = cfg.clientIds ?? [];
     const clients = await this.prisma.client.findMany({ where: {
       tenantId: ctx.tenantId, ...(clientIds.length ? { id: { in: clientIds } } : {}) } });
-    const idx = construireIndex(entries as any);
+    // R416 — rejeu FIDÈLE : si la config persistée utilisait la phonétique, le pré-filtre du rejeu doit
+    // l'appliquer AUSSI (sinon un candidat entré par voie phonétique manquerait et le hit ne se rejouerait pas).
+    const phon = cfg.moteur && cfg.moteur.phonetique
+      ? { phonetique: true as const, phonetiqueMethode: ((cfg.moteur.phonetiqueMethode as string) === "double" ? "double" : "metaphone") as "metaphone" | "double" }
+      : null;
+    const idx = construireIndex(entries as any, phon ?? undefined);
     if (entries.length >= 2) construireIdf(entries as any);
     const rejoue: { clientId: string; entreeUid: string; score: number }[] = [];
     for (const c of clients) {
       const st = (c as any).structure ?? (c as any).type;
       const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
         est_entite: st ? st !== "PP" : false };
-      const cand = candidats(idx, c.name, cfg.prefiltre ?? {});
+      const cand = candidats(idx, c.name, { ...(cfg.prefiltre ?? {}), ...(phon ?? {}) });
       const r = rapprocherDetail(requete, cand, run.seuil, cfg.moteur ?? {});
       if (r) rejoue.push({ clientId: c.id, entreeUid: r.uid, score: r.score });
     }

@@ -24,7 +24,8 @@ export interface Decomposition {
 export interface Resultat { uid: string; score: number; entree: EntreeMoteur; }
 export interface ResultatDetaille extends Resultat { detail: Decomposition; }
 export interface IndexTrigramme { index: Map<string, number[]>; entries: EntreeMoteur[]; n: number; }
-export interface OptionsBlocking { maxTrigrammes?: number; minPartages?: number; plafond?: number; }
+export interface OptionsBlocking { maxTrigrammes?: number; minPartages?: number; plafond?: number;
+  phonetique?: boolean; phonetiqueMethode?: "metaphone" | "double"; }  // R416 — canal phonétique du pré-filtre (OFF par défaut)
 
 // R413 — réglage optionnel du score. Omis → comportement d'origine (défauts = littéraux figés).
 export interface ConfigMoteur {
@@ -56,9 +57,10 @@ export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMo
 export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): Decomposition;
 export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): Resultat | null;
 export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): ResultatDetaille | null;
-export function construireIndex(entries: EntreeMoteur[]): IndexTrigramme;
+export function construireIndex(entries: EntreeMoteur[], opts?: OptionsBlocking): IndexTrigramme;
 // PERF (sous R409) — index mémoïsé par clé (ex. `SECO@2026-07-15`) ; invalidé si la liste change.
-export function construireIndexCache(cle: string, entries: EntreeMoteur[]): IndexTrigramme;
+// R416 — `opts.phonetique` ajoute un index phonétique ; faire varier `cle` par méthode (ex. `SECO@v#double`).
+export function construireIndexCache(cle: string, entries: EntreeMoteur[], opts?: OptionsBlocking): IndexTrigramme;
 export function viderIndexCache(): void;
 export function candidats(idx: IndexTrigramme, nom: string, opts?: OptionsBlocking): EntreeMoteur[];
 
