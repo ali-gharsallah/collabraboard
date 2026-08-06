@@ -239,10 +239,10 @@ jobs:
           out=$(node services/screening/index-cache.test.mjs); echo "$out"
           echo "$out" | grep -q "### 4/4 index-cache verts (R409) ###"
 
-      - name: "3x · Blocking phonétique screening (recall, R416, attendu 4/4)"
+      - name: "3x · Blocking phonétique screening (recall + perf à l'échelle, R416, attendu 6/6)"
         run: |
           out=$(node services/screening/blocking-phon.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 4/4 blocking-phonétique verts (R416) ###"
+          echo "$out" | grep -q "### 6/6 blocking-phonétique verts (R416) ###"
 
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation

@@ -11,7 +11,7 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { ingererListe, construireIndex, candidats } from "@olive/screening-engine";
+import { ingererListe, construireIndex, construireIndexCache, viderIndexCache, candidats } from "@olive/screening-engine";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const san = JSON.parse(readFileSync(join(DIR, "sanctions-synth.json"), "utf8"));
@@ -56,11 +56,29 @@ const exact = uids(candidats(iPh2, "Buraq Holding", { phonetique: true, phonetiq
 console.log(`4. exact Buraq Holding (phon ON) → [${exact}]`);
 check(exact.length === 1 && exact[0] === "B1", "un match exact reste un seul candidat");
 
-const total = 4;
+// ── 5) PERF à l'échelle : l'index phonétique reste un SURCOÛT BORNÉ de la construction trigramme, et
+//        (comme le trigramme, R409) il est MÉMOÏSÉ — le rescreening répété ne le reconstruit pas.
+const scale = (n) => { const out = []; let i = 0; while (out.length < n) { const e = reels[i % reels.length]; out.push({ ...e, uid: `${e.uid}-${out.length}` }); i++; } return out; };
+const N = 20000;
+const gros = scale(N);
+let t = Date.now(); construireIndex(gros); const mTri = Date.now() - t;
+t = Date.now(); construireIndex(gros, { phonetique: true, phonetiqueMethode: "double" }); const mPhon = Date.now() - t;
+const PLAFOND_MS = 4000;                                          // ~0,5 s mesuré → ~8× de marge CI
+console.log(`5. échelle ${N} : trigramme ${mTri} ms · +phonétique(double) ${mPhon} ms (×${(mPhon / (mTri || 1)).toFixed(1)}) · plafond ${PLAFOND_MS} ms`);
+check(mPhon < PLAFOND_MS, `construction phonétique ${mPhon} ms ≥ plafond ${PLAFOND_MS} ms (à ${N})`);
+
+viderIndexCache();
+t = Date.now(); const froid = construireIndexCache("SCALE#double", gros, { phonetique: true, phonetiqueMethode: "double" }); const msFroid = Date.now() - t;
+t = Date.now(); const chaud = construireIndexCache("SCALE#double", gros, { phonetique: true, phonetiqueMethode: "double" }); const msChaud = Date.now() - t;
+console.log(`6. mémoïsation : froid ${msFroid} ms → chaud ${msChaud} ms · même objet=${froid === chaud} · index phonétique présent=${!!froid.phon}`);
+check(froid === chaud && !!froid.phon, "l'index phonétique doit être mémoïsé (même objet réutilisé, pas reconstruit)");
+check(msChaud <= msFroid, `le chemin chaud ne doit pas reconstruire (${msChaud} ms > froid ${msFroid} ms)`);
+
+const total = 6;
 if (echecs.length) {
   console.log(`\n✗ BLOCKING-PHON ROUGE — ${echecs.length} invariant(s) cassé(s) :`);
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
-console.log(`\n✓ pré-filtre orthographique inchangé par défaut · le canal phonétique élargit le recall sur demande.`);
+console.log(`\n✓ pré-filtre orthographique inchangé par défaut · recall phonétique sur demande · surcoût borné et mémoïsé.`);
 console.log(`### ${total}/${total} blocking-phonétique verts (R416) ###`);
