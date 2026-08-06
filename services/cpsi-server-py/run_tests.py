@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Runner des suites CPSI (hors ligne, compatible pytest en CI). Lot L1 : le runner PROPAGE
+# désormais le code de sortie de la suite (exit ≠ 0 dès qu'un test échoue) — plus de faux-vert.
+# Mode --canary : exécute UNIQUEMENT le canari (échec délibéré, hors suite normale) pour prouver,
+# en CI, que la propagation fonctionne (cf. docs/notes/L1.md).
 import sys, importlib, inspect, traceback
 sys.path.insert(0, ".")
 mods = [("CPSI bloc 1 — R63..R67 (PS-01..05 · SG-01..03 · BD-01..02)", "tests.test_cpsi_bloc1"),
@@ -21,22 +25,49 @@ mods = [("CPSI bloc 1 — R63..R67 (PS-01..05 · SG-01..03 · BD-01..02)", "test
         ("CPSI bloc 18 — R86 visa qualifie / verdict OK-CONDITIONAL-NOK + message (VQ-01..06)", "tests.test_cpsi_bloc18"),
         ("CPSI bloc 19 — PC-20 equivalence permanente des chemins d hydratation (R324 dormant)", "tests.test_cpsi_bloc19"),
         ("CPSI bloc 20 — Analytique 2G AML gap (R399..R403 · AN-01..05, jamais en Nest)", "tests.test_cpsi_bloc20")]
-total_ok = 0
-for label, modname in mods:
+
+
+def run_module(label, modname):
+    """Exécute les tests d'un module ; renvoie (ok, ko). Fixtures scopées au module."""
     print(f"=== {label} ===")
     m = importlib.import_module(modname)
     fixtures = {n: f for n, f in vars(m).items() if getattr(f, "_is_fixture", False)}
     ok = ko = 0
     for n, f in vars(m).items():
-        if not n.startswith("test_"): continue
+        if not n.startswith("test_"):
+            continue
         try:
             kwargs = {}
             for p in inspect.signature(f).parameters:
-                if p in fixtures: kwargs[p] = fixtures[p]()
+                if p in fixtures:
+                    kwargs[p] = fixtures[p]()
             f(**kwargs)
             print(f"  PASS  {n}"); ok += 1
         except Exception:
             print(f"  FAIL  {n}"); traceback.print_exc(limit=3); ko += 1
     print(f"\n{ok} passés, {ko} échoués / {ok+ko}\n")
-    if ko == 0: total_ok += 1
-print(f"### {total_ok}/{len(mods)} suites vertes ###")
+    return ok, ko
+
+
+def main(argv):
+    # Méta-vérification (lot L1) : exécute UNIQUEMENT le canari. Un échec délibéré, hors de la
+    # suite normale, DOIT faire sortir le runner avec un code ≠ 0. Si cette commande rendait 0,
+    # le faux-vert serait de retour — la CI l'attrape (étape 5c-bis).
+    if "--canary" in argv:
+        _, ko = run_module("CANARY — échec délibéré (hors suite normale)", "canary")
+        print("### canary : le runner PROPAGE l'échec ###" if ko else "### canary : AUCUN échec détecté — FAUX-VERT ###")
+        sys.exit(1 if ko else 0)
+
+    total_ok = total_ko = 0
+    for label, modname in mods:
+        ok, ko = run_module(label, modname)
+        total_ko += ko
+        if ko == 0:
+            total_ok += 1
+    print(f"### {total_ok}/{len(mods)} suites vertes ###")
+    # Le runner propage le verdict : exit ≠ 0 dès qu'un test échoue (fin du faux-vert, L1).
+    sys.exit(0 if total_ko == 0 else 1)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

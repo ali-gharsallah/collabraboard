@@ -339,10 +339,20 @@ jobs:
           out=$(python3 services/workflow-engine-py/run_tests_sql.py); echo "$out"
           echo "$out" | grep -q "suites vertes ###"
 
-      - name: "5c · cpsi-server-py (attendu 20/20 — garde grep, le runner rend 0 à tort)"
+      - name: "5c · cpsi-server-py (attendu 20/20 — le runner PROPAGE le code de sortie, L1)"
         run: |
-          out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
-          echo "$out" | grep -q "### 20/20 suites vertes ###"
+          # L1 : le runner sort ≠ 0 dès qu'un test échoue (pipefail propage le code au travers du tee).
+          python3 services/cpsi-server-py/run_tests.py | tee /tmp/cpsi.out
+          grep -q "### 20/20 suites vertes ###" /tmp/cpsi.out
+
+      - name: "5c-bis · cpsi-server-py canary (méta-vérif faux-vert, L1) — --canary DOIT échouer"
+        run: |
+          # Prouve que le runner sait échouer : `--canary` exécute un test délibérément rouge et
+          # DOIT rendre un code ≠ 0. S'il rend 0, le faux-vert est de retour → CI rouge.
+          if python3 services/cpsi-server-py/run_tests.py --canary; then
+            echo "FAUX-VERT : run_tests.py --canary a rendu 0 — le runner ne propage pas l'échec"; exit 1
+          fi
+          echo "canary OK — le runner propage bien l'échec (code ≠ 0)"
 
       # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
       # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
