@@ -348,6 +348,7 @@ model ScreeningRun {
   perimetre    Int                                        // combien de clients confrontés
   nbHits       Int      @map("nb_hits")
   config       Json?                                      // R269 : config moteur EFFECTIVE + scénario/version en vigueur (replay R48/R49)
+  sujetType    String   @default("client") @map("sujet_type") // R100 — sujet screené : client | personne | prospect
   at           DateTime @default(now())
   hits         ScreeningHit[]
   @@index([tenantId, at])
@@ -358,7 +359,8 @@ model ScreeningHit {
   tenantId      String   @map("tenant_id") @db.Uuid
   runId         String?  @map("run_id") @db.Uuid
   run           ScreeningRun? @relation(fields: [runId], references: [id])
-  clientId      String   @map("client_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid       // R100 — id du SUJET (client | personne | prospect selon sujetType)
+  sujetType     String   @default("client") @map("sujet_type") // R100 — type de sujet screené
   entreeUid     String   @map("entree_uid")               // uid de l'entrée de liste
   entreeHash    String   @map("entree_hash")              // R102 : l'empreinte, pas l'uid seul
   score         Int

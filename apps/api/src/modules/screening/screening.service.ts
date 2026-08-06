@@ -19,14 +19,20 @@ import { construireIndex, construireIndexCache, construireIdf, candidats, rappro
  * (avant tout await) pour l'isoler - a instancier par run le jour du multi-tenant vraiment concurrent.
  */
 
+export type SujetType = "client" | "personne" | "prospect";
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
+  // R100 (sujets étendus) — le screening vise le CLIENT (défaut, rétro-compatible), la PERSONNE ou le
+  // PROSPECT/pré-prospect. Même moteur, même règle ; `sujetIds` restreint le périmètre (comme clientIds).
+  sujet?: SujetType; sujetIds?: string[];
   // R414 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
   // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
   // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
   scenarioCode?: string; moteurConfig?: Record<string, number | boolean>;
 }
+// Forme COMMUNE d'un sujet screené, quel que soit sa table d'origine (client/personne/prospect).
+type Sujet = { id: string; name: string; dob?: string; est_entite: boolean; nationalites?: string[] };
 type Ctx = { tenantId: string; userId: string; role: string };
 // Config EFFECTIVE d'un run + sa provenance (persistée sur le run pour le rejeu R48/R49).
 type ConfigRun = { moteur: Record<string, number | boolean>; prefiltre: Record<string, number>;
@@ -68,13 +74,36 @@ export class ScreeningService {
     return { moteur, prefiltre, source };
   }
 
+  /**
+   * R100 (sujets étendus) — charge le périmètre à screener selon le TYPE de sujet, et le ramène à une
+   * FORME COMMUNE {id, name, dob, est_entite, nationalites}. Le moteur est agnostique : il ne voit que
+   * des noms. Défaut `client` = comportement d'origine. PP par convention pour personne/prospect.
+   */
+  private async chargerSujets(tx: Tx, tenantId: string, sujet: SujetType, ids?: string[]): Promise<Sujet[]> {
+    const filtreId = ids && ids.length ? { id: { in: ids } } : {};
+    if (sujet === "personne") {
+      const rows: any[] = await tx.person.findMany({ where: { tenantId, etat: "ACTIVE", ...filtreId } });
+      return rows.map((p) => ({ id: p.id, name: p.nom, dob: (p.donnees || {}).date_naissance,
+        est_entite: false, nationalites: (p.donnees || {}).nationalites }));
+    }
+    if (sujet === "prospect") {
+      const rows: any[] = await tx.onboarding.findMany({ where: { tenantId, ...filtreId } });
+      return rows.map((o) => ({ id: o.id, name: o.prospectNom, dob: undefined, est_entite: false, nationalites: undefined }));
+    }
+    const rows: any[] = await tx.client.findMany({ where: { tenantId, ...filtreId } });
+    return rows.map((c) => { const st = c.structure ?? c.type;      // clients réels : structure (PP/PM/…) ; harnais : type
+      return { id: c.id, name: c.name, dob: c.dateNaissance ?? c.date_naissance ?? undefined,
+        est_entite: st ? st !== "PP" : false, nationalites: c.nationalites ?? (c.country ? [c.country] : undefined) }; });
+  }
+
   // -- R100 hits bruts persistes . R102 whitelist par empreinte . R103 trace meme sans hit --
   async run(ctx: Ctx, dto: RunDto) {
     if (!dto?.liste || !dto?.version || !Array.isArray(dto?.entries))
       throw new BadRequestException("liste, version et entries requis");
+    const sujetType: SujetType = dto.sujet ?? "client";
     return this.prisma.$transaction(async (tx: Tx) => {
-      const clients = await tx.client.findMany({ where: {
-        tenantId: ctx.tenantId, ...(dto.clientIds ? { id: { in: dto.clientIds } } : {}) } });
+      // R100 (sujets étendus) — charge le périmètre selon le TYPE de sujet, ramené à une forme commune.
+      const sujets = await this.chargerSujets(tx, ctx.tenantId, sujetType, dto.sujetIds ?? dto.clientIds);
       const at = new Date().toISOString();
 
       // R414 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
@@ -88,16 +117,13 @@ export class ScreeningService {
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
       // meilleur candidat au-dessus du seuil (R408). Isole l'etat IDF global des await de persistance.
-      const trouves: { client: any; uid: string; score: number; entree: EntreeListe; detail: HitDetail }[] = [];
-      for (const c of clients) {
-        const st = (c as any).structure ?? (c as any).type;      // clients réels : structure (PP/PM/…) ; harnais : type
-        const nat = (c as any).nationalites ?? ((c as any).country ? [(c as any).country] : undefined);
-        const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
-          est_entite: st ? st !== "PP" : false, nationalites: nat };   // R417 - nationalité du client
-        const cand = candidats(idx, c.name, cfg.prefiltre);           // R409/R414 - pre-filtre (config en vigueur)
+      const trouves: { sujetId: string; uid: string; score: number; entree: EntreeListe; detail: HitDetail }[] = [];
+      for (const s of sujets) {
+        const requete = { nom: s.name, dob: s.dob, est_entite: s.est_entite, nationalites: s.nationalites }; // R417 - nationalité
+        const cand = candidats(idx, s.name, cfg.prefiltre);           // R409/R414 - pre-filtre (config en vigueur)
         const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R408/R414 - score fin (knobs en vigueur)
         if (!r) continue;
-        trouves.push({ client: c, uid: r.uid, score: r.score, entree: r.entree as any,
+        trouves.push({ sujetId: s.id, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
             typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution,
             natContribution: r.detail.natContribution } });
@@ -110,23 +136,23 @@ export class ScreeningService {
         // R102 - ecarte seulement si un FAUX_POSITIF existe pour (client, entree, CETTE empreinte)
         const wl = await tx.screeningQualification.findFirst({ where: {
           tenantId: ctx.tenantId, verdict: "FAUX_POSITIF", entreeHash,
-          hit: { clientId: t.client.id, entreeUid: t.uid } } });
+          hit: { clientId: t.sujetId, entreeUid: t.uid } } });
         if (wl) continue;
         hits.push(await tx.screeningHit.create({ data: {
-          tenantId: ctx.tenantId, clientId: t.client.id, entreeUid: t.uid, score: t.score,
+          tenantId: ctx.tenantId, clientId: t.sujetId, sujetType, entreeUid: t.uid, score: t.score,
           listeVersion: dto.version, entreeHash, statut: "BRUT", at,
           detail: t.detail } }));      // R411 - decomposition explicable (score, via, DOB, type)
       }
       // R103 - la trace de passage s'ecrit TOUJOURS, hits ou pas, pre-filtre inclus
       const run = await tx.screeningRun.create({ data: {
-        tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version,
-        seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: clients.length,
+        tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version, sujetType,
+        seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: sujets.length,
         nbHits: hits.length, at,
         // R414/R415 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
-        config: { ...cfg, clientIds: clients.map((c: any) => c.id) } as any } });
+        config: { ...cfg, clientIds: sujets.map((s) => s.id) } as any } });
       for (const h of hits) await tx.screeningHit.update({ where: { id: h.id }, data: { runId: run.id } });
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_RUN",
-        `${dto.liste}@${dto.version}:${clients.length} clients, ${hits.length} hits`);
+        `${dto.liste}@${dto.version}:${sujets.length} ${sujetType}(s), ${hits.length} hits`);
       return { run, hits };
     });
   }
@@ -160,11 +186,11 @@ export class ScreeningService {
    * liste ; le run lié porte la config qui l'a produit — R414). On lit l'historique d'un SUJET dans le
    * temps : par client et fenêtre de dates. Index (tenant_id, client_id, at) pour la requête à l'échelle.
    */
-  hits(ctx: Ctx, f: { statut?: string; clientId?: string; since?: string; until?: string } = {}) {
+  hits(ctx: Ctx, f: { statut?: string; clientId?: string; sujetType?: string; since?: string; until?: string } = {}) {
     const at = (f.since || f.until) ? { at: { ...(f.since ? { gte: f.since } : {}), ...(f.until ? { lte: f.until } : {}) } } : {};
     return this.prisma.screeningHit.findMany({
       where: { tenantId: ctx.tenantId, ...(f.statut ? { statut: f.statut } : {}),
-        ...(f.clientId ? { clientId: f.clientId } : {}), ...at },
+        ...(f.clientId ? { clientId: f.clientId } : {}), ...(f.sujetType ? { sujetType: f.sujetType } : {}), ...at },
       orderBy: { at: "desc" } });
   }
   runs(ctx: Ctx) {                                        // R103 - la preuve de fraicheur, lisible

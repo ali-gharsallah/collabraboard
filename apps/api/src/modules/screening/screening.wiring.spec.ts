@@ -23,9 +23,9 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 }
 
 // ── Faux Prisma : tables en mémoire, filtres tenant réellement appliqués ──
-function fakePrisma(clients: any[], scenarios: any[] = []) {
+function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = []) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { clients, scenarios, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
+  const db = { clients, scenarios, persons, onboardings, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'hit') return match(db.hits.find((h) => h.id === row.hitId) ?? {}, v);
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -41,6 +41,7 @@ function fakePrisma(clients: any[], scenarios: any[] = []) {
     client: table(db.clients, 'CLI'), screeningRun: table(db.runs, 'RUN'),
     screeningHit: table(db.hits, 'HIT'), screeningQualification: table(db.quals, 'Q'),
     amlScenario: table(db.scenarios, 'SCN'),                    // R414 : config versionnée du moteur
+    person: table(db.persons, 'PER'), onboarding: table(db.onboardings, 'ONB'),   // R100 : sujets étendus
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -222,6 +223,20 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(tous.length === 1 && deC1.length === 1 && deC1[0].clientId === 'c1', 'filtre client : le hit du sujet');
     ok(deX.length === 0, 'filtre client : aucun hit pour un sujet sans correspondance');
     ok(p._db.hits[0].detail && typeof p._db.hits[0].score === 'number', 'le hit reste une pièce forensique (score + décomposition)');
+  });
+
+  // ── R100 sujets étendus : le screening vise aussi PERSONNES et PROSPECTS (même moteur, même règle) ──
+  await it('R100 sujets étendus : screener une PERSONNE puis un PROSPECT (hit typé)', async () => {
+    const persons = [{ id: 'per1', tenantId: 't1', nom: 'Viktor Volkov', etat: 'ACTIVE', donnees: { date_naissance: '1965-03-12' } }];
+    const onboardings = [{ id: 'onb1', tenantId: 't1', prospectNom: 'Viktor Volkov', etape: 'PROSPECT' }];
+    const p = fakePrisma([], [], persons, onboardings); const a = fakeAudit(); const s = new ScreeningService(p, a);
+    const rp: any = await s.run(CTX, { ...CFG, entries: [ENTREE], sujet: 'personne' });
+    ok(rp.hits.length === 1 && p._db.hits[0].sujetType === 'personne' && p._db.hits[0].clientId === 'per1', 'hit personne : sujet tracé (per1)');
+    const ro: any = await s.run(CTX, { ...CFG, entries: [ENTREE], sujet: 'prospect' });
+    ok(ro.hits.length === 1 && p._db.hits[1].sujetType === 'prospect' && p._db.hits[1].clientId === 'onb1', 'hit prospect : sujet tracé (onb1)');
+    ok(p._db.runs[0].sujetType === 'personne' && p._db.runs[1].sujetType === 'prospect', 'chaque run tracé par type de sujet');
+    const dePers: any[] = await s.hits(CTX, { sujetType: 'personne' });
+    ok(dePers.length === 1 && dePers[0].clientId === 'per1', 'audit : filtre par type de sujet');
   });
 
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
