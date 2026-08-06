@@ -23,7 +23,7 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 function fakePrisma(seed: any = {}) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
   const db: any = { tenants: seed.tenants ?? [], assignments: seed.assignments ?? [], attestations: [],
-    certifications: seed.certifications ?? [], events: [] };
+    certifications: seed.certifications ?? [], users: seed.users ?? [], events: [] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]); return row[k] === v; });
   const table = (rows: any[], prefix: string) => ({
@@ -35,6 +35,7 @@ function fakePrisma(seed: any = {}) {
   const p: any = { _db: db,
     tenant: table(db.tenants, 'TEN'), trainingAssignment: table(db.assignments, 'ASG'),
     trainingAttestation: table(db.attestations, 'ATT'), certification: table(db.certifications, 'CERT'),
+    user: table(db.users, 'USR'),
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -93,6 +94,47 @@ const tenant = (settings: any) => ({ id: 't1', settings });
     ok(maj.visaStatut === 'SIGNED' && maj.statut === 'COMPLETED' && maj.visePar === 'val', 'validation four-eyes réussie, auteur = jeton');
   });
 
-  console.log(`\nCâblage Formations — gardes ⚠ (R232 · R234 · R235) — ${passed}/${passed + failed} tests verts`);
+  // ── R231 — le catalogue est 100% tenant (aucun type en dur) ──
+  await it('R231 : le catalogue reflète trainingCatalog du tenant (aucun type codé en dur)', async () => {
+    const cat = [{ code: 'F1', libelle: 'AML' }, { code: 'F2', libelle: 'LSFin' }];
+    const p = fakePrisma({ tenants: [tenant({ trainingCatalog: cat })] });
+    const s = new FormationsService(p, fakeAudit());
+    const r: any = await s.catalogue({ tenantId: 't1', userId: 'u1', role: 'CO' });
+    ok(Array.isArray(r) && r.length === 2 && r[0].code === 'F1', 'catalogue = trainingCatalog du tenant');
+  });
+
+  // ── R233/R39 — rappels J-x informatifs (aucun blocage) ──
+  await it('R233 : certif expirant à un seuil de rappel → événement training.reminder (jamais bloquant)', async () => {
+    const p = fakePrisma({ tenants: [tenant({ trainingReminderDays: [30, 7] })],
+      certifications: [{ id: 'C9', tenantId: 't1', userId: 'u1', code: 'AML', obtenueLe: '2025-01-31', expireLe: '2026-01-31' }] });
+    const s = new FormationsService(p, fakeAudit());
+    const r: any = await s.tickRappels({ tenantId: 't1', userId: 'sys', role: 'CO' }, '2026-01-01');   // J-30
+    ok(r.rappels === 1 && p._db.events.some((e: any) => e.type === 'training.reminder' && e.payload.joursRestants === 30), 'un rappel J-30 émis');
+  });
+
+  // ── R236 — visibilité par profil : habilité voit tout, non habilité voit son périmètre ──
+  await it('R236 : rôle habilité voit toutes les assignations ; non habilité ne voit que les siennes', async () => {
+    const seed = { tenants: [tenant({ trainingVisibiliteRoles: ['CO'] })],
+      assignments: [{ id: 'A6', tenantId: 't1', userId: 'u1', formationCode: 'F1', statut: 'ASSIGNED' },
+                    { id: 'A7', tenantId: 't1', userId: 'u2', formationCode: 'F1', statut: 'ASSIGNED' }] };
+    const pTout = fakePrisma(seed); const sTout = new FormationsService(pTout, fakeAudit());
+    const tout: any[] = await sTout.assignations({ tenantId: 't1', userId: 'u9', role: 'CO' }, {});
+    ok(tout.length === 2, 'habilité (CO) : voit les 2 assignations');
+    const pMoi = fakePrisma(seed); const sMoi = new FormationsService(pMoi, fakeAudit());
+    const moi: any[] = await sMoi.assignations({ tenantId: 't1', userId: 'u1', role: 'USER' }, {});
+    ok(moi.length === 1 && moi[0].userId === 'u1', 'non habilité : ne voit que son périmètre (soi)');
+  });
+
+  // ── R238 — rejeu certifiant : « qui était certifié X au JJ » depuis l'historique append-only ──
+  await it('R238 : certifications(asOf) répond la couverture à la date (true avant expiration, false après)', async () => {
+    const p = fakePrisma({ tenants: [tenant({})],
+      certifications: [{ id: 'C10', tenantId: 't1', userId: 'u1', code: 'AML', obtenueLe: '2026-01-01', expireLe: '2026-06-01' }] });
+    const s = new FormationsService(p, fakeAudit());
+    const dedans: any = await s.certifications({ tenantId: 't1', userId: 'x', role: 'CO' } as any, 'u1', '2026-03-01');
+    const dehors: any = await s.certifications({ tenantId: 't1', userId: 'x', role: 'CO' } as any, 'u1', '2026-08-01');
+    ok(dedans.certifie === true && dehors.certifie === false, 'couverture résolue à asOf depuis l\'historique');
+  });
+
+  console.log(`\nCâblage Formations (vague R231–R238, gardes ⚠ + cycle) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

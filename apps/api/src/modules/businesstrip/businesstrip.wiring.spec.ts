@@ -126,6 +126,56 @@ const tenant = (settings: any) => ({ id: 't1', settings });
     ok(!(maj.signals as any[]).some((x) => x.type === 'CERTIFICATION_EXPIRED_AT_TRIP_DATE'), 'certif couvrante → aucun signal');
   });
 
-  console.log(`\nCâblage Business Trip — gardes ⚠ (R223 · R224 · R228 · R237) — ${passed}/${passed + failed} tests verts`);
+  // ── R222 — seul un DRAFT se soumet (garde de cycle) ──
+  await it('R222 : soumettre un voyage non-DRAFT → refus R222', async () => {
+    const p = fakePrisma({ tenants: [tenant({})],
+      trips: [{ id: 'TR8', tenantId: 't1', travelerId: 'trav', status: 'PENDING_APPROVAL', destinations: [], clients: [] }] });
+    const s = new BusinessTripService(p, fakeAudit());
+    await rejects(s.soumettre(CTX, 'TR8'), 'R222');
+  });
+
+  // ── R225 — une destination à risque ajoute un visa COMPLIANCE à la matrice d'approbation ──
+  await it('R225 : destination à risque → visa COMPLIANCE ajouté à la matrice', async () => {
+    const p = fakePrisma({ tenants: [tenant({ tripApprovalMatrix: ['DIR'], tripJuridictionsRisque: ['IR'] })],
+      trips: [{ id: 'TR9', tenantId: 't1', travelerId: 'trav', status: 'DRAFT', destinations: ['IR'], clients: [], dateStart: '2026-05-01', dateEnd: '2026-05-03' }] });
+    const s = new BusinessTripService(p, fakeAudit());
+    await s.soumettre(CTX, 'TR9');
+    ok(p._db.tripVisas.some((v: any) => v.role === 'COMPLIANCE') && p._db.tripVisas.some((v: any) => v.role === 'DIR'), 'visas DIR + COMPLIANCE attendus');
+  });
+
+  // ── R226/R39 — contact reports MESURÉS, jamais coercés ──
+  await it('R226 : client sans contact report après le voyage → mesuré, jamais bloquant (bloque:false)', async () => {
+    const p = fakePrisma({ tenants: [tenant({})],
+      trips: [{ id: 'TR10', tenantId: 't1', travelerId: 'trav', status: 'APPROVED', destinations: [], clients: ['c1'], dateEnd: '2026-05-03' }] });
+    const s = new BusinessTripService(p, fakeAudit());
+    const r: any = await s.mesurerContactReports(CTX, 'TR10');
+    ok(r.manquants.includes('c1') && r.bloque === false, 'manquant mesuré, aucun blocage (R39)');
+  });
+
+  // ── R229 — grandfathering par date d'effet : l'avis rejoué prend la version en vigueur à `asOf` ──
+  await it('R229 : rejeu daté — avant l\'entrée du référentiel = AUTORISEE, après = INTERDITE', async () => {
+    const p = fakePrisma({ tenants: [tenant({ tripCrossBorderReferentiel: [{ jurisdiction: 'IR', activite: 'trading', verdict: 'INTERDITE', depuisLe: '2026-06-01' }] })],
+      trips: [{ id: 'TR11', tenantId: 't1', travelerId: 'trav', status: 'DRAFT', destinations: ['IR'], clients: [] }] });
+    const s = new BusinessTripService(p, fakeAudit());
+    const avant: any = await s.get(CTX, 'TR11', '2026-03-01');
+    const apres: any = await s.get(CTX, 'TR11', '2026-09-01');
+    ok(avant.advisories.find((a: any) => a.jurisdiction === 'IR').verdict === 'AUTORISEE', 'avant l\'effet : la règle n\'existait pas → AUTORISEE');
+    ok(apres.advisories.find((a: any) => a.jurisdiction === 'IR').verdict === 'INTERDITE', 'après l\'effet : INTERDITE');
+  });
+
+  // ── R230 — révision chaînée : V2 en PENDING_APPROVAL, V1 intacte ; réviser un non-APPROVED refuse ──
+  await it('R230 : réviser un APPROVED → V2 PENDING_APPROVAL (revision+1) ; réviser un non-APPROVED → refus R230', async () => {
+    const p = fakePrisma({ tenants: [tenant({})],
+      trips: [{ id: 'TR12', tenantId: 't1', travelerId: 'trav', status: 'APPROVED', destinations: ['US'], clients: [], dateStart: '2026-05-01', dateEnd: '2026-05-03', revision: 0 }] });
+    const s = new BusinessTripService(p, fakeAudit());
+    const v2: any = await s.reviser(CTX, 'TR12', { destinations: ['FR'] });
+    ok(v2.status === 'PENDING_APPROVAL' && v2.revision === 1 && v2.previousTripId === 'TR12', 'V2 chaînée à V1');
+    const v1: any = p._db.trips.find((t: any) => t.id === 'TR12');
+    ok(v1.status === 'APPROVED', 'V1 reste intacte');
+    p._db.trips.push({ id: 'TR13', tenantId: 't1', travelerId: 'trav', status: 'DRAFT', destinations: [], clients: [] });
+    await rejects(s.reviser(CTX, 'TR13', {}), 'R230');
+  });
+
+  console.log(`\nCâblage Business Trip (vague R222–R230 · R237, gardes ⚠ + cycle) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

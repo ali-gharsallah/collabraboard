@@ -302,10 +302,16 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:aml-gap
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (438 verts, +13 gardes ⚠ L2) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 438/438)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (447 verts, +22 vague R222–R238 L2) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 447/447)"
         working-directory: apps/api
         run: pnpm run test:rules
+
+      # ── L2 · complétude de la vague R222–R238 (BLOQUANT) : chaque identifiant du code a un it() nommé ──
+      - name: "3-L2 · Complétude vague R222–R238 (16/16)"
+        run: |
+          out=$(node apps/api/scripts/verifier-couverture-r222-238.mjs); echo "$out"
+          echo "$out" | grep -q "### 16/16 complétude vague R222–R238 verte (L2) ###"
 
       # ── RUNBOOK §2 · 4 — e2e Postgres réel (62 suites, 411/411) ──────────────
       # Reproductible depuis la réconciliation de la dérive `db push` (20260805000002) : sans elle
