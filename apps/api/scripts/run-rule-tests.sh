@@ -48,6 +48,8 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/aml/aml-scoring.engine.ts src/modules/aml/aml.service.ts src/modules/aml/aml-scoring.wiring.spec.ts \
   src/modules/aml/aml-gap.referentiel.gen.ts src/modules/aml/aml-gap.gt.gen.ts src/modules/aml/aml-gap.service.ts src/modules/aml/aml-gap.wiring.spec.ts \
   src/modules/islamic/islamic-screening.engine.ts src/modules/islamic/islamic.service.ts src/modules/islamic/islamic-screening.wiring.spec.ts \
+  src/modules/businesstrip/businesstrip.module.ts src/modules/businesstrip/businesstrip.wiring.spec.ts \
+  src/modules/formations/formations.module.ts src/modules/formations/formations.wiring.spec.ts \
   src/common/feature-flags.ts src/common/feature-flags.spec.ts \
   src/common/optimistic-lock.ts src/common/optimistic-lock.spec.ts \
   src/modules/kyc/kyc-locking.spec.ts \
@@ -111,6 +113,8 @@ echo "── Câblage Licence vendor (LC-01..05, R177→R179) ──"; run vendo
 echo "── Câblage Surveillance AML (A-69..A-86, R189→R206) ──"; run aml-scoring.wiring.spec.js
 echo "── Câblage AML Gap Waves 1+2 (blocs 50–61, R340→R403) ──"; run aml-gap.wiring.spec.js
 echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run islamic-screening.wiring.spec.js
+echo "── Câblage Business Trip — gardes ⚠ (R223/R224/R228/R237, L2) ──"; run businesstrip.wiring.spec.js
+echo "── Câblage Formations — gardes ⚠ (R232/R234/R235, L2) ──"; run formations.wiring.spec.js
 echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js
 echo "── Verrou optimiste KYC lot 1 (LK-KYCFILE/KYCVISA + double-visa, R336) ──"; run kyc-locking.spec.js
