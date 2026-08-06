@@ -3,7 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/screening-qualification";
 import { Tx } from "../../common/tx";
-import { construireIndex, construireIdf, candidats, rapprocherDetail } from "@olive/screening-engine";
+import { construireIndex, construireIndexCache, construireIdf, candidats, rapprocherDetail } from "@olive/screening-engine";
 
 /**
  * Cablage persistant des regles screening R100->R103 (SC-01..04, ratifiees 15.07.2026).
@@ -80,9 +80,10 @@ export class ScreeningService {
       // R414 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
       const cfg = await this.resoudreConfig(tx, ctx.tenantId, dto, at);
 
-      // R409 - index trigramme construit UNE FOIS au chargement de la liste. IDF : n<2 donnerait
-      // log(1)=0 -> NaN ; on ne le construit qu'a partir de 2 entrees (sinon repli poids=1 du moteur).
-      const idx = construireIndex(dto.entries as any);
+      // R409 - index trigramme MÉMOÏSÉ par liste@version (PERF : le rescreening répété d'un portefeuille
+      // contre la même liste ne le reconstruit plus). L'index ne porte que des données de LISTE (jamais
+      // tenant) → cache partageable sans fuite. IDF : n<2 donnerait log(1)=0 -> NaN ; construit à partir de 2.
+      const idx = construireIndexCache(`${dto.liste}@${dto.version}`, dto.entries as any);
       if (dto.entries.length >= 2) construireIdf(dto.entries as any);
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
@@ -154,9 +155,17 @@ export class ScreeningService {
     });
   }
 
-  hits(ctx: Ctx, statut?: string) {
-    return this.prisma.screeningHit.findMany({ where: {
-      tenantId: ctx.tenantId, ...(statut ? { statut } : {}) } });
+  /**
+   * HISTORISATION / AUDIT — le hit est une pièce forensique IMMUABLE (score, décomposition, version de
+   * liste ; le run lié porte la config qui l'a produit — R414). On lit l'historique d'un SUJET dans le
+   * temps : par client et fenêtre de dates. Index (tenant_id, client_id, at) pour la requête à l'échelle.
+   */
+  hits(ctx: Ctx, f: { statut?: string; clientId?: string; since?: string; until?: string } = {}) {
+    const at = (f.since || f.until) ? { at: { ...(f.since ? { gte: f.since } : {}), ...(f.until ? { lte: f.until } : {}) } } : {};
+    return this.prisma.screeningHit.findMany({
+      where: { tenantId: ctx.tenantId, ...(f.statut ? { statut: f.statut } : {}),
+        ...(f.clientId ? { clientId: f.clientId } : {}), ...at },
+      orderBy: { at: "desc" } });
   }
   runs(ctx: Ctx) {                                        // R103 - la preuve de fraicheur, lisible
     return this.prisma.screeningRun.findMany({ where: { tenantId: ctx.tenantId } });

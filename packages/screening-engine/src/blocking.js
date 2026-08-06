@@ -33,6 +33,28 @@ function construireIndex(entries) {
   return { index, entries, n: entries.length };
 }
 
+/**
+ * PERF (sous R409) — l'index trigramme est DÉTERMINISTE à partir des entrées (données de LISTE
+ * partagées, jamais tenant). Le rescreening répété d'un portefeuille contre la MÊME version de liste
+ * reconstruisait l'index à chaque run — coûteux à l'échelle réelle (100k+ entrées). On mémoïse par
+ * `cle` (ex. `SECO@2026-07-15`), avec une empreinte légère qui invalide si la liste a changé.
+ */
+const _idxCache = new Map();
+const _empreinte = (entries) => {
+  const n = entries.length;
+  return n + "|" + ((entries[0] && entries[0].uid) || "") + "|" + ((entries[n - 1] && entries[n - 1].uid) || "");
+};
+function construireIndexCache(cle, entries) {
+  const emp = _empreinte(entries);
+  const hit = _idxCache.get(cle);
+  if (hit && hit.emp === emp) return hit.idx;       // même liste@version, entrées inchangées → réutilise
+  const idx = construireIndex(entries);
+  _idxCache.set(cle, { emp, idx });
+  if (_idxCache.size > 16) _idxCache.delete(_idxCache.keys().next().value);   // éviction FIFO simple
+  return idx;
+}
+function viderIndexCache() { _idxCache.clear(); }
+
 function candidats(idx, nom, opts = {}) {
   const { maxTrigrammes, minPartages, plafond } = { ...DEFAUTS_BLOCKING, ...opts };
   const gs = [...trigrammes(nom)]
@@ -50,4 +72,4 @@ function candidats(idx, nom, opts = {}) {
   return retenus.slice(0, plafond).map((x) => idx.entries[x.i]);
 }
 
-module.exports = { construireIndex, candidats, DEFAUTS_BLOCKING };
+module.exports = { construireIndex, construireIndexCache, viderIndexCache, candidats, DEFAUTS_BLOCKING };

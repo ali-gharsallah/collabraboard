@@ -53,6 +53,9 @@ export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: Co
 export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): Resultat | null;
 export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): ResultatDetaille | null;
 export function construireIndex(entries: EntreeMoteur[]): IndexTrigramme;
+// PERF (sous R409) — index mémoïsé par clé (ex. `SECO@2026-07-15`) ; invalidé si la liste change.
+export function construireIndexCache(cle: string, entries: EntreeMoteur[]): IndexTrigramme;
+export function viderIndexCache(): void;
 export function candidats(idx: IndexTrigramme, nom: string, opts?: OptionsBlocking): EntreeMoteur[];
 
 // Ingestion multi-format (sous R409) — normalise une entrée brute (SECO/synthétique, OFAC, UN) vers EntreeMoteur.

@@ -231,6 +231,14 @@ jobs:
           out=$(node services/screening/liste-reelle.test.mjs); echo "$out"
           echo "$out" | grep -q "### 5/5 liste-reelle verts (R409) ###"
 
+      # ── Perf : mémoïsation de l'index trigramme (sous R409) — porte BLOQUANTE ──
+      # Le rescreening répété d'un portefeuille contre la même version de liste ne reconstruit plus
+      # l'index. Casse la CI si la réutilisation, l'invalidation ou la purge régressent.
+      - name: "3w · Index-cache screening (perf, sous R409, attendu 4/4)"
+        run: |
+          out=$(node services/screening/index-cache.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 index-cache verts (R409) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille

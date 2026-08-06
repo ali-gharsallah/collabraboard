@@ -14,7 +14,7 @@ export class ScreeningController {
   constructor(private svc: ScreeningService) {}
   @Post("run")               run(@Req() r: any, @Body() b: any) { return this.svc.run(r.ctx, b); }                                   // R100/R103
   @Post("hits/:id/qualify")  qualify(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.qualify(r.ctx, id, b?.verdict, b?.motif); } // R101/R7
-  @Get("hits")               hits(@Req() r: any, @Query("statut") statut?: string) { return this.svc.hits(r.ctx, statut); }
+  @Get("hits")               hits(@Req() r: any, @Query() q: any) { return this.svc.hits(r.ctx, { statut: q.statut, clientId: q.clientId, since: q.since, until: q.until }); } // R411 — historique audité (sujet × temps)
   @Get("runs")               runs(@Req() r: any) { return this.svc.runs(r.ctx); }                                                     // R103 — preuve de fraîcheur
   @Get("config")             configs(@Req() r: any) { return this.svc.configs(r.ctx); }                                               // R415 — versions + en vigueur
   @Post("config")            publier(@Req() r: any, @Body() b: any) { return this.svc.publierConfig(r.ctx, b); }                      // R415/R7 — publier une version

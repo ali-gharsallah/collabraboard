@@ -18,7 +18,8 @@
     "screening:gate": "node services/screening/gate.test.mjs",
     "screening:config": "node services/screening/config-equivalence.test.mjs",
     "screening:ingest": "node services/screening/ingest.test.mjs",
-    "screening:liste-reelle": "node services/screening/liste-reelle.test.mjs"
+    "screening:liste-reelle": "node services/screening/liste-reelle.test.mjs",
+    "screening:index-cache": "node services/screening/index-cache.test.mjs"
   },
   "dependencies": {
     "@olive/screening-engine": "workspace:*"

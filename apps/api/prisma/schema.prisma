@@ -371,6 +371,7 @@ model ScreeningHit {
   qualification ScreeningQualification?
   @@index([tenantId, statut])
   @@index([tenantId, clientId, entreeUid])
+  @@index([tenantId, clientId, at])                       // R411 — historique audité d'un sujet dans le temps
   @@map("screening_hits")
 }
 model ScreeningQualification {

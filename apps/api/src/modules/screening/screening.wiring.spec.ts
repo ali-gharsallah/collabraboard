@@ -212,6 +212,18 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(rep.rejoue.length === 1 && rep.rejoue[0].entreeUid === 'SAN-1', 'le hit d\'origine est reproduit');
   });
 
-  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
+  // ── R411 — HISTORISATION/AUDIT : lire les hits d'un SUJET (filtre client) ──
+  await it('R411 audit : hits filtrés par client (historique d\'un sujet)', async () => {
+    const { p, s } = mk();
+    await s.run(CTX, { ...CFG, entries: [ENTREE] });          // produit 1 hit pour c1
+    const tous: any[] = await s.hits(CTX, {});
+    const deC1: any[] = await s.hits(CTX, { clientId: 'c1' });
+    const deX: any[] = await s.hits(CTX, { clientId: 'inexistant' });
+    ok(tous.length === 1 && deC1.length === 1 && deC1[0].clientId === 'c1', 'filtre client : le hit du sujet');
+    ok(deX.length === 0, 'filtre client : aucun hit pour un sujet sans correspondance');
+    ok(p._db.hits[0].detail && typeof p._db.hits[0].score === 'number', 'le hit reste une pièce forensique (score + décomposition)');
+  });
+
+  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();
