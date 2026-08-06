@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/screening-qualification";
 import { Tx } from "../../common/tx";
+import { parserSwift } from "../txflux/swift.module";
 import { construireIndex, construireIndexCache, construireIdf, candidats, rapprocherDetail } from "@olive/screening-engine";
 
 /**
@@ -24,6 +25,30 @@ export type SujetType = "client" | "personne" | "prospect" | "transaction";
 // donneur d'ordre, bénéficiaire, banque intermédiaire… `id` est une référence (uuid) que le flux de
 // paiement rattache à (transaction, rôle). `est_entite` = true pour une banque/société.
 export interface Partie { id: string; name: string; dob?: string; nationalites?: string[]; est_entite?: boolean }
+// R100 (branchement flux réel) — les PARTIES d'un message de paiement SWIFT (MT103/MT202/pacs.008),
+// telles que le parseur du flux (R300, swift.module) les surligne : donneur d'ordre, bénéficiaire,
+// banque bénéficiaire. Le SWIFT met le compte/IBAN sur la 1re ligne (préfixe `/`) et le NOM sur les
+// suivantes ; on isole le nom. `id` = `${référence}:${rôle}` → chaque hit se rattache à (virement, rôle).
+// Aucune partie inventée : seule une valeur PRÉSENTE dans le message devient une partie à screener.
+type SwiftExtraction = { reference?: string; donneurOrdre?: string | null; beneficiaire?: string | null; banqueBeneficiaire?: string | null };
+export function partiesSwift(extraction: SwiftExtraction): Partie[] {
+  const nomSwift = (champ?: string | null): string | null => {
+    if (!champ) return null;
+    const lignes = String(champ).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const sansCompte = lignes.filter((l) => !l.startsWith("/"));   // 1re ligne /compte|IBAN → le nom suit
+    return sansCompte[0] ?? lignes[0] ?? null;
+  };
+  const ref = extraction.reference ?? "?";
+  const roles: [string, string | null | undefined, boolean][] = [
+    ["donneur", extraction.donneurOrdre, false],
+    ["beneficiaire", extraction.beneficiaire, false],
+    ["banque", extraction.banqueBeneficiaire, true],             // banque intermédiaire = entité
+  ];
+  return roles.flatMap(([role, champ, est_entite]) => {
+    const name = nomSwift(champ);
+    return name ? [{ id: `${ref}:${role}`, name, est_entite }] : [];
+  });
+}
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
@@ -163,6 +188,23 @@ export class ScreeningService {
         `${dto.liste}@${dto.version}:${sujets.length} ${sujetType}(s), ${hits.length} hits`);
       return { run, hits };
     });
+  }
+
+  /**
+   * R100 (branchement du flux RÉEL) — screene les PARTIES d'un VIREMENT à partir de son message de
+   * paiement SWIFT brut. C'est le point où le screening de transaction cesse d'être une saisie
+   * manuelle : le message (MT103/MT202/pacs.008) est parsé par le flux (R300), les parties sont
+   * EXTRAITES (donneur / bénéficiaire / banque), puis on délègue à run(sujet='transaction'). Message
+   * non parsable = refus TYPÉ (jamais deviné, pattern R169). « Aucun hit ≠ pas d'alerte » (R100)
+   * s'applique tel quel : les hits produits se rattachent à (virement:référence, rôle).
+   */
+  async runSwift(ctx: Ctx, dto: Omit<RunDto, "parties" | "sujet"> & { texte?: string }) {
+    if (!dto?.texte?.trim()) throw new BadRequestException("texte du message SWIFT requis");
+    const p = parserSwift(dto.texte);
+    if (!p.extraction) throw new BadRequestException(`message SWIFT non parsable — ${p.motif ?? "format inconnu"}`);
+    const parties = partiesSwift(p.extraction);
+    const { run, hits } = await this.run(ctx, { ...dto, sujet: "transaction", parties });
+    return { reference: p.extraction.reference, type: p.extraction.type, parties, run, hits };
   }
 
   // -- R101 - verdict + motif obligatoire (R7) + auteur = jeton ; VP -> escalade PROPOSEE --

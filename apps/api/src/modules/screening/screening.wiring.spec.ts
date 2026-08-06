@@ -8,7 +8,7 @@
  * Harnais : compiler screening.service.ts + ce fichier ; exécuter
  *   echo "── Câblage screening (R100→R103) ──"; run screening.wiring.spec.js
  */
-import { ScreeningService } from './screening.service';
+import { ScreeningService, partiesSwift } from './screening.service';
 declare const process: { exit(n: number): void };
 
 let passed = 0, failed = 0; const fails: string[] = [];
@@ -250,6 +250,38 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(r.hits.length === 1, 'un seul hit : la partie bénéficiaire listée');
     ok(p._db.hits[0].sujetType === 'transaction' && p._db.hits[0].clientId === '22222222-2222-2222-2222-222222222222', 'hit rattaché à la PARTIE + typé transaction');
     ok(p._db.runs[0].sujetType === 'transaction' && p._db.runs[0].perimetre === 2, 'run typé transaction, périmètre = 2 parties');
+  });
+
+  // ── R100 branchement FLUX RÉEL : screener les parties d'un virement depuis son message SWIFT brut ──
+  await it('R100 SWIFT : partiesSwift isole le NOM (le compte /IBAN de 1re ligne n\'est pas un nom)', async () => {
+    const parties = partiesSwift({ reference: 'REF-77',
+      donneurOrdre: '/CH9300762011623852957\nAlice Ordinary\n12 Rue du Lac',
+      beneficiaire: '/DE89370400440532013000\nViktor Volkov',
+      banqueBeneficiaire: 'DEUTDEFF' });
+    ok(parties.length === 3, 'trois parties extraites (donneur, bénéficiaire, banque)');
+    ok(parties[0].id === 'REF-77:donneur' && parties[0].name === 'Alice Ordinary', 'donneur : nom isolé, id = ref:rôle');
+    ok(parties[1].name === 'Viktor Volkov', 'bénéficiaire : nom isolé (IBAN écarté)');
+    ok(parties[2].id === 'REF-77:banque' && parties[2].est_entite === true, 'banque = entité');
+  });
+  await it('R100 SWIFT : partie absente du message = jamais inventée', async () => {
+    const parties = partiesSwift({ reference: 'REF-88', beneficiaire: 'Jean Dupont' });
+    ok(parties.length === 1 && parties[0].id === 'REF-88:beneficiaire', 'seule la partie présente devient sujet');
+  });
+  await it('R100 SWIFT : runSwift parse un MT103 réel et screene le bénéficiaire listé (bout en bout)', async () => {
+    const p = fakePrisma([]); const a = fakeAudit(); const s = new ScreeningService(p, a);
+    const mt103 = ['{1:F01BANKBEBBAXXX0000000000}{2:I103BANKDEFFXXXXN}{4:',
+      ':20:REF-2026-42', ':32A:260720CHF12000,', ':50K:/CH9300762011623852957', 'Alice Ordinary',
+      ':59:/DE89370400440532013000', 'Viktor Volkov', ':57A:DEUTDEFF', '-}'].join('\n');
+    const r: any = await s.runSwift(CTX, { ...CFG, entries: [ENTREE], texte: mt103 });
+    ok(r.reference === 'REF-2026-42' && r.type === 'MT103', 'référence + type du virement remontés');
+    ok(r.hits.length === 1, 'un seul hit : le bénéficiaire listé (le donneur ne l\'est pas)');
+    ok(p._db.hits[0].sujetType === 'transaction' && p._db.hits[0].clientId === 'REF-2026-42:beneficiaire',
+      'hit typé transaction, rattaché à (virement:référence, rôle)');
+    ok(p._db.runs[0].perimetre === 3, 'périmètre = 3 parties extraites du message');
+  });
+  await it('R100 SWIFT : message non parsable → refus TYPÉ (jamais deviné)', async () => {
+    const p = fakePrisma([]); const s = new ScreeningService(p, fakeAudit());
+    await rejects(s.runSwift(CTX, { ...CFG, entries: [ENTREE], texte: 'ceci n\'est pas un message SWIFT' }), 'non parsable');
   });
 
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
