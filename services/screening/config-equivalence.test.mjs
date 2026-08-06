@@ -15,7 +15,7 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
-  construireIdf, rapprocher, scorer, construireIndex, candidats, clePhonetique,
+  construireIdf, rapprocher, scorer, construireIndex, candidats, clePhonetique, ingererListe,
   DEFAUTS_MOTEUR, DEFAUTS_BLOCKING,
 } from "@olive/screening-engine";
 
@@ -25,11 +25,7 @@ const san = lire("sanctions-synth.json");
 const golden = lire("golden-set.json");
 
 const SEUIL = 85;
-const entries = san.entries.map((e) => ({
-  ...e,
-  date_naissance: e.dates_naissance ? e.dates_naissance[0] : e.date_naissance,
-  alias: (e.alias || []).map((a) => (typeof a === "string" ? a : a.nom)),
-}));
+const entries = ingererListe(san.entries);   // R409 — adaptateur multi-format centralisé
 construireIdf(entries);
 
 let echecs = [];

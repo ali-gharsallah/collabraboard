@@ -213,6 +213,15 @@ jobs:
           out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
           echo "$out" | grep -q "### 10/10 config-equivalence verts (R413/R416/R417) ###"
 
+      # ── Ingestion des listes (sous R409) — porte BLOQUANTE ──
+      # L'adaptateur ingererListe normalise des formats de liste réels (SECO/synthétique, OFAC, UN)
+      # vers EntreeMoteur, ET reproduit à l'identique le mapping figé sur les 625 entrées du golden
+      # (parité). Casse la CI si un format n'est plus reconnu ou si le mapping dérive du gate qualité.
+      - name: "3u · Ingestion listes screening (sous R409, attendu 5/5)"
+        run: |
+          out=$(node services/screening/ingest.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 ingestion verts (R409) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille

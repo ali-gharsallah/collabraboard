@@ -54,3 +54,8 @@ export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: num
 export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): ResultatDetaille | null;
 export function construireIndex(entries: EntreeMoteur[]): IndexTrigramme;
 export function candidats(idx: IndexTrigramme, nom: string, opts?: OptionsBlocking): EntreeMoteur[];
+
+// Ingestion multi-format (sous R409) — normalise une entrée brute (SECO/synthétique, OFAC, UN) vers EntreeMoteur.
+export function ingererEntree(e: any): EntreeMoteur;
+export function ingererListe(entrees: any[]): EntreeMoteur[];
+export function normaliserType(t: unknown): string | undefined;

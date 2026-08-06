@@ -16,7 +16,8 @@
     "screening:blocking": "node services/screening/bench-blocking.mjs",
     "screening:portefeuille": "node services/screening/bench-portefeuille.mjs",
     "screening:gate": "node services/screening/gate.test.mjs",
-    "screening:config": "node services/screening/config-equivalence.test.mjs"
+    "screening:config": "node services/screening/config-equivalence.test.mjs",
+    "screening:ingest": "node services/screening/ingest.test.mjs"
   },
   "dependencies": {
     "@olive/screening-engine": "workspace:*"

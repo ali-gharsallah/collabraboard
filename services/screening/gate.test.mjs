@@ -20,7 +20,7 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { rapprocher, construireIdf } from "@olive/screening-engine";
-import { construireIndex, candidats } from "@olive/screening-engine";
+import { construireIndex, candidats, ingererListe } from "@olive/screening-engine";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const lire = (f) => JSON.parse(readFileSync(join(DIR, f), "utf8"));
@@ -30,11 +30,7 @@ const cli = lire("clients-synth.json");
 
 const SEUIL = 85;
 // Mapping appelant (comme bench-blocking.mjs) : DOB simple + alias en chaînes. Aucune modif moteur.
-const entries = san.entries.map((e) => ({
-  ...e,
-  date_naissance: e.dates_naissance ? e.dates_naissance[0] : e.date_naissance,
-  alias: (e.alias || []).map((a) => (typeof a === "string" ? a : a.nom)),
-}));
+const entries = ingererListe(san.entries);   // R409 — adaptateur multi-format centralisé (fin du mapping inline)
 
 // ── Planchers figés (mesure réelle 2026-08-05 ; graine 20260715 ; seuil 85 ; forme MAPPED) ──
 const PLANCHER = {
