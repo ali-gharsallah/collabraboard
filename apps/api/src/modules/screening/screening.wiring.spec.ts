@@ -8,7 +8,7 @@
  * Harnais : compiler screening.service.ts + ce fichier ; exécuter
  *   echo "── Câblage screening (R100→R103) ──"; run screening.wiring.spec.js
  */
-import { ScreeningService, partiesSwift, partiesTransactions } from './screening.service';
+import { ScreeningService, partiesSwift, partiesTransactions, hitsVersCsv } from './screening.service';
 declare const process: { exit(n: number): void };
 
 let passed = 0, failed = 0; const fails: string[] = [];
@@ -245,6 +245,22 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     const exp: any = await s.exporterHits(CTX, {});
     ok(exp.total === 1 && exp.lignes[0].qualification === null, 'un hit BRUT s\'exporte sans verdict (null)');
     ok(exp.lignes[0].statut === 'BRUT', 'statut BRUT préservé');
+  });
+  await it('R411 export CSV : en-tête stable + ligne, échappement RFC 4180 d\'un motif à virgule', async () => {
+    const { p, s } = mk();
+    await s.run(CTX, { ...CFG, entries: [ENTREE] });
+    await s.qualify(CTX, p._db.hits[0].id, 'FAUX_POSITIF', 'Homonyme, né une autre année');   // motif AVEC virgule
+    const csv: string = await s.exporterHitsCsv(CTX, { clientId: 'c1' });
+    const lignes = csv.split('\r\n');
+    ok(lignes[0].startsWith('at,statut,sujet_type,sujet_id,'), 'en-tête CSV stable');
+    ok(lignes[0].endsWith('verdict,motif,qualifie_par,qualifie_at'), 'colonnes qualification en fin');
+    ok(lignes.length === 2, 'un hit → une ligne de données');
+    ok(lignes[1].includes('"Homonyme, né une autre année"'), 'motif à virgule encadré de guillemets (RFC 4180)');
+    ok(lignes[1].includes(',c1,') && lignes[1].includes('FAUX_POSITIF'), 'sujet + verdict présents');
+  });
+  await it('R411 export CSV pur : hitsVersCsv double les guillemets internes', async () => {
+    const csv = hitsVersCsv([{ sujet: { type: 'client', id: 'c1' }, qualification: { motif: 'dit «"VIP"»', verdict: 'VRAI_POSITIF', par: 'i.vernet' } }]);
+    ok(csv.split('\r\n').length === 2 && csv.includes('"dit «""VIP""»"'), 'guillemets internes doublés');
   });
 
   // ── R100 sujets étendus : le screening vise aussi PERSONNES et PROSPECTS (même moteur, même règle) ──

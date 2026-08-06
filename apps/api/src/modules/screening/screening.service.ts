@@ -61,6 +61,33 @@ export function partiesTransactions(lignes: LigneFlux[]): Partie[] {
     return name ? [{ id: `${l.refExterne ?? "?"}:contrepartie`, name, est_entite: false }] : [];
   });
 }
+
+// R411 — sérialise les lignes d'export d'audit en CSV RFC 4180. Colonnes STABLES (une par intermédiaire
+// explicable). Échappement : un champ contenant «,» «"» ou saut de ligne est encadré de guillemets, les
+// guillemets internes doublés. Fonction PURE (aucun accès Prisma) → testable isolément.
+const CSV_COLS: [string, (l: any) => any][] = [
+  ["at", (l) => l.at], ["statut", (l) => l.statut],
+  ["sujet_type", (l) => l.sujet?.type], ["sujet_id", (l) => l.sujet?.id],
+  ["entree_uid", (l) => l.entree?.uid], ["entree_hash", (l) => l.entree?.hash],
+  ["liste_version", (l) => l.entree?.listeVersion], ["score", (l) => l.score],
+  ["via", (l) => l.decomposition?.via], ["nameScore", (l) => l.decomposition?.nameScore],
+  ["typePenalty", (l) => l.decomposition?.typePenalty], ["dobContribution", (l) => l.decomposition?.dobContribution],
+  ["natContribution", (l) => l.decomposition?.natContribution],
+  ["run_id", (l) => l.run?.id], ["run_liste", (l) => l.run?.liste], ["run_version", (l) => l.run?.version],
+  ["run_seuil", (l) => l.run?.seuil],
+  ["scenario_code", (l) => l.run?.scenario?.scenarioCode], ["scenario_version", (l) => l.run?.scenario?.scenarioVersion],
+  ["verdict", (l) => l.qualification?.verdict], ["motif", (l) => l.qualification?.motif],
+  ["qualifie_par", (l) => l.qualification?.par], ["qualifie_at", (l) => l.qualification?.at],
+];
+export function hitsVersCsv(lignes: any[]): string {
+  const echapper = (v: any) => {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const entete = CSV_COLS.map((c) => c[0]).join(",");
+  const corps = (lignes ?? []).map((l) => CSV_COLS.map((c) => echapper(c[1](l))).join(","));
+  return [entete, ...corps].join("\r\n");
+}
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
@@ -323,6 +350,15 @@ export class ScreeningService {
     await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_EXPORT",
       `${lignes.length} hits${f.since ? ` depuis ${f.since}` : ""}${f.until ? ` jusqu'à ${f.until}` : ""}`);
     return { genereLe: new Date().toISOString(), parJeton: ctx.userId, filtre: f, total: lignes.length, lignes };
+  }
+
+  /**
+   * R411 (export d'audit, format CSV) — même contenu que exporterHits, APLATI en CSV RFC 4180 pour un
+   * tableur/contrôleur. Une colonne par intermédiaire explicable ; l'export CSV est tracé comme le JSON.
+   */
+  async exporterHitsCsv(ctx: Ctx, f: { statut?: string; clientId?: string; sujetType?: string; since?: string; until?: string } = {}) {
+    const exp = await this.exporterHits(ctx, f);
+    return hitsVersCsv(exp.lignes);
   }
 
   // ── R415 — GOUVERNANCE de la config du moteur : publier/lister des VERSIONS (AmlScenario) ──
