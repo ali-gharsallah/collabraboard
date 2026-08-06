@@ -39121,15 +39121,85 @@ el("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTran
 el("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 } }, g.ids.map(renderCard))));
 return el("div", null, banner, groupes);
 }
+function ScreeningMoteurPanel() {
+const h = React.createElement;
+// R416 — clé phonétique (metaphone simplifié, identique au moteur @olive/screening-engine).
+const cle = (s) => {
+let t = String(s || "").toUpperCase().replace(/[^A-Z]/g, "");
+if (!t) return "";
+t = t.replace(/^(KN|GN|PN|WR|PS)/, (m) => m[1]);
+t = t.replace(/PH/g, "F").replace(/SCH/g, "SK").replace(/CK/g, "K").replace(/GH/g, "").replace(/Q/g, "K").replace(/X/g, "KS").replace(/Z/g, "S").replace(/V/g, "F");
+const first = t[0];
+let rest = t.slice(1).replace(/H/g, "").replace(/[AEIOUY]/g, "");
+return (first + rest).replace(/(.)\1+/g, "$1");
+};
+// Jaro-Winkler (R408) — même algorithme que le moteur fin.
+const jw = (a, b) => {
+a = a.toLowerCase(); b = b.toLowerCase();
+if (a === b) return 1;
+if (!a.length || !b.length) return 0;
+const d = Math.floor(Math.max(a.length, b.length) / 2) - 1;
+const ma = new Array(a.length).fill(false), mb = new Array(b.length).fill(false);
+let m = 0;
+for (let i = 0; i < a.length; i++) for (let j = Math.max(0, i - d); j < Math.min(b.length, i + d + 1); j++) { if (mb[j] || a[i] !== b[j]) continue; ma[i] = mb[j] = true; m++; break; }
+if (!m) return 0;
+let k = 0, tr = 0;
+for (let i = 0; i < a.length; i++) { if (!ma[i]) continue; while (!mb[k]) k++; if (a[i] !== b[k]) tr++; k++; }
+tr /= 2;
+const jaro = (m / a.length + m / b.length + (m - tr) / m) / 3;
+let p = 0; while (p < 4 && a[p] === b[p]) p++;
+return jaro + p * 0.1 * (1 - jaro);
+};
+const [qn, setQn] = useState("Nite");
+const [en, setEn] = useState("Knight");
+const [phon, setPhon] = useState(false);
+const [nat, setNat] = useState(false);
+const [qNat, setQNat] = useState("SY");
+const [eNat, setENat] = useState("SY, RU");
+const base = jw(qn, en);
+const kq = cle(qn), ke = cle(en);
+const phonMatch = phon && !!kq && kq === ke;
+const nameSim = phonMatch ? Math.max(base, 0.9) : base;
+const toks = (s) => s.toUpperCase().split(/[\s,]+/).filter(Boolean);
+const natCommon = nat && toks(qNat).some((x) => toks(eNat).includes(x));
+const score = Math.min(100, Math.round(nameSim * 100) + (natCommon ? 8 : 0));
+const hit = score >= 85;
+const card = { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 20 };
+const inp = { padding: 8, borderRadius: 8, border: "1px solid " + T.line, fontSize: 13, background: T.bg, color: T.ink };
+const lbl = { fontSize: 12, color: T.inkMid, display: "flex", flexDirection: "column", gap: 3 };
+const chip = (on) => ({ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: "1px solid " + T.line, cursor: "pointer", fontSize: 12, background: on ? T.olive600 : "transparent", color: on ? "#fff" : T.inkMid });
+return h("div", { style: card },
+h("div", { style: { fontWeight: 700, fontSize: 15, marginBottom: 2 } }, "⚙ Moteur de rapprochement configurable (R413–R417)"),
+h("div", { style: { fontSize: 12, color: T.inkMid, marginBottom: 14 } },
+"Le seuil et les méthodes sont des paramètres GOUVERNÉS : versionnés par scénario (R414, effet daté R29), rejouables à l'identique (R415/R48-R49). Défaut = Jaro-Winkler seul, comportement d'origine. Active une méthode pour voir son effet — sans rien changer par défaut."),
+h("div", { style: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 14 } },
+h("label", { style: lbl }, "Nom interrogé (client)", h("input", { style: inp, value: qn, onChange: (e) => setQn(e.target.value) })),
+h("label", { style: lbl }, "Entrée de liste", h("input", { style: inp, value: en, onChange: (e) => setEn(e.target.value) })),
+h("div", { style: chip(phon), onClick: () => setPhon(!phon) }, (phon ? "☑" : "☐") + " phonétique (R416)"),
+h("div", { style: chip(nat), onClick: () => setNat(!nat) }, (nat ? "☑" : "☐") + " nationalité (R417)")),
+nat && h("div", { style: { display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14 } },
+h("label", { style: lbl }, "Nationalité(s) client", h("input", { style: inp, value: qNat, onChange: (e) => setQNat(e.target.value) })),
+h("label", { style: lbl }, "Nationalité(s) entrée", h("input", { style: inp, value: eNat, onChange: (e) => setENat(e.target.value) }))),
+h("div", { style: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", padding: 14, borderRadius: 10, background: T.bg, border: "1px solid " + T.line } },
+h("div", { style: { fontSize: 28, fontWeight: 800, color: hit ? T.red : T.inkMid, minWidth: 64 } }, score),
+h("div", { style: { fontSize: 12, color: T.inkMid, lineHeight: 1.7 } },
+h("div", null, "Jaro-Winkler : " + Math.round(base * 100) + "%" + (phonMatch ? " → relevé à 90% (clés phonétiques identiques)" : "")),
+h("div", null, "Clés phonétiques : " + (kq || "∅") + " vs " + (ke || "∅") + (phon ? (phonMatch ? " ✓ coïncident" : " ✗ différentes") : " (méthode inactive)")),
+h("div", null, "Bonus nationalité : " + (natCommon ? "+8 (nationalité commune)" : (nat ? "0 (pas de recoupement)" : "méthode inactive"))),
+h("div", { style: { fontWeight: 700, color: hit ? T.red : T.oliveGreen } }, "Seuil 85 → " + (hit ? "HIT (matière à qualifier, R100)" : "pas de hit")))),
+h("div", { style: { fontSize: 11, color: T.inkMid, marginTop: 12, fontStyle: "italic" } },
+"Démonstration : le vrai moteur (@olive/screening-engine) applique ces mêmes méthodes côté serveur, publiées/versionnées via /v1/screening/config et tracées sur chaque run pour le rejeu. Essaie « Nite » vs « Knight » avec la phonétique."));
+}
 function ScreeningTabs({ user }) {
 const [t, setT] = useState("qualif");
 return (React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["qualif", "⚖ Qualification des hits"], ["batch", "↻ Re-screening & listes"], ["lev", "⌖ Test de screening"], ["watch", "▤ Watchlists & hits"], ["preuves", "🧪 Preuves moteur"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setT(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: t === id ? T.olive600 : "transparent", color: t === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: t === id ? 700 : 500 } }, label)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["qualif", "⚖ Qualification des hits"], ["batch", "↻ Re-screening & listes"], ["lev", "⌖ Test de screening"], ["watch", "▤ Watchlists & hits"], ["preuves", "🧪 Preuves moteur"], ["moteur", "⚙ Moteur configurable"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setT(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: t === id ? T.olive600 : "transparent", color: t === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: t === id ? 700 : 500 } }, label)))),
 t === "qualif" && React.createElement(ScreeningQualifPanel, { user: user }),
 t === "batch" && React.createElement(ScreeningBatchPanel, { user: user }),
 t === "lev" && React.createElement(ScreeningTestPanel, { user: user }),
 t === "watch" && React.createElement(ScreeningScreen, null),
-t === "preuves" && React.createElement(MoteurPreuvesPanel, null)));
+t === "preuves" && React.createElement(MoteurPreuvesPanel, null),
+t === "moteur" && React.createElement(ScreeningMoteurPanel, null)));
 }
 const ROLE_LABELS = { RM: "Relationship Manager", ARM: "Assistant RM", CO: "Compliance Officer", CO_SR: "Compliance Officer Senior", AML: "Analyste AML", MLRO: "MLRO", BRM: "Business Risk Manager", ESG: "ESG Officer", LEGAL: "Legal", CF: "Central File", HPB: "Head of Private Banking", DIR: "Direction", CEO: "CEO", ADMIN: "Administrateur", AUDIT: "Audit interne", SECU: "Security Officer", EDITOR: "Éditeur du logiciel (Olive)" };
 const SCOPE_OPTS = [
