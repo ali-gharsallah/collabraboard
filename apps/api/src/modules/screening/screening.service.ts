@@ -284,6 +284,47 @@ export class ScreeningService {
     return this.prisma.screeningRun.findMany({ where: { tenantId: ctx.tenantId } });
   }
 
+  /**
+   * R411 (export d'audit) — assemble, pour une fenêtre/sujet, un JEU DE LIGNES AUDITABLE : chaque hit
+   * (pièce forensique immuable) JOINT à la config qui l'a produit (run — liste/version/seuil/scénario,
+   * R414) ET à sa qualification motivée la plus récente (verdict/motif/auteur=jeton, R101). But : sortir
+   * l'historique tel quel pour un contrôle (révision interne, régulateur), sans recalcul — le repo fait foi.
+   * Même scope tenant et mêmes filtres que hits(). L'export lui-même est tracé (qui a exporté quoi, quand).
+   */
+  async exporterHits(ctx: Ctx, f: { statut?: string; clientId?: string; sujetType?: string; since?: string; until?: string } = {}) {
+    const hits: any[] = await this.hits(ctx, f);
+    const runIds = [...new Set(hits.map((h) => h.runId).filter(Boolean))];
+    const hitIds = hits.map((h) => h.id);
+    const runs: any[] = runIds.length
+      ? await this.prisma.screeningRun.findMany({ where: { tenantId: ctx.tenantId, id: { in: runIds } } }) : [];
+    const quals: any[] = hitIds.length
+      ? await this.prisma.screeningQualification.findMany({ where: { tenantId: ctx.tenantId, hitId: { in: hitIds } } }) : [];
+    const runById = new Map(runs.map((r) => [r.id, r]));
+    // Qualification la PLUS RÉCENTE par hit (une re-qualification tracée prime, R101).
+    const qualByHit = new Map<string, any>();
+    for (const q of quals) {
+      const cur = qualByHit.get(q.hitId);
+      if (!cur || String(q.at) > String(cur.at)) qualByHit.set(q.hitId, q);
+    }
+    const lignes = hits.map((h) => {
+      const run = runById.get(h.runId);
+      const cfg = (run?.config ?? {}) as any;
+      const q = qualByHit.get(h.id);
+      return {
+        hitId: h.id, at: h.at, statut: h.statut,
+        sujet: { type: h.sujetType ?? "client", id: h.clientId },
+        entree: { uid: h.entreeUid, hash: h.entreeHash, listeVersion: h.listeVersion },
+        score: h.score, decomposition: h.detail ?? null,          // R411 - via/nameScore/typePenalty/DOB/nat
+        run: run ? { id: run.id, liste: run.liste, version: run.listeVersion, seuil: run.seuil,
+          scenario: cfg.source ?? null } : null,                   // R414 - la config qui a produit le hit
+        qualification: q ? { verdict: q.verdict, motif: q.motif, par: q.par, at: q.at } : null, // R101
+      };
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_EXPORT",
+      `${lignes.length} hits${f.since ? ` depuis ${f.since}` : ""}${f.until ? ` jusqu'à ${f.until}` : ""}`);
+    return { genereLe: new Date().toISOString(), parJeton: ctx.userId, filtre: f, total: lignes.length, lignes };
+  }
+
   // ── R415 — GOUVERNANCE de la config du moteur : publier/lister des VERSIONS (AmlScenario) ──
   // Le code de scenario porteur de la config de screening. La voie run(dto.scenarioCode) resout la
   // version en vigueur (R414) ; ici on la PUBLIE et on la LIT, comme tout parametre versionne (R125).

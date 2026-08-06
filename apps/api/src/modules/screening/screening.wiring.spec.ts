@@ -226,6 +226,27 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(p._db.hits[0].detail && typeof p._db.hits[0].score === 'number', 'le hit reste une pièce forensique (score + décomposition)');
   });
 
+  await it('R411 export d\'audit : hit JOINT à sa config (run) et à sa qualification motivée', async () => {
+    const { p, s } = mk();
+    await s.run(CTX, { ...CFG, entries: [ENTREE] });          // 1 hit pour c1, run avec config
+    const hitId = p._db.hits[0].id;
+    await s.qualify(CTX, hitId, 'VRAI_POSITIF', 'Correspondance confirmée sur pièce');
+    const exp: any = await s.exporterHits(CTX, { clientId: 'c1' });
+    ok(exp.total === 1 && exp.parJeton === CTX.userId, 'export tracé (auteur = jeton), 1 ligne');
+    const l = exp.lignes[0];
+    ok(l.hitId === hitId && l.sujet.id === 'c1' && l.sujet.type === 'client', 'ligne rattachée au hit + sujet typé');
+    ok(l.decomposition && typeof l.score === 'number', 'décomposition forensique présente (R411)');
+    ok(l.run && l.run.liste === 'SECO' && l.run.version === '2026-07-14', 'config du run qui a produit le hit (R414)');
+    ok(l.qualification && l.qualification.verdict === 'VRAI_POSITIF' && l.qualification.par === CTX.userId, 'qualification motivée, auteur = jeton (R101)');
+  });
+  await it('R411 export d\'audit : hit non qualifié → qualification null, jamais inventée', async () => {
+    const { s } = mk();
+    await s.run(CTX, { ...CFG, entries: [ENTREE] });
+    const exp: any = await s.exporterHits(CTX, {});
+    ok(exp.total === 1 && exp.lignes[0].qualification === null, 'un hit BRUT s\'exporte sans verdict (null)');
+    ok(exp.lignes[0].statut === 'BRUT', 'statut BRUT préservé');
+  });
+
   // ── R100 sujets étendus : le screening vise aussi PERSONNES et PROSPECTS (même moteur, même règle) ──
   await it('R100 sujets étendus : screener une PERSONNE puis un PROSPECT (hit typé)', async () => {
     const persons = [{ id: 'per1', tenantId: 't1', nom: 'Viktor Volkov', etat: 'ACTIVE', donnees: { date_naissance: '1965-03-12' } }];
