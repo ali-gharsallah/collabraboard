@@ -1,17 +1,17 @@
-// Types du moteur de screening partagé (@olive/screening-engine, R263).
+// Types du moteur de screening partagé (@olive/screening-engine, R408).
 export interface EntreeMoteur {
   uid: string;
   nom_complet: string;
   alias?: Array<string | { nom: string }>;
   date_naissance?: string | null;
   type?: string;
-  nationalites?: string[];         // R272 — codes pays (ISO-2) de l'entrée listée
+  nationalites?: string[];         // R417 — codes pays (ISO-2) de l'entrée listée
 }
 export interface Requete {
   nom: string;
   dob?: string | null;
   est_entite?: boolean;
-  nationalites?: string[];         // R272 — nationalité(s) du client interrogé
+  nationalites?: string[];         // R417 — nationalité(s) du client interrogé
 }
 export interface Decomposition {
   score: number;         // 0-100 (float, avant arrondi)
@@ -19,14 +19,14 @@ export interface Decomposition {
   nameScore: number;     // score de nom (avant discriminants)
   typePenalty: number;   // 0, -40, -80
   dobContribution: number; // +6, +2, -12, -45, ou 0
-  natContribution: number; // R272 — bonus nationalité commune (0 si méthode off ou pas de recoupement)
+  natContribution: number; // R417 — bonus nationalité commune (0 si méthode off ou pas de recoupement)
 }
 export interface Resultat { uid: string; score: number; entree: EntreeMoteur; }
 export interface ResultatDetaille extends Resultat { detail: Decomposition; }
 export interface IndexTrigramme { index: Map<string, number[]>; entries: EntreeMoteur[]; n: number; }
 export interface OptionsBlocking { maxTrigrammes?: number; minPartages?: number; plafond?: number; }
 
-// R268 — réglage optionnel du score. Omis → comportement d'origine (défauts = littéraux figés).
+// R413 — réglage optionnel du score. Omis → comportement d'origine (défauts = littéraux figés).
 export interface ConfigMoteur {
   echelle?: number;                  // amplitude du score (défaut 100)
   penaliteTypeIncompatible?: number; // pénalité PP↔entité (défaut 40)
@@ -35,9 +35,9 @@ export interface ConfigMoteur {
   ecartAnneesProche?: number;        // seuil d'années « proche » (défaut 2)
   penaliteDobProche?: number;        // écart ≤ seuil (défaut 12)
   penaliteDobIncompatible?: number;  // écart > seuil (défaut 45)
-  phonetique?: boolean;              // R271 — méthode phonétique (défaut false = Jaro seul)
+  phonetique?: boolean;              // R416 — méthode phonétique (défaut false = Jaro seul)
   phonetiquePoids?: number;          // similarité créditée sur clé phonétique identique (défaut 0.9)
-  nationalite?: boolean;             // R272 — discriminant nationalité (défaut false)
+  nationalite?: boolean;             // R417 — discriminant nationalité (défaut false)
   nationaliteBonus?: number;         // bonus sur nationalité commune (défaut 8)
 }
 export declare const DEFAUTS_MOTEUR: Readonly<Required<ConfigMoteur>>;

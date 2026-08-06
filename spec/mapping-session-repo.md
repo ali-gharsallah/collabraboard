@@ -47,7 +47,8 @@ des specs. Résultat : ni l'un ni l'autre n'est un décalage session→repo.
 
 | Session | Repo | Nature |
 |---------|------|--------|
-| R332–R334 (On-premise PK-01..06) | **réservé R405+** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB, R336=LK, R337=IDM, R338=PJ, R339=EV. **DÉCISION Ali (2026-07-29) : PK renuméroté > R339.** **Step-0 (2026-08-04, §4) — révisé par le drop PO `SESSION-2026-08-04.md` : R340–R377 = AML Gap Wave 1, R378–R403 = AML Gap Wave 2 (26 règles, blocs 57–61), R404 = FilterBar (R-FB). La réservation PK (non implémentée) glisse donc à R405+** (même règle que le déplacement R335→R340 : l'implémenté/ratifié prend le créneau contigu, la réservation glisse). Réservation notée ici jusqu'à la spec PK. |
+| R332–R334 (On-premise PK-01..06) | **réservé R418+** | L'On-premise packaging (paquet signé autosuffisant) **n'est pas implémenté** au repo. Son créneau présumé (R335–R337 par le décalage +3) a été **réattribué à la robustesse** : R335=RB, R336=LK, R337=IDM, R338=PJ, R339=EV. **DÉCISION Ali (2026-07-29) : PK renuméroté > R339.** **Step-0 (2026-08-04, §4) — révisé par le drop PO `SESSION-2026-08-04.md` : R340–R377 = AML Gap Wave 1, R378–R403 = AML Gap Wave 2 (26 règles, blocs 57–61), R404 = FilterBar (R-FB). La réservation PK (non implémentée) glisse donc à R405+** (même règle que le déplacement R335→R340 : l'implémenté/ratifié prend le créneau contigu, la réservation glisse). **Mise à jour 2026-08-05 : le moteur de screening configurable multi-méthodes est implémenté et ratifié à R405–R417 (voir ligne suivante) ; la réservation PK glisse encore, à R418+** (même règle). Réservation notée ici jusqu'à la spec PK. |
+| Moteur de screening configurable (Phase 0→2) | **R405–R417** | Correction d'une collision : ces règles avaient été introduites par erreur sous R260–R272, déjà canon (swarm R259–R266, offboarding R267–R271, legal R272). Renumérotées le 2026-08-05 sur le créneau contigu libre. **R405** gate qualité golden · **R406** jauge perf blocking · **R407** non-perte blocking · **R408** délégation au moteur fin (score composite) · **R409** index trigramme + pré-filtre · **R410** contrat des endpoints préservé · **R411** décomposition explicable persistée · **R412** e2e HTTP == moteur · **R413** knobs configurables (défauts = comportement d'origine) · **R414** config depuis scénario versionné (AmlScenario.params, effet daté R29) · **R415** opérer la config (publier/lister/rejeu R48/R49) · **R416** méthode phonétique (off par défaut) · **R417** discriminant nationalité (off par défaut). Backend + moteur + front (ScreeningAvance) + gates CI verts. |
 | Industrialisation « R328–R331 » (§4 session) | R331–R334 | La borne haute session (R331) et repo (R334) diffèrent : même décalage +3, mais la plage session couvre 4 numéros pour 4 objets → cohérent une fois décalée. |
 | i18n « R323–R324 » (session) | R324–R327 région | `spec/canon-solde-4-ecarts-R324-R327.md` couvre le solde d'écarts + i18n cliquet côté repo aux R324–R327 ; mapping fin à confirmer par relecture du canon. |
 
@@ -61,7 +62,7 @@ Wave 2 `R378–R403`) et de la FilterBar (symbole `R-FB`) heurtaient la **réser
 > **Révision (drop PO `docs/SESSION-2026-08-04.md`, action 1).** Le premier jet de ce step-0 avait
 > attribué **R378** à la FilterBar. Le drop PO du même jour introduit **AML Gap Wave 2** (blocs
 > 57–61, 26 règles) et lui assigne explicitement **R378–R403**. La FilterBar glisse donc à **R404**
-> (numéro non pris par les deux vagues ratifiées), et PK à **R405+**. C'est la seule attribution
+> (numéro non pris par les deux vagues ratifiées), et PK à **R418+**. C'est la seule attribution
 > ci-dessous qui fait foi.
 
 Attribution définitive (visa PO au merge) :
@@ -85,7 +86,7 @@ Attribution définitive (visa PO au merge) :
 | 56 — Gouvernance du dispositif | R374–R377 | GV-01..04 |
 
 > **Amas contigu après step-0 (révisé)** : R339 (robustesse EV) → **R340–R377** (AML Gap Wave 1)
-> → **R378–R403** (AML Gap Wave 2) → **R404** (FilterBar). PK réservé **R405+**. CANON-MASTER
+> → **R378–R403** (AML Gap Wave 2) → **R404** (FilterBar). PK réservé **R418+**. CANON-MASTER
 > (`docs/CANON-MASTER.md`, généré) fait foi et **ne montrera ces numéros qu'à mesure de leur
 > implémentation réelle** au repo (familles + suites de tests) — le repo fait foi, la table
 > ci-dessus est l'attribution, pas l'implémentation.

@@ -1,7 +1,7 @@
 /**
  * Workflow de qualification du screening — R100 → R103 (ratifiées le 15.07.2026).
  *
- * Le rapprochement de noms délègue au moteur fin (@olive/screening-engine, R263) ; ce module traite
+ * Le rapprochement de noms délègue au moteur fin (@olive/screening-engine, R408) ; ce module traite
  * ce qui n'est pas résolu par un algorithme : ce qu'on FAIT d'un hit, et comment on le prouve trois
  * ans plus tard. Rien ici n'est propre au screening : événement tracé, motif obligatoire (R7), date
  * d'effet (R29), rejeu (R48/R49). C'est le moteur existant, branché sur un déclencheur de plus.
@@ -38,14 +38,14 @@ export class ScreeningQualificationService {
   /**
    * R100 — produit des hits BRUTS (ni alertes, ni cases).
    * R103 — enregistre la trace de passage, même sans aucun hit, avec le réglage du pré-filtre.
-   * R263 — le score est le COMPOSITE du moteur fin (rapprocherDetail : meilleur candidat de la liste).
+   * R408 — le score est le COMPOSITE du moteur fin (rapprocherDetail : meilleur candidat de la liste).
    */
   screener(clients: any[], entries: EntreeListe[], cfg: { seuil: number; prefiltre: Record<string, number>; liste: string; version: string }): { run: Run; hits: Hit[] } {
     const at = new Date().toISOString();
     const produits: Hit[] = [];
     for (const c of clients) {
       const requete = { nom: c.name, dob: c.date_naissance ?? undefined, est_entite: c.type ? c.type !== "PP" : false };
-      const r = rapprocherDetail(requete, entries as any, cfg.seuil);   // R263 : délègue au moteur fin
+      const r = rapprocherDetail(requete, entries as any, cfg.seuil);   // R408 : délègue au moteur fin
       if (!r) continue;
       const e = r.entree as unknown as EntreeListe;
       const hash = this.hashEntree(e);

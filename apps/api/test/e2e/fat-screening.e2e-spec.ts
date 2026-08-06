@@ -1,8 +1,8 @@
 /**
- * E2E — R267 : la voie HTTP réelle rejoue le golden set et se comporte comme le MOTEUR testé au
- * gate (R260, services/screening/gate.test.mjs). Preuve de bout en bout que `POST /v1/screening/run`
- * — client Prisma → index trigramme (R264) → score composite (R263) → hit persisté avec décomposition
- * (R266) — donne les MÊMES verdicts que rapprocher() mesuré hors-ligne. Aucun mock : NestFactory +
+ * E2E — R412 : la voie HTTP réelle rejoue le golden set et se comporte comme le MOTEUR testé au
+ * gate (R405, services/screening/gate.test.mjs). Preuve de bout en bout que `POST /v1/screening/run`
+ * — client Prisma → index trigramme (R409) → score composite (R408) → hit persisté avec décomposition
+ * (R411) — donne les MÊMES verdicts que rapprocher() mesuré hors-ligne. Aucun mock : NestFactory +
  * supertest + Postgres jetable, JWT RS256 (TenantMiddleware).
  *
  * 10 cas figés du golden set (graine 20260715, seuil 85, forme MAPPED `dates_naissance[0]→
@@ -50,7 +50,7 @@ const CAS: Cas[] = [
   { id: "G-NEUTRE-0",                  nom: "Jean Dupont",      dob: "1970-01-10", attendu: null,               categorie: "client_ordinaire" },
 ];
 
-describe("Screening — R267 : la voie HTTP rejoue le golden set (e2e)", () => {
+describe("Screening — R412 : la voie HTTP rejoue le golden set (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let http: any;
@@ -70,7 +70,7 @@ describe("Screening — R267 : la voie HTTP rejoue le golden set (e2e)", () => {
         VALUES (${id}::uuid, ${TID}::uuid, ${c.nom}, 'PP', 'CH', 'LOW', ${c.dob}, NOW())
         ON CONFLICT (id) DO NOTHING`;
     }
-    // La voie HTTP RÉELLE, seuil 85, pré-filtre = défauts du cahier (R264).
+    // La voie HTTP RÉELLE, seuil 85, pré-filtre = défauts du cahier (R409).
     const res = await request(http).post("/v1/screening/run").set(bearer(TID, CO, "CO")).send({
       liste: "SECO", version: "2026-07-15", seuil: 85,
       prefiltre: { minPartages: 2, maxTrigrammes: 12, plafond: 400 },
@@ -83,42 +83,42 @@ describe("Screening — R267 : la voie HTTP rejoue le golden set (e2e)", () => {
 
   const hitDe = (casId: string) => hits.find((h) => h.clientId === clientId[casId]);
 
-  // ── 6 correspondances certaines : hit sur l'UID attendu, score composite ≥ seuil, détail présent (R266) ──
+  // ── 6 correspondances certaines : hit sur l'UID attendu, score composite ≥ seuil, détail présent (R411) ──
   for (const c of CAS.filter((x) => x.attendu)) {
-    it(`R267 ${c.categorie} — ${c.nom} → ${c.attendu} (hit HTTP, score composite, détail)`, () => {
+    it(`R412 ${c.categorie} — ${c.nom} → ${c.attendu} (hit HTTP, score composite, détail)`, () => {
       const h = hitDe(c.id);
       expect(h).toBeDefined();
       expect(h.entreeUid).toBe(c.attendu);            // même verdict que le moteur du gate
-      expect(h.score).toBeGreaterThanOrEqual(85);     // R263 : score composite ≥ seuil
+      expect(h.score).toBeGreaterThanOrEqual(85);     // R408 : score composite ≥ seuil
       expect(h.score).toBeLessThanOrEqual(100);
       expect(h.statut).toBe("BRUT");                  // R100 : hit brut, jamais une alerte
-      expect(h.detail).toBeTruthy();                  // R266 : décomposition explicable persistée
+      expect(h.detail).toBeTruthy();                  // R411 : décomposition explicable persistée
       expect(typeof h.detail.via).toBe("string");
       expect(typeof h.detail.nameScore).toBe("number");
     });
   }
 
-  // ── R263 — le score persisté est un VRAI composite 0-100, plus jamais le binaire 100|0 ──
-  it("R263 — au moins un hit au score partiel (< 100) : la binaire est morte", () => {
+  // ── R408 — le score persisté est un VRAI composite 0-100, plus jamais le binaire 100|0 ──
+  it("R408 — au moins un hit au score partiel (< 100) : la binaire est morte", () => {
     const partiels = CAS.filter((x) => x.partiel).map((x) => hitDe(x.id)).filter(Boolean);
     expect(partiels.length).toBeGreaterThan(0);
     for (const h of partiels) { expect(h.score).toBeGreaterThan(85); expect(h.score).toBeLessThan(100); }
   });
 
   // ── Discriminant DOB à travers HTTP : nom EXACT mais date incompatible → AUCUN hit (homonyme) ──
-  it("R267 homonyme — Muhammad Haddad / 2002 : nom exact, date incompatible → rejeté (0 hit)", () => {
+  it("R412 homonyme — Muhammad Haddad / 2002 : nom exact, date incompatible → rejeté (0 hit)", () => {
     expect(hitDe("G-HOMONYME-SYN-SAN-P-100000")).toBeUndefined();
     // et le VRAI Muhammad Haddad (1980) est bien retenu : le rejet vient de la DATE, pas du nom.
     expect(hitDe("G-EXACT-SYN-SAN-P-100000")).toBeDefined();
   });
 
   // ── Client sans rapport avec la liste : aucun hit (pré-filtre + seuil) ──
-  it("R267 client_ordinaire — Jean Dupont : aucun hit", () => {
+  it("R412 client_ordinaire — Jean Dupont : aucun hit", () => {
     expect(hitDe("G-NEUTRE-0")).toBeUndefined();
   });
 
   // ── R103 — la trace de passage est écrite, le périmètre couvre les 10 clients, nbHits = hits reçus ──
-  it("R103/R264 — run tracé : périmètre 10, nbHits cohérent, pré-filtre figé", async () => {
+  it("R103/R409 — run tracé : périmètre 10, nbHits cohérent, pré-filtre figé", async () => {
     expect(run.perimetre).toBe(CAS.length);
     expect(run.nbHits).toBe(hits.length);
     expect(run.prefiltre).toMatchObject({ minPartages: 2, maxTrigrammes: 12, plafond: 400 });
@@ -126,8 +126,8 @@ describe("Screening — R267 : la voie HTTP rejoue le golden set (e2e)", () => {
     expect(enBase).toBeTruthy();
   });
 
-  // ── R266 — la décomposition est bien PERSISTÉE en base (colonne detail Json), relue telle quelle ──
-  it("R266 — le détail est relu depuis Postgres (score, via, DOB, type)", async () => {
+  // ── R411 — la décomposition est bien PERSISTÉE en base (colonne detail Json), relue telle quelle ──
+  it("R411 — le détail est relu depuis Postgres (score, via, DOB, type)", async () => {
     const h = hitDe("G-EXACT-SYN-SAN-P-100000");
     const enBase: any = await prisma.screeningHit.findFirst({ where: { id: h.id } });
     expect(enBase.detail).toBeTruthy();

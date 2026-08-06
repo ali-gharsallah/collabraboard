@@ -1,7 +1,7 @@
 {
   "name": "@olive/screening-engine",
   "version": "0.1.0",
-  "description": "Moteur de rapprochement de noms (Jaro-Winkler + IDF + pré-filtre trigramme) — extrait de services/screening (R263). CommonJS : importable par apps/api (CJS/Nest) ET par les bancs ESM.",
+  "description": "Moteur de rapprochement de noms (Jaro-Winkler + IDF + pré-filtre trigramme) — extrait de services/screening (R408). CommonJS : importable par apps/api (CJS/Nest) ET par les bancs ESM.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "license": "UNLICENSED",

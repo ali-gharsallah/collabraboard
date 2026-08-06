@@ -1,11 +1,11 @@
 /**
- * Moteur de rapprochement — LIGNE DE BASE (extrait de services/screening/baseline-engine.mjs, R263).
+ * Moteur de rapprochement — LIGNE DE BASE (extrait de services/screening/baseline-engine.mjs, R408).
  * ALGORITHMES INCHANGÉS : Jaro-Winkler + pondération IDF + discriminants type/DOB. Format CommonJS
  * pour être importable par apps/api (Nest/CJS) ET par les bancs ESM (import de nommés CJS).
  *
  * `scorer(requete, entree)` renvoie exactement le même nombre qu'avant. `scorerDetail(...)` expose
  * LA MÊME décomposition (nom/alias, contribution DOB, pénalité type) sans recalcul divergent — c'est
- * la matière de l'explicabilité (R266), pas un nouvel algorithme.
+ * la matière de l'explicabilité (R411), pas un nouvel algorithme.
  */
 "use strict";
 
@@ -13,7 +13,7 @@ const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;   // NB : d�
 const SUFFIXES = /\b(sa|ag|ltd|llc|gmbh|inc|plc|sarl|holding|holdings)\b/g;
 
 /**
- * R268 — les CONSTANTES du score, jusqu'ici en dur, deviennent des paramètres. Les VALEURS par
+ * R413 — les CONSTANTES du score, jusqu'ici en dur, deviennent des paramètres. Les VALEURS par
  * défaut sont EXACTEMENT les littéraux de l'origine : sans `config`, le score est identique au bit
  * près (prouvé par config-equivalence.test.mjs, 127/127). Phase 2 : un appelant (ou un scénario
  * versionné) pourra durcir/assouplir un discriminant sans toucher au code — le moteur ne décide
@@ -27,13 +27,13 @@ const DEFAUTS_MOTEUR = Object.freeze({
   ecartAnneesProche: 2,            // seuil (années) sous lequel un écart de DOB est « proche »
   penaliteDobProche: 12,           // écart d'années ≤ seuil : doute, on pénalise
   penaliteDobIncompatible: 45,     // écart d'années > seuil : incompatible (écarte l'homonyme)
-  // R271 — MÉTHODE phonétique, OFF par défaut (defaut = mono-méthode Jaro-Winkler, comportement d'origine).
+  // R416 — MÉTHODE phonétique, OFF par défaut (defaut = mono-méthode Jaro-Winkler, comportement d'origine).
   // Activée, deux jetons dont la CLÉ phonétique est identique reçoivent au moins `phonetiquePoids`,
   // ce qui rattrape des sonorités que Jaro rate (Knight/Nite, Phaisal/Faisal). Pluggable : d'autres
   // méthodes (double-metaphone, n-grammes) s'ajouteront sous le même schéma de config.
   phonetique: false,
   phonetiquePoids: 0.9,            // similarité créditée quand les clés phonétiques coïncident
-  // R272 — discriminant NATIONALITÉ, OFF par défaut. Une nationalité commune entre le client et
+  // R417 — discriminant NATIONALITÉ, OFF par défaut. Une nationalité commune entre le client et
   // l'entrée conforte la correspondance (bonus). Discriminant POSITIF seulement : l'absence de
   // recoupement ne pénalise pas (les données de nationalité sont souvent partielles).
   nationalite: false,
@@ -41,7 +41,7 @@ const DEFAUTS_MOTEUR = Object.freeze({
 });
 
 /**
- * R271 — CLÉ phonétique (style metaphone simplifié, déterministe). Réduit un jeton à son squelette
+ * R416 — CLÉ phonétique (style metaphone simplifié, déterministe). Réduit un jeton à son squelette
  * sonore : lettres muettes de tête (KN/GN/PN/WR/PS), PH→F, GH muet, CK→K, SCH→SK, Q→K, X→KS, Z/V→S/F,
  * H muet hors tête, voyelles muettes hors tête, doublons écrasés. Deux graphies d'un même son → même clé.
  * Portée assumée (latin) : c'est une PREMIÈRE méthode phonétique ; double-metaphone reste un ajout futur.
@@ -117,7 +117,7 @@ const poids = (t) => {
 
 /**
  * Similarité entre deux jetons : Jaro-Winkler, éventuellement relevée par la méthode phonétique
- * (R271). Sans config phonétique active → jaroWinkler pur (comportement d'origine).
+ * (R416). Sans config phonétique active → jaroWinkler pur (comportement d'origine).
  */
 function simJeton(a, b, cfg) {
   const jw = jaroWinkler(a, b);
@@ -149,7 +149,7 @@ function simPonderee(qTok, cTok, cfg) {
 const aliasNom = (a) => (typeof a === "string" ? a : a.nom);
 
 /**
- * DÉCOMPOSITION du score 0-100 (R266) — reproduit EXACTEMENT la logique de l'origine, en exposant
+ * DÉCOMPOSITION du score 0-100 (R411) — reproduit EXACTEMENT la logique de l'origine, en exposant
  * les intermédiaires : meilleur nom/alias apparié, pénalité de type, contribution DOB.
  */
 function scorerDetail(requete, entree, config) {
@@ -183,7 +183,7 @@ function scorerDetail(requete, entree, config) {
       else { dobContribution = -c.penaliteDobIncompatible; score -= c.penaliteDobIncompatible; }
     }
   }
-  // Discriminant NATIONALITÉ (R272) — positif seulement, actif sur demande (config).
+  // Discriminant NATIONALITÉ (R417) — positif seulement, actif sur demande (config).
   let natContribution = 0;
   if (c.nationalite && Array.isArray(requete.nationalites) && Array.isArray(entree.nationalites)) {
     if (requete.nationalites.some((n) => entree.nationalites.includes(n))) {
@@ -197,7 +197,7 @@ function scorerDetail(requete, entree, config) {
 /** Score d'une requête contre une entrée — sans `config`, IDENTIQUE à l'origine (délègue à scorerDetail). */
 function scorer(requete, entree, config) { return scorerDetail(requete, entree, config).score; }
 
-/** Meilleur candidat au-dessus du seuil, ou null. `config` optionnel (R268). */
+/** Meilleur candidat au-dessus du seuil, ou null. `config` optionnel (R413). */
 function rapprocher(requete, entries, seuil, config) {
   let best = null, bestScore = 0;
   for (const e of entries) {
@@ -207,7 +207,7 @@ function rapprocher(requete, entries, seuil, config) {
   return bestScore >= seuil ? { uid: best.uid, score: Math.round(bestScore), entree: best } : null;
 }
 
-/** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R266). `config` optionnel (R268). */
+/** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R411). `config` optionnel (R413). */
 function rapprocherDetail(requete, entries, seuil, config) {
   let best = null, bestDetail = null;
   for (const e of entries) {

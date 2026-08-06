@@ -40,7 +40,7 @@ function fakePrisma(clients: any[], scenarios: any[] = []) {
   const p: any = { _db: db,
     client: table(db.clients, 'CLI'), screeningRun: table(db.runs, 'RUN'),
     screeningHit: table(db.hits, 'HIT'), screeningQualification: table(db.quals, 'Q'),
-    amlScenario: table(db.scenarios, 'SCN'),                    // R269 : config versionnée du moteur
+    amlScenario: table(db.scenarios, 'SCN'),                    // R414 : config versionnée du moteur
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -143,31 +143,31 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(a.entries.some((e: any) => e.action === 'SCREENING_RUN'), 'passage audité');
   });
 
-  // ── R269 — la config du moteur vient d'un SCÉNARIO VERSIONNÉ (AmlScenario.params), effet daté ──
+  // ── R414 — la config du moteur vient d'un SCÉNARIO VERSIONNÉ (AmlScenario.params), effet daté ──
   // Un scénario dont params.moteur.echelle=50 fait tomber un appariement EXACT (nameScore 50) sous le
   // seuil 85 → 0 hit : preuve que le réglage gouverné pilote réellement le run.
   const scn = (version: number, effectiveFrom: string, moteur: any) => ({
-    id: `SCN-${version}`, tenantId: 't1', code: 'SCN-SCREEN', ruleRef: 'R269', fam: 'GV',
+    id: `SCN-${version}`, tenantId: 't1', code: 'SCN-SCREEN', ruleRef: 'R414', fam: 'GV',
     version, effectiveFrom, params: { moteur }, active: true,
   });
   const mkS = (scenarios: any[]) => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), scenarios);
     const a = fakeAudit(); return { p, s: new ScreeningService(p, a) }; };
 
-  await it('R269 sans scénario ni override → config par défaut, source null, comportement inchangé', async () => {
+  await it('R414 sans scénario ni override → config par défaut, source null, comportement inchangé', async () => {
     const { p, s } = mk();
     const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE] });
     ok(r.hits.length === 1, 'hit par défaut (echelle 100)');
     ok(p._db.runs[0].config.source === null, 'aucune provenance de scénario');
-    ok(Object.keys(p._db.runs[0].config.moteur).length === 0, 'moteur vide → défauts R268');
+    ok(Object.keys(p._db.runs[0].config.moteur).length === 0, 'moteur vide → défauts R413');
   });
-  await it('R269 scénario en vigueur (echelle 50) → l\'appariement exact tombe sous le seuil : 0 hit', async () => {
+  await it('R414 scénario en vigueur (echelle 50) → l\'appariement exact tombe sous le seuil : 0 hit', async () => {
     const { p, s } = mkS([scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })]);
     const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN' });
     ok(r.hits.length === 0, 'le réglage gouverné écarte le hit');
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'provenance tracée (scénario v1)');
     ok(p._db.runs[0].config.moteur.echelle === 50, 'config effective tracée sur le run (rejeu)');
   });
-  await it('R269 effet daté (R29) : une V2 à effet FUTUR n\'est pas appliquée → V1 en vigueur', async () => {
+  await it('R414 effet daté (R29) : une V2 à effet FUTUR n\'est pas appliquée → V1 en vigueur', async () => {
     const { p, s } = mkS([
       scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 }),
       scn(2, '2999-01-01T00:00:00.000Z', { echelle: 100 }),    // ratifiée mais pas encore en vigueur
@@ -176,7 +176,7 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(r.hits.length === 0, 'la V2 future ne s\'applique pas (grandfathering)');
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'c\'est la V1 qui gouverne');
   });
-  await it('R269 override d\'appel prime sur le scénario, et reste tracé', async () => {
+  await it('R414 override d\'appel prime sur le scénario, et reste tracé', async () => {
     const { p, s } = mkS([scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })]);
     const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN', moteurConfig: { echelle: 100 } });
     ok(r.hits.length === 1, 'l\'override rétablit l\'échelle 100 → hit');
@@ -184,12 +184,12 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'le scénario de base reste tracé');
   });
 
-  // ── R270 — GOUVERNANCE de la config : publier/lister des versions, et REJEU R48/R49 ──
-  await it('R270 publier une config sans motif → refus R7', async () => {
+  // ── R415 — GOUVERNANCE de la config : publier/lister des versions, et REJEU R48/R49 ──
+  await it('R415 publier une config sans motif → refus R7', async () => {
     const { s } = mk();
     await rejects(s.publierConfig(CTX, { moteur: { echelle: 50 } } as any), 'R7');
   });
-  await it('R270 publier v1 (effet passé) → run(scenarioCode) l\'applique ; configs() la donne en vigueur', async () => {
+  await it('R415 publier v1 (effet passé) → run(scenarioCode) l\'applique ; configs() la donne en vigueur', async () => {
     const { s } = mk();
     await s.publierConfig(CTX, { moteur: { echelle: 100 }, effectiveFrom: '2020-01-01T00:00:00.000Z', motif: 'seuil initial' });
     const cfgs: any = await s.configs(CTX);
@@ -197,7 +197,7 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SC-SCREENING' });
     ok(r.hits.length === 1, 'échelle 100 → hit');
   });
-  await it('R270/R48/R49 rejeu : après une v2, le run rejoué reproduit ses hits depuis la config PERSISTÉE', async () => {
+  await it('R415/R48/R49 rejeu : après une v2, le run rejoué reproduit ses hits depuis la config PERSISTÉE', async () => {
     const { s } = mk();
     await s.publierConfig(CTX, { moteur: { echelle: 100 }, effectiveFrom: '2020-01-01T00:00:00.000Z', motif: 'v1' });
     const run0: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SC-SCREENING' });
@@ -212,6 +212,6 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(rep.rejoue.length === 1 && rep.rejoue[0].entreeUid === 'SAN-1', 'le hit d\'origine est reproduit');
   });
 
-  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R269 · R270) — ${passed}/${passed + failed} tests verts`);
+  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

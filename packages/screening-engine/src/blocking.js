@@ -1,13 +1,13 @@
 /**
  * Pré-filtre (blocking) — index inversé de trigrammes. Extrait de services/screening/blocking.mjs
- * (R263), algorithme INCHANGÉ. On n'interroge que les trigrammes les plus RARES de la requête,
+ * (R408), algorithme INCHANGÉ. On n'interroge que les trigrammes les plus RARES de la requête,
  * puis on garde les entrées partageant ≥ minPartages de ces trigrammes (plafond de candidats).
  */
 "use strict";
 const { normaliser } = require("./baseline-engine");
 
 /**
- * R268 — les cutoffs du pré-filtre, jusqu'ici en dur dans la signature, sont exposés comme défauts
+ * R413 — les cutoffs du pré-filtre, jusqu'ici en dur dans la signature, sont exposés comme défauts
  * NOMMÉS (fin des nombres magiques). Sans `opts`, `candidats` se comporte à l'identique.
  */
 const DEFAUTS_BLOCKING = Object.freeze({ maxTrigrammes: 12, minPartages: 2, plafond: 400 });

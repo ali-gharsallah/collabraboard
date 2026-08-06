@@ -1,5 +1,5 @@
 /**
- * GATE MATCHER — filet de sécurité CI du rapprochement de noms (Phase 0, R260–R262).
+ * GATE MATCHER — filet de sécurité CI du rapprochement de noms (Phase 0, R405–R407).
  *
  * Transforme le golden set (jusqu'ici jugé par bench.mjs en PRINT-ONLY) en test de NON-RÉGRESSION
  * ASSERTÉ. Ne modifie NI baseline-engine.mjs NI blocking.mjs : il les importe et les mesure.
@@ -57,7 +57,7 @@ const pct = (x) => (x * 100).toFixed(2) + "%";
 
 console.log(`GATE matcher — golden ${golden.nb} cas · liste ${entries.length} entrées · seuil ${SEUIL} · graine ${golden.graine}\n`);
 
-// ══ R260 — Gate qualité (golden set asserté) ══
+// ══ R405 — Gate qualité (golden set asserté) ══
 construireIdf(entries);
 let vp = 0, fp = 0, fn = 0;
 const recCat = {}, totCat = {}, fpCat = {};
@@ -70,21 +70,21 @@ for (const c of golden.cas) {
   } else if (r) { fp++; fpCat[c.categorie] = (fpCat[c.categorie] || 0) + 1; }
 }
 const rappel = vp / (vp + fn), precision = vp / (vp + fp) || 0;
-console.log(`R260  rappel ${pct(rappel)} (plancher ${pct(PLANCHER.rappelGlobal)}) · précision ${pct(precision)} (plancher ${pct(PLANCHER.precisionGlobale)}) · VP=${vp} FP=${fp} FN=${fn}`);
-check(rappel >= PLANCHER.rappelGlobal, `R260 rappel global ${pct(rappel)} < plancher ${pct(PLANCHER.rappelGlobal)}`);
-check(precision >= PLANCHER.precisionGlobale, `R260 précision globale ${pct(precision)} < plancher ${pct(PLANCHER.precisionGlobale)}`);
+console.log(`R405  rappel ${pct(rappel)} (plancher ${pct(PLANCHER.rappelGlobal)}) · précision ${pct(precision)} (plancher ${pct(PLANCHER.precisionGlobale)}) · VP=${vp} FP=${fp} FN=${fn}`);
+check(rappel >= PLANCHER.rappelGlobal, `R405 rappel global ${pct(rappel)} < plancher ${pct(PLANCHER.rappelGlobal)}`);
+check(precision >= PLANCHER.precisionGlobale, `R405 précision globale ${pct(precision)} < plancher ${pct(PLANCHER.precisionGlobale)}`);
 for (const [cat, min] of Object.entries(PLANCHER.recallCat)) {
   const r = (recCat[cat] || 0) / (totCat[cat] || 1);
   console.log(`      recall ${cat.padEnd(28)} ${recCat[cat] || 0}/${totCat[cat] || 0} = ${pct(r)}  (plancher ${pct(min)})`);
-  check(r >= min, `R260 recall[${cat}] ${pct(r)} < plancher ${pct(min)}`);
+  check(r >= min, `R405 recall[${cat}] ${pct(r)} < plancher ${pct(min)}`);
 }
 for (const [cat, max] of Object.entries(PLANCHER.fpMax)) {
   const n = fpCat[cat] || 0;
   console.log(`      FP     ${cat.padEnd(28)} ${n}  (max ${max})`);
-  check(n <= max, `R260 faux positifs[${cat}] ${n} > max toléré ${max}`);
+  check(n <= max, `R405 faux positifs[${cat}] ${n} > max toléré ${max}`);
 }
 
-// ══ R262 — Non-perte de rappel du blocking (golden) ══
+// ══ R407 — Non-perte de rappel du blocking (golden) ══
 const idx = construireIndex(entries);
 const vpSans = new Set(), vpAvec = new Set();
 for (const c of golden.cas) {
@@ -97,9 +97,9 @@ for (const c of golden.cas) {
 }
 const perdus = [...vpSans].filter((id) => !vpAvec.has(id));
 console.log(`\nR262  VP sans blocking=${vpSans.size} · VP avec blocking=${vpAvec.size} · perdus=${perdus.length} (max 0)`);
-check(perdus.length === 0, `R262 blocking perd ${perdus.length} vrai(s) positif(s) : ${perdus.join(", ")}`);
+check(perdus.length === 0, `R407 blocking perd ${perdus.length} vrai(s) positif(s) : ${perdus.join(", ")}`);
 
-// ══ R261 — Jauge perf (200 clients × 625 sanctions, blocking actif) ══
+// ══ R406 — Jauge perf (200 clients × 625 sanctions, blocking actif) ══
 const req = (c) => ({ nom: c.name, dob: c.date_naissance, est_entite: c.type !== "PP" });
 const clients200 = cli.clients.slice(0, 200);
 let t0 = Date.now();
@@ -110,8 +110,8 @@ for (const c of clients200) rapprocher(req(c), entries, SEUIL);
 const msBrut = Date.now() - t0;
 const speedup = msBrut / (msBloc || 1);
 console.log(`\nR261  ${clients200.length} clients × ${entries.length} : blocking ${msBloc} ms (plafond ${PLANCHER.perfCeilMs}) · brute ${msBrut} ms · ×${speedup.toFixed(1)} (min ×${PLANCHER.perfSpeedupMin})`);
-check(msBloc < PLANCHER.perfCeilMs, `R261 latence blocking ${msBloc} ms ≥ plafond ${PLANCHER.perfCeilMs} ms`);
-check(speedup >= PLANCHER.perfSpeedupMin, `R261 blocking ×${speedup.toFixed(1)} < ×${PLANCHER.perfSpeedupMin} — pré-filtre inactif ou régressé`);
+check(msBloc < PLANCHER.perfCeilMs, `R406 latence blocking ${msBloc} ms ≥ plafond ${PLANCHER.perfCeilMs} ms`);
+check(speedup >= PLANCHER.perfSpeedupMin, `R406 blocking ×${speedup.toFixed(1)} < ×${PLANCHER.perfSpeedupMin} — pré-filtre inactif ou régressé`);
 
 // ── Verdict ──
 if (echecs.length) {
@@ -119,5 +119,5 @@ if (echecs.length) {
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
-console.log(`\n✓ R260 (qualité) · R261 (perf) · R262 (non-perte blocking) tous au-dessus des planchers.`);
-console.log(`### 3/3 gate matcher verts (R260-R262) ###`);
+console.log(`\n✓ R405 (qualité) · R406 (perf) · R407 (non-perte blocking) tous au-dessus des planchers.`);
+console.log(`### 3/3 gate matcher verts (R405-R407) ###`);

@@ -11,10 +11,10 @@ import { construireIndex, construireIdf, candidats, rapprocherDetail } from "@ol
  * ici : persistance Prisma, scope tenant, auteur depuis le JETON (jamais du body),
  * audit de passage, escalade PROPOSEE par evenement (R39/R44 - jamais executee).
  *
- * R263 - le rapprochement delegue au MOTEUR FIN (@olive/screening-engine : Jaro-Winkler + IDF +
+ * R408 - le rapprochement delegue au MOTEUR FIN (@olive/screening-engine : Jaro-Winkler + IDF +
  * pre-filtre trigramme). Le score persiste est le COMPOSITE 0-100, plus jamais 100|0 binaire.
- * R264 - l'index trigramme est construit UNE FOIS au chargement de la liste (pas par requete) ;
- * chaque client est pre-filtre (candidats) avant le score fin. R266 - le hit stocke la decomposition.
+ * R409 - l'index trigramme est construit UNE FOIS au chargement de la liste (pas par requete) ;
+ * chaque client est pre-filtre (candidats) avant le score fin. R411 - le hit stocke la decomposition.
  * NB (dette Phase 2) : l'IDF du moteur est un etat MODULE-global ; on score en une passe SYNCHRONE
  * (avant tout await) pour l'isoler - a instancier par run le jour du multi-tenant vraiment concurrent.
  */
@@ -22,7 +22,7 @@ import { construireIndex, construireIdf, candidats, rapprocherDetail } from "@ol
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
-  // R269 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
+  // R414 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
   // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
   // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
   scenarioCode?: string; moteurConfig?: Record<string, number | boolean>;
@@ -32,7 +32,7 @@ type Ctx = { tenantId: string; userId: string; role: string };
 type ConfigRun = { moteur: Record<string, number | boolean>; prefiltre: Record<string, number>;
   source: { scenarioCode: string; scenarioVersion: number } | null };
 
-// Decomposition explicable persistee (R266) - prepare R44 (le systeme explique, il ne decide pas).
+// Decomposition explicable persistee (R411) - prepare R44 (le systeme explique, il ne decide pas).
 type HitDetail = { via: string; nameScore: number; typePenalty: number; dobContribution: number; natContribution: number };
 
 @Injectable()
@@ -42,11 +42,11 @@ export class ScreeningService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   /**
-   * R269 — résout la config EFFECTIVE d'un run. Base : le scénario VERSIONNÉ en vigueur à la date
+   * R414 — résout la config EFFECTIVE d'un run. Base : le scénario VERSIONNÉ en vigueur à la date
    * (plus haute version active, effet ≤ date — R29), qui porte params.moteur / params.prefiltre.
    * Override : les paramètres d'appel (moteurConfig, prefiltre) priment, pour tuning/urgence — et
    * la config effective + la provenance sont TRACÉES sur le run (rejeu). Sans scénario ni override :
-   * moteur vide → défauts R268 (comportement inchangé), pré-filtre = celui de l'appel.
+   * moteur vide → défauts R413 (comportement inchangé), pré-filtre = celui de l'appel.
    */
   private async resoudreConfig(tx: Tx, tenantId: string, dto: RunDto, at: string): Promise<ConfigRun> {
     let scMoteur: Record<string, number | boolean> = {}, scPrefiltre: Record<string, number> = {};
@@ -77,24 +77,24 @@ export class ScreeningService {
         tenantId: ctx.tenantId, ...(dto.clientIds ? { id: { in: dto.clientIds } } : {}) } });
       const at = new Date().toISOString();
 
-      // R269 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
+      // R414 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
       const cfg = await this.resoudreConfig(tx, ctx.tenantId, dto, at);
 
-      // R264 - index trigramme construit UNE FOIS au chargement de la liste. IDF : n<2 donnerait
+      // R409 - index trigramme construit UNE FOIS au chargement de la liste. IDF : n<2 donnerait
       // log(1)=0 -> NaN ; on ne le construit qu'a partir de 2 entrees (sinon repli poids=1 du moteur).
       const idx = construireIndex(dto.entries as any);
       if (dto.entries.length >= 2) construireIdf(dto.entries as any);
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
-      // meilleur candidat au-dessus du seuil (R263). Isole l'etat IDF global des await de persistance.
+      // meilleur candidat au-dessus du seuil (R408). Isole l'etat IDF global des await de persistance.
       const trouves: { client: any; uid: string; score: number; entree: EntreeListe; detail: HitDetail }[] = [];
       for (const c of clients) {
         const st = (c as any).structure ?? (c as any).type;      // clients réels : structure (PP/PM/…) ; harnais : type
         const nat = (c as any).nationalites ?? ((c as any).country ? [(c as any).country] : undefined);
         const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
-          est_entite: st ? st !== "PP" : false, nationalites: nat };   // R272 - nationalité du client
-        const cand = candidats(idx, c.name, cfg.prefiltre);           // R264/R269 - pre-filtre (config en vigueur)
-        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R263/R269 - score fin (knobs en vigueur)
+          est_entite: st ? st !== "PP" : false, nationalites: nat };   // R417 - nationalité du client
+        const cand = candidats(idx, c.name, cfg.prefiltre);           // R409/R414 - pre-filtre (config en vigueur)
+        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R408/R414 - score fin (knobs en vigueur)
         if (!r) continue;
         trouves.push({ client: c, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
@@ -114,14 +114,14 @@ export class ScreeningService {
         hits.push(await tx.screeningHit.create({ data: {
           tenantId: ctx.tenantId, clientId: t.client.id, entreeUid: t.uid, score: t.score,
           listeVersion: dto.version, entreeHash, statut: "BRUT", at,
-          detail: t.detail } }));      // R266 - decomposition explicable (score, via, DOB, type)
+          detail: t.detail } }));      // R411 - decomposition explicable (score, via, DOB, type)
       }
       // R103 - la trace de passage s'ecrit TOUJOURS, hits ou pas, pre-filtre inclus
       const run = await tx.screeningRun.create({ data: {
         tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version,
         seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: clients.length,
         nbHits: hits.length, at,
-        // R269/R270 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
+        // R414/R415 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
         config: { ...cfg, clientIds: clients.map((c: any) => c.id) } as any } });
       for (const h of hits) await tx.screeningHit.update({ where: { id: h.id }, data: { runId: run.id } });
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_RUN",
@@ -162,12 +162,12 @@ export class ScreeningService {
     return this.prisma.screeningRun.findMany({ where: { tenantId: ctx.tenantId } });
   }
 
-  // ── R270 — GOUVERNANCE de la config du moteur : publier/lister des VERSIONS (AmlScenario) ──
+  // ── R415 — GOUVERNANCE de la config du moteur : publier/lister des VERSIONS (AmlScenario) ──
   // Le code de scenario porteur de la config de screening. La voie run(dto.scenarioCode) resout la
-  // version en vigueur (R269) ; ici on la PUBLIE et on la LIT, comme tout parametre versionne (R125).
+  // version en vigueur (R414) ; ici on la PUBLIE et on la LIT, comme tout parametre versionne (R125).
   static readonly CODE_CONFIG = "SC-SCREENING";
 
-  /** R270/R7 — publie une NOUVELLE version de la config (motif obligatoire, auteur = jeton, effet date R29). */
+  /** R415/R7 — publie une NOUVELLE version de la config (motif obligatoire, auteur = jeton, effet date R29). */
   async publierConfig(ctx: Ctx, dto: { moteur?: Record<string, number | boolean>; prefiltre?: Record<string, number>;
     effectiveFrom?: string; motif?: string }) {
     if (!dto?.motif || !dto.motif.trim()) throw new BadRequestException("R7 : publier une config exige un motif");
@@ -176,7 +176,7 @@ export class ScreeningService {
         where: { tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG } });
       const version = (rows.reduce((m, r) => Math.max(m, r.version), 0)) + 1;   // versions monotones par tenant
       const scen = await tx.amlScenario.create({ data: {
-        tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG, ruleRef: "R270", fam: "GV",
+        tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG, ruleRef: "R415", fam: "GV",
         version, effectiveFrom: dto.effectiveFrom ?? new Date().toISOString(),
         params: { moteur: dto.moteur ?? {}, prefiltre: dto.prefiltre ?? {}, motif: dto.motif.trim() },
         niveau: null, blocking: false, active: true } });
@@ -186,7 +186,7 @@ export class ScreeningService {
     });
   }
 
-  /** R270 — les versions publiees + celle EN VIGUEUR a la date (R29), pour l'ecran de gouvernance. */
+  /** R415 — les versions publiees + celle EN VIGUEUR a la date (R29), pour l'ecran de gouvernance. */
   async configs(ctx: Ctx, at: string = new Date().toISOString()) {
     const rows: any[] = await this.prisma.amlScenario.findMany({
       where: { tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG } });
@@ -197,7 +197,7 @@ export class ScreeningService {
   }
 
   /**
-   * R270/R48/R49 — REJEU d'un run : on re-score son perimetre EXACT avec la config PERSISTEE sur le
+   * R415/R48/R49 — REJEU d'un run : on re-score son perimetre EXACT avec la config PERSISTEE sur le
    * run (jamais la config courante), contre les memes entrees. Ne persiste RIEN : c'est une preuve
    * de reproductibilite, pas un nouveau run. Renvoie les hits recalcules + s'ils egalent l'origine.
    */

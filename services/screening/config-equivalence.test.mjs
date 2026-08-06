@@ -1,14 +1,14 @@
 /**
- * ÉQUIVALENCE-AUX-DÉFAUTS — filet de sécurité de la Phase 2 (R268).
+ * ÉQUIVALENCE-AUX-DÉFAUTS — filet de sécurité de la Phase 2 (R413).
  *
- * R268 rend configurables les constantes du score (DEFAUTS_MOTEUR) et du pré-filtre (DEFAUTS_BLOCKING).
+ * R413 rend configurables les constantes du score (DEFAUTS_MOTEUR) et du pré-filtre (DEFAUTS_BLOCKING).
  * La règle d'or : SANS config, le moteur se comporte au bit près comme avant. Ce test le PROUVE sur
  * les 127 cas du golden set — no-config === DEFAUTS_MOTEUR explicite — puis vérifie qu'un réglage
  * CHANGÉ change bien un verdict (sinon la paramétrisation serait factice).
  *
  *   node services/screening/config-equivalence.test.mjs      # exit 1 si un invariant casse
  *
- * Forme MAPPED (dates_naissance[0] → date_naissance), identique au gate R260 : c'est celle qui active
+ * Forme MAPPED (dates_naissance[0] → date_naissance), identique au gate R405 : c'est celle qui active
  * le discriminant DOB. Aucune modification moteur ici — on importe et on mesure.
  */
 import { readFileSync } from "fs";
@@ -86,7 +86,7 @@ const candStrict = candidats(idx, nomFreq, { minPartages: 9 });
 console.log(`6. minPartages : ${candDef.length} candidats (défaut ${DEFAUTS_BLOCKING.minPartages}) → ${candStrict.length} (minPartages 9)`);
 check(candStrict.length < candDef.length, `minPartages ne resserre pas : ${candDef.length} → ${candStrict.length}`);
 
-// ── 7) R271 — clé phonétique : sonorités équivalentes → même clé ; distinctes → clés différentes ──
+// ── 7) R416 — clé phonétique : sonorités équivalentes → même clé ; distinctes → clés différentes ──
 for (const [a, b] of [["Knight", "Nite"], ["Phaisal", "Faisal"], ["Smith", "Smyth"]]) {
   const ka = clePhonetique(a), kb = clePhonetique(b);
   console.log(`7. clePhonetique ${a}/${b} → ${ka}/${kb}`);
@@ -105,7 +105,7 @@ const sOn = scorer({ nom: "Nite" }, phon, { phonetique: true });
 console.log(`9. phonetique ON  : score Nite/Knight = ${Math.round(sOn)} (≥ seuil ${SEUIL})`);
 check(sOn >= SEUIL && sOn > sOff, `avec phonétique, Nite/Knight devrait franchir le seuil (${Math.round(sOn)})`);
 
-// ── 10) R272 — discriminant nationalité : bonus SI nationalité commune, rien sinon ; OFF = neutre ──
+// ── 10) R417 — discriminant nationalité : bonus SI nationalité commune, rien sinon ; OFF = neutre ──
 const natEntree = { uid: "NAT-1", nom_complet: "Muhammad Haddad", nationalites: ["SY", "RU"] };
 const natReq = { nom: "Muhamad Haddda", nationalites: ["SY"] };       // typo léger → score composite < 100
 const nOff = scorer(natReq, natEntree);                              // méthode off (défaut)
@@ -123,4 +123,4 @@ if (echecs.length) {
   process.exit(1);
 }
 console.log(`\n✓ défauts = comportement d'origine (127/127) · chaque knob change bien un verdict.`);
-console.log(`### ${total}/${total} config-equivalence verts (R268/R271/R272) ###`);
+console.log(`### ${total}/${total} config-equivalence verts (R413/R416/R417) ###`);

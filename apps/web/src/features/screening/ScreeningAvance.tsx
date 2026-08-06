@@ -21,9 +21,9 @@ export function ScreeningAvance() {
   const [hits, setHits] = useState<Hit[]>([]);
   const [msg, setMsg] = useState("");
   const [cfg, setCfg] = useState<{ enVigueur: Cfg | null; versions: Cfg[] }>({ enVigueur: null, versions: [] });
-  const [ech, setEch] = useState("100");                 // R268 knobs proposés à la publication
+  const [ech, setEch] = useState("100");                 // R413 knobs proposés à la publication
   const [pen, setPen] = useState("40");
-  const [phon, setPhon] = useState(false);               // R271 méthode phonétique (off par défaut)
+  const [phon, setPhon] = useState(false);               // R416 méthode phonétique (off par défaut)
   const { ask, modal } = useConfirmGate();               // contrat UX : qualifier un hit = acte motivé (R7)
 
   async function lancer() {
@@ -38,7 +38,7 @@ export function ScreeningAvance() {
     charger();
   }
   async function charger() { setHits((await apiGetSourced<Hit[]>("/v1/screening/hits", [])).data); }
-  // R270 — gouvernance du réglage : lire les versions (chargées à la demande, jamais au montage — MSW).
+  // R415 — gouvernance du réglage : lire les versions (chargées à la demande, jamais au montage — MSW).
   async function chargerConfig() {
     const r = await apiGetSourced<{ enVigueur: Cfg | null; versions: Cfg[] }>("/v1/screening/config", { enVigueur: null, versions: [] });
     setCfg(r.data);
@@ -49,7 +49,7 @@ export function ScreeningAvance() {
     const moteur: Record<string, number | boolean> = {};
     if (ech.trim()) moteur.echelle = Number(ech);
     if (pen.trim()) moteur.penaliteTypeIncompatible = Number(pen);
-    moteur.phonetique = phon;                             // R271 — méthode phonétique gouvernée
+    moteur.phonetique = phon;                             // R416 — méthode phonétique gouvernée
     const r = await fetch(`${base}/v1/screening/config`, { method: "POST", headers: auth(), body: JSON.stringify({ moteur, motif }) });
     const b = await r.json().catch(() => ({}));
     setMsg(r.ok ? `Config publiée — v${b.version} (effet ${String(b.effectiveFrom).slice(0, 10)}). Les runs futurs l'appliquent ; les runs passés gardent la leur (R48/R49).` : (b.message ?? "Erreur (motif requis ? R7)"));
@@ -73,9 +73,9 @@ export function ScreeningAvance() {
     <h3>Screening avancé — adverse media & listes complémentaires (R100→R103)</h3>
     <p style={{ fontSize: 12, color: "#777" }}>La liste complémentaire est un paramètre d'entrée du moteur ratifié, pas un moteur séparé.</p>
 
-    {/* R268/R269/R270 — réglage GOUVERNÉ du moteur : versionné (R29), motivé (R7), jamais rétroactif. */}
+    {/* R413/R414/R415 — réglage GOUVERNÉ du moteur : versionné (R29), motivé (R7), jamais rétroactif. */}
     <section style={{ border: "1px solid #e5e0d5", borderRadius: 10, padding: 12, margin: "12px 0", background: "#faf8f3" }}>
-      <h4 style={{ margin: "0 0 4px" }}>Réglage gouverné du moteur (R268/R269/R270)</h4>
+      <h4 style={{ margin: "0 0 4px" }}>Réglage gouverné du moteur (R413/R414/R415)</h4>
       <p style={{ fontSize: 12, color: "#777", margin: "0 0 8px" }}>
         Les seuils du moteur sont <b>versionnés et datés</b> (R29) : publier une version est un acte motivé (R7), jamais rétroactif.
         Un run applique la version <b>en vigueur à sa date</b> ; le rejeu (R48/R49) rescore avec la config d'origine.
@@ -89,7 +89,7 @@ export function ScreeningAvance() {
         <label style={{ fontSize: 12 }}>échelle <input style={{ ...inp, width: 70 }} value={ech} onChange={(e) => setEch(e.target.value)}/></label>
         <label style={{ fontSize: 12 }}>pénalité type <input style={{ ...inp, width: 70 }} value={pen} onChange={(e) => setPen(e.target.value)}/></label>
         <label style={{ fontSize: 12 }} title="Rattrape les sonorités que Jaro-Winkler rate (Knight/Nite). Off par défaut.">
-          <input type="checkbox" checked={phon} onChange={(e) => setPhon(e.target.checked)}/> phonétique (R271)</label>
+          <input type="checkbox" checked={phon} onChange={(e) => setPhon(e.target.checked)}/> phonétique (R416)</label>
         <button style={btn} onClick={() => ask({ title: "Publier une nouvelle version de la config (R7)",
           message: "Versionnée et datée (R29), jamais rétroactive : les runs futurs l'appliqueront, les runs passés gardent la leur (rejeu R48/R49).",
           input: { label: "Motif de la publication (R7)", placeholder: "obligatoire", required: true },

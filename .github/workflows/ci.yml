@@ -193,25 +193,25 @@ jobs:
           out=$(node tools/api-contract/test.mjs); echo "$out"
           echo "$out" | grep -q "### 2/2 tests surface-api verts ###"
 
-      # ── Gate matcher screening (R260-R262) — porte BLOQUANTE, filet de non-régression ──
+      # ── Gate matcher screening (R405-R407) — porte BLOQUANTE, filet de non-régression ──
       # Le golden set (127 cas, graine 20260715) devient ASSERTÉ, plus print-only. Planchers figés
       # sur la mesure réelle (ratchet) : rappel ≥ 0.90, précision ≥ 0.95, exact/alias/diacritiques
-      # = 1.0, typo ≥ 0.65 (faiblesse figée, pas améliorée ici). R261 : jauge perf (blocking actif,
-      # ×3 min vs force brute). R262 : le blocking ne perd AUCUN vrai positif. Échoue si le moteur
+      # = 1.0, typo ≥ 0.65 (faiblesse figée, pas améliorée ici). R406 : jauge perf (blocking actif,
+      # ×3 min vs force brute). R407 : le blocking ne perd AUCUN vrai positif. Échoue si le moteur
       # (services/screening) régresse OU si le blocking est désactivé.
-      - name: "3s · Gate matcher screening (R260-R262, attendu 3/3)"
+      - name: "3s · Gate matcher screening (R405-R407, attendu 3/3)"
         run: |
           out=$(node services/screening/gate.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 3/3 gate matcher verts (R260-R262) ###"
+          echo "$out" | grep -q "### 3/3 gate matcher verts (R405-R407) ###"
 
-      # ── Équivalence-aux-défauts du moteur configurable (R268) — porte BLOQUANTE ──
+      # ── Équivalence-aux-défauts du moteur configurable (R413) — porte BLOQUANTE ──
       # Prouve que les knobs Phase 2 (DEFAUTS_MOTEUR/DEFAUTS_BLOCKING) reproduisent, sans config, le
       # comportement d'origine (127/127) ET qu'un réglage changé change bien un verdict. Toute dérive
       # d'un défaut casse la CI avant qu'elle n'atteigne la voie de production.
-      - name: "3t · Config-equivalence screening (R268/R271/R272, attendu 10/10)"
+      - name: "3t · Config-equivalence screening (R413/R416/R417, attendu 10/10)"
         run: |
           out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 10/10 config-equivalence verts (R268/R271/R272) ###"
+          echo "$out" | grep -q "### 10/10 config-equivalence verts (R413/R416/R417) ###"
 
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
