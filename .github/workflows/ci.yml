@@ -222,6 +222,15 @@ jobs:
           out=$(node services/screening/ingest.test.mjs); echo "$out"
           echo "$out" | grep -q "### 5/5 ingestion verts (R409) ###"
 
+      # ── Bout en bout sur un feed au FORMAT RÉEL (sous R409) — porte BLOQUANTE ──
+      # Ingère un flux HÉTÉROGÈNE (OFAC-SDN + UN-consolidated mélangés) et le passe TOUT le pipeline :
+      # normalisation → pré-filtre → score fin + discriminants. Prouve que l'adaptateur branche un vrai
+      # format sur le moteur (translit retrouvée, alias UN retrouvé, homonyme DOB écarté).
+      - name: "3v · Liste réelle bout-en-bout screening (sous R409, attendu 5/5)"
+        run: |
+          out=$(node services/screening/liste-reelle.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 liste-reelle verts (R409) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille

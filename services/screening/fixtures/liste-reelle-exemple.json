@@ -1,0 +1,21 @@
+{
+  "_avertissement": "Extrait ILLUSTRATIF (données fictives) au FORMAT de listes réelles — champs OFAC-SDN et UN-consolidated MÉLANGÉS dans un même flux, pour prouver que l'adaptateur ingererListe (R409) normalise un feed hétérogène. Aucune personne réelle.",
+  "source": "exemple-format-reel",
+  "entries": [
+    { "id": "OFAC-0001", "entityType": "Individual", "name": "Muhammad Haddad",
+      "akas": [{ "aliasName": "Mohammed Haddad" }, { "aliasName": "Mohamad Haddad" }],
+      "dob": "1980-05-22", "nationality": ["SY", "RU"] },
+    { "id": "OFAC-0002", "entityType": "Individual", "name": "Aleksandr Sokolov",
+      "akas": [{ "aliasName": "Alexander Sokolov" }], "dob": "1973-12-15", "nationality": "RU" },
+    { "reference": "UN-KPi.045", "schema": "Person", "fullName": "Kim Chol Su",
+      "aliases": ["Kim Chol-su", "Kim Cheol Su"], "dateOfBirth": "1966-08-01", "nationalities": ["KP"] },
+    { "reference": "UN-QDi.312", "schema": "Person", "fullName": "Tariq Al-Habib",
+      "aliases": ["Tarek Al-Habib"], "dateOfBirth": "1988-06-24", "nationalities": ["IQ"] },
+    { "id": "OFAC-1100", "entityType": "Entity", "name": "Damas Trading Holdings LLC",
+      "akas": [{ "aliasName": "Damascus Trading Holdings" }], "nationality": "SY" },
+    { "reference": "UN-QDe.157", "schema": "Organization", "fullName": "Al-Nour Import Export",
+      "aliases": ["Nour Import-Export Co"], "nationalities": ["LB"] },
+    { "id": "OFAC-9001", "entityType": "Vessel", "name": "MV Northern Star",
+      "akas": [{ "aliasName": "Northern Star" }] }
+  ]
+}
