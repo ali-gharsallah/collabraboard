@@ -19,13 +19,18 @@ import { construireIndex, construireIndexCache, construireIdf, candidats, rappro
  * (avant tout await) pour l'isoler - a instancier par run le jour du multi-tenant vraiment concurrent.
  */
 
-export type SujetType = "client" | "personne" | "prospect";
+export type SujetType = "client" | "personne" | "prospect" | "transaction";
+// R100 (screening des transactions) — une PARTIE d'une transaction/position/virement à screener :
+// donneur d'ordre, bénéficiaire, banque intermédiaire… `id` est une référence (uuid) que le flux de
+// paiement rattache à (transaction, rôle). `est_entite` = true pour une banque/société.
+export interface Partie { id: string; name: string; dob?: string; nationalites?: string[]; est_entite?: boolean }
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
-  // R100 (sujets étendus) — le screening vise le CLIENT (défaut, rétro-compatible), la PERSONNE ou le
-  // PROSPECT/pré-prospect. Même moteur, même règle ; `sujetIds` restreint le périmètre (comme clientIds).
-  sujet?: SujetType; sujetIds?: string[];
+  // R100 (sujets étendus) — le screening vise le CLIENT (défaut, rétro-compatible), la PERSONNE, le
+  // PROSPECT/pré-prospect, ou les PARTIES d'une TRANSACTION (sujet='transaction' + `parties`). Même
+  // moteur, même règle ; `sujetIds` restreint le périmètre (comme clientIds).
+  sujet?: SujetType; sujetIds?: string[]; parties?: Partie[];
   // R414 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
   // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
   // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
@@ -103,7 +108,10 @@ export class ScreeningService {
     const sujetType: SujetType = dto.sujet ?? "client";
     return this.prisma.$transaction(async (tx: Tx) => {
       // R100 (sujets étendus) — charge le périmètre selon le TYPE de sujet, ramené à une forme commune.
-      const sujets = await this.chargerSujets(tx, ctx.tenantId, sujetType, dto.sujetIds ?? dto.clientIds);
+      // 'transaction' : les parties viennent EXPLICITEMENT du flux (paiement/virement), pas d'une table.
+      const sujets: Sujet[] = sujetType === "transaction"
+        ? (dto.parties ?? []).map((p) => ({ id: p.id, name: p.name, dob: p.dob, est_entite: !!p.est_entite, nationalites: p.nationalites }))
+        : await this.chargerSujets(tx, ctx.tenantId, sujetType, dto.sujetIds ?? dto.clientIds);
       const at = new Date().toISOString();
 
       // R414 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).

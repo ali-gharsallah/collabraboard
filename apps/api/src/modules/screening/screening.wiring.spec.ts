@@ -239,6 +239,19 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(dePers.length === 1 && dePers[0].clientId === 'per1', 'audit : filtre par type de sujet');
   });
 
+  // ── R100 screening de TRANSACTION : screener les PARTIES d'un virement (donneur/bénéficiaire) ──
+  await it('R100 transaction : screener les parties d\'un virement (parties explicites)', async () => {
+    const p = fakePrisma([]); const a = fakeAudit(); const s = new ScreeningService(p, a);
+    const parties = [
+      { id: '11111111-1111-1111-1111-111111111111', name: 'Alice Ordinary' },                     // donneur : sans rapport
+      { id: '22222222-2222-2222-2222-222222222222', name: 'Viktor Volkov', dob: '1965-03-12' },    // bénéficiaire : listé
+    ];
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], sujet: 'transaction', parties });
+    ok(r.hits.length === 1, 'un seul hit : la partie bénéficiaire listée');
+    ok(p._db.hits[0].sujetType === 'transaction' && p._db.hits[0].clientId === '22222222-2222-2222-2222-222222222222', 'hit rattaché à la PARTIE + typé transaction');
+    ok(p._db.runs[0].sujetType === 'transaction' && p._db.runs[0].perimetre === 2, 'run typé transaction, périmètre = 2 parties');
+  });
+
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();
