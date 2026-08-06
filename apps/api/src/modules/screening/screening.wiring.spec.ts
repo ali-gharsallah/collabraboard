@@ -8,7 +8,7 @@
  * Harnais : compiler screening.service.ts + ce fichier ; exécuter
  *   echo "── Câblage screening (R100→R103) ──"; run screening.wiring.spec.js
  */
-import { ScreeningService, partiesSwift } from './screening.service';
+import { ScreeningService, partiesSwift, partiesTransactions } from './screening.service';
 declare const process: { exit(n: number): void };
 
 let passed = 0, failed = 0; const fails: string[] = [];
@@ -23,9 +23,9 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 }
 
 // ── Faux Prisma : tables en mémoire, filtres tenant réellement appliqués ──
-function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = []) {
+function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = [], transactions: any[] = []) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { clients, scenarios, persons, onboardings, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
+  const db = { clients, scenarios, persons, onboardings, transactions, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'hit') return match(db.hits.find((h) => h.id === row.hitId) ?? {}, v);
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -42,6 +42,7 @@ function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], 
     screeningHit: table(db.hits, 'HIT'), screeningQualification: table(db.quals, 'Q'),
     amlScenario: table(db.scenarios, 'SCN'),                    // R414 : config versionnée du moteur
     person: table(db.persons, 'PER'), onboarding: table(db.onboardings, 'ONB'),   // R100 : sujets étendus
+    transaction: table(db.transactions, 'TXN'),                // R100 : contreparties du journal (core banking)
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
   };
   p.$transaction = async (fn: any) => fn(p);
@@ -282,6 +283,39 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
   await it('R100 SWIFT : message non parsable → refus TYPÉ (jamais deviné)', async () => {
     const p = fakePrisma([]); const s = new ScreeningService(p, fakeAudit());
     await rejects(s.runSwift(CTX, { ...CFG, entries: [ENTREE], texte: 'ceci n\'est pas un message SWIFT' }), 'non parsable');
+  });
+
+  // ── R100 branchement CORE BANKING : screener les contreparties du journal transactionnel (R297) ──
+  await it('R100 flux : partiesTransactions — une partie par écriture NOMMÉE, écriture sans contrepartie ignorée', async () => {
+    const parties = partiesTransactions([
+      { refExterne: 'FIX-001', contrepartieNom: 'Viktor Volkov' },
+      { refExterne: 'FIX-002', contrepartieNom: '  ' },              // pas de nom → ignorée
+      { refExterne: 'FIX-003', contrepartieNom: null },              // pas de nom → ignorée
+      { refExterne: 'FIX-004', contrepartieNom: 'Alpha SA' },
+    ]);
+    ok(parties.length === 2, 'seules les écritures avec contrepartie nommée deviennent des parties');
+    ok(parties[0].id === 'FIX-001:contrepartie' && parties[0].name === 'Viktor Volkov', 'id = refExterne:contrepartie');
+  });
+  await it('R100 flux : runFlux screene le journal (tenant-scopé) et rattache le hit à l\'écriture', async () => {
+    const txns = [
+      { id: 'x1', tenantId: 't1', refExterne: 'FIX-001', contrepartieNom: 'Viktor Volkov', clientId: 'c1' }, // listé
+      { id: 'x2', tenantId: 't1', refExterne: 'FIX-002', contrepartieNom: 'Beta Ltd', clientId: 'c1' },      // sans rapport
+      { id: 'x9', tenantId: 't2', refExterne: 'FIX-009', contrepartieNom: 'Viktor Volkov', clientId: 'c9' }, // autre tenant
+    ];
+    const p = fakePrisma([], [], [], [], txns); const a = fakeAudit(); const s = new ScreeningService(p, a);
+    const r: any = await s.runFlux(CTX, { ...CFG, entries: [ENTREE] });
+    ok(r.transactions === 2 && r.parties === 2, 'seul le journal du tenant t1 est screené (2 écritures)');
+    ok(r.hits.length === 1 && p._db.hits[0].clientId === 'FIX-001:contrepartie', 'un hit, rattaché à (écriture:refExterne, contrepartie)');
+    ok(p._db.runs[0].sujetType === 'transaction', 'run typé transaction');
+  });
+  await it('R100 flux : restriction à un client (dossier) — seules ses écritures sont screenées', async () => {
+    const txns = [
+      { id: 'x1', tenantId: 't1', refExterne: 'A1', contrepartieNom: 'Viktor Volkov', clientId: 'c1' },
+      { id: 'x2', tenantId: 't1', refExterne: 'B1', contrepartieNom: 'Viktor Volkov', clientId: 'c2' },
+    ];
+    const p = fakePrisma([], [], [], [], txns); const s = new ScreeningService(p, fakeAudit());
+    const r: any = await s.runFlux(CTX, { ...CFG, entries: [ENTREE], clientId: 'c2' });
+    ok(r.transactions === 1 && p._db.hits[0].clientId === 'B1:contrepartie', 'périmètre = écritures du client c2 seul');
   });
 
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);

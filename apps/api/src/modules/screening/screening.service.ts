@@ -49,6 +49,18 @@ export function partiesSwift(extraction: SwiftExtraction): Partie[] {
     return name ? [{ id: `${ref}:${role}`, name, est_entite }] : [];
   });
 }
+// R100 (branchement flux CORE BANKING) — l'AUTRE canal réel : le journal transactionnel (R297) porte
+// la contrepartie de chaque écriture. Chaque transaction dont la contrepartie est NOMMÉE devient une
+// partie à screener (`id` = `${refExterne}:contrepartie` → le hit se rattache à l'écriture). Le sens de
+// la contrepartie (personne/entité) n'est pas connu du journal : on ne l'invente pas (est_entite laissé
+// à false, aucune pénalité de type appliquée à tort). Une écriture sans contrepartie nommée est ignorée.
+type LigneFlux = { refExterne?: string; contrepartieNom?: string | null };
+export function partiesTransactions(lignes: LigneFlux[]): Partie[] {
+  return (lignes ?? []).flatMap((l) => {
+    const name = (l.contrepartieNom ?? "").trim();
+    return name ? [{ id: `${l.refExterne ?? "?"}:contrepartie`, name, est_entite: false }] : [];
+  });
+}
 export interface RunDto {
   liste: string; version: string; seuil: number;
   prefiltre: Record<string, number>; entries: EntreeListe[]; clientIds?: string[];
@@ -205,6 +217,23 @@ export class ScreeningService {
     const parties = partiesSwift(p.extraction);
     const { run, hits } = await this.run(ctx, { ...dto, sujet: "transaction", parties });
     return { reference: p.extraction.reference, type: p.extraction.type, parties, run, hits };
+  }
+
+  /**
+   * R100 (branchement du flux CORE BANKING) — screene les CONTREPARTIES du journal transactionnel
+   * (R297) contre la liste. C'est le canal réel complémentaire de SWIFT : les parties ne sont pas
+   * saisies, elles sont LUES du journal (tenant-scopé, éventuellement restreint à un client). On délègue
+   * à run(sujet='transaction') ; chaque hit se rattache à (écriture:refExterne, contrepartie). Journal
+   * vide = 0 partie → run tracé sans hit (R103), « aucun hit ≠ pas d'alerte » (R100) inchangé.
+   */
+  async runFlux(ctx: Ctx, dto: Omit<RunDto, "parties" | "sujet"> & { clientId?: string }) {
+    if (!dto?.liste || !dto?.version || !Array.isArray(dto?.entries))
+      throw new BadRequestException("liste, version et entries requis");
+    const lignes = await this.prisma.transaction.findMany({
+      where: { tenantId: ctx.tenantId, ...(dto.clientId ? { clientId: dto.clientId } : {}) } });
+    const parties = partiesTransactions(lignes as any);
+    const { run, hits } = await this.run(ctx, { ...dto, sujet: "transaction", parties });
+    return { transactions: lignes.length, parties: parties.length, run, hits };
   }
 
   // -- R101 - verdict + motif obligatoire (R7) + auteur = jeton ; VP -> escalade PROPOSEE --

@@ -14,6 +14,7 @@ export class ScreeningController {
   constructor(private svc: ScreeningService) {}
   @Post("run")               run(@Req() r: any, @Body() b: any) { return this.svc.run(r.ctx, b); }                                   // R100/R103
   @Post("run-swift")         runSwift(@Req() r: any, @Body() b: any) { return this.svc.runSwift(r.ctx, b); }                         // R100 — parties d'un virement SWIFT
+  @Post("run-flux")          runFlux(@Req() r: any, @Body() b: any) { return this.svc.runFlux(r.ctx, b); }                           // R100 — contreparties du journal (core banking)
   @Post("hits/:id/qualify")  qualify(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.qualify(r.ctx, id, b?.verdict, b?.motif); } // R101/R7
   @Get("hits")               hits(@Req() r: any, @Query() q: any) { return this.svc.hits(r.ctx, { statut: q.statut, clientId: q.clientId, sujetType: q.sujetType, since: q.since, until: q.until }); } // R411 — historique audité (sujet × temps)
   @Get("runs")               runs(@Req() r: any) { return this.svc.runs(r.ctx); }                                                     // R103 — preuve de fraîcheur
