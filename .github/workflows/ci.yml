@@ -354,6 +354,13 @@ jobs:
           fi
           echo "canary OK — le runner propage bien l'échec (code ≠ 0)"
 
+      - name: "5d · Contrat Nest↔Python CPSI (bridge.py vs docs/contracts/cpsi.schema.json, L1, 4/4)"
+        run: |
+          # BLOQUANT : la réponse RÉELLE du pont est validée contre le schéma d'enveloppe committé
+          # (R248), pour 3 payloads représentatifs + une erreur typée. Une dérive du pont = CI rouge.
+          out=$(node services/cpsi-server-py/contract.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 contrat CPSI verts (L1 · R248) ###"
+
       # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
       # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
       # se mesure (gzip réel) — dépassement = build ROUGE (verifier-budget-bundle.js).
