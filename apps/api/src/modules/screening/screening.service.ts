@@ -119,7 +119,8 @@ export class ScreeningService {
         tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version,
         seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: clients.length,
         nbHits: hits.length, at,
-        config: cfg as any } });   // R269 - config effective + scenario/version en vigueur (rejeu)
+        // R269/R270 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
+        config: { ...cfg, clientIds: clients.map((c: any) => c.id) } as any } });
       for (const h of hits) await tx.screeningHit.update({ where: { id: h.id }, data: { runId: run.id } });
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_RUN",
         `${dto.liste}@${dto.version}:${clients.length} clients, ${hits.length} hits`);
@@ -157,5 +158,73 @@ export class ScreeningService {
   }
   runs(ctx: Ctx) {                                        // R103 - la preuve de fraicheur, lisible
     return this.prisma.screeningRun.findMany({ where: { tenantId: ctx.tenantId } });
+  }
+
+  // ── R270 — GOUVERNANCE de la config du moteur : publier/lister des VERSIONS (AmlScenario) ──
+  // Le code de scenario porteur de la config de screening. La voie run(dto.scenarioCode) resout la
+  // version en vigueur (R269) ; ici on la PUBLIE et on la LIT, comme tout parametre versionne (R125).
+  static readonly CODE_CONFIG = "SC-SCREENING";
+
+  /** R270/R7 — publie une NOUVELLE version de la config (motif obligatoire, auteur = jeton, effet date R29). */
+  async publierConfig(ctx: Ctx, dto: { moteur?: Record<string, number>; prefiltre?: Record<string, number>;
+    effectiveFrom?: string; motif?: string }) {
+    if (!dto?.motif || !dto.motif.trim()) throw new BadRequestException("R7 : publier une config exige un motif");
+    return this.prisma.$transaction(async (tx: Tx) => {
+      const rows: any[] = await tx.amlScenario.findMany({
+        where: { tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG } });
+      const version = (rows.reduce((m, r) => Math.max(m, r.version), 0)) + 1;   // versions monotones par tenant
+      const scen = await tx.amlScenario.create({ data: {
+        tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG, ruleRef: "R270", fam: "GV",
+        version, effectiveFrom: dto.effectiveFrom ?? new Date().toISOString(),
+        params: { moteur: dto.moteur ?? {}, prefiltre: dto.prefiltre ?? {}, motif: dto.motif.trim() },
+        niveau: null, blocking: false, active: true } });
+      await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_CONFIG_PUBLIEE",
+        `${ScreeningService.CODE_CONFIG} v${version}`);
+      return scen;
+    });
+  }
+
+  /** R270 — les versions publiees + celle EN VIGUEUR a la date (R29), pour l'ecran de gouvernance. */
+  async configs(ctx: Ctx, at: string = new Date().toISOString()) {
+    const rows: any[] = await this.prisma.amlScenario.findMany({
+      where: { tenantId: ctx.tenantId, code: ScreeningService.CODE_CONFIG } });
+    const versions = rows.sort((a, b) => b.version - a.version);
+    const enVigueur = versions.filter((r) => r.active && new Date(r.effectiveFrom) <= new Date(at))
+      .sort((a, b) => b.version - a.version)[0] ?? null;
+    return { code: ScreeningService.CODE_CONFIG, enVigueur, versions };
+  }
+
+  /**
+   * R270/R48/R49 — REJEU d'un run : on re-score son perimetre EXACT avec la config PERSISTEE sur le
+   * run (jamais la config courante), contre les memes entrees. Ne persiste RIEN : c'est une preuve
+   * de reproductibilite, pas un nouveau run. Renvoie les hits recalcules + s'ils egalent l'origine.
+   */
+  async replay(ctx: Ctx, runId: string, entries: EntreeListe[]) {
+    const run: any = await this.prisma.screeningRun.findFirst({ where: { id: runId, tenantId: ctx.tenantId } });
+    if (!run) throw new NotFoundException("Run introuvable");
+    if (!Array.isArray(entries)) throw new BadRequestException("entries requis pour rejouer");
+    const cfg = (run.config ?? {}) as any;
+    const clientIds: string[] = cfg.clientIds ?? [];
+    const clients = await this.prisma.client.findMany({ where: {
+      tenantId: ctx.tenantId, ...(clientIds.length ? { id: { in: clientIds } } : {}) } });
+    const idx = construireIndex(entries as any);
+    if (entries.length >= 2) construireIdf(entries as any);
+    const rejoue: { clientId: string; entreeUid: string; score: number }[] = [];
+    for (const c of clients) {
+      const st = (c as any).structure ?? (c as any).type;
+      const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
+        est_entite: st ? st !== "PP" : false };
+      const cand = candidats(idx, c.name, cfg.prefiltre ?? {});
+      const r = rapprocherDetail(requete, cand, run.seuil, cfg.moteur ?? {});
+      if (r) rejoue.push({ clientId: c.id, entreeUid: r.uid, score: r.score });
+    }
+    // Comparaison a l'origine (hits persistes du run) — R48/R49 : meme config → memes hits.
+    const origine = (await this.prisma.screeningHit.findMany({ where: { tenantId: ctx.tenantId, runId } }))
+      .map((h: any) => ({ clientId: h.clientId, entreeUid: h.entreeUid, score: h.score }));
+    const norm = (xs: any[]) => JSON.stringify([...xs].sort((a, b) =>
+      (a.clientId + a.entreeUid).localeCompare(b.clientId + b.entreeUid)));
+    const identique = norm(rejoue) === norm(origine);
+    await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_REPLAY", `${runId}:${identique ? "identique" : "DIVERGENT"}`);
+    return { runId, config: cfg, rejoue, origine, identique };
   }
 }

@@ -184,6 +184,34 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'le scénario de base reste tracé');
   });
 
-  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R269) — ${passed}/${passed + failed} tests verts`);
+  // ── R270 — GOUVERNANCE de la config : publier/lister des versions, et REJEU R48/R49 ──
+  await it('R270 publier une config sans motif → refus R7', async () => {
+    const { s } = mk();
+    await rejects(s.publierConfig(CTX, { moteur: { echelle: 50 } } as any), 'R7');
+  });
+  await it('R270 publier v1 (effet passé) → run(scenarioCode) l\'applique ; configs() la donne en vigueur', async () => {
+    const { s } = mk();
+    await s.publierConfig(CTX, { moteur: { echelle: 100 }, effectiveFrom: '2020-01-01T00:00:00.000Z', motif: 'seuil initial' });
+    const cfgs: any = await s.configs(CTX);
+    ok(cfgs.enVigueur && cfgs.enVigueur.version === 1, 'v1 en vigueur');
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SC-SCREENING' });
+    ok(r.hits.length === 1, 'échelle 100 → hit');
+  });
+  await it('R270/R48/R49 rejeu : après une v2, le run rejoué reproduit ses hits depuis la config PERSISTÉE', async () => {
+    const { s } = mk();
+    await s.publierConfig(CTX, { moteur: { echelle: 100 }, effectiveFrom: '2020-01-01T00:00:00.000Z', motif: 'v1' });
+    const run0: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SC-SCREENING' });
+    ok(run0.hits.length === 1, 'run0 a 1 hit sous v1');
+    // le monde change : v2 durcit l'échelle → un run NEUF ne verrait plus le hit…
+    await s.publierConfig(CTX, { moteur: { echelle: 50 }, motif: 'v2 durcissement' });
+    const neuf: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SC-SCREENING' });
+    ok(neuf.hits.length === 0, 'v2 en vigueur → run neuf sans hit');
+    // …mais le REJEU de run0 rescore avec la config PERSISTÉE (échelle 100), pas la v2 courante.
+    const rep: any = await s.replay(CTX, run0.run.id, [ENTREE]);
+    ok(rep.identique === true, 'rejeu identique à l\'origine (R48/R49)');
+    ok(rep.rejoue.length === 1 && rep.rejoue[0].entreeUid === 'SAN-1', 'le hit d\'origine est reproduit');
+  });
+
+  console.log(`\nCâblage screening (SC-01..04, R100→R103 · R269 · R270) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

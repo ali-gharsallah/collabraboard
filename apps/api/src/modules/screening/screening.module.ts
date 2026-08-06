@@ -16,6 +16,9 @@ export class ScreeningController {
   @Post("hits/:id/qualify")  qualify(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.qualify(r.ctx, id, b?.verdict, b?.motif); } // R101/R7
   @Get("hits")               hits(@Req() r: any, @Query("statut") statut?: string) { return this.svc.hits(r.ctx, statut); }
   @Get("runs")               runs(@Req() r: any) { return this.svc.runs(r.ctx); }                                                     // R103 — preuve de fraîcheur
+  @Get("config")             configs(@Req() r: any) { return this.svc.configs(r.ctx); }                                               // R270 — versions + en vigueur
+  @Post("config")            publier(@Req() r: any, @Body() b: any) { return this.svc.publierConfig(r.ctx, b); }                      // R270/R7 — publier une version
+  @Post("runs/:id/replay")   replay(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.replay(r.ctx, id, b?.entries); } // R48/R49 — rejeu depuis config persistée
 }
 
 @Module({ controllers: [ScreeningController], providers: [ ScreeningService], exports: [ScreeningService] })
