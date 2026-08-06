@@ -9,6 +9,8 @@
  */
 "use strict";
 
+const { clesDouble, doubleMetaphone } = require("./phonetique-double");
+
 const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;   // NB : déclarée, non appliquée (parité avec l'origine)
 const SUFFIXES = /\b(sa|ag|ltd|llc|gmbh|inc|plc|sarl|holding|holdings)\b/g;
 
@@ -28,10 +30,13 @@ const DEFAUTS_MOTEUR = Object.freeze({
   penaliteDobProche: 12,           // écart d'années ≤ seuil : doute, on pénalise
   penaliteDobIncompatible: 45,     // écart d'années > seuil : incompatible (écarte l'homonyme)
   // R416 — MÉTHODE phonétique, OFF par défaut (defaut = mono-méthode Jaro-Winkler, comportement d'origine).
-  // Activée, deux jetons dont la CLÉ phonétique est identique reçoivent au moins `phonetiquePoids`,
-  // ce qui rattrape des sonorités que Jaro rate (Knight/Nite, Phaisal/Faisal). Pluggable : d'autres
-  // méthodes (double-metaphone, n-grammes) s'ajouteront sous le même schéma de config.
+  // Activée, deux jetons dont une CLÉ phonétique coïncide reçoivent au moins `phonetiquePoids`, ce qui
+  // rattrape des sonorités que Jaro rate (Knight/Nite, Phaisal/Faisal). Deux méthodes pluggables via
+  // `phonetiqueMethode` : "metaphone" (défaut, clé unique — comportement d'origine) ; "double"
+  // (Double Metaphone L. Philips — DEUX codes par jeton, meilleur recall sur les translittérations
+  // slaves/germaniques/romanes : Wladimir/Vladimir, Katherine/Catherine, Gonzalez/Gonzales).
   phonetique: false,
+  phonetiqueMethode: "metaphone",  // "metaphone" | "double"
   phonetiquePoids: 0.9,            // similarité créditée quand les clés phonétiques coïncident
   // R417 — discriminant NATIONALITÉ, OFF par défaut. Une nationalité commune entre le client et
   // l'entrée conforte la correspondance (bonus). Discriminant POSITIF seulement : l'absence de
@@ -116,14 +121,27 @@ const poids = (t) => {
 };
 
 /**
+ * R416 — CLÉS phonétiques d'un jeton selon la méthode. "metaphone" (défaut) : une clé unique
+ * (clePhonetique). "double" : les codes Double Metaphone (primaire + secondaire). Renvoie un tableau
+ * (vide si aucun code) — deux jetons riment si leurs tableaux se croisent.
+ */
+function clesPhonetiques(s, cfg) {
+  if (cfg && cfg.phonetiqueMethode === "double") return clesDouble(s);
+  const k = clePhonetique(s);
+  return k ? [k] : [];
+}
+
+/**
  * Similarité entre deux jetons : Jaro-Winkler, éventuellement relevée par la méthode phonétique
  * (R416). Sans config phonétique active → jaroWinkler pur (comportement d'origine).
  */
 function simJeton(a, b, cfg) {
   const jw = jaroWinkler(a, b);
   if (!cfg || !cfg.phonetique) return jw;
-  const ka = clePhonetique(a);
-  return (ka && ka === clePhonetique(b)) ? Math.max(jw, cfg.phonetiquePoids) : jw;
+  const ka = clesPhonetiques(a, cfg);
+  if (!ka.length) return jw;
+  const kb = clesPhonetiques(b, cfg);
+  return ka.some((k) => kb.includes(k)) ? Math.max(jw, cfg.phonetiquePoids) : jw;
 }
 
 /** Similarité pondérée : chaque jeton de la requête cherche son meilleur jeton dans le candidat. */
@@ -219,6 +237,6 @@ function rapprocherDetail(requete, entries, seuil, config) {
 }
 
 module.exports = {
-  PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler, clePhonetique,
+  PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler, clePhonetique, clesPhonetiques, clesDouble, doubleMetaphone,
   construireIdf, scorer, scorerDetail, rapprocher, rapprocherDetail,
 };

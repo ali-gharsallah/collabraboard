@@ -36,6 +36,7 @@ export interface ConfigMoteur {
   penaliteDobProche?: number;        // écart ≤ seuil (défaut 12)
   penaliteDobIncompatible?: number;  // écart > seuil (défaut 45)
   phonetique?: boolean;              // R416 — méthode phonétique (défaut false = Jaro seul)
+  phonetiqueMethode?: "metaphone" | "double"; // R416 — clé unique (défaut) ou Double Metaphone (2 codes)
   phonetiquePoids?: number;          // similarité créditée sur clé phonétique identique (défaut 0.9)
   nationalite?: boolean;             // R417 — discriminant nationalité (défaut false)
   nationaliteBonus?: number;         // bonus sur nationalité commune (défaut 8)
@@ -47,6 +48,9 @@ export function normaliser(s: string): string;
 export function jetonsTries(s: string): string;
 export function jaroWinkler(a: string, b: string): number;
 export function clePhonetique(s: string): string;
+export function clesPhonetiques(s: string, config?: ConfigMoteur): string[];  // R416 — clés selon la méthode
+export function doubleMetaphone(s: string): [string, string];                 // R416 — [primaire, secondaire]
+export function clesDouble(s: string): string[];                              // R416 — codes Double Metaphone déduits
 export function construireIdf(entries: EntreeMoteur[]): { df: Map<string, number>; n: number };
 export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): number;
 export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): Decomposition;

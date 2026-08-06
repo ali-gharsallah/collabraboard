@@ -16,7 +16,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   construireIdf, rapprocher, scorer, construireIndex, candidats, clePhonetique, ingererListe,
-  DEFAUTS_MOTEUR, DEFAUTS_BLOCKING,
+  clesDouble, DEFAUTS_MOTEUR, DEFAUTS_BLOCKING,
 } from "@olive/screening-engine";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
@@ -111,12 +111,29 @@ console.log(`10. nationalité : off ${Math.round(nOff)} · on(commune) ${Math.ro
 check(nOn > nOff, `nationalité commune devrait relever le score (${Math.round(nOff)}→${Math.round(nOn)})`);
 check(nAutre === nOff, `sans recoupement, aucun bonus (${Math.round(nAutre)} vs ${Math.round(nOff)})`);
 
+// ── 11) R416 — méthode "double" (Double Metaphone) : DEUX codes par jeton → recall supérieur.
+//        Des graphies que la clé MONO rate (C≠K, Cy≠Si) partagent un code Double Metaphone. ──
+for (const [a, b] of [["Catherine", "Katherine"], ["Christophe", "Kristophe"], ["Cyrus", "Sirus"]]) {
+  const monoRate = clePhonetique(a) !== clePhonetique(b);            // la mono-méthode NE les rapproche pas
+  const dbl = clesDouble(a).some((k) => clesDouble(b).includes(k));  // la double, si
+  console.log(`11. double ${a}/${b} → mono ${clePhonetique(a)}/${clePhonetique(b)} (rate=${monoRate}) · double [${clesDouble(a)}]∩[${clesDouble(b)}]=${dbl}`);
+  check(monoRate && dbl, `Double Metaphone devrait rapprocher ${a}/${b} là où la mono échoue`);
+}
+check(!clesDouble("Robert").some((k) => clesDouble("Richard").includes(k)), "Double : Robert/Richard restent distincts");
+
+// ── 12) méthode "double" bout en bout : un couple hors de portée de la mono franchit le seuil ──
+const dm = { uid: "DM-1", nom_complet: "Christophe Meyer" };
+const dmMono = scorer({ nom: "Kristophe Meyer" }, dm, { phonetique: true });                             // metaphone (défaut)
+const dmDouble = scorer({ nom: "Kristophe Meyer" }, dm, { phonetique: true, phonetiqueMethode: "double" });
+console.log(`12. Kristophe/Christophe : mono ${Math.round(dmMono)} · double ${Math.round(dmDouble)} (seuil ${SEUIL})`);
+check(dmDouble >= dmMono && dmDouble >= SEUIL, `la méthode double devrait franchir le seuil (${Math.round(dmMono)}→${Math.round(dmDouble)})`);
+
 // ── Verdict ──
-const total = 10;
+const total = 12;
 if (echecs.length) {
   console.log(`\n✗ CONFIG-EQUIVALENCE ROUGE — ${echecs.length} invariant(s) cassé(s) :`);
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
 console.log(`\n✓ défauts = comportement d'origine (127/127) · chaque knob change bien un verdict.`);
-console.log(`### ${total}/${total} config-equivalence verts (R413/R416/R417) ###`);
+console.log(`### ${total}/${total} config-equivalence verts (R413/R416/R417 · Double Metaphone) ###`);

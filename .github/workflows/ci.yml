@@ -211,7 +211,7 @@ jobs:
       - name: "3t · Config-equivalence screening (R413/R416/R417, attendu 10/10)"
         run: |
           out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 10/10 config-equivalence verts (R413/R416/R417) ###"
+          echo "$out" | grep -q "### 12/12 config-equivalence verts (R413/R416/R417 · Double Metaphone) ###"
 
       # ── Ingestion des listes (sous R409) — porte BLOQUANTE ──
       # L'adaptateur ingererListe normalise des formats de liste réels (SECO/synthétique, OFAC, UN)
