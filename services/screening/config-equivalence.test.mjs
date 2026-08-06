@@ -105,12 +105,22 @@ const sOn = scorer({ nom: "Nite" }, phon, { phonetique: true });
 console.log(`9. phonetique ON  : score Nite/Knight = ${Math.round(sOn)} (≥ seuil ${SEUIL})`);
 check(sOn >= SEUIL && sOn > sOff, `avec phonétique, Nite/Knight devrait franchir le seuil (${Math.round(sOn)})`);
 
+// ── 10) R272 — discriminant nationalité : bonus SI nationalité commune, rien sinon ; OFF = neutre ──
+const natEntree = { uid: "NAT-1", nom_complet: "Muhammad Haddad", nationalites: ["SY", "RU"] };
+const natReq = { nom: "Muhamad Haddda", nationalites: ["SY"] };       // typo léger → score composite < 100
+const nOff = scorer(natReq, natEntree);                              // méthode off (défaut)
+const nOn = scorer(natReq, natEntree, { nationalite: true });        // nationalité commune SY
+const nAutre = scorer({ nom: natReq.nom, nationalites: ["FR"] }, natEntree, { nationalite: true }); // pas de recoupement
+console.log(`10. nationalité : off ${Math.round(nOff)} · on(commune) ${Math.round(nOn)} · on(disjointe) ${Math.round(nAutre)}`);
+check(nOn > nOff, `nationalité commune devrait relever le score (${Math.round(nOff)}→${Math.round(nOn)})`);
+check(nAutre === nOff, `sans recoupement, aucun bonus (${Math.round(nAutre)} vs ${Math.round(nOff)})`);
+
 // ── Verdict ──
-const total = 9;
+const total = 10;
 if (echecs.length) {
   console.log(`\n✗ CONFIG-EQUIVALENCE ROUGE — ${echecs.length} invariant(s) cassé(s) :`);
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
 console.log(`\n✓ défauts = comportement d'origine (127/127) · chaque knob change bien un verdict.`);
-console.log(`### ${total}/${total} config-equivalence verts (R268/R271) ###`);
+console.log(`### ${total}/${total} config-equivalence verts (R268/R271/R272) ###`);

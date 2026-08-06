@@ -5,11 +5,13 @@ export interface EntreeMoteur {
   alias?: Array<string | { nom: string }>;
   date_naissance?: string | null;
   type?: string;
+  nationalites?: string[];         // R272 — codes pays (ISO-2) de l'entrée listée
 }
 export interface Requete {
   nom: string;
   dob?: string | null;
   est_entite?: boolean;
+  nationalites?: string[];         // R272 — nationalité(s) du client interrogé
 }
 export interface Decomposition {
   score: number;         // 0-100 (float, avant arrondi)
@@ -17,6 +19,7 @@ export interface Decomposition {
   nameScore: number;     // score de nom (avant discriminants)
   typePenalty: number;   // 0, -40, -80
   dobContribution: number; // +6, +2, -12, -45, ou 0
+  natContribution: number; // R272 — bonus nationalité commune (0 si méthode off ou pas de recoupement)
 }
 export interface Resultat { uid: string; score: number; entree: EntreeMoteur; }
 export interface ResultatDetaille extends Resultat { detail: Decomposition; }
@@ -34,6 +37,8 @@ export interface ConfigMoteur {
   penaliteDobIncompatible?: number;  // écart > seuil (défaut 45)
   phonetique?: boolean;              // R271 — méthode phonétique (défaut false = Jaro seul)
   phonetiquePoids?: number;          // similarité créditée sur clé phonétique identique (défaut 0.9)
+  nationalite?: boolean;             // R272 — discriminant nationalité (défaut false)
+  nationaliteBonus?: number;         // bonus sur nationalité commune (défaut 8)
 }
 export declare const DEFAUTS_MOTEUR: Readonly<Required<ConfigMoteur>>;
 export declare const DEFAUTS_BLOCKING: Readonly<Required<OptionsBlocking>>;

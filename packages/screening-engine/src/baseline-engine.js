@@ -33,6 +33,11 @@ const DEFAUTS_MOTEUR = Object.freeze({
   // méthodes (double-metaphone, n-grammes) s'ajouteront sous le même schéma de config.
   phonetique: false,
   phonetiquePoids: 0.9,            // similarité créditée quand les clés phonétiques coïncident
+  // R272 — discriminant NATIONALITÉ, OFF par défaut. Une nationalité commune entre le client et
+  // l'entrée conforte la correspondance (bonus). Discriminant POSITIF seulement : l'absence de
+  // recoupement ne pénalise pas (les données de nationalité sont souvent partielles).
+  nationalite: false,
+  nationaliteBonus: 8,
 });
 
 /**
@@ -178,8 +183,15 @@ function scorerDetail(requete, entree, config) {
       else { dobContribution = -c.penaliteDobIncompatible; score -= c.penaliteDobIncompatible; }
     }
   }
+  // Discriminant NATIONALITÉ (R272) — positif seulement, actif sur demande (config).
+  let natContribution = 0;
+  if (c.nationalite && Array.isArray(requete.nationalites) && Array.isArray(entree.nationalites)) {
+    if (requete.nationalites.some((n) => entree.nationalites.includes(n))) {
+      natContribution = c.nationaliteBonus; score = Math.min(c.echelle, score + c.nationaliteBonus);
+    }
+  }
   score = Math.max(0, Math.min(c.echelle, score));
-  return { score, via, nameScore, typePenalty, dobContribution };
+  return { score, via, nameScore, typePenalty, dobContribution, natContribution };
 }
 
 /** Score d'une requête contre une entrée — sans `config`, IDENTIQUE à l'origine (délègue à scorerDetail). */

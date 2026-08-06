@@ -33,7 +33,7 @@ type ConfigRun = { moteur: Record<string, number | boolean>; prefiltre: Record<s
   source: { scenarioCode: string; scenarioVersion: number } | null };
 
 // Decomposition explicable persistee (R266) - prepare R44 (le systeme explique, il ne decide pas).
-type HitDetail = { via: string; nameScore: number; typePenalty: number; dobContribution: number };
+type HitDetail = { via: string; nameScore: number; typePenalty: number; dobContribution: number; natContribution: number };
 
 @Injectable()
 export class ScreeningService {
@@ -90,14 +90,16 @@ export class ScreeningService {
       const trouves: { client: any; uid: string; score: number; entree: EntreeListe; detail: HitDetail }[] = [];
       for (const c of clients) {
         const st = (c as any).structure ?? (c as any).type;      // clients réels : structure (PP/PM/…) ; harnais : type
+        const nat = (c as any).nationalites ?? ((c as any).country ? [(c as any).country] : undefined);
         const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
-          est_entite: st ? st !== "PP" : false };
+          est_entite: st ? st !== "PP" : false, nationalites: nat };   // R272 - nationalité du client
         const cand = candidats(idx, c.name, cfg.prefiltre);           // R264/R269 - pre-filtre (config en vigueur)
         const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R263/R269 - score fin (knobs en vigueur)
         if (!r) continue;
         trouves.push({ client: c, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
-            typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution } });
+            typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution,
+            natContribution: r.detail.natContribution } });
       }
 
       // Passe de PERSISTANCE (await) - whitelist R102 par empreinte inchangee.

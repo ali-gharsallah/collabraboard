@@ -11,7 +11,7 @@ import { rapprocherDetail } from "@olive/screening-engine";
 
 export type Verdict = "VRAI_POSITIF" | "FAUX_POSITIF";
 export interface EntreeListe { uid: string; nom_complet: string; alias?: string[]; date_naissance?: string | null; type?: string; }
-export interface HitDetail { via: string; nameScore: number; typePenalty: number; dobContribution: number; }
+export interface HitDetail { via: string; nameScore: number; typePenalty: number; dobContribution: number; natContribution: number; }
 export interface Hit { id: string; clientId: string; entreeUid: string; score: number; listeVersion: string; entreeHash: string; at: string; statut: "BRUT" | "QUALIFIE"; detail?: HitDetail; }
 export interface Qualification { hitId: string; verdict: Verdict; motif: string; par: string; at: string; entreeHash: string; listeVersion: string; }
 export interface Run { id: string; perimetre: number; liste: string; listeVersion: string; at: string; seuil: number; prefiltre: Record<string, number>; nbHits: number; }
@@ -50,7 +50,7 @@ export class ScreeningQualificationService {
       const e = r.entree as unknown as EntreeListe;
       const hash = this.hashEntree(e);
       if (this.estEcarte(c.id, e, cfg.version)) continue;              // R102 : whitelist encore valable
-      const detail: HitDetail = { via: r.detail.via, nameScore: Math.round(r.detail.nameScore), typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution };
+      const detail: HitDetail = { via: r.detail.via, nameScore: Math.round(r.detail.nameScore), typePenalty: r.detail.typePenalty, dobContribution: r.detail.dobContribution, natContribution: r.detail.natContribution };
       const h: Hit = { id: "HIT-" + ++this.seq, clientId: c.id, entreeUid: e.uid, score: r.score, listeVersion: cfg.version, entreeHash: hash, at, statut: "BRUT", detail };
       produits.push(h); this.hits.push(h);
     }
