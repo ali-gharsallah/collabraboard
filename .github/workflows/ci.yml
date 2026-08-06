@@ -208,10 +208,10 @@ jobs:
       # Prouve que les knobs Phase 2 (DEFAUTS_MOTEUR/DEFAUTS_BLOCKING) reproduisent, sans config, le
       # comportement d'origine (127/127) ET qu'un réglage changé change bien un verdict. Toute dérive
       # d'un défaut casse la CI avant qu'elle n'atteigne la voie de production.
-      - name: "3t · Config-equivalence screening (R268, attendu 6/6)"
+      - name: "3t · Config-equivalence screening (R268/R271, attendu 9/9)"
         run: |
           out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 6/6 config-equivalence verts (R268) ###"
+          echo "$out" | grep -q "### 9/9 config-equivalence verts (R268/R271) ###"
 
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation

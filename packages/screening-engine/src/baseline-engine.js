@@ -27,7 +27,30 @@ const DEFAUTS_MOTEUR = Object.freeze({
   ecartAnneesProche: 2,            // seuil (années) sous lequel un écart de DOB est « proche »
   penaliteDobProche: 12,           // écart d'années ≤ seuil : doute, on pénalise
   penaliteDobIncompatible: 45,     // écart d'années > seuil : incompatible (écarte l'homonyme)
+  // R271 — MÉTHODE phonétique, OFF par défaut (defaut = mono-méthode Jaro-Winkler, comportement d'origine).
+  // Activée, deux jetons dont la CLÉ phonétique est identique reçoivent au moins `phonetiquePoids`,
+  // ce qui rattrape des sonorités que Jaro rate (Knight/Nite, Phaisal/Faisal). Pluggable : d'autres
+  // méthodes (double-metaphone, n-grammes) s'ajouteront sous le même schéma de config.
+  phonetique: false,
+  phonetiquePoids: 0.9,            // similarité créditée quand les clés phonétiques coïncident
 });
+
+/**
+ * R271 — CLÉ phonétique (style metaphone simplifié, déterministe). Réduit un jeton à son squelette
+ * sonore : lettres muettes de tête (KN/GN/PN/WR/PS), PH→F, GH muet, CK→K, SCH→SK, Q→K, X→KS, Z/V→S/F,
+ * H muet hors tête, voyelles muettes hors tête, doublons écrasés. Deux graphies d'un même son → même clé.
+ * Portée assumée (latin) : c'est une PREMIÈRE méthode phonétique ; double-metaphone reste un ajout futur.
+ */
+function clePhonetique(s) {
+  let t = String(s || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (!t) return "";
+  t = t.replace(/^(KN|GN|PN|WR|PS)/, (m) => m[1]);        // 1re lettre muette → on garde la 2e
+  t = t.replace(/PH/g, "F").replace(/SCH/g, "SK").replace(/CK/g, "K")
+       .replace(/GH/g, "").replace(/Q/g, "K").replace(/X/g, "KS").replace(/Z/g, "S").replace(/V/g, "F");
+  const first = t[0];
+  let rest = t.slice(1).replace(/H/g, "").replace(/[AEIOUY]/g, "");   // H et voyelles muets hors tête
+  return (first + rest).replace(/(.)\1+/g, "$1");        // doublons consécutifs → simple
+}
 
 function normaliser(s) {
   return String(s || "")
@@ -87,20 +110,31 @@ const poids = (t) => {
   return Math.log(_idf.n / d) / Math.log(_idf.n);        // 0 (partout) → 1 (unique)
 };
 
+/**
+ * Similarité entre deux jetons : Jaro-Winkler, éventuellement relevée par la méthode phonétique
+ * (R271). Sans config phonétique active → jaroWinkler pur (comportement d'origine).
+ */
+function simJeton(a, b, cfg) {
+  const jw = jaroWinkler(a, b);
+  if (!cfg || !cfg.phonetique) return jw;
+  const ka = clePhonetique(a);
+  return (ka && ka === clePhonetique(b)) ? Math.max(jw, cfg.phonetiquePoids) : jw;
+}
+
 /** Similarité pondérée : chaque jeton de la requête cherche son meilleur jeton dans le candidat. */
-function simPonderee(qTok, cTok) {
+function simPonderee(qTok, cTok, cfg) {
   if (!qTok.length || !cTok.length) return 0;
   let num = 0, den = 0;
   for (const q of qTok) {
     let best = 0;
-    for (const c of cTok) best = Math.max(best, jaroWinkler(q, c));
+    for (const c of cTok) best = Math.max(best, simJeton(q, c, cfg));
     const w = poids(q);
     num += best * w; den += w;
   }
   let num2 = 0, den2 = 0;
   for (const c of cTok) {
     let best = 0;
-    for (const q of qTok) best = Math.max(best, jaroWinkler(c, q));
+    for (const q of qTok) best = Math.max(best, simJeton(c, q, cfg));
     const w = poids(c);
     num2 += best * w; den2 += w;
   }
@@ -120,7 +154,7 @@ function scorerDetail(requete, entree, config) {
   let best = 0, via = entree.nom_complet;
   for (const cand of candidats) {
     const cTok = normaliser(cand).split(" ").filter(Boolean);
-    const s = simPonderee(qTok, cTok);
+    const s = simPonderee(qTok, cTok, c);
     if (s > best) { best = s; via = cand; }
   }
   const nameScore = best * c.echelle;
@@ -173,6 +207,6 @@ function rapprocherDetail(requete, entries, seuil, config) {
 }
 
 module.exports = {
-  PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler,
+  PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler, clePhonetique,
   construireIdf, scorer, scorerDetail, rapprocher, rapprocherDetail,
 };

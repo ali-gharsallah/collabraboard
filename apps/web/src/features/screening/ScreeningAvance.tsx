@@ -23,6 +23,7 @@ export function ScreeningAvance() {
   const [cfg, setCfg] = useState<{ enVigueur: Cfg | null; versions: Cfg[] }>({ enVigueur: null, versions: [] });
   const [ech, setEch] = useState("100");                 // R268 knobs proposés à la publication
   const [pen, setPen] = useState("40");
+  const [phon, setPhon] = useState(false);               // R271 méthode phonétique (off par défaut)
   const { ask, modal } = useConfirmGate();               // contrat UX : qualifier un hit = acte motivé (R7)
 
   async function lancer() {
@@ -45,9 +46,10 @@ export function ScreeningAvance() {
   async function publierConfig(motif: string) {
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
-    const moteur: Record<string, number> = {};
+    const moteur: Record<string, number | boolean> = {};
     if (ech.trim()) moteur.echelle = Number(ech);
     if (pen.trim()) moteur.penaliteTypeIncompatible = Number(pen);
+    moteur.phonetique = phon;                             // R271 — méthode phonétique gouvernée
     const r = await fetch(`${base}/v1/screening/config`, { method: "POST", headers: auth(), body: JSON.stringify({ moteur, motif }) });
     const b = await r.json().catch(() => ({}));
     setMsg(r.ok ? `Config publiée — v${b.version} (effet ${String(b.effectiveFrom).slice(0, 10)}). Les runs futurs l'appliquent ; les runs passés gardent la leur (R48/R49).` : (b.message ?? "Erreur (motif requis ? R7)"));
@@ -86,6 +88,8 @@ export function ScreeningAvance() {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <label style={{ fontSize: 12 }}>échelle <input style={{ ...inp, width: 70 }} value={ech} onChange={(e) => setEch(e.target.value)}/></label>
         <label style={{ fontSize: 12 }}>pénalité type <input style={{ ...inp, width: 70 }} value={pen} onChange={(e) => setPen(e.target.value)}/></label>
+        <label style={{ fontSize: 12 }} title="Rattrape les sonorités que Jaro-Winkler rate (Knight/Nite). Off par défaut.">
+          <input type="checkbox" checked={phon} onChange={(e) => setPhon(e.target.checked)}/> phonétique (R271)</label>
         <button style={btn} onClick={() => ask({ title: "Publier une nouvelle version de la config (R7)",
           message: "Versionnée et datée (R29), jamais rétroactive : les runs futurs l'appliqueront, les runs passés gardent la leur (rejeu R48/R49).",
           input: { label: "Motif de la publication (R7)", placeholder: "obligatoire", required: true },

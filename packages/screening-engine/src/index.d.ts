@@ -32,6 +32,8 @@ export interface ConfigMoteur {
   ecartAnneesProche?: number;        // seuil d'années « proche » (défaut 2)
   penaliteDobProche?: number;        // écart ≤ seuil (défaut 12)
   penaliteDobIncompatible?: number;  // écart > seuil (défaut 45)
+  phonetique?: boolean;              // R271 — méthode phonétique (défaut false = Jaro seul)
+  phonetiquePoids?: number;          // similarité créditée sur clé phonétique identique (défaut 0.9)
 }
 export declare const DEFAUTS_MOTEUR: Readonly<Required<ConfigMoteur>>;
 export declare const DEFAUTS_BLOCKING: Readonly<Required<OptionsBlocking>>;
@@ -39,6 +41,7 @@ export declare const DEFAUTS_BLOCKING: Readonly<Required<OptionsBlocking>>;
 export function normaliser(s: string): string;
 export function jetonsTries(s: string): string;
 export function jaroWinkler(a: string, b: string): number;
+export function clePhonetique(s: string): string;
 export function construireIdf(entries: EntreeMoteur[]): { df: Map<string, number>; n: number };
 export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): number;
 export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): Decomposition;

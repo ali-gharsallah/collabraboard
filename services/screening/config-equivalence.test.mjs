@@ -15,7 +15,7 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
-  construireIdf, rapprocher, scorer, construireIndex, candidats,
+  construireIdf, rapprocher, scorer, construireIndex, candidats, clePhonetique,
   DEFAUTS_MOTEUR, DEFAUTS_BLOCKING,
 } from "@olive/screening-engine";
 
@@ -86,12 +86,31 @@ const candStrict = candidats(idx, nomFreq, { minPartages: 9 });
 console.log(`6. minPartages : ${candDef.length} candidats (défaut ${DEFAUTS_BLOCKING.minPartages}) → ${candStrict.length} (minPartages 9)`);
 check(candStrict.length < candDef.length, `minPartages ne resserre pas : ${candDef.length} → ${candStrict.length}`);
 
+// ── 7) R271 — clé phonétique : sonorités équivalentes → même clé ; distinctes → clés différentes ──
+for (const [a, b] of [["Knight", "Nite"], ["Phaisal", "Faisal"], ["Smith", "Smyth"]]) {
+  const ka = clePhonetique(a), kb = clePhonetique(b);
+  console.log(`7. clePhonetique ${a}/${b} → ${ka}/${kb}`);
+  check(ka === kb && !!ka, `clé phonétique ${a}≠${b} (${ka}/${kb})`);
+}
+check(clePhonetique("Robert") !== clePhonetique("Richard"), "Robert/Richard ne doivent PAS coïncider");
+
+// ── 8) méthode phonétique OFF (défaut) : un quasi-homophone reste SOUS le seuil ──
+const phon = { uid: "PHON-1", nom_complet: "Knight" };
+const sOff = scorer({ nom: "Nite" }, phon);                       // sans config → phonetique off
+console.log(`8. phonetique OFF : score Nite/Knight = ${Math.round(sOff)} (< seuil ${SEUIL})`);
+check(sOff < SEUIL, `sans phonétique, Nite/Knight ne devrait pas atteindre le seuil (${Math.round(sOff)})`);
+
+// ── 9) méthode phonétique ON : le même couple FRANCHIT le seuil (rattrapage de sonorité) ──
+const sOn = scorer({ nom: "Nite" }, phon, { phonetique: true });
+console.log(`9. phonetique ON  : score Nite/Knight = ${Math.round(sOn)} (≥ seuil ${SEUIL})`);
+check(sOn >= SEUIL && sOn > sOff, `avec phonétique, Nite/Knight devrait franchir le seuil (${Math.round(sOn)})`);
+
 // ── Verdict ──
-const total = 6;
+const total = 9;
 if (echecs.length) {
   console.log(`\n✗ CONFIG-EQUIVALENCE ROUGE — ${echecs.length} invariant(s) cassé(s) :`);
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
 console.log(`\n✓ défauts = comportement d'origine (127/127) · chaque knob change bien un verdict.`);
-console.log(`### ${total}/${total} config-equivalence verts (R268) ###`);
+console.log(`### ${total}/${total} config-equivalence verts (R268/R271) ###`);

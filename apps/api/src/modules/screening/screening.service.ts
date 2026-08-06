@@ -25,11 +25,11 @@ export interface RunDto {
   // R269 — gouvernance du réglage : un scénario VERSIONNÉ (AmlScenario.params) fournit la config du
   // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
   // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
-  scenarioCode?: string; moteurConfig?: Record<string, number>;
+  scenarioCode?: string; moteurConfig?: Record<string, number | boolean>;
 }
 type Ctx = { tenantId: string; userId: string; role: string };
 // Config EFFECTIVE d'un run + sa provenance (persistée sur le run pour le rejeu R48/R49).
-type ConfigRun = { moteur: Record<string, number>; prefiltre: Record<string, number>;
+type ConfigRun = { moteur: Record<string, number | boolean>; prefiltre: Record<string, number>;
   source: { scenarioCode: string; scenarioVersion: number } | null };
 
 // Decomposition explicable persistee (R266) - prepare R44 (le systeme explique, il ne decide pas).
@@ -49,7 +49,7 @@ export class ScreeningService {
    * moteur vide → défauts R268 (comportement inchangé), pré-filtre = celui de l'appel.
    */
   private async resoudreConfig(tx: Tx, tenantId: string, dto: RunDto, at: string): Promise<ConfigRun> {
-    let scMoteur: Record<string, number> = {}, scPrefiltre: Record<string, number> = {};
+    let scMoteur: Record<string, number | boolean> = {}, scPrefiltre: Record<string, number> = {};
     let source: ConfigRun["source"] = null;
     if (dto.scenarioCode) {
       const rows: any[] = await tx.amlScenario.findMany({
@@ -166,7 +166,7 @@ export class ScreeningService {
   static readonly CODE_CONFIG = "SC-SCREENING";
 
   /** R270/R7 — publie une NOUVELLE version de la config (motif obligatoire, auteur = jeton, effet date R29). */
-  async publierConfig(ctx: Ctx, dto: { moteur?: Record<string, number>; prefiltre?: Record<string, number>;
+  async publierConfig(ctx: Ctx, dto: { moteur?: Record<string, number | boolean>; prefiltre?: Record<string, number>;
     effectiveFrom?: string; motif?: string }) {
     if (!dto?.motif || !dto.motif.trim()) throw new BadRequestException("R7 : publier une config exige un motif");
     return this.prisma.$transaction(async (tx: Tx) => {
