@@ -22,7 +22,7 @@ const NAV_AR: Record<string, string> = {
   "Business Trip": "رحلة عمل", "Cross-Border": "عبر الحدود", "Compliance & Risque": "الامتثال والمخاطر",
   "Screening": "الفرز", "Compliance Center": "مركز الامتثال", "AML Investigation": "تحقيق مكافحة غسل الأموال",
   "Investigation financière": "التحقيق المالي", "Transactions Risk Monitoring": "مراقبة مخاطر المعاملات",
-  "Transferts & ordres": "التحويلات والأوامر", "Registre LBA": "سجل مكافحة غسل الأموال",
+  "Transferts & ordres": "التحويلات والأوامر", "Registre LBA": "سجل مكافحة غسل الأموال", "Checklist exigences": "قائمة المتطلبات",
   "Corroboration KYC": "تأكيد KYC", "Reporting réglementaire": "الإبلاغ التنظيمي",
   "Formations & habilitations": "التدريب والتأهيل", "Veille réglementaire": "الرصد التنظيمي",
   "Wealth & Marchés": "الثروات والأسواق", "PMS": "PMS", "Mobile Banking": "الخدمات المصرفية عبر الهاتف",

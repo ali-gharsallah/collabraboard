@@ -28,6 +28,7 @@ const ScreeningAvance = lazy(() => import("../features/screening/ScreeningAvance
 const ReportingMros = lazy(() => import("../features/mros/ReportingMros").then((m) => ({ default: m.ReportingMros })));
 const GedCoffre = lazy(() => import("../features/gedcoffre/GedCoffre").then((m) => ({ default: m.GedCoffre })));
 const RegistreLBA = lazy(() => import("../features/registrelba/RegistreLBA").then((m) => ({ default: m.RegistreLBA })));
+const InferenceScreen = lazy(() => import("../features/inference/RequirementChecklist").then((m) => ({ default: m.InferenceScreen })));
 const CrmBanque = lazy(() => import("../features/crm/CrmBanque").then((m) => ({ default: m.CrmBanque })));
 const ContactReports = lazy(() => import("../features/crm/ContactReports").then((m) => ({ default: m.ContactReports })));
 const WorkflowDesigner = lazy(() => import("../features/workflow/WorkflowDesigner").then((m) => ({ default: m.WorkflowDesigner })));
@@ -85,7 +86,7 @@ const MobileAdmin = lazy(() => import("../features/mobile/MobileAdmin").then((m)
 const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ default: m.OpRisk })));
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "inference" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
   // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
@@ -136,7 +137,7 @@ export function Router() {
       ["aml", "Règles AML", "▤"], ["amlref", "Référentiel AML", "📖"], ["amlgap", "AML Gap", "🌊"], ["mros", "Reporting MROS", "📄"],
       ["corroboration", "Corroboration KYC", "⚖"], ["legalreg", "Legal — Contrats", "§"],
       ["oprisk", "Octopulse OpRisk", "🐙"], ["formations", "Formations", "🎓"],
-      ["veille", "Veille réglementaire", "📡"], ["registrelba", "Registre LBA", "📖"]] },
+      ["veille", "Veille réglementaire", "📡"], ["registrelba", "Registre LBA", "📖"], ["inference", "Checklist exigences", "🧭"]] },
     { id: "g_cpsi", label: "Profilage CPSI", icon: "◉", items: [
       ["cpsiProfil", "CPSI · Profil", "◉"], ["cpsiSeg", "CPSI · Segmentation", "▦"],
       ["cpsiCases", "CPSI · Risk cases", "▲"], ["cpsiParam", "CPSI · Barèmes", "⚖"],
@@ -247,6 +248,7 @@ export function Router() {
     {screen === "ged" && <GedPieces/>}
     {screen === "gedcoffre" && <GedCoffre/>}
     {screen === "registrelba" && <RegistreLBA/>}
+    {screen === "inference" && <InferenceScreen/>}
     {screen === "crm" && <CrmBanque/>}
     {screen === "contactreports" && <ContactReports/>}
     {screen === "workflow" && <WorkflowDesigner/>}

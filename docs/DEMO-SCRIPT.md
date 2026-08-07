@@ -54,3 +54,18 @@ MFA de démo : documentée à l'enrôlement (chaque persona enrôle un TOTP au p
 - **DM-05** : le rejeu à date fonctionne sur le tenant de démo.
 - **DM-06** : le tenant de démo est isolé (RLS) — absent de tout agrégat cross-tenant.
 - **R167** : aucune donnée simulée en prod — la démo est un TENANT, gardé par OLIVE_SEED_DEMO.
+
+---
+
+## G4 — Trust + settlor PEP : la checklist d'exigences (module A, P-L7-5)
+
+Parcours 100 % capacités RÉELLES (aucune valeur fabriquée au front — leçon L6-3) ; écran
+« Checklist exigences » (🧭), branché sur GET /v1/inference/:kycId/ledger et /explain/:rid.
+
+| Étape (action réelle) | État attendu de la checklist |
+|---|---|
+| 1. Créer le dossier Trust (client structure=TRUST) + lier le settlor (personne_liens, cible KYC) | Gap initial : ⛔ REQ-DOC-T (Formulaire T, CDB 20 art. 41), ⛔ REQ-VISA-CO ; ✅ REQ-CHECK-SCREEN (0 hit = vacuité) ; REQ-EDD-PEP ABSENT (inactif — pas de PEP lié) |
+| 2. Réception du Formulaire T (document ACTIF, non expiré, nom=FORMULAIRE_T) | ✅ REQ-DOC-T avec preuve = id de la pièce ; « pourquoi ? » montre règle + base légale + pièce |
+| 3. Screening PEP → hit → proposition (L4) → PEPisation DÉCIDÉE par un humain (personnes/:id/pep, sourceHitId tracé) | REQ-EDD-PEP APPARAÎT (when any(relatedPersons, p => p.pep) devient vrai) : ⛔ Rapport EDD manquant ; le hit BRUT rend ⛔ REQ-CHECK-SCREEN |
+| 4. Qualifier le hit (motif R7) + déposer le RAPPORT_EDD | ✅ REQ-CHECK-SCREEN (tous qualifiés) ; ✅ REQ-EDD-PEP |
+| 5. Visa CO sur IDENTITY (SIGNED, verdict OK — R86) | ✅ REQ-VISA-CO, preuve = id du visa ; gap VIDE — cohérent avec les gardes (P-L7-4 ; divergences connues : MIGRATION_DIVERGENCES.md) |
