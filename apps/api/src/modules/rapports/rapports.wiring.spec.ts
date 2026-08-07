@@ -7,7 +7,9 @@ import { RapportsService } from "./rapports.module";
 function fake(db: any = {}) {
   return {
     domainEvent: { findMany: async ({ where }: any) => (db.events ?? []).filter((e: any) =>
-      e.tenantId === where.tenantId && (!where.type?.contains || String(e.type).includes(where.type.contains))) },
+      e.tenantId === where.tenantId
+      && (!where.type?.contains || String(e.type).includes(where.type.contains))
+      && (!where.type?.in || where.type.in.includes(e.type))) },
     person: { findMany: async ({ where }: any) => (db.persons ?? []).filter((p: any) =>
       p.tenantId === where.tenantId && p.statutPep === true) },
     screeningHit: { findMany: async ({ where }: any) => (db.hits ?? []).filter((h: any) => h.tenantId === where.tenantId) },
@@ -35,14 +37,60 @@ const ctx = { tenantId: T, userId: "u", role: "CO_SR" };
     assert.equal(r[0].type, "xb.derogation.visee");
   });
 
-  await t("RP-02 PEP : ne liste QUE les personnes au statut PEP", async () => {
+  await t("RP-02 PEP : la section `declares` ne liste QUE les personnes au statut PEP (l'autorité)", async () => {
     const s = svc({ persons: [
       { tenantId: T, id: "P1", nom: "Alpha", statutPep: true, finMandatPep: null },
       { tenantId: T, id: "P2", nom: "Beta", statutPep: false, finMandatPep: null }] });
-    const r = await s.pep(ctx);
-    assert.equal(r.length, 1);
-    assert.equal(r[0].personne, "P1");
-    assert.equal(r[0].statut, "PEP");
+    const r: any = await s.pep(ctx);
+    assert.equal(r.declares.length, 1);
+    assert.equal(r.declares[0].personne, "P1");
+    assert.equal(r.declares[0].statut, "PEP");
+    assert.deepEqual(r.propositions, { ouvertes: [], rejetees: [] });
+  });
+
+  await t("RP-05 PEP (ADR-PEP-001) : un cas de CHAQUE chemin — déclaré via hit (trace liante), proposition ouverte, proposition rejetée — sections jamais confondues", async () => {
+    const s = svc({
+      persons: [{ tenantId: T, id: "P1", nom: "Alpha", statutPep: true, finMandatPep: null }],   // P2/P3 : non-PEP (propositions seulement)
+      events: [
+        { tenantId: T, id: 1, type: "pep.proposition.creee", aggregateId: "pep:P1:U1:v1",
+          payload: { cle: "pep:P1:U1:v1", hitId: "H1", personId: "P1", liste: "PEP-L", listeVersion: "v1", score: 92 }, at: "2026-08-01" },
+        { tenantId: T, id: 2, type: "personne.pep.declare", aggregateId: "P1",
+          payload: { source: "liste PEP (proposition)", sourceHitId: "H1" }, at: "2026-08-02" },
+        { tenantId: T, id: 3, type: "pep.proposition.creee", aggregateId: "pep:P2:U2:v1",
+          payload: { cle: "pep:P2:U2:v1", hitId: "H2", personId: "P2", liste: "PEP-L", listeVersion: "v1", score: 88 }, at: "2026-08-01" },
+        { tenantId: T, id: 4, type: "pep.proposition.creee", aggregateId: "pep:P3:U3:v1",
+          payload: { cle: "pep:P3:U3:v1", hitId: "H3", personId: "P3", liste: "PEP-L", listeVersion: "v1", score: 86 }, at: "2026-08-01" },
+        { tenantId: T, id: 5, type: "pep.proposition.rejetee", aggregateId: "pep:P3:U3:v1",
+          payload: { cle: "pep:P3:U3:v1", motif: "Homonymie établie", par: "co.sr" }, at: "2026-08-03" }] });
+    const r: any = await s.pep(ctx);
+    assert.equal(r.declares.length, 1);
+    assert.equal(r.declares[0].sourceHitId, "H1");                       // trace liante hit ↔ décision
+    assert.equal(r.propositions.ouvertes.length, 1);
+    assert.equal(r.propositions.ouvertes[0].hit, "H2");                  // ni rejetée ni convertie → ouverte
+    assert.equal(r.propositions.rejetees.length, 1);
+    assert.equal(r.propositions.rejetees[0].motif, "Homonymie établie"); // rejet motivé (R7), auteur tracé
+    assert.equal(r.propositions.rejetees[0].par, "co.sr");
+  });
+
+  await t("RP-06 hits : trace liante hit ↔ décision PEP (PEPISE | REJETEE | OUVERTE) quand elle existe", async () => {
+    const s = svc({
+      hits: [
+        { tenantId: T, id: "H1", clientId: "P1", statut: "QUALIFIE", score: 92, listeVersion: "v1" },
+        { tenantId: T, id: "H3", clientId: "P3", statut: "BRUT", score: 86, listeVersion: "v1" },
+        { tenantId: T, id: "H9", clientId: "C9", statut: "BRUT", score: 70, listeVersion: "v1" }],   // hors PEP : pas de trace
+      events: [
+        { tenantId: T, id: 1, type: "pep.proposition.creee", aggregateId: "pep:P1:U1:v1",
+          payload: { cle: "pep:P1:U1:v1", hitId: "H1", personId: "P1" }, at: "2026-08-01" },
+        { tenantId: T, id: 2, type: "personne.pep.declare", aggregateId: "P1",
+          payload: { source: "liste PEP", sourceHitId: "H1" }, at: "2026-08-02" },
+        { tenantId: T, id: 3, type: "pep.proposition.creee", aggregateId: "pep:P3:U3:v1",
+          payload: { cle: "pep:P3:U3:v1", hitId: "H3", personId: "P3" }, at: "2026-08-01" },
+        { tenantId: T, id: 4, type: "pep.proposition.rejetee", aggregateId: "pep:P3:U3:v1",
+          payload: { cle: "pep:P3:U3:v1", motif: "Homonymie", par: "co.sr" }, at: "2026-08-03" }] });
+    const r: any = await s.hits(ctx);
+    assert.equal(r.find((h: any) => h.hit === "H1").tracePep.decision, "PEPISE");
+    assert.equal(r.find((h: any) => h.hit === "H3").tracePep.decision, "REJETEE");
+    assert.equal(r.find((h: any) => h.hit === "H9").tracePep, undefined);
   });
 
   await t("RP-03 hits : liste des hits de screening et leur traitement", async () => {

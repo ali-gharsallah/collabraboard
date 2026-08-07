@@ -21,19 +21,52 @@ export class RapportsService {
       at: e.at, payload: e.payload }));
   }
 
-  // Rapport PEP : les personnes au statut PEP en vigueur (+ fin de mandat éventuelle).
+  // Événements du cycle PEP (propositions + décisions) — support commun de pep() et hits().
+  private async evenementsPep(ctx: Ctx) {
+    const evs = await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId,
+        type: { in: ["pep.proposition.creee", "pep.proposition.rejetee", "personne.pep.declare"] } },
+      orderBy: { id: "asc" } });
+    const props = evs.filter((e: any) => e.type === "pep.proposition.creee").map((e: any) => e.payload as any);
+    const rejets = new Map<string, any>();                                 // cle → {motif, par}
+    for (const e of evs) if (e.type === "pep.proposition.rejetee") rejets.set((e.payload as any)?.cle, e.payload);
+    const declares = new Map<string, any>();                               // personId → payload du declare
+    for (const e of evs) if (e.type === "personne.pep.declare") declares.set(e.aggregateId, e.payload);
+    const hitsPepises = new Set([...declares.values()].map((p: any) => p?.sourceHitId).filter(Boolean));
+    return { props, rejets, declares, hitsPepises };
+  }
+
+  /**
+   * Rapport PEP (R50, étendu ADR-PEP-001/P-L4-2) — le registre reflète L'AUTORITÉ, pas les signaux :
+   * `declares` = les PEP décidés par un HUMAIN (personnes.statutPep), avec la trace liante sourceHitId
+   * quand la décision répond à une proposition issue d'un hit ; `propositions` = les signaux en cours
+   * ({ ouvertes, rejetees }), section DISTINCTE, jamais confondue avec l'autorité.
+   */
   async pep(ctx: Ctx) {
     const ps = await this.prisma.person.findMany({
       where: { tenantId: ctx.tenantId, statutPep: true }, select: { id: true, nom: true, finMandatPep: true } });
-    return ps.map((p: any) => ({ personne: p.id, nom: p.nom, statut: "PEP", finMandat: p.finMandatPep }));
+    const { props, rejets, declares, hitsPepises } = await this.evenementsPep(ctx);
+    const lignes = ps.map((p: any) => { const d = declares.get(p.id);
+      return { personne: p.id, nom: p.nom, statut: "PEP", finMandat: p.finMandatPep,
+        ...(d?.sourceHitId ? { sourceHitId: d.sourceHitId } : {}) }; });
+    const ouvertes = props.filter((p) => !rejets.has(p.cle) && !hitsPepises.has(p.hitId))
+      .map((p) => ({ cle: p.cle, personne: p.personId, hit: p.hitId, liste: p.liste, listeVersion: p.listeVersion, score: p.score }));
+    const rejetees = props.filter((p) => rejets.has(p.cle))
+      .map((p) => ({ cle: p.cle, personne: p.personId, hit: p.hitId, motif: rejets.get(p.cle)?.motif, par: rejets.get(p.cle)?.par }));
+    return { declares: lignes, propositions: { ouvertes, rejetees } };
   }
 
-  // Liste des hits de screening et leur traitement (BRUT | QUALIFIE).
+  // Liste des hits de screening et leur traitement (BRUT | QUALIFIE). P-L4-2 : quand le hit a produit
+  // une proposition de PEPisation, le rapport porte la TRACE LIANTE hit ↔ décision (PEPISE | REJETEE | OUVERTE).
   async hits(ctx: Ctx) {
     const hs = await this.prisma.screeningHit.findMany({
       where: { tenantId: ctx.tenantId },
       select: { id: true, clientId: true, statut: true, score: true, listeVersion: true }, orderBy: { at: "desc" } });
-    return hs.map((h: any) => ({ hit: h.id, client: h.clientId, etat: h.statut, score: h.score, listeVersion: h.listeVersion }));
+    const { props, rejets, hitsPepises } = await this.evenementsPep(ctx);
+    const propParHit = new Map(props.map((p: any) => [p.hitId, p.cle]));
+    return hs.map((h: any) => ({ hit: h.id, client: h.clientId, etat: h.statut, score: h.score, listeVersion: h.listeVersion,
+      ...(propParHit.has(h.id) ? { tracePep: { proposition: propParHit.get(h.id),
+        decision: hitsPepises.has(h.id) ? "PEPISE" : (rejets.has(propParHit.get(h.id)!) ? "REJETEE" : "OUVERTE") } } : {}) }));
   }
 
   // Recertifications (reviews) ouvertes au-delà du délai : échéance PLANIFIEE dont la due date est passée

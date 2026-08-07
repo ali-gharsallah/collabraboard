@@ -302,8 +302,8 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:aml-gap
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (453 verts, +6 routage PEP L4) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 453/453)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (455 verts, +2 registre R50 L4) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 455/455)"
         working-directory: apps/api
         run: pnpm run test:rules
 
@@ -374,6 +374,13 @@ jobs:
           # (R248), pour 3 payloads représentatifs + une erreur typée. Une dérive du pont = CI rouge.
           out=$(node services/cpsi-server-py/contract.test.mjs); echo "$out"
           echo "$out" | grep -q "### 4/4 contrat CPSI verts (L1 · R248) ###"
+
+      - name: "5e · Cohérence PEP↔CPSI (le score lit la fiche, jamais les hits — L4 · ADR-PEP-001, 3/3)"
+        run: |
+          # BLOQUANT : statique.pep=true → driver 15 ; =false → absent ; un hit glissé au journal
+          # CPSI = DEFAULT_DENY. La fiche personne est la SEULE source PEP du score (R44).
+          out=$(node services/cpsi-server-py/pep-coherence.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 3/3 cohérence PEP↔CPSI verts (L4 · ADR-PEP-001) ###"
 
       # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
       # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS
