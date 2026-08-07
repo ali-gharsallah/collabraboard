@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { EsEventStore } from "./es-event-store.service";
 import { EsSubscriber } from "./es-subscriber.service";
+import { EsAlertes } from "./alertes.service";
+import { TasksModule } from "../tasks/tasks.module";
 
 /**
  * ES-0 (docs/SURVEILLANCE-ES.md) — module SIDECAR du contexte « surveillance-es ».
@@ -11,5 +13,9 @@ import { EsSubscriber } from "./es-subscriber.service";
  * s'arme que sous ES_SOUSCRIPTEUR=on (§1 : le module n'est pas actif avant la réconciliation
  * ES-4) — les tests et le shadow appellent drainer() explicitement.
  */
-@Module({ providers: [EsEventStore, EsSubscriber], exports: [EsEventStore, EsSubscriber] })
+// TasksModule = le canal de PROPOSITION (R239/R44) : la seule dépendance sortante vers le
+// monolithe, hors du contexte Surveillance gardé (frontière L3) — jamais d'écriture directe.
+@Module({ imports: [TasksModule],
+  providers: [EsEventStore, EsSubscriber, EsAlertes],
+  exports: [EsEventStore, EsSubscriber, EsAlertes] })
 export class SurveillanceEsModule {}
