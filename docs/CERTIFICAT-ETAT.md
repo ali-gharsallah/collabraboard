@@ -1,119 +1,132 @@
-# O-Live — CERTIFICAT D'ÉTAT (checkpoint PRÉ-PILOTE, 2026-07-29 — industrialisation)
+# O-Live — CERTIFICAT D'ÉTAT (checkpoint POST-PLAYBOOK, 2026-08-07)
 
-**Source de vérité unique de l'état du produit.** Remplace la version du 2026-07-22.
-Établi par une passe verte COMPLÈTE rejouée le 2026-07-29 (HEAD `e857e61`, branche
-`claude/olive-mvp-bootstrap-m02v1x`, PR #46). Index maître : `docs/PROJECT-INDEX.md`.
+**Source de vérité unique de l'état du produit.** Remplace la version du 2026-07-29.
+Établi par une passe verte COMPLÈTE rejouée le 2026-08-07 (HEAD `e75ce79`, branche
+`claude/olive-mvp-bootstrap-m02v1x`, CI GitHub verte sur ce même commit — 2 workflows CI
++ fat-visuel « completed success »). Index maître : `docs/PROJECT-INDEX.md`.
 
-> **Correctif d'intégrité CI (2026-07-29)** : la baseline Prisma `0_baseline_lot42` avait
-> dérivé du schéma (63 tables sur 78, `effective_to`/R282 absent) — `migrate deploy` bâtissait
-> un schéma incomplet et `prisma:post` échouait, si bien que **l'e2e ne tournait pas en CI**.
-> Baseline régénérée du schéma courant ; reproduction EXACTE de la CI (base neuve → migrate
-> deploy → prisma:post → e2e) : **336/336 au 1er passage**. C'est la dérive que le cadre R334
-> (MG-01) attrape désormais en amont.
+> **Intégrité CI (rappel de période)** : entre le 02.08 et le 05.08, la CI est restée rouge
+> ~30 runs sur un FAUX POSITIF de la garde R329 (IDs d'onglet parité attrapés par le grep
+> `demo`) qui masquait en cascade d'autres dérives (snapshot de surface API, stamps canon,
+> exception MG-05, comptage grep AML). Tout a été pelé un par un, chaque exception documentée
+> (`docs/notes/ci-r329-faux-positif.md`) — **aucune garde affaiblie**. La CI est verte et
+> honnête depuis, et chaque commit de cette période l'a revérifiée.
 
 ## 1. Verdict global : PRÊT POUR LE PILOTE (code)
 
 Tout le canon ratifié est codé, testé, poussé. Il ne reste AUCUN chantier de code
-bloquant — seulement des actes humains (§7) et un chantier de fond continu (i18n, §6).
+bloquant — les restes sont des décisions humaines (§6), des backlogs documentés non
+bloquants (§7) et le continu hors code du playbook (§8).
 
-## 1-bis. Mise à jour 2026-08-02 — portage règles domain.py (Lot A/B) + parité 100 %
+## 2. Livré depuis le certificat du 29.07/02.08
 
-Passe de portage fidèle du moteur de référence Python (`services/workflow-engine-py`) vers le
-backend NestJS, découpée et validée (`RULES-GAP.md`). Tout expand-only, specs autonomes (fakePrisma,
-sans DB), la frontière reste verte entre chaque règle.
+- **PLAYBOOK v2 COMPLET (L0→L8)** — `docs/PLAYBOOK.md`, chaque gate franchie :
+  - **L1 signal fiable** : runners propagent les codes de sortie (canari CPSI en CI),
+    zéro suite hors CI.
+  - **L2** couverture R222–R238 (complétude 16/16 en CI) · **L3** frontière Surveillance
+    ADR-TM-001 (import inter-contexte = test d'architecture rouge) · **L4** routage PEP
+    ADR-PEP-001 (PEPisation tracée OU rejet motivé, registre R50 voit les deux chemins).
+  - **L5 dettes C5/C6/C7/C8** : registre de règles généré, catalogue d'événements au
+    write (`apps/api/src/contracts/events-catalog.ts`), services instanciés par run.
+  - **L6 screening réel** : moteur `packages/screening-engine` (JW + IDF + blocking
+    trigramme + Double Metaphone) branché dans l'écran — `parity/screening-support.ts`
+    réécrit en délégation au vrai moteur (l'interdit de langage est levé pour cet écran),
+    gate golden 127 cas + matcher R405-R407/R410 bloquants en CI.
+  - **L7 module A inférence** : Requirement/CompletionProfile chargés YAML (zod strict),
+    DSL AST restreint SANS eval, RequirementLedger éphémère (vue, R1–R51 inchangées),
+    miroir 50 règles généré no-drift, divergences consignées (`MIGRATION_DIVERGENCES.md`,
+    DIV-1/DIV-2) avec verrou CI bidirectionnel (CO-03), écran Checklist exigences.
+  - **L8 complétion D + packaging O** : goAML (XSD-subset committé, soumission MANUELLE
+    tracée, chrono J+5 OUVRÉS idempotent, cloisonnement 9a/10a) · KPI conformité
+    (projections de lecture R50, P90 ordinal, définitions affichées, trimestriel CSV) ·
+    gouvernance O (curseur observe/suggere/copilote_gouverne par tenant, événement
+    catalogué, rapport de valeur mensuel).
+- **Série ES complète (ES-0→ES-5) + extensions ES-6/ES-7** — `docs/SURVEILLANCE-ES.md`,
+  notes `docs/notes/ES-*.md` : sidecar event-sourcé sur schéma `es` dédié (append-only
+  par TRIGGER SQL, RLS FORCE, streams physiques scopés tenant), souscripteur R286 né au
+  présent (idempotence par source_event_id, quarantaine zod), agrégat alertes pur
+  (evidence figée, sorties = propositions R44 uniquement), backtest = rejeu déterministe,
+  shadow ES-4 structurellement incapable d'émettre + rapport de réconciliation avec
+  critères de bascule oui/non, timeline des hits (ES-6) et décisions PEP (ES-7) par rejeu.
+  Le module est DORMANT (`ES_SOUSCRIPTEUR=on` absent) tant que la bascule humaine n'est
+  pas actée. Discours §7 du doc ES : autorisé APRÈS bascule seulement.
+- **AML Gap waves 1+2** — `spec/SPEC-AML-GAP-WAVE1/2.md` : référentiel généré R340–R403
+  (64 règles, 12 familles de `spec/GAP-ANALYSIS-AML.md` couvertes : screening en flux,
+  OBA-FINMA, UBO, instruments PB, crypto/VASP, CFT, tuning, TBML, correspondent banking,
+  prolifération, immobilier/art, analytique 2G), 122 cas GT au référentiel, analytique 2G
+  exécutée côté CPSI Python (bloc 20, jamais en Nest), écran AML Gap. Les règles exigeant
+  une intégration externe (prix HS, tracking conteneurs, on-chain) restent définies mais
+  inactives par tenant — statut visible, jamais dégradées en silence.
+- **FilterBar R404** (composant unique, FB-01..07) · **i18n 4 langues** (EN/DE/IT/AR,
+  cliquet R326 : tout nouveau libellé nav doit ses 4 traductions sinon CI rouge) ·
+  **budget bundle relevé à 225 kB gz** (commit motivé, packs de langue paresseux).
 
-- **Lot A** ✅ — R6/R10, R9, R11, R12, R14, R24, R50 (gardes visa, révocation, engagement, exports).
-- **Lot B** ✅ — machine d'états dossier **R16–R23** (suspension/abandon/réactivation/effacement LPD/
-  changement de circonstances + processes concurrents avec priorité/pause/reprise/absorption),
-  matrice documentaire versionnée **R26/R27** (résolution par juridiction, union des porteurs,
-  grandfathering) — R28 = péremption→tâche déjà portée par `ged.tickPeremptions`, routage tâche
-  **R38** (rôle→personne in-scope), gel sur hit **R46** (`VisaStatus.GELE` + décision comité).
-  Migrations `IF NOT EXISTS`, tables tenantées ajoutées à la boucle RLS `post-deploy-v2.sql`.
-- **Lot C** ⏸ — les 9 R-Q ⚙ (R5, R17, R19, R25, R37, R41, R43, R45, R47) **non implémentées par
-  principe** : seuils/rôles/périmètres arbitrés banque. Bordereau de décision : `GOUVERNANCE-LOTC.md`.
-  Le mécanisme est prêt à recevoir les valeurs (config tenant / `publier()`), défaut neutre sinon.
-- **Parité écran** ✅ **100 %** — les 3 derniers écrans de `docs/reference/olive-demo.html`
-  (`formbuilder`, `accounts`, `signatories`) portés verbatim et câblés dans `Shell.tsx`.
-- **Seed démo** — bloc Lot B additif (matrice publiée, Nordwind suspendu, recertification ouverte)
-  par les vraies routes, idempotent (`DEMO-SCRIPT.md` scène 3-bis).
-
-**Nouvelles suites autonomes** (dans `run-rule-tests.sh`) : `kyc-lotA` **25/25**, `docmatrix`
-**13/13**, `tasks-r38` **6/6**, `rapports` **4/4** ; harnais **59 suites, exit 0** · web **80/80** ·
-`tsc --noEmit` vert · schéma Prisma valide. Validation e2e/DB (Postgres via Docker) **différée**
-(indisponible ici) — migrations expand-only prêtes.
-
-## 2. Frontière verte (rejouée ce jour)
+## 3. Frontière verte (rejouée ce jour, 2026-08-07, HEAD `e75ce79`)
 
 | Suite | Résultat | Portée |
 |-------|----------|--------|
-| e2e API (Postgres réel, **schéma migrate deploy**) | **336 / 336** (45 suites) | tout le backend tenant, jetons réels |
-| Harnais de règles | **0 ✗** | R1..R323 + IAM + corpus session |
-| Moteur CPSI (Python) | **19 / 19** | R63..R86 + PC-20 équivalence |
-| Console vendor (séparée) | **6 / 6** | R319/R320, VE-01..03 versant vendor |
-| Front (vitest) | **80 / 80** | écrans + i18n + comparaison maquette |
-| Build web + budget | ✓ | 166.8 / 220 kB gz |
-| Cliquet i18n / rapport nav | ✓ / 0 écart | 5 écrans convertis, nav 76/76 clés × 3 langues |
-| Greps CI | ✓ | 0 en-tête de contexte · 0 branche `demo` · secrets · anthropic |
-| **Industrialisation** (6 harnais neufs) | **registrar 5/5 · Olivia A.1/A.5 6/6 · FAT 4/4 · migrations 5/5 · déploiement 5/5 · BAT 4/4** | R331-R334 + guide C.1 |
+| e2e API (Postgres réel) | **446 / 446** (69 suites) | tout le backend tenant + série ES (es-store, souscription, alerte, backtest, shadow, hits, pep) |
+| Harnais de règles (`test:rules`) | **exit 0** (label CI 526/526) | R1..R417 + IAM + corpus + miroir no-drift + inférence IN/DS/LG/CO |
+| Moteur CPSI (Python, runner L1) | **20 / 20 suites** + canari propagation OK | R63..R86 + PC-20 + analytique 2G (bloc 20) |
+| Contrats Nest↔Python | **4/4** contrat + **3/3** cohérence PEP | L1 R248 · L4 ADR-PEP-001 |
+| Gate screening | **4/4** matcher (R405-R407 · R410) | golden 127 cas, planchers qualité/perf/non-perte/non-latin |
+| Front (vitest) | **116 / 116** (7 fichiers) | écrans + i18n + FilterBar + checklist inférence + sincérité screening |
+| Build web + budget | ✓ | core **222.4 / 225 kB gz** + packs langue 4.6 kB (paresseux) |
+| Console vendor (séparée) | **6 / 6** | R319/R320 versant vendor |
+| Lint + typecheck (codes de sortie) | **exit 0 / exit 0** | eslint src · tsc --noEmit |
+| CI GitHub sur HEAD | **verte** (2× CI + fat-visuel) | greps bloquants, snapshot surface API RB-07, industrialisation R331-R334, cliquet i18n |
 
-## 3. Périmètre fonctionnel livré
+## 4. Périmètre fonctionnel livré
 
-- **Socle** : multi-tenant RLS FORCE, JWT RS256/JWKS (contexte 100 % du jeton — R328,
-  en-têtes morts), rate limiting login R296 (store partageable Redis), en-têtes de
-  sécurité (ASVS V14.4), audit append-only (triggers d'immuabilité).
-- **KYC / onboarding / screening / CoC / review / offboarding** (art. 10a cloisonné) ·
-  **AML** private banking (18 scénarios R189-R206) · **Finance islamique** (Shariah
-  R207-R221) · **CPSI** (score perpétuel, segmentation, risk cases, R63-R86) ·
-  **MROS**, **cross-border**, **legal**, **BI**, **PMS**, **formations**, **business trip**.
-- **Dégel V1-V9** (R297-R323) : flux/txrisk/fx/swift · custody & TA · Builder · regwatch ·
-  legal · BI · mobile banking · console éditeur · Octopulse OpRisk.
-- **Olivia** v1/v1.1 + **v2 agentique** (R259-R266, SW-01..18, 2 missions, missions_actives
-  vide par défaut).
-- **Bacs à sable** BS-01..06 (5 bacs dry-run, zéro mutation prouvée, pont vers paramétrage).
-- **Readiness & pipeline** (R330 : /readyz, /healthz, smoke, journal déploiements).
-- **Tenant de démo GWB** (R329 : seed idempotent par références, histoire complète,
-  DEMO-SCRIPT.md).
-
-## 4. Front : 72/72 écrans expliqués (comparaison maquette)
-
-71 écrans au front tenant (dont les 4 bacs en deep-link vers le hub) + 1 sur l'instance
-vendor séparée = **72/72**, aucun « absent » inexpliqué (COMPARAISON-FRONT-HTML.md).
-Palette : cœur identique à la maquette + accents par module (G3 levé), prouvé en CI (FE-CMP).
+Tout le périmètre du certificat précédent (socle multi-tenant RLS FORCE + JWT RS256,
+KYC/onboarding/screening/CoC/review/offboarding, AML PB R189-R206, Shariah R207-R221,
+CPSI R63-R86, MROS, cross-border, legal, BI, PMS, formations, trips, dégel V1-V9
+R297-R323, Olivia v1/v1.1/v2 agentique R259-R266, bacs à sable, readiness R330, tenant
+démo GWB R329, industrialisation R331-R334), PLUS le §2 ci-dessus. Architecture inchangée :
+**journal immuable + état à date (R48) + référentiels versionnés par date d'effet** —
+le cœur reste CRUD-primaire ; seul le sidecar surveillance-es est event-sourcé, et il
+est dormant jusqu'à bascule humaine.
 
 ## 5. Infra & sécurité PRÉPARÉES (à appliquer par un humain)
 
-- `infra/` : Terraform Exoscale, WAL-G + restore-test chronométré, compose 2-instances +
-  Redis AOF + Caddy TLS/HSTS, règles d'alerte (dead-letters, jauge R250, backups).
-- `docs/SECURITE.md` : grille ASVS L2 contre le code réel + CI sécurité (audit deps, ZAP
-  gated, grep secrets). RUNBOOK-OPS §8 : expand/contract. §9 : seed/purge démo.
+Inchangé : `infra/` (Terraform Exoscale, WAL-G + restore-test, compose 2-instances,
+Redis AOF, Caddy TLS/HSTS, alertes) · `docs/SECURITE.md` (ASVS L2, CI sécurité) ·
+RUNBOOK-OPS §8 expand/contract, §9 seed/purge démo.
 
-## 6. Chantier de fond CONTINU (non bloquant)
+## 6. Décisions HUMAINES en attente (non codables)
 
-- **i18n cliquet** : 5 écrans convertis (t() + tokens), ~67 restants — mécanique, par
-  tranches. La nav est déjà 100 % traduite (72/72 clés × EN/DE/IT).
+- **Bascule ES-4** : shadow → actif sur la foi du rapport de réconciliation (critères
+  oui/no explicites : zéro alerte existante manquée par ES, écarts additionnels tous
+  expliqués). C'est elle qui autorise le discours commercial §7 du doc ES.
+- **DIV-1 / DIV-2** (`MIGRATION_DIVERGENCES.md`) : harmonisation gardes↔ledger
+  (expiration des pièces dans la validation ? revalidation sur hit post-visas ?) =
+  décision produit/réglementaire.
+- **Lot C — 9 R-Q ⚙** (R5, R17, R19, R25, R37, R41, R43, R45, R47) : valeurs à arbitrer
+  par la banque via le questionnaire R-Q signé (prérequis contractuel). Mécanisme prêt.
+- Actes opérationnels : `terraform apply` (restore testé = critère) · canal d'alerte
+  réel · pentest (dossier ASVS = sa matière) · avocat CO art. 332 · marque O-Live.
 
-## 6bis. Industrialisation livrée (R331-R334 + guide C.1)
+## 7. Backlogs de code DOCUMENTÉS (non bloquants)
 
-Six chantiers, chacun sous harnais + porte CI (`tools/{registrar,olivia-eval,fat,migrations,
-deploiement,bat}`) :
-- **R331 registrar** (IX) : boîte d'entrée `spec/inbox/` indexée sans main, PR de ratification
-  auto — **le merge d'Ali est l'acte** (jamais d'auto-ratification, jamais de renumérotation).
-- **Olivia A.1/A.5** : golden 200 (langue 100 %, 0 faux positif) · attaque **résistance 52.4 %**
-  publiée (`SECURITE.md`), cliquet anti-dégradation ; zéro appel modèle (R167).
-- **R332 FAT** (FB) : 6 parcours, traçabilité générée **anti-fiction** (0 orphelin) ; recette
-  visuelle Playwright non bloquante (job séparé).
-- **R334 migrations** (MG) : expand/contract, no-mutation append-only (24 tables, source unique),
-  backfill idempotent, répétition hebdo restore→migrate→FAT.
-- **Guide C.1** : `docs/DEPLOIEMENT.md` généré du pipeline (no-drift) ; prod jamais automatique.
-- **R333 BAT** (FB) : cahier généré filtré par licence, écran léger, porte de promotion visée R15.
+- **Catalogue C6** (`docs/notes/L5-events-todo.md`) : 568 types « en attente » à
+  schématiser par familles ; creates directs restants à basculer vers `emitEvent` ;
+  garde d'inventaire `--generer` à envisager.
+- **ES ↔ catalogue** (`docs/notes/ES-catalogue-gaps.md`) : 4 types en garde locale à
+  monter au catalogue puis étendre `DU_CATALOGUE`.
+- **i18n cliquet** : conversion des écrans restants par tranches (la nav est 100 %
+  traduite × 4 langues ; le cliquet CI interdit toute régression).
+- **AML gap** : activation par tenant des règles à intégration externe (prix HS,
+  conteneurs, on-chain) quand les données arrivent.
 
-## 7. Ce qui reste = ACTES HUMAINS uniquement
+## 8. Continu hors code (playbook)
 
-`terraform apply` (avec restauration testée = critère) · brancher le canal d'alerte réel ·
-commander le pentest (dossier ASVS = sa matière) · avocat CO art. 332 · marque O-Live.
+PV-4 pricing (guide + 10 entretiens EAM/fiduciaires) · PS-3 revue croisée de chaque
+lot vs la spec v2 (`docs/OLive-Specification-Produit-v2-PostAudit.docx`) · PS-1 revue
+OKR mensuelle (kill criteria oui/non).
 
-## 8. Note de fiabilité des tests
+## 9. Note de fiabilité des tests
 
-Les suites Olivia v2 (fat-swarm) invoquent le pont Python et peuvent TIMEOUT sous charge
-CPU/DB froide (flaky environnemental, jamais un échec produit) : un second passage rend
-336/336 systématiquement. Consigné pour la CI (retry sur ces suites recommandé).
+Les suites Olivia v2 (pont Python) et les assertions de latence peuvent TIMEOUT sous
+charge CI froide (flaky environnemental, CERTIFICAT §8 historique) : la CI joue UN
+second passage (step 4) — un vrai échec échoue aux deux, seul un flake est absorbé.
+Rien d'autre n'est retenté nulle part.
