@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
@@ -130,11 +130,14 @@ export class PersonnesService {
   }
 
   // ── R32 : PEPisation contagieuse — tâche par dossier, AUCUNE bascule de risque ──
-  async declarerPep(ctx: Ctx, personId: string, source: string) {
+  // ADR-PEP-001 (P-L4-1) : `sourceHitId` optionnel = TRACE LIANTE quand la décision humaine répond à
+  // une proposition issue d'un hit de liste PEP (le hit propose, l'humain décide — R44).
+  async declarerPep(ctx: Ctx, personId: string, source: string, sourceHitId?: string) {
     return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await tx.person.update({ where: { id: personId }, data: { statutPep: true } });
-      await this.emit(tx, ctx.tenantId, "personne.pep.declare", personId, { source });
+      await this.emit(tx, ctx.tenantId, "personne.pep.declare", personId,
+        { source, ...(sourceHitId ? { sourceHitId } : {}) });
       for (const d of await this.dossiersDe(tx, ctx, personId)) {
         await this.emit(tx, ctx.tenantId, "tache.reevaluation_pep", personId, { dossier: d.id });
         await this.emit(tx, ctx.tenantId, "personne.pep.propage", personId, { dossier: d.id });
@@ -170,12 +173,27 @@ export class PersonnesService {
   }
 
   // ── R33 : levée = décision humaine, tracée (décideur = jeton) ──
-  async leverPep(ctx: Ctx, personId: string) {
+  async leverPep(ctx: Ctx, personId: string, sourceHitId?: string) {
     return this.prisma.$transaction(async (tx: Tx) => {
       await this.personne(tx, ctx, personId);
       await tx.person.update({ where: { id: personId }, data: { statutPep: false } });
-      await this.emit(tx, ctx.tenantId, "personne.pep.leve", personId, { decideur: ctx.userId });
+      await this.emit(tx, ctx.tenantId, "personne.pep.leve", personId,
+        { decideur: ctx.userId, ...(sourceHitId ? { sourceHitId } : {}) });
       await this.audit.log(ctx.tenantId, ctx.userId, "PEP_LIFTED", personId);
+    });
+  }
+
+  // ── ADR-PEP-001 (P-L4-1) : REJETER une proposition de PEPisation issue d'un hit — motif OBLIGATOIRE
+  // (R7). Décision humaine tracée ; n'écrit JAMAIS statutPep (la personne reste non-PEP, le registre
+  // R50 verra la proposition rejetée). `cle` = clé idempotente de la proposition (pep:sujet:uid:version).
+  async rejeterPropositionPep(ctx: Ctx, cle: string, motif: string) {
+    if (!cle || !cle.trim()) throw new BadRequestException("cle de proposition requise");
+    if (!motif || !motif.trim()) throw new BadRequestException("R7 : rejeter une proposition PEP exige un motif");
+    return this.prisma.$transaction(async (tx: Tx) => {
+      await this.emit(tx, ctx.tenantId, "pep.proposition.rejetee", cle,
+        { cle, motif: motif.trim(), par: ctx.userId });
+      await this.audit.log(ctx.tenantId, ctx.userId, "PEP_PROPOSITION_REJECTED", cle);
+      return { cle, rejetee: true };
     });
   }
 

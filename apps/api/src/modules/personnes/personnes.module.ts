@@ -21,6 +21,11 @@ export class PersonnesController {
   @Get(":id/relations")      relations(@Req() r: any, @Param("id") id: string) { return this.svc.relationsDe(r.ctx, id); }
   @Post(":id/coc")           coc(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.changementCirconstances(r.ctx, id, b?.champ, b?.valeur, b?.document); } // R30/R42
   @Post(":id/corroboration") corrob(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.signalerDivergence(r.ctx, id, b?.champ, b?.constats ?? {}); }         // R36 (Vague 5)
+  // ── ADR-PEP-001 (P-L4-1) : la DÉCISION PEP est humaine et passe par ces chemins — sourceHitId
+  //    optionnel = trace liante vers la proposition issue d'un hit (le hit propose, jamais ne bascule).
+  @Post(":id/pep")           pep(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.declarerPep(r.ctx, id, b?.source, b?.sourceHitId); }                     // R32
+  @Post(":id/pep/lever")     depep(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.leverPep(r.ctx, id, b?.sourceHitId); }                                 // R33
+  @Post("pep/propositions/rejeter") rejetPep(@Req() r: any, @Body() b: any) { return this.svc.rejeterPropositionPep(r.ctx, b?.cle, b?.motif); }                                     // R7
 }
 
 @Module({ controllers: [PersonnesController], providers: [ PersonnesService], exports: [PersonnesService] })

@@ -25,7 +25,7 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 // ── Faux Prisma : tables en mémoire, filtres tenant réellement appliqués ──
 function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = [], transactions: any[] = []) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { clients, scenarios, persons, onboardings, transactions, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[] };
+  const db = { clients, scenarios, persons, onboardings, transactions, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[], tasks: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'hit') return match(db.hits.find((h) => h.id === row.hitId) ?? {}, v);
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -43,7 +43,9 @@ function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], 
     amlScenario: table(db.scenarios, 'SCN'),                    // R414 : config versionnée du moteur
     person: table(db.persons, 'PER'), onboarding: table(db.onboardings, 'ONB'),   // R100 : sujets étendus
     transaction: table(db.transactions, 'TXN'),                // R100 : contreparties du journal (core banking)
-    domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; } },
+    task: table(db.tasks, 'TSK'),                              // ADR-PEP-001 : tâche compliance de proposition
+    domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; },
+      findFirst: async ({ where }: any = {}) => db.events.find((e) => match(e, where)) ?? null },
   };
   p.$transaction = async (fn: any) => fn(p);
   return p;
@@ -353,6 +355,35 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     const p = fakePrisma([], [], [], [], txns); const s = new ScreeningService(p, fakeAudit());
     const r: any = await s.runFlux(CTX, { ...CFG, entries: [ENTREE], clientId: 'c2' });
     ok(r.transactions === 1 && p._db.hits[0].clientId === 'B1:contrepartie', 'périmètre = écritures du client c2 seul');
+  });
+
+  // ── ADR-PEP-001 (P-L4-1) — routage PEP : hit sur liste PEP → PROPOSITION, jamais une bascule ──
+  await it('ADR-PEP-001 : hit sur liste catégorie PEP → pep.proposition.creee + tâche COMPLIANCE, statutPep JAMAIS écrit', async () => {
+    const persons = [{ id: 'per1', tenantId: 't1', nom: 'Viktor Volkov', etat: 'ACTIVE', statutPep: false, donnees: { date_naissance: '1965-03-12' } }];
+    const p = fakePrisma([], [], persons); const s = new ScreeningService(p, fakeAudit());
+    const r: any = await s.run(CTX, { ...CFG, liste: 'PEP-LISTE', entries: [ENTREE], sujet: 'personne', categorie: 'PEP' });
+    ok(r.hits.length === 1, 'un hit au-dessus du seuil');
+    const prop = p._db.events.find((e: any) => e.type === 'pep.proposition.creee');
+    ok(!!prop && prop.payload.personId === 'per1' && prop.payload.hitId === r.hits[0].id
+      && prop.payload.listeVersion === CFG.version && typeof prop.payload.score === 'number' && !!prop.payload.decomposition,
+      'proposition portant hitId, listeVersion, score, décomposition');
+    ok(p._db.tasks.some((t: any) => t.type === 'PEP_PROPOSITION' && t.assigneeId === 'COMPLIANCE' && t.subjectId === 'per1'),
+      'tâche assignée au rôle compliance');
+    ok(p._db.persons[0].statutPep === false, 'R44 : AUCUNE bascule automatique de statutPep');
+  });
+  await it('ADR-PEP-001 : idempotence — même hit, même version de liste = UNE seule proposition', async () => {
+    const persons = [{ id: 'per1', tenantId: 't1', nom: 'Viktor Volkov', etat: 'ACTIVE', statutPep: false, donnees: {} }];
+    const p = fakePrisma([], [], persons); const s = new ScreeningService(p, fakeAudit());
+    await s.run(CTX, { ...CFG, liste: 'PEP-LISTE', entries: [ENTREE], sujet: 'personne', categorie: 'PEP' });
+    await s.run(CTX, { ...CFG, liste: 'PEP-LISTE', entries: [ENTREE], sujet: 'personne', categorie: 'PEP' });   // rejeu même version
+    const props = p._db.events.filter((e: any) => e.type === 'pep.proposition.creee');
+    ok(props.length === 1, `une seule proposition attendue (obtenu ${props.length})`);
+  });
+  await it('ADR-PEP-001 : liste NON-PEP (sanctions) → hit sans proposition de PEPisation', async () => {
+    const { p, s } = mk();
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE] });                    // catégorie absente = sanctions
+    ok(r.hits.length === 1 && !p._db.events.some((e: any) => e.type === 'pep.proposition.creee'),
+      'aucune proposition hors catégorie PEP');
   });
 
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);

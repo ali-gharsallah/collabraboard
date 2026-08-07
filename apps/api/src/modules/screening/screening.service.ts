@@ -99,6 +99,9 @@ export interface RunDto {
   // moteur (params.moteur) et du pré-filtre (params.prefiltre) en vigueur à la date du run (R29).
   // Un override d'appel reste possible (moteurConfig) et PRIME sur le scénario ; tout est tracé.
   scenarioCode?: string; moteurConfig?: Record<string, number | boolean>;
+  // ADR-PEP-001 (P-L4-1) — CATÉGORIE de la liste screenée. "PEP" active le ROUTAGE : un hit au-dessus
+  // du seuil devient une PROPOSITION de PEPisation (événement + tâche compliance) — jamais une bascule.
+  categorie?: string;
 }
 // Forme COMMUNE d'un sujet screené, quel que soit sa table d'origine (client/personne/prospect).
 type Sujet = { id: string; name: string; dob?: string; est_entite: boolean; nationalites?: string[] };
@@ -231,6 +234,28 @@ export class ScreeningService {
         // R414/R415 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
         config: { ...cfg, clientIds: sujets.map((s) => s.id) } as any } });
       for (const h of hits) await tx.screeningHit.update({ where: { id: h.id }, data: { runId: run.id } });
+
+      // ── ADR-PEP-001 / R44 (P-L4-1) — ROUTAGE PEP : sur une liste de catégorie PEP, chaque hit
+      // au-dessus du seuil de revue devient une PROPOSITION de PEPisation : événement
+      // pep.proposition.creee + tâche assignée au rôle compliance. JAMAIS de bascule de statutPep ici
+      // (l'autorité reste personnes.service, décision humaine — le screening PROPOSE). Idempotence :
+      // même (sujet, entrée, version de liste) = une seule proposition, clé déterministe en aggregateId.
+      if ((dto.categorie ?? "").toUpperCase() === "PEP") {
+        for (const h of hits) {
+          const t = trouves.find((x) => x.sujetId === h.clientId && x.uid === h.entreeUid);
+          const cle = `pep:${h.clientId}:${h.entreeUid}:${dto.version}`;
+          const deja = await tx.domainEvent.findFirst({ where: {
+            tenantId: ctx.tenantId, type: "pep.proposition.creee", aggregateId: cle } });
+          if (deja) continue;
+          await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "pep.proposition.creee",
+            aggregateId: cle, payload: { cle, hitId: h.id, personId: h.clientId, liste: dto.liste,
+              listeVersion: dto.version, score: h.score, decomposition: t?.detail ?? null } } });
+          await tx.task.create({ data: { tenantId: ctx.tenantId, assigneeId: "COMPLIANCE",
+            type: "PEP_PROPOSITION", statut: "OUVERTE", createdAt: at,
+            subjectType: "personne", subjectId: h.clientId, origine: cle } });
+        }
+      }
+
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_RUN",
         `${dto.liste}@${dto.version}:${sujets.length} ${sujetType}(s), ${hits.length} hits`);
       return { run, hits };
