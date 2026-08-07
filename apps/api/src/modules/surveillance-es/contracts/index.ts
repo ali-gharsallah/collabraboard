@@ -1,26 +1,32 @@
 import { z } from "zod";
+import { SCHEMAS_EVENEMENTS } from "../../../contracts/events-catalog";
 import * as txFlux from "./tx-flux-importee.v1";
 import * as kycValidated from "./kyc-validated.v1";
-import * as escalade from "./screening-escalade-proposee.v1";
-import * as pepCreee from "./pep-proposition-creee.v1";
-import * as pepRejetee from "./pep-proposition-rejetee.v1";
 import * as pepDeclare from "./personne-pep-declare.v1";
 import * as pepLeve from "./personne-pep-leve.v1";
 
 /**
- * ES-1 (docs/SURVEILLANCE-ES.md §2) — registre des gardes ANTI-CORRUPTION du contexte
- * surveillance-es : un fichier par type consommé, version EXPLICITE. Ces schémas sont la
- * frontière du contexte — un payload non conforme part en quarantaine (jamais de crash,
- * jamais de skip silencieux). ES-5 remplacera les définitions locales par des références au
- * catalogue central (apps/api/src/contracts/events-catalog.ts) pour les types qu'il couvre.
+ * ES-5 (docs/SURVEILLANCE-ES.md §4) — gardes anti-corruption ADOSSÉES AU CATALOGUE CENTRAL
+ * (apps/api/src/contracts/events-catalog.ts, P-L5-2) pour les types qu'il couvre :
+ * screening.escalade.proposee, pep.proposition.creee, pep.proposition.rejetee — ZÉRO
+ * duplication de schéma (les définitions locales de ces trois types sont SUPPRIMÉES).
+ * Les schémas LOCAUX ne subsistent que pour les types ABSENTS du catalogue, listés dans
+ * docs/notes/ES-catalogue-gaps.md (tx.flux.importee, kyc.validated, personne.pep.declare,
+ * personne.pep.leve). NB frontière : les schémas du catalogue sont .strict() (contrat au
+ * write) — plus stricts que les gardes locales (additif toléré) ; assumé : un événement qui
+ * passe emitEvent passe la garde ES par construction.
  */
 export type GardeEs = { version: number; schema: z.ZodTypeAny };
 
-export const SCHEMAS_ES: Readonly<Record<string, GardeEs>> = Object.freeze(
-  Object.fromEntries(
-    [txFlux, kycValidated, escalade, pepCreee, pepRejetee, pepDeclare, pepLeve]
-      .map((m) => [m.TYPE, { version: m.VERSION, schema: m.schema }]),
-  ),
-);
+const DU_CATALOGUE = ["screening.escalade.proposee", "pep.proposition.creee", "pep.proposition.rejetee"] as const;
+
+export const SCHEMAS_ES: Readonly<Record<string, GardeEs>> = Object.freeze({
+  ...Object.fromEntries(DU_CATALOGUE.map((t) => {
+    const c = SCHEMAS_EVENEMENTS[t];
+    return [t, { version: c.version, schema: c.schema }];
+  })),
+  ...Object.fromEntries([txFlux, kycValidated, pepDeclare, pepLeve]
+    .map((m) => [m.TYPE, { version: m.VERSION, schema: m.schema }])),
+});
 
 export const TYPES_CONSOMMES: ReadonlySet<string> = new Set(Object.keys(SCHEMAS_ES));
