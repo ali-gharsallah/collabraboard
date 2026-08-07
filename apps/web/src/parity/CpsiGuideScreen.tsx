@@ -5,7 +5,7 @@ import { CPSI_ETAPES, CPSI_PIEGES, CPSI_DEMO } from "./cpsi-guide-support";
 // Source : docs/reference/olive-demo.html 18805–18867 — CpsiGuideScreen (CPSI — Profilage continu, guide).
 export function CpsiGuideScreen() {
   const [ong, setOng] = useState("process");
-  const ONG: [string, string][] = [["process", "🔄 Le process en 7 étapes"], ["demo", "🎬 Scénario de démo (7 min)"], ["pieges", "⚠ Pièges & réponses"]];
+  const ONG: [string, string][] = [["process", "🔄 Le process en 7 étapes"], ["scenario7min", "🎬 Scénario de démo (7 min)"], ["pieges", "⚠ Pièges & réponses"]];
   const card: React.CSSProperties = { background: T.surface, border: "1px solid " + T.line, borderRadius: 12, padding: 16 };
   return (
     <div>
@@ -46,7 +46,7 @@ export function CpsiGuideScreen() {
           </div>
         </div>
       )}
-      {ong === "demo" && (
+      {ong === "scenario7min" && (
         <div style={card}>
           <div style={{ fontSize: 12, color: T.inkMid, marginBottom: 14, lineHeight: 1.6 }}>Déroulé face à un Compliance Officer ou un CRO. Chaque étape se joue dans la démo.</div>
           {CPSI_DEMO.map((st: any, i: number) => (

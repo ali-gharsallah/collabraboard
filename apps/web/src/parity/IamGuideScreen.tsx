@@ -6,7 +6,7 @@ import { IAM_BRIQUES, IAM_DEMO_STEPS, IAM_OBJECTIONS } from "./iam-guide-support
 
 export default function IamGuideScreen() {
 const [ong, setOng] = useState("briques");
-const ONG = [["briques", "🧩 Ce que couvre l'IAM"], ["demo", "🎬 Scénario de démo (7 min)"], ["objections", "💬 Objections fréquentes"]];
+const ONG = [["briques", "🧩 Ce que couvre l'IAM"], ["scenario7min", "🎬 Scénario de démo (7 min)"], ["objections", "💬 Objections fréquentes"]];
 return (React.createElement("div", null,
 React.createElement("div", { style: { marginBottom: 14 } },
 React.createElement("div", { style: { fontSize: 21, fontWeight: 800, color: T.ink } }, "IAM — Sécurité & accès"),
@@ -30,7 +30,7 @@ React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft } },
 "Preuve : ",
 b.preuve)));
 }))),
-ong === "demo" && (React.createElement("div", { style: { background: "#fff", border: `1px solid ${T.line}`, borderRadius: 12, padding: 18 } },
+ong === "scenario7min" && (React.createElement("div", { style: { background: "#fff", border: `1px solid ${T.line}`, borderRadius: 12, padding: 18 } },
 React.createElement("div", { style: { fontSize: 12, color: T.inkMid, marginBottom: 14, lineHeight: 1.6 } }, "Déroulé conseillé face à un Compliance Officer ou un CISO de banque privée. Chaque étape se joue dans la démo."),
 IAM_DEMO_STEPS.map(function (st: any, i: number) {
 return (React.createElement("div", { key: i, style: { display: "flex", gap: 12, padding: "11px 0", borderBottom: i < IAM_DEMO_STEPS.length - 1 ? `1px solid ${T.lineSoft}` : "none" } },

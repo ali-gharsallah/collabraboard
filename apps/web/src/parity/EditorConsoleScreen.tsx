@@ -18,7 +18,7 @@ export default function EditorConsoleScreen({ user = { role: "EDITOR" } }: { use
     return React.createElement("div", { style: { background: T.redSoft, border: "1px solid " + T.red + "44", borderRadius: 14, padding: 24, color: T.red, fontSize: 13 } }, "🔒 Accès réservé à l'éditeur du logiciel (Olive) — Product Owner, support éditeur ou administrateur technique certifié. Non accessible aux utilisateurs de la banque.");
   }
   licenseDaysRemaining();
-  const TABS = [["license", "🔑 Licence"], ["env", "🖥 Environnements"], ["modules", "▦ Modules"], ["demo", "⏱ Démo / POC"], ["etl", "⇌ ETL & Migration"]];
+  const TABS = [["license", "🔑 Licence"], ["env", "🖥 Environnements"], ["modules", "▦ Modules"], ["poc", "⏱ Démo / POC"], ["etl", "⇌ ETL & Migration"]];
   return (React.createElement("div", null,
     React.createElement("div", { style: { marginBottom: 16 } },
       React.createElement("div", { style: { fontSize: 11, color: T.violet, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 } }, "Vendor Console — On-Premise Licensing"),
@@ -72,7 +72,7 @@ export default function EditorConsoleScreen({ user = { role: "EDITOR" } }: { use
           React.createElement("input", { type: "checkbox", checked: on, onChange: function () { toggleLicenseModule(m.id); re(); }, style: { accentColor: T.olive600 } }),
           React.createElement("span", { style: { fontSize: 12, fontWeight: on ? 700 : 500, color: on ? T.ink : T.inkMid } }, m.label)));
       })))),
-    tab === "demo" && (React.createElement("div", { style: card },
+    tab === "poc" && (React.createElement("div", { style: card },
       React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 4 } }, "Licences Démo / POC — temporaires"),
       React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 12 } }, "À expiration : blocage de création, passage en lecture seule, message « Votre environnement Proof Of Concept a expiré. Veuillez contacter Olive. »"),
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, DEMO_LICENSES.map(function (d: any) {
