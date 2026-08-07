@@ -13,6 +13,7 @@ vérité**. Un seul certificat, un seul cahier, zéro doublon.
 | Document | Objet | Date |
 |---|---|---|
 | **`docs/CERTIFICAT-ETAT.md`** | **Certificat d'état unique** : écrans réels, routes, tests, taux de réussite, rejeu à date, régressions | 2026-08-07 |
+| `docs/API-SURFACE.md` | Surface d'API GÉNÉRÉE du snapshot RB-07 (`tools/api-contract/generer-doc.mjs`) — la doc vivante reste `GET /v1/apidoc` | 2026-08-07 |
 | `docs/ETAT-REEL-VERIFIE.md` | Diagnostic prouvé par commandes (volume, modules, capacités) + addendum Vague 1 | 2026-07-22 |
 | `docs/DECALAGE-FRONT-BACK.md` | Cartographie frontend ↔ backend + addendum Vague 1 (6 écrans) | 2026-07-22 |
 | `spec/vague2-scenarios/VAGUE2-ECRANS.feature` | Gherkin spec-first Vague 2 (Dossiers · Pièces GED) | 2026-07-22 |
