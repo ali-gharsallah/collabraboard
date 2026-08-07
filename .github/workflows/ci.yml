@@ -302,8 +302,8 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:aml-gap
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (460 verts, +5 catalogue C6 L5) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 460/460)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (463 verts, +3 C7-C8 L5) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 463/463)"
         working-directory: apps/api
         run: pnpm run test:rules
 

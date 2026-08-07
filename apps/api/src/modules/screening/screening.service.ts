@@ -5,7 +5,7 @@ import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/scr
 import { Tx } from "../../common/tx";
 import { parserSwift } from "../txflux/swift.module";
 import { emitEvent } from "../../common/domain-event";
-import { construireIndex, construireIndexCache, construireIdf, candidats, rapprocherDetail } from "@olive/screening-engine";
+import { construireIndex, construireIndexCache, construireIdfLocal, candidats, rapprocherDetail } from "@olive/screening-engine";
 
 /**
  * Cablage persistant des regles screening R100->R103 (SC-01..04, ratifiees 15.07.2026).
@@ -17,8 +17,8 @@ import { construireIndex, construireIndexCache, construireIdf, candidats, rappro
  * pre-filtre trigramme). Le score persiste est le COMPOSITE 0-100, plus jamais 100|0 binaire.
  * R409 - l'index trigramme est construit UNE FOIS au chargement de la liste (pas par requete) ;
  * chaque client est pre-filtre (candidats) avant le score fin. R411 - le hit stocke la decomposition.
- * NB (dette Phase 2) : l'IDF du moteur est un etat MODULE-global ; on score en une passe SYNCHRONE
- * (avant tout await) pour l'isoler - a instancier par run le jour du multi-tenant vraiment concurrent.
+ * C8 (L5) : l'IDF est INSTANCIÉ PAR RUN (construireIdfLocal) — plus d'état module-global, les runs
+ * concurrents ne se contaminent pas ; la passe de scoring reste synchrone (lisibilité, pas nécessité).
  */
 
 export type SujetType = "client" | "personne" | "prospect" | "transaction";
@@ -103,13 +103,16 @@ export interface RunDto {
   // ADR-PEP-001 (P-L4-1) — CATÉGORIE de la liste screenée. "PEP" active le ROUTAGE : un hit au-dessus
   // du seuil devient une PROPOSITION de PEPisation (événement + tâche compliance) — jamais une bascule.
   categorie?: string;
+  // C7 (L5) — un override d'appel (moteurConfig) accepté EXIGE une justification (R7), tracée sur le run.
+  justification?: string;
 }
 // Forme COMMUNE d'un sujet screené, quel que soit sa table d'origine (client/personne/prospect).
 type Sujet = { id: string; name: string; dob?: string; est_entite: boolean; nationalites?: string[] };
 type Ctx = { tenantId: string; userId: string; role: string };
 // Config EFFECTIVE d'un run + sa provenance (persistée sur le run pour le rejeu R48/R49).
 type ConfigRun = { moteur: Record<string, number | boolean>; prefiltre: Record<string, number>;
-  source: { scenarioCode: string; scenarioVersion: number } | null };
+  source: { scenarioCode: string; scenarioVersion: number } | null;
+  override?: { justification: string; knobs: string[] } | null };   // C7 — override gouverné, tracé
 
 // Decomposition explicable persistee (R411) - prepare R44 (le systeme explique, il ne decide pas).
 type HitDetail = { via: string; nameScore: number; typePenalty: number; dobContribution: number; natContribution: number };
@@ -123,9 +126,10 @@ export class ScreeningService {
   /**
    * R414 — résout la config EFFECTIVE d'un run. Base : le scénario VERSIONNÉ en vigueur à la date
    * (plus haute version active, effet ≤ date — R29), qui porte params.moteur / params.prefiltre.
-   * Override : les paramètres d'appel (moteurConfig, prefiltre) priment, pour tuning/urgence — et
-   * la config effective + la provenance sont TRACÉES sur le run (rejeu). Sans scénario ni override :
-   * moteur vide → défauts R413 (comportement inchangé), pré-filtre = celui de l'appel.
+   * C7 (L5) — l'override d'appel (moteurConfig) n'écrase plus SILENCIEUSEMENT la config gouvernée :
+   * il exige (1) l'opt-in tenant `allowCallOverride` (tenant.settings, défaut false — sinon REFUS
+   * typé) et (2) une `justification` (R7), TRACÉE sur le run (rejeu R48/R49). Sans scénario ni
+   * override : moteur vide → défauts R413 (comportement inchangé), pré-filtre = celui de l'appel.
    */
   private async resoudreConfig(tx: Tx, tenantId: string, dto: RunDto, at: string): Promise<ConfigRun> {
     let scMoteur: Record<string, number | boolean> = {}, scPrefiltre: Record<string, number> = {};
@@ -142,9 +146,18 @@ export class ScreeningService {
         source = { scenarioCode: env.code, scenarioVersion: env.version };
       }
     }
-    const moteur = { ...scMoteur, ...(dto.moteurConfig ?? {}) };        // l'appel prime sur le scénario
+    let override: ConfigRun["override"] = null;
+    if (dto.moteurConfig && Object.keys(dto.moteurConfig).length > 0) {   // C7 : l'override est un ACTE gouverné
+      const t = await tx.tenant.findFirst({ where: { id: tenantId } });
+      if (((t?.settings as any) ?? {}).allowCallOverride !== true)
+        throw new BadRequestException("C7 : override de la config gouvernée refusé — le tenant n'a pas activé allowCallOverride");
+      if (!dto.justification || !dto.justification.trim())
+        throw new BadRequestException("C7/R7 : un override accepté exige une justification");
+      override = { justification: dto.justification.trim(), knobs: Object.keys(dto.moteurConfig) };
+    }
+    const moteur = { ...scMoteur, ...(dto.moteurConfig ?? {}) };        // l'appel prime — mais gouverné (C7)
     const prefiltre = { ...scPrefiltre, ...(dto.prefiltre ?? {}) };
-    return { moteur, prefiltre, source };
+    return { moteur, prefiltre, source, override };
   }
 
   /**
@@ -197,7 +210,9 @@ export class ScreeningService {
         : null;
       const cacheKey = `${dto.liste}@${dto.version}${phon ? `#${phon.phonetiqueMethode}` : ""}`;
       const idx = construireIndexCache(cacheKey, dto.entries as any, phon ?? undefined);
-      if (dto.entries.length >= 2) construireIdf(dto.entries as any);
+      // C8 (L5) — IDF LOCAL AU RUN : plus d'état module-global ; deux runs interleavés (tenants/listes
+      // différents) ne peuvent plus se contaminer. IDF : n<2 donnerait log(1)=0 -> NaN ; construit à partir de 2.
+      const idf = dto.entries.length >= 2 ? construireIdfLocal(dto.entries as any) : undefined;
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
       // meilleur candidat au-dessus du seuil (R408). Isole l'etat IDF global des await de persistance.
@@ -205,7 +220,7 @@ export class ScreeningService {
       for (const s of sujets) {
         const requete = { nom: s.name, dob: s.dob, est_entite: s.est_entite, nationalites: s.nationalites }; // R417 - nationalité
         const cand = candidats(idx, s.name, { ...cfg.prefiltre, ...(phon ?? {}) }); // R409/R414/R416 - pre-filtre (config + phonétique en vigueur)
-        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur); // R408/R414 - score fin (knobs en vigueur)
+        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur, idf); // R408/R414 - score fin (knobs en vigueur), IDF du run (C8)
         if (!r) continue;
         trouves.push({ sujetId: s.id, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
@@ -441,14 +456,14 @@ export class ScreeningService {
       ? { phonetique: true as const, phonetiqueMethode: ((cfg.moteur.phonetiqueMethode as string) === "double" ? "double" : "metaphone") as "metaphone" | "double" }
       : null;
     const idx = construireIndex(entries as any, phon ?? undefined);
-    if (entries.length >= 2) construireIdf(entries as any);
+    const idf = entries.length >= 2 ? construireIdfLocal(entries as any) : undefined;   // C8 — local au rejeu
     const rejoue: { clientId: string; entreeUid: string; score: number }[] = [];
     for (const c of clients) {
       const st = (c as any).structure ?? (c as any).type;
       const requete = { nom: c.name, dob: (c as any).dateNaissance ?? (c as any).date_naissance ?? undefined,
         est_entite: st ? st !== "PP" : false };
       const cand = candidats(idx, c.name, { ...(cfg.prefiltre ?? {}), ...(phon ?? {}) });
-      const r = rapprocherDetail(requete, cand, run.seuil, cfg.moteur ?? {});
+      const r = rapprocherDetail(requete, cand, run.seuil, cfg.moteur ?? {}, idf);
       if (r) rejoue.push({ clientId: c.id, entreeUid: r.uid, score: r.score });
     }
     // Comparaison a l'origine (hits persistes du run) — R48/R49 : meme config → memes hits.

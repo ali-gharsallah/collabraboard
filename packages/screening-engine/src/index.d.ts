@@ -52,11 +52,13 @@ export function clePhonetique(s: string): string;
 export function clesPhonetiques(s: string, config?: ConfigMoteur): string[];  // R416 — clés selon la méthode
 export function doubleMetaphone(s: string): [string, string];                 // R416 — [primaire, secondaire]
 export function clesDouble(s: string): string[];                              // R416 — codes Double Metaphone déduits
-export function construireIdf(entries: EntreeMoteur[]): { df: Map<string, number>; n: number };
-export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): number;
-export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur): Decomposition;
-export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): Resultat | null;
-export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur): ResultatDetaille | null;
+export type Idf = { df: Map<string, number>; n: number };
+export function construireIdf(entries: EntreeMoteur[]): Idf;                 // global (compat bancs)
+export function construireIdfLocal(entries: EntreeMoteur[]): Idf;            // C8 — par run, AUCUN état module-global
+export function scorer(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur, idf?: Idf): number;
+export function scorerDetail(requete: Requete, entree: EntreeMoteur, config?: ConfigMoteur, idf?: Idf): Decomposition;
+export function rapprocher(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur, idf?: Idf): Resultat | null;
+export function rapprocherDetail(requete: Requete, entries: EntreeMoteur[], seuil: number, config?: ConfigMoteur, idf?: Idf): ResultatDetaille | null;
 export function construireIndex(entries: EntreeMoteur[], opts?: OptionsBlocking): IndexTrigramme;
 // PERF (sous R409) — index mémoïsé par clé (ex. `SECO@2026-07-15`) ; invalidé si la liste change.
 // R416 — `opts.phonetique` ajoute un index phonétique ; faire varier `cle` par méthode (ex. `SECO@v#double`).

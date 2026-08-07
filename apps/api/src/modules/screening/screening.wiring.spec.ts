@@ -23,9 +23,9 @@ async function rejects(p: Promise<unknown>, part: string): Promise<void> {
 }
 
 // ── Faux Prisma : tables en mémoire, filtres tenant réellement appliqués ──
-function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = [], transactions: any[] = []) {
+function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], onboardings: any[] = [], transactions: any[] = [], tenants: any[] = []) {
   let seq = 0; const id = (p: string) => `${p}-${++seq}`;
-  const db = { clients, scenarios, persons, onboardings, transactions, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[], tasks: [] as any[] };
+  const db = { clients, scenarios, persons, onboardings, transactions, tenants, runs: [] as any[], hits: [] as any[], quals: [] as any[], events: [] as any[], tasks: [] as any[] };
   const match = (row: any, where: any): boolean => Object.entries(where ?? {}).every(([k, v]: any) => {
     if (k === 'hit') return match(db.hits.find((h) => h.id === row.hitId) ?? {}, v);
     if (v && typeof v === 'object' && 'in' in v) return v.in.includes(row[k]);
@@ -44,6 +44,7 @@ function fakePrisma(clients: any[], scenarios: any[] = [], persons: any[] = [], 
     person: table(db.persons, 'PER'), onboarding: table(db.onboardings, 'ONB'),   // R100 : sujets étendus
     transaction: table(db.transactions, 'TXN'),                // R100 : contreparties du journal (core banking)
     task: table(db.tasks, 'TSK'),                              // ADR-PEP-001 : tâche compliance de proposition
+    tenant: table(db.tenants, 'TEN'),                          // C7 : opt-in allowCallOverride
     domainEvent: { create: async ({ data }: any) => { db.events.push(data); return data; },
       findFirst: async ({ where }: any = {}) => db.events.find((e) => match(e, where)) ?? null },
   };
@@ -180,12 +181,26 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     ok(r.hits.length === 0, 'la V2 future ne s\'applique pas (grandfathering)');
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'c\'est la V1 qui gouverne');
   });
-  await it('R414 override d\'appel prime sur le scénario, et reste tracé', async () => {
-    const { p, s } = mkS([scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })]);
-    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN', moteurConfig: { echelle: 100 } });
+  await it('R414/C7 override d\'appel (opt-in + justification) prime sur le scénario, et reste tracé', async () => {
+    const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), [scn(1, '2020-01-01T00:00:00.000Z', { echelle: 50 })],
+      [], [], [], [{ id: 't1', settings: { allowCallOverride: true } }]);
+    const s = new ScreeningService(p, fakeAudit());
+    const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE], scenarioCode: 'SCN-SCREEN',
+      moteurConfig: { echelle: 100 }, justification: 'Tuning urgence — faux négatifs sur translittérations' });
     ok(r.hits.length === 1, 'l\'override rétablit l\'échelle 100 → hit');
     ok(p._db.runs[0].config.moteur.echelle === 100, 'la config effective (override) est tracée');
     ok(p._db.runs[0].config.source.scenarioVersion === 1, 'le scénario de base reste tracé');
+    ok(p._db.runs[0].config.override.justification.includes('Tuning'), 'C7 : la justification est tracée sur le run');
+  });
+  await it('C7 : override SANS opt-in tenant (allowCallOverride absent/false) → refus typé', async () => {
+    const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), [], [], [], [], [{ id: 't1', settings: {} }]);
+    const s = new ScreeningService(p, fakeAudit());
+    await rejects(s.run(CTX, { ...CFG, entries: [ENTREE], moteurConfig: { echelle: 100 }, justification: 'x' }), 'allowCallOverride');
+  });
+  await it('C7 : override avec opt-in mais SANS justification → refus R7', async () => {
+    const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), [], [], [], [], [{ id: 't1', settings: { allowCallOverride: true } }]);
+    const s = new ScreeningService(p, fakeAudit());
+    await rejects(s.run(CTX, { ...CFG, entries: [ENTREE], moteurConfig: { echelle: 100 } }), 'justification');
   });
 
   // ── R415 — GOUVERNANCE de la config : publier/lister des versions, et REJEU R48/R49 ──
@@ -384,6 +399,29 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
     const r: any = await s.run(CTX, { ...CFG, entries: [ENTREE] });                    // catégorie absente = sanctions
     ok(r.hits.length === 1 && !p._db.events.some((e: any) => e.type === 'pep.proposition.creee'),
       'aucune proposition hors catégorie PEP');
+  });
+
+  // ── C8 (L5) — IDF PAR RUN : deux runs interleavés (tenants + listes différents) rendent des scores
+  //     IDENTIQUES à leurs runs isolés. Scores PARTIELS choisis exprès (un exact=100 masquerait une fuite :
+  //     la pondération IDF ne pèse que sur les appariements partiels). ──
+  await it('C8 : runs concurrents (tenants/listes différents) → scores identiques aux runs isolés (aucune fuite d\'IDF)', async () => {
+    const E1 = [{ uid: 'SAN-1', nom_complet: 'Viktor Volkov', type: 'individu' },
+                { uid: 'SAN-2', nom_complet: 'Ivan Petrov', type: 'individu' }];
+    const E2 = [{ uid: 'PX-1', nom_complet: 'Viktor Sokolov', type: 'individu' },
+                { uid: 'PX-2', nom_complet: 'Andrei Volkov', type: 'individu' },
+                { uid: 'PX-3', nom_complet: 'Viktor Volkonsky', type: 'individu' }];   // IDF très différent (viktor/volkov fréquents)
+    const CL1 = [{ id: 'c1', tenantId: 't1', name: 'Viktor Volkovv' }];               // partiel (typo) → l'IDF pèse
+    const CL2 = [{ id: 'z1', tenantId: 't2', name: 'Viktor Volkonski' }];             // partiel → l'IDF pèse
+    const runA = (p: any) => new ScreeningService(p, fakeAudit()).run(CTX, { ...CFG, liste: 'A', seuil: 50, entries: E1 as any });
+    const runB = (p: any) => new ScreeningService(p, fakeAudit()).run({ ...CTX, tenantId: 't2' }, { ...CFG, liste: 'B', seuil: 50, entries: E2 as any });
+    const rIsoA: any = await runA(fakePrisma(CL1.map((c) => ({ ...c }))));
+    const rIsoB: any = await runB(fakePrisma(CL2.map((c) => ({ ...c }))));
+    ok(rIsoA.hits.length === 1 && rIsoB.hits.length === 1 && rIsoA.hits[0].score < 100 && rIsoB.hits[0].score < 100,
+      'préconditions : un hit PARTIEL de chaque côté');
+    const [rA, rB]: any[] = await Promise.all([                                        // INTERLEAVÉ
+      runA(fakePrisma(CL1.map((c) => ({ ...c })))), runB(fakePrisma(CL2.map((c) => ({ ...c })))) ]);
+    ok(rA.hits[0].score === rIsoA.hits[0].score && rB.hits[0].score === rIsoB.hits[0].score,
+      `scores interleavés = isolés (A ${rA.hits[0].score}/${rIsoA.hits[0].score} · B ${rB.hits[0].score}/${rIsoB.hits[0].score})`);
   });
 
   console.log(`\nCâblage screening (SC-01..04, R100→R103 · R411 · R414 · R415) — ${passed}/${passed + failed} tests verts`);

@@ -102,7 +102,10 @@ function jaroWinkler(a, b) {
 }
 
 let _idf = null;
-function construireIdf(entries) {
+// C8 (L5) — IDF INSTANCIABLE : même calcul, AUCUNE écriture d'état module-global. À utiliser par
+// run/appel (leçon C8 : tout service de calcul s'instancie par requête) via le paramètre `idf`
+// des fonctions de score. `construireIdf` (global) reste pour la compat des bancs — défauts inchangés.
+function construireIdfLocal(entries) {
   const df = new Map(); const n = entries.length;
   for (const e of entries) {
     const vus = new Set();
@@ -111,13 +114,17 @@ function construireIdf(entries) {
     }
     for (const t of vus) df.set(t, (df.get(t) || 0) + 1);
   }
-  _idf = { df, n };
+  return { df, n };
+}
+function construireIdf(entries) {
+  _idf = construireIdfLocal(entries);
   return _idf;
 }
-const poids = (t) => {
-  if (!_idf) return 1;                                   // sans IDF construit : tous les jetons égaux
-  const d = _idf.df.get(t) || 0.5;
-  return Math.log(_idf.n / d) / Math.log(_idf.n);        // 0 (partout) → 1 (unique)
+const poids = (t, idf) => {
+  const i = idf ?? _idf;                                 // C8 : l'IDF passé PRIME ; le global n'est qu'un repli
+  if (!i) return 1;                                      // sans IDF construit : tous les jetons égaux
+  const d = i.df.get(t) || 0.5;
+  return Math.log(i.n / d) / Math.log(i.n);              // 0 (partout) → 1 (unique)
 };
 
 /**
@@ -144,21 +151,22 @@ function simJeton(a, b, cfg) {
   return ka.some((k) => kb.includes(k)) ? Math.max(jw, cfg.phonetiquePoids) : jw;
 }
 
-/** Similarité pondérée : chaque jeton de la requête cherche son meilleur jeton dans le candidat. */
-function simPonderee(qTok, cTok, cfg) {
+/** Similarité pondérée : chaque jeton de la requête cherche son meilleur jeton dans le candidat.
+ *  `idf` optionnel (C8) : pondération LOCALE à l'appel ; absent → repli sur l'état global. */
+function simPonderee(qTok, cTok, cfg, idf) {
   if (!qTok.length || !cTok.length) return 0;
   let num = 0, den = 0;
   for (const q of qTok) {
     let best = 0;
     for (const c of cTok) best = Math.max(best, simJeton(q, c, cfg));
-    const w = poids(q);
+    const w = poids(q, idf);
     num += best * w; den += w;
   }
   let num2 = 0, den2 = 0;
   for (const c of cTok) {
     let best = 0;
     for (const q of qTok) best = Math.max(best, simJeton(c, q, cfg));
-    const w = poids(c);
+    const w = poids(c, idf);
     num2 += best * w; den2 += w;
   }
   return ((num / (den || 1)) + (num2 / (den2 || 1))) / 2;
@@ -170,14 +178,14 @@ const aliasNom = (a) => (typeof a === "string" ? a : a.nom);
  * DÉCOMPOSITION du score 0-100 (R411) — reproduit EXACTEMENT la logique de l'origine, en exposant
  * les intermédiaires : meilleur nom/alias apparié, pénalité de type, contribution DOB.
  */
-function scorerDetail(requete, entree, config) {
+function scorerDetail(requete, entree, config, idf) {
   const c = config ? { ...DEFAUTS_MOTEUR, ...config } : DEFAUTS_MOTEUR;   // défauts = comportement d'origine
   const qTok = normaliser(requete.nom).split(" ").filter(Boolean);
   const candidats = [entree.nom_complet, ...(entree.alias || []).map(aliasNom)];
   let best = 0, via = entree.nom_complet;
   for (const cand of candidats) {
     const cTok = normaliser(cand).split(" ").filter(Boolean);
-    const s = simPonderee(qTok, cTok, c);
+    const s = simPonderee(qTok, cTok, c, idf);
     if (s > best) { best = s; via = cand; }
   }
   const nameScore = best * c.echelle;
@@ -213,23 +221,23 @@ function scorerDetail(requete, entree, config) {
 }
 
 /** Score d'une requête contre une entrée — sans `config`, IDENTIQUE à l'origine (délègue à scorerDetail). */
-function scorer(requete, entree, config) { return scorerDetail(requete, entree, config).score; }
+function scorer(requete, entree, config, idf) { return scorerDetail(requete, entree, config, idf).score; }
 
 /** Meilleur candidat au-dessus du seuil, ou null. `config` optionnel (R413). */
-function rapprocher(requete, entries, seuil, config) {
+function rapprocher(requete, entries, seuil, config, idf) {
   let best = null, bestScore = 0;
   for (const e of entries) {
-    const s = scorer(requete, e, config);
+    const s = scorer(requete, e, config, idf);
     if (s > bestScore) { bestScore = s; best = e; }
   }
   return bestScore >= seuil ? { uid: best.uid, score: Math.round(bestScore), entree: best } : null;
 }
 
 /** Comme rapprocher, mais renvoie aussi la décomposition du meilleur candidat (R411). `config` optionnel (R413). */
-function rapprocherDetail(requete, entries, seuil, config) {
+function rapprocherDetail(requete, entries, seuil, config, idf) {
   let best = null, bestDetail = null;
   for (const e of entries) {
-    const d = scorerDetail(requete, e, config);
+    const d = scorerDetail(requete, e, config, idf);
     if (!bestDetail || d.score > bestDetail.score) { bestDetail = d; best = e; }
   }
   if (!best || bestDetail.score < seuil) return null;
@@ -238,5 +246,5 @@ function rapprocherDetail(requete, entries, seuil, config) {
 
 module.exports = {
   PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler, clePhonetique, clesPhonetiques, clesDouble, doubleMetaphone,
-  construireIdf, scorer, scorerDetail, rapprocher, rapprocherDetail,
+  construireIdf, construireIdfLocal, scorer, scorerDetail, rapprocher, rapprocherDetail,
 };
