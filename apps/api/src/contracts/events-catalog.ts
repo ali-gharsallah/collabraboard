@@ -23,6 +23,8 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "kyc.handoff.back":      { version: 1, schema: z.object({ code: z.string(), to: z.string(), by: z.string(), message: z.string() }).strict() },
   "kyc.handoff.validated": { version: 1, schema: z.object({ code: z.string(), by: z.string(), message: z.string() }).strict() },
   "kyc.handoff.rejected":  { version: 1, schema: z.object({ code: z.string(), by: z.string(), message: z.string() }).strict() },
+  "olivia.curseur.change": { version: 1, schema: z.object({ capacite: z.string(), niveau: z.string(),
+    precedent: z.string(), par: z.string() }).strict() },
   "mros.goaml.soumis": { version: 1, schema: z.object({ reference: z.string(), par: z.string() }).strict() },
   "mros.chrono.alerte": { version: 1, schema: z.object({ communicationId: z.string(), joursOuvres: z.number(), echeanceJours: z.number() }).strict() },
   "screening.hit.detecte": { version: 1, schema: z.object({ hitId: z.string(), clientId: z.string(),

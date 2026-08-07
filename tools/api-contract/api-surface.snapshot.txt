@@ -91,6 +91,8 @@ GET    /v1/olivia/agents
 GET    /v1/olivia/agents/:code/en-vigueur
 GET    /v1/olivia/conversations/:id
 GET    /v1/olivia/conversations/:id/replay
+GET    /v1/olivia/gouvernance/curseur
+GET    /v1/olivia/gouvernance/rapport-valeur
 GET    /v1/olivia/health
 GET    /v1/olivia/missions
 GET    /v1/olivia/proposals
@@ -293,6 +295,7 @@ POST   /v1/olivia/agents/:code/retirer
 POST   /v1/olivia/conversations
 POST   /v1/olivia/conversations/:id/feedback
 POST   /v1/olivia/conversations/:id/messages
+POST   /v1/olivia/gouvernance/curseur
 POST   /v1/olivia/proposals
 POST   /v1/olivia/proposals/:id/adopt
 POST   /v1/olivia/proposals/:id/reject
