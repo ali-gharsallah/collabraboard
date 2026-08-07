@@ -5,6 +5,7 @@ import { AuditService } from "../../common/audit.service";
 import { computeRisk, baremeEnVigueur } from "./risk-engine";
 import { SECTIONS_BY_WORKFLOW, VISAS_BY_WORKFLOW } from "./kyc.templates";
 import { SectionFourEyes } from "./rules/section-four-eyes"; // R13/R52
+import { emitEvent } from "../../common/domain-event";
 import { NamedValidator } from "./rules/named-validator"; // R2/R4
 import { QualifiedVisaService, VisaError, Verdict } from "./rules/qualified-visa.service"; // R86
 import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
@@ -737,8 +738,9 @@ export class KycService {
     return svc;
   }
   // Émet un événement (outbox transactionnel) + audit — invariant : rien ne change sans trace.
+  // P-L5-2 (C6) : passe par emitEvent — le CATALOGUE valide le payload au write (noyau KYC schématisé).
   private async emit(tx: Tx, ctx: Ctx, type: string, aggregateId: string, payload: any) {
-    await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type, aggregateId, payload } });
+    await emitEvent(tx, ctx.tenantId, type, aggregateId, payload);
     await this.audit.log(ctx.tenantId, ctx.userId, type.toUpperCase().replace(/\./g, "_"), JSON.stringify(payload));
   }
 

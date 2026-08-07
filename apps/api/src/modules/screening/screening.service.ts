@@ -4,6 +4,7 @@ import { AuditService } from "../../common/audit.service";
 import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/screening-qualification";
 import { Tx } from "../../common/tx";
 import { parserSwift } from "../txflux/swift.module";
+import { emitEvent } from "../../common/domain-event";
 import { construireIndex, construireIndexCache, construireIdf, candidats, rapprocherDetail } from "@olive/screening-engine";
 
 /**
@@ -247,9 +248,10 @@ export class ScreeningService {
           const deja = await tx.domainEvent.findFirst({ where: {
             tenantId: ctx.tenantId, type: "pep.proposition.creee", aggregateId: cle } });
           if (deja) continue;
-          await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "pep.proposition.creee",
-            aggregateId: cle, payload: { cle, hitId: h.id, personId: h.clientId, liste: dto.liste,
-              listeVersion: dto.version, score: h.score, decomposition: t?.detail ?? null } } });
+          // P-L5-2 (C6) : émission par emitEvent — le catalogue VALIDE le payload au write.
+          await emitEvent(tx, ctx.tenantId, "pep.proposition.creee",
+            cle, { cle, hitId: h.id, personId: h.clientId, liste: dto.liste,
+              listeVersion: dto.version, score: h.score, decomposition: t?.detail ?? null });
           await tx.task.create({ data: { tenantId: ctx.tenantId, assigneeId: "COMPLIANCE",
             type: "PEP_PROPOSITION", statut: "OUVERTE", createdAt: at,
             subjectType: "personne", subjectId: h.clientId, origine: cle } });
@@ -311,9 +313,9 @@ export class ScreeningService {
       await tx.screeningHit.update({ where: { id: hit.id }, data: { statut: "QUALIFIE" } });
       if (verdict === "VRAI_POSITIF") {
         // R39/R44 - on PROPOSE : gel, clarification art. 6 LBA, MROS restent des decisions humaines
-        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
-          type: "screening.escalade.proposee", aggregateId: hit.id,
-          payload: { hitId: hit.id, clientId: hit.clientId, motif: "Correspondance qualifiée vraie — gel, clarification art. 6 LBA et communication MROS à arbitrer" } } });
+        // P-L5-2 (C6) : émission par emitEvent — le catalogue VALIDE le payload au write.
+        await emitEvent(tx, ctx.tenantId, "screening.escalade.proposee", hit.id,
+          { hitId: hit.id, clientId: hit.clientId, motif: "Correspondance qualifiée vraie — gel, clarification art. 6 LBA et communication MROS à arbitrer" });
       }
       await this.audit.log(ctx.tenantId, ctx.userId, "SCREENING_QUALIFIED", `${hit.id}:${verdict}`);
       return q;
