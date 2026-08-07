@@ -17,6 +17,8 @@ export type EvenementEs = {
   payload: unknown;
   version?: number;             // version de schéma de l'événement (défaut 1)
   sourceEventId?: string | null; // id d'événement monolithe pour les FAITS D'ENTRÉE (idempotence ES-1)
+  at?: string;                  // horodatage MÉTIER (ISO) — les faits d'entrée portent le `at` SOURCE
+                                // (le backtest ES-3 filtre par période) ; défaut : now()
 };
 
 export type EvenementEsLu = {
@@ -45,9 +47,10 @@ export class EsEventStore {
           const e = events[i];
           await tx.$executeRaw`
             INSERT INTO "es"."events"
-              ("tenant_id", "stream_type", "stream_id", "seq", "type", "version", "payload", "source_event_id")
+              ("tenant_id", "stream_type", "stream_id", "seq", "type", "version", "payload", "source_event_id", "at")
             VALUES (${ctx.tenantId}::uuid, ${streamType}, ${streamId}, ${expectedSeq + 1 + i},
-                    ${e.type}, ${e.version ?? 1}, ${JSON.stringify(e.payload)}::jsonb, ${e.sourceEventId ?? null})`;
+                    ${e.type}, ${e.version ?? 1}, ${JSON.stringify(e.payload)}::jsonb, ${e.sourceEventId ?? null},
+                    COALESCE(${e.at ?? null}::timestamptz, now()))`;
         }
       });
     } catch (err: any) {
@@ -70,6 +73,19 @@ export class EsEventStore {
       WHERE "tenant_id" = ${ctx.tenantId}::uuid
         AND "stream_type" = ${streamType} AND "stream_id" = ${streamId}
       ORDER BY "seq" ASC`;
+    return rows as EvenementEsLu[];
+  }
+
+  /** Tous les événements d'un TYPE de stream pour le tenant (projections ES-3) — ordonnés par
+   *  (stream_id, seq) : chaque stream se rejoue dans l'ordre, les streams entre eux sont groupés. */
+  async readTousParType(ctx: Ctx, streamType: string): Promise<EvenementEsLu[]> {
+    const rows = await this.prisma.$queryRaw<any[]>`
+      SELECT "id"::text AS id, "tenant_id"::text AS "tenantId", "stream_type" AS "streamType",
+             "stream_id" AS "streamId", "seq", "type", "version", "payload",
+             "source_event_id" AS "sourceEventId", "at"
+      FROM "es"."events"
+      WHERE "tenant_id" = ${ctx.tenantId}::uuid AND "stream_type" = ${streamType}
+      ORDER BY "stream_id" ASC, "seq" ASC`;
     return rows as EvenementEsLu[];
   }
 

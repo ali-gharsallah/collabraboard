@@ -93,7 +93,7 @@ export class EsSubscriber implements OnModuleInit, OnModuleDestroy {
       const streamId = cleFlux(ev.tenant_id, ev.type);
       await this.store.append(ctx, STREAM_FAITS, streamId,
         [{ type: `fait.${ev.type}`, version: garde.version, sourceEventId,
-           payload: { source, donnees: ev.payload } }],
+           payload: { source, donnees: ev.payload }, at: source.at }],   // le fait porte le `at` SOURCE (ES-3)
         await this.store.derniereSeq(ctx, STREAM_FAITS, streamId));
       await this.prisma.$executeRaw`
         UPDATE "es"."subscription_cursor" SET "nb_faits" = "nb_faits" + 1 WHERE "consumer" = ${CONSOMMATEUR_ES}`;
