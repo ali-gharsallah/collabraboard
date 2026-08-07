@@ -1,0 +1,3451 @@
+{
+  "commentaire": "Registre central des identifiants R (C5). Propriétaire = module qui cite le plus (le code fait foi). Un numéro retiré passe en `brules` — JAMAIS réattribué.",
+  "genere": "par verifier-registre-regles.mjs --generer (rejouable)",
+  "regles": [
+    {
+      "numero": "R1",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "regwatch"
+      ]
+    },
+    {
+      "numero": "R2",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R4",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R5",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif"
+    },
+    {
+      "numero": "R6",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R7",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged",
+        "parametres",
+        "mros",
+        "personnes",
+        "workflow-engine",
+        "aml",
+        "custody",
+        "ia",
+        "offboarding",
+        "riskcases",
+        "transactions",
+        "workflow",
+        "kyc",
+        "onboarding",
+        "oprisk",
+        "regwatch",
+        "cpsi-server-py",
+        "annotations",
+        "auth",
+        "coc",
+        "cpsi",
+        "legal",
+        "olivia",
+        "pms",
+        "reviews",
+        "builder",
+        "coffre",
+        "crossborder",
+        "license",
+        "ocr",
+        "swarm",
+        "workload"
+      ]
+    },
+    {
+      "numero": "R8",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif"
+    },
+    {
+      "numero": "R9",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R10",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R11",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R12",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R13",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "aml",
+        "parametres",
+        "auth",
+        "businesstrip",
+        "custody",
+        "formations",
+        "reviews",
+        "crossborder",
+        "offboarding",
+        "workflow-engine",
+        "builder",
+        "onboarding",
+        "coc",
+        "pms"
+      ]
+    },
+    {
+      "numero": "R14",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/bridge.mjs",
+      "statut": "actif",
+      "citePar": [
+        "kyc"
+      ]
+    },
+    {
+      "numero": "R15",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif",
+      "citePar": [
+        "workflow-instances",
+        "kyc",
+        "parametres",
+        "aml",
+        "businesstrip",
+        "formations",
+        "offboarding",
+        "reviews",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R16",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R17",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R18",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R19",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R20",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R21",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif",
+      "citePar": [
+        "kyc"
+      ]
+    },
+    {
+      "numero": "R22",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R23",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-engine"
+      ]
+    },
+    {
+      "numero": "R26",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/docmatrix.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R27",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/docmatrix.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R29",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/docmatrix.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "aml",
+        "screening",
+        "builder",
+        "parametres",
+        "corebanking",
+        "reviews",
+        "common",
+        "coc",
+        "txflux",
+        "workflow",
+        "workload"
+      ]
+    },
+    {
+      "numero": "R30",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R31",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R32",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R33",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R34",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R35",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged"
+      ]
+    },
+    {
+      "numero": "R36",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R38",
+      "module": "tasks",
+      "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R39",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "cpsi-server-py",
+        "crossborder",
+        "ged",
+        "screening",
+        "businesstrip",
+        "cpsi",
+        "formations",
+        "pms",
+        "reviews",
+        "tasks",
+        "bi",
+        "coc",
+        "coffre",
+        "events",
+        "ia",
+        "legal",
+        "mros",
+        "onboarding",
+        "personnes",
+        "recherche",
+        "riskcases",
+        "swarm",
+        "transactions",
+        "txflux",
+        "corebanking",
+        "crm",
+        "olivia",
+        "oprisk",
+        "regwatch",
+        "surveillance",
+        "workload"
+      ]
+    },
+    {
+      "numero": "R42",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R44",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "screening",
+        "ged",
+        "api",
+        "ia",
+        "olivia",
+        "nba",
+        "onboarding",
+        "pms",
+        "cpsi",
+        "crm",
+        "mros",
+        "personnes",
+        "surveillance",
+        "transactions",
+        "screening-engine"
+      ]
+    },
+    {
+      "numero": "R46",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R48",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "kyc",
+        "cpsi",
+        "screening",
+        "workflow-instances",
+        "custody",
+        "events",
+        "ged",
+        "onboarding",
+        "parametres",
+        "tasks",
+        "txflux",
+        "common",
+        "aml",
+        "ia",
+        "legal",
+        "mros",
+        "riskcases",
+        "transactions",
+        "workflow"
+      ]
+    },
+    {
+      "numero": "R49",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "screening",
+        "kyc",
+        "cpsi",
+        "workflow-engine",
+        "common",
+        "events",
+        "ged",
+        "ia",
+        "mros",
+        "parametres",
+        "riskcases",
+        "transactions",
+        "workflow-instances"
+      ]
+    },
+    {
+      "numero": "R50",
+      "module": "rapports",
+      "ancre": "apps/api/src/modules/rapports/rapports.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "personnes"
+      ]
+    },
+    {
+      "numero": "R51",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R52",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R56",
+      "module": "workflow-engine",
+      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif"
+    },
+    {
+      "numero": "R63",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R64",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R65",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R66",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "statut": "actif",
+      "citePar": [
+        "olivia",
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R67",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "olivia"
+      ]
+    },
+    {
+      "numero": "R68",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "olivia",
+        "swarm",
+        "auth",
+        "audit",
+        "license",
+        "parametres",
+        "regwatch"
+      ]
+    },
+    {
+      "numero": "R69",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R70",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "aml",
+        "cpsi",
+        "onboarding",
+        "sandbox",
+        "olivia",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R71",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R72",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R73",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R74",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R75",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R76",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "riskcases"
+      ]
+    },
+    {
+      "numero": "R78",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R79",
+      "module": "txflux",
+      "ancre": "apps/api/src/modules/txflux/swift.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R80",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "olivia",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R81",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R82",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R83",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "riskcases"
+      ]
+    },
+    {
+      "numero": "R84",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R85",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R86",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R89",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R90",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R91",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R94",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "onboarding"
+      ]
+    },
+    {
+      "numero": "R99",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R100",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R101",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R102",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R103",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R104",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/events.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "pms"
+      ]
+    },
+    {
+      "numero": "R105",
+      "module": "pms",
+      "ancre": "apps/api/src/modules/pms/pms.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R106",
+      "module": "pms",
+      "ancre": "apps/api/src/modules/pms/pms.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R107",
+      "module": "pms",
+      "ancre": "apps/api/src/modules/pms/pms.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R108",
+      "module": "pms",
+      "ancre": "apps/api/src/modules/pms/pms.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R109",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-avance.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "coffre",
+        "legal"
+      ]
+    },
+    {
+      "numero": "R110",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-consultation.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ia",
+        "mros",
+        "kyc",
+        "parametres",
+        "workflow-instances"
+      ]
+    },
+    {
+      "numero": "R111",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "coffre"
+      ]
+    },
+    {
+      "numero": "R112",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "recherche",
+        "ia",
+        "mros",
+        "parametres",
+        "personnes",
+        "transactions"
+      ]
+    },
+    {
+      "numero": "R113",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-avance.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "onboarding"
+      ]
+    },
+    {
+      "numero": "R114",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-avance.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "onboarding",
+        "corebanking",
+        "coffre",
+        "ia",
+        "workflow"
+      ]
+    },
+    {
+      "numero": "R115",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/coffre.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged",
+        "chaines",
+        "recherche",
+        "legal"
+      ]
+    },
+    {
+      "numero": "R116",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-avance.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "onboarding"
+      ]
+    },
+    {
+      "numero": "R117",
+      "module": "onboarding",
+      "ancre": "apps/api/src/modules/onboarding/onboarding.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R118",
+      "module": "onboarding",
+      "ancre": "apps/api/src/modules/onboarding/onboarding.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc"
+      ]
+    },
+    {
+      "numero": "R119",
+      "module": "onboarding",
+      "ancre": "apps/api/src/modules/onboarding/onboarding.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ia"
+      ]
+    },
+    {
+      "numero": "R120",
+      "module": "onboarding",
+      "ancre": "apps/api/src/modules/onboarding/onboarding.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "events",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R121",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/prerevue.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R122",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/prerevue.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R123",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/prerevue.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R124",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/prerevue.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R125",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged",
+        "aml",
+        "onboarding",
+        "common",
+        "mros",
+        "riskcases",
+        "screening",
+        "transactions"
+      ]
+    },
+    {
+      "numero": "R126",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "auth",
+        "aml",
+        "onboarding"
+      ]
+    },
+    {
+      "numero": "R127",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "auth"
+      ]
+    },
+    {
+      "numero": "R128",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R129",
+      "module": "mros",
+      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R130",
+      "module": "mros",
+      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R131",
+      "module": "mros",
+      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "transactions",
+        "parametres",
+        "surveillance"
+      ]
+    },
+    {
+      "numero": "R132",
+      "module": "mros",
+      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "transactions",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R133",
+      "module": "riskcases",
+      "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "surveillance",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R134",
+      "module": "riskcases",
+      "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R135",
+      "module": "riskcases",
+      "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R136",
+      "module": "riskcases",
+      "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "mros",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R137",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R138",
+      "module": "api",
+      "ancre": "apps/api/src/adapters/claude-ia.adapter.ts",
+      "statut": "actif",
+      "citePar": [
+        "crm",
+        "ged",
+        "chaines",
+        "ocr",
+        "ia",
+        "recherche"
+      ]
+    },
+    {
+      "numero": "R139",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "recherche",
+        "chaines",
+        "ia"
+      ]
+    },
+    {
+      "numero": "R140",
+      "module": "transactions",
+      "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "surveillance"
+      ]
+    },
+    {
+      "numero": "R141",
+      "module": "transactions",
+      "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R142",
+      "module": "transactions",
+      "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R143",
+      "module": "transactions",
+      "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R144",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/coffre.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "chaines",
+        "corebanking",
+        "parametres",
+        "ports"
+      ]
+    },
+    {
+      "numero": "R145",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-consultation.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "coffre"
+      ]
+    },
+    {
+      "numero": "R146",
+      "module": "chaines",
+      "ancre": "apps/api/src/modules/chaines/chaines.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "coffre",
+        "parametres",
+        "ports"
+      ]
+    },
+    {
+      "numero": "R147",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/coffre.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R148",
+      "module": "recherche",
+      "ancre": "apps/api/src/modules/recherche/recherche.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "chaines",
+        "ia"
+      ]
+    },
+    {
+      "numero": "R149",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/vues.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "recherche",
+        "annotations",
+        "ia"
+      ]
+    },
+    {
+      "numero": "R150",
+      "module": "recherche",
+      "ancre": "apps/api/src/modules/recherche/recherche.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged"
+      ]
+    },
+    {
+      "numero": "R151",
+      "module": "recherche",
+      "ancre": "apps/api/src/modules/recherche/recherche.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "chaines"
+      ]
+    },
+    {
+      "numero": "R152",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R153",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R154",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R155",
+      "module": "personnes",
+      "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R156",
+      "module": "annotations",
+      "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R157",
+      "module": "annotations",
+      "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R158",
+      "module": "annotations",
+      "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "chaines",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R159",
+      "module": "annotations",
+      "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "chaines"
+      ]
+    },
+    {
+      "numero": "R160",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R161",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "corebanking"
+      ]
+    },
+    {
+      "numero": "R162",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R163",
+      "module": "ia",
+      "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "olivia",
+        "parametres",
+        "ports",
+        "corebanking"
+      ]
+    },
+    {
+      "numero": "R164",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/vues.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R165",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/vues.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R166",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/vues.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R167",
+      "module": "corebanking",
+      "ancre": "apps/api/src/modules/corebanking/core-sync.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "txflux",
+        "offboarding",
+        "parametres",
+        "ports",
+        "custody",
+        "olivia",
+        "regwatch"
+      ]
+    },
+    {
+      "numero": "R168",
+      "module": "corebanking",
+      "ancre": "apps/api/src/modules/corebanking/core-sync.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R169",
+      "module": "corebanking",
+      "ancre": "apps/api/src/modules/corebanking/core-sync.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "txflux",
+        "parametres",
+        "sandbox",
+        "crossborder",
+        "ports",
+        "screening"
+      ]
+    },
+    {
+      "numero": "R170",
+      "module": "ged",
+      "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "offboarding",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R171",
+      "module": "workflow",
+      "ancre": "apps/api/src/modules/workflow/workflow-def.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "builder",
+        "workflow-instances"
+      ]
+    },
+    {
+      "numero": "R172",
+      "module": "workflow",
+      "ancre": "apps/api/src/modules/workflow/kyc-workflow.chaine.ts",
+      "statut": "actif",
+      "citePar": [
+        "builder"
+      ]
+    },
+    {
+      "numero": "R173",
+      "module": "workflow",
+      "ancre": "apps/api/src/modules/workflow/workflow-def.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R174",
+      "module": "ocr",
+      "ancre": "apps/api/src/modules/ocr/ocr-extraction.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R175",
+      "module": "ocr",
+      "ancre": "apps/api/src/modules/ocr/ocr-extraction.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R176",
+      "module": "ocr",
+      "ancre": "apps/api/src/modules/ocr/ocr-extraction.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R177",
+      "module": "license",
+      "ancre": "apps/api/src/modules/license/license.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm",
+        "common"
+      ]
+    },
+    {
+      "numero": "R178",
+      "module": "license",
+      "ancre": "apps/api/src/modules/license/license.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R179",
+      "module": "license",
+      "ancre": "apps/api/src/modules/license/license.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R180",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/ged-externe.adapter.ts",
+      "statut": "actif",
+      "citePar": [
+        "ports",
+        "ged",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R181",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/ged-externe.adapter.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R182",
+      "module": "coffre",
+      "ancre": "apps/api/src/modules/coffre/ged-externe.adapter.ts",
+      "statut": "actif",
+      "citePar": [
+        "ged"
+      ]
+    },
+    {
+      "numero": "R183",
+      "module": "workload",
+      "ancre": "apps/api/src/modules/workload/workload.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "tasks"
+      ]
+    },
+    {
+      "numero": "R184",
+      "module": "workload",
+      "ancre": "apps/api/src/modules/workload/workload.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R185",
+      "module": "workload",
+      "ancre": "apps/api/src/modules/workload/workload.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R186",
+      "module": "crm",
+      "ancre": "apps/api/src/modules/crm/crm.controller.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R187",
+      "module": "crm",
+      "ancre": "apps/api/src/modules/crm/crm.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R188",
+      "module": "crm",
+      "ancre": "apps/api/src/modules/crm/crm.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R189",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R190",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R191",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R192",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R193",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R194",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R195",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R196",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R197",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R198",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R199",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R200",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R201",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.referentiel.gen.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R202",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R203",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R204",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R205",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R206",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R207",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R208",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R209",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R210",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R211",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R212",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R213",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R214",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R215",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R216",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R217",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R218",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R219",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R220",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R221",
+      "module": "islamic",
+      "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R222",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "formations",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R223",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "crossborder"
+      ]
+    },
+    {
+      "numero": "R224",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R225",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R226",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R228",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "businesstrip"
+      ]
+    },
+    {
+      "numero": "R229",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "crossborder",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R230",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R231",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R232",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R233",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R234",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R235",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R236",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "common"
+      ]
+    },
+    {
+      "numero": "R237",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R238",
+      "module": "formations",
+      "ancre": "apps/api/src/modules/formations/formations.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "businesstrip",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R239",
+      "module": "tasks",
+      "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "nba"
+      ]
+    },
+    {
+      "numero": "R240",
+      "module": "tasks",
+      "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "common",
+        "workload"
+      ]
+    },
+    {
+      "numero": "R241",
+      "module": "tasks",
+      "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R242",
+      "module": "tasks",
+      "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R243",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "nba"
+      ]
+    },
+    {
+      "numero": "R244",
+      "module": "nba",
+      "ancre": "apps/api/src/modules/nba/nba.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R245",
+      "module": "nba",
+      "ancre": "apps/api/src/modules/nba/nba.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "tasks"
+      ]
+    },
+    {
+      "numero": "R246",
+      "module": "nba",
+      "ancre": "apps/api/src/modules/nba/nba.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "tasks"
+      ]
+    },
+    {
+      "numero": "R248",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi",
+        "apidoc"
+      ]
+    },
+    {
+      "numero": "R249",
+      "module": "cpsi-server-py",
+      "ancre": "services/cpsi-server-py/bridge.py",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R250",
+      "module": "cpsi",
+      "ancre": "apps/api/src/modules/cpsi/cpsi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R251",
+      "module": "cpsi",
+      "ancre": "apps/api/src/modules/cpsi/cpsi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R252",
+      "module": "cpsi",
+      "ancre": "apps/api/src/modules/cpsi/cpsi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "riskcases",
+        "cpsi-server-py",
+        "olivia",
+        "surveillance",
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R253",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R254",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R255",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R256",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "swarm"
+      ]
+    },
+    {
+      "numero": "R257",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "regwatch"
+      ]
+    },
+    {
+      "numero": "R258",
+      "module": "olivia",
+      "ancre": "apps/api/src/modules/olivia/olivia-detecteurs.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R259",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "olivia"
+      ]
+    },
+    {
+      "numero": "R260",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "audit"
+      ]
+    },
+    {
+      "numero": "R261",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "olivia"
+      ]
+    },
+    {
+      "numero": "R262",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R263",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R264",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "bi"
+      ]
+    },
+    {
+      "numero": "R265",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "audit"
+      ]
+    },
+    {
+      "numero": "R266",
+      "module": "swarm",
+      "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "common",
+        "olivia"
+      ]
+    },
+    {
+      "numero": "R267",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/cloture.util.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc",
+        "common",
+        "audit",
+        "olivia"
+      ]
+    },
+    {
+      "numero": "R268",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R269",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "builder",
+        "custody",
+        "coc"
+      ]
+    },
+    {
+      "numero": "R270",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "mobile",
+        "common",
+        "olivia",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R271",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/cloture.util.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc",
+        "license",
+        "olivia",
+        "onboarding"
+      ]
+    },
+    {
+      "numero": "R272",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "reviews",
+        "legal"
+      ]
+    },
+    {
+      "numero": "R273",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "coc"
+      ]
+    },
+    {
+      "numero": "R274",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "legal",
+        "oprisk",
+        "cpsi",
+        "license",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R275",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc"
+      ]
+    },
+    {
+      "numero": "R276",
+      "module": "coc",
+      "ancre": "apps/api/src/modules/coc/coc.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "mobile",
+        "reviews"
+      ]
+    },
+    {
+      "numero": "R277",
+      "module": "coc",
+      "ancre": "apps/api/src/modules/coc/coc.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R278",
+      "module": "coc",
+      "ancre": "apps/api/src/modules/coc/coc.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R279",
+      "module": "license",
+      "ancre": "apps/api/src/modules/license/license.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R280",
+      "module": "riskcases",
+      "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "events"
+      ]
+    },
+    {
+      "numero": "R281",
+      "module": "cpsi",
+      "ancre": "apps/api/src/modules/cpsi/cpsi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "apidoc",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R282",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "audit",
+        "builder",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R283",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc",
+        "builder",
+        "parametres",
+        "coc"
+      ]
+    },
+    {
+      "numero": "R284",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "common",
+        "audit",
+        "events",
+        "api",
+        "offboarding",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R285",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/outbox.worker.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R286",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/case-proposal.consumer.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "txflux",
+        "common",
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R287",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/events.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R288",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "sandbox"
+      ]
+    },
+    {
+      "numero": "R289",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R290",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "auth"
+      ]
+    },
+    {
+      "numero": "R291",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/events.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "kyc"
+      ]
+    },
+    {
+      "numero": "R293",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api",
+        "legal"
+      ]
+    },
+    {
+      "numero": "R294",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R295",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R296",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/auth.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "mobile",
+        "common",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R297",
+      "module": "txflux",
+      "ancre": "apps/api/src/modules/txflux/fx.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "screening",
+        "api"
+      ]
+    },
+    {
+      "numero": "R298",
+      "module": "txflux",
+      "ancre": "apps/api/src/modules/txflux/swift.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "custody"
+      ]
+    },
+    {
+      "numero": "R299",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "custody",
+        "txflux"
+      ]
+    },
+    {
+      "numero": "R300",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "screening",
+        "txflux",
+        "api",
+        "custody"
+      ]
+    },
+    {
+      "numero": "R301",
+      "module": "custody",
+      "ancre": "apps/api/src/modules/custody/custody.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R302",
+      "module": "custody",
+      "ancre": "apps/api/src/modules/custody/custody.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R303",
+      "module": "api",
+      "ancre": "apps/api/src/app.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "custody"
+      ]
+    },
+    {
+      "numero": "R304",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R305",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R306",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R307",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R308",
+      "module": "builder",
+      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "kyc",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R309",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "regwatch",
+        "api"
+      ]
+    },
+    {
+      "numero": "R310",
+      "module": "regwatch",
+      "ancre": "apps/api/src/modules/regwatch/regwatch.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R311",
+      "module": "regwatch",
+      "ancre": "apps/api/src/modules/regwatch/regwatch.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R312",
+      "module": "legal",
+      "ancre": "apps/api/src/modules/legal/legal.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R313",
+      "module": "legal",
+      "ancre": "apps/api/src/modules/legal/legal.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R314",
+      "module": "bi",
+      "ancre": "apps/api/src/modules/bi/bi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R315",
+      "module": "bi",
+      "ancre": "apps/api/src/modules/bi/bi.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R316",
+      "module": "mobile",
+      "ancre": "apps/api/src/modules/mobile/mobile.gate.ts",
+      "statut": "actif",
+      "citePar": [
+        "common",
+        "parametres",
+        "api",
+        "auth"
+      ]
+    },
+    {
+      "numero": "R317",
+      "module": "mobile",
+      "ancre": "apps/api/src/modules/mobile/mobile.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R318",
+      "module": "mobile",
+      "ancre": "apps/api/src/modules/mobile/mobile.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R319",
+      "module": "auth",
+      "ancre": "apps/api/src/modules/auth/users.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R320",
+      "module": "license",
+      "ancre": "apps/api/src/modules/license/license.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R321",
+      "module": "oprisk",
+      "ancre": "apps/api/src/modules/oprisk/oprisk.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api",
+        "common"
+      ]
+    },
+    {
+      "numero": "R322",
+      "module": "oprisk",
+      "ancre": "apps/api/src/modules/oprisk/oprisk.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R323",
+      "module": "oprisk",
+      "ancre": "apps/api/src/modules/oprisk/oprisk.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api",
+        "regwatch"
+      ]
+    },
+    {
+      "numero": "R324",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R325",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R326",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R327",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "coc",
+        "offboarding"
+      ]
+    },
+    {
+      "numero": "R330",
+      "module": "readiness",
+      "ancre": "apps/api/src/modules/readiness/readiness.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "common"
+      ]
+    },
+    {
+      "numero": "R335",
+      "module": "common",
+      "ancre": "apps/api/src/common/feature-flags.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R336",
+      "module": "kyc",
+      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "statut": "actif",
+      "citePar": [
+        "common"
+      ]
+    },
+    {
+      "numero": "R337",
+      "module": "common",
+      "ancre": "apps/api/src/common/core.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R339",
+      "module": "events",
+      "ancre": "apps/api/src/modules/events/upcasters.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R340",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R341",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R342",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R343",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R344",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R345",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R346",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R347",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R348",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R349",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R350",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R351",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R352",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R353",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R354",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R355",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R356",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R357",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R358",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R359",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R360",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R361",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R362",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R363",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R364",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R365",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R366",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R367",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R368",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R369",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R370",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R371",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R372",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R373",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R374",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R375",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R376",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R377",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R378",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R379",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R380",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R381",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R382",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R383",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R384",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R385",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R386",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R387",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R388",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R389",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R390",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R391",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R392",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R393",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R394",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R395",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R396",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R397",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R398",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R399",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-2g-fixtures.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "cpsi",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R400",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R401",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "cpsi-server-py"
+      ]
+    },
+    {
+      "numero": "R402",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-gap.gt.gen.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R403",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/aml-2g-fixtures.ts",
+      "statut": "actif",
+      "citePar": [
+        "cpsi-server-py",
+        "parametres",
+        "cpsi"
+      ]
+    },
+    {
+      "numero": "R408",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
+      "statut": "actif",
+      "citePar": [
+        "screening-engine"
+      ]
+    },
+    {
+      "numero": "R409",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/screening.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "screening-engine"
+      ]
+    },
+    {
+      "numero": "R411",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/screening.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "screening-engine"
+      ]
+    },
+    {
+      "numero": "R413",
+      "module": "screening-engine",
+      "ancre": "packages/screening-engine/src/baseline-engine.js",
+      "statut": "actif",
+      "citePar": [
+        "screening"
+      ]
+    },
+    {
+      "numero": "R414",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/screening.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R415",
+      "module": "screening",
+      "ancre": "apps/api/src/modules/screening/screening.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R416",
+      "module": "screening-engine",
+      "ancre": "packages/screening-engine/src/baseline-engine.js",
+      "statut": "actif",
+      "citePar": [
+        "screening"
+      ]
+    },
+    {
+      "numero": "R417",
+      "module": "screening-engine",
+      "ancre": "packages/screening-engine/src/baseline-engine.js",
+      "statut": "actif",
+      "citePar": [
+        "screening"
+      ]
+    }
+  ],
+  "brules": []
+}

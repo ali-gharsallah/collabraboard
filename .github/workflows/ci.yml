@@ -313,6 +313,13 @@ jobs:
           out=$(node apps/api/scripts/verifier-couverture-r222-238.mjs); echo "$out"
           echo "$out" | grep -q "### 16/16 complétude vague R222–R238 verte (L2) ###"
 
+      # ── L5 · registre central des identifiants R (C5, BLOQUANT) : identifiant hors registre,
+      #    numéro brûlé réattribué, ou doublon de propriétaire = CI rouge. ──
+      - name: "3-L5 · Registre des règles (docs/rules-registry.json, C5)"
+        run: |
+          out=$(node apps/api/scripts/verifier-registre-regles.mjs); echo "$out"
+          echo "$out" | grep -q "### registre des règles vert (L5 · C5) ###"
+
       # ── L3 · test d'ARCHITECTURE (BLOQUANT) : frontière du contexte Surveillance (ADR-TM-001).
       #    Import direct d'un interne de screening/aml/riskcases/mros depuis l'extérieur (ou l'inverse)
       #    = rouge ; seuls les ports (modules/surveillance/ports) et la composition module→module passent. ──
