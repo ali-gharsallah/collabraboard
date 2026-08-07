@@ -1,0 +1,887 @@
+{
+ "_avertissement": "SYNTHÉTIQUE (P-L6-2) : paires générées par tables de romanisation déterministes (aucune personne réelle). Marquées par origine ar|cy ; positifs (attendu=uid) et négatifs (attendu=null).",
+ "entries": [
+  {
+   "uid": "XAR-1",
+   "nom_complet": "Muhammad Haddad",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-2",
+   "nom_complet": "Ali Hassan",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-3",
+   "nom_complet": "Omar Khalil",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-4",
+   "nom_complet": "Khalid Mansour",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-5",
+   "nom_complet": "Yusuf Rahman",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-6",
+   "nom_complet": "Ahmad Salim",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-7",
+   "nom_complet": "Hassan Farhat",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-8",
+   "nom_complet": "Tariq Aziz",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-9",
+   "nom_complet": "Samir Kassab",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-10",
+   "nom_complet": "Nabil Hamdan",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-11",
+   "nom_complet": "Walid Shammas",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-12",
+   "nom_complet": "Bassam Khoury",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-13",
+   "nom_complet": "Ziad Nassar",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-14",
+   "nom_complet": "Fadi Sleiman",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-15",
+   "nom_complet": "Rami Dagher",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-16",
+   "nom_complet": "Hisham Barakat",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-17",
+   "nom_complet": "Mahmud Zahran",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-18",
+   "nom_complet": "Jamal Hariri",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-19",
+   "nom_complet": "Karim Sabbagh",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-20",
+   "nom_complet": "Salim Matar",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-21",
+   "nom_complet": "Adnan Shakir",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-22",
+   "nom_complet": "Bilal Rashid",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-23",
+   "nom_complet": "Faris Najjar",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-24",
+   "nom_complet": "Ghassan Tahan",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-25",
+   "nom_complet": "Marwan Salhab",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-26",
+   "nom_complet": "Nizar Kabbani",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-27",
+   "nom_complet": "Raid Hamawi",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-28",
+   "nom_complet": "Sami Halabi",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-29",
+   "nom_complet": "Talal Mahfuz",
+   "type": "individu"
+  },
+  {
+   "uid": "XAR-30",
+   "nom_complet": "Wael Sharara",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-1",
+   "nom_complet": "Vladimir Sokolov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-2",
+   "nom_complet": "Dmitri Volkov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-3",
+   "nom_complet": "Sergei Morozov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-4",
+   "nom_complet": "Nikolai Petrov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-5",
+   "nom_complet": "Andrei Kuznetsov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-6",
+   "nom_complet": "Mikhail Orlov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-7",
+   "nom_complet": "Aleksandr Novikov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-8",
+   "nom_complet": "Ivan Fedorov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-9",
+   "nom_complet": "Pavel Smirnov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-10",
+   "nom_complet": "Boris Lebedev",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-11",
+   "nom_complet": "Viktor Kozlov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-12",
+   "nom_complet": "Anatoli Popov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-13",
+   "nom_complet": "Grigori Vasiliev",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-14",
+   "nom_complet": "Konstantin Egorov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-15",
+   "nom_complet": "Leonid Pavlov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-16",
+   "nom_complet": "Maksim Titov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-17",
+   "nom_complet": "Oleg Belov",
+   "type": "individu"
+  },
+  {
+   "uid": "XCY-18",
+   "nom_complet": "Roman Gusev",
+   "type": "individu"
+  }
+ ],
+ "cas": [
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "محممد حددد"
+   },
+   "attendu": "XAR-1",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ال حسسن"
+   },
+   "attendu": "XAR-2",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "امر خلل"
+   },
+   "attendu": "XAR-3",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "خلد منسر"
+   },
+   "attendu": "XAR-4",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "يسف رحمن"
+   },
+   "attendu": "XAR-5",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "احمد سلم"
+   },
+   "attendu": "XAR-6",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "حسسن فرحت"
+   },
+   "attendu": "XAR-7",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ترق ازز"
+   },
+   "attendu": "XAR-8",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "سمر كسسب"
+   },
+   "attendu": "XAR-9",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "نبل حمدن"
+   },
+   "attendu": "XAR-10",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ولد شممس"
+   },
+   "attendu": "XAR-11",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "بسسم خري"
+   },
+   "attendu": "XAR-12",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "زد نسسر"
+   },
+   "attendu": "XAR-13",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "فد سلمن"
+   },
+   "attendu": "XAR-14",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "رم دغر"
+   },
+   "attendu": "XAR-15",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "حشم بركت"
+   },
+   "attendu": "XAR-16",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "محمد زحرن"
+   },
+   "attendu": "XAR-17",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "جمل حرر"
+   },
+   "attendu": "XAR-18",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "كرم سببغ"
+   },
+   "attendu": "XAR-19",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "سلم متر"
+   },
+   "attendu": "XAR-20",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ادنن شكر"
+   },
+   "attendu": "XAR-21",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "بلل رشد"
+   },
+   "attendu": "XAR-22",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "فرس نججر"
+   },
+   "attendu": "XAR-23",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "غسسن تحن"
+   },
+   "attendu": "XAR-24",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "مرون سلحب"
+   },
+   "attendu": "XAR-25",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "نزر كببن"
+   },
+   "attendu": "XAR-26",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "رد حمو"
+   },
+   "attendu": "XAR-27",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "سم حلب"
+   },
+   "attendu": "XAR-28",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "تلل محفز"
+   },
+   "attendu": "XAR-29",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ول شرر"
+   },
+   "attendu": "XAR-30",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "владимир соколов"
+   },
+   "attendu": "XCY-1",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "дмитри волков"
+   },
+   "attendu": "XCY-2",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "сергеи морозов"
+   },
+   "attendu": "XCY-3",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "николаи петров"
+   },
+   "attendu": "XCY-4",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "андреи кузнецов"
+   },
+   "attendu": "XCY-5",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "михаил орлов"
+   },
+   "attendu": "XCY-6",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "александр новиков"
+   },
+   "attendu": "XCY-7",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "иван федоров"
+   },
+   "attendu": "XCY-8",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "павел смирнов"
+   },
+   "attendu": "XCY-9",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "борис лебедев"
+   },
+   "attendu": "XCY-10",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "виктор козлов"
+   },
+   "attendu": "XCY-11",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "анатоли попов"
+   },
+   "attendu": "XCY-12",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "григори василиев"
+   },
+   "attendu": "XCY-13",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "константин егоров"
+   },
+   "attendu": "XCY-14",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "леонид павлов"
+   },
+   "attendu": "XCY-15",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "максим титов"
+   },
+   "attendu": "XCY-16",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "олег белов"
+   },
+   "attendu": "XCY-17",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "роман гусев"
+   },
+   "attendu": "XCY-18",
+   "categorie": "translit-positif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "يحي قسم"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "منر دللل"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "انور سب"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "حسم جبر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ريد انتر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "زحر ملس"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "كمل اتتر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "لتف حمو"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "مزن كرد"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "امد شم"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ايمن حلق"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "فوز نمر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ابرحم تول"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "اسم بتر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "حن سقر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "مجد ارنس"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "ندم قسسر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "رفق شحب"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "سفن مسر"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "ar",
+   "requete": {
+    "nom": "زك حمدن ادلب"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "степан мелников"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "руслан баранов"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "тимур заицев"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "вадим сорокин"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "ыегор фролов"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "аркади виноградов"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "богдан рыбаков"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "всеволод жуков"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "геннади соболев"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "денис воронин"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "кирилл быков"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  },
+  {
+   "origine": "cy",
+   "requete": {
+    "nom": "артем никитин"
+   },
+   "attendu": null,
+   "categorie": "translit-negatif"
+  }
+ ]
+}

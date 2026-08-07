@@ -52,6 +52,8 @@ export function clePhonetique(s: string): string;
 export function clesPhonetiques(s: string, config?: ConfigMoteur): string[];  // R416 — clés selon la méthode
 export function doubleMetaphone(s: string): [string, string];                 // R416 — [primaire, secondaire]
 export function clesDouble(s: string): string[];                              // R416 — codes Double Metaphone déduits
+export function translitterer(s: string): string;                             // R410 — cyrillique + arabe → latin (amont)
+export function estNonLatin(s: string): boolean;
 export type Idf = { df: Map<string, number>; n: number };
 export function construireIdf(entries: EntreeMoteur[]): Idf;                 // global (compat bancs)
 export function construireIdfLocal(entries: EntreeMoteur[]): Idf;            // C8 — par run, AUCUN état module-global

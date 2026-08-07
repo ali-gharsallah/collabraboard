@@ -202,7 +202,7 @@ jobs:
       - name: "3s · Gate matcher screening (R405-R407, attendu 3/3)"
         run: |
           out=$(node services/screening/gate.test.mjs); echo "$out"
-          echo "$out" | grep -q "### 3/3 gate matcher verts (R405-R407) ###"
+          echo "$out" | grep -q "### 4/4 gate matcher verts (R405-R407 · R410) ###"
 
       # ── Équivalence-aux-défauts du moteur configurable (R413) — porte BLOQUANTE ──
       # Prouve que les knobs Phase 2 (DEFAUTS_MOTEUR/DEFAUTS_BLOCKING) reproduisent, sans config, le

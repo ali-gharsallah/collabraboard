@@ -109,11 +109,31 @@ console.log(`\nR261  ${clients200.length} clients × ${entries.length} : blockin
 check(msBloc < PLANCHER.perfCeilMs, `R406 latence blocking ${msBloc} ms ≥ plafond ${PLANCHER.perfCeilMs} ms`);
 check(speedup >= PLANCHER.perfSpeedupMin, `R406 blocking ×${speedup.toFixed(1)} < ×${PLANCHER.perfSpeedupMin} — pré-filtre inactif ou régressé`);
 
+// ══ R410 — GOLDEN ÉTENDU NON-LATIN (P-L6-2) : translittération cyrillique + arabe en amont. ══
+// Les requêtes sont en ÉCRITURE D'ORIGINE, les entrées de liste en latin (réalité des feeds).
+// RECALIBRAGE ASSUMÉ : cette section score avec { phonetique: true } — l'abjad arabe ne note pas
+// les voyelles brèves, et c'est la couche phonétique R416 (clés sans voyelles) qui rapproche
+// « mhmd » de « muhammad ». Les planchers du golden 127 (sections ci-dessus) restent AUX DÉFAUTS.
+const etendu = JSON.parse(readFileSync(join(DIR, "golden-etendu.json"), "utf8"));
+const PLANCHER_ETENDU = { rappel: 0.90, precision: 0.95 };
+let xtp = 0, xfn = 0, xfp = 0;
+for (const c of etendu.cas) {
+  const r = rapprocher(c.requete, etendu.entries, SEUIL, { phonetique: true });
+  if (c.attendu) { if (r && r.uid === c.attendu) xtp++; else { xfn++; if (r) xfp++; } }
+  else if (r) xfp++;
+}
+const xr = xtp / (xtp + xfn), xp = xtp / ((xtp + xfp) || 1);
+const parOrigine = (o) => etendu.cas.filter((c) => c.origine === o).length;
+console.log(`
+R410  golden étendu non-latin : ar=${parOrigine("ar")} cy=${parOrigine("cy")} · rappel ${pct(xr)} (plancher ${pct(PLANCHER_ETENDU.rappel)}) · précision ${pct(xp)} (plancher ${pct(PLANCHER_ETENDU.precision)}) · VP=${xtp} FN=${xfn} FP=${xfp}`);
+check(xr >= PLANCHER_ETENDU.rappel, `R410 rappel étendu ${pct(xr)} < plancher ${pct(PLANCHER_ETENDU.rappel)}`);
+check(xp >= PLANCHER_ETENDU.precision, `R410 précision étendue ${pct(xp)} < plancher ${pct(PLANCHER_ETENDU.precision)}`);
+
 // ── Verdict ──
 if (echecs.length) {
   console.log(`\n✗ GATE MATCHER ROUGE — ${echecs.length} plancher(s) cassé(s) :`);
   echecs.forEach((m) => console.log(`   ✗ ${m}`));
   process.exit(1);
 }
-console.log(`\n✓ R405 (qualité) · R406 (perf) · R407 (non-perte blocking) tous au-dessus des planchers.`);
-console.log(`### 3/3 gate matcher verts (R405-R407) ###`);
+console.log(`\n✓ R405 (qualité) · R406 (perf) · R407 (non-perte blocking) · R410 (non-latin) tous au-dessus des planchers.`);
+console.log(`### 4/4 gate matcher verts (R405-R407 · R410) ###`);

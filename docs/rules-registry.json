@@ -415,8 +415,8 @@
       "statut": "actif",
       "citePar": [
         "kyc",
-        "cpsi",
         "screening",
+        "cpsi",
         "workflow-instances",
         "custody",
         "events",
@@ -443,9 +443,10 @@
       "citePar": [
         "screening",
         "kyc",
+        "common",
         "cpsi",
         "workflow-engine",
-        "common",
+        "api",
         "events",
         "ged",
         "ia",
@@ -688,6 +689,7 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "cpsi-server-py"
       ]
     },
@@ -697,7 +699,8 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
-        "cpsi-server-py"
+        "cpsi-server-py",
+        "api"
       ]
     },
     {
@@ -2793,9 +2796,13 @@
     },
     {
       "numero": "R339",
-      "module": "events",
-      "ancre": "apps/api/src/modules/events/upcasters.ts",
-      "statut": "actif"
+      "module": "common",
+      "ancre": "apps/api/src/common/domain-event.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "events"
+      ]
     },
     {
       "numero": "R340",
@@ -3392,11 +3399,18 @@
     {
       "numero": "R409",
       "module": "screening",
-      "ancre": "apps/api/src/modules/screening/screening.service.ts",
+      "ancre": "apps/api/src/modules/screening/listes.service.ts",
       "statut": "actif",
       "citePar": [
-        "screening-engine"
+        "screening-engine",
+        "api"
       ]
+    },
+    {
+      "numero": "R410",
+      "module": "screening-engine",
+      "ancre": "packages/screening-engine/src/baseline-engine.js",
+      "statut": "actif"
     },
     {
       "numero": "R411",

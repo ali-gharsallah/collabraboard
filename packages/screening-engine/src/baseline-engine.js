@@ -10,6 +10,7 @@
 "use strict";
 
 const { clesDouble, doubleMetaphone } = require("./phonetique-double");
+const { translitterer, estNonLatin } = require("./translitteration");
 
 const PARTICULES = /\b(al|el|bin|ibn|van|der|de|la|du|von|ben)\b/g;   // NB : déclarée, non appliquée (parité avec l'origine)
 const SUFFIXES = /\b(sa|ag|ltd|llc|gmbh|inc|plc|sarl|holding|holdings)\b/g;
@@ -63,7 +64,11 @@ function clePhonetique(s) {
 }
 
 function normaliser(s) {
-  return String(s || "")
+  let t = String(s || "");
+  // R410 (L6) — translittération EN AMONT : sans elle, un nom cyrillique/arabe était réduit à la
+  // chaîne vide (strip [^a-z]) — invisible au moteur. Le chemin LATIN reste bit à bit identique.
+  if (estNonLatin(t)) t = translitterer(t);
+  return t
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // diacritiques
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")                        // ponctuation, tirets
@@ -246,5 +251,5 @@ function rapprocherDetail(requete, entries, seuil, config, idf) {
 
 module.exports = {
   PARTICULES, SUFFIXES, DEFAUTS_MOTEUR, normaliser, jetonsTries, jaroWinkler, clePhonetique, clesPhonetiques, clesDouble, doubleMetaphone,
-  construireIdf, construireIdfLocal, scorer, scorerDetail, rapprocher, rapprocherDetail,
+  construireIdf, construireIdfLocal, scorer, scorerDetail, rapprocher, rapprocherDetail, translitterer, estNonLatin,
 };
