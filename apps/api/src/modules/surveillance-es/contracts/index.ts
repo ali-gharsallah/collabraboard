@@ -18,7 +18,8 @@ import * as pepLeve from "./personne-pep-leve.v1";
  */
 export type GardeEs = { version: number; schema: z.ZodTypeAny };
 
-const DU_CATALOGUE = ["screening.escalade.proposee", "pep.proposition.creee", "pep.proposition.rejetee"] as const;
+const DU_CATALOGUE = ["screening.escalade.proposee", "pep.proposition.creee", "pep.proposition.rejetee",
+  "screening.hit.detecte", "screening.hit.qualifie"] as const;   // ES-6 : timeline des hits
 
 export const SCHEMAS_ES: Readonly<Record<string, GardeEs>> = Object.freeze({
   ...Object.fromEntries(DU_CATALOGUE.map((t) => {

@@ -237,10 +237,15 @@ export class ScreeningService {
           tenantId: ctx.tenantId, verdict: "FAUX_POSITIF", entreeHash,
           hit: { clientId: t.sujetId, entreeUid: t.uid } } });
         if (wl) continue;
-        hits.push(await tx.screeningHit.create({ data: {
+        const hitCree = await tx.screeningHit.create({ data: {
           tenantId: ctx.tenantId, clientId: t.sujetId, sujetType, entreeUid: t.uid, score: t.score,
           listeVersion: dto.version, entreeHash, statut: "BRUT", at,
-          detail: t.detail } }));      // R411 - decomposition explicable (score, via, DOB, type)
+          detail: t.detail } });      // R411 - decomposition explicable (score, via, DOB, type)
+        hits.push(hitCree);
+        // ES-6 (C6) : la TIMELINE du hit devient événementielle — la détection est un fait
+        // horodaté du journal (le sidecar ES la rejoue) ; l'état reste la table (CRUD-primaire).
+        await emitEvent(tx, ctx.tenantId, "screening.hit.detecte", hitCree.id,
+          { hitId: hitCree.id, clientId: t.sujetId, entreeUid: t.uid, score: t.score, listeVersion: dto.version });
       }
       // R103 - la trace de passage s'ecrit TOUJOURS, hits ou pas, pre-filtre inclus
       const run = await tx.screeningRun.create({ data: {
@@ -326,6 +331,9 @@ export class ScreeningService {
         par: ctx.userId,                                  // R101 : personne nommee = jeton, jamais body
         at: new Date().toISOString(), entreeHash: hit.entreeHash, listeVersion: hit.listeVersion } });
       await tx.screeningHit.update({ where: { id: hit.id }, data: { statut: "QUALIFIE" } });
+      // ES-6 (C6) : CHAQUE qualification (VP comme FP) est un fait du journal — timeline rejouable.
+      await emitEvent(tx, ctx.tenantId, "screening.hit.qualifie", hit.id,
+        { hitId: hit.id, verdict, motif: motif.trim(), par: ctx.userId });
       if (verdict === "VRAI_POSITIF") {
         // R39/R44 - on PROPOSE : gel, clarification art. 6 LBA, MROS restent des decisions humaines
         // P-L5-2 (C6) : émission par emitEvent — le catalogue VALIDE le payload au write.

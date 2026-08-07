@@ -5,6 +5,7 @@ import { EsAlertes } from "./alertes.service";
 import { EsProjections } from "./es-projections.service";
 import { EsBacktest } from "./es-backtest.service";
 import { EsShadow } from "./es-shadow.service";
+import { EsHits } from "./es-hits.service";
 import { TasksModule } from "../tasks/tasks.module";
 
 /**
@@ -19,6 +20,6 @@ import { TasksModule } from "../tasks/tasks.module";
 // TasksModule = le canal de PROPOSITION (R239/R44) : la seule dépendance sortante vers le
 // monolithe, hors du contexte Surveillance gardé (frontière L3) — jamais d'écriture directe.
 @Module({ imports: [TasksModule],
-  providers: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow],
-  exports: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow] })
+  providers: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow, EsHits],
+  exports: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow, EsHits] })
 export class SurveillanceEsModule {}
