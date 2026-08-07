@@ -1,6 +1,7 @@
 import { parse } from "yaml";
 import { z } from "zod";
 import { CompletionProfile, KINDS_REQUIREMENT, SEVERITES } from "./types";
+import { compilerExpression, ExpressionInvalide } from "./dsl";
 
 /**
  * P-L7-1 — CHARGEUR YAML STRICT des CompletionProfiles. La config d'inférence est GOUVERNÉE :
@@ -8,8 +9,8 @@ import { CompletionProfile, KINDS_REQUIREMENT, SEVERITES } from "./types";
  * silence désarmerait une exigence réglementaire), et chaque erreur porte le CHEMIN du champ
  * fautif (`profils[0].requirements[1].kind`). Aucun état module-global (leçon C8) : le chargeur
  * est une fonction pure texte → profils, appelée par requête/chargement.
- * `when` (activation_rules) est accepté comme chaîne OPAQUE : le DSL sûr (P-L7-2) le compilera
- * et rejettera les expressions invalides AU CHARGEMENT dès son branchement.
+ * `when` (activation_rules) est COMPILÉ ICI par le DSL sûr (P-L7-2, dsl.ts — AST restreint,
+ * pas d'eval) : une expression invalide est rejetée AU CHARGEMENT, avec le chemin du champ.
  */
 
 const SCHEMA_REQUIREMENT = z.object({
@@ -69,6 +70,15 @@ export function chargerProfils(yamlText: string): CompletionProfile[] {
       message: `profil dupliqué pour (${p.entityType}, ${p.jurisdiction}) — déjà défini par profils.${cles.get(cle)}` });
     else cles.set(cle, pi);
   });
+  // P-L7-2 : les activation_rules se COMPILENT au chargement — expression invalide = config refusée.
+  profils.forEach((p, pi) => p.requirements.forEach((r, ri) => {
+    if (r.when === undefined) return;
+    try { compilerExpression(r.when); }
+    catch (e) {
+      erreurs.push({ chemin: `profils.${pi}.requirements.${ri}.when`,
+        message: e instanceof ExpressionInvalide ? e.message : String(e) });
+    }
+  }));
   if (erreurs.length) throw new ConfigurationProfilInvalide(erreurs);
   return profils as CompletionProfile[];
 }
