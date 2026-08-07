@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { RiskCaseService } from "../riskcases/risk-case.service";
+import { Inject, Injectable } from "@nestjs/common";
+import { PORT_PROPOSITION_RISK_CASE, PortPropositionRiskCase } from "../surveillance/ports";
 
 /**
  * R286 / AS-03 — le worker case_proposal : consomme l'événement outbox MIROIR
@@ -11,7 +11,8 @@ import { RiskCaseService } from "../riskcases/risk-case.service";
  */
 @Injectable()
 export class CaseProposalConsumer {
-  constructor(private riskCases: RiskCaseService) {}
+  // P-L3-2 (ADR-TM-001) : dépendance au PORT du contexte Surveillance, jamais au service concret.
+  constructor(@Inject(PORT_PROPOSITION_RISK_CASE) private riskCases: PortPropositionRiskCase) {}
 
   async handle(ev: { tenant_id: string; type: string; payload: unknown }, _db?: unknown) {
     if (ev.type !== "cpsi.case_proposal.emitted") return { applied: false, reason: "type" };

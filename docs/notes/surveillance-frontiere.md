@@ -92,3 +92,31 @@ export const PORT_PROPOSITION_RISK_CASE = Symbol("PortPropositionRiskCase");
 
 **Critère de sortie P-L3-1 atteint** : chaque violation de frontière est listée avec `fichier:ligne`
 (VIOL-1/2/3) ; les ports sont déclarés ; aucun refactor d'implémentation.
+
+---
+
+## Matérialisation (P-L3-2) — état : FAIT
+
+- `modules/surveillance/ports.ts` créé (`PortGelMros` / `PORT_GEL_MROS`, `PortPropositionRiskCase` /
+  `PORT_PROPOSITION_RISK_CASE`).
+- **VIOL-1 résolue** : `transaction-gate.service.ts` importe le port (`gardeGelMros(mros: PortGelMros)`),
+  plus jamais `MrosService` ; `MrosModule` fournit `PORT_GEL_MROS` (`useExisting: MrosService` — même
+  instance, comportement identique).
+- **VIOL-2 résolue** : `case-proposal.consumer.ts` injecte `@Inject(PORT_PROPOSITION_RISK_CASE)` ;
+  `RiskCaseModule` fournit le port (`useExisting: RiskCaseService`).
+- **VIOL-3 requalifiée** : `events.module → RiskCaseModule` est la **composition DI Nest** — le
+  mécanisme même par lequel le port est fourni. La composition `*.module.ts → *.module.ts` est
+  autorisée (symétriquement : `aml.module → CpsiModule`, pont Analytique 2G).
+- **Test d'architecture** : `apps/api/scripts/verifier-frontiere-surveillance.mjs` — imports RÉSOLUS
+  (160 fichiers de prod), entrant ET sortant ; CI étape `3-L3`, bloquante. Prouvé mordant : un import
+  de `mros.service` injecté dans `transaction-gate` → rouge.
+
+### Découvertes de la gate (que la carte P-L3-1 avait manquées) — exceptions assumées
+
+| Exception | Import | Motif |
+|---|---|---|
+| EXC-1 | `screening.service.ts → txflux/swift.module` | `parserSwift` : fonction **pure** de parsing (R300), sans DI ni état — le flux reste propriétaire du format |
+| EXC-2 | `aml.service.ts → parametres/parametres.service` | `REGISTRE_RQ` : **constante** référentiel R125 (données, pas un service) — aucun état ni DI traversé |
+
+Toute nouvelle exception exige une entrée motivée ici ET dans la liste `EXC` du script — sinon CI rouge.
+Zéro spec cassée (harnais 62 suites vert, Portail TX 7/7, tsc + lint 0 erreur).

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
 import { Module } from "@nestjs/common";
 import { MrosService } from "./mros.service";
+import { PORT_GEL_MROS } from "../surveillance/ports";
 
 /**
  * Porte HTTP du reporting réglementaire MROS (Vague 4). Délégation PURE vers le domaine
@@ -20,5 +21,9 @@ export class MrosController {
   @Post(":id/gel/lever")      lever(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.leverGel(r.ctx, id, b?.motif); }     // R131
 }
 
-@Module({ controllers: [MrosController], providers: [ MrosService], exports: [MrosService] })
+// P-L3-2 : le contexte Surveillance fournit le PORT (frontière ADR-TM-001) — l'extérieur n'importe
+// jamais MrosService, il injecte PORT_GEL_MROS (même instance, useExisting : comportement identique).
+@Module({ controllers: [MrosController],
+  providers: [ MrosService, { provide: PORT_GEL_MROS, useExisting: MrosService }],
+  exports: [MrosService, PORT_GEL_MROS] })
 export class MrosModule {}

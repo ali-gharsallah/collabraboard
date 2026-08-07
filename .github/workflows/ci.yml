@@ -313,6 +313,14 @@ jobs:
           out=$(node apps/api/scripts/verifier-couverture-r222-238.mjs); echo "$out"
           echo "$out" | grep -q "### 16/16 complétude vague R222–R238 verte (L2) ###"
 
+      # ── L3 · test d'ARCHITECTURE (BLOQUANT) : frontière du contexte Surveillance (ADR-TM-001).
+      #    Import direct d'un interne de screening/aml/riskcases/mros depuis l'extérieur (ou l'inverse)
+      #    = rouge ; seuls les ports (modules/surveillance/ports) et la composition module→module passent. ──
+      - name: "3-L3 · Frontière Surveillance (imports résolus, ADR-TM-001)"
+        run: |
+          out=$(node apps/api/scripts/verifier-frontiere-surveillance.mjs); echo "$out"
+          echo "$out" | grep -q "### frontière Surveillance verte (L3 · ADR-TM-001) ###"
+
       # ── RUNBOOK §2 · 4 — e2e Postgres réel (62 suites, 411/411) ──────────────
       # Reproductible depuis la réconciliation de la dérive `db push` (20260805000002) : sans elle
       # `migrate deploy` bâtissait une base incomplète et la voie e2e était rouge en CI (colonnes/
