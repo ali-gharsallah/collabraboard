@@ -57,6 +57,8 @@ GET    /v1/ged/vues/:code
 GET    /v1/healthz
 GET    /v1/ia/prerevue/:id
 GET    /v1/ia/prerevue/kyc/:id/traitement
+GET    /v1/inference/:kycId/explain/:rid
+GET    /v1/inference/:kycId/ledger
 GET    /v1/islamic/clients/:id/signaux
 GET    /v1/islamic/clients/:id/zakat
 GET    /v1/kyc

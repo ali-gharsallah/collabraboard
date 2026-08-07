@@ -8,7 +8,7 @@ import { PROFILS_DEFAUT_YAML } from "./profils.defaut";
  * Le front (RequirementChecklist) n'affiche QUE ces réponses — aucune valeur fabriquée
  * côté écran (leçon L6-3). Profils chargés PAR REQUÊTE depuis le YAML gouverné (C8).
  */
-@Controller("v1/inference")
+@Controller("inference")
 export class InferenceController {
   constructor(private svc: LedgerService) {}
 
