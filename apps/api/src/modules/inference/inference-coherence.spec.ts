@@ -108,7 +108,7 @@ await t("CO-03 divergences OBSERVÉES = divergences DOCUMENTÉES, ni plus ni moi
   }
   assert.deepEqual(observees.sort(), ["DIV-1", "DIV-2"]);
   for (const div of observees)
-    assert.ok(new RegExp(`## ${div} `).test(DIVERGENCES_MD), `${div} absent de MIGRATION_DIVERGENCES.md`);
+    assert.ok(DIVERGENCES_MD.includes(`## ${div} `), `${div} absent de MIGRATION_DIVERGENCES.md`);
 });
 
 await t("CO-04 le miroir généré est FIDÈLE : 50 règles reformulables, basis repris de l'inventaire", async () => {
