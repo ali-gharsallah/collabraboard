@@ -80,6 +80,7 @@ GET    /v1/mobile/messages
 GET    /v1/modules/actifs
 GET    /v1/mros
 GET    /v1/mros/:id
+GET    /v1/mros/:id/goaml
 GET    /v1/nba
 GET    /v1/nba/:id
 GET    /v1/offboarding
@@ -274,7 +275,9 @@ POST   /v1/modules/licence
 POST   /v1/modules/licence/tick
 POST   /v1/mros/:id/gel
 POST   /v1/mros/:id/gel/lever
+POST   /v1/mros/:id/goaml/soumettre
 POST   /v1/mros/:id/notification
+POST   /v1/mros/chrono/tick
 POST   /v1/mros/decider
 POST   /v1/nba/:id/decision
 POST   /v1/nba/propose
