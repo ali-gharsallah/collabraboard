@@ -17,6 +17,12 @@ const CONVERTIS = [
   "src/features/oprisk/OpRisk.tsx",       // tranche 2
   "src/features/mobile/MobileAdmin.tsx",  // tranche 2
   "src/features/regwatch/Regwatch.tsx",   // tranche 3 (+ accent data/IA en token)
+  // Câblage back→front 2026-08-07 : nouveaux écrans NÉS convertis (critère d'acceptation).
+  "src/features/rapports/RapportsConformite.tsx",
+  "src/features/olivia/GouvernanceO.tsx",
+  "src/features/ia/PreRevue.tsx",
+  "src/features/workload/CapaciteEquipe.tsx",
+  "src/features/surveillance/SurveillanceEs.tsx",
 ];
 
 const racine = path.join(__dirname, "..");

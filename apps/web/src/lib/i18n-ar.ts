@@ -55,6 +55,8 @@ const EXT_AR: Record<string, string> = {
   "Olivia · Runs": "Olivia · التشغيلات", "Sections & droits": "الأقسام والصلاحيات", "Profils AR": "ملفات AR",
   "Profils GAR": "ملفات GAR", "Registre paramètres": "سجل المعلمات", "Matrice documentaire": "مصفوفة المستندات",
   "Types de CoC": "أنواع CoC", "Bacs à sable": "بيئات الاختبار", "Audit & transport": "التدقيق والنقل",
+  "Rapports conformité": "تقارير الامتثال", "Pré-revue IA": "المراجعة المسبقة بالذكاء الاصطناعي",
+  "Gouvernance O": "حوكمة O", "Capacité équipe": "قدرة الفريق", "Surveillance ES": "مراقبة ES",
   "Audit IT": "تدقيق تقنية المعلومات", "Utilisateurs & rôles": "المستخدمون والأدوار", "Guide IAM": "دليل IAM",
   "SSO / Fédération": "SSO / الاتحاد",
 };

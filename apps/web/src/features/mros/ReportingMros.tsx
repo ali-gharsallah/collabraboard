@@ -11,12 +11,14 @@ import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat
 
 type Comm = { id: string; riskCaseId: string; decision: string; notification?: string; gelActif?: boolean; dossierSha256: string; decideAt: string };
 type Relu = { decision: string; motif: string; dossierSha256: string } | null;
+type Goaml = { communicationId: string; xml: string; nTransactions: number; dossierSha256: string } | null;
 const apiBase = (): string | undefined => (window as unknown as { OLIVE_API_URL?: string }).OLIVE_API_URL;
 const auth = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("olive_jwt")}` });
 
 export function ReportingMros() {
   const [comms, setComms] = useState<Comm[]>([]);
   const [detail, setDetail] = useState<Relu>(null);
+  const [goaml, setGoaml] = useState<Goaml>(null);
   const [msg, setMsg] = useState("");
   const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
@@ -42,6 +44,35 @@ export function ReportingMros() {
     setMsg(r.ok ? `Notification saisie : ${notification}.` : "Erreur");
     if (r.ok) charger();
   }
+  // P-L8-1 goAML : le brouillon XML est GÉNÉRÉ par l'API (validé contre le XSD-subset committé) ;
+  // la soumission est MANUELLE et tracée (référence portail obligatoire) — jamais d'envoi auto.
+  async function genererGoaml(id: string) {
+    const g = await apiGetSourced<Goaml>(`/v1/mros/${id}/goaml`, null);
+    setGoaml(g.data);
+    setMsg(g.data ? `Brouillon goAML généré — ${g.data.nTransactions} transaction(s), XSD-subset validé.` : DEMO_MESSAGE);
+  }
+  function telechargerGoaml() {
+    if (!goaml) return;
+    const url = URL.createObjectURL(new Blob([goaml.xml], { type: "application/xml" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `goaml-${goaml.communicationId}.xml`; a.click();
+    URL.revokeObjectURL(url);
+  }
+  async function soumettreGoaml(id: string, reference: string) {
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/mros/${id}/goaml/soumettre`, { method: "POST", headers: auth(), body: JSON.stringify({ reference }) });
+    const b = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Soumission goAML tracée — référence ${reference}.` : (b.message ?? "Erreur (référence portail requise)"));
+    if (r.ok) charger();
+  }
+  async function tickChrono() {
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/mros/chrono/tick`, { method: "POST", headers: auth(), body: JSON.stringify({}) });
+    const b = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Chrono J+5 ouvrés : ${b.examinees ?? 0} examinée(s), ${(b.alertes ?? []).length} alerte(s).` : "Erreur");
+  }
 
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
@@ -49,7 +80,10 @@ export function ReportingMros() {
     {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Reporting réglementaire (MROS) — registre opposable & figé (R129→R132)</h3>
-    <button style={btn} onClick={charger}>Charger le registre</button>
+    <button style={btn} onClick={charger}>Charger le registre</button>{" "}
+    <button style={{ ...btn, background: "#8a6d1a" }} onClick={tickChrono}
+      title="Chronomètre J+5 OUVRÉS depuis la décision DECLARER sans soumission goAML (P-L8-1) — idempotent">
+      Chrono J+5 (tick)</button>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 10 }}>
       <thead><tr style={{ textAlign: "left", borderBottom: "2px solid #4A6B28" }}>
@@ -61,6 +95,11 @@ export function ReportingMros() {
           <td style={{ fontFamily: "monospace", fontSize: 11 }}>{c.dossierSha256?.slice(0, 12)}…</td>
           <td>{c.decideAt ? new Date(c.decideAt).toLocaleDateString() : "—"}</td>
           <td><button style={{ ...btn, background: "#777" }} onClick={() => relire(c.id)}>Relire</button>{" "}
+            <button style={{ ...btn, background: "#4a5d68" }} onClick={() => genererGoaml(c.id)}>goAML</button>{" "}
+            <button style={{ ...btn, background: "#2f4b66" }} onClick={() => ask({ title: "Soumettre au portail goAML — acte MANUEL tracé",
+              message: "La soumission n'est JAMAIS automatique : elle trace la référence remise par le portail MROS (P-L8-1).",
+              input: { label: "Référence portail", placeholder: "obligatoire", required: true },
+              confirmLabel: "Tracer la soumission", onConfirm: (ref) => soumettreGoaml(c.id, ref ?? "") })}>Soumis</button>{" "}
             <button style={btn} onClick={() => ask({ title: "Notifier — transmission à l'autorité",
               message: "Acte opposable et tracé (art. 10a). Le dossier reste figé (R130).", confirmLabel: "Transmettre",
               onConfirm: () => notifier(c.id, "TRANSMISSION_AUTORITE") })}>Transmis</button>{" "}
@@ -74,6 +113,13 @@ export function ReportingMros() {
     {detail && <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: "#f3f0e8", fontSize: 13 }}>
       <strong>Relecture opposable</strong> — décision {detail.decision}, motif « {detail.motif} »,
       empreinte <span style={{ fontFamily: "monospace" }}>{detail.dossierSha256}</span> (identique au dépôt, R130).
+    </div>}
+    {goaml && <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: "#f3f0e8", fontSize: 13 }}>
+      <strong>Brouillon goAML (P-L8-1)</strong> — {goaml.nTransactions} transaction(s), empreinte dossier{" "}
+      <span style={{ fontFamily: "monospace" }}>{goaml.dossierSha256?.slice(0, 16)}…</span>{" "}
+      <button style={{ ...btn, background: "#4a5d68" }} onClick={telechargerGoaml}>Télécharger le XML</button>
+      <pre style={{ marginTop: 8, fontSize: 11, maxHeight: 260, overflow: "auto", background: "#fff",
+        padding: 10, borderRadius: 6 }}>{goaml.xml}</pre>
     </div>}
   </div>;
 }

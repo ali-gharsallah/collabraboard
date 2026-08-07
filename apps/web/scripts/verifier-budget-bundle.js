@@ -19,7 +19,12 @@ const zlib = require("zlib");
 // DÉCOMPOSITION du moteur (R411), la version de liste et la config du run, plus le bandeau
 // d'âge des listes (R409) — ~1 kB gz de plus, et le budget était déjà à fleur (mesure locale
 // 220.4 sur le commit précédent). Marge résiduelle ≈ 4 kB, pas un blanc-seing.
-const BUDGET_TOTAL_KB = 225;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// 2026-08-07 (câblage back→front, commit motivé) : 225 → 240. CINQ écrans neufs câblent les
+// familles de routes jusqu'ici sans consommateur (rapports/KPI, gouvernance O, pré-revue IA,
+// workload, surveillance-es) + goAML/déploiements dans deux écrans existants — mesure 232.8
+// (tous en chunks LAZY : le chargement initial ne bouge pas, mais ce budget somme TOUS les
+// chunks hors packs de langue). Marge résiduelle ≈ 7 kB, pas un blanc-seing.
+const BUDGET_TOTAL_KB = 240;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

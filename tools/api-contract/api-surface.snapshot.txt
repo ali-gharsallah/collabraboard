@@ -134,6 +134,12 @@ GET    /v1/screening/hits/export
 GET    /v1/screening/hits/export.csv
 GET    /v1/screening/listes
 GET    /v1/screening/runs
+GET    /v1/surveillance-es/alertes
+GET    /v1/surveillance-es/etat
+GET    /v1/surveillance-es/hits
+GET    /v1/surveillance-es/hits/:hitId
+GET    /v1/surveillance-es/pep
+GET    /v1/surveillance-es/pep/:personId
 GET    /v1/swift/messages
 GET    /v1/swift/quarantaine
 GET    /v1/ta/registre

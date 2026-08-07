@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { SurveillanceEsController } from "./surveillance-es.controller";
 import { EsEventStore } from "./es-event-store.service";
 import { EsSubscriber } from "./es-subscriber.service";
 import { EsAlertes } from "./alertes.service";
@@ -21,6 +22,7 @@ import { TasksModule } from "../tasks/tasks.module";
 // TasksModule = le canal de PROPOSITION (R239/R44) : la seule dépendance sortante vers le
 // monolithe, hors du contexte Surveillance gardé (frontière L3) — jamais d'écriture directe.
 @Module({ imports: [TasksModule],
+  controllers: [SurveillanceEsController],   // câblage front : VUES par rejeu, lecture seule (R44)
   providers: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow, EsHits, EsPep],
   exports: [EsEventStore, EsSubscriber, EsAlertes, EsProjections, EsBacktest, EsShadow, EsHits, EsPep] })
 export class SurveillanceEsModule {}
