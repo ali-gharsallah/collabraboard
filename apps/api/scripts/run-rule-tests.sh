@@ -60,6 +60,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/rapports/rapports.module.ts src/modules/rapports/rapports.wiring.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
   src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
+  src/modules/inference/types.ts src/modules/inference/profils.loader.ts src/modules/inference/profils.resolver.ts src/modules/inference/profils.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -127,3 +128,4 @@ echo "── Routage des tâches (R38 T-02/T-03 — port creer_tache) ──"; r
 echo "── Exports réglementaires R50 (RP-01..04 — port domain.py) ──"; run rapports.wiring.spec.js
 echo "── Idempotence commandes (IDM-01..03, R337) ──"; run idempotency.spec.js
 echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec.js
+echo "── Inférence module A (IN-01..11, P-L7-1 profils Requirements) ──"; run profils.spec.js
