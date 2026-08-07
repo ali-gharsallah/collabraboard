@@ -60,7 +60,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/rapports/rapports.module.ts src/modules/rapports/rapports.wiring.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
   src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
-  src/modules/inference/types.ts src/modules/inference/case-facts.ts src/modules/inference/dsl.ts src/modules/inference/profils.loader.ts src/modules/inference/profils.resolver.ts src/modules/inference/profils.spec.ts src/modules/inference/dsl.spec.ts src/modules/inference/case-facts.reader.ts src/modules/inference/requirement-ledger.ts src/modules/inference/ledger.service.ts src/modules/inference/inference-ledger.wiring.spec.ts \
+  src/modules/inference/types.ts src/modules/inference/case-facts.ts src/modules/inference/dsl.ts src/modules/inference/profils.loader.ts src/modules/inference/profils.resolver.ts src/modules/inference/profils.spec.ts src/modules/inference/dsl.spec.ts src/modules/inference/case-facts.reader.ts src/modules/inference/requirement-ledger.ts src/modules/inference/ledger.service.ts src/modules/inference/inference-ledger.wiring.spec.ts src/modules/inference/inference-coherence.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -131,3 +131,5 @@ echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec
 echo "── Inférence module A (IN-01..11, P-L7-1 profils Requirements) ──"; run profils.spec.js
 echo "── Inférence module A (DS-01..14, P-L7-2 DSL d'activation sûr) ──"; run dsl.spec.js
 echo "── Inférence module A (LG-01..08, P-L7-3 CaseFactsReader + RequirementLedger) ──"; run inference-ledger.wiring.spec.js
+echo "── Inférence module A (CO-01..05, P-L7-4 cohérence gardes ↔ ledger + miroir no-drift) ──"; run inference-coherence.spec.js
+node scripts/generer-miroir-regles.mjs --verifier
