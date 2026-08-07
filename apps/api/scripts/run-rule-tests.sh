@@ -13,7 +13,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/auth/*.ts src/common/tenant.middleware.ts src/common/tenant.middleware.spec.ts \
   src/common/prisma.service.ts src/common/audit.service.ts src/common/secret-box.ts \
   src/modules/kyc/risk-engine.ts src/modules/kyc/kyc.templates.ts \
-  src/modules/screening/rules/*.ts src/modules/screening/*.spec.ts src/modules/screening/screening.service.ts \
+  src/modules/screening/rules/*.ts src/modules/screening/*.spec.ts src/modules/screening/screening.service.ts src/modules/screening/listes.service.ts \
   src/modules/events/golden-record.projector.ts src/modules/events/golden-record.projector.spec.ts \
   src/modules/personnes/personnes.service.ts src/modules/personnes/personnes.wiring.spec.ts \
   src/modules/pms/pms.service.ts src/modules/pms/pms.wiring.spec.ts \
@@ -79,6 +79,7 @@ echo "── Corpus I-01..I-05 (R89→R92) ──"; run iam-scenarios.spec.js
 echo "── Corpus SC-01..SC-04 (R100→R103) ──"; run screening-scenarios.spec.js
 echo "── Corpus GR-01..GR-04 (R104 golden record) ──"; run golden-record.projector.spec.js
 echo "── Câblage screening persistant (R100→R103) ──"; run screening.wiring.spec.js
+echo "── Câblage Ingestion de listes versionnée (L6-01..08, R409) ──"; run listes.wiring.spec.js
 echo "── Vérif JWKS IdP (JV-01..07) ──"; run jwks-verifier.spec.js
 echo "── Chiffrement mfa_secret (SB-01..06) ──"; run secret-box.spec.js
 echo "── Câblage personnes (P-01..08, R30→R36) ──"; run personnes.wiring.spec.js

@@ -338,6 +338,25 @@ model ProcessedCommand {
 
 // ═══ v2 (19.07.2026) — R100→R116 ═══
 
+// R409 (L6 · P-L6-1) — VERSIONS IMMUABLES des listes ingérées (OpenSanctions, secours SECO/OFAC).
+// (tenant, source, version) unique ; hash d'intégrité ; delta vs version précédente calculé à l'IMPORT
+// (entité par entité) ; conservation ≥ 90 j (purge gardée côté service). Les entrées stockées sont
+// NORMALISÉES (ingererListe — adaptateur multi-format R409).
+model ListeVersion {
+  id        String @id @default(uuid()) @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+  source    String                                    // 'OPENSANCTIONS' | 'SECO' | 'OFAC'…
+  version   String                                    // étiquette IMMUABLE (timestamp du dump)
+  hash      String                                    // sha256 des entrées normalisées (intégrité)
+  entries   Json                                      // entrées normalisées
+  nEntrees  Int    @map("n_entrees")
+  delta     Json?                                     // { ajoutees[], modifiees[], retirees[] } vs précédente
+  importeLe String @map("importe_le")                 // ISO — l'ÂGE de la liste s'expose (bandeau + API)
+  @@unique([tenantId, source, version])
+  @@index([tenantId, source, importeLe])
+  @@map("liste_versions")
+}
+
 model ScreeningRun {
   id           String   @id @default(uuid()) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid

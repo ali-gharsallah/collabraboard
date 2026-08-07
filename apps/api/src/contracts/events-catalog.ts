@@ -27,6 +27,13 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "pep.proposition.creee": { version: 1, schema: z.object({ cle: z.string(), hitId: z.string(), personId: z.string(),
     liste: z.string(), listeVersion: z.string(), score: z.number(), decomposition: z.any() }).strict() },
   "pep.proposition.rejetee": { version: 1, schema: z.object({ cle: z.string(), motif: z.string(), par: z.string() }).strict() },
+  // ── Ingestion de listes versionnée (R409 · L6) ──
+  "liste.version.importee":  { version: 1, schema: z.object({ source: z.string(), version: z.string(), hash: z.string(),
+    nEntrees: z.number(), ajoutees: z.number(), modifiees: z.number(), retirees: z.number() }).strict() },
+  "liste.rescreening.cible": { version: 1, schema: z.object({ source: z.string(), version: z.string(),
+    entrees: z.number(), hits: z.number() }).strict() },
+  "liste.delisting.revue":   { version: 1, schema: z.object({ source: z.string(), version: z.string(),
+    uid: z.string(), hitId: z.string() }).strict() },
 };
 
 // ── Types EN ATTENTE de schéma (inventaire des littéraux émis — migration douce, à réduire) ──

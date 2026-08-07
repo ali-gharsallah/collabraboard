@@ -112,7 +112,7 @@ DO $$ DECLARE t text; BEGIN
     'clients', 'users', 'kyc_files', 'kyc_sections', 'kyc_questions',
     'kyc_access_rules', 'kyc_question_history', 'kyc_visas', 'kyc_locks',
     'kyc_lock_requests', 'documents', 'domain_events', 'audit_log',
-    'screening_runs', 'screening_hits', 'screening_qualifications',
+    'screening_runs', 'screening_hits', 'screening_qualifications', 'liste_versions',  -- R409 (L6)
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
     'onboardings',                                        -- R117→R120 (bloc 19, tenantée)
