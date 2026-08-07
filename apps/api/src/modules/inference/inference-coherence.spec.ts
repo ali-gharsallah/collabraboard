@@ -113,7 +113,7 @@ await t("CO-03 divergences OBSERVÉES = divergences DOCUMENTÉES, ni plus ni moi
 
 await t("CO-04 le miroir généré est FIDÈLE : 50 règles reformulables, basis repris de l'inventaire", async () => {
   const miroir = readFileSync(join(process.cwd(), "src", "modules", "inference", "miroir-regles.gen.yaml"), "utf8");
-  assert.equal((miroir.match(/^  - id: REQ-R\d+$/gm) ?? []).length, 50);
+  assert.equal((miroir.match(/^ {2}- id: REQ-R\d+$/gm) ?? []).length, 50);
   assert.ok(miroir.includes('basis: "LBA art. 8 / CDB 20 (contrôle nommé)"'));   // R2, repris verbatim
   assert.ok(miroir.includes("R1–R51 inchangées"));
 });
