@@ -20,3 +20,23 @@ ne référençait ces IDs (vérifié par grep).
 **Leçon.** Un identifiant interne qui porte le même mot qu'un motif de garde CI finit par la
 déclencher. Pour les prochains onglets/états : éviter les valeurs littérales `demo`, `test`,
 `admin`… qui sont aussi des motifs de gardes.
+
+## Rattrapage des dérives masquées (même journée, après levée du faux positif)
+
+La garde R329 étant en AMONT du pipeline, ~30 runs n'ont jamais exécuté les étapes aval.
+Rejouées localement une à une, quatre dérives accumulées pendant la période masquée :
+
+1. **Surface API (RB-07)** — 53 routes ajoutées par les lots L2→L6 (rapports, PEP, listes,
+   kyc processes, aml/*) jamais snapshotées → snapshot régénéré (`tools/api-contract/scan.mjs`),
+   chaque route correspond à un endpoint volontaire d'un lot committé.
+2. **CANON-MASTER (no-drift)** — document régénéré (`run.mjs`), 404 règles / 109 familles.
+3. **MG-05 (migrations expand-only)** — la migration de réconciliation `20260805000002` porte
+   `ALTER COLUMN "id" DROP DEFAULT` (kyc_processes) : résidu de `db push`, le client fournit
+   toujours l'id, et la gate no-drift EXIGE la ligne. Exception DOCUMENTÉE par migration dans
+   `tools/migrations/test.mjs` (doctrine EXC-1/EXC-2) — le harnais reste intact ailleurs.
+4. **Grep AML Gap** — le générateur publie 27 invariants, la CI en grep-ait 25 → grep aligné.
+
+Vérifié vert localement avant push : gates moteur 3s..3x · migrations 5/5 · FAT 4/4 · BAT 4/4 ·
+canon-master 8/8 + --check · AML Gap 27/27 + 11 suites/179 · règles (exit 0) · L2 16/16 ·
+registre C5 · frontière L3 · e2e 62 suites/411 · RLS 0 ligne · python 19/19, 11/11, 20/20,
+canary, contrat 4/4, PEP↔CPSI 3/3 · front 114/114 + budget.

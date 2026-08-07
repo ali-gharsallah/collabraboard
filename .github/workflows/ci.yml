@@ -289,10 +289,10 @@ jobs:
       # Invariants du générateur (R340–R377), fraîcheur des artefacts émis (TS backend/front),
       # parité avec le canon PO (data/aml-gap-dataset-gt.json) et régénération sans dérive du
       # canon PO runnable in-repo (tools/gen_aml_gap.py). Le générateur fait foi.
-      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 25/25)"
+      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 27/27)"
         run: |
           out=$(python3 tools/aml-gap/test_gen_aml_gap.py); echo "$out"
-          echo "$out" | grep -q "### 25/25 invariants AML Gap verts ###"
+          echo "$out" | grep -q "### 27/27 invariants AML Gap verts ###"
 
       # ── AML Gap — moteur (blocs 50–60, R340–R398) : les suites Gherkin rouges deviennent vertes.
       # evaluateScenario (src/aml/engine.ts) MESURE des faits contre les paramètres tenant (R44),
