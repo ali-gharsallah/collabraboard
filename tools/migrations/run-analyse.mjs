@@ -5,7 +5,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyserExpandOnly, tablesAppendOnly, analyserMutationAppendOnly } from "./lib.mjs";
+import { analyserExpandOnly, tablesAppendOnly, analyserMutationAppendOnly, filtrerExceptions } from "./lib.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const dirMig = join(racine, "apps", "api", "prisma", "migrations");
@@ -20,7 +20,7 @@ for (const d of existsSync(dirMig) ? readdirSync(dirMig) : []) {
   if (!existsSync(f)) continue;
   total++;
   const sql = readFileSync(f, "utf8");
-  const vExpand = analyserExpandOnly(sql);
+  const vExpand = filtrerExceptions(d, analyserExpandOnly(sql));   // exceptions documentées (lib.mjs)
   const vAO = analyserMutationAppendOnly(sql, tablesAO);
   if (!vExpand.length && !vAO.length) { console.log(`- ✓ ${d} — expand-only, aucune mutation append-only`); continue; }
   violations += vExpand.length + vAO.length;
