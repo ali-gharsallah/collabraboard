@@ -32,6 +32,17 @@ libellés nav traduits EN/DE/IT + pack AR. Budget bundle relevé 225→240 (comm
 - `POST /v1/ia/prerevue/prompt` (R124 versionner le prompt) : acte de gouvernance éditeur,
   pas exposé dans l'écran tenant — à câbler dans la console éditeur si demandé.
 
+## Maquette démo (2026-08-07, suite : « le html démo doit suivre cette évolution »)
+
+`demo/olive-demo.html` reflète désormais les 5 écrans : entrées NAV dans les mêmes groupes
+de domaine que le front, libellés I18N EN/DE/IT (mêmes traductions que le dict du front),
+et 5 écrans de démo STATIQUES dans le style de la maquette (createElement + thème T).
+Les données y sont ILLUSTRATIVES (tenant GWB) — c'est la nature de la maquette ; le vrai
+front, lui, n'affiche que ce que l'API sert. Le discours y reste conforme : bandeau shadow
+ES (« l'état du monolithe fait foi »), R44/R123/R184 rappelés dans les titres.
+Smoke Playwright : 78/78 écrans sains (73→78). `docs/reference/olive-demo.html` reste
+la référence FIGÉE d'origine du portage parité — volontairement non modifiée.
+
 ## Découverte HORS PÉRIMÈTRE (pas de correction opportuniste)
 
 `apps/web/package.json` a un script `typecheck: tsc --noEmit` mais AUCUN `tsconfig.json`
