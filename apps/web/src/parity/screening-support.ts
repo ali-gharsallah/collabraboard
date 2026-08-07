@@ -1,7 +1,10 @@
-// Source : docs/reference/olive-demo.html 33845-34106 — moteur de screening (porté verbatim, appariement d'accolades).
-// Fuzzy matching (normalisation, alias, Levenshtein, tokens) contre une base sanctions, file de hits
-// dérivée des dossiers KYC, qualification TP/FP (four-eyes ≥ 80%), re-screening batch, adjudication IA locale.
+// P-L6-3 (« le front dit la vérité ») — l'ancien moteur local d'édition de distance et la confiance
+// fabriquée par hachage sont SUPPRIMÉS : tout score et toute décomposition viennent du VRAI
+// moteur @olive/screening-engine (R408/R411 — le même que le serveur). amlHash ne sert plus qu'à
+// CHOISIR un record de démo dans la base publique, JAMAIS à fabriquer un score.
+// File de hits dérivée des dossiers KYC, qualification TP/FP (four-eyes ≥ 80%), re-screening batch.
 import KYCS_DATA from "../fixtures/KYCS_DATA.json";
+import { scorer, scorerDetail, normaliser } from "@olive/screening-engine";
 import { amlHash } from "./preonboarding-support";
 import { clientById } from "./components-data";
 import { AML_ALERTS } from "./aml-workspace-support";
@@ -29,73 +32,27 @@ export const SANCTIONS_DB = [
 { id: "EU-E-310", name: "SYRIATEL MOBILE TELECOM", aliases: ["Syriatel"], type: "ENTITY", dob: null, country: "SY", list: "seco", program: "UE Syrie — repris SECO", ref: "SESAM 30988" },
 { id: "EU-E-311", name: "MYANMAR ECONOMIC HOLDINGS LIMITED", aliases: ["MEHL"], type: "ENTITY", dob: null, country: "MM", list: "seco", program: "UE Myanmar — repris SECO", ref: "SESAM 52114" },
 ];
-export function screenNorm(x) {
-return String(x || "").toUpperCase()
-.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-.replace(/([A-Z])\.\s*(?=[A-Z]\b)/g, "$1")
-.replace(/[.,;:'"()\-]/g, " ")
-.replace(/\b(LTD|LIMITED|SA|AG|GMBH|LLC|INC|CORP|CORPORATION|HOLDING|HOLDINGS|OOO|PAO|OAO|AO|FZE|PLC|OU|PJSC|JSC|COMPANY|CO)\b/g, " ")
-.replace(/\s+/g, " ").trim();
+// Adaptation d'un record de la base publique vers la forme du moteur.
+function entreeMoteur(e) {
+  return { uid: e.id, nom_complet: e.name, alias: e.aliases || [], date_naissance: e.dob || null,
+    type: e.type === "ENTITY" ? "entite" : "individu" };
 }
-export function screenLev(a, b) {
-a = a.slice(0, 32);
-b = b.slice(0, 32);
-var m = a.length, n = b.length;
-if (!m)
-return n;
-if (!n)
-return m;
-var row = [];
-for (var j = 0; j <= n; j++)
-row[j] = j;
-for (var i = 1; i <= m; i++) {
-var prev = row[0];
-row[0] = i;
-for (var j2 = 1; j2 <= n; j2++) {
-var tmp = row[j2];
-row[j2] = Math.min(row[j2] + 1, row[j2 - 1] + 1, prev + (a[i - 1] === b[j2 - 1] ? 0 : 1));
-prev = tmp;
-}
-}
-return row[n];
-}
+/** Normalisation d'AFFICHAGE — délègue au moteur (aucune règle locale). */
+export function screenNorm(x) { return normaliser(String(x || "")).toUpperCase(); }
+/** Similarité rendue par LE MOTEUR (composite 0-100) — plus aucun calcul de confiance côté front. */
 export function screenSim(qn, cn) {
-if (!qn || !cn)
-return 0;
-var lev = 1 - screenLev(qn, cn) / Math.max(qn.length, cn.length);
-var qt = qn.split(" "), ct = cn.split(" ");
-var contained = qt.length > 0 && ct.every(function (t) { return qt.indexOf(t) >= 0; }) || ct.length > 0 && qt.every(function (t) { return ct.indexOf(t) >= 0; });
-var tokMatch = function (t, pool) { if (pool.indexOf(t) >= 0)
-return true; if (t.length === 1)
-return pool.some(function (p) { return p[0] === t; }); return false; };
-var tokenHit = qt.filter(function (t) { return t.length > 2 && ct.indexOf(t) >= 0; }).length;
-var initialsFull = qt.length >= 2 && qt.every(function (t) { return tokMatch(t, ct); });
-var tokenSim = tokenHit / Math.max(1, Math.min(qt.length, ct.length));
-if (initialsFull)
-tokenSim = Math.max(tokenSim, 1);
-var sim = Math.max(lev, contained ? 0.93 : 0, tokenSim * 0.9);
-return Math.round(sim * 100);
+  return Math.round(scorer({ nom: String(qn || "") }, { uid: "q", nom_complet: String(cn || "") }, { phonetique: true }));
 }
 export function screenMatch(query, opts) {
-opts = opts || {};
-var qn = screenNorm(query);
-if (!qn)
-return [];
-var out = [];
-SANCTIONS_DB.forEach(function (e) {
-var best = 0, via = e.name;
-[e.name].concat(e.aliases || []).forEach(function (al) {
-var sc = screenSim(qn, screenNorm(al));
-if (sc > best) {
-best = sc;
-via = al;
-}
-});
-if (best >= (opts.min || 60))
-out.push({ entry: e, score: best, via: via });
-});
-out.sort(function (a, b) { return b.score - a.score; });
-return out.slice(0, opts.limit || 5);
+  opts = opts || {};
+  if (!String(query || "").trim()) return [];
+  var out = [];
+  SANCTIONS_DB.forEach(function (e) {
+    var det = scorerDetail({ nom: String(query) }, entreeMoteur(e), { phonetique: true });
+    if (det.score >= (opts.min || 60)) out.push({ entry: e, score: Math.round(det.score), via: det.via, detail: det });
+  });
+  out.sort(function (a, b) { return b.score - a.score; });
+  return out.slice(0, opts.limit || 5);
 }
 export const SCREEN_PROG_SEVERITY = [["SDGT", "CRITIQUE"], ["DPRK", "CRITIQUE"], ["IRAN", "CRITIQUE"], ["TCO", "CRITIQUE"], ["EO14024", "ÉLEVÉE"], ["EO13661", "ÉLEVÉE"], ["CYBER", "ÉLEVÉE"], ["GLOMAG", "ÉLEVÉE"], ["Magnitsky", "ÉLEVÉE"], ["sectorielle", "MODÉRÉE"], ["PEP", "MODÉRÉE"]];
 export function aiScreeningAnalyze(hit) {
@@ -152,27 +109,28 @@ if (sc[list] !== "HIT")
 return;
 var c = clientById[k.clientId] || {};
 var target = (list === "pep" || list === "adverse") ? (c.uboName || c.name || "—") : (c.name || "—");
-// Comparaison d'attributs — c'est SUR CELA que le CO tranche. Le score
-// de confiance est CALCULÉ depuis ces attributs (pondération métier),
-// pas l'inverse : nom 40 · date de naissance 25 · pays 20 · qualité 15.
-var hN = amlHash(k.code + list + "AN", 100), hD = amlHash(k.code + list + "AD", 100), hP = amlHash(k.code + list + "AP", 100), hQ = amlHash(k.code + list + "AQ", 100);
-var nameSim = 78 + (hN % 22); // 78–99% de similarité de nom
-var dobState = hD < 45 ? "MATCH" : hD < 75 ? "DIVERGENT" : "INCONNUE";
-var ctryState = hP < 60 ? "MATCH" : "DIVERGENT";
-var kindState = hQ < 85 ? "MATCH" : "DIVERGENT"; // personne vs entité
-var attrs = [
-{ label: "Nom", dossier: target, liste: target.split(" ")[0] + (nameSim < 90 ? "ov" : "") + " " + (target.split(" ")[1] || ""), state: nameSim >= 90 ? "MATCH" : "PROCHE", pts: Math.round(nameSim * 0.40) },
-{ label: "Date de naissance", dossier: dobState === "INCONNUE" ? "—" : ("19" + (55 + hD % 30) + "-0" + (1 + hD % 9) + "-1" + (hD % 9)), liste: dobState === "MATCH" ? ("19" + (55 + hD % 30) + "-0" + (1 + hD % 9) + "-1" + (hD % 9)) : dobState === "DIVERGENT" ? ("19" + (50 + hD % 20) + "-1" + (hD % 2) + "-0" + (1 + hD % 8)) : "—", state: dobState, pts: dobState === "MATCH" ? 25 : dobState === "INCONNUE" ? 12 : 0 },
-{ label: "Pays / nationalité", dossier: c.country || "—", liste: ctryState === "MATCH" ? (c.country || "—") : ["Russie", "Turquie", "Panama", "Brésil"][hP % 4], state: ctryState, pts: ctryState === "MATCH" ? 20 : 0 },
-{ label: "Qualité (personne/entité)", dossier: c.typeLabel || "—", liste: kindState === "MATCH" ? (c.typeLabel || "—") : "Personne physique", state: kindState, pts: kindState === "MATCH" ? 15 : 0 },
-];
-var conf = attrs.reduce(function (a, x) { return a + x.pts; }, 0);
-var q = SCREEN_QUALIF[k.code + "|" + list];
-var alert = AML_ALERTS.find(function (a) { return a.clientId === k.clientId && a.status === "NEW"; });
-// Le hit est lié à un VRAI record de la base (extrait public) pour les
-// listes sanctions ; PEP/adverse restent des profils fournisseur.
+// Le hit est lié à un VRAI record de la base (extrait public) pour les listes sanctions ;
+// PEP/adverse restent des profils fournisseur. amlHash ne fait que CHOISIR le record de démo.
 var pool = SANCTIONS_DB.filter(function (e) { return e.list === list; });
 var entry = pool.length ? pool[amlHash(k.code + list + "DBE", pool.length)] : { id: list.toUpperCase() + "-" + (1000 + amlHash(k.code, 9000)), name: target, aliases: [], type: "PERSON", dob: null, country: c.countryCode || "—", list: list, program: list === "pep" ? "PEP — fonction publique (" + (c.country || "") + ")" : "Adverse media — presse " + (2020 + amlHash(k.code, 6)), ref: (list === "pep" ? "DJ-PEP " : "LN-AM ") + (40000 + amlHash(k.code, 50000)) };
+// Score + DÉCOMPOSITION rendus par LE MOTEUR (R408/R411) — Jaro-Winkler + jetons IDF + phonétique
+// + discriminants type/DOB/nationalité. La « confiance » n'est plus fabriquée : c'est det.score.
+var det = scorerDetail({ nom: target, est_entite: !!(c.typeLabel && c.typeLabel.indexOf("physique") < 0) },
+  entreeMoteur(entry), { phonetique: true });
+var conf = Math.round(det.score);
+var attrs = [
+  { label: "Nom — moteur (JW + jetons + phonétique)", dossier: target, liste: det.via,
+    state: det.nameScore >= 90 ? "MATCH" : det.nameScore >= 70 ? "PROCHE" : "DIVERGENT", pts: Math.round(det.nameScore) },
+  { label: "Date de naissance (discriminant)", dossier: "—", liste: entry.dob || "—",
+    state: det.dobContribution > 0 ? "MATCH" : det.dobContribution < 0 ? "DIVERGENT" : "INCONNUE", pts: det.dobContribution },
+  { label: "Qualité personne/entité (discriminant)", dossier: c.typeLabel || "—",
+    liste: entry.type === "ENTITY" ? "Entité" : "Personne physique",
+    state: det.typePenalty < 0 ? "DIVERGENT" : "MATCH", pts: det.typePenalty },
+  { label: "Nationalité (R417)", dossier: c.country || "—", liste: entry.country || "—",
+    state: det.natContribution > 0 ? "MATCH" : "INCONNUE", pts: det.natContribution },
+];
+var q = SCREEN_QUALIF[k.code + "|" + list];
+var alert = AML_ALERTS.find(function (a) { return a.clientId === k.clientId && a.status === "NEW"; });
 out.push({ key: k.code + "|" + list, k: k, c: c, list: list, listMeta: SCREEN_LISTS[list], target: target, conf: conf, attrs: attrs,
 entry: entry, q: q || null, alert: alert || null });
 });

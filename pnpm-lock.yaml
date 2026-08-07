@@ -84,6 +84,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@olive/screening-engine':
+        specifier: workspace:*
+        version: link:../../packages/screening-engine
       '@olive/shared':
         specifier: workspace:*
         version: link:../../packages/shared

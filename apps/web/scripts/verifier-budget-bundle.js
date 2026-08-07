@@ -15,7 +15,11 @@ const zlib = require("zlib");
 // par les seuls utilisateurs qui choisissent la langue — ils ne pèsent PAS sur le chargement INITIAL
 // que ce budget garde. On les MESURE et on les AFFICHE (transparence, pas un trou), mais on les
 // EXCLUT du total de base. Ajouter un pack de langue n'inflate donc plus le bundle core.
-const BUDGET_TOTAL_KB = 220;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// 2026-08-07 (P-L6-3, commit motivé) : 220 → 225. L'écran screening affiche désormais la
+// DÉCOMPOSITION du moteur (R411), la version de liste et la config du run, plus le bandeau
+// d'âge des listes (R409) — ~1 kB gz de plus, et le budget était déjà à fleur (mesure locale
+// 220.4 sur le commit précédent). Marge résiduelle ≈ 4 kB, pas un blanc-seing.
+const BUDGET_TOTAL_KB = 225;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 
