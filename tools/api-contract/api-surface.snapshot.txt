@@ -116,6 +116,8 @@ GET    /v1/ports
 GET    /v1/ports/:portId/health
 GET    /v1/rapports/derogations
 GET    /v1/rapports/hits
+GET    /v1/rapports/kpi
+GET    /v1/rapports/kpi/trimestre
 GET    /v1/rapports/pep
 GET    /v1/rapports/retards-recertification
 GET    /v1/readyz

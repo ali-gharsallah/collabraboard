@@ -1,5 +1,6 @@
 import { Module, Controller, Get, Query, Req, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
+import { KpiService } from "./kpi.service";
 
 // R50 — Exports réglementaires « en un clic » (port fidèle domain.py rapport_derogations / rapport_pep /
 // rapport_hits / rapport_retards_recertification). Lecture seule, scopée tenant (SERVEUR). Le registre
@@ -82,8 +83,10 @@ export class RapportsService {
 
 @Controller("rapports")
 export class RapportsController {
-  constructor(private svc: RapportsService) {}
+  constructor(private svc: RapportsService, private kpi: KpiService) {}
   @Get("derogations") derogations(@Req() r: any) { return this.svc.derogations(r.ctx); }
+  @Get("kpi") kpiConformite(@Req() r: any, @Query("du") du: string, @Query("au") au: string) { return this.kpi.conformite(r.ctx, { du, au }); }   // P-L8-2
+  @Get("kpi/trimestre") kpiTrimestre(@Req() r: any, @Query("annee") a: string, @Query("t") t2: string) { return this.kpi.trimestriel(r.ctx, Number(a), Number(t2) as any); }
   @Get("pep") pep(@Req() r: any) { return this.svc.pep(r.ctx); }
   @Get("hits") hits(@Req() r: any) { return this.svc.hits(r.ctx); }
   @Get("retards-recertification")
@@ -92,5 +95,5 @@ export class RapportsController {
   }
 }
 
-@Module({ controllers: [RapportsController], providers: [RapportsService, PrismaService] })
+@Module({ controllers: [RapportsController], providers: [RapportsService, KpiService, PrismaService] })
 export class RapportsModule {}
