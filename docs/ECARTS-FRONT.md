@@ -1322,5 +1322,5 @@ re-soumis ici.
   le pipeline WIR intercepte la sortie, quel que soit le chemin qui l'a produite).
 - **Options** : (a) aligner sur `/v1/ai/workflow/*` et créer la route côté API ; (b) supprimer
   la tentative backend (démo = générateur local assumé) ; (c) statu quo documenté.
-- **ARBITRÉ (2026-08-08, PO)** : générateur local ASSUMÉ — la tentative backend `/api/v1/ai/workflow/*` sera SUPPRIMÉE d'OcrSketchImport (la démo est une vitrine hors-ligne ; la vraie API vision attend l'arbitrage licence E-WD-2). Exécution : prochain lot démo.
+- **ARBITRÉ (2026-08-08, PO) — EXÉCUTÉ (même jour)** : générateur local ASSUMÉ — la tentative backend `/api/v1/ai/workflow/*` est SUPPRIMÉE d'OcrSketchImport (`requestWorkflow` = générateur local seul, commentaire d'arbitrage en place). La vraie API vision attend l'arbitrage licence E-WD-2 (interface VisionExtractor côté produit). Écart CLOS.
 

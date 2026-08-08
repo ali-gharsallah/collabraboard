@@ -41366,33 +41366,12 @@ const canvasRef = useRef();
 const [drawing, setDrawing] = useState(false);
 const [strokes, setStrokes] = useState([]);
 const [currentStroke, setCurrentStroke] = useState([]);
-// Backend d'abord si configuré (clé Claude côté serveur, jamais dans ce bundle),
-// repli automatique et silencieux sur le générateur local sinon/en cas d'échec.
-// Le flag `source` ("ai"|"fallback") renvoyé permet d'afficher au démonstrateur
-// quel chemin a réellement servi.
-const requestWorkflow = async ({ description, imageBase64, mediaType }) => {
-const base = (typeof window !== "undefined" && window.OLIVE_API_URL) || "";
-if (base) {
-try {
-const endpoint = imageBase64 ? "/api/v1/ai/workflow/from-image" : "/api/v1/ai/workflow/from-text";
-const body = imageBase64 ? { imageBase64, mediaType } : { description };
-const controller = new AbortController();
-const timer = setTimeout(() => controller.abort(), 20000);
-const res = await fetch(base + endpoint, {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify(body),
-signal: controller.signal,
-});
-clearTimeout(timer);
-if (res.ok) {
-const wf = await res.json();
-if (wf && Array.isArray(wf.nodes) && wf.nodes.length)
-return wf;
-}
-}
-catch (e) { /* silencieux — repli local ci-dessous */ }
-}
+// E-WD-6 ARBITRÉ (2026-08-08) : générateur local ASSUMÉ. L'ancienne tentative backend
+// `/api/v1/ai/workflow/*` visait un préfixe `/api` que le backend réel ne sert pas — le
+// repli silencieux masquait un chemin qui ne fonctionnerait jamais. La démo est une
+// vitrine hors-ligne : l'extraction EST le générateur local déterministe ; la vraie API
+// vision attend l'arbitrage licence E-WD-2 (côté produit : interface VisionExtractor).
+const requestWorkflow = async ({ description }) => {
 await new Promise(resolve => setTimeout(resolve, 900 + Math.random() * 500));
 return aiGenerateWorkflow(description || "");
 };
@@ -44785,7 +44764,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.6 \u00B7 arbitrages E-NAV (nav & purge)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.7 \u00B7 E-WD-6 (import local assum\u00E9)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44971,7 +44950,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.6 \u00B7 arbitrages E-NAV (nav & purge)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.7 \u00B7 E-WD-6 (import local assum\u00E9)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
