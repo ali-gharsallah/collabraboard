@@ -1312,6 +1312,7 @@ re-soumis ici.
   a été aligné sur cet ensemble — un rôle inventé (ex. SORCIER) reste NON_MAPPÉ bloquant (WD-06).
 - **Option d'arbitrage** : si le canon veut un référentiel de rôles plus strict (IAM seul),
   les gabarits EDD/ONBOARDING de la démo devront être re-rôlés — décision PO.
+- **ARBITRÉ (2026-08-08, PO)** : les rôles des GABARITS LIVRÉS font canon — le référentiel démo reste l'union rôles IAM + rôles gabarits (AML, BRM, ESG, LEGAL, ESG/LEGAL, HPB/CEO) ; aucun re-rôlage. Côté produit, chaque tenant paramètre son référentiel (Q-WD-5). Écart CLOS.
 
 ### E-WD-6 — OcrSketchImport appelle `/api/v1/ai/workflow/*` (préfixe `/api` mort)
 - **Constat** : le capteur d'import (réutilisé verbatim) tente d'abord un backend
@@ -1321,3 +1322,5 @@ re-soumis ici.
   le pipeline WIR intercepte la sortie, quel que soit le chemin qui l'a produite).
 - **Options** : (a) aligner sur `/v1/ai/workflow/*` et créer la route côté API ; (b) supprimer
   la tentative backend (démo = générateur local assumé) ; (c) statu quo documenté.
+- **ARBITRÉ (2026-08-08, PO)** : générateur local ASSUMÉ — la tentative backend `/api/v1/ai/workflow/*` sera SUPPRIMÉE d'OcrSketchImport (la démo est une vitrine hors-ligne ; la vraie API vision attend l'arbitrage licence E-WD-2). Exécution : prochain lot démo.
+
