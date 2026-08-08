@@ -20,8 +20,9 @@ visible qu'après ouverture du groupe parent.
   séparé », `continue-on-error: true`). La porte bloquante reste la suite FAT API.
 - Le test « shell boote » et les 3 scénarios WD (`wd-parcours.spec.mjs`) sont VERTS.
 
-## Correctif proposé (non appliqué — hors périmètre du prompt WD)
+## Correctif — APPLIQUÉ (session suivante, même jour)
 
-Dans `fat-visuel.spec.mjs`, ouvrir le groupe parent avant d'asserter l'onglet (comme le
-fait `wd-parcours.spec.mjs` : clic sur le groupe « Workflow » puis sur l'item), ou donner
-à chaque parcours phare son groupe (`{ groupe: "AML", onglet: "Règles AML" }`).
+Dans `fat-visuel.spec.mjs`, chaque parcours phare porte désormais son groupe parent
+(`{ groupe: "Compliance & Risque", onglet: "Règles AML" }`, etc.) et le test ouvre le
+groupe avant d'asserter l'onglet — même geste que `wd-parcours.spec.mjs`. Suite complète
+re-mesurée verte (9/9 : shell + 5 parcours phares + 3 WD) sur le bundle construit.
