@@ -64,7 +64,7 @@ export class WorkflowDesignerService {
       seuilConfiance: typeof s.wdSeuilConfiance === "number" ? s.wdSeuilConfiance : 0.6,   // Q-WD-3
       formats: s.wdFormats ?? ["image/png", "image/jpeg", "application/pdf"], // Q-WD-4
       tailleMaxMo: typeof s.wdTailleMaxMo === "number" ? s.wdTailleMaxMo : 10, // Q-WD-4
-      rolesTenant: s.wdRolesTenant ?? ["ARM", "RM", "CO", "CO_SR", "CF", "DIR", "ADMIN", "HPB", "CEO", "SECU", "Système"],   // Q-WD-5
+      rolesTenant: s.wdRolesTenant ?? ["ARM", "RM", "CO", "CO_SR", "CF", "DIR", "ADMIN", "HPB", "CEO", "SECU", "Système", "MLRO", "SYSTEM"],   // Q-WD-5 — + rôles des gabarits livrés (E-WD-5/E-WD-7)
       visionApi: s.wdVisionApi === true,                                     // E-WD-2 (flag licence)
     };
   }

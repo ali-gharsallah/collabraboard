@@ -40723,120 +40723,29 @@ const USERS = [
 // ── WORKFLOW TEMPLATES (SDD / CDD / EDD) ────────────────────────────────────
 // Each node: id, type(start/step/decision/merge/end), label, role, x, y
 // Each edge: from, to, label, condition
-const WF_TEMPLATES = {
-SDD: {
-label: "SDD — Simplifié",
-color: T.green,
-description: "Workflow allégé · Risque LOW · Délai ~5j ouvrés",
-nodes: [
-{ id: "n0", type: "start", label: "Déclenchement", role: null, x: 400, y: 40 },
-{ id: "n1", type: "step", label: "Saisie RM", role: "ARM", x: 400, y: 140 },
-{ id: "n2", type: "step", label: "Screening auto", role: "Système", x: 400, y: 240 },
-{ id: "n3", type: "decision", label: "Hit ?", role: null, x: 400, y: 340 },
-{ id: "n4", type: "step", label: "Revue Compliance", role: "CO", x: 220, y: 440 },
-{ id: "n5", type: "step", label: "Validation CF", role: "CF", x: 580, y: 440 },
-{ id: "n6", type: "merge", label: "", role: null, x: 400, y: 540 },
-{ id: "n7", type: "step", label: "Approbation HPB", role: "HPB", x: 400, y: 630 },
-{ id: "n8", type: "end", label: "KYC Approuvé", role: null, x: 400, y: 720 },
-{ id: "n9", type: "end", label: "KYC Rejeté", role: null, x: 650, y: 630 },
-],
-edges: [
-{ from: "n0", to: "n1", label: "" },
-{ from: "n1", to: "n2", label: "Sections RM" },
-{ from: "n2", to: "n3", label: "Résultats" },
-{ from: "n3", to: "n4", label: "Oui — Hit", color: T.red },
-{ from: "n3", to: "n5", label: "Non — Clear", color: T.green },
-{ from: "n4", to: "n6", label: "Levée hit" },
-{ from: "n5", to: "n6", label: "Docs OK" },
-{ from: "n6", to: "n7", label: "Dossier complet" },
-{ from: "n7", to: "n8", label: "Approuvé", color: T.green },
-{ from: "n7", to: "n9", label: "Rejeté", color: T.red },
-],
-},
-CDD: {
-label: "CDD — Standard",
-color: T.amber,
-description: "Workflow complet · Risque MEDIUM · Délai ~10j ouvrés",
-nodes: [
-{ id: "n0", type: "start", label: "Déclenchement", role: null, x: 400, y: 40 },
-{ id: "n1", type: "step", label: "Saisie RM", role: "ARM", x: 400, y: 130 },
-{ id: "n2", type: "step", label: "Screening OFAC/PEP", role: "Système", x: 400, y: 220 },
-{ id: "n3", type: "decision", label: "PEP / Sanction ?", role: null, x: 400, y: 315 },
-{ id: "n4", type: "step", label: "Clarif. AML", role: "AML", x: 180, y: 415 },
-{ id: "n5", type: "step", label: "Revue Compliance", role: "CO", x: 400, y: 415 },
-{ id: "n6", type: "step", label: "Validation CF", role: "CF", x: 620, y: 415 },
-{ id: "n7", type: "merge", label: "", role: null, x: 400, y: 510 },
-{ id: "n8", type: "step", label: "Score BRM", role: "BRM", x: 400, y: 595 },
-{ id: "n9", type: "step", label: "ESG Officer", role: "ESG", x: 400, y: 680 },
-{ id: "n10", type: "step", label: "Legal Cross-border", role: "LEGAL", x: 400, y: 765 },
-{ id: "n11", type: "step", label: "Double visa HPB+CEO", role: "HPB/CEO", x: 400, y: 855 },
-{ id: "n12", type: "end", label: "KYC Approuvé", role: null, x: 280, y: 945 },
-{ id: "n13", type: "end", label: "KYC Rejeté", role: null, x: 520, y: 945 },
-],
-edges: [
-{ from: "n0", to: "n1", label: "" },
-{ from: "n1", to: "n2", label: "RM validé" },
-{ from: "n2", to: "n3", label: "Résultats" },
-{ from: "n3", to: "n4", label: "Hit détecté", color: T.red },
-{ from: "n3", to: "n5", label: "Clear", color: T.green },
-{ from: "n4", to: "n7", label: "Levée AML" },
-{ from: "n5", to: "n7", label: "CO visa" },
-{ from: "n6", to: "n7", label: "Docs signés" },
-{ from: "n1", to: "n6", label: "Docs upload", color: T.blue },
-{ from: "n7", to: "n8", label: "Sections complètes" },
-{ from: "n8", to: "n9", label: "Score validé" },
-{ from: "n9", to: "n10", label: "ESG visa" },
-{ from: "n10", to: "n11", label: "Legal visa" },
-{ from: "n11", to: "n12", label: "Approuvé", color: T.green },
-{ from: "n11", to: "n13", label: "Rejeté", color: T.red },
-],
-},
-EDD: {
-label: "EDD — Renforcé",
-color: T.red,
-description: "Diligences maximales · Risque HIGH/PEP · Délai max 5j ouvrés règlementaires",
-nodes: [
-{ id: "n0", type: "start", label: "Déclenchement EDD", role: null, x: 400, y: 40 },
-{ id: "n1", type: "step", label: "Saisie RM étendue", role: "ARM", x: 400, y: 130 },
-{ id: "n2", type: "step", label: "Screening complet", role: "Système", x: 400, y: 220 },
-{ id: "n3", type: "decision", label: "PEP/Sanctions/Hit ?", role: null, x: 400, y: 315 },
-{ id: "n4", type: "step", label: "Clarif. OBA Art.6", role: "AML", x: 160, y: 415 },
-{ id: "n5", type: "step", label: "Adverse Media", role: "AML", x: 160, y: 510 },
-{ id: "n6", type: "step", label: "Revue CO Senior", role: "CO_SR", x: 400, y: 415 },
-{ id: "n7", type: "step", label: "Docs CDB + UBO", role: "CF", x: 640, y: 415 },
-{ id: "n8", type: "merge", label: "", role: null, x: 400, y: 610 },
-{ id: "n9", type: "step", label: "Score BRM renforcé", role: "BRM", x: 400, y: 695 },
-{ id: "n10", type: "step", label: "ESG + Cross-border", role: "ESG/LEGAL", x: 400, y: 780 },
-{ id: "n11", type: "step", label: "Comité risque", role: "DIR", x: 400, y: 870 },
-{ id: "n12", type: "decision", label: "Comité décision ?", role: null, x: 400, y: 965 },
-{ id: "n13", type: "step", label: "Double visa HPB+CEO", role: "HPB/CEO", x: 250, y: 1065 },
-{ id: "n14", type: "step", label: "Dérogation formelle", role: "CEO", x: 560, y: 1065 },
-{ id: "n15", type: "end", label: "KYC Approuvé — EDD", role: null, x: 250, y: 1155 },
-{ id: "n16", type: "end", label: "KYC Rejeté", role: null, x: 560, y: 1155 },
-],
-edges: [
-{ from: "n0", to: "n1", label: "" },
-{ from: "n1", to: "n2", label: "RM complet" },
-{ from: "n2", to: "n3", label: "Résultats" },
-{ from: "n3", to: "n4", label: "Hit PEP/Sanction", color: T.red },
-{ from: "n3", to: "n6", label: "Clear", color: T.green },
-{ from: "n4", to: "n5", label: "Analyse adverse" },
-{ from: "n5", to: "n8", label: "AML levée" },
-{ from: "n6", to: "n8", label: "CO visa" },
-{ from: "n7", to: "n8", label: "CDB complet" },
-{ from: "n1", to: "n7", label: "Docs upload", color: T.blue },
-{ from: "n8", to: "n9", label: "Tout validé" },
-{ from: "n9", to: "n10", label: "Score OK" },
-{ from: "n10", to: "n11", label: "Visas section" },
-{ from: "n11", to: "n12", label: "Délibération" },
-{ from: "n12", to: "n13", label: "Favorable", color: T.green },
-{ from: "n12", to: "n14", label: "Défavorable + dérogation", color: T.amber },
-{ from: "n13", to: "n15", label: "Four-eyes OK", color: T.green },
-{ from: "n14", to: "n15", label: "Dérogation signée", color: T.amber },
-{ from: "n12", to: "n16", label: "Rejet ferme", color: T.red },
-],
-},
-};
+// ── E-WD-7 (arbitré 2026-08-08) : les gabarits du Designer SONT le catalogue gouverné ──
+// Nomenclature produit : 6 workflows NOMMÉS (SOW/HOW/POW onboarding · SKW/HKW/PKW perpétuel,
+// WF_MGMT_TEMPLATES = source unique — étapes, rôles, SLA, type d'approbation). SDD/CDD/EDD
+// n'est PAS un nom de workflow : c'est le NIVEAU DE DILIGENCE, attribut dérivé du tier
+// (calculé par le moteur de risque côté produit) — affiché, jamais utilisé comme gabarit.
+const WF_TIER_COLORS = { LOW: T.green, HIGH: T.red, PEP: T.gold };
+const WF_TIER_DILIGENCE = { LOW: "SDD", HIGH: "EDD", PEP: "EDD" };
+const WF_TEMPLATES = {};
+WF_MGMT_TEMPLATES.forEach(function (t) {
+const nodes = [{ id: "n0", type: "start", label: t.category === "ONBOARDING" ? "Entrée en relation" : "Révision déclenchée", role: null, x: 400, y: 40 }];
+const edges = [];
+t.steps.forEach(function (st, i2) {
+nodes.push({ id: "n" + (i2 + 1), type: "step", label: st.name + (st.slaDays ? " · " + st.slaDays + "j" : ""), role: st.owner, x: 400, y: 140 + i2 * 100 });
+edges.push({ from: "n" + i2, to: "n" + (i2 + 1), label: i2 === 0 ? "" : (t.steps[i2 - 1].approvalType || "") });
+});
+nodes.push({ id: "n" + (t.steps.length + 1), type: "end", label: t.category === "ONBOARDING" ? "Relation ouverte" : "Revue clôturée", role: null, x: 400, y: 140 + t.steps.length * 100 });
+edges.push({ from: "n" + t.steps.length, to: "n" + (t.steps.length + 1), label: t.steps[t.steps.length - 1].approvalType || "" });
+WF_TEMPLATES[t.code] = { label: t.code + " — " + t.label,
+color: WF_TIER_COLORS[t.riskTier] || T.olive600,
+description: (t.category === "ONBOARDING" ? "Onboarding" : "Perpétuel (révisions)") + " · tier " + t.riskTier + " · diligence " + (WF_TIER_DILIGENCE[t.riskTier] || "CDD") + " · " + t.version,
+nodes: nodes, edges: edges };
+});
+
 // ── NODE TYPE STYLES ─────────────────────────────────────────────────────────
 const NODE_STYLE = {
 start: { shape: "circle", bg: T.olive700, border: T.olive900, text: "#fff", size: 44 },
@@ -40847,6 +40756,7 @@ merge: { shape: "circle", bg: T.sage, border: T.olive600, text: T.olive900, size
 };
 const ROLE_COLORS = {
 ARM: T.olive600, CO: T.amber, CO_SR: T.amber, AML: T.red, BRM: T.olive700,
+MLRO: T.red, SYSTEM: T.inkSoft, RM: T.olive600,
 CF: T.violet, HPB: T.gold, CEO: T.gold, DIR: T.gold, ESG: T.green,
 LEGAL: T.blue, Système: T.inkSoft, "HPB/CEO": T.gold, "ESG/LEGAL": T.green,
 };
@@ -40866,7 +40776,7 @@ default: return state;
 const INIT_STATE = {
 user: null,
 screen: "login",
-activeWf: "CDD",
+activeWf: "SOW",
 customNodes: null,
 customEdges: null,
 builderMode: "view", // view | build | ocr
@@ -40973,7 +40883,8 @@ nodes.map(node => renderNode(node)))));
  * UNIQUEMENT par le circuit gouvernance (R436) ; anomalies LISTÉES, jamais corrigées. */
 
 const ROLES_TENANT = ["ARM", "RM", "CO", "CO_SR", "CF", "DIR", "ADMIN", "HPB", "CEO", "SECU",
-  "AML", "BRM", "ESG", "LEGAL", "ESG/LEGAL", "HPB/CEO", "Système"];   // référentiel du tenant démo (gabarits livrés)
+  "AML", "BRM", "ESG", "LEGAL", "ESG/LEGAL", "HPB/CEO", "Système",
+  "MLRO", "SYSTEM"];   // référentiel du tenant démo = rôles des gabarits livrés (E-WD-5/E-WD-7)
 
 const STATUTS_WIR = ["DRAFT_AI", "DRAFT_HUMAN", "PUBLISHED"];
 
@@ -41122,6 +41033,7 @@ function wirDepuisCanvas(nodes, edges, meta) {
   wir.meta.status = "DRAFT_HUMAN";
   return wir;
 }
+
 /* OLIVE-WIR:END */
 
 // Registre des WIR ratifiés en attente de publication (transmis au circuit gouvernance)
@@ -41287,12 +41199,12 @@ if (bestScore <= 0)
 best = t.length < 40 ? "SDD" : "CDD";
 var out;
 if (best === "EDD") {
-out = clone(WF_TEMPLATES.EDD);
-out.label = (has("trust") && has("offshore")) ? "Workflow EDD — Trust offshore" : has("pep") ? "Workflow EDD — Client PEP" : "Workflow EDD — Renforcé";
+out = clone(has("pep") ? WF_TEMPLATES.POW : WF_TEMPLATES.HOW);
+out.label = (has("trust") && has("offshore")) ? "HOW — Trust offshore (diligence EDD)" : has("pep") ? "POW — Client PEP (diligence EDD)" : "HOW — Renforcé (diligence EDD)";
 }
 else if (best === "SDD") {
-out = clone(WF_TEMPLATES.SDD);
-out.label = "Workflow SDD — Simplifié";
+out = clone(WF_TEMPLATES.SOW);
+out.label = "SOW — Simplifié (diligence SDD)";
 }
 else if (best === "ONBOARDING") {
 out = {
@@ -41349,8 +41261,8 @@ edges: [
 };
 }
 else {
-out = clone(WF_TEMPLATES.CDD);
-out.label = "Workflow CDD — Standard";
+out = clone(WF_TEMPLATES.SOW);
+out.label = "SOW — Standard (diligence CDD)";
 }
 var excerpt = (text || "").trim().slice(0, 70);
 if (excerpt)
@@ -41562,7 +41474,7 @@ const { user, activeWf, customNodes, customEdges, builderMode } = state;
 const [tab, setTab] = useState("view"); // view | build | ocr
 const wfData = activeWf === "CUSTOM" && customNodes
 ? { label: "Workflow personnalisé", color: T.olive700, description: "Généré par IA / dessin", nodes: customNodes, edges: customEdges || [] }
-: WF_TEMPLATES[activeWf] || WF_TEMPLATES.CDD;
+: WF_TEMPLATES[activeWf] || WF_TEMPLATES.SOW;
 const canAccess = (perm) => user?.permissions?.includes(perm);
 return (React.createElement("div", { style: { minHeight: "100vh", background: T.cream, fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", display: "flex", flexDirection: "column" } },
 React.createElement("header", { style: { background: T.surface, borderBottom: `1px solid ${T.line}`, padding: "0 24px", height: 54, display: "flex", alignItems: "center", gap: 14, flexShrink: 0 } },
@@ -41945,7 +41857,7 @@ React.createElement("td", { style: { padding: "7px 9px", color: T.inkMid } }, ap
 function WorkflowBuilderScreen({ activeWf, customNodes, customEdges, wfTab, setWfTab, dispatch, user, canAccess }) {
 const wfData = activeWf === "CUSTOM" && customNodes
 ? { label: "Workflow personnalisé", color: T.olive700, description: "Généré par IA ou Builder", nodes: customNodes, edges: customEdges || [] }
-: WF_TEMPLATES[activeWf] || WF_TEMPLATES.CDD;
+: WF_TEMPLATES[activeWf] || WF_TEMPLATES.SOW;
 return (React.createElement("div", null,
 React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" } },
 React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: T.inkMid, marginRight: 4 } }, "Workflow :"),
@@ -44698,7 +44610,7 @@ const [navCollapsed, setNavCollapsed] = useState(typeof window !== "undefined" &
 const [, setUiBump] = useState(0);
 const [openGroups, setOpenGroups] = useState({ lifecycle: true });
 // Workflow Builder state
-const [activeWf, setActiveWf] = useState("CDD");
+const [activeWf, setActiveWf] = useState("SOW");
 const [customNodes, setCustomNodes] = useState(null);
 const [customEdges, setCustomEdges] = useState(null);
 const [wfTab, setWfTab] = useState("view"); // view|build|ocr|roles
@@ -44764,7 +44676,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.7 \u00B7 E-WD-6 (import local assum\u00E9)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.8 \u00B7 E-WD-7 (gabarits nomm\u00E9s SOW..PKW)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44950,7 +44862,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.7 \u00B7 E-WD-6 (import local assum\u00E9)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.8 \u00B7 E-WD-7 (gabarits nomm\u00E9s SOW..PKW)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),

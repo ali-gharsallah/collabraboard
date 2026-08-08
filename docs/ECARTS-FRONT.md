@@ -1305,6 +1305,21 @@ re-soumis ici.
   écran par écran au bloc WD.
 - **ARBITRÉ (2026-08-08, PO)** : option (b) — écart ASSUMÉ et documenté : la maquette = vitrine, le React = produit ; `docs/COMPARAISON-FRONT-HTML.md` reste la table de vérité, mise à jour à chaque bloc. Aucun portage systématique.
 
+### E-WD-7 — Nomenclature des gabarits du Designer : niveaux de diligence ≠ workflows nommés
+- **Constat (2026-08-08, signalé par le PO)** : les gabarits du canvas (WF_TEMPLATES) étaient
+  nommés SDD/CDD/EDD — le NIVEAU DE DILIGENCE (calculé par le moteur de risque,
+  `risk-engine.ts`) — alors que le catalogue produit compte 6 workflows NOMMÉS
+  (WF_MGMT_TEMPLATES, écran Gestion & versions) : SOW/HOW/POW (onboarding) ·
+  SKW/HKW/PKW (perpétuel), dérivation `wfNomenclature` déjà codée et liste KYC déjà
+  filtrée par ces 6 codes (maquette + React).
+- **ARBITRÉ (2026-08-08, PO) — EXÉCUTÉ (même jour)** : les gabarits du Designer SONT le
+  catalogue gouverné — WF_TEMPLATES est GÉNÉRÉ depuis WF_MGMT_TEMPLATES (source unique,
+  étapes/rôles/SLA/approbation), 6 gabarits nommés, la diligence (SDD/CDD/EDD) reste un
+  ATTRIBUT affiché (LOW→SDD, HIGH/PEP→EDD). Générateur local remappé (EDD→HOW/POW,
+  SDD/CDD→SOW). ROLES_TENANT (+MLRO, +SYSTEM — rôles des gabarits, doctrine E-WD-5) côté
+  démo ET défaut Q-WD-5 backend. Le backend reste TIER-BASED (le moteur calcule le niveau,
+  jamais un nom de workflow) — conforme à l'option retenue.
+
 ### E-WD-5 — Référentiel « rôles tenant » de la démo : assumé = rôles des gabarits livrés
 - **Constat (bloc WD, 2026-08-08)** : R434 exige des rôles mappés sur les rôles tenant. La démo
   n'a pas de référentiel de rôles séparé ; ses gabarits livrés (WF_TEMPLATES) utilisent

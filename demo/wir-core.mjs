@@ -7,7 +7,8 @@
  * UNIQUEMENT par le circuit gouvernance (R436) ; anomalies LISTÉES, jamais corrigées. */
 
 export const ROLES_TENANT = ["ARM", "RM", "CO", "CO_SR", "CF", "DIR", "ADMIN", "HPB", "CEO", "SECU",
-  "AML", "BRM", "ESG", "LEGAL", "ESG/LEGAL", "HPB/CEO", "Système"];   // référentiel du tenant démo (gabarits livrés)
+  "AML", "BRM", "ESG", "LEGAL", "ESG/LEGAL", "HPB/CEO", "Système",
+  "MLRO", "SYSTEM"];   // référentiel du tenant démo = rôles des gabarits livrés (E-WD-5/E-WD-7)
 
 export const STATUTS_WIR = ["DRAFT_AI", "DRAFT_HUMAN", "PUBLISHED"];
 
