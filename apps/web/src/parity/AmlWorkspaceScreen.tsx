@@ -60,6 +60,7 @@ export function AmlWorkspaceScreen() {
     return (
       <div>
         {Header}
+        {Tabs}
         <button onClick={() => setView("inbox")} style={{ marginBottom: 14, padding: "7px 14px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface, color: T.inkMid, fontSize: 12, cursor: "pointer" }}>← Retour à la file</button>
         <div style={{ display: "grid", gridTemplateColumns: "290px 1fr 260px", gap: 16, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
