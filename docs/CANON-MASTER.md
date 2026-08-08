@@ -2,18 +2,18 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-07 · commit `5dd23a3`.** Ce document se périme visiblement :
+> **Généré le 2026-08-08 · commit `1ba8227`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-**2 anomalie(s) à traiter.**
+**29 anomalie(s) à traiter.**
 
 - **Doublons de numéro à titres divergents** : 0
 - **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 1
   - spec/SPEC-I18N.md (R29, R323, R324)
-- **Numéros R absents dans [1..404]** (plafond = sommet de l'amas contigu, hors réserves) : 0
+- **Numéros R absents dans [1..438]** (plafond = sommet de l'amas contigu, hors réserves) : 27 — R405–R431
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -51,7 +51,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-102 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+114 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
@@ -126,6 +126,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R13, R15, R48–R49, R76, R89–R90, R104, R255, R266–R267, R270, R284–R287 | O-Live — Canon des DEUX DERNIERS ÉCARTS | RATIFIÉ | AS, AU, HO, OF, OL, PC, SO, UC | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R13, R15, R39, R48, R222, R230–R238 | language: fr | RATIFIÉ | FO | fat-vague13.e2e-spec.ts |
 | R13, R15, R29, R39, R48, R221–R230, R238 | language: fr | PROPOSÉ | BT | fat-vague14.e2e-spec.ts |
+| R13, R435 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
 | R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, FilterBar.test.tsx, test.mjs, test.mjs |
 | R29, R323–R324 | SPEC — I18N quadrilingue FR/EN/DE/AR (R323–R324, périmètre révisé) | RATIFIÉ | — | — |
 | R167–R169 | Catalogue O-Live — Amendement PROPOSÉ (R167 → R169) · Bloc 33 « Le core banking est un port » | RATIFIÉ | SY | core-sync.wiring.spec.ts |
@@ -143,6 +144,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R44, R56, R104–R116 | Catalogue O-Live — Patch v4.1 → v4.2 (RATIFICATION du 19.07.2026) | PROPOSÉ | GD, GR, PF | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, golden-record.projector.spec.ts |
 | R44, R48, R239, R243–R246 | language: fr | RATIFIÉ | NB, TA | fat-vague17.e2e-spec.ts, fat-vague16.e2e-spec.ts |
 | R177–R179 | Catalogue O-Live — Amendement PROPOSÉ (R177 → R179) · Bloc 37 « Le module est une licence » | RATIFIÉ | LC | vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
+| R48–R49, R436 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
 | R70, R94–R95, R316–R317, R319–R320 | CANON — DÉCISIONS PO : BACS À SABLE + CONSOLE ÉDITEUR (enregistré 2026-07-29, RATIFIÉ) | PROPOSÉ | BS, VE | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-degel-v8.e2e-spec.ts |
 | R115, R138–R139, R144, R146, R148–R151, R156–R159 | Note de câblage — Les chaînes (CB-01..06) · Lot 30 | PROPOSÉ | CB | aml-gap.wiring.spec.ts, chaines.wiring.spec.ts, fat-aml-dq.e2e-spec.ts, FilterBar.test.tsx |
 | R119 | Erratum R119 — `APPROVED` → `VALIDATED` (19.07.2026, soir) | PROPOSÉ | OB | onboarding.wiring.spec.ts |
@@ -157,8 +159,18 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R221–R222, R230–R231, R238 | Règles PROPOSÉES R222..R238 — GELÉES (attente validation Ali) | RATIFIÉ | BT, FO | fat-vague14.e2e-spec.ts, fat-vague13.e2e-spec.ts |
 | R324–R327 | CANON — SOLDE DES 4 DERNIERS ÉCARTS (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | LN, OF, PC | fat-solde4-i18n.e2e-spec.ts, screens.test.tsx, kyc-service.spec.ts, fat-canon-derniers.e2e-spec.ts |
 | R328–R330 | CANON — VAGUE DE CLÔTURE PRÉ-PILOTE (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DM, JW, RZ, SW | fat-cloture-demo.e2e-spec.ts, seed-demo-gwb.seed.ts, test.mjs, fat-cloture-jwt.e2e-spec.ts |
+| R432 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R432, R436 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R433 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R437 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
+| R438 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
 | — | O-Live GED — Référence technique | PROPOSÉ | — | — |
 | — | Note E2 — 21.07.2026 · `Document.nom` est le champ canonique | PROPOSÉ | — | — |
+| — | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wd-wir-core.test.ts |
 
 ## c) Paramètres tenant R-Q (`spec/questionnaire-R-Q.md`)
 
