@@ -74,6 +74,41 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "kyc.access.modifie": { version: 1, schema: z.object({ question: z.string(), role: z.string(),
     ancienne: z.string(), nouvelle: z.string(), par: z.string(), dateEffet: z.string(),
     portee: z.string(), dossiersTouches: z.number() }).strict() },
+  // ── Vague 2 (C6, 2026-08-08) — kyc.* : schémas tirés des payloads réels de kyc.service.ts
+  //    et kyc-workflow.chaine.ts (jamais déduits d'une doc). Un champ à deux formes selon le
+  //    site d'émission est nullish/optional, jamais élargi en z.any() sans raison de config.
+  "kyc.lock.requested": { version: 1, schema: z.object({ code: z.string(), requester: z.string(),
+    holder: z.string() }).strict() },
+  "kyc.lock.passed": { version: 1, schema: z.object({ code: z.string(), from: z.string(),
+    to: z.string() }).strict() },
+  "kyc.visa.invalide": { version: 1, schema: z.object({ section: z.string(), cause: z.string(),
+    nb: z.number().optional() }).strict() },                         // nb absent au site R21/R22 (par section)
+  "kyc.visa.validateur.reassigne": { version: 1, schema: z.object({ section: z.string(),
+    requiredRole: z.string(), ancien: z.string().nullable(), nouveau: z.string() }).strict() },
+  "kyc.visa.annule.vice": { version: 1, schema: z.object({ section: z.string(),
+    requiredRole: z.string(), motif: z.string() }).strict() },
+  "kyc.visas.geles": { version: 1, schema: z.object({ hit: z.string(), nb: z.number(),
+    delaiAnalyseJours: z.number() }).strict() },                     // R46
+  "kyc.comite.decision": { version: 1, schema: z.object({ hit: z.string(),
+    decision: z.enum(["poursuite", "offboarding"]), membres: z.array(z.string()) }).strict() },   // R46
+  "kyc.offboarding.propose": { version: 1, schema: z.object({ hit: z.string(),
+    origine: z.string() }).strict() },                               // R44 : propose, ne décide jamais
+  "kyc.dossier.suspendu": { version: 1, schema: z.object({ cause: z.string(),
+    restrictions: z.record(z.any()).optional() }).strict() },        // restrictions = JSON tenant (R-Q), figé à date (S-09)
+  "kyc.dossier.reactive": { version: 1, schema: z.object({}).strict() },
+  "kyc.dossier.abandonne": { version: 1, schema: z.object({ motif: z.string() }).strict() },
+  "kyc.dossier.mise_a_jour": { version: 1, schema: z.object({ description: z.string(),
+    sections: z.array(z.string()) }).strict() },                     // R21/R22 : réouverture ciblée
+  "kyc.effacement.refuse.lba": { version: 1, schema: z.object({ demandeur: z.string(),
+    baseLegale: z.string() }).strict() },
+  "kyc.process.ouvert": { version: 1, schema: z.object({ process: z.string(), type: z.string() }).strict() },
+  "kyc.process.pause": { version: 1, schema: z.object({ cause: z.string(), nb: z.number() }).strict() },
+  "kyc.process.repris": { version: 1, schema: z.object({ process: z.string(),
+    sectionsAbsorbees: z.array(z.string()) }).strict() },
+  "kyc.process.cloture": { version: 1, schema: z.object({ process: z.string(),
+    sections: z.array(z.string()) }).strict() },
+  "kyc.dossier.workflow": { version: 1, schema: z.object({ source: z.enum(["GOUVERNE", "TEMPLATE"]),
+    workflowCode: z.string(), version: z.number().nullable(), depuisLe: z.string().nullable() }).strict() },   // R172 : le timbre
   "personne.pep.declare": { version: 1, schema: z.object({ source: z.string(), sourceHitId: z.string().nullish() }).strict() },
   "personne.pep.leve": { version: 1, schema: z.object({ decideur: z.string(), sourceHitId: z.string().nullish() }).strict() },
   // ── Bloc WD (R432/R436) : WorkflowIR — source → brut → éditions → visa, rejouable ──
@@ -489,24 +524,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "islamic.takaful.suivi",
   "islamic.waqf.distribue",
   "islamic.zakat.calcule",
-  "kyc.comite.decision",
-  "kyc.dossier.abandonne",
-  "kyc.dossier.mise_a_jour",
-  "kyc.dossier.reactive",
-  "kyc.dossier.suspendu",
-  "kyc.dossier.workflow",
-  "kyc.effacement.refuse.lba",
-  "kyc.lock.passed",
-  "kyc.lock.requested",
-  "kyc.offboarding.propose",
-  "kyc.process.cloture",
-  "kyc.process.ouvert",
-  "kyc.process.pause",
-  "kyc.process.repris",
-  "kyc.visa.annule.vice",
-  "kyc.visa.invalide",
-  "kyc.visa.validateur.reassigne",
-  "kyc.visas.geles",
   "legal.echeance.escalade",
   "legal.objet.cree",
   "legal.objet.dates",
