@@ -8,8 +8,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { BusinessTrip } from "../features/businesstrip/BusinessTrip";
 
-let paramChanged: any[] = [];
-let visasPostes: any[] = [];
+let paramChanged: Record<string, unknown>[] = [];
+let visasPostes: Record<string, unknown>[] = [];
 let guards: Record<string, string> = {};
 
 const rep = (status: number, body: unknown) =>
@@ -92,7 +92,8 @@ describe("FE-BT — Bloc 63 à l'écran (R445/R447/R448/R450)", () => {
     fireEvent.click(confirmer);
     await screen.findByText(/Paramètre appliqué : guards.certifValide/);
     expect(paramChanged).toHaveLength(1);
-    expect(paramChanged[0].confirmation.engagementTexte).toMatch(/responsabilité/);
+    const conf = (paramChanged[0] as { confirmation: { engagementTexte: string } }).confirmation;
+    expect(conf.engagementTexte).toMatch(/responsabilité/);
   });
 
   it("FE-BT-03 [R450] certificat AVEC écart → validateur résolu XB ; sans écart → MGR", async () => {
