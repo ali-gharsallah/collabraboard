@@ -1281,6 +1281,89 @@ ni `test:smoke`, ni `extract_demo_data`) :**
   construction ; la réconciliation (mapping d'états, quelle machine porte quoi) est une
   DÉCISION PO à acter — consignée ici, jamais absorbée en silence.
 
+### E-6364-0 — Blocs 63/64 : collision de numérotation ET de périmètre (A0, 2026-08-08 — STOP, arbitrage PO)
+- **Contexte** : drop de session « Blocs 63 & 64 · Business Trip + Cross-Border » (specs v2
+  post-audit, numérotation session R439–R458). L'action A0 exigeait la vérification canon
+  avant tout code — la voici, verdict : STOP.
+- **Collision 1 — numérotation (certaine)** : R439–R445 sont RATIFIÉES au repo (Bloc 62
+  Offboarding, session R432–R438, canon 08.08.2026) ; R446+ est la réservation PK.
+  Mécanisme ratifié applicable (mapping-session-repo.md §3, décision Ali 2026-07-29,
+  appliqué 4 fois) : l'implémenté prend le créneau contigu → Blocs 63/64 = repo
+  **R446–R465** (63 : R439→R446 … R445→R452, R458→R465 ; 64 : R446→R453 … R457→R464,
+  R456/R457 gelées → R463/R464), PK glisse à R466+.
+- **Collision 2 — périmètre (majeure)** : l'audit joint (AUDIT-BLOCS-63-64-EXISTANT.md) n'a
+  audité QUE la démo HTML (réserve explicite §Réserve) ; or le repo implémente déjà :
+  · **MOD-75 Business Trip R222–R230** (lot 51, ratifié « OK pour R222..R238 ») — cycle
+    événementiel (R222), avis cross-border versionné + grandfathering (R223/R229 ≈ session
+    R441/BT-14), signaux KYC (R224), visa R15 + exclusion R13 (R225 ≈ BT-03), contact
+    reports mesurés (R226), certification à la DATE DU VOYAGE via MOD-43 (R228/R237 ≈
+    BT-04), révision chaînée (R230 ≈ BT-07) ; `tripCertificationRequise` est DÉJÀ filtré
+    par juridiction (≈ session R451 — « aucune granularité pays » n'est vrai qu'en démo).
+  · **Cross-Border R293–R295** (canon triage final, 28.07) — R293 : country manual = clé
+    EXISTANTE `tripCrossBorderReferentiel` ENRICHIE, « JAMAIS un second référentiel »
+    (l'unification E-XB-3 est déjà doctrinale au repo) ; R294 : moteur pur `evaluerXb`,
+    DEUX surfaces (pré-voyage / à la relation), dérogation motivée + visa ; R295 : ordres
+    pays restreint + qualification « initiative du client » + preuve GED (≈ R448-ORDER /
+    R449 partiels).
+  · **MOD-43 Formations R231–R238** — attestations append-only, visa R15, catalogue tenant
+    (socle de session R451, la spec le référence d'ailleurs).
+  · Événements `trip.*` déjà schématisés au catalogue C6 (vague 1).
+- **Réconciliation préliminaire (session → existant)** : DÉJÀ COUVERTES en substance :
+  R444 (=MOD-43), cœur de R441 (=R223/R229/R230) ; PARTIELLES (extension de l'existant,
+  pas de nouveau module) : R439 (chaîne dynamique risque×budget sur MOD-75), R440 (guards
+  de transition sur signaux R224/R228, pattern Bloc 62), R446 (port fournisseur = extension
+  de R293, jamais un remplacement), R447 (2e surface R294 à étendre), R448 (R295 couvre
+  ORDER), R449 (registre-objet sur la qualification R295), R451 (codes XB-<pays> sur
+  MOD-43) ; NOUVELLES : R442 (quotas+overrides), R443 (certificat de trip), R450, R452,
+  R453 (brique : reporting R295), R454, R458 ; GELÉES : R456/R457.
+- **Règle du drop appliquée** : « si collision de numéro ou de périmètre avec R439–R458,
+  STOP et consigner l'écart pour arbitrage PO. Ne jamais dupliquer une règle existante. »
+  → implémentation NON commencée, arbitrage demandé.
+- **ARBITRÉ (PO, 2026-08-08)** : « Delta sur l'existant » — renumérotation mécanique
+  (Bloc 63 = R446–R452 + R465, Bloc 64 = R453–R464, PK → R466+) ET implémentation en
+  EXTENSION des modules existants (MOD-75, R293–R295, MOD-43) ; quand l'existant couvre,
+  la règle repo le référence, aucune duplication. Specs versées avec en-tête d'édition.
+
+### E-BT-1 — Module Business Trip démo hors moteur (Blocs 63/64, A1)
+- **Constat** : la démo mute `approvals[].state` à la main, chaîne fixe RM→MGR→XB→HPB pour
+  tous les voyages, `DEST_QUOTAS_SEED`/`ROLE_GATE`/`INDIGITA_DB` en constantes non tenant,
+  aucun certificat de retour. NB : le repo, lui, a déjà MOD-75 (R222–R230) événementiel —
+  l'écart est DÉMO-seulement pour le cycle, réel pour chaîne dynamique/guards/certificat.
+- **Résolution** : Bloc 63 (repo R446–R452 + R465), migration démo en A7 après 30/30.
+
+### E-BT-2 — Compte-rendu de voyage libre, sans validation ni cycle
+- **Constat** : la démo porte `report`/`reportDate` en texte libre — sans cycle de vie,
+  sans visa, sans liens contact reports, sans SLA, sans écarts déclarés.
+- **Résolution** : R450 (repo) FORMALISE l'existant — le texte libre devient le corps
+  narratif du certificat ; migration des comptes rendus existants en certificats Brouillon.
+
+### E-BT-3 — Prospect né en voyage : fonctionnalité démo orpheline de règle
+- **Constat** : « Nouvelle demande de voyage » sait déclarer un nouveau contact rencontré
+  → prospect complet (`source: "Business Trip"`, docs CDB pré-listés) via `onNewProspect` ;
+  aucune règle ne couvrait cette capacité (la migration A7 l'aurait supprimée — interdit).
+- **Résolution** : règle R465 (repo ; session R458, ajout d'audit) — origine tracée, liens
+  voyage + contact report, circuit d'onboarding standard, zéro raccourci de diligence.
+
+### E-XB-1 — Matrice cross-border démo en constante
+- **Constat** : `CB_RULES` en dur dans l'écran Cross-Border — aucune source, aucune
+  version, aucun traitement des actes distants.
+- **Résolution** : Bloc 64 (repo R453–R464) — port fournisseur versionné en EXTENSION de
+  R293 (le country manual repo `tripCrossBorderReferentiel` reste LA clé), migration A7.
+
+### E-XB-2 — Intégration réseau Indigita/Apiax : HORS SESSION
+- **Décision (drop)** : adaptateurs `INDIGITA_API`/`APIAX_API` livrés en CONTRAT + MOCK
+  uniquement ; l'intégration réseau réelle est un lot commercial séparé. Toute tentative
+  d'implémentation réseau dans cette session serait un écart — consigné ici par avance.
+
+### E-XB-3 — Deux référentiels cross-border parallèles en démo
+- **Constat** : `CB_RULES` (matrice 6 activités) et `INDIGITA_DB` (statut/sollicitation/
+  licence/produits) coexistent sans synchronisation — un pays peut être BLOQUÉ dans l'un
+  et permissif dans l'autre. Le repo interdit déjà cette situation (R293 : « JAMAIS un
+  second référentiel »).
+- **Résolution** : R453 (repo) — la version de matrice est UN objet par juridiction
+  (verdicts d'activités + champs de synthèse) ; CB_RULES et INDIGITA_DB deviennent deux
+  projections de lecture de la même version.
+
 ### E-OFF-4 — Fonctionnalités démo conservées HORS périmètre R439–R445 (audit A5)
 - **Constat** : l'audit ligne à ligne de l'écran démo avant migration a recensé des
   fonctionnalités absentes de la spec Bloc 62 : onglet Dashboard (motifs de sortie, répartition
