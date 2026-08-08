@@ -1122,6 +1122,8 @@ model Trip {
   clients       Json     @default("[]")                        // string[] (clientId visités)
   advisories    Json     @default("[]")                        // [{ jurisdiction, activite, verdict, referentielVersion }] (R223)
   signals       Json     @default("[]")                        // [{ type, severite, detail }] (R224/R228)
+  activites     Json     @default("[]")                        // string[] — activités prévues (Bloc 63 R446/R448, expand R334)
+  budget        Float?                                         // CHF — chaîne risque × budget (Bloc 63 R446)
   revision      Int      @default(1)                           // R230
   previousTripId String? @map("previous_trip_id") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at")

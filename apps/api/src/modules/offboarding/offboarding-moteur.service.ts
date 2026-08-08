@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
+import { modifierParametreGouverne, resoudreParametresGouvernes } from "../../common/param-engagement";
 import { Tx } from "../../common/tx";
 import { CoreBankingPort } from "./offboarding.service";
 
@@ -61,58 +62,28 @@ export const DEFAUTS_OFFBOARDING = {
   slaJoursParEtape: { "Création": 1, "Collecte": 3, "Review": 3, "Validation": 2 } as Record<string, number>,
 };
 
-const poserCle = (obj: any, cle: string, valeur: any) => {
-  const parts = cle.split(".");
-  let c = obj;
-  for (const p of parts.slice(0, -1)) c = c[p] ?? (c[p] = {});
-  c[parts[parts.length - 1]] = valeur;
-};
-const lireCle = (obj: any, cle: string) => cle.split(".").reduce((a, p) => a?.[p], obj);
-
 @Injectable()
 export class OffboardingMoteurService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private ports: { core?: CoreBankingPort } = {}) {}
 
-  // ── Paramètres §Offboarding — défauts + REJEU des PARAM_CHANGED en vigueur ≤ aDate (R48/R29) ──
+  // ── Paramètres §Offboarding — défauts + REJEU des PARAM_CHANGED en vigueur ≤ aDate (R48/R29).
+  //    Mécanisme COMMUN param-engagement.ts (généralisé aux Blocs 63/64 — jamais dupliqué). ──
   async parametres(ctx: Ctx, aDate?: Date) {
-    const ref = aDate ?? new Date();
-    const p = JSON.parse(JSON.stringify(DEFAUTS_OFFBOARDING));
-    const evs: any[] = await this.prisma.domainEvent.findMany({
-      where: { tenantId: ctx.tenantId, aggregateId: AGG_PARAMS, type: "PARAM_CHANGED" },
-      orderBy: { id: "asc" } });
-    for (const e of evs) {
-      const d: any = e.payload;
-      if (new Date(d.enVigueurLe) <= ref) poserCle(p, d.cle, d.nouveau);
-    }
-    return p;
+    return resoudreParametresGouvernes(this.prisma, ctx.tenantId, AGG_PARAMS, DEFAUTS_OFFBOARDING, aDate);
   }
 
   // ── R445 — pop-up d'engagement : sans confirmation AUCUNE écriture, 409 avec le payload ──
   async modifierParametre(ctx: Ctx, dto: { cle: string; valeur: any; enVigueurLe: string;
     confirmation?: { engagementTexte: string; auteur: string } }) {
-    const enVigueur = new Date(dto.enVigueurLe);
-    const actuel = await this.parametres(ctx, enVigueur);
-    const ancien = lireCle(actuel, dto.cle);
-    if (ancien === undefined) throw new BadRequestException(`Paramètre inconnu du §Offboarding : ${dto.cle}`);
-    const sensible = /guards\.(MROS|SCREENING)|Sanctions/i.test(dto.cle) ||
-      (dto.cle === "forcageParMotif" || dto.cle.startsWith("guards."));
-    const popup = {
-      cle: dto.cle, ancien, nouveau: dto.valeur,
-      portee: "dossiers futurs — grandfathering R29 sur les dossiers en cours",
-      ...(sensible ? { rappelLBA: "Rappel des obligations LBA/OBA-FINMA : affaiblir cette garde " +
-        "n'éteint aucune obligation légale (art. 9/10a LBA) — engagement de responsabilité requis." } : {}),
-    };
-    if (!dto.confirmation?.engagementTexte || !dto.confirmation?.auteur)
-      throw new ConflictException({ code: "R445_CONFIRMATION_REQUISE", popup });
-    await this.prisma.$transaction(async (tx: Tx) => {
-      await emitEvent(tx, ctx.tenantId, "PARAM_CHANGED", AGG_PARAMS, {
-        cle: dto.cle, ancien, nouveau: dto.valeur, enVigueurLe: enVigueur.toISOString(),
-        auteur: dto.confirmation!.auteur, engagementTexte: dto.confirmation!.engagementTexte,
-        portee: popup.portee });
-      await this.audit.log(ctx.tenantId, ctx.userId, "OFFB_PARAM_CHANGED", `${dto.cle}`);
+    return modifierParametreGouverne(this.prisma, ctx, {
+      aggregate: AGG_PARAMS, cle: dto.cle, valeur: dto.valeur, enVigueurLe: dto.enVigueurLe,
+      confirmation: dto.confirmation, base: DEFAUTS_OFFBOARDING,
+      extraPopup: (cle) => (/guards\.(MROS|SCREENING)|Sanctions/i.test(cle) || cle === "forcageParMotif" || cle.startsWith("guards.")
+        ? { rappelLBA: "Rappel des obligations LBA/OBA-FINMA : affaiblir cette garde " +
+            "n'éteint aucune obligation légale (art. 9/10a LBA) — engagement de responsabilité requis." } : {}),
+      apresEmission: async () => { await this.audit.log(ctx.tenantId, ctx.userId, "OFFB_PARAM_CHANGED", `${dto.cle}`); },
     });
-    return { cle: dto.cle, ancien, nouveau: dto.valeur, enVigueurLe: enVigueur.toISOString() };
   }
 
   // ── R442/R441 — initiation : rôle habilité PAR MOTIF, niveau (calculé|forçage), snapshot figé ──

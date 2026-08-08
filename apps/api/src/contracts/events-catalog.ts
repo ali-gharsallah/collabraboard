@@ -39,12 +39,35 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "mros.gel.echeance": { version: 1, schema: z.object({ echeance: z.union([z.string(), z.date()]) }).strict() },
   "mros.acces": { version: 1, schema: z.object({ par: z.string() }).strict() },
   "mros.acces.refuse": { version: 1, schema: z.object({ par: z.string(), role: z.string() }).strict() },
+  // Bloc 63 (R446) : soumission ENRICHIE — chaîne résolue risque×budget FIGÉE dans l'événement
+  // de création (grandfathering R29) ; champs optionnels, les événements historiques restent valides.
   "trip.submitted": { version: 1, schema: z.object({ destinations: z.array(z.string()),
-    avis: z.number(), signaux: z.number() }).strict() },
-  "trip.visa.signed": { version: 1, schema: z.object({ role: z.string(), par: z.string() }).strict() },
+    avis: z.number(), signaux: z.number(),
+    chaine: z.array(z.string()).optional(), budget: z.number().nullish(),
+    origineChaine: z.object({ risque: z.string(), budget: z.number().nullish(),
+      seuilBudgetHPB: z.number(), hpbAjoute: z.boolean() }).optional() }).strict() },
+  "trip.visa.signed": { version: 1, schema: z.object({ role: z.string(), par: z.string(),
+    motivation: z.string().optional() }).strict() },      // Bloc 63 (R447) : dérogation motivée sur avertissement
   "trip.approved": { version: 1, schema: z.object({}).strict() },
   "trip.revised": { version: 1, schema: z.object({ depuis: z.string(), revision: z.number() }).strict() },
   "trip.contactreports.manquants": { version: 1, schema: z.object({ manquants: z.array(z.string()) }).strict() },
+  // ── Bloc 63 (repo R446–R452 + R465) — business trip AU MOTEUR : check consigné/invalidé,
+  //    certificat de trip, relances SLA, prospect né en voyage. Payloads RÉELS des sites d'émission.
+  "trip.check.consigne": { version: 1, schema: z.object({ juridictions: z.array(z.string()),
+    parActivite: z.array(z.any()), referentielVersion: z.string(), at: z.string() }).strict() },   // R448 : la preuve
+  "trip.check.invalide": { version: 1, schema: z.object({ cause: z.string() }).strict() },          // R448 : invalidation tracée
+  "trip.certificat.soumis": { version: 1, schema: z.object({ par: z.string(), role: z.string(),
+    validateurResolu: z.string(), activitesParJuridiction: z.record(z.array(z.string())),
+    rencontres: z.array(z.object({ clientId: z.string(), contactReportId: z.string() }).strict()),
+    ecarts: z.array(z.any()), narratif: z.string(), prospectsNes: z.array(z.any()) }).strict() },   // R450
+  "trip.certificat.vise": { version: 1, schema: z.object({ par: z.string(), role: z.string() }).strict() },
+  "trip.certificat.qualification.demandee": { version: 1, schema: z.object({
+    ecarts: z.array(z.any()), par: z.string() }).strict() },                                        // R450/R44 : analyse humaine
+  "trip.certificat.relance": { version: 1, schema: z.object({ joursRetard: z.number(),
+    notifie: z.string() }).strict() },                                                              // R450 : SLA tracé
+  "trip.cloture": { version: 1, schema: z.object({ par: z.string() }).strict() },                   // R450 : le certificat clôt
+  "trip.prospect.ne": { version: 1, schema: z.object({ clientId: z.string(), contactReportId: z.string(),
+    nom: z.string(), verdictProsp: z.any() }).strict() },                                           // R465 : origine tracée
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
