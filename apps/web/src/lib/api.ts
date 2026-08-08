@@ -18,7 +18,8 @@ export function isDemoMode(): boolean {
 
 /** Erreur normalisée — le `message` est celui du serveur, affiché TEL QUEL (FE-04, jamais reformulé).
  *  `refus` (optionnel) : les listes de refus backend (R269/R306) voyagent ENTIÈRES — jamais tronquées. */
-export type OliveError = { code: string; status: number; message: string; refus?: string[] };
+export type OliveError = { code: string; status: number; message: string; refus?: string[];
+  popup?: Record<string, unknown> };   // R445 : le 409 CONFIRMATION_REQUISE porte le payload exact du pop-up d'engagement
 
 type OliveSession = { tenantId?: string; userId?: string; role?: string };
 // OLIVE_SESSION reste une PROJECTION d'affichage (rôle courant pour les écrans) — jamais un
@@ -88,9 +89,10 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const payload = await r.json().catch(() => ({} as Record<string, unknown>));
   if (r.status === 401) signalerExpiration();                              // JW-05 — le brouillon (état React) survit
   if (!r.ok) {
-    const p = payload as { code?: string; error?: string; message?: string; refus?: string[] };
+    const p = payload as { code?: string; error?: string; message?: string; refus?: string[]; popup?: Record<string, unknown> };
     throw { code: p.code ?? p.error ?? "ERROR", status: r.status, message: p.message ?? `Erreur ${r.status}`,
-      ...(Array.isArray(p.refus) ? { refus: p.refus } : {}) } as OliveError;
+      ...(Array.isArray(p.refus) ? { refus: p.refus } : {}),
+      ...(p.popup ? { popup: p.popup } : {}) } as OliveError;
   }
   return payload as T;
 }
