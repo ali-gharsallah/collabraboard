@@ -2,7 +2,7 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-08 · commit `3accb92`.** Ce document se périme visiblement :
+> **Généré le 2026-08-08 · commit `e030456`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
@@ -13,7 +13,7 @@
 - **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 1
   - spec/SPEC-I18N.md (R29, R323, R324)
-- **Numéros R absents dans [1..438]** (plafond = sommet de l'amas contigu, hors réserves) : 27 — R405–R431
+- **Numéros R absents dans [1..446]** (plafond = sommet de l'amas contigu, hors réserves) : 27 — R405–R431
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -48,16 +48,24 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 | R331 | R334 | Migrations expand/contract | MG-01..05 |
 | R70 | R95 | Mapping droits (renumérotation étape 0 signalée) | — |
 | R222 | R248 | Porte CPSI (enveloppe versionnée) | PC-01..14 |
+| R432 | R439 | Bloc 62 — offboarding = workflow du moteur | OF-01..03, OF-10 |
+| R433 | R440 | Bloc 62 — health check guards, sévérité tenant | OF-04..05, OF-12..14 |
+| R434 | R441 | Bloc 62 — chaîne d'approbation par niveau + forçage | OF-06..08 |
+| R435 | R442 | Bloc 62 — motifs & initiateurs tenant | OF-01..02 |
+| R436 | R443 | Bloc 62 — checklists tenant versionnées | OF-09 |
+| R437 | R444 | Bloc 62 — clôturé rejouable + rétention | OF-10..11 |
+| R438 | R445 | Bloc 62 — pop-up d'engagement paramétrage | OF-13 |
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-114 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+115 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
 | Règles (repo) | Domaine / titre | Statut | Familles | Suites de test |
 |---------------|-----------------|--------|----------|----------------|
 | R1–R52 | ADR-14 — Implémentation de référence du moteur de workflow | PROPOSÉ | — | — |
+| R432–R438 | Bloc 62 · Sortie de relation (Offboarding) | RATIFIÉ | OF | kyc-service.spec.ts, fat-canon-derniers.e2e-spec.ts, fat-offboarding.e2e-spec.ts, fat-solde4-i18n.e2e-spec.ts |
 | R1, R7, R13, R29, R39, R42, R48–R49, R66, R68, R177–R179, R267–R279 | ═══ VERDICT ÉTAPE 0 (Claude Code, 2026-07-27) — canon reçu d'Ali, enregistré tel quel ci-dessous ═══ | PROPOSÉ | CC, HO, LC, LS, OL, RV | fat-canon-anciens.e2e-spec.ts, fat-coc.e2e-spec.ts, fat-degel-v7.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts |
 | R1–R51, R68–R70, R73, R79–R80, R109–R115, R167–R169, R224, R255, R257, R264–R265, R269–R270, R272, R274, R276, R279, R282–R283, R285–R287, R290, R293–R323 | O-Live — CANON DU DÉGEL COMPLET (Vagues 1–9) + état du développement restant | RATIFIÉ | AS, AU, BD, BL, CC, CY, LC, LE, MB, OL, OP, PA, PC, RW, SB, SO, SY, TF, VE, VR, WB | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R1–R51, R334–R339 | CANON — ROBUSTESSE O-Live (adaptation étape 0, PROPOSÉ — en attente de ratification) | PROPOSÉ | MG | test.mjs, test.mjs |

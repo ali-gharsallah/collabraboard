@@ -1243,6 +1243,31 @@ ni `test:smoke`, ni `extract_demo_data`) :**
 
 ---
 
+## 7. Bloc 62 — Offboarding au moteur (session 2026-08-08)
+
+### E-OFF-1 — Module offboarding démo hors moteur
+- **Constat** : l'offboarding existe en démo (écran, checklists, chaînes d'approbation) mais
+  hors moteur certifié : progression par `approvalIdx++`, `OFF_APPROVAL_CHAINS` en constantes
+  non tenant, pas de visa R15, pas d'exclusion R13, pas d'événements.
+- **Résolution : Bloc 62 ratifié 08.08.2026** (`spec/BLOC-62-OFFBOARDING-R432-R438.md`,
+  règles repo R439–R445) — migration de l'écran démo APRÈS 14/14 verts (A5).
+
+### E-OFF-3 — Collisions de numérotation et d'identifiants (découvertes au versement du Bloc 62)
+- **Constat 1 — numéros de règles** : le drop de session numérote R432–R438, créneau déjà
+  attribué (bloc WD, registre C5). Résolu par le mécanisme ratifié de mapping-session-repo.md :
+  Bloc 62 = **R439–R445** au repo, réservation PK glisse à R446+, table §1 mise à jour.
+- **Constat 2 — IDs de scénarios** : OF-01..12 existent déjà (bloc offboarding R267–R271,
+  `fat-offboarding.e2e-spec.ts`, contenu différent). Les scénarios du Bloc 62 gardent leurs
+  IDs OF-01..14 (le document fait foi) dans la suite distincte `offboarding-moteur.spec.ts`
+  avec référence repo [R439–R445] dans chaque titre.
+- **Constat 3 — deux machines à états** : la machine RATIFIÉE R267–R271
+  (CLOTURE_DEMANDEE → EN_CLOTURE → CLOTUREE, OffboardingService) et celle du Bloc 62
+  (Création → Collecte → Review → Validation → Clôturé, instance moteur) décrivent la même
+  sortie de relation à deux granularités. R267–R271 restent actives et inchangées pendant la
+  construction ; la réconciliation (mapping d'états, quelle machine porte quoi) est une
+  DÉCISION PO à acter — consignée ici, jamais absorbée en silence.
+
+
 ## 6. Écarts de NAVIGATION (audit 2026-08-08 — préalable bloc WD, R432–R438)
 
 Source : `docs/AUDIT-NAV-2026-08-08.md` (matrice complète, méthode, lignes). Constat
