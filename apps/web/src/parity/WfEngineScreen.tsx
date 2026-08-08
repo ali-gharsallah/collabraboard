@@ -5,7 +5,8 @@ import { WF_ENGINE, WF_INVARIANTS, WF_TYPES_RT, wfOliviaPropose } from "./olive-
 import RULES_CATALOG from "../fixtures/RULES_CATALOG.json";
 
 // Source : docs/reference/olive-demo.html 24150–24244 — porté verbatim.
-export function WfRulesCatalogPanel({ go }: { go?: (s: string) => void }) {
+// Interne à l'écran (E-NAV-6 arbitré : purge sélective — l'export mort est retiré).
+function WfRulesCatalogPanel({ go }: { go?: (s: string) => void }) {
   const [q, setQ] = useState("");
   const [filtre, setFiltre] = useState("tous");
   const [compact, setCompact] = useState(false);

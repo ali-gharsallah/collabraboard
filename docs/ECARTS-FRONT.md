@@ -1255,18 +1255,21 @@ re-soumis ici.
   `go()` vivant ne les cible. Injoignables à la souris.
 - **Options** : (a) entrées NAV dédiées (g_clients) ; (b) liens depuis la fiche client
   (`ClientFileScreen`) ; (c) supprimer les routes (perte d'accès aux écrans portés).
+- **ARBITRÉ (2026-08-08, PO)** : option (b) — liens « Comptes → » / « Signataires → » depuis la fiche client (`ClientFileScreen`, via `OLIVE_NAVIGATE`). Appliqué.
 
 ### E-NAV-2 — Route alias `aml48` orpheline (maquette)
 - **Constat** : case L44867 rend `AmlEncyclopediaScreen`, déjà servi par `amlcat` (NAV
   « Règles AML »). Alias historique sans entrée.
 - **Options** : (a) supprimer l'alias au bloc WD ; (b) conserver si des liens externes/démos
   scriptées l'utilisent (aucun trouvé dans le fichier).
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — alias `aml48` supprimé du switch. Appliqué.
 
 ### E-NAV-3 — Route `formbuilder` : doublon d'accès de l'onglet « quest »
 - **Constat** : case L44874 (`QuestionnaireBuilderScreen`) sans entrée UI ; le MÊME composant
   est vivant comme onglet « quest » du Section Designer (L24757/L24866, via sdkyc/sdar/sdgar).
 - **Options** : (a) retirer la route doublon ; (b) donner une entrée NAV propre au
   Questionnaire Builder (comme la maquette PO d'origine, item « Questionnaire Builder »).
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — route doublon `formbuilder` retirée ; le Questionnaire Builder reste l'onglet « quest » du Section Designer (sdkyc/sdar/sdgar). Appliqué.
 
 ### E-NAV-4 — Composants morts maquette : LoginScreen, BuilderScreen, AmlCatalogueScreen, Compliance48Screen
 - **Constat** : définis (L41574, L41654, L27255, L26976), montés par personne. Le login réel
@@ -1274,12 +1277,14 @@ re-soumis ici.
   AmlCatalogueScreen/Compliance48Screen sont supplantés par AmlEncyclopediaScreen/
   ComplianceCenterScreen.
 - **Options** : (a) purge au bloc WD (avec E-WD-4) ; (b) conserver comme référence commentée.
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — `AmlCatalogueScreen` et `Compliance48Screen` purgés (mêmes geste que RoleDashboard/LoginScreen/BuilderScreen au bloc WD). Appliqué.
 
 ### E-NAV-5 — `dashboard`, `capacite`, `crm2` joignables par la SEULE nav v2
 - **Constat** : atteignables uniquement via `OLIVE_NAV_INDEX`/`OliveNavV2` (panneau flottant),
   absents du menu latéral principal. Un utilisateur qui ignore la nav v2 ne les trouve pas.
 - **Options** : (a) les ajouter au NAV principal ; (b) statu quo assumé (la nav v2 est le
   chemin voulu « Mon travail ») ; (c) fusionner capacite↔workload (React) au bloc WD.
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — `capacite` (« Capacité de l'équipe (live) ») et `crm2` (« Relation — timeline & entretiens ») ajoutés au menu latéral (groupe Front & Croissance) ; `dashboard` = alias de `home`, rien à faire. Appliqué.
 
 ### E-NAV-6 — 43 exports morts au front React (dont un composant)
 - **Constat** : jamais référencés hors de leur fichier ni des tests — 40 résidus de portage
@@ -1288,6 +1293,7 @@ re-soumis ici.
 - **Options** : (a) purge groupée (lot dédié, tree-shaking déjà neutralise le poids) ;
   (b) statu quo (les clones parité sont des références de portage) ; (c) purge sélective
   (le composant seulement).
+- **ARBITRÉ (2026-08-08, PO)** : option (c) — purge sélective : l'export mort `WfRulesCatalogPanel` devient interne à `parity/WfEngineScreen.tsx` (le composant reste monté L97) ; les `parity/*-support.ts` et `currentAsOf`/`oliveSession` restent (références de portage / API d'avenir). Appliqué.
 
 ### E-NAV-7 — Résidus de parité maquette ↔ React
 - **Constat** : hors renommages mappés (COMPARAISON-FRONT-HTML.md), le React a 16 écrans
@@ -1297,7 +1303,7 @@ re-soumis ici.
 - **Options** : (a) faire suivre la maquette écran par écran (comme fait le 07-08.08) ;
   (b) assumer l'écart documenté (la maquette = vitrine, le React = produit) ; (c) trancher
   écran par écran au bloc WD.
-
+- **ARBITRÉ (2026-08-08, PO)** : option (b) — écart ASSUMÉ et documenté : la maquette = vitrine, le React = produit ; `docs/COMPARAISON-FRONT-HTML.md` reste la table de vérité, mise à jour à chaque bloc. Aucun portage systématique.
 
 ### E-WD-5 — Référentiel « rôles tenant » de la démo : assumé = rôles des gabarits livrés
 - **Constat (bloc WD, 2026-08-08)** : R434 exige des rôles mappés sur les rôles tenant. La démo
