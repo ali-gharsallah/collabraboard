@@ -4,10 +4,11 @@
   "regles": [
     {
       "numero": "R1",
-      "module": "builder",
-      "ancre": "apps/api/src/modules/builder/builder.module.ts",
+      "module": "inference",
+      "ancre": "apps/api/src/modules/inference/inference.module.ts",
       "statut": "actif",
       "citePar": [
+        "builder",
         "regwatch"
       ]
     },
@@ -75,6 +76,7 @@
         "olivia",
         "pms",
         "reviews",
+        "surveillance-es",
         "builder",
         "coffre",
         "crossborder",
@@ -141,6 +143,7 @@
         "workflow-engine",
         "builder",
         "onboarding",
+        "workflow-designer",
         "coc",
         "pms"
       ]
@@ -151,7 +154,8 @@
       "ancre": "packages/workflow-engine/bridge.mjs",
       "statut": "actif",
       "citePar": [
-        "kyc"
+        "kyc",
+        "inference"
       ]
     },
     {
@@ -168,6 +172,7 @@
         "formations",
         "offboarding",
         "reviews",
+        "workflow-designer",
         "cpsi-server-py"
       ]
     },
@@ -213,7 +218,8 @@
       "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
       "statut": "actif",
       "citePar": [
-        "workflow-engine"
+        "workflow-engine",
+        "inference"
       ]
     },
     {
@@ -247,7 +253,10 @@
       "numero": "R26",
       "module": "kyc",
       "ancre": "apps/api/src/modules/kyc/docmatrix.controller.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "inference"
+      ]
     },
     {
       "numero": "R27",
@@ -269,8 +278,10 @@
         "reviews",
         "common",
         "coc",
+        "inference",
         "txflux",
         "workflow",
+        "workflow-designer",
         "workload"
       ]
     },
@@ -286,14 +297,18 @@
       "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
       "statut": "actif",
       "citePar": [
+        "inference",
         "parametres"
       ]
     },
     {
       "numero": "R32",
-      "module": "personnes",
-      "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
-      "statut": "actif"
+      "module": "inference",
+      "ancre": "apps/api/src/modules/inference/profils.defaut.ts",
+      "statut": "actif",
+      "citePar": [
+        "personnes"
+      ]
     },
     {
       "numero": "R33",
@@ -302,7 +317,8 @@
       "statut": "actif",
       "citePar": [
         "ged",
-        "parametres"
+        "parametres",
+        "surveillance-es"
       ]
     },
     {
@@ -386,16 +402,18 @@
       "citePar": [
         "cpsi-server-py",
         "screening",
+        "surveillance-es",
         "ged",
+        "olivia",
         "api",
         "ia",
-        "olivia",
+        "inference",
+        "mros",
         "nba",
         "onboarding",
         "pms",
         "cpsi",
         "crm",
-        "mros",
         "personnes",
         "surveillance",
         "transactions",
@@ -406,7 +424,10 @@
       "numero": "R46",
       "module": "kyc",
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "inference"
+      ]
     },
     {
       "numero": "R48",
@@ -417,6 +438,7 @@
         "kyc",
         "screening",
         "cpsi",
+        "workflow-designer",
         "workflow-instances",
         "custody",
         "events",
@@ -443,6 +465,7 @@
       "citePar": [
         "screening",
         "kyc",
+        "workflow-designer",
         "common",
         "cpsi",
         "workflow-engine",
@@ -460,7 +483,7 @@
     {
       "numero": "R50",
       "module": "rapports",
-      "ancre": "apps/api/src/modules/rapports/rapports.module.ts",
+      "ancre": "apps/api/src/modules/rapports/kpi.service.ts",
       "statut": "actif",
       "citePar": [
         "api",
@@ -469,9 +492,12 @@
     },
     {
       "numero": "R51",
-      "module": "builder",
-      "ancre": "apps/api/src/modules/builder/builder.module.ts",
-      "statut": "actif"
+      "module": "inference",
+      "ancre": "apps/api/src/modules/inference/inference.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "builder"
+      ]
     },
     {
       "numero": "R52",
@@ -709,6 +735,7 @@
       "ancre": "apps/api/src/modules/kyc/kyc.module.ts",
       "statut": "actif",
       "citePar": [
+        "inference",
         "cpsi-server-py"
       ]
     },
@@ -751,14 +778,19 @@
       "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "surveillance-es"
       ]
     },
     {
       "numero": "R101",
       "module": "screening",
       "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "rapports",
+        "inference"
+      ]
     },
     {
       "numero": "R102",
@@ -770,7 +802,10 @@
       "numero": "R103",
       "module": "screening",
       "ancre": "apps/api/src/modules/screening/rules/screening-qualification.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "surveillance-es"
+      ]
     },
     {
       "numero": "R104",
@@ -1015,7 +1050,7 @@
     {
       "numero": "R129",
       "module": "mros",
-      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "ancre": "apps/api/src/modules/mros/goaml.service.ts",
       "statut": "actif",
       "citePar": [
         "parametres"
@@ -1024,7 +1059,7 @@
     {
       "numero": "R130",
       "module": "mros",
-      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "ancre": "apps/api/src/modules/mros/goaml.service.ts",
       "statut": "actif"
     },
     {
@@ -1041,7 +1076,7 @@
     {
       "numero": "R132",
       "module": "mros",
-      "ancre": "apps/api/src/modules/mros/mros.module.ts",
+      "ancre": "apps/api/src/modules/mros/goaml.service.ts",
       "statut": "actif",
       "citePar": [
         "transactions",
@@ -1957,7 +1992,8 @@
       "statut": "actif",
       "citePar": [
         "parametres",
-        "nba"
+        "nba",
+        "surveillance-es"
       ]
     },
     {
@@ -2089,7 +2125,7 @@
     {
       "numero": "R254",
       "module": "olivia",
-      "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
+      "ancre": "apps/api/src/modules/olivia/gouvernance-o.service.ts",
       "statut": "actif",
       "citePar": [
         "swarm"
@@ -2389,6 +2425,7 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "surveillance-es",
         "txflux",
         "common",
         "cpsi"
@@ -3458,6 +3495,64 @@
       "statut": "actif",
       "citePar": [
         "screening"
+      ]
+    },
+    {
+      "numero": "R432",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-designer",
+        "api"
+      ]
+    },
+    {
+      "numero": "R433",
+      "module": "workflow-designer",
+      "ancre": "apps/api/src/modules/workflow-designer/workflow-designer.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R434",
+      "module": "workflow-designer",
+      "ancre": "apps/api/src/modules/workflow-designer/wir.schema.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R435",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "workflow-designer"
+      ]
+    },
+    {
+      "numero": "R436",
+      "module": "workflow-designer",
+      "ancre": "apps/api/src/modules/workflow-designer/workflow-designer.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R437",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R438",
+      "module": "workflow-designer",
+      "ancre": "apps/api/src/modules/workflow-designer/wir.schema.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
       ]
     }
   ],
