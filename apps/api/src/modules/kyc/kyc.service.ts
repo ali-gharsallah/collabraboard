@@ -158,14 +158,13 @@ export class KycService {
           .map(v => ({ sectionCode: v.sectionCode, requiredRole: v.role })) },
       }, include: { sections: { include: { questions: true } }, visas: true } });
 
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
-        type: "kyc.created", aggregateId: kyc.id,
-        payload: { code, workflow: risk.workflow, riskTrace: risk.trace } as any } });
+      await emitEvent(tx, ctx.tenantId, "kyc.created", kyc.id,
+        { code, workflow: risk.workflow, riskTrace: risk.trace });
       // R18 : détection du retour d'un prospect précédemment REFUSÉ (alerte compliance, jamais un blocage).
       const refusAnterieurs = await this.dossiersRefusesAnterieurs(ctx, dto.clientId, tx);
       if (refusAnterieurs.length)
-        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "prospect.retour.refuse.detecte",
-          aggregateId: kyc.id, payload: { code, dossiersRefuses: refusAnterieurs.map((r: any) => r.code) } as any } });
+        await emitEvent(tx, ctx.tenantId, "prospect.retour.refuse.detecte", kyc.id,
+          { code, dossiersRefuses: refusAnterieurs.map((r: any) => r.code) });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_CREATED", code);
       return { ...kyc, riskTrace: risk.trace };
     });
@@ -709,10 +708,9 @@ export class KycService {
         await tx.kycAccessRule.create({ data: { questionId: cible.id, role: dto.role as any,
           right: dto.right as any, effectiveFrom: dateEffet } });
       }
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "kyc.access.modifie",
-        aggregateId: q.section.kycFile.id,
-        payload: { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId,
-          dateEffet: dateEffet.toISOString(), portee, dossiersTouches: cibles.length } as any } });
+      await emitEvent(tx, ctx.tenantId, "kyc.access.modifie", q.section.kycFile.id,
+        { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId,
+          dateEffet: dateEffet.toISOString(), portee, dossiersTouches: cibles.length });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ACCESS_MODIFIE", `${code}/${qCode}:${dto.role}=${dto.right}:${portee}`);
     });
     return { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, portee, dateEffet: dateEffet.toISOString() };

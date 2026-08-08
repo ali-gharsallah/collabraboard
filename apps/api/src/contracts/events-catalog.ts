@@ -40,6 +40,16 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "tx.flux.importee": { version: 1, schema: z.object({ refExterne: z.string(), source: z.string(),
     compte: z.string(), clientId: z.string().nullish() }).strict() },
   "kyc.validated": { version: 1, schema: z.object({ code: z.string(), validatedBy: z.string() }).strict() },
+  // ── Tranche C6 (2026-08-08) : kyc.service quitte les creates DIRECTS — ses 3 types
+  // restants passent par emitEvent avec schéma strict (payloads RÉELS des sites d'émission).
+  "kyc.created": { version: 1, schema: z.object({ code: z.string(), workflow: z.string(),
+    // trace du moteur de risque : entrées STRUCTURÉES (objets) + chaînes appendées (ex. R271) — opaque ici
+    riskTrace: z.array(z.any()).nullish() }).strict() },
+  "prospect.retour.refuse.detecte": { version: 1, schema: z.object({ code: z.string(),
+    dossiersRefuses: z.array(z.string()) }).strict() },
+  "kyc.access.modifie": { version: 1, schema: z.object({ question: z.string(), role: z.string(),
+    ancienne: z.string(), nouvelle: z.string(), par: z.string(), dateEffet: z.string(),
+    portee: z.string(), dossiersTouches: z.number() }).strict() },
   "personne.pep.declare": { version: 1, schema: z.object({ source: z.string(), sourceHitId: z.string().nullish() }).strict() },
   "personne.pep.leve": { version: 1, schema: z.object({ decideur: z.string(), sourceHitId: z.string().nullish() }).strict() },
   // ── Bloc WD (R432/R436) : WorkflowIR — source → brut → éditions → visa, rejouable ──
@@ -437,9 +447,7 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "islamic.takaful.suivi",
   "islamic.waqf.distribue",
   "islamic.zakat.calcule",
-  "kyc.access.modifie",
   "kyc.comite.decision",
-  "kyc.created",
   "kyc.dossier.abandonne",
   "kyc.dossier.mise_a_jour",
   "kyc.dossier.reactive",
@@ -463,6 +471,7 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "licence.expiration.j30",
   "licence.expiration.j60",
   "licence.expiree",
+  "matrice_documentaire.publiee",
   "mobile.identite.activee",
   "mobile.identite.creee",
   "mobile.message",
@@ -533,7 +542,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "pms.pretrade.bloque",
   "pms.pretrade.ok",
   "pms.suitability.alerte",
-  "prospect.retour.refuse.detecte",
   "recherche.executee",
   "recherche.index.desync",
   "recherche.index.entree",

@@ -56,6 +56,29 @@ function fakeClient() {
     ok(c.rows.length === 1 && c.rows[0].eventVersion === undefined, 'écrit, version laissée au défaut DB');
   });
 
+  // ── Tranche C6 : les 3 ex-creates directs de kyc.service sont schématisés STRICTS ──
+  await it('C6 : kyc.created — payload réel du site d\'émission accepté (riskTrace optionnel)', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'kyc.created', 'K1', { code: 'KYC-1', workflow: 'EDD', riskTrace: ['R271'] });
+    await emitEvent(c, 't1', 'kyc.created', 'K2', { code: 'KYC-2', workflow: 'STANDARD' });
+    ok(c.rows.length === 2 && c.rows[0].eventVersion === 1, 'écrits + version 1');
+  });
+  await it('C6 : prospect.retour.refuse.detecte — dossiersRefuses typé, passager clandestin refusé', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'prospect.retour.refuse.detecte', 'K1', { code: 'KYC-1', dossiersRefuses: ['KYC-0'] });
+    try { await emitEvent(c, 't1', 'prospect.retour.refuse.detecte', 'K1', { code: 'KYC-1', dossiersRefuses: ['KYC-0'], extra: 1 }); throw new Error('aurait dû refuser'); }
+    catch (e) { ok(e instanceof EvenementNonConformeError, 'refus strict'); }
+    ok(c.rows.length === 1, 'un seul write');
+  });
+  await it('C6 : kyc.access.modifie — payload complet exigé (champ manquant refusé, zéro write)', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'kyc.access.modifie', 'K1', { question: 'Q1', role: 'ARM', ancienne: 'HIDDEN',
+      nouvelle: 'READ', par: 'u1', dateEffet: new Date(0).toISOString(), portee: 'dossier', dossiersTouches: 1 });
+    try { await emitEvent(c, 't1', 'kyc.access.modifie', 'K1', { question: 'Q1', role: 'ARM' }); throw new Error('aurait dû refuser'); }
+    catch (e) { ok(e instanceof EvenementNonConformeError, 'refus typé'); }
+    ok(c.rows.length === 1, 'un seul write');
+  });
+
   console.log(`\nCatalogue d'événements au write (C6, L5) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

@@ -302,8 +302,8 @@ jobs:
         working-directory: apps/api
         run: pnpm run test:aml-gap
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (532 verts, +6 WIR bloc WD) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 532/532)"
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (535 verts, +3 schémas C6 kyc) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 535/535)"
         working-directory: apps/api
         run: pnpm run test:rules
 
@@ -319,6 +319,14 @@ jobs:
         run: |
           out=$(node apps/api/scripts/verifier-registre-regles.mjs); echo "$out"
           echo "$out" | grep -q "### registre des règles vert (L5 · C5) ###"
+
+      # ── C6 · garde d'inventaire du catalogue d'événements (BLOQUANT) : un littéral émis
+      #    au code mais absent de (SCHEMAS ∪ TYPES_EN_ATTENTE) serait REFUSÉ au write à
+      #    l'exécution — la bombe se désamorce ici, pas en prod. ──
+      - name: "3-C6 · Catalogue d'événements — inventaire no-drift (bombe à refus)"
+        run: |
+          out=$(node apps/api/scripts/verifier-catalogue-evenements.mjs); echo "$out"
+          echo "$out" | grep -q "### catalogue d'événements vert (C6) ###"
 
       # ── L3 · test d'ARCHITECTURE (BLOQUANT) : frontière du contexte Surveillance (ADR-TM-001).
       #    Import direct d'un interne de screening/aml/riskcases/mros depuis l'extérieur (ou l'inverse)

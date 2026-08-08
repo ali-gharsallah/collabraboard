@@ -5,16 +5,20 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-06)
+## État (2026-08-08, tranche C6)
 
-- **9 types SCHÉMATISÉS (v1, strict)** : noyau KYC (`kyc.lock.acquired/released`,
-  `kyc.handoff.next/back/validated/rejected`) + screening/PEP (`screening.escalade.proposee`,
-  `pep.proposition.creee`, `pep.proposition.rejetee`).
-- **568 types EN ATTENTE** : inventaire GÉNÉRÉ par scan large des littéraux émis (appels précis
-  `.emit(`/`emitEvent(` + littéraux pointés + UPPER_SNAKE dans les fichiers émetteurs). La
-  SUR-capture est assumée (un littéral non-événement dans la liste est inoffensif) ; la
-  SOUS-capture serait une bombe à refus — c'est pourquoi le scan est large. À réduire au fil
-  des migrations de schémas.
+- **27 types SCHÉMATISÉS (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
+  ES-8 (`tx.flux.importee`, `kyc.validated`, `personne.pep.declare/leve`), bloc WD
+  (`wd.wir.importe/edite/ratifie`), ingestion de listes (`liste.*`), MROS (`mros.goaml.soumis`,
+  `mros.chrono.alerte`), gouvernance O (`olivia.curseur.change`), et la tranche C6 :
+  `kyc.created`, `prospect.retour.refuse.detecte`, `kyc.access.modifie`.
+- **562 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
+  `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
+  régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
+  littéral émis manque OU si un type est à double statut. La SUR-capture reste assumée.
+  Première prise de la garde (2026-08-08) : `matrice_documentaire.publiee` (docmatrix,
+  R282) était émis HORS catalogue — refus au write en prod, invisible du harnais
+  (fakePrisma ne passe pas par emitEvent). Ajouté à l'inventaire.
 
 ## Reste à faire (par priorité)
 
@@ -22,16 +26,15 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    dossier.*/visa.*), `mros.*` (gel/communication), `trip.*`/`training.*` (vague L2),
    `aml.*`/`cpsi.*`. Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n
    avec upcaster de lecture si le payload évolue).
-2. **Creates directs restants** : des services écrivent encore `domainEvent.create` sans passer
-   par `emitEvent` — hors catalogue (liste par grep, 2026-08-06) : `pms`, `readiness`,
-   `coffre/storage-resolver`, `transaction-gate` (événements de verdict), `auth/*`, `crossborder/xb`,
-   `personnes` (via son wrapper local → **déjà** sur emitEvent), `txflux/fx`, `kyc.service`
-   (4 creates directs restants : `kyc.created`, `prospect.retour.refuse.detecte`, `kyc.validated`,
-   `kyc.access.modifie` — son wrapper `emit` est migré). Basculer ces sites vers `emitEvent`
-   au fil des lots ; le catalogue ne gouverne que ce qui passe par lui.
+2. **Creates directs restants** : `pms`, `readiness`, `coffre/storage-resolver`,
+   `transaction-gate` (événements de verdict), `auth/*`, `crossborder/xb`, `txflux/fx`.
+   **FAIT (tranche C6, 2026-08-08)** : `kyc.service` est intégralement sur `emitEvent` —
+   ses 3 derniers creates directs (`kyc.created`, `prospect.retour.refuse.detecte`,
+   `kyc.access.modifie`) sont basculés ET schématisés stricts (payloads réels des sites) ;
+   `kyc.validated` l'était depuis ES-8. Basculer les services restants au fil des lots.
 3. **Types dynamiques bornés** : `olivia` (3 littéraux `tache.*` résolus par ternaire) et
    `prerevue` (`ia.point.traite|ecarte`) sont couverts par l'inventaire. Toute NOUVELLE émission
    à type calculé doit résoudre vers des littéraux inventoriés — sinon refus au write (voulu).
-4. **Garde d'inventaire** : envisager un script `--generer` (comme le registre des règles C5)
-   qui régénère TYPES_EN_ATTENTE et échoue si un littéral émis manque — pour l'instant la
-   sanction est le refus au write en spec/e2e.
+4. **Garde d'inventaire** : **FAIT (tranche C6, 2026-08-08)** —
+   `verifier-catalogue-evenements.mjs` (`--generer` monotone + check bloquant en CI,
+   step « 3-C6 »). La sanction n'est plus le refus au write : la CI attrape la dérive.
