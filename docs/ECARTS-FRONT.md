@@ -1297,3 +1297,21 @@ re-soumis ici.
 - **Options** : (a) faire suivre la maquette écran par écran (comme fait le 07-08.08) ;
   (b) assumer l'écart documenté (la maquette = vitrine, le React = produit) ; (c) trancher
   écran par écran au bloc WD.
+
+
+### E-WD-5 — Référentiel « rôles tenant » de la démo : assumé = rôles des gabarits livrés
+- **Constat (bloc WD, 2026-08-08)** : R434 exige des rôles mappés sur les rôles tenant. La démo
+  n'a pas de référentiel de rôles séparé ; ses gabarits livrés (WF_TEMPLATES) utilisent
+  AML, BRM, ESG, LEGAL, ESG/LEGAL, HPB/CEO en plus des rôles IAM. ROLES_TENANT (wir-core.mjs)
+  a été aligné sur cet ensemble — un rôle inventé (ex. SORCIER) reste NON_MAPPÉ bloquant (WD-06).
+- **Option d'arbitrage** : si le canon veut un référentiel de rôles plus strict (IAM seul),
+  les gabarits EDD/ONBOARDING de la démo devront être re-rôlés — décision PO.
+
+### E-WD-6 — OcrSketchImport appelle `/api/v1/ai/workflow/*` (préfixe `/api` mort)
+- **Constat** : le capteur d'import (réutilisé verbatim) tente d'abord un backend
+  `/api/v1/ai/workflow/from-text|from-image` — or l'écart d'invariant §1 a acté que le backend
+  réel sert `/v1/...` SANS `/api`. Le repli local silencieux masque l'échec : le chemin
+  backend ne fonctionnera jamais tel quel. NON corrigé dans le bloc WD (hors périmètre —
+  le pipeline WIR intercepte la sortie, quel que soit le chemin qui l'a produite).
+- **Options** : (a) aligner sur `/v1/ai/workflow/*` et créer la route côté API ; (b) supprimer
+  la tentative backend (démo = générateur local assumé) ; (c) statu quo documenté.
