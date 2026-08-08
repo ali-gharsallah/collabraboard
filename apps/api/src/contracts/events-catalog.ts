@@ -115,6 +115,56 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     enAttenteMrosJours: z.number().nullable(), par: z.string() }).strict() },                        // R250
   "cpsi.case_proposal.emitted": { version: 1, schema: z.object({ cle: z.string(),
     par: z.string() }).strict() },                                                                   // R285/R286 : miroir outbox, at corrélé au jumeau
+  // ── Vague 4 (C6, 2026-08-08) — ged.* intégral : ingestion (R137–R139), noyau documentaire
+  //    (R108–R112), avancé (ancrage/QES/hold/destruction), vues (R164). Payloads RÉELS.
+  "ged.ingest": { version: 1, schema: z.object({ canal: z.string(), source: z.string(),
+    par: z.string(), nom: z.string() }).strict() },                                                  // R137 : l'arrivée est une pièce
+  "ged.classement": { version: 1, schema: z.object({ typeCode: z.string(), clientId: z.string(),
+    par: z.string(), retentionUntil: z.union([z.string(), z.date()]).nullable() }).strict() },       // R138
+  "ged.ocr.derive": { version: 1, schema: z.object({ versionId: z.string(), moteur: z.string(),
+    sha256Derive: z.string() }).strict() },                                                          // dérivé, jamais l'original
+  "ged.inbox.acces.refuse": { version: 1, schema: z.object({ par: z.string(), role: z.string() }).strict() },   // R139
+  "ged.inbox.sla": { version: 1, schema: z.object({ jours: z.number(), sla: z.number() }).strict() },   // R39 : mesuré, rien ne se classe seul
+  "ged.version.creee": { version: 1, schema: z.object({ numero: z.number(), sha256: z.string(),
+    deposant: z.string(), type: z.string() }).strict() },                                            // R108
+  "ged.archive": { version: 1, schema: z.object({ motif: z.string(), par: z.string() }).strict() },
+  "ged.acces": { version: 1, schema: z.object({ lecteur: z.string(), role: z.string(),
+    version: z.number() }).strict() },                                                               // R112 : qui a vu quoi
+  "ged.acces.refuse": { version: 1, schema: z.object({ lecteur: z.string(), role: z.string(),
+    type: z.string() }).strict() },
+  "ged.consultation.refusee": { version: 1, schema: z.object({ par: z.string(), role: z.string(),
+    typeCode: z.string() }).strict() },                                                              // R110
+  "ged.completude.verifiee": { version: 1, schema: z.object({ passage: z.string(), complet: z.boolean(),
+    manquants: z.array(z.string()), expires: z.array(z.string()) }).strict() },                      // R110 : la GED constate
+  // deposeAt/retentionUntil sortent de Prisma en instance Date — validés AVANT sérialisation JSON
+  "ged.expiration.detectee": { version: 1, schema: z.object({ type: z.string(),
+    deposeAt: z.union([z.string(), z.date()]), validiteMois: z.number() }).strict() },
+  "ged.integrite.alerte": { version: 1, schema: z.object({ version: z.number(),
+    attendu: z.string(), obtenu: z.string() }).strict() },                                           // altération = jamais authentique
+  "ged.externe.indisponible": { version: 1, schema: z.object({ operation: z.string(),
+    message: z.string() }).strict() },                                                               // R167 : le signal n'étouffe jamais le refus
+  "ged.ancrage.cree": { version: 1, schema: z.object({ racine: z.string(), tsaToken: z.string(),
+    versions: z.number() }).strict() },
+  "ged.signature.qualifiee": { version: 1, schema: z.object({ version: z.number(),
+    signataire: z.string(), evidenceId: z.string() }).strict() },
+  "ged.classification.proposee": { version: 1, schema: z.object({ type: z.string(),
+    expirationDetectee: z.any().nullish(), source: z.string() }).strict() },                         // R44 : rien n'est appliqué ici
+  "ged.classification.confirmee": { version: 1, schema: z.object({ type: z.string(),
+    par: z.string() }).strict() },
+  "ged.destruction.proposee": { version: 1, schema: z.object({
+    retentionUntil: z.union([z.string(), z.date()]).nullable(), type: z.string() }).strict() },      // R33/R44 : décision, jamais une échéance
+  "ged.destruction.certifiee": { version: 1, schema: z.object({ motif: z.string(), par: z.string(),
+    empreintes: z.array(z.string()) }).strict() },
+  "ged.hold.pose": { version: 1, schema: z.object({ motif: z.string(), par: z.string(),
+    docs: z.number() }).strict() },
+  "ged.hold.leve": { version: 1, schema: z.object({ motif: z.string(), par: z.string(),
+    docs: z.number() }).strict() },
+  "ged.vue.creee": { version: 1, schema: z.object({ code: z.string(), par: z.string() }).strict() }, // R164
+  "ged.vue.evaluee": { version: 1, schema: z.object({ code: z.string(), par: z.string(),
+    role: z.string(), nbServis: z.number() }).strict() },
+  "ged.vue.retiree": { version: 1, schema: z.object({ code: z.string(), par: z.string(),
+    motif: z.string() }).strict() },
+  "ged.vue.acces.refuse": { version: 1, schema: z.object({ par: z.string(), role: z.string() }).strict() },
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -538,32 +588,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "dq.degraded",
   "fake-1.0",
   "fx.seuil.franchi",
-  "ged.acces",
-  "ged.acces.refuse",
-  "ged.ancrage.cree",
-  "ged.archive",
-  "ged.classement",
-  "ged.classification.confirmee",
-  "ged.classification.proposee",
-  "ged.completude.verifiee",
-  "ged.consultation.refusee",
-  "ged.destruction.certifiee",
-  "ged.destruction.proposee",
-  "ged.expiration.detectee",
-  "ged.externe.indisponible",
-  "ged.hold.leve",
-  "ged.hold.pose",
-  "ged.inbox.acces.refuse",
-  "ged.inbox.sla",
-  "ged.ingest",
-  "ged.integrite.alerte",
-  "ged.ocr.derive",
-  "ged.signature.qualifiee",
-  "ged.version.creee",
-  "ged.vue.acces.refuse",
-  "ged.vue.creee",
-  "ged.vue.evaluee",
-  "ged.vue.retiree",
   "gwb-private.ch",
   "gwb.ch",
   "ia.acces.refuse",

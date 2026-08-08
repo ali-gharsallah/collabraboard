@@ -43,7 +43,13 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    group.defined, scenario.defined) vivent dans le journal JUMEAU `cpsi_events` (moteur
    pur rejouable, écrit par `cpsiEvent.create`, jamais par emitEvent) — ils restent en
    attente par SUR-capture assumée du scan, le catalogue ne gouverne que domain_events.
-   RESTENT : le reste par familles (onboarding.*, ged.*, wd.*, olivia.*, …).
+   **Vague 4 FAITE (2026-08-08)** : `ged.*` intégral — 26 schémas (ingestion R137–R139 :
+   ingest/classement/ocr.derive/inbox.*, noyau R108–R112 : version.creee/acces/archive/
+   completude/expiration/integrite, avancé : ancrage/QES/hold/destruction/classification,
+   vues R164, externe.indisponible R167). Payloads réels ; deposeAt/retentionUntil validés
+   en instance Date (avant sérialisation JSON), même doctrine que mros.gel.echeance.
+   RESTENT : tache.* (22), personne.* (18), puis le reste par familles (ia.*, islamic.*,
+   pms.*, olivia.*, …) et le bloc SANS_POINT (284 littéraux MAJUSCULES, gabarits inclus).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
