@@ -212,6 +212,32 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     commentaire: z.string().nullable() }).strict() },                                                // append-only
   "task.sla.retard": { version: 1, schema: z.object({ dueAt: z.union([z.string(), z.date()]).nullable(),
     assignee: z.string().nullish() }).strict() },                                                    // R39 : signal, jamais coercition
+  // ── Vague 6 (C6, 2026-08-08) — personne.* (fiche centrale R30→R36, liens R152, CoC/PEP
+  //    propagés, ADR-PEP-001 : la dé-PEPisation est une DÉCISION humaine). Payloads RÉELS.
+  "personne.creee": { version: 1, schema: z.object({ nom: z.string() }).strict() },
+  "personne.creee.minimale": { version: 1, schema: z.object({ nom: z.string(), par: z.string() }).strict() },
+  "personne.homonymie.signal": { version: 1, schema: z.object({ nom: z.string(),
+    homonymeId: z.string() }).strict() },                                                            // R263 : signal, jamais fusion auto
+  "personne.liee": { version: 1, schema: z.object({ dossier: z.string(), role: z.string() }).strict() },
+  "personne.role.retire": { version: 1, schema: z.object({ dossier: z.string(), role: z.string() }).strict() },
+  "personne.archivee": { version: 1, schema: z.object({ baseLegale: z.string() }).strict() },        // conservation LBA, jamais un effacement
+  "personne.reactivee": { version: 1, schema: z.object({}).strict() },
+  "personne.flag.pose": { version: 1, schema: z.object({ flag: z.string(), dossier: z.string(),
+    cause: z.string() }).strict() },                                                                 // ex. insider par cumul de rôles
+  "personne.coc.cree": { version: 1, schema: z.object({ champ: z.string() }).strict() },
+  "personne.coc.propage": { version: 1, schema: z.object({ dossier: z.string(), champ: z.string() }).strict() },
+  "personne.rescreening.declenche": { version: 1, schema: z.object({ cause: z.string() }).strict() },
+  "personne.pep.propage": { version: 1, schema: z.object({ dossier: z.string() }).strict() },        // ADR-PEP-001
+  "personne.alerte.depep": { version: 1, schema: z.object({}).strict() },                            // décision humaine ATTENDUE, jamais prise ici
+  "personne.relation.declaree": { version: 1, schema: z.object({ b: z.string(), typeAb: z.string(),
+    typeBa: z.string() }).strict() },
+  "personne.relation.supprimee": { version: 1, schema: z.object({ b: z.string() }).strict() },
+  "personne.lien.pose": { version: 1, schema: z.object({ par: z.string(), typeCode: z.string(),
+    categorie: z.string(), cibleType: z.string(), cibleId: z.string() }).strict() },                 // R152
+  "personne.lien.retrait": { version: 1, schema: z.object({ par: z.string(), typeCode: z.string(),
+    motif: z.string() }).strict() },
+  "personne.lien.acces.refuse": { version: 1, schema: z.object({ par: z.string(), role: z.string(),
+    typeCode: z.string() }).strict() },
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -701,24 +727,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "pacs.008",
   "param.change",
   "param.effet.applique",
-  "personne.alerte.depep",
-  "personne.archivee",
-  "personne.coc.cree",
-  "personne.coc.propage",
-  "personne.creee",
-  "personne.creee.minimale",
-  "personne.flag.pose",
-  "personne.homonymie.signal",
-  "personne.liee",
-  "personne.lien.acces.refuse",
-  "personne.lien.pose",
-  "personne.lien.retrait",
-  "personne.pep.propage",
-  "personne.reactivee",
-  "personne.relation.declaree",
-  "personne.relation.supprimee",
-  "personne.rescreening.declenche",
-  "personne.role.retire",
   "pms.breach.clos",
   "pms.breach.escalade",
   "pms.drift.detecte",
