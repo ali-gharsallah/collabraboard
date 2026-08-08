@@ -91,19 +91,21 @@ describe("Bloc 64 — cross-border étendu (R453–R462, spec/BLOC-64 §3)", () 
     indigita.etat = MATRICE_V1;
     const v1 = await svc.syncMatrice(RM1);
     expect(v1.versionId).toBeTruthy();
+    // NB fixture : la dégradation porte sur ORDER (FR ADVICE reste COND — exigé par XB-03/06/07 ;
+    // la dégradation FR ADVICE COND→NON est le scénario XB-10, qui vient APRÈS).
     indigita.etat = MATRICE_V1.map((e) =>
-      e.jurisdiction === "FR" ? { ...e, activites: { ...e.activites, ADVICE: "NON" } } :
+      e.jurisdiction === "FR" ? { ...e, activites: { ...e.activites, ORDER: "NON" } } :
       e.jurisdiction === "IT" ? { ...e, activites: { ...e.activites, ORDER: "NON" } } : e);
     const v2 = await svc.syncMatrice(RM1);
     expect(v2.versionId).not.toBe(v1.versionId);
     const synced: any = (await evsType("MATRIX_SYNCED")).pop();
     const diff = synced.payload.diff;
     expect(diff).toEqual(expect.arrayContaining([
-      expect.objectContaining({ jurisdiction: "FR", activite: "ADVICE", ancien: "COND", nouveau: "NON" }),
+      expect.objectContaining({ jurisdiction: "FR", activite: "ORDER", ancien: "COND", nouveau: "NON" }),
       expect.objectContaining({ jurisdiction: "IT", activite: "ORDER", ancien: "COND", nouveau: "NON" })]));
     const avant = await svc.matriceCourante(RM1, v1.at);                   // la précédente reste consultable/rejouable
     expect(avant.versionId).toBe(v1.versionId);
-    expect(avant.entrees.find((e: any) => e.jurisdiction === "FR").activites.ADVICE).toBe("COND");
+    expect(avant.entrees.find((e: any) => e.jurisdiction === "FR").activites.ORDER).toBe("COND");
   });
 
   it("XB-02 [R453] — fournisseur indisponible : dernière version servie, ÂGE affiché, tâche Compliance, jamais un blocage", async () => {

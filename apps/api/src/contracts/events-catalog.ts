@@ -68,6 +68,28 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "trip.cloture": { version: 1, schema: z.object({ par: z.string() }).strict() },                   // R450 : le certificat clôt
   "trip.prospect.ne": { version: 1, schema: z.object({ clientId: z.string(), contactReportId: z.string(),
     nom: z.string(), verdictProsp: z.any() }).strict() },                                           // R465 : origine tracée
+  // ── Bloc 64 (repo R453–R462) — matrice versionnée, checks au moment de l'acte, registre RS,
+  //    localisation, impact. Payloads RÉELS des sites d'émission (xb.module.ts).
+  "MATRIX_SYNCED": { version: 1, schema: z.object({ versionId: z.string(), source: z.string(),
+    entrees: z.array(z.any()), diff: z.array(z.object({ jurisdiction: z.string(), activite: z.string(),
+      ancien: z.string().nullable(), nouveau: z.string() }).strict()), at: z.string() }).strict() },  // R453
+  "xb.matrice.sync.echec": { version: 1, schema: z.object({ source: z.string(), erreur: z.string(),
+    at: z.string() }).strict() },                                                                    // R453 : jamais silencieux
+  "xb.tache.creee": { version: 1, schema: z.object({ type: z.string(),
+    voyageId: z.string().optional(), assigneRole: z.string().optional(), rm: z.string().optional(),
+    contactReportId: z.string().optional(), clientId: z.string().optional(),
+    perimetre: z.string().nullish() }).strict() },                                                   // R453/R454/R456/R459
+  "xb.impact.notifie": { version: 1, schema: z.object({ versionId: z.string(),
+    clientsAffectes: z.number(), voyagesARevoir: z.number(), preuvesInsuffisantes: z.number() }).strict() },   // R459
+  "xb.preacte.verdict": { version: 1, schema: z.object({ type: z.string(), clientId: z.string(),
+    juridiction: z.string(), verdict: z.string(), passe: z.boolean(), versionMatrice: z.string(),
+    at: z.string(), perimetre: z.string().optional(), condition: z.string().optional(),
+    preuveId: z.string().optional(), mention: z.string().optional(), motif: z.string().optional() }).strict() },   // R455
+  "xb.rs.enregistree": { version: 1, schema: z.object({ clientId: z.string(), perimetre: z.string(),
+    nature: z.string(), docId: z.string(), date: z.string(), par: z.string() }).strict() },          // R456
+  "xb.rs.visee": { version: 1, schema: z.object({ par: z.string() }).strict() },
+  "xb.localisation.declaree": { version: 1, schema: z.object({ juridiction: z.string(),
+    du: z.string(), au: z.string(), par: z.string() }).strict() },                                   // R457
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
