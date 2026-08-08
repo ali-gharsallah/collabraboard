@@ -52,7 +52,8 @@ function fakeClient() {
   // ── type EN ATTENTE (migration douce) → écrit sans validation, version par défaut ──
   await it('C6 : type en attente de schéma → écrit tel quel (migration douce)', async () => {
     const c = fakeClient();
-    await emitEvent(c, 't1', 'trip.submitted', 'TR1', { nimporte: 'quoi' });
+    // « tuning.btl.campagne » : encore à l'inventaire (trip.submitted, l'ancien exemple, a reçu son schéma en vague 1)
+    await emitEvent(c, 't1', 'tuning.btl.campagne', 'TU1', { nimporte: 'quoi' });
     ok(c.rows.length === 1 && c.rows[0].eventVersion === undefined, 'écrit, version laissée au défaut DB');
   });
 
@@ -77,6 +78,33 @@ function fakeClient() {
     try { await emitEvent(c, 't1', 'kyc.access.modifie', 'K1', { question: 'Q1', role: 'ARM' }); throw new Error('aurait dû refuser'); }
     catch (e) { ok(e instanceof EvenementNonConformeError, 'refus typé'); }
     ok(c.rows.length === 1, 'un seul write');
+  });
+
+  // ── Vague 1 de schématisation : familles mros.* / trip.* / training.* (15 types) ──
+  await it('C6-V1 : mros.decision — payload réel accepté, passager clandestin refusé (art. 10a : rien de plus que le décidé)', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'mros.decision', 'M1', { decision: 'COMMUNIQUER', motif: 'soupçon fondé',
+      par: 'u1', riskCaseId: 'rc-1', dossierSha256: 'abc' });
+    try { await emitEvent(c, 't1', 'mros.decision', 'M1', { decision: 'COMMUNIQUER', motif: 'x',
+      par: 'u1', riskCaseId: 'rc-1', dossierSha256: 'abc', fuite: true }); throw new Error('aurait dû refuser'); }
+    catch (e) { ok(e instanceof EvenementNonConformeError, 'refus strict'); }
+    ok(c.rows.length === 1 && c.rows[0].eventVersion === 1, 'un write, version 1');
+  });
+  await it('C6-V1 : trip.submitted typé (destinations string[], compteurs) · trip.approved = payload VIDE strict', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'trip.submitted', 'TR1', { destinations: ['IR'], avis: 1, signaux: 0 });
+    await emitEvent(c, 't1', 'trip.approved', 'TR1', {});
+    try { await emitEvent(c, 't1', 'trip.approved', 'TR1', { par: 'u1' }); throw new Error('aurait dû refuser'); }
+    catch (e) { ok(e instanceof EvenementNonConformeError, 'payload vide strict'); }
+    ok(c.rows.length === 2, 'deux writes');
+  });
+  await it('C6-V1 : training.reminder — joursRestants NUMÉRIQUE exigé · mros.gel.echeance accepte Date (sortie Prisma)', async () => {
+    const c = fakeClient();
+    await emitEvent(c, 't1', 'training.reminder', 'F1', { userId: 'u1', code: 'LBA', joursRestants: 7 });
+    await emitEvent(c, 't1', 'mros.gel.echeance', 'M1', { echeance: new Date(0) });
+    try { await emitEvent(c, 't1', 'training.reminder', 'F1', { userId: 'u1', code: 'LBA', joursRestants: '7' }); throw new Error('aurait dû refuser'); }
+    catch (e) { ok(e instanceof EvenementNonConformeError, 'type numérique exigé'); }
+    ok(c.rows.length === 2, 'deux writes');
   });
 
   console.log(`\nCatalogue d'événements au write (C6, L5) — ${passed}/${passed + failed} tests verts`);

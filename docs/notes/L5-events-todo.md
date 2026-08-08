@@ -7,12 +7,12 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
 
 ## État (2026-08-08, tranche C6)
 
-- **27 types SCHÉMATISÉS (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
+- **42 types SCHÉMATISÉS (vague 1 mros.*/trip.*/training.* comprise, 2026-08-08)** — anciennement : 27 types SCHÉMATISÉS (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
   ES-8 (`tx.flux.importee`, `kyc.validated`, `personne.pep.declare/leve`), bloc WD
   (`wd.wir.importe/edite/ratifie`), ingestion de listes (`liste.*`), MROS (`mros.goaml.soumis`,
   `mros.chrono.alerte`), gouvernance O (`olivia.curseur.change`), et la tranche C6 :
   `kyc.created`, `prospect.retour.refuse.detecte`, `kyc.access.modifie`.
-- **562 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
+- **549 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
   littéral émis manque OU si un type est à double statut. La SUR-capture reste assumée.
@@ -22,10 +22,13 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
 
 ## Reste à faire (par priorité)
 
-1. **Schématiser par vagues** les familles les plus émises : `kyc.*` restants (created/validated/
-   dossier.*/visa.*), `mros.*` (gel/communication), `trip.*`/`training.*` (vague L2),
-   `aml.*`/`cpsi.*`. Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n
-   avec upcaster de lecture si le payload évolue).
+1. **Schématiser par vagues** — **vague 1 FAITE (2026-08-08)** : `mros.*` (decision,
+   notification, gel.pose/leve/echeance, acces, acces.refuse), `trip.*` (submitted,
+   visa.signed, approved, revised, contactreports.manquants), `training.*` (completed,
+   validated, reminder) — 15 schémas stricts tirés des payloads réels. RESTENT :
+   `kyc.*` (dossier.*/visa.*/suspendu…), `aml.*`/`cpsi.*`, puis le reste par familles.
+   Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
+   de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
    `domainEvent.create` hors `emitEvent` dans `apps/api/src` (grep vide). ~40 sites sur
    ~30 fichiers basculés : tous les wrappers locaux `emit()` délèguent désormais (pms, xb,
