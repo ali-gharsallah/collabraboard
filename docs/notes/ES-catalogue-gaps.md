@@ -1,5 +1,11 @@
 # ES-5 — Types consommés par surveillance-es ABSENTS du catalogue central
 
+> **SOLDÉ par ES-8 (2026-08-08)** : les 4 types ci-dessous sont montés au catalogue central
+> (schémas stricts = payloads réels des émetteurs), `DU_CATALOGUE` couvre les 9 types
+> consommés, les gardes locales sont supprimées. `kyc.validated` — le seul encore émis par
+> un `domainEvent.create` direct — est passé sur `emitEvent` (wrapper `emit` de kyc.service,
+> gardes de `validate()` intactes). Le tableau est conservé pour l'historique.
+
 Référence : docs/SURVEILLANCE-ES.md prompt ES-5. Le catalogue central
 (apps/api/src/contracts/events-catalog.ts, P-L5-2) couvre 3 des 7 types consommés —
 screening.escalade.proposee, pep.proposition.creee, pep.proposition.rejetee — désormais

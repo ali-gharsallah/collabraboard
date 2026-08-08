@@ -563,9 +563,9 @@ export class KycService {
       const validatedAt = new Date();
       await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version,
         { status: "VALIDATED", validatedBy: ctx.userId, validatedAt }, { enforce: true });
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
-        type: "kyc.validated", aggregateId: kyc.id,
-        payload: { code, validatedBy: ctx.userId } as any } });
+      // ES-8 (C6) : kyc.validated passe par emitEvent — le catalogue valide le payload au write
+      // (le type est consommé par surveillance-es ; l'ordre des gardes de validate() est INTACT).
+      await this.emit(tx, ctx, "kyc.validated", kyc.id, { code, validatedBy: ctx.userId });
       if (this.reviews) await this.reviews.surApprobation(ctx, tx,            // RV-01/07 : l'échéance naît ICI
         { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ENGAGEMENT_RESPONSABILITE", code);   // R14

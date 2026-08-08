@@ -35,6 +35,13 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "pep.proposition.creee": { version: 1, schema: z.object({ cle: z.string(), hitId: z.string(), personId: z.string(),
     liste: z.string(), listeVersion: z.string(), score: z.number(), decomposition: z.any() }).strict() },
   "pep.proposition.rejetee": { version: 1, schema: z.object({ cle: z.string(), motif: z.string(), par: z.string() }).strict() },
+  // ── ES-8 : les 4 types consommés par surveillance-es montent au catalogue (fin des gardes
+  // locales ES — docs/notes/ES-catalogue-gaps.md soldé). Schémas = payloads RÉELS des émetteurs.
+  "tx.flux.importee": { version: 1, schema: z.object({ refExterne: z.string(), source: z.string(),
+    compte: z.string(), clientId: z.string().nullish() }).strict() },
+  "kyc.validated": { version: 1, schema: z.object({ code: z.string(), validatedBy: z.string() }).strict() },
+  "personne.pep.declare": { version: 1, schema: z.object({ source: z.string(), sourceHitId: z.string().nullish() }).strict() },
+  "personne.pep.leve": { version: 1, schema: z.object({ decideur: z.string(), sourceHitId: z.string().nullish() }).strict() },
   // ── Ingestion de listes versionnée (R409 · L6) ──
   "liste.version.importee":  { version: 1, schema: z.object({ source: z.string(), version: z.string(), hash: z.string(),
     nEntrees: z.number(), ajoutees: z.number(), modifiees: z.number(), retirees: z.number() }).strict() },
@@ -439,7 +446,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "kyc.process.ouvert",
   "kyc.process.pause",
   "kyc.process.repris",
-  "kyc.validated",
   "kyc.visa.annule.vice",
   "kyc.visa.invalide",
   "kyc.visa.validateur.reassigne",
@@ -507,8 +513,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "personne.lien.acces.refuse",
   "personne.lien.pose",
   "personne.lien.retrait",
-  "personne.pep.declare",
-  "personne.pep.leve",
   "personne.pep.propage",
   "personne.reactivee",
   "personne.relation.declaree",
@@ -596,7 +600,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "trip.visa.signed",
   "tuning.btl.campagne",
   "tuning.calibrage.annuel",
-  "tx.flux.importee",
   "tx.revue.acces.refuse",
   "tx.revue.decision",
   "tx.revue.sla",
