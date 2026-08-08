@@ -43221,6 +43221,12 @@ if ((t.approvals || []).some(function (a) { return a.state === "alert"; })) evs.
 if (t.report) evs.push({ type: "CERT_BROUILLON", at: t.reportDate || "semis" });   // E-BT-2 : compte-rendu libre → certificat Brouillon
 return { ...t, events: evs };
 }
+function btCertifEnRetard(t) {
+if (t.status !== "APPROVED") return false;
+if ((t.events || []).some(function (e) { return e.type === "CERT_VISE" || e.type === "CERT_SOUMIS"; })) return false;
+var fin = new Date(t.to).getTime();
+return (Date.now() - fin) / 86400000 > 7;                                  // ~5 j ouvr\u00E9s (R450)
+}
 function btEtatCertificat(t) {
 var evs = t.events || [];
 if (evs.some(function (e) { return e.type === "CERT_VISE"; })) return "Visé — voyage clôturé";
@@ -43273,6 +43279,7 @@ const ini = (nm.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).t
 const docs = ["Formulaire CDB", "Contrat d'ouverture de compte", "Conditions générales", "Profil investisseur (LSFin)", "Pièce d'identité certifiée", "Justificatif de domicile", "Auto-certification CRS / FATCA"].map(l => ({ label: l, present: true, signed: false }));
 const prospect = { id: "PRO-9" + rnd, name: nm, initials: ini, type: draft.extType, typeLabel: TL[draft.extType] || "Personne physique", country: q.country, countryCode: q.code, countryFlag: q.flag, segment: "Affluent", aum: "CHF —", sector: "—", rm: draft.rm, score: 0, risk: "LOW", ddl: "SDD", cdbForm: (draft.extType === "PP" ? "A" : "K"), uboName: nm, firstKyc: { code: "KYC-2026-" + q.code + "-" + rnd + "-R1", status: "IN_PROGRESS" }, docs: docs, createdAt: new Date().toISOString().slice(0, 10), external: true, source: "Business Trip" };
 onNewProspect(prospect);
+trip.events.push({ type: "PROSPECT_NE", nom: nm, verdictProsp: (cbCountry(q.code) && cbCountry(q.code).rules.PROSP ? cbCountry(q.code).rules.PROSP[0] : "COND"), at: new Date().toISOString() });   // R465 : origine tracée, verdict d'origine porté
 }
 setTrips(ts => [trip, ...ts]);
 setSel(id);
@@ -43498,14 +43505,41 @@ React.createElement("button", { disabled: !canAct, onClick: () => reject(trip.id
 !canAct && React.createElement("div", { style: { fontSize: 11, color: T.amber, marginTop: 8 } }, "Votre r\u00F4le ne permet pas de valider cette \u00E9tape (d\u00E9mo : connectez-vous avec un Compliance Officer pour l'\u00E9tape cross-border)."))),
 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${T.lineSoft}` } },
 React.createElement("span", { style: { fontSize: 12, color: T.inkSoft } }, "Budget estim\u00E9 \u00B7 notes de frais"),
-React.createElement("span", { style: { fontSize: 16, fontWeight: 800, color: T.ink } }, trip.budget))),
+React.createElement("span", { style: { fontSize: 16, fontWeight: 800, color: T.ink } }, trip.budget)),
+(function () {
+var plafondBanque = bankAllow(trip.countryCode);
+var plafond = rmAllow(trip.rm, trip.countryCode);
+var conso = consumedRM(trip.rm, trip.countryCode);
+var demande = trip.status === "APPROVED" ? 0 : tripDays(trip);
+var total = conso + demande;
+var override = plafond !== plafondBanque;
+var depasse = total > plafond;
+return React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, fontSize: 11.5 } },
+React.createElement("span", { style: { color: T.inkSoft } }, "Quota jours bancables " + trip.countryCode + " (ann\u00E9e glissante \u2014 PROJECTION, R449)"),
+React.createElement("span", { style: { fontWeight: 800, color: depasse ? T.amber : T.green } },
+conso + (demande ? " + " + demande : "") + " = " + total + " / " + plafond + (override ? " (override RM \u2014 prime le plafond banque " + plafondBanque + ")" : ""),
+depasse ? " \u26A0 d\u00E9rogation motiv\u00E9e requise" : " \u2713"));
+})()),
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 20, border: `1px solid ${T.line}` } },
 React.createElement(SectionTitle, null, "Certificat de trip"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, margin: "4px 0 6px" } },
 React.createElement(Badge, { text: btEtatCertificat(trip), color: btEtatCertificat(trip).indexOf("Vis") === 0 ? T.green : btEtatCertificat(trip) === "Soumis" ? T.gold : T.inkSoft, bg: btEtatCertificat(trip).indexOf("Vis") === 0 ? T.greenSoft : btEtatCertificat(trip) === "Soumis" ? T.amberSoft : T.cream }),
-certValidateur && React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, "Validateur r\u00E9solu : " + certValidateur + (certSoumisEv && certSoumisEv.ecarts && certSoumisEv.ecarts.length ? " (\u00E9cart d\u00E9clar\u00E9 \u2192 qualification Compliance)" : ""))),
+certValidateur && React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, "Validateur r\u00E9solu : " + certValidateur + (certSoumisEv && certSoumisEv.ecarts && certSoumisEv.ecarts.length ? " (\u00E9cart d\u00E9clar\u00E9 \u2192 qualification Compliance)" : "")),
+btCertifEnRetard(trip) && React.createElement(Badge, { text: "\u23F0 SLA d\u00E9pass\u00E9 \u2014 relance RM + notification MGR (R450)", color: T.red, bg: T.redSoft })),
 React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, margin: "0 0 10px" } }, "Au retour, le RM CERTIFIE ce qui a r\u00E9ellement eu lieu (R450) : le texte libre reste le corps narratif, l'\u00E9cart d\u00E9clar\u00E9 route vers Compliance, le visa cl\u00F4t le voyage. Le certifiant ne vise jamais son propre certificat (R13)."),
 React.createElement("input", { value: certEcart, onChange: e => setCertEcart(e.target.value), placeholder: "\u00C9cart vs autorisation (vide = aucun) \u2014 ex. \u00AB Signature d'un mandat sur place \u00BB", style: { width: "100%", padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 12, color: T.ink, boxSizing: "border-box", outline: "none", background: T.cream, marginBottom: 8 } }),
+(function () {
+var crLies = (typeof CONTACT_REPORTS !== "undefined" ? CONTACT_REPORTS : []).filter(function (r) {
+var c = (typeof CLIENTS !== "undefined" ? CLIENTS : []).find(function (x) { return x.id === r.clientId; });
+return c && (trip.clients || []).indexOf(c.name) >= 0;
+}).slice(0, 4);
+var prospectsNes = (trip.events || []).filter(function (e) { return e.type === "PROSPECT_NE"; });
+return React.createElement("div", { style: { fontSize: 11, color: T.inkMid, marginBottom: 8, lineHeight: 1.7 } },
+React.createElement("div", { style: { fontWeight: 700, color: T.inkSoft } }, "\uD83D\uDD17 Rencontres li\u00E9es (contact reports \u2014 R188/R450) : " + (crLies.length || "aucune")),
+crLies.map(function (r, i) { return React.createElement("div", { key: i }, "\u2022 " + (r.personName || r.subject) + " \u2014 " + r.channel + " (" + r.date + ")"); }),
+prospectsNes.length ? React.createElement("div", { style: { fontWeight: 700, color: T.inkSoft, marginTop: 4 } }, "\uD83C\uDF31 Prospects n\u00E9s du voyage (R465) :") : null,
+prospectsNes.map(function (e, i) { return React.createElement("div", { key: "p" + i }, "\u2022 " + e.nom + " \u2014 verdict PROSP d'origine : " + e.verdictProsp + " (onboarding standard, z\u00E9ro raccourci)"); }));
+})(),
 React.createElement("textarea", { value: reportDraft, onChange: e => setReportDraft(e.target.value), placeholder: "D\u00E9crire le voyage et son compte-rendu\u2026", style: { width: "100%", minHeight: 96, padding: "12px 14px", borderRadius: 10, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", outline: "none", background: T.cream } }),
 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 } },
 React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, trip.reportDate ? `Dernier dépôt : ${trip.reportDate}` : "Aucun certificat déposé"),
@@ -44852,7 +44886,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.12 \u00B7 blocs 63-64 : business trip \u0026 cross-border au moteur (R446\u2013R465)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.13 \u00B7 \u00E9vol BT : quotas projet\u00E9s, certificat enrichi, prospects R465, SLA"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -45038,7 +45072,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.12 \u00B7 blocs 63-64 : business trip \u0026 cross-border au moteur (R446\u2013R465)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.13 \u00B7 \u00E9vol BT : quotas projet\u00E9s, certificat enrichi, prospects R465, SLA"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
