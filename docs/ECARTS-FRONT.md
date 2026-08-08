@@ -1364,6 +1364,21 @@ ni `test:smoke`, ni `extract_demo_data`) :**
   (verdicts d'activités + champs de synthèse) ; CB_RULES et INDIGITA_DB deviennent deux
   projections de lecture de la même version.
 
+### E-6364-A7 — Fonctionnalités démo conservées HORS périmètre R446–R465 (audit A7)
+- **Constat (audit ligne à ligne avant transcription)** : l'écran Business Trip démo porte
+  des capacités sans règle R des Blocs 63/64 : bouton « Lancer Indigita » (consultation
+  ponctuelle de synthèse), création de prospect avec pré-liste de documents CDB, KPIs
+  (pending/high/actifs), onglet « Paramétrage quotas » in-écran (doublon partiel du panneau
+  admin). L'écran Cross-Border porte un simulateur de check à la relation.
+- **Décision (A7, conforme au prompt)** : conservées TELLES QUELLES — ni supprimées, ni
+  transcrites. La création de prospect est désormais couverte par R465 (E-BT-3 résolu) ;
+  le reste attend une règle si le PO le norme. Migré au moteur : projection des événements
+  (plus d'`approvals[].state` muté), chaîne résolue risque×budget figée dans
+  WORKFLOW_STARTED, certificat de trip (cycle + validateur résolu + écart → XB, E-BT-2 :
+  les comptes rendus libres deviennent des certificats Brouillon au semis), matrice UNE
+  version datée (bandeau, E-XB-3), verdict distant consigné aux contact reports (badge),
+  pop-up R445 sur toutes les éditions du panneau admin.
+
 ### E-OFF-4 — Fonctionnalités démo conservées HORS périmètre R439–R445 (audit A5)
 - **Constat** : l'audit ligne à ligne de l'écran démo avant migration a recensé des
   fonctionnalités absentes de la spec Bloc 62 : onglet Dashboard (motifs de sortie, répartition

@@ -21675,6 +21675,15 @@ var personName = ccPersonId ? (PERSONS_DATA.find(function (p) { return p.id === 
 var rec = { id: "CR-" + String(9000 + CONTACT_REPORTS.length), clientId: ccClientId, personId: ccPersonId || null, personName: personName,
 channel: ccChannel, date: "2026-07-10", rm: (user && user.name) || (ccClient && ccClient.rm), subject: ccSubject || ccChannel,
 notes: ccNotes, draft: ccDraft || null };
+// ── Bloc 64 (R454) : canal DISTANT × juridiction étrangère → le check s'exécute et le
+// verdict est CONSIGNÉ dans l'acte (version de matrice comprise) — badge GUARD_WARNING si NON.
+if (["Visioconférence", "Appel téléphonique", "Email"].indexOf(ccChannel) >= 0 && ccClient && ccClient.countryCode && ccClient.countryCode !== "CH") {
+var actXb = /conseil|advice|proposition/i.test(ccSubject || "") ? "ADVICE" : /doc|marketing/i.test(ccSubject || "") ? "MKT" : /ordre|order/i.test(ccSubject || "") ? "ORDER" : "MEET";
+var paysXb = cbCountry(ccClient.countryCode);
+var vXb = paysXb && paysXb.rules[actXb] ? paysXb.rules[actXb][0] : "COND";
+rec.verdictXb = { activite: actXb, juridiction: ccClient.countryCode, verdict: vXb, matrice: XB_MATRICE_VERSION.id + " du " + XB_MATRICE_VERSION.enVigueurLe };
+if (vXb === "NON") { wfEmit("GUARD_WARNING", null, { subjectId: rec.id, actor: (user && user.name) || "RM", payload: { guard: "verdictNON", activite: actXb, juridiction: ccClient.countryCode } }); pushParamAudit("Système", "Acte distant en verdict NON — tâche de qualification Compliance créée (" + rec.id + ")"); }
+}
 CONTACT_REPORTS.unshift(rec);
 pushParamAudit((user && user.name) || "RM", "Contact report créé : " + ccClient.name + " (" + ccChannel + ")");
 wfEmit("PARAM_CHANGED", null, { subjectId: "CONTACT_REPORT/" + rec.id, actor: (user && user.name) || "RM", payload: { client: ccClient.name } });
@@ -21763,7 +21772,9 @@ React.createElement("td", { style: { padding: "9px 14px", fontSize: 10.5, color:
 React.createElement("td", { style: { padding: "9px 14px", fontWeight: 700, color: T.ink } }, c ? c.name : r.clientId),
 React.createElement("td", { style: { padding: "9px 14px", color: T.inkMid } }, r.personName || "—"),
 React.createElement("td", { style: { padding: "9px 14px" } },
-React.createElement(Badge, { text: r.channel, color: T.blue, bg: T.blueSoft })),
+React.createElement(Badge, { text: r.channel, color: T.blue, bg: T.blueSoft }),
+r.verdictXb && React.createElement("span", { style: { marginLeft: 5 } },
+React.createElement(Badge, { text: r.verdictXb.verdict === "NON" ? "\u26A0 XB NON" : "XB " + r.verdictXb.verdict, color: r.verdictXb.verdict === "NON" ? T.red : r.verdictXb.verdict === "COND" ? T.amber : T.green, bg: r.verdictXb.verdict === "NON" ? T.redSoft : r.verdictXb.verdict === "COND" ? T.amberSoft : T.greenSoft }))),
 React.createElement("td", { style: { padding: "9px 14px", color: T.inkMid } }, r.subject),
 React.createElement("td", { style: { padding: "9px 14px", color: T.inkSoft, fontSize: 10.5 } }, r.rm)));
 }),
@@ -29649,6 +29660,10 @@ const CB_ACTIVITIES = [
 { code: "SIGN", label: "Signature de contrat" },
 { code: "ORDER", label: "Réception d'ordres" },
 ];
+// ── Bloc 64 (R453, E-XB-3) : la matrice est UNE version datée — CB_RULES (verdicts
+// d'activités) et INDIGITA_DB (synthèse par pays) sont deux PROJECTIONS de la même
+// version, jamais deux vérités parallèles. Le port fournisseur (INTERNE ici) la produit.
+const XB_MATRICE_VERSION = { id: "v8", enVigueurLe: "2026-07-01", source: "INTERNE — positions FINMA / mémo juridique", synchroniseLe: "2026-08-08" };
 const CB_RULES = [
 { cc: "CH", country: "Suisse", flag: "🇨🇭", regime: "Marché domestique", rules: { MEET: ["OK", ""], PROSP: ["OK", ""], ADVICE: ["OK", ""], MKT: ["OK", ""], SIGN: ["OK", ""], ORDER: ["OK", ""] } },
 { cc: "FR", country: "France", flag: "🇫🇷", regime: "UE — pas de passeport MiFID (banque CH)", rules: { MEET: ["OK", "Servicing passif d'une relation existante toléré"], PROSP: ["NON", "Démarchage bancaire réservé aux établissements agréés (CMF)"], ADVICE: ["COND", "Uniquement reverse solicitation documentée"], MKT: ["COND", "Documentation sans caractère promotionnel, remise sur demande"], SIGN: ["NON", "Signature en France = fourniture de service en France"], ORDER: ["NON", "Réception d'ordres nécessite l'agrément ACPR"] } },
@@ -29676,8 +29691,8 @@ return { act: CB_ACTIVITIES.find(function (x) { return x.code === a; }).label, c
 var blocked = lines.filter(function (l) { return l.v === "NON"; }).length;
 var cond = lines.filter(function (l) { return l.v === "COND"; }).length;
 var verdict = blocked > 0 ? "REFUS PARTIEL" : cond > 0 ? "AUTORISÉ SOUS CONDITIONS" : "AUTORISÉ";
-pushParamAudit((user && user.name) || "—", "Cross-Border — check pré-voyage " + c.country + " : " + acts.length + " activité(s) → " + verdict + " (" + blocked + " interdite(s), " + cond + " sous conditions)");
-return { c: c, lines: lines, verdict: verdict, blocked: blocked, cond: cond };
+pushParamAudit((user && user.name) || "—", "Cross-Border — check pré-voyage " + c.country + " [matrice " + XB_MATRICE_VERSION.id + " du " + XB_MATRICE_VERSION.enVigueurLe + "] : " + acts.length + " activité(s) → " + verdict + " (" + blocked + " interdite(s), " + cond + " sous conditions)");
+return { c: c, lines: lines, verdict: verdict, blocked: blocked, cond: cond, matrice: XB_MATRICE_VERSION };
 }
 const CB_V_META = { OK: ["OK", T.green, "greenSoft"], COND: ["Conditions", T.amber, "amberSoft"], NON: ["Interdit", T.red, "redSoft"] };
 function CrossBorderScreen({ user }) {
@@ -29703,6 +29718,9 @@ React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16,
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "matrix" && (React.createElement("div", { style: card },
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", marginBottom: 10, borderRadius: 9, background: T.oliveSoft, border: "1px solid " + T.olive600 + "40", fontSize: 11, color: T.olive700, fontWeight: 700 } },
+"\uD83D\uDCD0 Matrice ", XB_MATRICE_VERSION.id, " \u00B7 en vigueur ", XB_MATRICE_VERSION.enVigueurLe, " \u00B7 source ", XB_MATRICE_VERSION.source, " \u00B7 derni\u00E8re sync ", XB_MATRICE_VERSION.synchroniseLe,
+React.createElement("span", { style: { fontWeight: 400, color: T.inkSoft } }, " \u2014 chaque check r\u00E9f\u00E9rence cette version (rejeu \u00E0 date R48)")),
 React.createElement("div", { style: { overflowX: "auto" } },
 React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 11 } },
 React.createElement("thead", null,
@@ -40105,15 +40123,29 @@ const re = function () { bump(function (x) { return x + 1; }); };
 const [newCountry, setNewCountry] = useState("");
 const [newCode, setNewCode] = useState("");
 const [newDays, setNewDays] = useState("15");
+// ── R445 (généralisé R452/R462) : AUCUNE écriture de paramètre sans le pop-up d'engagement.
+const [popupBT, setPopupBT] = useState(null);   // { cle, ancien, nouveau, appliquer }
+const engagementR445 = function (cle, ancien, nouveau, appliquer) { setPopupBT({ cle: cle, ancien: ancien, nouveau: nouveau, appliquer: appliquer }); };
 const card = { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 16, marginBottom: 14 };
-const setQuotaDays = function (q, val) { q.bankDays = parseInt(val) || 0; pushParamAudit("Admin", "Business Trip — quota " + q.country + " : " + q.bankDays + "j"); re(); };
-const removeQuota = function (idx) { var q = DEST_QUOTAS_SEED[idx]; DEST_QUOTAS_SEED.splice(idx, 1); pushParamAudit("Admin", "Business Trip — destination supprimée : " + q.country); re(); };
+const setQuotaDays = function (q, val) { engagementR445("businessTrip.quotas." + q.code, q.bankDays + "j", (parseInt(val) || 0) + "j", function () { q.bankDays = parseInt(val) || 0; pushParamAudit("Admin", "Business Trip — quota " + q.country + " : " + q.bankDays + "j (engagement R445)"); }); };
+const removeQuota = function (idx) { var q = DEST_QUOTAS_SEED[idx]; engagementR445("businessTrip.quotas." + q.code, q.bankDays + "j", "(supprimée)", function () { DEST_QUOTAS_SEED.splice(idx, 1); pushParamAudit("Admin", "Business Trip — destination supprimée : " + q.country + " (engagement R445)"); }); };
 const addQuota = function () { if (!newCountry.trim() || !newCode.trim())
-return; DEST_QUOTAS_SEED.push({ country: newCountry.trim(), flag: "🏳", code: newCode.trim().toUpperCase(), bankDays: parseInt(newDays) || 15 }); pushParamAudit("Admin", "Business Trip — destination ajoutée : " + newCountry); setNewCountry(""); setNewCode(""); setNewDays("15"); re(); };
-const setIndigitaField = function (code, field, val) { INDIGITA_DB[code] = INDIGITA_DB[code] || {}; INDIGITA_DB[code][field] = val; pushParamAudit("Admin", "Business Trip — Indigita " + code + "." + field + " → " + val); wfEmit("PARAM_CHANGED", null, { subjectId: "INDIGITA/" + code, actor: "Admin", payload: { field: field, val: val } }); re(); };
-const setGate = function (key, val) { ROLE_GATE[key] = val.split(",").map(function (s) { return s.trim(); }).filter(Boolean); pushParamAudit("Admin", "Business Trip — rôles habilités " + key + " → " + ROLE_GATE[key].join(", ")); re(); };
+return; var pays = newCountry.trim(), code = newCode.trim().toUpperCase(), jours = parseInt(newDays) || 15; engagementR445("businessTrip.quotas." + code, "(absente)", jours + "j", function () { DEST_QUOTAS_SEED.push({ country: pays, flag: "🏳", code: code, bankDays: jours }); pushParamAudit("Admin", "Business Trip — destination ajoutée : " + pays + " (engagement R445)"); setNewCountry(""); setNewCode(""); setNewDays("15"); }); };
+const setIndigitaField = function (code, field, val) { var ancien = (INDIGITA_DB[code] || {})[field] || "(vide)"; engagementR445("crossBorder.synthese." + code + "." + field, ancien, val, function () { INDIGITA_DB[code] = INDIGITA_DB[code] || {}; INDIGITA_DB[code][field] = val; pushParamAudit("Admin", "Cross-Border — synthèse " + code + "." + field + " → " + val + " (engagement R445)"); }); };
+const setGate = function (key, val) { var nouveaux = val.split(",").map(function (s) { return s.trim(); }).filter(Boolean); engagementR445("businessTrip.rolesParEtape." + key, ROLE_GATE[key].join(", "), nouveaux.join(", "), function () { ROLE_GATE[key] = nouveaux; pushParamAudit("Admin", "Business Trip — rôles habilités " + key + " → " + ROLE_GATE[key].join(", ") + " (engagement R445)"); }); };
 return (React.createElement("div", null,
-React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 } }, "Param\u00E9trage d\u00E9di\u00E9 Business Trip : quotas de jours bancables par destination, moteur cross-border (Indigita) par pays, et r\u00F4les habilit\u00E9s \u00E0 chaque \u00E9tape d'approbation."),
+popupBT && React.createElement("div", { style: { position: "fixed", inset: 0, background: "rgba(30,35,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 320 } },
+React.createElement("div", { style: { background: "#fff", borderRadius: 16, padding: 22, width: 520, boxShadow: "0 18px 60px rgba(0,0,0,0.25)" } },
+React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u26A0 Engagement de responsabilit\u00E9 (R445)"),
+React.createElement("div", { style: { fontSize: 12, color: T.inkMid, lineHeight: 1.7 } },
+React.createElement("div", null, React.createElement("b", null, "Param\u00E8tre : "), popupBT.cle),
+React.createElement("div", null, React.createElement("b", null, "Ancien : "), String(popupBT.ancien), " \u2192 ", React.createElement("b", null, "Nouveau : "), String(popupBT.nouveau)),
+React.createElement("div", null, React.createElement("b", null, "Port\u00E9e : "), "demandes FUTURES \u2014 les voyages en cours conservent leur param\u00E9trage d'initiation (grandfathering R29).")),
+React.createElement("div", { style: { marginTop: 10, padding: 10, borderRadius: 9, background: T.amberSoft, border: "1px solid " + T.amber + "40", fontSize: 11.5, color: T.amber, fontWeight: 700 } }, "Rappel : quotas, verdicts cross-border et habilitations engagent la banque \u2014 la modification est trac\u00E9e PARAM_CHANGED, append-only, rejouable \u00E0 date."),
+React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" } },
+React.createElement("button", { onClick: function () { setPopupBT(null); }, style: { padding: "8px 14px", borderRadius: 8, border: "1px solid " + T.line, background: "#fff", fontSize: 12, cursor: "pointer" } }, "Annuler \u2014 aucune \u00E9criture"),
+React.createElement("button", { onClick: function () { popupBT.appliquer(); wfEmit("PARAM_CHANGED", null, { subjectId: "bt-xb-params", actor: "Admin", payload: { cle: popupBT.cle, ancien: popupBT.ancien, nouveau: popupBT.nouveau, engagement: "J'engage ma responsabilit\u00E9 \u2014 " + popupBT.cle, portee: "demandes futures (R29)" } }); setPopupBT(null); re(); }, style: { padding: "8px 14px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" } }, "Je confirme \u2014 engagement trac\u00E9")))),
+React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 } }, "Param\u00E9trage d\u00E9di\u00E9 Business Trip : quotas de jours bancables par destination, matrice cross-border versionn\u00E9e (une seule v\u00E9rit\u00E9 \u2014 R453), et r\u00F4les habilit\u00E9s \u00E0 chaque \u00E9tape d'approbation. Chaque \u00E9dition passe par le pop-up d'engagement R445."),
 React.createElement("div", { style: card },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u2708 Quotas de jours bancables par destination"),
 React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, DEST_QUOTAS_SEED.map(function (q, idx) {
@@ -43123,6 +43155,7 @@ DRAFT: { l: "Brouillon", c: "inkSoft", bg: "cream" },
 PENDING: { l: "En approbation", c: "amber", bg: "amberSoft" },
 APPROVED: { l: "Approuvé", c: "green", bg: "greenSoft" },
 REJECTED: { l: "Refusé", c: "red", bg: "redSoft" },
+CLOTURE: { l: "Clôturé", c: "green", bg: "greenSoft" },
 };
 const SOLIC = {
 allowed: { l: "Sollicitation autorisée", c: "green", ic: "✓" },
@@ -43144,7 +43177,9 @@ const RM_OVERRIDES_SEED = [
 { rm: "Ralf Kessler", code: "SG", days: 15 },
 { rm: "Valentina Rossi", code: "US", days: 8 },
 ];
-// Indigita — moteur cross-border (verdicts par juridiction, démo)
+// Synthèse par pays — PROJECTION de la version de matrice XB_MATRICE_VERSION (R453,
+// E-XB-3) : mêmes juridictions que CB_RULES, jamais une seconde vérité. Paramétrable
+// via le pop-up d'engagement R445 (PARAM_CHANGED versionné).
 const INDIGITA_DB = {
 FR: { status: "AUTORISÉ", solic: "Autorisée (prof.)", lic: "Non requise", contact: "Visite & démarchage OK", prod: "Produits transfrontaliers UE (LSFin)" },
 DE: { status: "AUTORISÉ", solic: "Autorisée (prof.)", lic: "Non requise", contact: "Visite & démarchage OK", prod: "Produits transfrontaliers UE (LSFin)" },
@@ -43157,14 +43192,51 @@ US: { status: "BLOQUÉ", solic: "Interdite", lic: "Requise (SEC/FINRA)", contact
 };
 const IND_C = { "AUTORISÉ": "green", "CONDITIONNEL": "amber", "BLOQUÉ": "red" };
 const ROLE_GATE = { RM: ["ARM"], MGR: ["ARM", "BRM", "DIR"], XB: ["CO", "CO_SR", "AML"], HPB: ["HPB", "CEO"] };
+// ── Bloc 63 (R446/R447/R452) : registre TENANT — l'écran ne lit plus une constante câblée.
+const BT_TENANT_PARAMS = {
+chains: { LOW: ["RM", "MGR"], MEDIUM: ["RM", "MGR", "XB"], HIGH: ["RM", "MGR", "XB", "HPB"] },
+seuilBudgetHPB: 5000,
+quotas: DEST_QUOTAS_SEED, overridesRM: RM_OVERRIDES_SEED, rolesParEtape: ROLE_GATE,
+guards: { certifValide: "BLOQUANT", quotaDepasse: "AVERTISSEMENT", verdictNON: "BLOQUANT", paysSanctions: "BLOQUANT", certificatPrecedentManquant: "BLOQUANT" },
+certificat: { slaJoursOuvres: 5, validateurDefaut: "MGR", validateurSiEcart: "XB" },
+};
+const CHAIN_LABELS = { RM: "Demande RM", MGR: "Responsable d'équipe", XB: "Compliance Cross-Border", HPB: "Head of Private Banking" };
+// ── R446 : l'état d'un voyage est une PROJECTION de ses événements — plus aucun state muté.
+function btEtats(t) {
+var evs = t.events || [];
+var rejet = evs.some(function (e) { return e.type === "REJET"; });
+var semis = evs.filter(function (e) { return e.type === "SEMIS_VISAS"; })[0];
+var n = (semis ? semis.n : 1) + evs.filter(function (e) { return e.type === "TRANSITION_FIRED"; }).length;
+return (t.approvals || []).map(function (a, i) {
+if (i < n) return "done";
+if (i === n) return rejet ? "alert" : "current";
+return "pending";
+});
+}
+function btMigrerSemis(t) {
+if (t.events) return t;
+var n = (t.approvals || []).filter(function (a) { return a.state === "done"; }).length;
+var evs = [{ type: "SEMIS_VISAS", n: n }];
+if ((t.approvals || []).some(function (a) { return a.state === "alert"; })) evs.push({ type: "REJET", at: "semis" });
+if (t.report) evs.push({ type: "CERT_BROUILLON", at: t.reportDate || "semis" });   // E-BT-2 : compte-rendu libre → certificat Brouillon
+return { ...t, events: evs };
+}
+function btEtatCertificat(t) {
+var evs = t.events || [];
+if (evs.some(function (e) { return e.type === "CERT_VISE"; })) return "Visé — voyage clôturé";
+if (evs.some(function (e) { return e.type === "CERT_SOUMIS"; })) return "Soumis";
+if (evs.some(function (e) { return e.type === "CERT_BROUILLON"; })) return "Brouillon";
+return "À établir";
+}
 function BusinessTripScreen({ user, onNewProspect }) {
 const [tab, setTab] = useState("trips"); // trips | quotas
-const [trips, setTrips] = useState(BUSINESS_TRIPS.map(t => ({ ...t, report: t.report || "", reportDate: t.reportDate || null })));
+const [trips, setTrips] = useState(BUSINESS_TRIPS.map(t => btMigrerSemis({ ...t, report: t.report || "", reportDate: t.reportDate || null })));
 const [sel, setSel] = useState(BUSINESS_TRIPS[0].id);
 const [quotas, setQuotas] = useState(DEST_QUOTAS_SEED);
 const [overrides, setOverrides] = useState(RM_OVERRIDES_SEED);
 const [indigita, setIndigita] = useState({});
 const [reportDraft, setReportDraft] = useState("");
+const [certEcart, setCertEcart] = useState("");
 const [newOpen, setNewOpen] = useState(false);
 const RM_LIST = [...new Set([...(user ? [user.name] : []), ...trips.map(t => t.rm)])];
 const blankDraft = { rm: (user && user.name) || trips[0].rm, code: "FR", city: "", from: "", to: "", purpose: "Visite clientèle", clients: "", budget: "", newClient: false, extName: "", extType: "PP" };
@@ -43184,7 +43256,15 @@ const id = nextTripId();
 const baseClients = draft.clients ? draft.clients.split(",").map(s => s.trim()).filter(Boolean) : [];
 if (draft.newClient && (draft.extName || "").trim())
 baseClients.unshift(draft.extName.trim());
-const trip = { id, rm: draft.rm, city: draft.city || q.country, country: q.country, countryCode: q.code, flag: q.flag, from: draft.from, to: draft.to, purpose: draft.purpose, clients: baseClients, status: "PENDING", xbRisk: der.xbRisk, licenceRequired: lic, solicitation: der.solicitation, budget: draft.budget || "CHF —", approvals: [{ role: "RM", label: "Demande RM", state: "done" }, { role: "MGR", label: "Responsable d'équipe", state: "current" }, { role: "XB", label: "Compliance Cross-Border", state: "pending" }, { role: "HPB", label: "Head of Private Banking", state: "pending" }], report: "", reportDate: null };
+const budgetNum = parseFloat(String(draft.budget).replace(/[^0-9.]/g, "")) || 0;
+var chaine = (BT_TENANT_PARAMS.chains[der.xbRisk] || BT_TENANT_PARAMS.chains.LOW).slice();
+var hpbAjoute = budgetNum > BT_TENANT_PARAMS.seuilBudgetHPB && chaine.indexOf("HPB") < 0;
+if (hpbAjoute) chaine.push("HPB");
+const trip = { id, rm: draft.rm, city: draft.city || q.country, country: q.country, countryCode: q.code, flag: q.flag, from: draft.from, to: draft.to, purpose: draft.purpose, clients: baseClients, status: "PENDING", xbRisk: der.xbRisk, licenceRequired: lic, solicitation: der.solicitation, budget: draft.budget || "CHF —",
+approvals: chaine.map(function (r) { return { role: r, label: CHAIN_LABELS[r] || r }; }),
+events: [{ type: "WORKFLOW_STARTED", chaine: chaine, origineChaine: { risque: der.xbRisk, budget: budgetNum, seuilBudgetHPB: BT_TENANT_PARAMS.seuilBudgetHPB, hpbAjoute: hpbAjoute }, matrice: XB_MATRICE_VERSION.id, at: new Date().toISOString() }],
+report: "", reportDate: null };
+wfEmit && wfEmit("WORKFLOW_STARTED", null, { subjectId: id, actor: draft.rm, payload: { chaine: chaine.join("→"), risque: der.xbRisk, budget: budgetNum } });
 if (draft.newClient && (draft.extName || "").trim() && onNewProspect) {
 const nm = draft.extName.trim();
 const TL = { PP: "Personne physique", SA: "Société opérationnelle (SA)", SARL: "Société (SARL/GmbH)", HOLD: "Holding", TRUST: "Trust", FOND: "Fondation", FO: "Family Office", FUND: "Fonds de placement" };
@@ -43217,22 +43297,33 @@ const active = trips.filter(t => t.status === "APPROVED").length;
 const approve = (id) => setTrips(ts => ts.map(t => {
 if (t.id !== id)
 return t;
-const idx = t.approvals.findIndex(a => a.state === "current");
+const etats = btEtats(t);
+const idx = etats.indexOf("current");
 if (idx < 0)
 return t;
-const approvals = t.approvals.map((a, i) => i === idx ? { ...a, state: "done" } : (i === idx + 1 && a.state === "pending" ? { ...a, state: "current" } : a));
-const allDone = approvals.every(a => a.state === "done");
-return { ...t, approvals, status: allDone ? "APPROVED" : "PENDING" };
+const evs = [...(t.events || []), { type: "TRANSITION_FIRED", role: t.approvals[idx].role, visa: { validateur: (user && user.name) || "—", role: (user && user.role) || "—", at: new Date().toISOString() } }];
+const allDone = evs.filter(e => e.type === "TRANSITION_FIRED").length + ((evs.find(e => e.type === "SEMIS_VISAS") || { n: 1 }).n) >= t.approvals.length;
+wfEmit && wfEmit("TRANSITION_FIRED", null, { subjectId: t.id, actor: (user && user.name) || "—", payload: { etape: t.approvals[idx].role } });
+return { ...t, events: evs, status: allDone ? "APPROVED" : "PENDING" };
 }));
 const reject = (id) => setTrips(ts => ts.map(t => {
 if (t.id !== id)
 return t;
-const approvals = t.approvals.map(a => a.state === "current" ? { ...a, state: "alert" } : a);
-return { ...t, approvals, status: "REJECTED" };
+const evs = [...(t.events || []), { type: "REJET", par: (user && user.name) || "—", at: new Date().toISOString() }];
+wfEmit && wfEmit("GUARD_BLOCKED", null, { subjectId: t.id, actor: (user && user.name) || "—", payload: { guard: "REJET", etape: "approbation" } });
+return { ...t, events: evs, status: "REJECTED" };
 }));
-const saveReport = () => setTrips(ts => ts.map(t => t.id === sel ? { ...t, report: reportDraft, reportDate: new Date().toISOString().slice(0, 10) } : t));
+// ── R450 : certificat de trip — cycle Brouillon → Soumis → Visé → Clôturé, chaque étape un événement.
+const certEmit = (id, type, extra) => setTrips(ts => ts.map(t => t.id === id ? { ...t, events: [...(t.events || []), { type, at: new Date().toISOString(), ...(extra || {}) }] } : t));
+const saveReport = () => { setTrips(ts => ts.map(t => t.id === sel ? { ...t, report: reportDraft, reportDate: new Date().toISOString().slice(0, 10), events: [...(t.events || []).filter(e => e.type !== "CERT_BROUILLON"), { type: "CERT_BROUILLON", at: new Date().toISOString() }] } : t)); };
+const soumettreCert = () => { const ecarts = (certEcart || "").trim(); const validateur = ecarts ? BT_TENANT_PARAMS.certificat.validateurSiEcart : BT_TENANT_PARAMS.certificat.validateurDefaut; certEmit(sel, "CERT_SOUMIS", { validateur, ecarts: ecarts ? [ecarts] : [], par: (user && user.name) || trip.rm }); if (ecarts) { certEmit(sel, "CERT_QUALIFICATION_DEMANDEE", { ecart: ecarts }); wfEmit && wfEmit("GUARD_WARNING", null, { subjectId: sel, actor: (user && user.name) || "—", payload: { guard: "ecartCertificat", detail: ecarts } }); } wfEmit && wfEmit("CERT_SOUMIS", null, { subjectId: sel, actor: (user && user.name) || "—", payload: { validateur } }); };
+const viserCert = () => { certEmit(sel, "CERT_VISE", { par: (user && user.name) || "—" }); setTrips(ts => ts.map(t => t.id === sel ? { ...t, status: "CLOTURE" } : t)); wfEmit && wfEmit("WORKFLOW_COMPLETED", null, { subjectId: sel, actor: (user && user.name) || "—", payload: {} }); };
+const certSoumisEv = (trip.events || []).find(e => e.type === "CERT_SOUMIS");
+const certValidateur = certSoumisEv ? certSoumisEv.validateur : null;
+const peutViserCert = certSoumisEv && !(trip.events || []).some(e => e.type === "CERT_VISE") && user && user.name !== trip.rm && (BT_TENANT_PARAMS.rolesParEtape[certValidateur] || [certValidateur]).concat([certValidateur]).includes(user.role);
 const runIndigita = (t) => setIndigita(m => ({ ...m, [t.id]: INDIGITA_DB[t.countryCode] || { status: "CONDITIONNEL", solic: "À vérifier", lic: "À vérifier", contact: "À vérifier", prod: "À vérifier" } }));
-const curStep = trip.approvals.find(a => a.state === "current");
+const etatsTrip = btEtats(trip);
+const curStep = trip.approvals[etatsTrip.indexOf("current")];
 const canAct = curStep && (!user || (ROLE_GATE[curStep.role] || []).includes(user.role));
 const sol = SOLIC[trip.solicitation];
 const xbCol = T[XB_C[trip.xbRisk]];
@@ -43385,13 +43476,14 @@ React.createElement("div", { style: { fontSize: 12.5, color: T.ink, marginTop: 3
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 20, border: `1px solid ${T.line}` } },
 React.createElement(SectionTitle, null, "Circuit d'approbation"),
 React.createElement("div", { style: { display: "flex", alignItems: "flex-start", marginTop: 14 } }, trip.approvals.map((a, i, arr) => {
-const col = a.state === "done" ? T.green : a.state === "current" ? T.gold : a.state === "alert" ? T.red : T.inkSoft;
+const stI = etatsTrip[i];
+const col = stI === "done" ? T.green : stI === "current" ? T.gold : stI === "alert" ? T.red : T.inkSoft;
 return (React.createElement("div", { key: a.role, style: { display: "flex", alignItems: "flex-start", flex: i < arr.length - 1 ? 1 : "none" } },
 React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 104 } },
-React.createElement("div", { style: { width: 32, height: 32, borderRadius: "50%", background: a.state === "pending" ? T.surface : col, border: a.state === "pending" ? `2px solid ${T.line}` : "none", color: a.state === "pending" ? T.inkSoft : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 } }, a.state === "done" ? "✓" : a.state === "alert" ? "✕" : i + 1),
-React.createElement("span", { style: { fontSize: 10.5, fontWeight: 600, color: a.state === "pending" ? T.inkSoft : T.ink, textAlign: "center", lineHeight: 1.3 } }, a.label),
-a.state === "current" && React.createElement(Badge, { text: "EN COURS", color: T.gold, bg: T.amberSoft })),
-i < arr.length - 1 && React.createElement("div", { style: { flex: 1, height: 3, background: a.state === "done" ? T.green : T.line, margin: "16px 4px 0", borderRadius: 2 } })));
+React.createElement("div", { style: { width: 32, height: 32, borderRadius: "50%", background: stI === "pending" ? T.surface : col, border: stI === "pending" ? `2px solid ${T.line}` : "none", color: stI === "pending" ? T.inkSoft : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 } }, stI === "done" ? "✓" : stI === "alert" ? "✕" : i + 1),
+React.createElement("span", { style: { fontSize: 10.5, fontWeight: 600, color: stI === "pending" ? T.inkSoft : T.ink, textAlign: "center", lineHeight: 1.3 } }, a.label),
+stI === "current" && React.createElement(Badge, { text: "EN COURS", color: T.gold, bg: T.amberSoft })),
+i < arr.length - 1 && React.createElement("div", { style: { flex: 1, height: 3, background: stI === "done" ? T.green : T.line, margin: "16px 4px 0", borderRadius: 2 } })));
 })),
 curStep && trip.status !== "APPROVED" && trip.status !== "REJECTED" && (React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: `1px solid ${T.lineSoft}` } },
 React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, marginBottom: 10 } },
@@ -43408,12 +43500,19 @@ React.createElement("div", { style: { display: "flex", justifyContent: "space-be
 React.createElement("span", { style: { fontSize: 12, color: T.inkSoft } }, "Budget estim\u00E9 \u00B7 notes de frais"),
 React.createElement("span", { style: { fontSize: 16, fontWeight: 800, color: T.ink } }, trip.budget))),
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 20, border: `1px solid ${T.line}` } },
-React.createElement(SectionTitle, null, "Compte-rendu de voyage"),
-React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, margin: "4px 0 10px" } }, "Au retour, le RM documente le d\u00E9roulement : clients rencontr\u00E9s, sujets abord\u00E9s, opportunit\u00E9s, points de conformit\u00E9."),
+React.createElement(SectionTitle, null, "Certificat de trip"),
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, margin: "4px 0 6px" } },
+React.createElement(Badge, { text: btEtatCertificat(trip), color: btEtatCertificat(trip).indexOf("Vis") === 0 ? T.green : btEtatCertificat(trip) === "Soumis" ? T.gold : T.inkSoft, bg: btEtatCertificat(trip).indexOf("Vis") === 0 ? T.greenSoft : btEtatCertificat(trip) === "Soumis" ? T.amberSoft : T.cream }),
+certValidateur && React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, "Validateur r\u00E9solu : " + certValidateur + (certSoumisEv && certSoumisEv.ecarts && certSoumisEv.ecarts.length ? " (\u00E9cart d\u00E9clar\u00E9 \u2192 qualification Compliance)" : ""))),
+React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, margin: "0 0 10px" } }, "Au retour, le RM CERTIFIE ce qui a r\u00E9ellement eu lieu (R450) : le texte libre reste le corps narratif, l'\u00E9cart d\u00E9clar\u00E9 route vers Compliance, le visa cl\u00F4t le voyage. Le certifiant ne vise jamais son propre certificat (R13)."),
+React.createElement("input", { value: certEcart, onChange: e => setCertEcart(e.target.value), placeholder: "\u00C9cart vs autorisation (vide = aucun) \u2014 ex. \u00AB Signature d'un mandat sur place \u00BB", style: { width: "100%", padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 12, color: T.ink, boxSizing: "border-box", outline: "none", background: T.cream, marginBottom: 8 } }),
 React.createElement("textarea", { value: reportDraft, onChange: e => setReportDraft(e.target.value), placeholder: "D\u00E9crire le voyage et son compte-rendu\u2026", style: { width: "100%", minHeight: 96, padding: "12px 14px", borderRadius: 10, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", outline: "none", background: T.cream } }),
 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 } },
-React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, trip.reportDate ? `Dernier dépôt : ${trip.reportDate}` : "Aucun compte-rendu déposé"),
-React.createElement("button", { onClick: saveReport, disabled: !reportDraft.trim(), style: { padding: "8px 15px", borderRadius: 9, border: "none", background: reportDraft.trim() ? T.olive600 : T.line, color: reportDraft.trim() ? "#fff" : T.inkSoft, fontSize: 12.5, fontWeight: 700, cursor: reportDraft.trim() ? "pointer" : "not-allowed" } }, "Enregistrer le compte-rendu"))))))),
+React.createElement("span", { style: { fontSize: 11, color: T.inkSoft } }, trip.reportDate ? `Dernier dépôt : ${trip.reportDate}` : "Aucun certificat déposé"),
+React.createElement("div", { style: { display: "flex", gap: 8 } },
+React.createElement("button", { onClick: saveReport, disabled: !reportDraft.trim(), style: { padding: "8px 13px", borderRadius: 9, border: `1px solid ${T.line}`, background: T.surface, color: reportDraft.trim() ? T.inkMid : T.inkSoft, fontSize: 12, fontWeight: 700, cursor: reportDraft.trim() ? "pointer" : "not-allowed" } }, "Brouillon"),
+React.createElement("button", { onClick: soumettreCert, disabled: !reportDraft.trim() || !!certSoumisEv, style: { padding: "8px 13px", borderRadius: 9, border: "none", background: reportDraft.trim() && !certSoumisEv ? T.olive600 : T.line, color: reportDraft.trim() && !certSoumisEv ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 700, cursor: reportDraft.trim() && !certSoumisEv ? "pointer" : "not-allowed" } }, "Soumettre \u2192 " + ((certEcart || "").trim() ? BT_TENANT_PARAMS.certificat.validateurSiEcart : BT_TENANT_PARAMS.certificat.validateurDefaut)),
+peutViserCert && React.createElement("button", { onClick: viserCert, style: { padding: "8px 13px", borderRadius: 9, border: "none", background: T.green, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" } }, "Viser \u2014 cl\u00F4turer le voyage")))))))),
 tab === "quotas" && (React.createElement("div", null,
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 22, border: `1px solid ${T.line}`, marginBottom: 16 } },
 React.createElement(SectionTitle, null, "Plafonds banque \u2014 jours par destination (ann\u00E9e glissante)"),
@@ -44753,7 +44852,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.11 \u00B7 bloc 62 : offboarding au moteur (R439\u2013R445)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.12 \u00B7 blocs 63-64 : business trip \u0026 cross-border au moteur (R446\u2013R465)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44939,7 +45038,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.11 \u00B7 bloc 62 : offboarding au moteur (R439\u2013R445)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.12 \u00B7 blocs 63-64 : business trip \u0026 cross-border au moteur (R446\u2013R465)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
