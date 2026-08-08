@@ -48,7 +48,12 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    completude/expiration/integrite, avancé : ancrage/QES/hold/destruction/classification,
    vues R164, externe.indisponible R167). Payloads réels ; deposeAt/retentionUntil validés
    en instance Date (avant sérialisation JSON), même doctrine que mros.gel.echeance.
-   RESTENT : tache.* (22), personne.* (18), puis le reste par familles (ia.*, islamic.*,
+   **Vague 5 FAITE (2026-08-08)** : `tache.*` (22 signaux de travail R39/R44 — le système
+   mesure et notifie, l'humain agit : aiguillage/allègement EDD, coffre, core, corroboration,
+   ged, kyc.requalification, legal.preavis, onboarding.relance, oprisk, personne, pms, PEP,
+   regwatch, reviews préavis/escalade, riskcase.relance) + `task.*` (6, module Tâches R38 :
+   created/manual/routed/delegated/completed/sla.retard) — 28 schémas stricts.
+   RESTENT : personne.* (18), puis le reste par familles (ia.*, islamic.*,
    pms.*, olivia.*, …) et le bloc SANS_POINT (284 littéraux MAJUSCULES, gabarits inclus).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
