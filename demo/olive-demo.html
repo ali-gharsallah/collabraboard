@@ -14824,11 +14824,16 @@ return ["PEP", T.violet, T.violetSoft];
 return ["Presse négative", T.amber, T.amberSoft];
 }
 function amlSignalColor(sig) { return sig === "negative" ? T.red : sig === "positive" ? T.green : T.inkSoft; }
+// Filtres AML persistants pour LA SESSION (hors composant) : ils survivent à TOUT
+// remontage de l'écran — retour par onglet, par la nav, ou via un autre écran.
+const AML_FILTRES_SESSION = { status: "all", type: "all" };
 function AmlWorkspaceScreen() {
 const [view, setView] = useState("inbox");
 const [selId, setSelId] = useState(null);
-const [fStatus, setFStatus] = useState("all");
-const [fType, setFType] = useState("all");
+const [fStatus, setFStatusBrut] = useState(AML_FILTRES_SESSION.status);
+const [fType, setFTypeBrut] = useState(AML_FILTRES_SESSION.type);
+const setFStatus = (v) => { AML_FILTRES_SESSION.status = v; setFStatusBrut(v); };
+const setFType = (v) => { AML_FILTRES_SESSION.type = v; setFTypeBrut(v); };
 const [state, setState] = useState({});
 const getStatus = (a) => (state[a.id] && state[a.id].status) || a.status;
 const getDecisions = (a) => (state[a.id] && state[a.id].decisions) || [];
