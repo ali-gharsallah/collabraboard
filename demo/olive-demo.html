@@ -18061,7 +18061,7 @@ if (n >= 1e3)
 return (n / 1e3) + " k";
 return String(n);
 }
-// Référentiel « types de compte » — 4e info du formulaire de création KYC, entre dans l'aiguillage SDD/CDD/EDD.
+// Référentiel « types de compte » — 4e info du formulaire de création KYC, entre dans l'aiguillage de diligence SDD/CDD/EDD.
 const REF_ACCOUNT_TYPES = [
 { code: "COURANT", label: "Compte courant", score: 0 },
 { code: "EPARGNE", label: "Épargne", score: 0 },
@@ -19334,7 +19334,7 @@ React.createElement("button", { onClick: reset, style: { padding: "9px 16px", bo
 React.createElement("span", { style: { fontSize: 10.5, color: T.inkSoft } }, modifie ? "Modifications en attente — non écrites." : "Configuration identique à la production.")))));
 }
 // ════════════════════════════════════════════════════
-// BAC À SABLE ONBOARDING — aiguillage SDD / CDD / EDD (dry-run)
+// BAC À SABLE ONBOARDING — aiguillage de DILIGENCE SDD / CDD / EDD (dry-run) ; le workflow nommé (SOW..PKW) s'en dérive
 // Quatre informations décident du niveau de diligence, du workflow, du formulaire CDB et de
 // la charge documentaire. Ici on voit POURQUOI, et ce que déplacent les seuils d'aiguillage.
 // ════════════════════════════════════════════════════
@@ -19411,7 +19411,8 @@ React.createElement("span", { style: { fontSize: 10, fontWeight: 800, padding: "
 React.createElement("div", { style: { fontSize: 12, color: T.inkSoft, marginTop: 4, maxWidth: 980, lineHeight: 1.6 } },
 "Quatre informations \u00E0 la cr\u00E9ation d\u00E9cident de tout : niveau de diligence, workflow, formulaire CDB et charge documentaire. Ici, on voit ",
 React.createElement("b", null, "pourquoi"),
-" \u2014 r\u00E8gle par r\u00E8gle \u2014 et ce que d\u00E9placent les seuils d'aiguillage sur le portefeuille r\u00E9el.")),
+" \u2014 r\u00E8gle par r\u00E8gle \u2014 et ce que d\u00E9placent les seuils d'aiguillage sur le portefeuille r\u00E9el."),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginTop: 3 } }, "La diligence d\u00E9rive ensuite le workflow nomm\u00E9 : LOW \u2192 SOW\u00B7SKW \u00B7 HIGH \u2192 HOW\u00B7HKW \u00B7 PEP \u2192 POW\u00B7PKW.")),
 msg && React.createElement("div", { style: { marginBottom: 12, padding: "9px 12px", borderRadius: 8, fontSize: 11.5, lineHeight: 1.6,
 background: msg.k === "ok" ? T.greenSoft : T.redSoft, color: msg.k === "ok" ? T.green : T.red, border: "1px solid " + (msg.k === "ok" ? T.green : T.red) + "30" } }, msg.t),
 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 14 } },
@@ -20263,7 +20264,7 @@ React.createElement("button", { onClick: function () { var v = refNa.trim(); if 
 return; CPSI_SECTEUR_RISQUE[v] = 1; CPSI.pop = null; pushParamAudit("Admin", "Activité ajoutée : " + v + " (score 1)"); setRefNa(""); re(); }, style: { padding: "6px 12px", borderRadius: 7, border: "none", background: T.olive600, color: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer" } }, "Ajouter"))),
 React.createElement("div", { style: card },
 React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: T.ink, marginBottom: 3 } }, "Types de compte \u2014 score"),
-React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 8 } }, "4\u1D49 information du formulaire de cr\u00E9ation KYC \u2014 entre dans l'aiguillage SDD / CDD / EDD."),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 8 } }, "4\u1D49 information du formulaire de cr\u00E9ation KYC \u2014 entre dans l'aiguillage du niveau de diligence (SDD / CDD / EDD)."),
 React.createElement("div", { style: { maxHeight: 230, overflowY: "auto" } }, REF_ACCOUNT_TYPES.map(function (t, i) {
 return (React.createElement("div", { key: t.code, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "5px 0", borderBottom: "1px solid " + T.lineSoft } },
 React.createElement("span", { style: { fontSize: 11.5, color: T.ink } },
@@ -20514,7 +20515,7 @@ return (React.createElement("div", { style: { display: "flex", flexDirection: "c
 React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, overflow: "hidden" } },
 React.createElement("div", { style: { padding: "12px 18px", borderBottom: "1px solid " + T.line } },
 React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: T.ink } }, "\u25C9 Scoring client \u2014 r\u00E8gles param\u00E9trables (Decisioning Layer)"),
-React.createElement("div", { style: { fontSize: 11, color: T.inkSoft } }, "RiskScore = \u03A3 W\u1D62 \u00D7 f\u1D62(x\u1D62) \u2014 poids \u00E9ditables, r\u00E8gles activables. Le score aiguille ensuite le workflow via WR0 (SDD / CDD / EDD).")),
+React.createElement("div", { style: { fontSize: 11, color: T.inkSoft } }, "RiskScore = \u03A3 W\u1D62 \u00D7 f\u1D62(x\u1D62) \u2014 poids \u00E9ditables, r\u00E8gles activables. Le score aiguille le NIVEAU DE DILIGENCE via WR0 (SDD / CDD / EDD) ; le workflow nommé (SOW/HOW/POW \u00b7 SKW/HKW/PKW) s'en dérive avec le moment de vie.")),
 React.createElement("div", { style: { padding: "12px 16px", background: T.oliveSoft, borderRadius: 10, margin: "0 0 14px 0" } },
 React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: T.olive700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 } }, "\u2699 Seuils param\u00E9trables des sc\u00E9narios \u2014 appliqu\u00E9s en direct par le moteur, sans red\u00E9ploiement"),
 React.createElement("div", { style: { display: "flex", gap: 14, flexWrap: "wrap" } }, Object.keys(AML_PARAMS).map(function (pk) {
@@ -40720,7 +40721,7 @@ const USERS = [
 { id: "USR-016", name: "Thomas Berger", email: "t.berger@banque-olive.ch", password: "olive2026", role: "AUDIT", roleLabel: "Auditeur Interne", dept: "Audit", avatar: "TB", color: T.inkMid, permissions: ["audit_read", "kyc_read", "report_read", "dashboard_exec"], visibility: "read_only" },
 { id: "USR-017", name: "Camille Noir", email: "c.noir@regulateur.ch", password: "olive2026", role: "FINMA", roleLabel: "Inspecteur FINMA", dept: "Autorité de tutelle", avatar: "CN", color: T.red, permissions: ["kyc_read", "audit_read", "report_read", "sampling_read"], visibility: "supervised" },
 ];
-// ── WORKFLOW TEMPLATES (SDD / CDD / EDD) ────────────────────────────────────
+// ── GABARITS DU DESIGNER — générés depuis le catalogue gouverné (E-WD-7) ───────────
 // Each node: id, type(start/step/decision/merge/end), label, role, x, y
 // Each edge: from, to, label, condition
 // ── E-WD-7 (arbitré 2026-08-08) : les gabarits du Designer SONT le catalogue gouverné ──
@@ -44676,7 +44677,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.8 \u00B7 E-WD-7 (gabarits nomm\u00E9s SOW..PKW)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.9 \u00B7 E-WD-7 + param\u00E9trage (diligence \u2260 workflow)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44862,7 +44863,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.8 \u00B7 E-WD-7 (gabarits nomm\u00E9s SOW..PKW)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.9 \u00B7 E-WD-7 + param\u00E9trage (diligence \u2260 workflow)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),

@@ -1319,6 +1319,12 @@ re-soumis ici.
   SDD/CDD→SOW). ROLES_TENANT (+MLRO, +SYSTEM — rôles des gabarits, doctrine E-WD-5) côté
   démo ET défaut Q-WD-5 backend. Le backend reste TIER-BASED (le moteur calcule le niveau,
   jamais un nom de workflow) — conforme à l'option retenue.
+- **Complément (même jour) — côté Paramétrage** : passe terminologique — la grille de
+  risque Admin dit désormais « le score aiguille le NIVEAU DE DILIGENCE via WR0 ; le
+  workflow nommé s'en dérive » ; le bac à sable Onboarding affiche la table de dérivation
+  (LOW→SOW·SKW · HIGH→HOW·HKW · PEP→POW·PKW) ; libellés « aiguillage de diligence »
+  partout. Les usages LÉGITIMES du niveau (matrice documentaire, profils de review,
+  questionnaires AR, grille BRM, clé backend `workflows` des sections) sont INCHANGÉS.
 
 ### E-WD-5 — Référentiel « rôles tenant » de la démo : assumé = rôles des gabarits livrés
 - **Constat (bloc WD, 2026-08-08)** : R434 exige des rôles mappés sur les rôles tenant. La démo
