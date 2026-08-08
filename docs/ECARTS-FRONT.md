@@ -1239,3 +1239,61 @@ ni `test:smoke`, ni `extract_demo_data`) :**
   un chemin de l'env PO (`/home/claude/.npm-global/…`) et ciblent la structure de l'ancien oracle —
   à repointer (chemin Playwright repo + sélecteurs de la nouvelle démo) lors du re-port. Non gatés CI.
 - Suites gatées **inchangées et vertes** après le remplacement : web 99/99, build, canon-master 8/8.
+
+
+---
+
+## 6. Écarts de NAVIGATION (audit 2026-08-08 — préalable bloc WD, R432–R438)
+
+Source : `docs/AUDIT-NAV-2026-08-08.md` (matrice complète, méthode, lignes). Constat
+uniquement — **E-WD-4 (wfbuilder/RoleDashboard) est DÉJÀ ARBITRÉ : FUSION** et n'est pas
+re-soumis ici.
+
+### E-NAV-1 — Routes `accounts` et `signatories` orphelines (maquette)
+- **Constat** : cases L44828/L44829 (AccountsScreen, SignatoriesScreen — écrans du portage
+  « parité 100 % » du 02.08) sans AUCUNE entrée UI : absents du NAV, de la nav v2, et aucun
+  `go()` vivant ne les cible. Injoignables à la souris.
+- **Options** : (a) entrées NAV dédiées (g_clients) ; (b) liens depuis la fiche client
+  (`ClientFileScreen`) ; (c) supprimer les routes (perte d'accès aux écrans portés).
+
+### E-NAV-2 — Route alias `aml48` orpheline (maquette)
+- **Constat** : case L44867 rend `AmlEncyclopediaScreen`, déjà servi par `amlcat` (NAV
+  « Règles AML »). Alias historique sans entrée.
+- **Options** : (a) supprimer l'alias au bloc WD ; (b) conserver si des liens externes/démos
+  scriptées l'utilisent (aucun trouvé dans le fichier).
+
+### E-NAV-3 — Route `formbuilder` : doublon d'accès de l'onglet « quest »
+- **Constat** : case L44874 (`QuestionnaireBuilderScreen`) sans entrée UI ; le MÊME composant
+  est vivant comme onglet « quest » du Section Designer (L24757/L24866, via sdkyc/sdar/sdgar).
+- **Options** : (a) retirer la route doublon ; (b) donner une entrée NAV propre au
+  Questionnaire Builder (comme la maquette PO d'origine, item « Questionnaire Builder »).
+
+### E-NAV-4 — Composants morts maquette : LoginScreen, BuilderScreen, AmlCatalogueScreen, Compliance48Screen
+- **Constat** : définis (L41574, L41654, L27255, L26976), montés par personne. Le login réel
+  est inline dans `App` ; BuilderScreen est l'ancêtre de WorkflowBuilderScreen ;
+  AmlCatalogueScreen/Compliance48Screen sont supplantés par AmlEncyclopediaScreen/
+  ComplianceCenterScreen.
+- **Options** : (a) purge au bloc WD (avec E-WD-4) ; (b) conserver comme référence commentée.
+
+### E-NAV-5 — `dashboard`, `capacite`, `crm2` joignables par la SEULE nav v2
+- **Constat** : atteignables uniquement via `OLIVE_NAV_INDEX`/`OliveNavV2` (panneau flottant),
+  absents du menu latéral principal. Un utilisateur qui ignore la nav v2 ne les trouve pas.
+- **Options** : (a) les ajouter au NAV principal ; (b) statu quo assumé (la nav v2 est le
+  chemin voulu « Mon travail ») ; (c) fusionner capacite↔workload (React) au bloc WD.
+
+### E-NAV-6 — 43 exports morts au front React (dont un composant)
+- **Constat** : jamais référencés hors de leur fichier ni des tests — 40 résidus de portage
+  dans `parity/*-support.ts`, `WfRulesCatalogPanel` (parity/WfEngineScreen.tsx),
+  `currentAsOf`/`oliveSession` (lib/api.ts). Liste complète : AUDIT-NAV §2.
+- **Options** : (a) purge groupée (lot dédié, tree-shaking déjà neutralise le poids) ;
+  (b) statu quo (les clones parité sont des références de portage) ; (c) purge sélective
+  (le composant seulement).
+
+### E-NAV-7 — Résidus de parité maquette ↔ React
+- **Constat** : hors renommages mappés (COMPARAISON-FRONT-HTML.md), le React a 16 écrans
+  sans équivalent maquette (amlgap, bat, inference, rejeu, ports, oliviaruns, audit,…) et la
+  maquette 10 sans équivalent React tenant (execdash, invest, apidoc-nav, admin, crm2,
+  sbowner, wfaudit, sandbox-live, prospects dédiés). Détail : AUDIT-NAV §3.
+- **Options** : (a) faire suivre la maquette écran par écran (comme fait le 07-08.08) ;
+  (b) assumer l'écart documenté (la maquette = vitrine, le React = produit) ; (c) trancher
+  écran par écran au bloc WD.
