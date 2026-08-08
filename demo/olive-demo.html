@@ -18125,9 +18125,9 @@ const AML_SCENARIOS = [
     { code: "AML-PB-85", name: "Tax minimization scheme (R205)", logic: "Schéma multi-juridictions à finalité fiscale exclusive (signal Niveau 1)", threshold: 100000, unit: "CHF structuré", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
     { code: "AML-PB-86", name: "Concentration risk (R206)", logic: "≥ x% des flux du compte vers une contrepartie unique / 90j", threshold: 60, unit: "% flux / 90j", on: true, cat: "Bloc 48 — Private Banking", hits: 0 },
 { code: "AML-01", name: "Structuring / smurfing", logic: "N dépôts < seuil unitaire sur fenêtre glissante 7j dont la somme dépasse le seuil agrégé", threshold: 100000, unit: "CHF agrégé / 7j", on: true, cat: "Structuring", hits: 5 },
-{ code: "AML-10", name: "CBK — Nested relationships", logic: "Usage d'une relation de correspondance par des banques tierces non déclarées : ≥ 3 BIC ordonnateurs distincts derrière un même correspondant / 30j, MT202COV sans MT103 apparié", threshold: 3, unit: "BIC distincts / 30j", on: true, cat: "Correspondent Banking", hits: 4 },
-{ code: "AML-11", name: "CBK — Downstream juridiction à risque", logic: "Correspondant dont les flux aval touchent une juridiction de la liste pays à risque (Admin → Pays à risque)", threshold: 250000, unit: "CHF cumulé / 7j", on: true, cat: "Correspondent Banking", hits: 2 },
-{ code: "AML-12", name: "White collar — Détournement", logic: "Dirigeant/signataire transférant vers des comptes personnels des montants incohérents avec la rémunération déclarée au KYC (> 3× salaire mensuel, récurrence ≥ 2)", threshold: 3, unit: "× salaire mensuel", on: true, cat: "White collar", hits: 3 },
+{ code: "AML-CB-01", name: "CBK — Nested relationships", logic: "Usage d'une relation de correspondance par des banques tierces non déclarées : ≥ 3 BIC ordonnateurs distincts derrière un même correspondant / 30j, MT202COV sans MT103 apparié", threshold: 3, unit: "BIC distincts / 30j", on: true, cat: "Correspondent Banking", hits: 4 },
+{ code: "AML-CB-02", name: "CBK — Downstream juridiction à risque", logic: "Correspondant dont les flux aval touchent une juridiction de la liste pays à risque (Admin → Pays à risque)", threshold: 250000, unit: "CHF cumulé / 7j", on: true, cat: "Correspondent Banking", hits: 2 },
+{ code: "AML-WC-01", name: "White collar — Détournement", logic: "Dirigeant/signataire transférant vers des comptes personnels des montants incohérents avec la rémunération déclarée au KYC (> 3× salaire mensuel, récurrence ≥ 2)", threshold: 3, unit: "× salaire mensuel", on: true, cat: "White collar", hits: 3 },
 { code: "AML-13", name: "White collar — Délit d'initié", logic: "Achats concentrés d'un titre en fenêtre J-10 avant annonce (croisement Market Abuse), revente < 5j puis sortie de fonds", threshold: 20, unit: "% du mandat", on: true, cat: "White collar", hits: 1 },
 { code: "AML-14", name: "Pays à risque — corridor pondéré", logic: "Flux sortant vers liste GAFI/interne, seuil pondéré par niveau : noire CHF 0 · grise 100k · interne 250k", threshold: 0, unit: "CHF (pondéré)", on: true, cat: "Pays à risque", hits: 9 },
 { code: "AML-15", name: "Réactivation de compte dormant", logic: "Compte sans mouvement > 24 mois recevant soudainement > seuil — alerte enrichie du profil KYC", threshold: 100000, unit: "CHF", on: false, cat: "Comportement", hits: 1 },
@@ -18143,6 +18143,11 @@ const AML_SCENARIOS = [
 { code: "AML-11", name: "Crypto on/off-ramp", logic: "Flux vers/depuis exchange crypto ≥ seuil sans profil déclaré", threshold: 10000, unit: "CHF", on: false },
 { code: "AML-12", name: "Incohérence profil transactionnel", logic: "Opération > 2× l'activité attendue déclarée au KYC", threshold: 2, unit: "× profil attendu", on: true },
 ];
+// Invariant BUG-1 (2026-08-04, ré-appris 2026-08-08) : un code de scénario DUPLIQUÉ = clés React
+// dupliquées = cartes ORPHELINES qui survivent au changement d'onglet (fuite scénarios→alertes).
+(function () { var vus = {}; AML_SCENARIOS.forEach(function (x) {
+if (vus[x.code]) console.warn("[AML_SCENARIOS] code dupliqué : " + x.code + " — clés React en collision");
+vus[x.code] = true; }); })();
 const DOC_STRUCTURES = [
 { id: "PP", name: "Personne physique", roles: ["Titulaire", "Ayant droit éco.", "Fondé de pouvoir"] },
 { id: "SA", name: "Société SA/AG", roles: ["Titulaire", "UBO", "Administrateur", "Actionnaire", "Signataire"] },
@@ -44677,7 +44682,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.9 \u00B7 E-WD-7 + param\u00E9trage (diligence \u2260 workflow)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.10 \u00B7 fix fuite sc\u00E9narios\u2192alertes (AML)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44863,7 +44868,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.9 \u00B7 E-WD-7 + param\u00E9trage (diligence \u2260 workflow)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.10 \u00B7 fix fuite sc\u00E9narios\u2192alertes (AML)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
