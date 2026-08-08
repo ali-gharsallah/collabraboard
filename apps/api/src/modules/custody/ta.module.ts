@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Get, Module, NotFoundException, Param, Post, Query, Req, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -23,7 +24,7 @@ export class TaService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   private async journal(tenantId: string) {

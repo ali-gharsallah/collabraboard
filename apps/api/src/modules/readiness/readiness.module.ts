@@ -1,4 +1,5 @@
 import { Body, Controller, ForbiddenException, Get, Module, Post, Req, Res, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { KeyStore } from "../auth/key-store";
 import { storeDepuisEnv } from "../auth/login-rate";
@@ -69,10 +70,10 @@ export class ReadinessService {
   // RZ-02/04 : enregistrer l'issue d'un déploiement — événement append-only tracé.
   async enregistrerDeploiement(ctx: Ctx, dto: { version?: string; smokeOk?: boolean; readyz?: string; note?: string }) {
     if (!["DIR", "ADMIN"].includes(ctx.role)) throw new ForbiddenException("Enregistrer un déploiement est un acte DIR/ADMIN");
-    await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "deploiement.enregistre",
-      aggregateId: String(dto.version ?? "inconnue").slice(0, 190), at: new Date().toISOString(),
-      payload: { version: dto.version ?? null, smokeOk: dto.smokeOk === true, readyz: dto.readyz ?? null,
-        note: dto.note ?? null, par: ctx.userId } } });
+    await emitEvent(this.prisma, ctx.tenantId, "deploiement.enregistre",
+      String(dto.version ?? "inconnue").slice(0, 190),
+      { version: dto.version ?? null, smokeOk: dto.smokeOk === true, readyz: dto.readyz ?? null,
+        note: dto.note ?? null, par: ctx.userId });
     return { version: dto.version, enregistre: true };
   }
 

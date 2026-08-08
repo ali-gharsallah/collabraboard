@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { flagActif } from "../../common/feature-flags";
@@ -124,9 +125,8 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
               const enSouffrance = await tx.eventDeadLetter.count({
                 where: { tenantId: ev.tenant_id, consumer: c.nom, rejoueAt: null } });
               if (enSouffrance >= seuil)
-                await tx.domainEvent.create({ data: { tenantId: ev.tenant_id, type: "transport.deadletter",
-                  aggregateId: String(ev.id), payload: { consumer: c.nom, seq: Number(ev.id), enSouffrance },
-                  at: new Date().toISOString() } });
+                await emitEvent(tx, ev.tenant_id, "transport.deadletter",
+                  String(ev.id), { consumer: c.nom, seq: Number(ev.id), enSouffrance });
               await tx.eventConsumer.update({ where: cleW,
                 data: { lastSeq: ev.id, blocageSeq: null, tentatives: 0, prochaineTentativeAt: null } });
             });

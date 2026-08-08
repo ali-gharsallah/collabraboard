@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException, ServiceUnavailableException, BadGatewayException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHash, createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { GouvernanceOService } from "./gouvernance-o.service";
@@ -103,7 +104,7 @@ export class OliviaService {
     private cpsi?: { score(ctx: Ctx, clientId: string, asOf?: string): Promise<any>; regles(ctx: Ctx, asOf?: string): Promise<any>; proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }): Promise<any> }) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });

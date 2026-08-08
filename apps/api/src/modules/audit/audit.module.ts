@@ -1,4 +1,5 @@
 import { Body, Controller, ForbiddenException, Get, Module, Post, Query, Req } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -106,9 +107,9 @@ export class AuditController {
         ...(doublons.length ? { rompu: { ref: String(doublons[0].question_id), detail: `question ${doublons[0].question_id} × ${doublons[0].role} : ${doublons[0].n} versions en vigueur` } } : {}) });
     }
     // L'auditeur est audité : la vérification est ELLE-MÊME un AUDIT_ACCESS (SO-07)
-    await this.prisma.domainEvent.create({ data: { tenantId: r.ctx.tenantId, type: "AUDIT_ACCESS",
-      aggregateId: "verification-integrite", payload: { par: r.ctx.userId, role: r.ctx.role,
-        chemin: "/v1/audit/integrite", methode: "GET" }, at: new Date().toISOString() } });
+    await emitEvent(this.prisma, r.ctx.tenantId, "AUDIT_ACCESS",
+      "verification-integrite", { par: r.ctx.userId, role: r.ctx.role,
+        chemin: "/v1/audit/integrite", methode: "GET" });
     return { verifieAt: new Date().toISOString(), journaux };
   }
 
@@ -136,10 +137,10 @@ export class AuditController {
     const evs = await this.prisma.domainEvent.findMany({ where, orderBy: { id: "asc" }, take: 1000 });
     const genereAt = new Date().toISOString();
     await this.prisma.$transaction(async (tx: Tx) =>
-      tx.domainEvent.create({ data: { tenantId: r.ctx.tenantId, type: "AUDIT_EXPORT",
-        aggregateId: b?.aggregateId ?? "tenant", payload: { par: r.ctx.userId, role: r.ctx.role,
+      emitEvent(tx, r.ctx.tenantId, "AUDIT_EXPORT",
+        b?.aggregateId ?? "tenant", { par: r.ctx.userId, role: r.ctx.role,
           perimetre: { aggregateId: b?.aggregateId ?? null, type: b?.type ?? null }, n: evs.length },
-        at: genereAt } }));
+        genereAt));   // `at` = horodatage de génération de l'export (corrélé au contenu servi)
     await this.audit.log(r.ctx.tenantId, r.ctx.userId, "AUDIT_EXPORT", `${b?.aggregateId ?? "tenant"}:${evs.length}`);
     return { genereAt, n: evs.length,
       evenements: evs.map((e: any) => ({ seq: Number(e.id), type: e.type, aggregateId: e.aggregateId, at: e.at, payload: e.payload })) };

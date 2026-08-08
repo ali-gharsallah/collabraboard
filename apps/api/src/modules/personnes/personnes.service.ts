@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
@@ -26,7 +27,7 @@ export class PersonnesService {
              depepDelaiJours: s.depepDelaiJours ?? 365 };
   }
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private notify(tx: Tx, tenantId: string, aggregateId: string, destinataire: string, message: string) {
     return this.emit(tx, tenantId, "notification", aggregateId, { destinataire, message });

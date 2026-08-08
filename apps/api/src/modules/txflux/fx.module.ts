@@ -1,4 +1,5 @@
 import { Controller, Get, Module, Req, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { loadSettings } from "../../common/tenant-settings";
 import { Tx } from "../../common/tx";
@@ -38,10 +39,8 @@ export class FxService {
       const seuil = seuils[devise];
       if (typeof seuil === "number" && d.exposition > seuil) {
         d.seuilFranchi = true;                                               // notifié — JAMAIS bloqué (R39)
-        await this.prisma.$transaction((tx: Tx) => tx.domainEvent.create({ data: {
-          tenantId: ctx.tenantId, type: "fx.seuil.franchi", aggregateId: devise,
-          payload: { devise, exposition: d.exposition, seuil, par: ctx.userId },
-          at: new Date().toISOString() } }));
+        await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "fx.seuil.franchi",
+          devise, { devise, exposition: d.exposition, seuil, par: ctx.userId }));
       }
     }
     return { parDevise,

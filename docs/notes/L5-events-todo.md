@@ -26,12 +26,18 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    dossier.*/visa.*), `mros.*` (gel/communication), `trip.*`/`training.*` (vague L2),
    `aml.*`/`cpsi.*`. Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n
    avec upcaster de lecture si le payload évolue).
-2. **Creates directs restants** : `pms`, `readiness`, `coffre/storage-resolver`,
-   `transaction-gate` (événements de verdict), `auth/*`, `crossborder/xb`, `txflux/fx`.
-   **FAIT (tranche C6, 2026-08-08)** : `kyc.service` est intégralement sur `emitEvent` —
-   ses 3 derniers creates directs (`kyc.created`, `prospect.retour.refuse.detecte`,
-   `kyc.access.modifie`) sont basculés ET schématisés stricts (payloads réels des sites) ;
-   `kyc.validated` l'était depuis ES-8. Basculer les services restants au fil des lots.
+2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
+   `domainEvent.create` hors `emitEvent` dans `apps/api/src` (grep vide). ~40 sites sur
+   ~30 fichiers basculés : tous les wrappers locaux `emit()` délèguent désormais (pms, xb,
+   offboarding, olivia, legal, reviews, custody/ta, swarm, regwatch, builder, coc,
+   onboarding, ged, personnes, transaction-gate, mobile, oprisk, auth-sso, event-bus.port)
+   et les sites directs (readiness, storage-resolver, users/login auth, fx/swift,
+   custody, deadletter events/outbox, license, ged-consultation, clients.controller,
+   cpsi, audit, tenant.middleware, docmatrix). `emitEvent` accepte un `at` OPTIONNEL pour
+   les deux sites qui corrèlent délibérément leur horodatage (cpsi_events jumeau,
+   génération d'export AUDIT_EXPORT) ; le middleware fire-and-forget encapsule le refus
+   catalogue synchrone (jamais bloquant, jamais silencieux). Le catalogue gouverne
+   désormais TOUTE écriture d'événement.
 3. **Types dynamiques bornés** : `olivia` (3 littéraux `tache.*` résolus par ternaire) et
    `prerevue` (`ia.point.traite|ecarte`) sont couverts par l'inventaire. Toute NOUVELLE émission
    à type calculé doit résoudre vers des littéraux inventoriés — sinon refus au write (voulu).

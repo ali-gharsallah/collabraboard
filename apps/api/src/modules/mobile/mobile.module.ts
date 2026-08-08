@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Get, Module, NotFoundException,
   Param, Post, Query, Req, Injectable, UnauthorizedException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHash, createHmac, randomBytes, randomUUID } from "crypto";
 import { sign } from "jsonwebtoken";
 import { PrismaService } from "../../common/prisma.service";
@@ -46,8 +47,7 @@ export class MobileService {
     private limiteur: LoginRateLimiter) {}
 
   private emit(type: string, tenantId: string, aggregateId: string, payload: any) {
-    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId, payload,
-      at: new Date().toISOString() } });
+    return emitEvent(this.prisma, tenantId, type, aggregateId, payload);
   }
 
   // `mobile_actif` OFF → la surface N'EXISTE pas : 404 neutre (jamais 403 — rien n'est avoué).

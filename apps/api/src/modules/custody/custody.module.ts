@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Module, Post, Req, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { TaService, TaModule } from "./ta.module";
@@ -73,10 +74,8 @@ export class CustodyService {
           titre, custody: null, registre: quantite, voie: VOIES.REGISTRE_SANS_POSITION });
     }
     const ouverts = ecarts.filter((e) => !resolus.has(e.cle));               // le traité sort, mais reste COMPTÉ
-    await this.prisma.$transaction((tx: Tx) => tx.domainEvent.create({ data: {
-      tenantId: ctx.tenantId, type: "ta.rapprochement", aggregateId: p.depositaire,
-      payload: { ecarts: ouverts.length, resolus: ecarts.length - ouverts.length, par: ctx.userId },
-      at: new Date().toISOString() } }));
+    await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "ta.rapprochement",
+      p.depositaire, { ecarts: ouverts.length, resolus: ecarts.length - ouverts.length, par: ctx.userId }));
     return { depositaire: p.depositaire, ecarts: ouverts, resolus: ecarts.length - ouverts.length };
   }
 
@@ -84,10 +83,8 @@ export class CustodyService {
   async resoudre(ctx: Ctx, dto: { cle?: string; voie?: string; motif?: string }) {
     if (!dto?.cle || !dto?.voie?.trim() || !dto?.motif?.trim())
       throw new BadRequestException("R269/R7 : la résolution nomme l'écart (cle), sa voie et son motif");
-    await this.prisma.$transaction((tx: Tx) => tx.domainEvent.create({ data: {
-      tenantId: ctx.tenantId, type: "ta.ecart.resolu", aggregateId: dto.cle!,
-      payload: { cle: dto.cle, voie: dto.voie!.trim(), motif: dto.motif!.trim(), par: ctx.userId },
-      at: new Date().toISOString() } }));
+    await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "ta.ecart.resolu",
+      dto.cle!, { cle: dto.cle, voie: dto.voie!.trim(), motif: dto.motif!.trim(), par: ctx.userId }));
     await this.audit.log(ctx.tenantId, ctx.userId, "TA_ECART_RESOLU", dto.cle!);
     return { cle: dto.cle, resolu: true };
   }

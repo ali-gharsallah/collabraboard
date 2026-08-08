@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Post, Req, BadRequestException, ForbiddenException, NotFoundException, ConflictException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { OutboxWorker } from "./outbox.worker";
@@ -58,9 +59,8 @@ export class EventsController {
     await this.prisma.$transaction(async (tx: Tx) => {
       await tx.eventDeadLetter.update({ where: { id: dl.id },
         data: { rejouePar: r.ctx.userId, rejoueAt: new Date() } });          // QUI (jeton), QUAND
-      await tx.domainEvent.create({ data: { tenantId: r.ctx.tenantId, type: "transport.deadletter.rejouee",
-        aggregateId: String(dl.eventId), payload: { consumer: dl.consumer, par: r.ctx.userId },
-        at: new Date().toISOString() } });
+      await emitEvent(tx, r.ctx.tenantId, "transport.deadletter.rejouee",
+        String(dl.eventId), { consumer: dl.consumer, par: r.ctx.userId });
     });
     await this.audit.log(r.ctx.tenantId, r.ctx.userId, "TRANSPORT_DEADLETTER_REJOUEE", `${dl.consumer}:${dl.eventId}`);
     return { rejoue: true, consumer: dl.consumer, seq: Number(dl.eventId) };

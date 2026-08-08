@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { PortGelMros } from "../surveillance/ports";
@@ -76,7 +77,7 @@ export class TransactionGateService {
 
   private emitter(tx: PrismaTx, tenantId: string) {
     return (type: string, aggregateId: string, payload: any) =>
-      tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+      emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cfg(tx: PrismaTx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

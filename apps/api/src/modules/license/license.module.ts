@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Req, Module, Injectable, ForbiddenException, BadRequestException, CanActivate, ExecutionContext, mixin, Type } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { LicenseService, OliveLicense } from "./license.service";
@@ -50,9 +51,8 @@ export class ModulesActifsService {
     await this.prisma.$transaction(async (tx: Tx) => {
       await tx.tenant.update({ where: { id: ctx.tenantId },
         data: { settings: { ...((t?.settings as any) ?? {}), licence: raw } } });
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "module.licence.chargee",
-        aggregateId: ctx.tenantId, at: new Date().toISOString(),
-        payload: { modules: raw.modules, issuedAt: raw.issuedAt, expiresAt: raw.expiresAt, par: ctx.userId } } });
+      await emitEvent(tx, ctx.tenantId, "module.licence.chargee", ctx.tenantId,
+        { modules: raw.modules, issuedAt: raw.issuedAt, expiresAt: raw.expiresAt, par: ctx.userId });
     });
     await this.audit.log(ctx.tenantId, ctx.userId, "LICENCE_CHARGEE", raw.modules.join(","));
     return { modules: raw.modules, actifDepuis: raw.issuedAt };
@@ -94,9 +94,8 @@ export class ModulesActifsService {
       const deja = await this.prisma.domainEvent.findFirst({ where: { tenantId: ctx.tenantId,
         type: e.type, aggregateId: c.lic.expiresAt } });
       if (deja) continue;
-      await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: e.type,
-        aggregateId: c.lic.expiresAt, at: new Date().toISOString(),
-        payload: { expiresAt: c.lic.expiresAt, modules: c.lic.modules, notifie: ["ADMIN", "DIR"], par: ctx.userId } } });
+      await emitEvent(this.prisma, ctx.tenantId, e.type, c.lic.expiresAt,
+        { expiresAt: c.lic.expiresAt, modules: c.lic.modules, notifie: ["ADMIN", "DIR"], par: ctx.userId });
       notifies.push(e.type);
     }
     return { notifies, expiree: c.expiree };

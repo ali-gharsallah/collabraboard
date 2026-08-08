@@ -23,7 +23,10 @@ export class EvenementNonConformeError extends Error {
   }
 }
 
-export function emitEvent(client: DbClient, tenantId: string | null, type: string, aggregateId: string, payload: any) {
+/** `at` optionnel : la quasi-totalité des émissions datent « maintenant » (défaut) ; un site qui
+ *  CORRÈLE délibérément son horodatage avec un autre enregistrement (ex. cpsi_events jumeau,
+ *  horodatage de génération d'un export) le passe explicitement — sans sortir du catalogue. */
+export function emitEvent(client: DbClient, tenantId: string | null, type: string, aggregateId: string, payload: any, at?: string) {
   const entree = SCHEMAS_EVENEMENTS[type];
   if (entree) {
     const r = entree.schema.safeParse(payload ?? {});
@@ -31,9 +34,9 @@ export function emitEvent(client: DbClient, tenantId: string | null, type: strin
       throw new EvenementNonConformeError(type,
         r.error.issues.map((i) => `${i.path.join(".") || "payload"} : ${i.message}`).join(" ; "));
     return client.domainEvent.create({ data: {
-      tenantId, type, aggregateId, payload, eventVersion: entree.version, at: new Date().toISOString() } });
+      tenantId, type, aggregateId, payload, eventVersion: entree.version, at: at ?? new Date().toISOString() } });
   }
   if (!TYPES_EN_ATTENTE.has(type))
     throw new EvenementNonConformeError(type, "type inconnu du catalogue (ni schéma, ni liste d'attente) — déclarer le type avant de l'émettre");
-  return client.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+  return client.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: at ?? new Date().toISOString() } });
 }

@@ -46,14 +46,21 @@ const fichiers = [];
 
 const EMETTEUR = /\bemitEvent\(|\.emit\(|domainEvent\.create/;
 const LITTERAL_POINTE = /["'`]([a-z][a-z0-9_]*(?:\.[a-z0-9_]+){1,5})["'`]/g;
+// Types GABARITS (`PREFIXE_${expr}`) : invisibles du scan de littéraux — chaque variante doit
+// être ÉNUMÉRÉE À LA MAIN dans TYPES_EN_ATTENTE (leçon CC-07 : `COC_${vers}` → COC_NON_RETENU
+// refusé au write). On les LISTE ici pour qu'aucune émission dynamique ne reste invisible.
+const TYPE_GABARIT = /(?:\.emit|emitEvent)\(\s*[^,;]+,\s*[^,;]+,\s*`([^`$]*)\$\{/g;
 // Bruit évident retiré du scan large : noms de fichiers et accès membres cités en chaîne.
 // (La doctrine reste la SUR-capture — on n'exclut que l'indiscutable.)
 const BRUIT = /(?:\.(?:py|json|ts|js|mjs|cjs|txt|md|ya?ml|html|sql|env|csv|xml|xsd|pdf|png)$)|^this\./;
 const emis = new Set();
+const gabarits = [];   // { prefixe, ou } — émissions à type dynamique
 for (const f of fichiers) {
   const t = readFileSync(f, "utf8");
   if (!EMETTEUR.test(t)) continue;
   for (const m of t.matchAll(LITTERAL_POINTE)) if (!BRUIT.test(m[1])) emis.add(m[1]);
+  for (const m of t.matchAll(TYPE_GABARIT))
+    gabarits.push({ prefixe: m[1], ou: f.slice(RACINE.length + 1) });
 }
 
 // ── 3. Vérifier / régénérer ──
@@ -73,6 +80,15 @@ if (GENERER) {
 console.log(`CATALOGUE D'ÉVÉNEMENTS — ${schematises.size} schématisés · ${enAttente.size} en attente · ` +
   `${emis.size} littéraux pointés scannés (${fichiers.length} fichiers src, émetteurs seulement)`);
 let rouge = false;
+for (const g of gabarits) {
+  const variantes = [...enAttente, ...schematises].filter((t) => g.prefixe && t.startsWith(g.prefixe));
+  console.log(`ℹ type GABARIT \`${g.prefixe}\${…}\` (${g.ou}) — ${variantes.length} variante(s) énumérée(s) : ` +
+    `${variantes.join(", ") || "AUCUNE"}. Chaque nouvelle valeur DOIT être énumérée à la main (leçon CC-07).`);
+  if (!variantes.length) {
+    rouge = true;
+    console.error(`✗ type gabarit \`${g.prefixe}\${…}\` sans AUCUNE variante au catalogue — refus au write garanti.`);
+  }
+}
 if (manquants.length) {
   rouge = true;
   console.error(`\n✗ ${manquants.length} littéral(aux) émis ABSENTS du catalogue (bombe à refus au write) :`);

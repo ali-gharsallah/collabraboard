@@ -1,4 +1,5 @@
 import { Global, Module, Controller, Post, Get, Body, Param, Req, BadRequestException, UseGuards, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuthService } from "./auth.service";
 import { UsersService } from "./users.service";
@@ -75,8 +76,7 @@ class SsoController {
     return ((t?.settings as any) ?? {});
   }
   private emit(tenantId: string, type: string, payload: any) {
-    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId: "sso",
-      payload, at: new Date().toISOString() } });
+    return emitEvent(this.prisma, tenantId, type, "sso", payload);
   }
 
   @Get("etat")

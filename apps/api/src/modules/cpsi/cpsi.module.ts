@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException, UnprocessableEntityException, ServiceUnavailableException, UseGuards, OnApplicationShutdown } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { spawn, ChildProcess } from "child_process";
 import * as readline from "readline";
 import * as path from "path";
@@ -437,8 +438,8 @@ export class CpsiService implements OnApplicationShutdown {
       const cas: [string, boolean][] = [["hit_escalade", c.depassementHitEscalade], ["escalade_mros", c.depassementEscaladeMros]];
       for (const [jalon, depasse] of cas) {
         if (!depasse || deja.has(`${c.cle}|${jalon}`)) continue;
-        await this.prisma.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.sla.depassement",
-          aggregateId: c.caseId ?? c.cle, payload: { cle: c.cle, jalon, enAttenteMrosJours: c.enAttenteMrosJours ?? null, par: ctx.userId }, at: new Date().toISOString() } });
+        await emitEvent(this.prisma, ctx.tenantId, "cpsi.sla.depassement",
+          c.caseId ?? c.cle, { cle: c.cle, jalon, enAttenteMrosJours: c.enAttenteMrosJours ?? null, par: ctx.userId });
         notifies.push({ cle: c.cle, jalon });
       }
     }
@@ -464,8 +465,8 @@ export class CpsiService implements OnApplicationShutdown {
       // consommera par la porte d'entrée canonique (UC-01, idempotent par depuisProposition).
       await this.prisma.$transaction(async (tx) => {
         await tx.cpsiEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted", clientId: client, at, payload } });
-        await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "cpsi.case_proposal.emitted",
-          aggregateId: client, payload: { cle, par: ctx.userId }, at } });
+        await emitEvent(tx, ctx.tenantId, "cpsi.case_proposal.emitted",
+          client, { cle, par: ctx.userId }, at);   // `at` partagé avec le cpsiEvent jumeau (corrélation de rejeu)
       });
       await this.audit.log(ctx.tenantId, ctx.userId, "CPSI_CASE_PROPOSAL_EMITTED", cle);
       emises.push({ client, scenarios, cle, at });

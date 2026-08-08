@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { PasswordHasher } from "./password";
 
@@ -68,9 +69,8 @@ export class UsersService {
       const interdit = ((t?.settings as any) ?? {}).cumul_so_admin_interdit ?? true;
       if (interdit) throw new BadRequestException(
         "cumul_so_admin_interdit : SO surveille (journaux), ADMIN paramètre — un même utilisateur ne porte pas les deux regards (R284) ; assouplissable par le registre R-Q, tracé");
-      await this.prisma.domainEvent.create({ data: { tenantId, type: "iam.cumul_so_admin.autorise",
-        aggregateId: userId, payload: { de: u.role, vers: role, par: par ?? "system" },
-        at: new Date().toISOString() } });
+      await emitEvent(this.prisma, tenantId, "iam.cumul_so_admin.autorise",
+        userId, { de: u.role, vers: role, par: par ?? "system" });
     }
     if (u.role === ("ADMIN" as any) && role !== "ADMIN" && u.active)
       await this.garderDernierAdmin(tenantId, userId);                       // IM-02 — APRÈS la règle de paire SO-05

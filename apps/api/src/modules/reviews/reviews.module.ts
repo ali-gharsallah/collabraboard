@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
@@ -42,7 +43,7 @@ export class ReviewsService {
   brancherCoc(svc: { ouvrir(ctx: Ctx, dto: any): Promise<any> }) { this.cocSvc = svc; }
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(db: any, tenantId: string) {
     const t = await db.tenant.findFirst({ where: { id: tenantId } });

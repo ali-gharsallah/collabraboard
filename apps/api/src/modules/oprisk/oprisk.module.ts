@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Module, NotFoundException, Param, Post,
   Query, Req, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -34,8 +35,7 @@ export class OpRiskService {
     private parametres: ParametresService) {}
 
   private emit(type: string, tenantId: string, aggregateId: string, payload: any) {
-    return this.prisma.domainEvent.create({ data: { tenantId, type, aggregateId, payload,
-      at: new Date().toISOString() } });
+    return emitEvent(this.prisma, tenantId, type, aggregateId, payload);
   }
 
   private async taxonomie(ctx: Ctx): Promise<string[]> {
