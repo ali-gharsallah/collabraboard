@@ -34,6 +34,7 @@ const RapportsConformite = lazy(() => import("../features/rapports/RapportsConfo
 const GouvernanceO = lazy(() => import("../features/olivia/GouvernanceO").then((m) => ({ default: m.GouvernanceO })));
 const PreRevue = lazy(() => import("../features/ia/PreRevue").then((m) => ({ default: m.PreRevue })));
 const CapaciteEquipe = lazy(() => import("../features/workload/CapaciteEquipe").then((m) => ({ default: m.CapaciteEquipe })));
+const DesignerWd = lazy(() => import("../features/workflow/DesignerWd").then((m) => ({ default: m.DesignerWd })));
 const SurveillanceEs = lazy(() => import("../features/surveillance/SurveillanceEs").then((m) => ({ default: m.SurveillanceEs })));
 const CrmBanque = lazy(() => import("../features/crm/CrmBanque").then((m) => ({ default: m.CrmBanque })));
 const ContactReports = lazy(() => import("../features/crm/ContactReports").then((m) => ({ default: m.ContactReports })));
@@ -92,7 +93,7 @@ const MobileAdmin = lazy(() => import("../features/mobile/MobileAdmin").then((m)
 const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ default: m.OpRisk })));
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "inference" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat" | "rapportsconf" | "gouvernanceo" | "prerevue" | "workload" | "surveillancees">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "inference" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat" | "rapportsconf" | "gouvernanceo" | "prerevue" | "workload" | "surveillancees" | "wfdesigner">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
   // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
@@ -160,7 +161,7 @@ export function Router() {
       ["bi", "BI — Reporting sur mesure", "▥"], ["ged", "Pièces (GED)", "🗄"],
       ["gedcoffre", "GED / coffre", "🗄"], ["integrations", "Intégrations", "⇌"], ["ports", "Ports", "⇌"]] },
     { id: "g_wf", label: "Workflow", icon: "⎇", items: [
-      ["workflow", "Workflow", "⎇"], ["builder", "Workflow Builder", "✎"], ["wfi", "Workflow Instances", "▶"]] },
+      ["workflow", "Workflow", "⎇"], ["wfdesigner", "Workflow Designer", "✎"], ["wfi", "Workflow Instances", "▶"]] },
     { id: "g_sb", label: "Bacs à sable", icon: "🧪", items: [
       ["sandboxes", "Bacs à sable", "🧪"], ["sbaml", "Bac à sable AML", "◬"], ["sbkyc", "Bac à sable KYC", "◎"],
       ["sbbrm", "Bac à sable BRM", "▲"], ["sbonb", "Bac à sable Onboarding", "🌱"],
@@ -263,6 +264,7 @@ export function Router() {
     {screen === "prerevue" && <PreRevue/>}
     {screen === "workload" && <CapaciteEquipe/>}
     {screen === "surveillancees" && <SurveillanceEs/>}
+    {(screen === "wfdesigner" || screen === "builder") && <DesignerWd/>}
     {screen === "crm" && <CrmBanque/>}
     {screen === "contactreports" && <ContactReports/>}
     {screen === "workflow" && <WorkflowDesigner/>}
@@ -303,8 +305,7 @@ export function Router() {
     {screen === "fx" && <FxExposition/>}
     {screen === "swiftlab" && <SwiftLab/>}
     {screen === "custodyta" && <CustodyTa/>}
-    {screen === "builder" && <Builder/>}
-    {screen === "veille" && <Regwatch/>}
+        {screen === "veille" && <Regwatch/>}
     {screen === "legalreg" && <LegalRegistre/>}
     {screen === "bi" && <BiReporting/>}
     {screen === "mobileadmin" && <MobileAdmin/>}

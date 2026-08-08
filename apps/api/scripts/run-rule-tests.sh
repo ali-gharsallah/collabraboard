@@ -64,6 +64,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/mros/goaml.service.ts src/modules/mros/goaml.wiring.spec.ts \
   src/modules/rapports/kpi.service.ts src/modules/rapports/kpi.wiring.spec.ts \
   src/modules/olivia/gouvernance-o.service.ts src/modules/olivia/gouvernance-o.wiring.spec.ts \
+  src/modules/workflow-designer/wir.schema.ts src/modules/workflow-designer/wir.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -138,4 +139,5 @@ echo "── Inférence module A (CO-01..05, P-L7-4 cohérence gardes ↔ ledger
 echo "── MROS goAML + chronomètre (GO-01..07, P-L8-1) ──"; run goaml.wiring.spec.js
 echo "── KPI conformité (KP-01..05, P-L8-2) ──"; run kpi.wiring.spec.js
 echo "── Gouvernance module O (OO-01..05, P-L8-3) ──"; run gouvernance-o.wiring.spec.js
+echo "── Bloc WD — WIR v1 + validateur R434 (WD-01..06/12) ──"; run wir.wiring.spec.js
 node scripts/generer-miroir-regles.mjs --verifier

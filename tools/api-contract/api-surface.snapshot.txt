@@ -151,6 +151,7 @@ GET    /v1/trips/:id
 GET    /v1/txflux
 GET    /v1/txflux/etat
 GET    /v1/txrisk/tendances
+GET    /v1/workflow-designer/:id
 GET    /v1/workflow-instances
 GET    /v1/workflow-instances/:id
 GET    /v1/workflow-instances/:id/events
@@ -161,6 +162,7 @@ GET    /v1/workload/mesures/:userId
 GET    /v1/workload/points/:userId
 PATCH  /v1/kyc/:code/questions/:qcode
 PATCH  /v1/kyc/:code/questions/:qcode/access
+PATCH  /v1/workflow-designer/:id/ir
 PATCH  /v1/workflow/definitions/:id
 POST   /v1/admin/sso/jwks/rotation
 POST   /v1/admin/sso/mode
@@ -383,6 +385,8 @@ POST   /v1/trips/:id/submit
 POST   /v1/trips/:id/visa
 POST   /v1/txflux/importer
 POST   /v1/txrisk/alimenter
+POST   /v1/workflow-designer/:id/ratify
+POST   /v1/workflow-designer/import
 POST   /v1/workflow/definitions
 POST   /v1/workflow/definitions/:id/publier
 POST   /v1/workload/equipes/:role/snapshot-rh

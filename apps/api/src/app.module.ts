@@ -43,6 +43,7 @@ import { BusinessTripModule } from "./modules/businesstrip/businesstrip.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
 import { NbaModule } from "./modules/nba/nba.module";
 import { WorkflowModule } from "./modules/workflow/workflow.module";
+import { WorkflowDesignerModule } from "./modules/workflow-designer/workflow-designer.module";
 import { PmsModule } from "./modules/pms/pms.module";
 import { CpsiModule } from "./modules/cpsi/cpsi.module";
 import { OliviaModule } from "./modules/olivia/olivia.module";
@@ -56,7 +57,7 @@ import { SwarmModule } from "./modules/swarm/swarm.module";
 import { SurveillanceEsModule } from "./modules/surveillance-es/surveillance-es.module";   // sidecar ES (docs/SURVEILLANCE-ES.md)
 import { InferenceModule } from "./modules/inference/inference.module";   // module A (L7 — le ledger est une VUE)
 
-@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule, RapportsModule, SurveillanceEsModule, InferenceModule] })
+@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, WorkflowDesignerModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule, RapportsModule, SurveillanceEsModule, InferenceModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(SecurityHeadersMiddleware, TenantMiddleware).forRoutes("*"); }
 }

@@ -42,6 +42,13 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "kyc.validated": { version: 1, schema: z.object({ code: z.string(), validatedBy: z.string() }).strict() },
   "personne.pep.declare": { version: 1, schema: z.object({ source: z.string(), sourceHitId: z.string().nullish() }).strict() },
   "personne.pep.leve": { version: 1, schema: z.object({ decideur: z.string(), sourceHitId: z.string().nullish() }).strict() },
+  // ── Bloc WD (R432/R436) : WorkflowIR — source → brut → éditions → visa, rejouable ──
+  "wd.wir.importe": { version: 1, schema: z.object({ documentId: z.string(), hash: z.string(),
+    modele: z.string(), wir: z.any(), zonesIllisibles: z.any() }).strict() },
+  "wd.wir.edite": { version: 1, schema: z.object({ patch: z.object({ noeud: z.string(),
+    label: z.string().optional(), ownerRole: z.string().optional(), slaHours: z.number().optional() }).strict(),
+    par: z.string() }).strict() },
+  "wd.wir.ratifie": { version: 1, schema: z.object({ par: z.string(), defId: z.string() }).strict() },
   // ── Ingestion de listes versionnée (R409 · L6) ──
   "liste.version.importee":  { version: 1, schema: z.object({ source: z.string(), version: z.string(), hash: z.string(),
     nEntrees: z.number(), ajoutees: z.number(), modifiees: z.number(), retirees: z.number() }).strict() },
