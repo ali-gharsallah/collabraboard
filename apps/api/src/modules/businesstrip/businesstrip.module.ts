@@ -43,7 +43,8 @@ export class BusinessTripService {
     return out;
   }
 
-  async creer(ctx: Ctx, dto: { destinations?: string[]; clients?: string[]; dateStart: string; dateEnd: string; purpose?: string }) {
+  async creer(ctx: Ctx, dto: { destinations?: string[]; clients?: string[]; dateStart: string; dateEnd: string; purpose?: string;
+    activites?: string[]; budget?: number }) {                                     // Bloc 63 (R446) : activités prévues + budget
     if (!dto?.dateStart || !dto?.dateEnd) throw new BadRequestException("dateStart et dateEnd requis");
     return this.prisma.trip.create({ data: {
       tenantId: ctx.tenantId, travelerId: ctx.userId, status: "DRAFT", purpose: dto.purpose ?? null,
@@ -105,8 +106,9 @@ export class BusinessTripService {
   }
 
   // ── R225/R13/R224 : viser (approbation) ──
-  async viser(ctx: Ctx, tripId: string, role: string) {
+  async viser(ctx: Ctx, tripId: string, role: string, motivation?: string) {       // Bloc 63 (R447) : dérogation motivée sur GUARD_WARNING
     if (!role) throw new BadRequestException("role requis");
+    void motivation;                                                               // consommée par le delta A4
     return this.prisma.$transaction(async (tx: Tx) => {
       const trip = await tx.trip.findFirst({ where: { id: tripId, tenantId: ctx.tenantId } });
       if (!trip) throw new NotFoundException("Voyage introuvable");
@@ -178,6 +180,42 @@ export class BusinessTripService {
     if (filtre.status) where.status = filtre.status;
     const take = applyKeyset(where, filtre);                                       // A4 : défaut borné + curseur keyset
     return this.prisma.trip.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take });
+  }
+
+  // ══ Bloc 63 (repo R446–R452 + R465) — SQUELETTE A2 : les 16 scénarios BT sont rouges
+  //    contre ces surfaces AVANT tout code moteur (même discipline que le Bloc 62).
+  //    Delta sur MOD-75 (E-6364-0) : extension, jamais un moteur parallèle. ══
+  /** R448 : modification pré-approbation → check invalidé, visas Compliance tombés. */
+  async modifier(_ctx: Ctx, _tripId: string, _dto: { destinations?: string[]; activites?: string[]; dateStart?: string; dateEnd?: string }): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R450 : certificat de trip — soumission (cycle Brouillon→Soumis, validateur résolu). */
+  async soumettreCertificat(_ctx: Ctx, _tripId: string, _dto: any): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R450 : visa du certificat (R15/R13) → voyage clôturé. */
+  async viserCertificat(_ctx: Ctx, _tripId: string): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R450 : relances SLA certificat (tâches tracées, notification MGR). */
+  async tickSlaCertificats(_ctx: Ctx, _atIso?: string): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R465 : prospect né en voyage — origine tracée, circuit onboarding standard. */
+  async declarerProspect(_ctx: Ctx, _tripId: string, _dto: any): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R448/R48 : rejeu à date du check consigné (verdict d'époque, jamais recalculé). */
+  async rejouerCheck(_ctx: Ctx, _tripId: string, _asOf: string): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R452 : paramètres §BusinessTrip résolus à date (défauts + rejeu PARAM_CHANGED). */
+  async parametresBT(_ctx: Ctx, _at?: Date): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
+  }
+  /** R452/R445 : modification de paramètre — pop-up d'engagement exigé côté API. */
+  async modifierParametreBT(_ctx: Ctx, _dto: any): Promise<any> {
+    throw new Error("BLOC63_NON_IMPLEMENTE");
   }
 }
 
