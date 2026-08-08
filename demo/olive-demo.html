@@ -24342,7 +24342,7 @@ ev.regleType ? " (" + ev.regleType + ")" : "",
 ev.source ? " · " + ev.source : ""))));
 }
 // ── Audit FINMA ──
-function WfAuditScreen() {
+function WfAuditScreen({ go }) {
 const [sel, setSel] = useState("D-2026-001");
 const [rjN, setRjN] = useState(6);
 const [scelle, setScelle] = useState(null); // dernier export R62 {scelle, nb, verif}
@@ -24362,6 +24362,11 @@ setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 catch (_) { }
 };
 return React.createElement("div", { style: { maxWidth: 1020 } },
+React.createElement("div", { style: { ...wfCarte, display: "flex", gap: 10, alignItems: "center", padding: "11px 18px" } },
+React.createElement("div", { style: { flex: 1, fontSize: 12.5, color: T.inkMid } }, "Module Workflow \u2014 rejeu & preuves. Le surf reste dans le module :"),
+React.createElement("button", { style: wfBouton(T.olive600), onClick: () => go && go("wfdesigner") }, "\u270E Designer"),
+React.createElement("button", { style: { ...wfBouton(T.surface), color: T.olive700, border: `1px solid ${T.olive600}` }, onClick: () => go && go("wfmanagement") }, "\u25B6 Instances"),
+React.createElement("button", { style: { ...wfBouton(T.surface), color: T.olive700, border: `1px solid ${T.olive600}` }, onClick: () => go && go("wfengine") }, "\u2696 Rules")),
 React.createElement("div", { style: wfCarte },
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" } },
 React.createElement("div", { style: { flex: 1, minWidth: 260 } },
@@ -44843,7 +44848,7 @@ case "cpsiguide": return React.createElement(CpsiGuideScreen, null);
 case "cpsiparam": return React.createElement(CpsiParamScreen, { user: currentUser });
 case "wfengine": return React.createElement(WfEngineScreen, { go: (id) => setScreen(id) });
 case "wfdesigner": return React.createElement(WorkflowManagementScreen, { user: currentUser, fixedTab: "designer", go: (id) => setScreen(id) });
-case "command": return React.createElement(CommandCenterScreen, null); case "wfaudit": return React.createElement(WfAuditScreen, null);
+case "command": return React.createElement(CommandCenterScreen, null); case "wfaudit": return React.createElement(WfAuditScreen, { go: (id) => setScreen(id) });
 case "sandbox": return React.createElement(GlobalSandboxScreen, { go: (id) => setScreen(id) });
 case "sbaml": return React.createElement(AmlSandboxScreen, null);
 case "sbkyc": return React.createElement(KycSandboxScreen, null);
