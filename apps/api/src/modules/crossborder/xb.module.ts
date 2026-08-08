@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Module, NotFoundException, Param, Post, Req, Injectable, BadRequestException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, ForbiddenException, Get, Module, NotFoundException, Param, Post, Query, Req, Injectable, BadRequestException, UnprocessableEntityException } from "@nestjs/common";
 import { emitEvent } from "../../common/domain-event";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
@@ -500,6 +500,9 @@ export class XbService {
     return { ...(acte.payload as any), rejoueA: asOf };
   }
 
+  /** R462 : le registre §CrossBorder résolu à date — lecture publique (écran Paramétrage). */
+  async parametresXB(ctx: Ctx, at?: Date) { return this.paramsXB(ctx, at); }
+
   /** R462/R445 : pop-up d'engagement — mécanisme COMMUN du Bloc 62, étendu, jamais dupliqué. */
   async modifierParametreXB(ctx: Ctx, dto: { cle: string; valeur: any; enVigueurLe: string;
     confirmation?: { engagementTexte: string; auteur: string } }) {
@@ -537,6 +540,18 @@ export class XbController {
   @Get("voyages/:id/conformite")     conf(@Req() r: any, @Param("id") id: string) { return this.svc.conformiteVoyage(r.ctx, id); }      // XB-03
   @Post("ordres")                    ordre(@Req() r: any, @Body() b: any) { return this.svc.enregistrerOrdre(r.ctx, b ?? {}); }         // XB-04
   @Get("reporting")                  reporting(@Req() r: any) { return this.svc.reporting(r.ctx); }                                      // XB-04/R39
+  // ── Bloc 64 (repo R453–R462) — porte HTTP du delta ──
+  @Post("matrice/sync")              sync(@Req() r: any) { return this.svc.syncMatrice(r.ctx); }                                         // R453
+  @Get("matrice")                    matrice(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.matriceCourante(r.ctx, asOf); }   // R453
+  @Post("actes-distants")            distant(@Req() r: any, @Body() b: any) { return this.svc.contactReportDistant(r.ctx, b ?? {}); }    // R454
+  @Post("pre-acte")                  preActe(@Req() r: any, @Body() b: any) { return this.svc.checkPreActe(r.ctx, b ?? {}); }            // R455
+  @Post("reverse-solicitation")      rs(@Req() r: any, @Body() b: any) { return this.svc.enregistrerPreuveRS(r.ctx, b ?? {}); }          // R456
+  @Post("reverse-solicitation/:id/visa") rsVisa(@Req() r: any, @Param("id") id: string) { return this.svc.viserPreuveRS(r.ctx, id); }    // R456/R13
+  @Post("localisations")             loc(@Req() r: any, @Body() b: any) { return this.svc.declarerLocalisation(r.ctx, b ?? {}); }        // R457
+  @Get("exposition")                 exposition(@Req() r: any) { return this.svc.expositionCrossBorder(r.ctx); }                         // R460
+  @Get("actes/:id/rejeu")            rejeu(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf: string) { return this.svc.rejouerActe(r.ctx, id, asOf); }   // R48
+  @Get("params/registre")            params(@Req() r: any, @Query("date") d?: string) { return this.svc.parametresXB(r.ctx, d ? new Date(d) : undefined); }   // R462
+  @Post("params/modifier")           modifierParam(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreXB(r.ctx, b ?? {}); }   // R462/R445
 }
 
 @Module({ controllers: [XbController],

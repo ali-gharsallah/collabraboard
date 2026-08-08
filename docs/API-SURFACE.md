@@ -5,7 +5,7 @@
 > La documentation VIVANTE (extraite du routeur au runtime) est servie par `GET /v1/apidoc` ;
 > ce document en est la projection committée, au même niveau que le snapshot.
 
-**402 routes** · **59 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
+**421 routes** · **59 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
 
 | Module | Routes |
 |---|---|
@@ -22,7 +22,7 @@
 | [`corebanking`](#corebanking) | 2 |
 | [`cpsi`](#cpsi) | 29 |
 | [`crm`](#crm) | 4 |
-| [`crossborder`](#crossborder) | 6 |
+| [`crossborder`](#crossborder) | 17 |
 | [`custody`](#custody) | 3 |
 | [`deploiements`](#deploiements) | 2 |
 | [`doc-matrix`](#doc-matrix) | 3 |
@@ -61,7 +61,7 @@
 | [`ta`](#ta) | 4 |
 | [`tasks`](#tasks) | 8 |
 | [`transactions`](#transactions) | 4 |
-| [`trips`](#trips) | 7 |
+| [`trips`](#trips) | 15 |
 | [`txflux`](#txflux) | 3 |
 | [`txrisk`](#txrisk) | 2 |
 | [`workflow`](#workflow) | 5 |
@@ -234,11 +234,22 @@
 
 | Méthode | Chemin |
 |---|---|
+| POST | `/v1/crossborder/actes-distants` |
+| GET | `/v1/crossborder/actes/:id/rejeu` |
 | POST | `/v1/crossborder/check` |
 | POST | `/v1/crossborder/derogations` |
 | POST | `/v1/crossborder/derogations/:id/visa` |
+| GET | `/v1/crossborder/exposition` |
+| POST | `/v1/crossborder/localisations` |
+| GET | `/v1/crossborder/matrice` |
+| POST | `/v1/crossborder/matrice/sync` |
 | POST | `/v1/crossborder/ordres` |
+| POST | `/v1/crossborder/params/modifier` |
+| GET | `/v1/crossborder/params/registre` |
+| POST | `/v1/crossborder/pre-acte` |
 | GET | `/v1/crossborder/reporting` |
+| POST | `/v1/crossborder/reverse-solicitation` |
+| POST | `/v1/crossborder/reverse-solicitation/:id/visa` |
 | GET | `/v1/crossborder/voyages/:id/conformite` |
 
 ## custody
@@ -708,10 +719,18 @@
 | GET | `/v1/trips` |
 | POST | `/v1/trips` |
 | GET | `/v1/trips/:id` |
+| POST | `/v1/trips/:id/certificat` |
+| POST | `/v1/trips/:id/certificat/visa` |
 | POST | `/v1/trips/:id/contact-reports/mesurer` |
+| POST | `/v1/trips/:id/modifier` |
+| POST | `/v1/trips/:id/prospects` |
+| GET | `/v1/trips/:id/rejouer-check` |
 | POST | `/v1/trips/:id/revise` |
 | POST | `/v1/trips/:id/submit` |
 | POST | `/v1/trips/:id/visa` |
+| POST | `/v1/trips/certificats/tick-sla` |
+| POST | `/v1/trips/params/modifier` |
+| GET | `/v1/trips/params/registre` |
 
 ## txflux
 

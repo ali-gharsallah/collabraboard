@@ -586,6 +586,15 @@ export class BusinessTripController {
   @Post(":id/visa")          viser(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.viser(r.ctx, id, b?.role); } // R225/R13
   @Post(":id/revise")        reviser(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.reviser(r.ctx, id, b); }  // R230
   @Post(":id/contact-reports/mesurer") mesurer(@Req() r: any, @Param("id") id: string) { return this.svc.mesurerContactReports(r.ctx, id); } // R226
+  // ── Bloc 63 (repo R446–R452 + R465) — porte HTTP du delta ──
+  @Get("params/registre")    params(@Req() r: any, @Query("date") d?: string) { return this.svc.parametresBT(r.ctx, d ? new Date(d) : undefined); }   // R452
+  @Post("params/modifier")   modifierParam(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreBT(r.ctx, b ?? {}); }                     // R452/R445
+  @Post("certificats/tick-sla") tickSla(@Req() r: any) { return this.svc.tickSlaCertificats(r.ctx); }                                                  // R450
+  @Post(":id/modifier")      modifier(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.modifier(r.ctx, id, b ?? {}); }        // R448
+  @Post(":id/certificat")    certificat(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.soumettreCertificat(r.ctx, id, b ?? {}); }   // R450
+  @Post(":id/certificat/visa") viserCert(@Req() r: any, @Param("id") id: string) { return this.svc.viserCertificat(r.ctx, id); }                       // R450/R13
+  @Post(":id/prospects")     prospect(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.declarerProspect(r.ctx, id, b ?? {}); } // R465
+  @Get(":id/rejouer-check")  rejouer(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf: string) { return this.svc.rejouerCheck(r.ctx, id, asOf); }   // R448/R48
 }
 
 @Module({

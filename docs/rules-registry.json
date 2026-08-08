@@ -134,14 +134,14 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "businesstrip",
         "aml",
         "offboarding",
         "auth",
-        "businesstrip",
+        "crossborder",
         "custody",
         "formations",
         "reviews",
-        "crossborder",
         "workflow-engine",
         "builder",
         "onboarding",
@@ -168,10 +168,11 @@
       "citePar": [
         "parametres",
         "workflow-instances",
+        "businesstrip",
         "kyc",
         "offboarding",
         "aml",
-        "businesstrip",
+        "crossborder",
         "formations",
         "reviews",
         "workflow-designer",
@@ -227,10 +228,11 @@
     },
     {
       "numero": "R21",
-      "module": "workflow-engine",
-      "ancre": "packages/workflow-engine/src/engine.mjs",
+      "module": "api",
+      "ancre": "apps/api/src/contracts/events-catalog.ts",
       "statut": "actif",
       "citePar": [
+        "workflow-engine",
         "kyc"
       ]
     },
@@ -240,6 +242,7 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "workflow-engine"
       ]
     },
@@ -274,13 +277,16 @@
       "statut": "actif",
       "citePar": [
         "aml",
+        "businesstrip",
         "parametres",
         "screening",
         "builder",
-        "corebanking",
-        "offboarding",
-        "reviews",
         "common",
+        "corebanking",
+        "reviews",
+        "crossborder",
+        "offboarding",
+        "api",
         "coc",
         "inference",
         "txflux",
@@ -407,17 +413,19 @@
         "cpsi-server-py",
         "screening",
         "surveillance-es",
+        "api",
         "ged",
         "olivia",
-        "api",
         "ia",
         "inference",
         "mros",
         "nba",
         "onboarding",
         "pms",
+        "businesstrip",
         "cpsi",
         "crm",
+        "crossborder",
         "parametres",
         "personnes",
         "surveillance",
@@ -431,6 +439,7 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "inference"
       ]
     },
@@ -446,6 +455,9 @@
         "offboarding",
         "workflow-designer",
         "workflow-instances",
+        "common",
+        "businesstrip",
+        "crossborder",
         "custody",
         "events",
         "ged",
@@ -453,7 +465,6 @@
         "parametres",
         "tasks",
         "txflux",
-        "common",
         "aml",
         "ia",
         "legal",
@@ -470,10 +481,10 @@
       "statut": "actif",
       "citePar": [
         "screening",
+        "common",
         "kyc",
         "offboarding",
         "workflow-designer",
-        "common",
         "cpsi",
         "workflow-engine",
         "api",
@@ -517,6 +528,12 @@
       "numero": "R56",
       "module": "workflow-engine",
       "ancre": "packages/workflow-engine/src/engine.mjs",
+      "statut": "actif"
+    },
+    {
+      "numero": "R59",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
       "statut": "actif"
     },
     {
@@ -1458,6 +1475,7 @@
       "ancre": "apps/api/src/modules/workflow/kyc-workflow.chaine.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "builder"
       ]
     },
@@ -3628,6 +3646,177 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "common",
+        "businesstrip",
+        "crossborder",
+        "api"
+      ]
+    },
+    {
+      "numero": "R446",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R447",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R448",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R449",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "businesstrip"
+      ]
+    },
+    {
+      "numero": "R450",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R451",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R452",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "common",
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R453",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R454",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R455",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R456",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R457",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R458",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "businesstrip"
+      ]
+    },
+    {
+      "numero": "R459",
+      "module": "api",
+      "ancre": "apps/api/src/contracts/events-catalog.ts",
+      "statut": "actif",
+      "citePar": [
+        "crossborder"
+      ]
+    },
+    {
+      "numero": "R460",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R461",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R462",
+      "module": "crossborder",
+      "ancre": "apps/api/src/modules/crossborder/xb.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "common",
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R465",
+      "module": "businesstrip",
+      "ancre": "apps/api/src/modules/businesstrip/businesstrip.module.ts",
+      "statut": "actif",
+      "citePar": [
         "api"
       ]
     }
