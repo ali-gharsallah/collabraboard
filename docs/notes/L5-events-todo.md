@@ -34,7 +34,16 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    offboarding.propose, dossier.suspendu/reactive/abandonne/mise_a_jour/workflow,
    effacement.refuse.lba, process.ouvert/pause/repris/cloture) tirés des payloads réels
    de `kyc.service.ts` + `kyc-workflow.chaine.ts`. Plus AUCUN type `kyc.*` en attente.
-   RESTENT : `aml.*`/`cpsi.*`, puis le reste par familles.
+   **Vague 3 FAITE (2026-08-08)** : `aml.*` intégral (signal.leve, operation.bloquee,
+   signal.raised, block.requested, signal.qualified, eval.version_compared, eval.completed)
+   + les DEUX `cpsi.*` réellement émis via emitEvent (`cpsi.sla.depassement`,
+   `cpsi.case_proposal.emitted` — miroir outbox, `at` corrélé au jumeau). **Constat de
+   vague** : les 11 autres littéraux `cpsi.*` du scan (client.registered, signal.ingested,
+   param.proposed/adopted/rejected/applied, insider.tagged/lifted, fp.declared,
+   group.defined, scenario.defined) vivent dans le journal JUMEAU `cpsi_events` (moteur
+   pur rejouable, écrit par `cpsiEvent.create`, jamais par emitEvent) — ils restent en
+   attente par SUR-capture assumée du scan, le catalogue ne gouverne que domain_events.
+   RESTENT : le reste par familles (onboarding.*, ged.*, wd.*, olivia.*, …).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN

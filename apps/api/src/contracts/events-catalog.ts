@@ -90,6 +90,31 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "xb.rs.visee": { version: 1, schema: z.object({ par: z.string() }).strict() },
   "xb.localisation.declaree": { version: 1, schema: z.object({ juridiction: z.string(),
     du: z.string(), au: z.string(), par: z.string() }).strict() },                                   // R457
+  // ── Vague 3 (C6, 2026-08-08) — aml.* + cpsi.* réellement émis via emitEvent. Schémas tirés
+  //    des payloads RÉELS (aml.service, aml-gap.service, aml-eval.service, cpsi.module).
+  //    NB : les 11 littéraux cpsi.* restants du scan vivent dans le journal JUMEAU cpsi_events
+  //    (moteur pur, rejouable) — jamais écrits via emitEvent, ils restent en attente (sur-capture
+  //    assumée, cf. docs/notes/L5-events-todo.md).
+  "aml.signal.leve": { version: 1, schema: z.object({ clientId: z.string(), type: z.string(),
+    regle: z.string(), niveau: z.number(), bloquant: z.boolean() }).strict() },                      // R189→R206
+  "aml.operation.bloquee": { version: 1, schema: z.object({ regles: z.array(z.string()) }).strict() },   // niveau 1 = suspension
+  "aml.signal.raised": { version: 1, schema: z.object({ scenarioCode: z.string(),
+    scenarioVer: z.number(), ruleRef: z.string(), clientId: z.string().nullable(),
+    niveau: z.number().nullish(), blocking: z.boolean() }).strict() },                               // AML Gap (R340+)
+  "aml.block.requested": { version: 1, schema: z.object({ scenarioCode: z.string(),
+    ruleRef: z.string(), clientId: z.string().nullable(), motif: z.string() }).strict() },           // R44 : demandé, jamais exécuté
+  "aml.signal.qualified": { version: 1, schema: z.object({ scenarioCode: z.string(),
+    outcome: z.enum(["TP", "FP"]), motif: z.string(), par: z.string() }).strict() },                 // R7 : motif obligatoire
+  "aml.eval.version_compared": { version: 1, schema: z.object({ overrides: z.any(),
+    recallBefore: z.number(), recallAfter: z.number(), degradation: z.boolean(),
+    regressions: z.number(), par: z.string() }).strict() },                                          // R375 : rollback PROPOSÉ
+  "aml.eval.completed": { version: 1, schema: z.object({ corpus: z.number(), evaluated: z.number(),
+    raised: z.number(), recall: z.number(), via2G: z.number(), deferred2G: z.number(),
+    par: z.string() }).strict() },                                                                   // backtest GT (R29)
+  "cpsi.sla.depassement": { version: 1, schema: z.object({ cle: z.string(), jalon: z.string(),
+    enAttenteMrosJours: z.number().nullable(), par: z.string() }).strict() },                        // R250
+  "cpsi.case_proposal.emitted": { version: 1, schema: z.object({ cle: z.string(),
+    par: z.string() }).strict() },                                                                   // R285/R286 : miroir outbox, at corrélé au jumeau
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -474,13 +499,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "XB_DEROGATION_DEMANDEE",
   "XB_DEROGATION_VISEE",
   "XB_ORDRE_ENREGISTRE",
-  "aml.block.requested",
-  "aml.eval.completed",
-  "aml.eval.version_compared",
-  "aml.operation.bloquee",
-  "aml.signal.leve",
-  "aml.signal.qualified",
-  "aml.signal.raised",
   "annotation.acces.refuse",
   "annotation.posee",
   "annotation.retiree",
@@ -501,7 +519,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "core.sync.lot",
   "core.sync.quarantaine",
   "core.sync.resolution",
-  "cpsi.case_proposal.emitted",
   "cpsi.client.registered",
   "cpsi.fp.declared",
   "cpsi.group.defined",
@@ -513,7 +530,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "cpsi.param.rejected",
   "cpsi.scenario.defined",
   "cpsi.signal.ingested",
-  "cpsi.sla.depassement",
   "crm.acces.refuse",
   "crm.contact.cree",
   "deploiement.enregistre",
