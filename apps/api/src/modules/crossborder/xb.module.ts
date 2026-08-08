@@ -43,9 +43,21 @@ export function evaluerXb(manual: EntreeManual[], juridiction: string, activites
   return { verdict, parActivite };
 }
 
+/** Bloc 64 (R453) — PORT fournisseur de matrice : le savoir vient d'une source déclarée
+ *  par tenant (INDIGITA_API | APIAX_API | IMPORT_BRP | INTERNE), O-Live l'orchestre.
+ *  Contrat + mock UNIQUEMENT pour les adaptateurs réseau (E-XB-2 : intégration réelle hors session). */
+export interface CrossBorderRuleProvider {
+  source: string;                                        // INDIGITA_API | APIAX_API | IMPORT_BRP | INTERNE
+  /** L'état complet du référentiel unifié chez le fournisseur (un objet PAR juridiction :
+   *  verdicts d'activités ET champs de synthèse — E-XB-3, jamais deux vérités). */
+  lire(): Promise<Array<{ jurisdiction: string; activites: Record<string, string>;
+    statut?: string; sollicitation?: string; licence?: string; produits?: string[] }>>;
+}
+
 @Injectable()
 export class XbService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService,
+    private ports: { matrice?: CrossBorderRuleProvider } = {}) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
     return emitEvent(tx, tenantId, type, aggregateId, payload);
@@ -137,6 +149,29 @@ export class XbService {
     return { enregistre: true, reverseSolicitation: restreint };
   }
 
+  // ══ Bloc 64 (repo R453–R462) — SQUELETTE A3 : XB-01..XB-14 rouges AVANT tout code
+  //    moteur (même discipline que les Blocs 62/63). Delta sur R293–R295 : le country
+  //    manual reste LA clé — le port le versionne, jamais ne le remplace. ══
+  /** R453 : synchronisation du port → version datée immuable + MATRIX_SYNCED (diff lisible). */
+  async syncMatrice(_ctx: Ctx, _atIso?: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R453 : la version courante (ou à date) — âge affiché si la sync est en échec. */
+  async matriceCourante(_ctx: Ctx, _asOf?: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R454 : acte cross-border DISTANT (contact report canal distant × juridiction étrangère). */
+  async contactReportDistant(_ctx: Ctx, _dto: any, _atIso?: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R455 : check pré-acte embarqué (MKT/ADVICE/ORDER) — verdict attaché à l'objet. */
+  async checkPreActe(_ctx: Ctx, _dto: any, _atIso?: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R456 : registre de reverse solicitation — la preuve est un objet daté, visé, à périmètre. */
+  async enregistrerPreuveRS(_ctx: Ctx, _dto: any): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  async viserPreuveRS(_ctx: Ctx, _preuveId: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R457 : localisation temporaire du client — prime le domicile pendant la période. */
+  async declarerLocalisation(_ctx: Ctx, _dto: any): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R460 : exposition consolidée par juridiction — projection live, jamais un rapport figé. */
+  async expositionCrossBorder(_ctx: Ctx): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R453/R455/R48 : rejeu à date d'un acte — verdict et condition d'époque. */
+  async rejouerActe(_ctx: Ctx, _acteId: string, _asOf: string): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+  /** R462/R445 : modification de paramètre §CrossBorder — pop-up d'engagement côté API. */
+  async modifierParametreXB(_ctx: Ctx, _dto: any): Promise<any> { throw new Error("BLOC64_NON_IMPLEMENTE"); }
+
   async reporting(ctx: Ctx) {
     const evs = await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "xb.ordre.enregistre" } });
     const parPays: Record<string, { total: number; reverseSolicitation: number }> = {};
@@ -161,5 +196,9 @@ export class XbController {
   @Get("reporting")                  reporting(@Req() r: any) { return this.svc.reporting(r.ctx); }                                      // XB-04/R39
 }
 
-@Module({ controllers: [XbController], providers: [XbService], exports: [XbService] })
+@Module({ controllers: [XbController],
+  providers: [{ provide: XbService,
+    useFactory: (p: PrismaService, a: AuditService) => new XbService(p, a, {}),   // port matrice : INTERNE par défaut (R453) — adaptateurs réseau hors session (E-XB-2)
+    inject: [PrismaService, AuditService] }],
+  exports: [XbService] })
 export class XbModule {}
