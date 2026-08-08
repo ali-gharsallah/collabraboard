@@ -22,7 +22,8 @@ describe("Bloc 62 — offboarding au moteur (R439–R445, spec/BLOC-62 §3)", ()
   let C1: string, C2: string, C3: string, C4: string;
 
   const client = async (nom: string) => {
-    const c = await owner.client.create({ data: { tenantId: T, name: nom } as any });
+    const c = await owner.client.create({ data: { tenantId: T, name: nom,
+      structure: "PP", country: "CH", riskLevel: "LOW" } as any });   // niveau calculé LOW (OF-07)
     return c.id;
   };
 
@@ -163,9 +164,9 @@ describe("Bloc 62 — offboarding au moteur (R439–R445, spec/BLOC-62 §3)", ()
       notification: null } as any });                             // EN ATTENTE DE TRANSMISSION
     const r = await svc.initier(RM1, { clientId: C3, motif: "Demande du client" });
     const hcRM = await svc.healthCheck(RM1, r.instanceId);
-    const gRM = hcRM.guards.find((g: any) => g.guard === "MROS");
-    expect(gRM.motif).toBe("Vérifications compliance en cours"); // neutre (tipping-off)
-    expect(JSON.stringify(hcRM)).not.toMatch(/MROS/i);           // le mot n'apparaît nulle part pour RM
+    // le guard MROS est MASQUÉ pour RM : entrée neutre, et le mot « MROS » absent de tout le payload
+    expect(hcRM.guards.some((g: any) => g.echec && g.motif === "Vérifications compliance en cours")).toBe(true);
+    expect(JSON.stringify(hcRM)).not.toMatch(/MROS/i);           // tipping-off : rien ne fuit
     const hcSR = await svc.healthCheck(CO_SR1, r.instanceId);
     expect(hcSR.guards.find((g: any) => g.guard === "MROS").motif).toMatch(/Déclaration MROS en attente/);
     await svc.viser(RM2, r.instanceId);
@@ -178,7 +179,7 @@ describe("Bloc 62 — offboarding au moteur (R439–R445, spec/BLOC-62 §3)", ()
 
   it("OF-13 [R445/R440] — modification de guard SANS confirmation : refus 409 + payload pop-up ; AVEC : PARAM_CHANGED complet", async () => {
     await expect(svc.modifierParametre(ADMIN1, { cle: "guards.MROS", valeur: "AVERTISSEMENT",
-      enVigueurLe: j("2026-08-08") })).rejects.toMatchObject({
+      enVigueurLe: j("2026-08-01") })).rejects.toMatchObject({
         response: expect.objectContaining({ popup: expect.objectContaining({
           ancien: "BLOQUANT", nouveau: "AVERTISSEMENT",
           portee: expect.stringMatching(/dossiers futurs/i),
@@ -186,7 +187,7 @@ describe("Bloc 62 — offboarding au moteur (R439–R445, spec/BLOC-62 §3)", ()
     expect((await evs("offboarding-params")).filter((x: any) =>
       x.type === "PARAM_CHANGED" && (x.payload as any).cle === "guards.MROS").length).toBe(0);
     await svc.modifierParametre(ADMIN1, { cle: "guards.MROS", valeur: "AVERTISSEMENT",
-      enVigueurLe: j("2026-08-08"),
+      enVigueurLe: j("2026-08-01"),
       confirmation: { engagementTexte: "J'engage ma responsabilité — obligations LBA rappelées.", auteur: ADMIN1.userId } });
     const pc: any = (await evs("offboarding-params")).filter((x: any) =>
       x.type === "PARAM_CHANGED" && (x.payload as any).cle === "guards.MROS").pop();

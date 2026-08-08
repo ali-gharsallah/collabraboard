@@ -9,7 +9,9 @@
       "statut": "actif",
       "citePar": [
         "builder",
-        "regwatch"
+        "offboarding",
+        "regwatch",
+        "api"
       ]
     },
     {
@@ -131,15 +133,15 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
-        "aml",
         "parametres",
+        "aml",
+        "offboarding",
         "auth",
         "businesstrip",
         "custody",
         "formations",
         "reviews",
         "crossborder",
-        "offboarding",
         "workflow-engine",
         "builder",
         "onboarding",
@@ -164,13 +166,13 @@
       "ancre": "packages/workflow-engine/src/engine.mjs",
       "statut": "actif",
       "citePar": [
+        "parametres",
         "workflow-instances",
         "kyc",
-        "parametres",
+        "offboarding",
         "aml",
         "businesstrip",
         "formations",
-        "offboarding",
         "reviews",
         "workflow-designer",
         "cpsi-server-py"
@@ -182,6 +184,7 @@
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
       "statut": "actif",
       "citePar": [
+        "offboarding",
         "workflow-engine"
       ]
     },
@@ -271,10 +274,11 @@
       "statut": "actif",
       "citePar": [
         "aml",
+        "parametres",
         "screening",
         "builder",
-        "parametres",
         "corebanking",
+        "offboarding",
         "reviews",
         "common",
         "coc",
@@ -414,6 +418,7 @@
         "pms",
         "cpsi",
         "crm",
+        "parametres",
         "personnes",
         "surveillance",
         "transactions",
@@ -438,6 +443,7 @@
         "kyc",
         "screening",
         "cpsi",
+        "offboarding",
         "workflow-designer",
         "workflow-instances",
         "custody",
@@ -465,6 +471,7 @@
       "citePar": [
         "screening",
         "kyc",
+        "offboarding",
         "workflow-designer",
         "common",
         "cpsi",
@@ -496,7 +503,8 @@
       "ancre": "apps/api/src/modules/inference/inference.module.ts",
       "statut": "actif",
       "citePar": [
-        "builder"
+        "builder",
+        "offboarding"
       ]
     },
     {
@@ -2279,6 +2287,7 @@
       "statut": "actif",
       "citePar": [
         "kyc",
+        "api",
         "license",
         "olivia",
         "onboarding"
@@ -3504,6 +3513,7 @@
       "statut": "actif",
       "citePar": [
         "workflow-designer",
+        "offboarding",
         "api"
       ]
     },
@@ -3552,7 +3562,73 @@
       "ancre": "apps/api/src/modules/workflow-designer/wir.schema.ts",
       "statut": "actif",
       "citePar": [
+        "offboarding",
         "parametres"
+      ]
+    },
+    {
+      "numero": "R439",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R440",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R441",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R442",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R443",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R444",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R445",
+      "module": "offboarding",
+      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres",
+        "api"
       ]
     }
   ],

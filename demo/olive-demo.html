@@ -20689,7 +20689,8 @@ return "CHF " + (chf / 1e6).toFixed(0) + "M";
 return "CHF " + Math.round(chf / 1000) + "k";
 }
 function OffboardingScreen({ user, go }) {
-const [tab, setTab] = useState("cases"); // cases | dashboard
+const [tab, setTab] = useState("cases"); // cases | dashboard | params
+const [popupR445, setPopupR445] = useState(null);   // R445 : sans confirmation, aucune écriture
 const [, bump] = useState(0);
 const re = function () { bump(function (x) { return x + 1; }); };
 const [selId, setSelId] = useState((OFFBOARDING_CASES[0] || {}).id || null);
@@ -20701,7 +20702,7 @@ const cases = OFFBOARDING_CASES;
 const sel = cases.find(function (o) { return o.id === selId; }) || cases[0] || null;
 const selClient = sel && CLIENTS.find(function (c) { return c.id === sel.clientId; });
 const selKyc = selClient && KYCS_DATA.filter(function (k) { return k.clientId === selClient.id; }).sort(function (a, b) { return (b.createdAt || "").localeCompare(a.createdAt || ""); })[0];
-const hc = selClient ? offHealthCheck(selClient, selKyc) : null;
+const hc = selClient ? offHealthCheck(selClient, selKyc, (user && user.role) || "") : null;
 const checklist = selClient ? offChecklistFor(selClient) : [];
 const chain = selClient ? offApprovalChain(selClient.risk, sel && sel.reason) : [];
 const createCase = function () {
@@ -20710,9 +20711,10 @@ if (!c || allowedReasons.indexOf(ncReason) < 0)
 return;
 var newId = "OFF-" + String(2000 + cases.length);
 var checklistArr = offChecklistFor(c).map(function () { return false; });
-cases.unshift({ id: newId, clientId: c.id, reason: ncReason, initiatedAt: "2026-07-10", initiatedBy: (user && user.name) || "—", checklistState: checklistArr, approvalIdx: 0, status: "EN_COURS" });
+var nc = { id: newId, clientId: c.id, reason: ncReason, initiatedAt: "2026-07-10", initiatedBy: (user && user.name) || "—", checklistState: checklistArr, events: [], status: "EN_COURS" };
+cases.unshift(nc);
 pushParamAudit((user && user.name) || "RM", "Offboarding initié : " + c.name + " (" + ncReason + ")");
-wfEmit("PARAM_CHANGED", null, { subjectId: "OFFBOARDING/" + newId, actor: (user && user.name) || "RM", payload: { reason: ncReason, client: c.name } });
+offEmettre(nc, "WORKFLOW_STARTED", { reason: ncReason, client: c.name, chaine: offApprovalChain(c.risk, ncReason).map(function (x) { return x[0]; }) }, user);   // R439 — l'initiation ÉMET
 setSelId(newId);
 setCreateOpen(false);
 re();
@@ -20720,18 +20722,29 @@ re();
 const toggleChecklistItem = function (idx) { if (!sel)
 return; sel.checklistState[idx] = !sel.checklistState[idx]; pushParamAudit((user && user.name) || "RM", "Checklist offboarding " + sel.id + " — étape " + (idx + 1) + (sel.checklistState[idx] ? " cochée" : " décochée")); re(); };
 const advanceApproval = function () { if (!sel)
-return; if (sel.approvalIdx < chain.length) {
-sel.approvalIdx++;
-wfEmit("TRANSITION_FIRED", null, { subjectId: sel.id, actor: (user && user.name) || "—", actorRole: (user && user.role) || "RM", payload: { step: chain[sel.approvalIdx - 1][1] } });
-pushParamAudit((user && user.name) || "—", "Offboarding " + sel.id + " — approbation " + chain[sel.approvalIdx - 1][1]);
-if (sel.approvalIdx >= chain.length) {
-sel.status = "ARCHIVE";
+return; var proj = offProjection(sel); if (proj.clos || proj.visas >= chain.length) return;
+// R440 : guards réévalués à CHAQUE tentative — BLOQUANT refuse (GUARD_BLOCKED), AVERTISSEMENT trace et passe
+var bloquant = (hc.guards || []).find(function (g) { return g.echec && g.severite === "BLOQUANT"; });
+if (bloquant) { offEmettre(sel, "GUARD_BLOCKED", { guard: bloquant.guard, reason: bloquant.motif }, user); re(); return; }
+(hc.avertissements || []).forEach(function (g) { offEmettre(sel, "GUARD_WARNING", { guard: g.guard, reason: g.motif }, user); });
+var derniere = proj.visas === chain.length - 1;
+if (derniere) {                                                  // R443 : la CLÔTURE exige la checklist
+var manquant = checklist.map(function (lbl, i) { return sel.checklistState[i] ? null : lbl; }).filter(Boolean)[0];
+if (manquant && (OFF_TENANT_PARAMS.guards.CHECKLIST || "BLOQUANT") === "BLOQUANT") {
+offEmettre(sel, "GUARD_BLOCKED", { guard: "CHECKLIST", reason: "Item obligatoire non validé : " + manquant }, user); re(); return;
+}
+}
+offEmettre(sel, "TRANSITION_FIRED", { step: chain[proj.visas][1], visa: { validateur: (user && user.name) || "—", role: chain[proj.visas][0], at: "aujourd'hui" } }, user);
+pushParamAudit((user && user.name) || "—", "Offboarding " + sel.id + " — approbation " + chain[proj.visas][1]);
+if (proj.visas + 1 >= chain.length) {
+offEmettre(sel, "WORKFLOW_COMPLETED", { par: (user && user.name) || "—" }, user);
+sel.status = "ARCHIVE";                                        // étiquette d'état (la vérité = projection)
 pushParamAudit((user && user.name) || "—", "Offboarding " + sel.id + " — Relationship Closed");
 }
-re();
-} };
+re(); };
+const selVisas = sel ? offProjection(sel).visas : 0;
 const checklistDone = sel ? sel.checklistState : [];
-const approvalsDone = chain.map(function (_, i) { return sel && i < sel.approvalIdx; });
+const approvalsDone = chain.map(function (_, i) { return sel && i < selVisas; });
 const steps = sel ? offStepsFor(checklistDone, approvalsDone) : [];
 const globalPct = steps.length ? Math.round(steps.reduce(function (a, st) { return a + st.pct; }, 0) / steps.length) : 0;
 // -- Dashboard ------------------------------------------------------------
@@ -20763,7 +20776,7 @@ React.createElement("div", { style: { fontSize: 11, color: T.olive700, letterSpa
 React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.ink } }, SCREEN_LABEL.offboarding),
 React.createElement("div", { style: { fontSize: 11.5, color: T.inkSoft, marginTop: 2 } }, "Garantir qu'un client quitte la banque sans risque op\u00E9rationnel, r\u00E9glementaire ou juridique r\u00E9siduel.")),
 React.createElement("div", { style: { marginLeft: "auto", display: "flex", gap: 8 } },
-React.createElement("div", { style: { display: "flex", gap: 4, background: T.cream, padding: 4, borderRadius: 10 } }, [["cases", "Dossiers"], ["dashboard", "Dashboard"]].map(function (tb) {
+React.createElement("div", { style: { display: "flex", gap: 4, background: T.cream, padding: 4, borderRadius: 10 } }, [["cases", "Dossiers"], ["dashboard", "Dashboard"], ["params", "Paramétrage"]].map(function (tb) {
 return (React.createElement("button", { key: tb[0], onClick: function () { setTab(tb[0]); }, style: { padding: "7px 14px", borderRadius: 7, border: "none", cursor: "pointer", background: tab === tb[0] ? T.olive600 : "transparent", color: tab === tb[0] ? "#fff" : T.inkMid, fontSize: 12, fontWeight: tab === tb[0] ? 700 : 500 } }, tb[1]));
 })),
 React.createElement("button", { onClick: function () { setNcReason((allowedReasons[0]) || OFFBOARDING_REASONS[0]); setCreateOpen(true); }, style: { padding: "9px 16px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" } }, "\uFF0B Nouvel offboarding"))),
@@ -20837,15 +20850,15 @@ React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: T.
 selClient.risk,
 ")"),
 React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 } }, chain.map(function (step, i) {
-var done = i < sel.approvalIdx;
-var current = i === sel.approvalIdx;
+var done = i < selVisas;
+var current = i === selVisas;
 return (React.createElement(React.Fragment, { key: step[0] },
 React.createElement("span", { style: { fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 20, background: done ? T.greenSoft : current ? T.amberSoft : T.lineSoft, color: done ? T.green : current ? T.amber : T.inkSoft } },
 done ? "✓ " : current ? "● " : "",
 step[1]),
 i < chain.length - 1 && React.createElement("span", { style: { color: T.inkSoft, fontSize: 11 } }, "\u2192")));
 })),
-sel.status !== "ARCHIVE" && (React.createElement("button", { onClick: advanceApproval, disabled: !hc.canProceed, title: !hc.canProceed ? "Le Compliance Health Check bloque la progression" : "", style: { padding: "8px 16px", borderRadius: 8, border: "none", background: hc.canProceed ? T.olive600 : T.line, color: hc.canProceed ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 700, cursor: hc.canProceed ? "pointer" : "not-allowed" } }, sel.approvalIdx < chain.length - 1 ? ("Valider " + chain[sel.approvalIdx][1] + " →") : "Finaliser — Relationship Closed →")),
+sel.status !== "ARCHIVE" && (React.createElement("button", { onClick: advanceApproval, disabled: !hc.canProceed, title: !hc.canProceed ? "Le Compliance Health Check bloque la progression" : "", style: { padding: "8px 16px", borderRadius: 8, border: "none", background: hc.canProceed ? T.olive600 : T.line, color: hc.canProceed ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 700, cursor: hc.canProceed ? "pointer" : "not-allowed" } }, selVisas < chain.length - 1 ? ("Valider " + chain[selVisas][1] + " →") : "Finaliser — Relationship Closed →")),
 sel.status === "ARCHIVE" && React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: T.green } }, "\u2713 Relationship Closed")),
 React.createElement("div", { style: card },
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } },
@@ -20866,6 +20879,37 @@ st.pct,
 React.createElement("div", { style: { height: 6, background: T.lineSoft, borderRadius: 3, overflow: "hidden" } },
 React.createElement("div", { style: { height: "100%", width: st.pct + "%", background: st.pct === 100 ? T.green : T.amber, borderRadius: 3 } }))));
 })))) : React.createElement("div", { style: card }, "S\u00E9lectionnez un dossier."))),
+tab === "params" && (React.createElement("div", { style: { maxWidth: 720 } },
+React.createElement("div", { style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 18 } },
+React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 4 } }, "\u2699 Offboarding Workflow \u2014 s\u00E9v\u00E9rit\u00E9 des guards (R440, 100 % tenant)"),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 12 } }, "Toute modification passe par le pop-up d'engagement de responsabilit\u00E9 (R445) : ancien/nouveau, port\u00E9e (dossiers futurs, grandfathering R29), rappel LBA pour MROS. Trace PARAM_CHANGED append-only."),
+Object.keys(OFF_TENANT_PARAMS.guards).map(function (g) {
+return (React.createElement("div", { key: g, style: { display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: "1px solid " + T.lineSoft } },
+React.createElement("span", { style: { fontSize: 12, fontWeight: 700, minWidth: 110 } }, g),
+React.createElement("select", { value: OFF_TENANT_PARAMS.guards[g], onChange: function (ev) {
+setPopupR445({ cle: "guards." + g, ancien: OFF_TENANT_PARAMS.guards[g], nouveau: ev.target.value, sensible: g === "MROS" || g === "SCREENING" });
+}, style: { padding: "5px 9px", borderRadius: 7, border: "1px solid " + T.line, fontSize: 11.5, fontWeight: 700 } },
+["BLOQUANT", "AVERTISSEMENT", "D\u00C9SACTIV\u00C9"].map(function (v) { return React.createElement("option", { key: v, value: v }, v); }))));
+})))),
+popupR445 && React.createElement("div", { style: { position: "fixed", inset: 0, background: "rgba(30,35,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300 } },
+React.createElement("div", { style: { background: "#fff", borderRadius: 16, padding: 22, width: 520, boxShadow: "0 18px 60px rgba(0,0,0,0.25)" } },
+React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u26A0 Engagement de responsabilit\u00E9 (R445)"),
+React.createElement("div", { style: { fontSize: 12, color: T.inkMid, lineHeight: 1.7 } },
+React.createElement("div", null, React.createElement("b", null, "Param\u00E8tre : "), popupR445.cle),
+React.createElement("div", null, React.createElement("b", null, "Ancien : "), popupR445.ancien, " \u2192 ", React.createElement("b", null, "Nouveau : "), popupR445.nouveau),
+React.createElement("div", null, React.createElement("b", null, "Port\u00E9e : "), "dossiers FUTURS \u2014 les dossiers en cours conservent leur param\u00E9trage d'initiation (grandfathering R29).")),
+popupR445.sensible && React.createElement("div", { style: { marginTop: 10, padding: 10, borderRadius: 9, background: T.redSoft, border: "1px solid " + T.red + "40", fontSize: 11.5, color: T.red, fontWeight: 700 } },
+"Rappel LBA/OBA-FINMA : affaiblir cette garde n'\u00E9teint aucune obligation l\u00E9gale (art. 9/10a LBA). En confirmant, vous engagez votre responsabilit\u00E9."),
+React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" } },
+React.createElement("button", { onClick: function () { setPopupR445(null); }, style: { padding: "8px 14px", borderRadius: 8, border: "1px solid " + T.line, background: "#fff", fontSize: 12, cursor: "pointer" } }, "Annuler \u2014 aucune \u00E9criture"),
+React.createElement("button", { onClick: function () {
+var g2 = popupR445.cle.split(".")[1];
+var engagement = "J'engage ma responsabilit\u00E9 \u2014 obligations LBA rappel\u00E9es (" + popupR445.cle + " : " + popupR445.ancien + " \u2192 " + popupR445.nouveau + ").";
+OFF_TENANT_PARAMS.guards[g2] = popupR445.nouveau;
+wfEmit("PARAM_CHANGED", null, { subjectId: "offboarding-params", actor: (user && user.name) || "ADMIN", payload: { cle: popupR445.cle, ancien: popupR445.ancien, nouveau: popupR445.nouveau, engagement: engagement, portee: "dossiers futurs (R29)" } });
+pushParamAudit((user && user.name) || "ADMIN", "Offboarding \u2014 " + popupR445.cle + " : " + popupR445.ancien + " \u2192 " + popupR445.nouveau + " (engagement R445)");
+setPopupR445(null); re();
+}, style: { padding: "8px 14px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" } }, "Je confirme \u2014 engagement trac\u00E9")))),
 tab === "dashboard" && (React.createElement("div", null,
 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 } },
 React.createElement("div", { style: card },
@@ -21017,10 +21061,28 @@ const OFFBOARDING_REASONS = [
 const OFF_PP_CHECKLIST = ["Vérifier les soldes", "Clôturer les comptes", "Désactiver les accès eBanking", "Archiver les documents", "Informer le RM", "Valider la conformité", "Vérifier les obligations fiscales", "Envoyer la confirmation de clôture"];
 const OFF_CORP_CHECKLIST = ["Vérifier les UBO", "Vérifier les pouvoirs de signature", "Clôturer les comptes liés", "Vérifier les structures associées", "Contrôler les obligations CRS/FATCA", "Archiver les documents légaux"];
 function offChecklistFor(client) { return (client && client.type === "PP") ? OFF_PP_CHECKLIST : OFF_CORP_CHECKLIST; }
-// -- Paramétrage : qui peut initier quel motif, quel workflow d'approbation par niveau de risque,
-//    et forçage d'un niveau minimum pour certains motifs (ex. Sanctions -> toujours HIGH). --
+// ── Bloc 62 (E-OFF-1 résolu) : le paramétrage offboarding vit dans le REGISTRE TENANT
+//    (OFF_TENANT_PARAMS, modifiable UNIQUEMENT via le pop-up d'engagement R445) — les
+//    constantes ci-dessous ne sont plus que les DÉFAUTS de semis. Sévérité par guard 100 %
+//    tenant (R440) ; chaînes par niveau + forçage par motif (R441) ; l'état d'un dossier est
+//    une PROJECTION de ses événements (R439) — le champ approvalIdx a disparu. --
 const OFF_ROLE_SEQ = ["RM", "ARM", "CO", "CO_SR", "MLRO", "DIR", "ADMIN"];
 const OFF_APPROVAL_CHAINS = { LOW: ["RM", "CO"], MEDIUM: ["RM", "CO", "CO_SR"], HIGH: ["RM", "CO", "MLRO", "DIR"] };
+const OFF_TENANT_PARAMS = {
+chains: JSON.parse(JSON.stringify(OFF_APPROVAL_CHAINS)),
+guards: { AR: "BLOQUANT", AML: "BLOQUANT", SCREENING: "BLOQUANT", MROS: "BLOQUANT", CHECKLIST: "BLOQUANT" },
+retentionAnnees: 10,
+};
+function offProjection(o) {
+var visas = 0, clos = false;
+(o.events || []).forEach(function (e) { if (e.type === "TRANSITION_FIRED") visas++; if (e.type === "WORKFLOW_COMPLETED") clos = true; });
+return { visas: visas, clos: clos };
+}
+function offEmettre(o, type, payload, user) {
+o.events = o.events || [];
+o.events.push({ type: type, at: "aujourd'hui", payload: payload });
+wfEmit(type, null, { subjectId: o.id, actor: (user && user.name) || "—", actorRole: (user && user.role) || "—", payload: payload });
+}
 const OFF_REASON_FORCE = {
 "Demande du client": null, "Décision de la banque": null, "Risque AML élevé": "HIGH", "Sanctions": "HIGH",
 "Décès": null, "Changement de stratégie": null, "Inactivité prolongée": null,
@@ -21035,7 +21097,7 @@ function offRoleLabel(code) { return (typeof ROLE_LABELS !== "undefined" && ROLE
 function offApprovalChain(riskLevel, reason) {
 var forced = reason ? OFF_REASON_FORCE[reason] : null;
 var level = forced || riskLevel || "LOW";
-var roles = OFF_APPROVAL_CHAINS[level] || OFF_APPROVAL_CHAINS.LOW;
+var roles = OFF_TENANT_PARAMS.chains[level] || OFF_TENANT_PARAMS.chains.LOW;   // registre tenant (R441)
 return roles.map(function (r) { return [r, r === "RM" ? "Demande RM" : offRoleLabel(r)]; });
 }
 function offCanInitiate(role, reason) {
@@ -21043,26 +21105,34 @@ var allowed = OFF_REASON_ROLES[reason];
 return !allowed || role === "ADMIN" || allowed.indexOf(role) >= 0;
 }
 // -- Compliance Health Check : calcule reellement les blocages depuis les donnees liees (AR, AML, screening) --
-function offHealthCheck(client, kyc) {
+function offHealthCheck(client, kyc, role) {
+// R440 : chaque bloqueur est un GUARD à sévérité TENANT ; art. 10a LBA : le motif MROS est
+// NEUTRE pour les rôles non habilités (RM/ARM…) — détail réservé à CO_SR/MLRO/DIR.
+var detailMros = ["CO_SR", "MLRO", "DIR"].indexOf(role || "") >= 0;
+var guards = [];
 var blockers = [];
+var garde = function (g, echec, motif) {
+var sev = OFF_TENANT_PARAMS.guards[g] || "BLOQUANT";
+if (sev === "DÉSACTIVÉ") return;
+if (g === "MROS" && echec && !detailMros) motif = "Vérifications compliance en cours";
+guards.push({ guard: (g === "MROS" && !detailMros) ? "COMPLIANCE" : g, severite: sev, echec: echec, motif: motif });
+if (echec && sev === "BLOQUANT") blockers.push(motif);
+};
 var openAr = ACCOUNT_REVIEWS_DATA.filter(function (a) { return a.clientId === (client && client.id) && a.status !== "COMPLETED"; });
-if (openAr.length)
-blockers.push(openAr.length + " Account Review(s) non clôturée(s) (" + openAr.map(function (a) { return a.trigger; }).join(", ") + ")");
+garde("AR", openAr.length > 0, openAr.length + " Account Review(s) non clôturée(s) (" + openAr.map(function (a) { return a.trigger; }).join(", ") + ")");
 var openAlerts = (typeof AML_ALERTS !== "undefined") ? AML_ALERTS.filter(function (a) { return a.clientId === (client && client.id) && a.status === "NEW"; }) : [];
-if (openAlerts.length)
-blockers.push(openAlerts.length + " alerte(s) AML en cours d'investigation (" + openAlerts.map(function (a) { return a.alertLabel; }).join(", ") + ")");
+garde("AML", openAlerts.length > 0, openAlerts.length + " alerte(s) AML en cours d'investigation (" + openAlerts.map(function (a) { return a.alertLabel; }).join(", ") + ")");
 var scr = (kyc && kyc.screening) || {};
 var scrHit = ["ofac", "seco", "pep", "adverse"].filter(function (k) { return scr[k] === "HIT"; });
-if (scrHit.length)
-blockers.push("Hit(s) screening non levé(s) : " + scrHit.join(", ").toUpperCase());
+garde("SCREENING", scrHit.length > 0, "Hit(s) screening non levé(s) : " + scrHit.join(", ").toUpperCase());
 var sarPending = REPORTING_DATA.some(function (r) { return r.type.indexOf("SAR") >= 0 && r.subject.indexOf((client && client.name) || "###") >= 0 && r.status !== "TRANSMIS"; });
-if (sarPending)
-blockers.push("Déclaration SAR/MROS en attente de transmission");
+garde("MROS", !!sarPending, "Déclaration SAR/MROS en attente de transmission (art. 10a LBA)");
 var canProceed = blockers.length === 0;
 var narrative = canProceed
 ? "Le client a demandé la clôture de la relation. Tous les comptes présentent un solde nul. Aucun prêt, mandat ou litige n'est en cours. Une revue AML récente est conforme. Aucun obstacle réglementaire identifié. L'offboarding peut être validé."
 : "Offboarding bloqué : " + blockers.join(" · ") + ".";
-return { blockers: blockers, canProceed: canProceed, narrative: narrative };
+return { blockers: blockers, canProceed: canProceed, narrative: narrative, guards: guards,
+avertissements: guards.filter(function (g) { return g.echec && g.severite === "AVERTISSEMENT"; }) };
 }
 function offStepsFor(checklistDone, approvalsDone) {
 var pct = function (arr) { return arr.length ? Math.round(arr.filter(Boolean).length / arr.length * 100) : 100; };
@@ -21088,7 +21158,8 @@ var c = CLIENTS.find(function (x) { return x.id === p[0]; });
 if (!c)
 return null;
 return { id: "OFF-" + String(1001 + i), clientId: c.id, reason: p[1], initiatedAt: "2026-0" + (3 + (i % 4)) + "-1" + (i % 9), initiatedBy: i % 2 ? "RM" : "Compliance",
-checklistState: OFF_CORP_CHECKLIST.concat(OFF_PP_CHECKLIST).map(function () { return false; }), approvalIdx: 0, status: "EN_COURS" };
+checklistState: OFF_CORP_CHECKLIST.concat(OFF_PP_CHECKLIST).map(function () { return false; }),
+events: [{ type: "WORKFLOW_STARTED", at: "semis", payload: { reason: p[1] } }], status: "EN_COURS" };
 }).filter(Boolean);
 })();
 // -- Profils de workflow "Head" (SIMPLE / MEDIUM / HIGH_RISK / PEP pour le KYC ;
@@ -44682,7 +44753,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.10 \u00B7 fix fuite sc\u00E9narios\u2192alertes (AML)"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.11 \u00B7 bloc 62 : offboarding au moteur (R439\u2013R445)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -44868,7 +44939,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.10 \u00B7 fix fuite sc\u00E9narios\u2192alertes (AML)"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.11 \u00B7 bloc 62 : offboarding au moteur (R439\u2013R445)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),

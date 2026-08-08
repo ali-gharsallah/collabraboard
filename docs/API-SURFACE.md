@@ -5,7 +5,7 @@
 > La documentation VIVANTE (extraite du routeur au runtime) est servie par `GET /v1/apidoc` ;
 > ce document en est la projection committée, au même niveau que le snapshot.
 
-**390 routes** · **57 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
+**402 routes** · **59 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
 
 | Module | Routes |
 |---|---|
@@ -41,6 +41,7 @@
 | [`mros`](#mros) | 9 |
 | [`nba`](#nba) | 4 |
 | [`offboarding`](#offboarding) | 9 |
+| [`offboarding-moteur`](#offboarding-moteur) | 8 |
 | [`olivia`](#olivia) | 28 |
 | [`onboarding`](#onboarding) | 5 |
 | [`oprisk`](#oprisk) | 8 |
@@ -64,6 +65,7 @@
 | [`txflux`](#txflux) | 3 |
 | [`txrisk`](#txrisk) | 2 |
 | [`workflow`](#workflow) | 5 |
+| [`workflow-designer`](#workflow-designer) | 4 |
 | [`workflow-instances`](#workflow-instances) | 3 |
 | [`workload`](#workload) | 6 |
 
@@ -452,6 +454,19 @@
 | POST | `/v1/offboarding/:id/visa` |
 | GET | `/v1/offboarding/statut/:clientId` |
 
+## offboarding-moteur
+
+| Méthode | Chemin |
+|---|---|
+| POST | `/v1/offboarding-moteur/instances` |
+| GET | `/v1/offboarding-moteur/instances/:id` |
+| POST | `/v1/offboarding-moteur/instances/:id/checklist` |
+| GET | `/v1/offboarding-moteur/instances/:id/health` |
+| GET | `/v1/offboarding-moteur/instances/:id/trail` |
+| POST | `/v1/offboarding-moteur/instances/:id/viser` |
+| GET | `/v1/offboarding-moteur/params` |
+| PATCH | `/v1/offboarding-moteur/params` |
+
 ## olivia
 
 | Méthode | Chemin |
@@ -722,6 +737,15 @@
 | PATCH | `/v1/workflow/definitions/:id` |
 | POST | `/v1/workflow/definitions/:id/publier` |
 | GET | `/v1/workflow/resoudre` |
+
+## workflow-designer
+
+| Méthode | Chemin |
+|---|---|
+| GET | `/v1/workflow-designer/:id` |
+| PATCH | `/v1/workflow-designer/:id/ir` |
+| POST | `/v1/workflow-designer/:id/ratify` |
+| POST | `/v1/workflow-designer/import` |
 
 ## workflow-instances
 

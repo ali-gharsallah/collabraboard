@@ -1251,6 +1251,20 @@ ni `test:smoke`, ni `extract_demo_data`) :**
   non tenant, pas de visa R15, pas d'exclusion R13, pas d'événements.
 - **Résolution : Bloc 62 ratifié 08.08.2026** (`spec/BLOC-62-OFFBOARDING-R432-R438.md`,
   règles repo R439–R445) — migration de l'écran démo APRÈS 14/14 verts (A5).
+- **EXÉCUTÉ (08.08.2026, A5)** : écran migré sur la projection (`offProjection`/`offEmettre`,
+  plus d'`approvalIdx`), registre tenant `OFF_TENANT_PARAMS` (sévérités jamais codées en dur),
+  masquage MROS→COMPLIANCE par rôle, onglet Paramétrage + pop-up R445. Parcours navigateur
+  6/6, smoke 80/80. CLOS.
+
+### E-OFF-2 — Port core banking absent : guard CORE en stub explicite
+- **Constat** : la spec Bloc 62 exige un guard « soldes/positions core » sur la clôture, mais
+  aucun connecteur core banking n'est configuré dans ce dépôt (R167 — port vide en prod).
+- **Décision (A3)** : le guard CORE existe dans le registre des paramètres avec sa sévérité,
+  et le service l'évalue UNIQUEMENT si un port est injecté (`OFFB_FAKE_CORE=1` en test, jamais
+  en prod). Sans port, le guard n'est PAS évalué — stub explicite consigné en commentaire dans
+  `offboarding-moteur.service.ts` (jamais évalué à tort, jamais un faux vert calculé). Limite
+  assumée : l'absence du port n'apparaît pas encore dans la réponse du health check — à traiter
+  au branchement d'un vrai connecteur (même modèle que `CorebankingModule`).
 
 ### E-OFF-3 — Collisions de numérotation et d'identifiants (découvertes au versement du Bloc 62)
 - **Constat 1 — numéros de règles** : le drop de session numérote R432–R438, créneau déjà
@@ -1266,6 +1280,15 @@ ni `test:smoke`, ni `extract_demo_data`) :**
   sortie de relation à deux granularités. R267–R271 restent actives et inchangées pendant la
   construction ; la réconciliation (mapping d'états, quelle machine porte quoi) est une
   DÉCISION PO à acter — consignée ici, jamais absorbée en silence.
+
+### E-OFF-4 — Fonctionnalités démo conservées HORS périmètre R439–R445 (audit A5)
+- **Constat** : l'audit ligne à ligne de l'écran démo avant migration a recensé des
+  fonctionnalités absentes de la spec Bloc 62 : onglet Dashboard (motifs de sortie, répartition
+  par statut, insights générés), narrative du health check, pourcentage d'avancement checklist,
+  bannières de statut client.
+- **Décision (A5, conforme au prompt)** : conservées TELLES QUELLES — ni supprimées (pas de
+  régression démo silencieuse), ni transcrites au moteur (elles n'ont pas de règle R associée).
+  Si elles doivent devenir normatives, c'est un bloc de spec à part — décision PO.
 
 
 ## 6. Écarts de NAVIGATION (audit 2026-08-08 — préalable bloc WD, R432–R438)

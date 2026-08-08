@@ -7,7 +7,7 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
 
 ## État (2026-08-08, tranche C6)
 
-- **42 types SCHÉMATISÉS (vague 1 mros.*/trip.*/training.* comprise, 2026-08-08)** — anciennement : 27 types SCHÉMATISÉS (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
+- **50 types SCHÉMATISÉS (Bloc 62 offboarding-moteur compris : WORKFLOW_STARTED, TRANSITION_FIRED, VISA_APPOSE, GUARD_BLOCKED, GUARD_WARNING, WORKFLOW_COMPLETED, CHECKLIST_ITEM_CHECKED, PARAM_CHANGED — 2026-08-08)** — anciennement : 42 (vague 1 mros.*/trip.*/training.*), avant 27 (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
   ES-8 (`tx.flux.importee`, `kyc.validated`, `personne.pep.declare/leve`), bloc WD
   (`wd.wir.importe/edite/ratifie`), ingestion de listes (`liste.*`), MROS (`mros.goaml.soumis`,
   `mros.chrono.alerte`), gouvernance O (`olivia.curseur.change`), et la tranche C6 :
