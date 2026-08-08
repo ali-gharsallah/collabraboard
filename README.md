@@ -1,7 +1,7 @@
 # Olive MVP — production-ready, minimal, scalable
 
 <!-- CANON-STAMP:START (généré par tools/canon-master — NE PAS éditer) -->
-> **Catalogue faisant foi : [`docs/CANON-MASTER.md`](docs/CANON-MASTER.md) — R1–R446, 115 artefacts, 110 familles.**
+> **Catalogue faisant foi : [`docs/CANON-MASTER.md`](docs/CANON-MASTER.md) — R1–R466, 118 artefacts, 110 familles.**
 > Généré depuis le repo + gaté CI (porte 3c). Protocole de synchro claude.ai : [`docs/SYNC-CLAUDE-AI.md`](docs/SYNC-CLAUDE-AI.md).
 <!-- CANON-STAMP:END -->
 

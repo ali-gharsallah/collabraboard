@@ -2,18 +2,18 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-08 · commit `271c98e`.** Ce document se périme visiblement :
+> **Généré le 2026-08-08 · commit `b6b38c3`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-**29 anomalie(s) à traiter.**
+**28 anomalie(s) à traiter.**
 
 - **Doublons de numéro à titres divergents** : 0
 - **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 1
   - spec/SPEC-I18N.md (R29, R323, R324)
-- **Numéros R absents dans [1..446]** (plafond = sommet de l'amas contigu, hors réserves) : 27 — R405–R431
+- **Numéros R absents dans [1..466]** (plafond = sommet de l'amas contigu, hors réserves) : 26 — R405–R430
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -55,16 +55,37 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 | R436 | R443 | Bloc 62 — checklists tenant versionnées | OF-09 |
 | R437 | R444 | Bloc 62 — clôturé rejouable + rétention | OF-10..11 |
 | R438 | R445 | Bloc 62 — pop-up d'engagement paramétrage | OF-13 |
+| R439 | R446 | Bloc 63 — demande de business trip = workflow du moteur | BT-01..03, BT-09 |
+| R440 | R447 | Bloc 63 — guards pré-départ, sévérités tenant | BT-04..08, BT-12 |
+| R441 | R448 | Bloc 63 — check pré-voyage figé avec version de matrice | BT-06..07, BT-14 |
+| R442 | R449 | Bloc 63 — quotas jours bancables + overrides RM | BT-05, BT-15 |
+| R443 | R450 | Bloc 63 — certificat de trip (clôture du voyage) | BT-10..12 |
+| R444 | R451 | Bloc 63 — croisement formation × activité (MOD-43 fait foi) | BT-04 |
+| R445 | R452 | Bloc 63 — §BusinessTrip R-Q + pop-up généralisé (R445 repo) | BT-13 |
+| R458 | R465 | Bloc 63 — prospect né en voyage (ajout d'audit) | BT-16 |
+| R446 | R453 | Bloc 64 — matrice cross-border = PORT versionné (extension R293) | XB-01..02, XB-14 |
+| R447 | R454 | Bloc 64 — actes cross-border distants (2e surface R294 étendue) | XB-03..04 |
+| R448 | R455 | Bloc 64 — check pré-acte embarqué (MKT/ADVICE/ORDER, R295) | XB-05 |
+| R449 | R456 | Bloc 64 — registre reverse solicitation (objet de preuve) | XB-06..07 |
+| R450 | R457 | Bloc 64 — localisation temporaire prime le domicile | XB-08 |
+| R451 | R458 | Bloc 64 — certification par juridiction (codes XB-<pays>, MOD-43) | XB-09 |
+| R452 | R459 | Bloc 64 — analyse d'impact sur changement de matrice | XB-10 |
+| R453 | R460 | Bloc 64 — exposition cross-border = projection consolidée | XB-11 |
+| R454 | R461 | Bloc 64 — régime par entité de booking | XB-12 |
+| R455 | R462 | Bloc 64 — §CrossBorder R-Q + pop-up (R445 repo généralisé) | XB-13 |
+| R456 | R463 | Bloc 64 — [OLIVIA GELÉE] briefing pack pré-voyage | — |
+| R457 | R464 | Bloc 64 — [OLIVIA GELÉE] rapprochement certificat de trip | — |
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-115 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+118 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
 | Règles (repo) | Domaine / titre | Statut | Familles | Suites de test |
 |---------------|-----------------|--------|----------|----------------|
 | R1–R52 | ADR-14 — Implémentation de référence du moteur de workflow | PROPOSÉ | — | — |
+| R1, R13, R15, R59, R222–R238, R293–R295, R431, R438–R466 | AUDIT 08.08.2026 — Blocs 63 & 64 vs existant (démo + catalogue) | PROPOSÉ | BT | fat-vague14.e2e-spec.ts |
 | R432–R438 | Bloc 62 · Sortie de relation (Offboarding) | RATIFIÉ | OF | kyc-service.spec.ts, fat-canon-derniers.e2e-spec.ts, fat-offboarding.e2e-spec.ts, fat-solde4-i18n.e2e-spec.ts |
 | R1, R7, R13, R29, R39, R42, R48–R49, R66, R68, R177–R179, R267–R279 | ═══ VERDICT ÉTAPE 0 (Claude Code, 2026-07-27) — canon reçu d'Ali, enregistré tel quel ci-dessous ═══ | PROPOSÉ | CC, HO, LC, LS, OL, RV | fat-canon-anciens.e2e-spec.ts, fat-coc.e2e-spec.ts, fat-degel-v7.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts |
 | R1–R51, R68–R70, R73, R79–R80, R109–R115, R167–R169, R224, R255, R257, R264–R265, R269–R270, R272, R274, R276, R279, R282–R283, R285–R287, R290, R293–R323 | O-Live — CANON DU DÉGEL COMPLET (Vagues 1–9) + état du développement restant | RATIFIÉ | AS, AU, BD, BL, CC, CY, LC, LE, MB, OL, OP, PA, PC, RW, SB, SO, SY, TF, VE, VR, WB | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
@@ -129,12 +150,14 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R7, R36, R138, R171–R173, R186–R188 | language: fr | PROPOSÉ | — | — |
 | R7, R93, R99, R125–R128 | language: fr | PROPOSÉ | — | — |
 | R7, R44, R105–R108 | language: fr | PROPOSÉ | — | — |
+| R446–R452, R465 | Bloc 63 · Business Trip (Déplacements RM & certificat de voyage) | RATIFIÉ | BT | fat-vague14.e2e-spec.ts |
 | R13, R15, R29, R39, R44, R48–R49, R328, R340–R377 | SPEC — AML Gap Wave 1 : blocs 50–56 (R340–R377 provisoires) | RATIFIÉ | CR, FT, GU, GV, IP, QO, SF | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts, fat-aml-btl.e2e-spec.ts |
 | R13, R39, R44, R201, R340–R403 | SPEC — AML Gap Wave 2 : blocs 57–61 (R378–R403 provisoires) | RATIFIÉ | AN, CB, IA, PF, TB, WC | annotation.wiring.spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-gap-2g.e2e-spec.ts, fat-aml-live.e2e-spec.ts |
 | R13, R15, R48–R49, R76, R89–R90, R104, R255, R266–R267, R270, R284–R287 | O-Live — Canon des DEUX DERNIERS ÉCARTS | RATIFIÉ | AS, AU, HO, OF, OL, PC, SO, UC | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R13, R15, R39, R48, R222, R230–R238 | language: fr | RATIFIÉ | FO | fat-vague13.e2e-spec.ts |
 | R13, R15, R29, R39, R48, R221–R230, R238 | language: fr | PROPOSÉ | BT | fat-vague14.e2e-spec.ts |
 | R13, R435 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R453–R464 | Bloc 64 · Cross-Border étendu (MOD-33 normatif) | RATIFIÉ | SW, XB | fat-swarm.e2e-spec.ts, util.ts, screens.test.tsx, fat-canon-derniers.e2e-spec.ts |
 | R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, FilterBar.test.tsx, test.mjs, test.mjs |
 | R29, R323–R324 | SPEC — I18N quadrilingue FR/EN/DE/AR (R323–R324, périmètre révisé) | RATIFIÉ | — | — |
 | R167–R169 | Catalogue O-Live — Amendement PROPOSÉ (R167 → R169) · Bloc 33 « Le core banking est un port » | RATIFIÉ | SY | core-sync.wiring.spec.ts |
