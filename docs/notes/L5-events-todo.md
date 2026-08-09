@@ -5,9 +5,9 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-09, après vague 9)
+## État (2026-08-09, après vague 10)
 
-- **248 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
+- **282 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
   noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
   +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
   TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
@@ -16,8 +16,10 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
   +18 vague 6 (personne.*), +17 Blocs 63/64 (trip.*/MATRIX_SYNCED/xb.*), +25 vague 7
   (ia.* 9 + islamic.* 9 + pms.* 7), +28 vague 8 (2026-08-09 : mobile.* 6 + olivia.* 6 +
   riskcase.* 6 + coffre.* 5 + ocr.* 5), +30 vague 9 (2026-08-09 : offboarding.* 5 +
-  onboarding.* 5 + oprisk.* 5 + regwatch.* 5 + ta.* 5 + tx.* 5).
-- **366 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
+  onboarding.* 5 + oprisk.* 5 + regwatch.* 5 + ta.* 5 + tx.* 5), +34 vague 10
+  (2026-08-09 : annotation.* 3 + core.* 4 + legal.* 3 + licence.* 3 + recherche.* 4 +
+  review.* 3 + sso.* 4 + workflow.def.* 3 + workload.* 3 + xb.* reliquat 4).
+- **332 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
   littéral émis manque OU si un type est à double statut. La SUR-capture reste assumée.
@@ -96,11 +98,22 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    = payload COMPLET du mouvement embarqué [inverse exact tracé], rapprochement,
    écart résolu) + `tx.*` (5 — R140–R143 : verdict/suspend même shape, revue humaine,
    sla signale jamais ne libère R39) — 30 schémas stricts.
-   RESTENT : familles courtes (core.*, recherche.*, sso.*, xb.* reliquat, annotation.*,
-   legal.*, licence.*, review.*, workflow.*, workload.*, builder.*, caviardage.*, crm.*,
-   divulgation.*, param.*, swift.*, transport.*, tuning.*, vendor.*, singletons…) et le
-   bloc SANS_POINT (~284 littéraux MAJUSCULES, gabarits inclus). Les 11 `cpsi.*` du
-   journal jumeau restent en attente par doctrine (sur-capture assumée).
+   **Vague 10 FAITE (2026-08-09)** : les familles à 3-4 types — `annotation.*` (R157),
+   `core.*` (sync R167 : quarantaine = fait, résolution humaine, refus de périmètre
+   jamais silencieux), `legal.*` (R312–R313 : la pièce GED d'abord, `rattachements` =
+   objet libre non figé), `licence.*` (R320 : J-60/J-30/expirée, MÊME payload, une
+   notification par état et par expiresAt), `recherche.*` (R148 : l'index jamais purgé
+   en silence, desync = fait d'audit), `review.*` (R283 : `profil` = le profil appliqué
+   FIGÉ dans l'événement R29, objet gouverné), `sso.*` (IM-03/04 : bascule
+   demandée/visée R13, vers en enum jwt|sso), `workflow.def.*` (R171 : la publication
+   porte sa mise en vigueur), `workload.*` (R183 : suggestion — la décision vous
+   appartient), `xb.*` reliquat (check tracé, dérogation demandée→visée = payload
+   REJOUÉ + visePar R13, ordre RS) — 34 schémas stricts.
+   RESTENT : familles à 1-2 types (builder.*, caviardage.*, crm.*, divulgation.*,
+   param.*, swift.*, transport.*, tuning.*, vendor.*, et ~19 singletons dont le
+   littéral suspect `fake-1` à instruire) et le bloc SANS_POINT (~284 littéraux
+   MAJUSCULES, gabarits inclus). Les 11 `cpsi.*` du journal jumeau restent en attente
+   par doctrine (sur-capture assumée).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
