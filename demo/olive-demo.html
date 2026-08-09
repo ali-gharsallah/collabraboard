@@ -17575,13 +17575,13 @@ var st1 = useState(""); var q = st1[0], setQ = st1[1];
 var st2 = useState(null); var sel = st2[0], setSel = st2[1];       // personne sélectionnée | { creer: nom }
 var st3 = useState([]); var roles = st3[0], setRoles = st3[1];     // codes cumulés
 var st4 = useState(null); var fait = st4[0], setFait = st4[1];     // résultat de l'attribution
-var svc = req("personne-lien.service");
-var TYPES = (function () { var s = new svc.PersonneLienService(fakeDb({ tenants: [{ id: "t1", settings: {} }] }), audit);
+var svc = window.OLIVE_REQ("personne-lien.service");
+var TYPES = (function () { var s = new svc.PersonneLienService(window.OLIVE_FAKEDB({ tenants: [{ id: "t1", settings: {} }] }), window.OLIVE_AUDIT);
 var out = null; s.typesDisponibles({ tenantId: "t1", userId: "ui", role: "CO" }).then(function (t) { out = t; });
 return out || { officiels: [], nonOfficiels: [] }; })();
 var st5 = useState(TYPES); var types = st5[0], setTypes = st5[1];
 useEffect(function () {
-var s = new svc.PersonneLienService(fakeDb({ tenants: [{ id: "t1", settings: {} }] }), audit);
+var s = new svc.PersonneLienService(window.OLIVE_FAKEDB({ tenants: [{ id: "t1", settings: {} }] }), window.OLIVE_AUDIT);
 s.typesDisponibles({ tenantId: "t1", userId: "ui", role: "CO" }).then(setTypes);
 }, []);
 var hits = q.trim().length >= 2 ? PERSONS_DATA.filter(function (p) {
@@ -17597,9 +17597,9 @@ background: on ? T.oliveSoft : T.surface, color: on ? T.olive700 : T.inkMid } },
 (on ? "✓ " : "") + t.label);
 };
 var attribuer = function () {
-var p = fakeDb({ tenants: [{ id: "t1", name: "GWB", settings: {} }],
+var p = window.OLIVE_FAKEDB({ tenants: [{ id: "t1", name: "GWB", settings: {} }],
 personnes: sel && sel.id ? [{ id: sel.id, tenantId: "t1", nom: sel.name, type: sel.kind === "entity" ? "MORALE" : "PHYSIQUE" }] : [] });
-var s = new svc.PersonneLienService(p, audit);
+var s = new svc.PersonneLienService(p, window.OLIVE_AUDIT);
 var CTX = { tenantId: "t1", userId: "i.vernet", role: "CO" };
 var nom = sel && sel.id ? sel.name : (sel && sel.creer) || q.trim();
 (async function () {
@@ -18351,11 +18351,11 @@ struct.roles.length,
 React.createElement(Badge, { text: mCount + " exigences", color: T.olive700, bg: T.oliveSoft }),
 overrideCount > 0 && React.createElement(Badge, { text: overrideCount + " surcharge(s)", color: T.violet, bg: T.violetSoft })),
 React.createElement("div", { style: { overflowX: "auto" } },
-React.createElement("table", { style: { borderCollapse: "collapse", width: "100%", fontSize: 11 } },
+React.createElement("table", { style: { borderCollapse: "collapse", tableLayout: "fixed", fontSize: 11 } },
 React.createElement("thead", null,
 React.createElement("tr", { style: { background: T.lineSoft } },
-React.createElement("th", { style: { textAlign: "left", padding: "8px 12px", color: T.inkSoft, fontWeight: 700, position: "sticky", left: 0, background: T.lineSoft, minWidth: 200 } }, "Document"),
-cols.map(function (col) { var acct = col === "Compte"; return (React.createElement("th", { key: col, style: { padding: "8px 6px", color: acct ? T.gold : T.inkSoft, fontWeight: 700, textAlign: "center", whiteSpace: "nowrap", borderLeft: acct ? "none" : "1px solid " + T.lineSoft, background: acct ? T.gold + "12" : "transparent" } }, col)); }))),
+React.createElement("th", { style: { textAlign: "left", padding: "8px 12px", color: T.inkSoft, fontWeight: 700, position: "sticky", left: 0, background: T.lineSoft, width: 220, minWidth: 220, maxWidth: 220 } }, "Document"),
+cols.map(function (col) { var acct = col === "Compte"; return (React.createElement("th", { key: col, style: { padding: "8px 6px", color: acct ? T.gold : T.inkSoft, fontWeight: 700, textAlign: "center", whiteSpace: "normal", overflowWrap: "break-word", width: 108, minWidth: 108, maxWidth: 108, borderLeft: acct ? "none" : "1px solid " + T.lineSoft, background: acct ? T.gold + "12" : "transparent" } }, col)); }))),
 React.createElement("tbody", null, DOC_LIST.map(function (doc) {
 return (React.createElement("tr", { key: doc, style: { borderTop: "1px solid " + T.lineSoft } },
 React.createElement("td", { style: { padding: "7px 12px", position: "sticky", left: 0, background: T.surface, whiteSpace: "nowrap" } },
@@ -30988,44 +30988,14 @@ background: role === r ? T.olive600 : T.surface, color: role === r ? "#fff" : T.
 }),
 React.createElement("span", { style: { fontSize: 10.5, color: T.inkSoft } },
 "11 sp\u00E9cimens FICTIFS \u00B7 4 clients \u00B7 7 types \u00B7 vrais services compil\u00E9s \u2014 rien n'est simul\u00E9.")),
-React.createElement("div", { style: card },
-React.createElement("div", { style: h6 }, "\u2699 Param\u00E9trage GED \u2014 R125 (le registre au travail) \u00B7 R110\u00B7R112\u00B7R139\u00B7R170"),
-React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 10 } },
-"Chaque \u00AB \u00E7a d\u00E9pend de la banque \u00BB est une cl\u00E9 tenant. Les services relisent le registre \u00C0 CHAQUE ACTE \u2014 touchez un r\u00F4le, relancez la recherche : l'effet est imm\u00E9diat."),
-(function () {
-var settings = monde.p._db.tenants[0].settings;
-var chip = function (label, on, onClick) {
-return React.createElement("button", { key: label, onClick: function () { onClick(); re(); },
-style: { padding: "3px 10px", borderRadius: 12, cursor: "pointer", marginRight: 5, fontSize: 10.5,
-fontWeight: on ? 800 : 400, border: "1.2px solid " + (on ? T.olive600 : T.line),
-background: on ? T.olive600 : "transparent", color: on ? "#fff" : T.inkMid } }, label);
-};
-return React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid " + T.line } },
-React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: T.ink, minWidth: 210 } },
-"gedInboxRoles \u2014 qui classe"),
-["RM", "CO", "CF"].map(function (r2) {
-return chip(r2, settings.gedInboxRoles.indexOf(r2) >= 0, function () {
-var i9 = settings.gedInboxRoles.indexOf(r2);
-if (i9 >= 0) settings.gedInboxRoles.splice(i9, 1); else settings.gedInboxRoles.push(r2);
-});
-})),
-settings.gedDocTypes.map(function (t9) {
-return React.createElement("div", { key: t9.code, style: { display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid " + T.line, flexWrap: "wrap" } },
-React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: T.ink, minWidth: 210 } }, t9.label),
-["RM", "CO", "CF"].map(function (r3) {
-return chip(r3, (t9.rolesAutorises || []).indexOf(r3) >= 0, function () {
-t9.rolesAutorises = t9.rolesAutorises || [];
-var i8 = t9.rolesAutorises.indexOf(r3);
-if (i8 >= 0) t9.rolesAutorises.splice(i8, 1); else t9.rolesAutorises.push(r3);
-});
-}),
-React.createElement("span", { style: { fontSize: 10, color: T.inkSoft, marginLeft: 6 } }, "r\u00E9tention (ans, R170) :"),
-React.createElement("input", { type: "number", value: t9.retentionAnnees == null ? "" : t9.retentionAnnees, min: 0,
-onChange: function (e9) { t9.retentionAnnees = e9.target.value === "" ? null : Number(e9.target.value); re(); },
-style: { width: 52, padding: "3px 6px", borderRadius: 6, border: "1.2px solid " + T.line, fontSize: 11 } }));
-}));
-})()),
+React.createElement("div", { style: Object.assign({}, card, { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }) },
+React.createElement("div", { style: { flex: 1, minWidth: 260 } },
+React.createElement("div", { style: h6 }, "\u2699 Param\u00E9trage GED \u2014 R125 (registre R-Q)"),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft } },
+"Le param\u00E9trage vit UNIQUEMENT dans Param\u00E9trage \u2192 GED \u2014 Param\u00E8tres (demande PO 09.08) : cet \u00E9cran LIT le registre \u00E0 chaque acte, il ne configure rien.")),
+React.createElement("button", { onClick: function () { if (window.OLIVE_NAVIGATE) window.OLIVE_NAVIGATE("admin", { admin: "gedparams" }); },
+style: { padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: T.olive600, color: "#fff", fontSize: 11.5, fontWeight: 800, whiteSpace: "nowrap" } },
+"Ouvrir GED \u2014 Param\u00E8tres")),
 React.createElement("div", { style: card },
 React.createElement("div", { style: h6 }, "\uD83D\uDCDA Inventaire \u2014 ", String(actifs.length), " ACTIF \u00B7 ",
 String(arrivee.length), " en arriv\u00E9e \u00B7 ", String(detruits.length), " d\u00E9truit \u00B7 coffre ",
@@ -32632,7 +32602,8 @@ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "rep
 })));
 }
 function CentralDashboardScreen({ user }) {
-const [dashTab, setDashTab] = useState("home");
+// Demande PO 09.08 : le dashboard sert le TRAVAIL DU JOUR — le cockpit du rôle est l'entrée.
+const [dashTab, setDashTab] = useState("cockpit");
 const [tasks, setTasks] = useState([
 { id: "T-101", label: "Compléter section SOF/SOW — Zhang Wei FO", owner: "S. Marchand", deadline: "2026-07-01", done: false },
 { id: "T-102", label: "Lever hit screening — Al-Maktoum SA", owner: "I. Vernet", deadline: "2026-07-05", done: false },
@@ -32663,54 +32634,66 @@ React.createElement(GlobalKpiPanel, null)));
 if (dashTab === "cockpit") {
 var role = (user && user.role) || "RM";
 var uname = (user && user.name) || "";
-var Sec = function (title, items, color) {
-return (React.createElement("div", { style: card },
-React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: color || T.olive700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 } }, title),
-items.length === 0 && React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, fontStyle: "italic" } }, "Rien \u00E0 traiter \u2014 \u00E0 jour."),
-items.slice(0, 6).map(function (it, i) {
-return (React.createElement("div", { key: i, style: { display: "flex", gap: 8, alignItems: "baseline", fontSize: 10.5, padding: "4px 0", borderBottom: "1px solid " + T.lineSoft } },
-React.createElement("span", { style: { fontWeight: 700, color: T.ink, flexShrink: 0 } }, it[0]),
-React.createElement("span", { style: { color: T.inkMid, flex: 1 } }, it[1]),
-it[2] && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: it[3] || T.amber, whiteSpace: "nowrap" } }, it[2])));
-}),
-items.length > 6 && React.createElement("div", { style: { fontSize: 9.5, color: T.inkSoft, marginTop: 4 } },
-"\u2026 et ",
-items.length - 6,
-" autre(s)")));
-};
 var isRm = ["RM", "ARM"].indexOf(role) >= 0;
 var isCo = ["CO", "CO_SR", "AML", "MLRO"].indexOf(role) >= 0;
-var secs = [];
+// Chaque section SAIT où mène le travail : titre et lignes sont des liens (demande PO 09.08).
+var defs = [];
 if (isRm) {
 var mine = CLIENTS.filter(function (c) { return c.rm === uname; });
 var scope = mine.length ? mine : CLIENTS.slice(0, 12);
 var scopeIds = scope.map(function (c) { return c.id; });
-secs.push(Sec("Mes dossiers KYC en cours", KYCS_DATA.filter(function (k) { return scopeIds.indexOf(k.clientId) >= 0 && k.status === "IN_PROGRESS"; }).map(function (k) { var c = clientById[k.clientId] || {}; return [c.name || k.clientId, k.code + " — " + (k.totalPct || 0) + "%", (k.totalPct || 0) < 50 ? "à compléter" : null, T.amber]; })));
-secs.push(Sec("Mes relances CRM", crmRelances().filter(function (x) { return x.r.rm === uname || !mine.length; }).map(function (x) { var c = clientById[x.r.clientId] || {}; return [c.name || "", x.r.nextStep, x.late ? ("J+" + x.days) : x.r.nextDate, x.late ? T.red : T.amber]; })));
-secs.push(Sec("Mes ordres de transfert", TRANSFER_ORDERS.filter(function (o) { return o.createdBy === uname || !mine.length; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, XFER_STATUS_META[o.status][0], o.status === "BLOCKED" ? T.red : o.status === "PENDING_APPROVAL" ? T.amber : T.green]; })));
-secs.push(Sec("Opportunités sur mon portefeuille", crmOpportunities().filter(function (o) { return !mine.length || o.c.rm === uname; }).map(function (o) { return [o.c.name, o.msg, o.act, T.olive700]; }), T.violet));
+defs.push({ titre: "Mes dossiers KYC en cours", ecran: "kyc", items: KYCS_DATA.filter(function (k) { return scopeIds.indexOf(k.clientId) >= 0 && k.status === "IN_PROGRESS"; }).map(function (k) { var c = clientById[k.clientId] || {}; return [c.name || k.clientId, k.code + " — " + (k.totalPct || 0) + "%", (k.totalPct || 0) < 50 ? "à compléter" : null, T.amber]; }) });
+defs.push({ titre: "Mes relances CRM", ecran: "crm2", items: crmRelances().filter(function (x) { return x.r.rm === uname || !mine.length; }).map(function (x) { var c = clientById[x.r.clientId] || {}; return [c.name || "", x.r.nextStep, x.late ? ("J+" + x.days) : x.r.nextDate, x.late ? T.red : T.amber]; }) });
+defs.push({ titre: "Mes ordres de transfert", ecran: "settlement", items: TRANSFER_ORDERS.filter(function (o) { return o.createdBy === uname || !mine.length; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, XFER_STATUS_META[o.status][0], o.status === "BLOCKED" ? T.red : o.status === "PENDING_APPROVAL" ? T.amber : T.green]; }) });
+defs.push({ titre: "Opportunités sur mon portefeuille", ecran: "prospection", couleur: T.violet, items: crmOpportunities().filter(function (o) { return !mine.length || o.c.rm === uname; }).map(function (o) { return [o.c.name, o.msg, o.act, T.olive700]; }) });
 }
 else if (isCo) {
-secs.push(Sec("Alertes AML à qualifier", AML_ALERTS.filter(function (a) { return a.status === "NEW"; }).slice(0, 20).map(function (a) { return [a.clientName || a.clientId, a.alertType, "NEW", T.red]; }), T.red));
-secs.push(Sec("Revues périodiques en retard", ACCOUNT_REVIEWS_DATA.filter(function (a) { return a.status === "OVERDUE"; }).map(function (a) { var c = clientById[a.clientId] || {}; return [c.name || a.clientId, a.trigger, "OVERDUE", T.red]; })));
-secs.push(Sec("Ordres en attente four-eyes", TRANSFER_ORDERS.filter(function (o) { return o.status === "PENDING_APPROVAL"; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, o.controls.verdict, o.controls.verdict === "WARN" ? T.amber : T.green]; })));
-secs.push(Sec("Suivi MROS", MROS_REPORTS.map(function (r) { var a = mrosAckAge(r); return [r.ref, r.clientName || "", a ? ("J+" + a.days + " — " + a.level) : r.status, a && a.level !== "OK" ? T.red : T.green]; }), T.violet));
+defs.push({ titre: "Alertes AML à qualifier", ecran: "aml", couleur: T.red, items: AML_ALERTS.filter(function (a) { return a.status === "NEW"; }).slice(0, 20).map(function (a) { return [a.clientName || a.clientId, a.alertType, "NEW", T.red]; }) });
+defs.push({ titre: "Revues périodiques en retard", ecran: "review", items: ACCOUNT_REVIEWS_DATA.filter(function (a) { return a.status === "OVERDUE"; }).map(function (a) { var c = clientById[a.clientId] || {}; return [c.name || a.clientId, a.trigger, "OVERDUE", T.red]; }) });
+defs.push({ titre: "Ordres en attente four-eyes", ecran: "settlement", items: TRANSFER_ORDERS.filter(function (o) { return o.status === "PENDING_APPROVAL"; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, o.controls.verdict, o.controls.verdict === "WARN" ? T.amber : T.green]; }) });
+defs.push({ titre: "Suivi MROS", ecran: "compliance", couleur: T.violet, items: MROS_REPORTS.map(function (r) { var a = mrosAckAge(r); return [r.ref, r.clientName || "", a ? ("J+" + a.days + " — " + a.level) : r.status, a && a.level !== "OK" ? T.red : T.green]; }) });
 }
 else {
 var rels = CLIENTS.map(regRelationRow);
 var nc = rels.filter(function (r) { return regFiche(r).verdict === "NON CONFORME"; });
-secs.push(Sec("Registre art. 7 — relations non conformes", nc.map(function (r) { return [r.c.name, r.wn.code + " · " + r.pct + "%", "NON CONFORME", T.red]; }), T.red));
-secs.push(Sec("Habilitations suspendues", STAFF_DATA.map(staffProfile).filter(function (x) { return x.suspended; }).map(function (x) { return [x.p.name, x.p.role + " — " + x.expired.map(function (c) { return c.code; }).join(", "), "SUSPENDU", T.red]; })));
-secs.push(Sec("Ordres bloqués & en attente", TRANSFER_ORDERS.filter(function (o) { return o.status !== "EXECUTED" && o.status !== "REJECTED"; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, XFER_STATUS_META[o.status][0], o.status === "BLOCKED" ? T.red : T.amber]; })));
-secs.push(Sec("Échéances réglementaires à venir", REG_DEADLINES.filter(function (d) { return !d.done; }).map(function (d) { return [d.date, d.label, d.org, T.olive700]; }), T.violet));
+defs.push({ titre: "Registre art. 7 — relations non conformes", ecran: "registre", couleur: T.red, items: nc.map(function (r) { return [r.c.name, r.wn.code + " · " + r.pct + "%", "NON CONFORME", T.red]; }) });
+defs.push({ titre: "Habilitations suspendues", ecran: "formations", items: STAFF_DATA.map(staffProfile).filter(function (x) { return x.suspended; }).map(function (x) { return [x.p.name, x.p.role + " — " + x.expired.map(function (c) { return c.code; }).join(", "), "SUSPENDU", T.red]; }) });
+defs.push({ titre: "Ordres bloqués & en attente", ecran: "settlement", items: TRANSFER_ORDERS.filter(function (o) { return o.status !== "EXECUTED" && o.status !== "REJECTED"; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, XFER_STATUS_META[o.status][0], o.status === "BLOCKED" ? T.red : T.amber]; }) });
+defs.push({ titre: "Échéances réglementaires à venir", ecran: "reporting", couleur: T.violet, items: REG_DEADLINES.filter(function (d) { return !d.done; }).map(function (d) { return [d.date, d.label, d.org, T.olive700]; }) });
 }
+// Priorisation : le CRITIQUE d'abord dans chaque liste — le reste garde son ordre.
+defs.forEach(function (d) { d.items = d.items.filter(function (x) { return x[3] === T.red; }).concat(d.items.filter(function (x) { return x[3] !== T.red; })); });
+var total = defs.reduce(function (a, d) { return a + d.items.length; }, 0);
+var critiques = defs.reduce(function (a, d) { return a + d.items.filter(function (x) { return x[3] === T.red; }).length; }, 0);
+var ouvre = function (ecran) { return function () { if (window.OLIVE_NAVIGATE) window.OLIVE_NAVIGATE(ecran, {}); }; };
+var SecEl = function (d, di) {
+return (React.createElement("div", { key: di, style: card },
+React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 } },
+React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: d.couleur || T.olive700, textTransform: "uppercase", letterSpacing: 0.5 } }, d.titre),
+React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: d.items.length ? T.ink : T.green, fontFamily: "monospace" } }, String(d.items.length)),
+React.createElement("button", { onClick: ouvre(d.ecran), style: { marginLeft: "auto", padding: "3px 10px", borderRadius: 7, border: "1px solid " + T.line, background: "transparent", color: T.olive700, fontSize: 10, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" } }, "Ouvrir \u2192")),
+d.items.length === 0 && React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, fontStyle: "italic" } }, "Rien \u00E0 traiter \u2014 \u00E0 jour."),
+d.items.slice(0, 6).map(function (it, i) {
+return (React.createElement("div", { key: i, onClick: ouvre(d.ecran), title: "Ouvrir " + d.titre,
+onMouseEnter: function (e) { e.currentTarget.style.background = T.oliveSoft; },
+onMouseLeave: function (e) { e.currentTarget.style.background = "transparent"; },
+style: { display: "flex", gap: 8, alignItems: "baseline", fontSize: 10.5, padding: "4px 6px", margin: "0 -6px", borderRadius: 6, borderBottom: "1px solid " + T.lineSoft, cursor: "pointer" } },
+React.createElement("span", { style: { fontWeight: 700, color: T.ink, flexShrink: 0 } }, it[0]),
+React.createElement("span", { style: { color: T.inkMid, flex: 1 } }, it[1]),
+it[2] && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: it[3] || T.amber, whiteSpace: "nowrap" } }, it[2])));
+}),
+d.items.length > 6 && React.createElement("button", { onClick: ouvre(d.ecran), style: { fontSize: 9.5, color: T.olive700, marginTop: 4, border: "none", background: "transparent", cursor: "pointer", padding: 0, fontWeight: 700 } },
+"\u2026 et " + (d.items.length - 6) + " autre(s) \u2014 tout voir \u2192")));
+};
 return (React.createElement("div", null,
 dashTabBar("cockpit"),
-React.createElement("div", { style: { marginBottom: 12, fontSize: 11.5, color: T.inkSoft } },
-"Cockpit adapt\u00E9 au r\u00F4le ",
-React.createElement("strong", { style: { color: T.ink } }, (user && user.roleLabel) || role),
-" \u2014 les listes de travail du jour, d\u00E9riv\u00E9es en direct des modules."),
-React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, secs)));
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: critiques ? T.redSoft : T.oliveSoft, border: "1px solid " + (critiques ? T.red : T.olive600), borderRadius: 12, padding: "10px 16px", marginBottom: 14 } },
+React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: critiques ? T.red : T.olive700 } },
+"Aujourd'hui \u2014 " + total + " \u00E9l\u00E9ment(s) \u00E0 traiter" + (critiques ? " \u00B7 dont " + critiques + " critique(s)" : "")),
+React.createElement("span", { style: { fontSize: 11, color: T.inkMid } },
+"Cockpit ", React.createElement("strong", { style: { color: T.ink } }, (user && user.roleLabel) || role),
+" \u2014 chaque ligne ouvre l'\u00E9cran de travail.")),
+React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, defs.map(SecEl))));
 }
 const W = (label, value, sub, color) => (React.createElement("div", { style: card },
 React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: color, fontFamily: "monospace" } }, value),
@@ -32728,7 +32711,11 @@ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "rep
 ["▦", "Dérives ≥10%", CLIENTS.filter(function (c) { return pmsPortfolio(c).drift >= 10; }).length, "PMS"],
 ["🎓", "Habilitations échues", STAFF_DATA.map(staffProfile).filter(function (x) { return x.suspended; }).length, "suspensions"],
 ].map(function (x, i) {
-return (React.createElement("div", { key: i, style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 12, padding: "12px 14px", display: "flex", gap: 10, alignItems: "center" } },
+var cibles = ["kyc", "screening", "aml", "settlement", "crm2", "review", "invest", "formations"];
+return (React.createElement("div", { key: i, onClick: function () { if (window.OLIVE_NAVIGATE) window.OLIVE_NAVIGATE(cibles[i], {}); },
+onMouseEnter: function (e) { e.currentTarget.style.background = T.oliveSoft; },
+onMouseLeave: function (e) { e.currentTarget.style.background = T.surface; },
+title: "Ouvrir l'\u00E9cran", style: { background: T.surface, border: "1px solid " + T.line, borderRadius: 12, padding: "12px 14px", display: "flex", gap: 10, alignItems: "center", cursor: "pointer" } },
 React.createElement("span", { style: { fontSize: 17 } }, x[0]),
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: x[2] > 0 ? T.ink : T.green } }, x[2]),
@@ -34675,6 +34662,7 @@ var m = { exports: {} }; cache[name] = m.exports;
 registry[name](m, m.exports, req); cache[name] = m.exports; return m.exports;
 }
 var OLIVE = { define: function (name, fn) { registry[name] = fn; }, require: req };
+window.OLIVE_REQ = req;   // le popup « Lier une personne » (écran Personnes) vit HORS de cette portée
 OLIVE.define("./rules/screening-qualification", function (module, exports, require) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -38354,6 +38342,7 @@ p.$transaction = function (fn) { return fn(p); };
 return p;
 }
 var audit = { entries: [], log: function (t, u, a, g) { audit.entries.push({ action: a, target: g }); return Promise.resolve(); } };
+window.OLIVE_AUDIT = audit; window.OLIVE_FAKEDB = fakeDb;   // consommés par LierPersonnePopup (hors portée)
 function evts(p, type) { return p._db.events.filter(function (e) { return e.type === type; }); }
 function ck(label, ok) { return { label: label, ok: !!ok }; }
 // ── SCÉNARIOS : chacun exécute le VRAI service et re-vérifie son Gherkin ──
@@ -44233,7 +44222,9 @@ add(p.name, "Prospect \u00B7 " + (p.typeLabel || ""), "prospect_onboard", {});
 return out.slice(0, 8);
 }
 function OliveNavV2() {
-var s0 = useState(true); var actif = s0[0], setActif = s0[1];
+// Demande PO 09.08 : le bandeau horizontal dupliquait la sidebar — navigation CLASSIQUE par
+// défaut ; le bandeau + palette restent opt-in (bouton ✶ en bas à droite, ou ⌘K → Entrée).
+var s0 = useState(false); var actif = s0[0], setActif = s0[1];
 var s1 = useState(null); var ouvert = s1[0], setOuvert = s1[1];
 var s2 = useState(false); var pal = s2[0], setPal = s2[1];
 var s3 = useState(""); var q = s3[0], setQ = s3[1];
@@ -44904,7 +44895,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-08.14 \u00B7 \u00E9vol BT compl\u00E8te + rejeu \u00E0 date (R48) \u00B7 catalogue 165 sch\u00E9matis\u00E9s"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.15 \u00B7 remarques PO : lier-personne r\u00E9par\u00E9 \u00B7 matrice homog\u00E8ne \u00B7 nav classique \u00B7 param GED centralis\u00E9 \u00B7 cockpit du jour"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -45090,7 +45081,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-08.14 \u00B7 \u00E9vol BT compl\u00E8te + rejeu \u00E0 date (R48) \u00B7 catalogue 165 sch\u00E9matis\u00E9s"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.15 \u00B7 remarques PO : lier-personne r\u00E9par\u00E9 \u00B7 matrice homog\u00E8ne \u00B7 nav classique \u00B7 param GED centralis\u00E9 \u00B7 cockpit du jour"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
