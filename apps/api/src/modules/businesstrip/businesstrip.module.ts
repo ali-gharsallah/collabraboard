@@ -7,6 +7,8 @@ import { loadSettings } from "../../common/tenant-settings";
 import { fusionProfonde, modifierParametreGouverne, resoudreParametresGouvernes } from "../../common/param-engagement";
 import { evaluerXb } from "../crossborder/xb.module";
 import { Tx } from "../../common/tx";
+import { ReviewsModule } from "../reviews/reviews.module";            // Bloc 65 Volet B (R474)
+import { DecisionUnifieeService } from "../reviews/decision-unifiee.service";
 
 // ── Bloc 63 (repo R446–R452 + R465) — défauts du registre §BusinessTrip (R452).
 //    Le delta ne s'active QUE si le tenant a posé `settings.businessTrip` (ou un
@@ -598,9 +600,16 @@ export class BusinessTripController {
 }
 
 @Module({
+  imports: [ReviewsModule],                                           // Bloc 65 Volet B : la barre de décision (R474)
   controllers: [BusinessTripController],
   providers: [
-    { provide: BusinessTripService, useFactory: (p: PrismaService, a: AuditService) => new BusinessTripService(p, a), inject: [PrismaService, AuditService] }],
+    { provide: BusinessTripService,
+      useFactory: (p: PrismaService, a: AuditService, du: DecisionUnifieeService) => {
+        const svc = new BusinessTripService(p, a);
+        du.brancherBusinessTrip(svc);   // R474 : Valider sur BUSINESS_TRIP = bt.viser — aucun fork
+        return svc;
+      },
+      inject: [PrismaService, AuditService, DecisionUnifieeService] }],
   exports: [BusinessTripService],
 })
 export class BusinessTripModule {}

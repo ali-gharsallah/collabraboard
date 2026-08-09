@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+body{margin:0;background:#E9EBE5}
+a{color:#4A6B28;text-decoration:none}
+a:hover{color:#5A7D3A}
+</style>
+</helmet>
+
+<div style="padding:56px;display:flex;flex-direction:column;gap:64px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#171C22;width:max-content">
+
+<!-- ══ 05 SCREENING ═══════════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 05</div>
+    <div style="font-size:22px;font-weight:600">Screening — qualification d'un hit</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Le hit est présenté comme une comparaison champ à champ, pas comme un verdict. Ce qui concorde et ce qui diverge est visible d'un coup d'œil, et la décision porte sur une personne, pas sur un dossier.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="surveillance" user="Sofia Berger" role="Compliance Officer" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div style="width:44px;height:44px;border-radius:11px;background:#FAE9E6;display:flex;align-items:center;justify-content:center;font-size:17px;color:#A63A2D">⌖</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="font-size:17px;font-weight:600">Hit sanctions — Meridian Trust Ltd</div>
+            <span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:5px;padding:3px 8px">À QUALIFIER</span>
+          </div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">Personne : Andrei Volkov · rôle UBO · liste UE consolidée · détecté il y a 2 h</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Historique des screenings</div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px">
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;padding:11px 20px;background:#FBFCF9;border-bottom:1px solid #EDF0E9;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:#5C6655">
+              <div>Attribut</div><div>Dossier O-Live</div><div>Liste source</div><div style="text-align:right">Concordance</div>
+            </div>
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;align-items:center;padding:13px 20px;border-bottom:1px solid #F2F4EE;font-size:13px"><div style="color:#646E5E">Nom complet</div><div style="font-weight:500">Andrei Volkov</div><div style="font-weight:500">Andrey Volkov</div><div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:4px;padding:2px 7px">92 %</span></div></div>
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;align-items:center;padding:13px 20px;border-bottom:1px solid #F2F4EE;font-size:13px;background:#FDF7F5"><div style="color:#646E5E">Date de naissance</div><div style="font-weight:500">14.06.1971</div><div style="font-weight:500;color:#A63A2D">03.11.1967</div><div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">DIVERGE</span></div></div>
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;align-items:center;padding:13px 20px;border-bottom:1px solid #F2F4EE;font-size:13px"><div style="color:#646E5E">Nationalité</div><div style="font-weight:500">Fédération de Russie</div><div style="font-weight:500">Fédération de Russie</div><div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:4px;padding:2px 7px">EXACT</span></div></div>
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;align-items:center;padding:13px 20px;border-bottom:1px solid #F2F4EE;font-size:13px;background:#FDF7F5"><div style="color:#646E5E">Lieu de naissance</div><div style="font-weight:500">Saint-Pétersbourg</div><div style="font-weight:500;color:#A63A2D">Moscou</div><div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">DIVERGE</span></div></div>
+            <div style="display:grid;grid-template-columns:180px 1fr 1fr 92px;align-items:center;padding:13px 20px;font-size:13px"><div style="color:#646E5E">Pièce d'identité</div><div style="font-weight:500">Passeport 71‑xxxx‑4402</div><div style="color:#646E5E">non renseignée</div><div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#4A5740;background:#F0F3EB;border-radius:4px;padding:2px 7px">N/A</span></div></div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:9px">Mesure listée</div>
+            <div style="font-size:12.5px;line-height:1.65;color:#4A5740;max-width:760px;text-wrap:pretty">Gel des avoirs et interdiction de mise à disposition de fonds — régime UE relatif aux actions compromettant l'intégrité territoriale de l'Ukraine. Inscription du 08.04.2022, révisée le 15.01.2026.</div>
+            <div style="display:flex;gap:22px;margin-top:15px">
+              <div><div style="font-size:11px;color:#646E5E">Liste</div><div style="font-size:13px;font-weight:600;margin-top:3px">UE consolidée</div></div>
+              <div><div style="font-size:11px;color:#646E5E">Version</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:3px">2026‑07‑31</div></div>
+              <div><div style="font-size:11px;color:#646E5E">Autres listes</div><div style="font-size:13px;margin-top:3px">OFAC : absent · SECO : absent</div></div>
+            </div>
+          </div>
+
+          <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:11px">Où cette personne intervient</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:11px 14px"><div style="flex:1;font-size:13px"><b>Meridian Trust Ltd</b> · UBO · 55 %</div><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:5px;padding:3px 8px">DOSSIER BLOQUÉ</span></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:11px 14px"><div style="flex:1;font-size:13px"><b>Volkov Family Foundation</b> · fondateur</div><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">REVUE ANTICIPÉE</span></div>
+            </div>
+            <div style="font-size:11.5px;color:#646E5E;margin-top:12px;line-height:1.6;text-wrap:pretty">Une seule qualification vaut pour la personne : elle se propage aux deux dossiers par événement, sans double saisie.</div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:24px 22px;display:flex;flex-direction:column;gap:18px;overflow:hidden">
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:4px">Qualifier le hit</div><div style="font-size:11.5px;color:#646E5E;line-height:1.5">Deux divergences sur cinq attributs. La décision engage la banque.</div></div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="border:1px solid #DCE1D6;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #C3CBBA"></div><div><div style="font-size:13px;font-weight:500">Homonyme — écarter</div><div style="font-size:11px;color:#646E5E;margin-top:2px">Motif obligatoire</div></div></div>
+            <div style="border:1px solid #DCE1D6;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #C3CBBA"></div><div><div style="font-size:13px;font-weight:500">Correspondance confirmée</div><div style="font-size:11px;color:#646E5E;margin-top:2px">Gel et communication immédiats</div></div></div>
+            <div style="border:1.5px solid #4A6B28;background:#F5F8EF;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:4.5px solid #4A6B28;background:#FFFFFF;box-sizing:border-box"></div><div><div style="font-size:13px;font-weight:600">Demander une pièce complémentaire</div><div style="font-size:11px;color:#4A5740;margin-top:2px">Dossier maintenu bloqué</div></div></div>
+          </div>
+          <div>
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:7px">Motif <span style="color:#A63A2D">*</span></div>
+            <div style="border:1px solid #DCE1D6;border-radius:9px;padding:12px 13px;font-size:12.5px;color:#3F4A38;line-height:1.55;min-height:70px">Écart de 4 ans sur la date de naissance et lieu de naissance différent. Copie certifiée du passeport demandée avant qualification définitive.</div>
+          </div>
+          <div style="background:#FBFCF9;border:1px solid #E7EBE1;border-radius:10px;padding:13px">
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:8px">Effets</div>
+            <div style="font-size:11.5px;color:#4A5740;line-height:1.7">Dossier Meridian Trust maintenu bloqué<br />Tâche créée pour le gestionnaire<br />Re-screening automatique à réception</div>
+          </div>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:9px">
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:9px;padding:12px;text-align:center;font-size:13px;font-weight:600">Enregistrer la qualification</div>
+            <div style="text-align:center;font-size:11px;color:#646E5E">Second regard MLRO requis sur toute correspondance confirmée</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 06 ACCOUNT REVIEW ══════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 06</div>
+    <div style="font-size:22px;font-weight:600">Revue périodique</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">La revue n'est pas un questionnaire à refaire : l'écran montre ce qui a changé depuis la dernière validation et ne demande de confirmer que cela. Les dossiers d'un même groupe se traitent ensemble.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="revue" user="Camille Morel" role="Relationship Manager" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="font-size:17px;font-weight:600">Groupe Delacroix — revue groupée</div>
+            <span style="font-size:10.5px;font-weight:600;color:#3F4A38;background:#F0F3EB;border-radius:5px;padding:3px 8px">4 DOSSIERS</span>
+          </div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">Dernière validation : 22.09.2025 · échéance 22.09.2026 · cycle annuel (risque élevé)</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:8px">
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Comparer à 2025</div>
+          <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 15px;font-size:12.5px;font-weight:500">Transmettre pour visa</div>
+        </div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr)">
+        <div style="border-right:1px solid #E2E6DD;background:#FBFCF9;padding:20px 18px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase;padding-bottom:4px">Dossiers du groupe</div>
+          <div style="background:#FFFFFF;border:1px solid #D6E0C6;border-radius:10px;padding:13px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.04)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:600">Delacroix &amp; Fils SA</div><span style="font-size:10px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:4px;padding:2px 6px">3 ÉCARTS</span></div><div style="font-size:11px;color:#646E5E;margin-top:3px">Personne morale · Genève</div></div>
+          <div style="border:1px solid #E7EBE1;border-radius:10px;padding:13px 14px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:500">Pierre Delacroix</div><span style="font-size:10px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:4px;padding:2px 6px">RAS</span></div><div style="font-size:11px;color:#646E5E;margin-top:3px">Personne physique · UBO 60 %</div></div>
+          <div style="border:1px solid #E7EBE1;border-radius:10px;padding:13px 14px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:500">Hélène Delacroix</div><span style="font-size:10px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:4px;padding:2px 6px">1 ÉCART</span></div><div style="font-size:11px;color:#646E5E;margin-top:3px">Personne physique · UBO 40 %</div></div>
+          <div style="border:1px solid #E7EBE1;border-radius:10px;padding:13px 14px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:500">Fondation Delacroix</div><span style="font-size:10px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:4px;padding:2px 6px">RAS</span></div><div style="font-size:11px;color:#646E5E;margin-top:3px">Fondation · Vaud</div></div>
+          <div style="margin-top:auto;background:#FFFFFF;border:1px solid #E7EBE1;border-radius:10px;padding:13px"><div style="font-size:11.5px;color:#646E5E;margin-bottom:6px">Effort évité</div><div style="font-size:12.5px;line-height:1.55;color:#3F4A38">28 des 32 sections sont inchangées et reportées automatiquement, avec leur preuve d'origine.</div></div>
+        </div>
+
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:baseline;gap:12px"><div style="font-size:16px;font-weight:600">Ce qui a changé depuis la dernière revue</div><div style="font-size:12px;color:#646E5E">4 écarts sur 32 sections</div></div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #C44536;border-radius:11px;padding:17px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><div style="font-size:13.5px;font-weight:600">Flux transactionnels hors profil</div><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:5px;padding:3px 8px">À TRAITER</span></div>
+            <div style="font-size:12.5px;line-height:1.6;color:#4A5740;max-width:760px">Le volume sortant a triplé au 2ᵉ trimestre vers une contrepartie absente du profil déclaré en 2025. Une alerte AML est ouverte sur ce point.</div>
+            <div style="display:flex;gap:9px;margin-top:12px"><div style="border:1px solid #DCE1D6;border-radius:8px;padding:7px 13px;font-size:12px;color:#3F4A38">Ouvrir l'alerte liée</div><div style="border:1px solid #DCE1D6;border-radius:8px;padding:7px 13px;font-size:12px;color:#3F4A38">Mettre à jour le profil de flux</div></div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #D99A2B;border-radius:11px;padding:17px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><div style="font-size:13.5px;font-weight:600">Nouvelle activité déclarée</div><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">À CONFIRMER</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12.5px">
+              <div><div style="font-size:11px;color:#646E5E;margin-bottom:4px">Au dossier — 2025</div><div style="color:#4A5740">Négoce de matériel médical, Suisse et UE</div></div>
+              <div><div style="font-size:11px;color:#646E5E;margin-bottom:4px">Constaté — 2026</div><div style="color:#8A6212;font-weight:500">Ajout d'une activité d'import depuis les Émirats</div></div>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #D99A2B;border-radius:11px;padding:17px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><div style="font-size:13.5px;font-weight:600">Pièce d'identité expirée — Hélène Delacroix</div><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">À RENOUVELER</span></div>
+            <div style="font-size:12.5px;line-height:1.6;color:#4A5740">Passeport échu le 11.05.2026. Détecté par le contrôle de validité documentaire, pas par la revue elle-même.</div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #7BA042;border-radius:11px;padding:17px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><div style="font-size:13.5px;font-weight:600">Changement d'adresse — siège social</div><span style="font-size:10.5px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:5px;padding:3px 8px">DÉJÀ TRAITÉ</span></div>
+            <div style="font-size:12.5px;line-height:1.6;color:#4A5740">Traité en mars par un événement de changement de circonstances et propagé aux 4 dossiers. Aucune action requise ici.</div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;align-items:center;gap:12px;border-top:1px solid #E7EBE1;padding-top:15px">
+            <div style="font-size:12.5px;color:#646E5E">2 écarts restent à traiter avant transmission</div>
+            <div style="flex:1"></div>
+            <div style="border:1px solid #DCE1D6;border-radius:8px;padding:9px 14px;font-size:12.5px;color:#3F4A38">Reporter les 28 sections inchangées</div>
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:500">Enregistrer</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 07 CHANGE OF CIRCUMSTANCES ═════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 07</div>
+    <div style="font-size:22px;font-weight:600">Changement de circonstances</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Une personne est unique dans le système. L'écran montre l'onde de propagation avant de la déclencher : quels dossiers sont touchés, quelles tâches naissent, ce qui reste inchangé.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="kyc" user="Camille Morel" role="Relationship Manager" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div style="width:44px;height:44px;border-radius:50%;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5740">HV</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="font-size:17px;font-weight:600">Henrik Vallon</div><span style="font-size:10.5px;font-weight:600;color:#3F4A38;background:#F0F3EB;border-radius:5px;padding:3px 8px">PERSONNE UNIQUE</span></div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">PER-01994 · Suède · référencé dans 3 dossiers · UBO et signataire</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Voir la fiche personne</div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 400px">
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase;margin-bottom:10px">Changement constaté</div>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center">
+              <div style="border:1px solid #E7EBE1;border-radius:10px;padding:14px 16px"><div style="font-size:11px;color:#646E5E;margin-bottom:5px">Au dossier depuis 2019</div><div style="font-size:13.5px;font-weight:500">Domicile fiscal : Suède</div><div style="font-size:11.5px;color:#646E5E;margin-top:5px">Attestation de résidence 2019</div></div>
+              <div style="font-size:20px;color:#5C6655">→</div>
+              <div style="border:1.5px solid #E3C07A;background:#FDFAF3;border-radius:10px;padding:14px 16px"><div style="font-size:11px;color:#8A6212;margin-bottom:5px">Déclaré le 07.08.2026</div><div style="font-size:13.5px;font-weight:600;color:#6B5220">Domicile fiscal : Émirats arabes unis</div><div style="font-size:11.5px;color:#8A6212;margin-top:5px">Certificat de résidence à recevoir</div></div>
+            </div>
+            <div style="font-size:12px;color:#646E5E;margin-top:14px;line-height:1.6;text-wrap:pretty">Matérialité évaluée <b style="color:#8A6212">élevée</b> par le moteur : un changement de juridiction fiscale touche l'analyse cross-border, le profil de risque et la documentation fiscale.</div>
+          </div>
+
+          <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px;display:flex;flex-direction:column;gap:13px">
+            <div style="display:flex;align-items:baseline;gap:12px"><div style="font-size:14px;font-weight:600">Propagation — 3 dossiers concernés</div><div style="font-size:11.5px;color:#646E5E">simulée, non encore appliquée</div></div>
+
+            <div style="border:1px solid #E7EBE1;border-radius:10px;padding:14px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:600">Vallon Nordic Holding AS</div><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">REVUE ANTICIPÉE</span></div>
+              <div style="font-size:11.5px;color:#646E5E;margin-top:6px;line-height:1.6">Sections rouvertes : fiscalité, cross-border, profil de risque · CDD → EDD probable · 2 tâches créées</div>
+            </div>
+            <div style="border:1px solid #E7EBE1;border-radius:10px;padding:14px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:600">Sablier Investments SA</div><span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">ONBOARDING IMPACTÉ</span></div>
+              <div style="font-size:11.5px;color:#646E5E;margin-top:6px;line-height:1.6">Dossier en cours d'ouverture — l'aiguillage sera recalculé avant décision · 1 tâche créée</div>
+            </div>
+            <div style="border:1px solid #E7EBE1;border-radius:10px;padding:14px 16px;opacity:0.7">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:600">Fondation Vallon</div><span style="font-size:10.5px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:5px;padding:3px 8px">SANS EFFET</span></div>
+              <div style="font-size:11.5px;color:#646E5E;margin-top:6px;line-height:1.6">Henrik Vallon y figure comme donateur, sans rôle de contrôle — aucune section rouverte</div>
+            </div>
+
+            <div style="margin-top:auto;font-size:11.5px;color:#646E5E;line-height:1.6;border-top:1px solid #EDF0E9;padding-top:13px;text-wrap:pretty">Rien ne se déclenche par effet de bord : l'application émet un événement, et les tâches, revues et recalculs en découlent. La liste ci-dessus est ce que cet événement produira, mot pour mot.</div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:24px 22px;display:flex;flex-direction:column;gap:18px;overflow:hidden">
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:4px">Appliquer le changement</div><div style="font-size:11.5px;color:#646E5E;line-height:1.5">L'événement est horodaté et nominatif. Il ne peut pas être supprimé, seulement corrigé par un nouvel événement.</div></div>
+
+          <div>
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:7px">Date d'effet</div>
+            <div style="border:1px solid #DCE1D6;border-radius:9px;padding:11px 13px;font-size:13px;color:#3F4A38">01.07.2026</div>
+            <div style="font-size:10.5px;color:#646E5E;margin-top:6px">Antérieure au constat — le rejeu d'audit distinguera les deux dates.</div>
+          </div>
+
+          <div>
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:7px">Source du constat</div>
+            <div style="border:1px solid #DCE1D6;border-radius:9px;padding:11px 13px;font-size:13px;color:#3F4A38">Entretien client du 07.08 ⌄</div>
+          </div>
+
+          <div style="background:#FBFCF9;border:1px solid #E7EBE1;border-radius:10px;padding:13px">
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:8px">Ce qui sera créé</div>
+            <div style="font-size:11.5px;color:#4A5740;line-height:1.75">1 événement de changement de circonstances<br />3 tâches réparties sur 2 gestionnaires<br />1 demande de document au client<br />2 recalculs de profil de risque</div>
+          </div>
+
+          <div style="background:#FDFAF3;border:1px solid #E7DCC2;border-radius:10px;padding:13px">
+            <div style="font-size:11.5px;color:#6B5220;line-height:1.6">Le dossier Sablier Investments est en cours d'ouverture : son aiguillage sera recalculé et pourra passer en EDD, ce qui rallongera le délai annoncé au client.</div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:9px">
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:9px;padding:12px;text-align:center;font-size:13px;font-weight:600">Émettre l'événement</div>
+            <div style="border:1px solid #DCE1D6;border-radius:9px;padding:11px;text-align:center;font-size:12.5px;color:#3F4A38">Enregistrer sans propager</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 08 DASHBOARD EXÉCUTIF ══════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 08</div>
+    <div style="font-size:22px;font-weight:600">Pilotage — direction</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Un tableau de bord qui montre où le travail est bloqué plutôt qu'une collection d'indicateurs. Chaque chiffre est cliquable jusqu'aux dossiers qui le composent.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="rapports" user="Marc Bregy" role="Directeur Compliance" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 60px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div style="font-size:16px;font-weight:600">Pilotage</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#646E5E">août 2026 · Banque Olive Suisse SA · Zurich et Genève</div>
+        <div style="flex:1"></div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:7px 13px;font-size:12.5px;color:#3F4A38">30 derniers jours ⌄</div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:7px 13px;font-size:12.5px;color:#3F4A38">Exporter</div>
+      </header>
+
+      <div style="flex:1;min-height:0;padding:24px 28px;display:flex;flex-direction:column;gap:18px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px"><div style="font-size:11.5px;color:#646E5E">Dossiers en cours</div><div style="font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;margin-top:7px">438</div><div style="font-size:11.5px;color:#646E5E;margin-top:5px">+12 sur 30 jours</div></div>
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px;border-left:3px solid #D99A2B"><div style="font-size:11.5px;color:#646E5E">Hors SLA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;margin-top:7px;color:#8A6212">37</div><div style="font-size:11.5px;color:#646E5E;margin-top:5px">8,4 % du stock</div></div>
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px"><div style="font-size:11.5px;color:#646E5E">Délai médian d'ouverture</div><div style="font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;margin-top:7px">11 j</div><div style="font-size:11.5px;color:#3C6B2E;margin-top:5px">−3 j depuis janvier</div></div>
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px;border-left:3px solid #C44536"><div style="font-size:11.5px;color:#646E5E">Alertes AML ouvertes</div><div style="font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;margin-top:7px;color:#A63A2D">23</div><div style="font-size:11.5px;color:#646E5E;margin-top:5px">dont 4 en escalade MLRO</div></div>
+        </div>
+
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px">
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+            <div><div style="font-size:14px;font-weight:600">Où le travail est bloqué</div><div style="font-size:11.5px;color:#646E5E;margin-top:3px">temps d'attente médian par étape du parcours</div></div>
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>Saisie gestionnaire</span><span style="font-family:'IBM Plex Mono',monospace;color:#4A5740">2,1 j</span></div><div style="height:9px;border-radius:5px;background:#EDF0E9;overflow:hidden"><div style="width:18%;height:100%;background:#7BA042"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>Attente de documents client</span><span style="font-family:'IBM Plex Mono',monospace;color:#8A6212;font-weight:600">6,8 j</span></div><div style="height:9px;border-radius:5px;background:#EDF0E9;overflow:hidden"><div style="width:58%;height:100%;background:#D99A2B"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>Visa Compliance</span><span style="font-family:'IBM Plex Mono',monospace;color:#A63A2D;font-weight:600">4,3 j</span></div><div style="height:9px;border-radius:5px;background:#EDF0E9;overflow:hidden"><div style="width:37%;height:100%;background:#C44536"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>Décision MLRO</span><span style="font-family:'IBM Plex Mono',monospace;color:#4A5740">1,4 j</span></div><div style="height:9px;border-radius:5px;background:#EDF0E9;overflow:hidden"><div style="width:12%;height:100%;background:#7BA042"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>Ouverture technique</span><span style="font-family:'IBM Plex Mono',monospace;color:#4A5740">0,6 j</span></div><div style="height:9px;border-radius:5px;background:#EDF0E9;overflow:hidden"><div style="width:5%;height:100%;background:#7BA042"></div></div></div>
+            </div>
+            <div style="margin-top:auto;background:#FBFCF9;border:1px solid #E7EBE1;border-radius:10px;padding:13px;font-size:12px;line-height:1.6;color:#3F4A38;text-wrap:pretty">Le visa Compliance est le seul goulot interne : 4,3 jours pour 3 contrôleurs, dont 61 % du temps sur des dossiers à risque faible. Le reste de l'attente vient du client.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px;min-height:0">
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:20px 22px;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:14px;font-weight:600">Charge par contrôleur</div>
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#4A5740">SB</div><div style="flex:1;font-size:12.5px">Sofia Berger</div><div style="width:92px;height:7px;border-radius:4px;background:#EDF0E9;overflow:hidden"><div style="width:94%;height:100%;background:#C44536"></div></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;width:34px;text-align:right;color:#A63A2D">94 %</div></div>
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#4A5740">TR</div><div style="flex:1;font-size:12.5px">Thomas Roth</div><div style="width:92px;height:7px;border-radius:4px;background:#EDF0E9;overflow:hidden"><div style="width:71%;height:100%;background:#D99A2B"></div></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;width:34px;text-align:right;color:#4A5740">71 %</div></div>
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#4A5740">AL</div><div style="flex:1;font-size:12.5px">Ana Lopes</div><div style="width:92px;height:7px;border-radius:4px;background:#EDF0E9;overflow:hidden"><div style="width:44%;height:100%;background:#7BA042"></div></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;width:34px;text-align:right;color:#4A5740">44 %</div></div>
+              </div>
+              <div style="margin-top:auto;font-size:11.5px;color:#4A6B28;font-weight:500">Rééquilibrer 9 dossiers vers Ana Lopes →</div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:20px 22px;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:14px;font-weight:600">Exposition par risque pays</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:11px;height:11px;border-radius:3px;background:#8E3B33"></div><div style="flex:1;font-size:12.5px">Critique</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A5740">6 clients · 41 M</div></div>
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:11px;height:11px;border-radius:3px;background:#B07A3A"></div><div style="flex:1;font-size:12.5px">Élevé</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A5740">73 clients · 620 M</div></div>
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:11px;height:11px;border-radius:3px;background:#7B8595"></div><div style="flex:1;font-size:12.5px">Modéré</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A5740">218 clients · 2,1 Md</div></div>
+                <div style="display:flex;align-items:center;gap:12px"><div style="width:11px;height:11px;border-radius:3px;background:#7BA042"></div><div style="flex:1;font-size:12.5px">Faible</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A5740">141 clients · 1,4 Md</div></div>
+              </div>
+              <div style="margin-top:auto;font-size:11.5px;color:#4A6B28;font-weight:500">Ouvrir la carte des flux →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 09 AUDIT FINMA ═════════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 09</div>
+    <div style="font-size:22px;font-weight:600">Audit — rejeu et preuves</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">L'écran que l'auditeur utilise lui-même. On choisit une date, et le dossier se réaffiche tel qu'il était, avec la version de paramétrage alors en vigueur. Chaque consultation est elle-même tracée.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="rapports" user="Jean Perrin" role="Audit interne — lecture seule" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="font-size:17px;font-weight:600">Rejeu — Meridian Trust Ltd</div><span style="font-size:10.5px;font-weight:600;color:#2E5A80;background:#E7F0F7;border-radius:5px;padding:3px 8px">LECTURE SEULE</span></div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">CLI-02207 · état reconstitué au 12.03.2025 · consultation tracée sous AUD-9931</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:8px"><div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Exporter le dossier de preuve</div></div>
+      </header>
+
+      <div style="flex:0 0 74px;background:#FFFFFF;border-bottom:1px solid #E2E6DD;display:flex;align-items:center;padding:0 28px;gap:20px">
+        <div style="font-size:12.5px;font-weight:600;white-space:nowrap">Date de rejeu</div>
+        <div style="flex:1;position:relative;height:34px;display:flex;align-items:center">
+          <div style="position:absolute;left:0;right:0;height:3px;background:#E7EBE1;border-radius:2px"></div>
+          <div style="position:absolute;left:0;width:36%;height:3px;background:#4A6B28;border-radius:2px"></div>
+          <div style="position:absolute;left:8%;width:9px;height:9px;border-radius:50%;background:#7BA042"></div>
+          <div style="position:absolute;left:22%;width:9px;height:9px;border-radius:50%;background:#D99A2B"></div>
+          <div style="position:absolute;left:36%;width:17px;height:17px;border-radius:50%;background:#FFFFFF;border:3px solid #4A6B28;box-sizing:border-box"></div>
+          <div style="position:absolute;left:58%;width:9px;height:9px;border-radius:50%;background:#C44536"></div>
+          <div style="position:absolute;left:79%;width:9px;height:9px;border-radius:50%;background:#7BA042"></div>
+        </div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:7px 13px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#3F4A38;white-space:nowrap">12.03.2025</div>
+        <div style="font-size:11.5px;color:#646E5E;white-space:nowrap">142 événements · ouverture 2019 → aujourd'hui</div>
+      </div>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px">
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px">État du dossier au 12.03.2025</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+              <div><div style="font-size:11px;color:#646E5E">Statut KYC</div><div style="font-size:14px;font-weight:600;margin-top:4px;color:#3C6B2E">Validé</div></div>
+              <div><div style="font-size:11px;color:#646E5E">Niveau de diligence</div><div style="font-size:14px;font-weight:600;margin-top:4px">CDD</div></div>
+              <div><div style="font-size:11px;color:#646E5E">Risque</div><div style="font-size:14px;font-weight:600;margin-top:4px">Moyen</div></div>
+              <div><div style="font-size:11px;color:#646E5E">Visa en vigueur</div><div style="font-size:14px;font-weight:600;margin-top:4px">M. Bregy</div></div>
+            </div>
+            <div style="font-size:11.5px;color:#646E5E;margin-top:14px;line-height:1.6;text-wrap:pretty">Le passage en EDD et le blocage sanctions sont postérieurs à cette date : ils n'apparaissent pas ici. C'est l'état réel connu de la banque ce jour-là.</div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px">Paramétrage en vigueur ce jour-là</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="border:1px solid #E7EBE1;border-radius:9px;padding:12px 14px"><div style="font-size:11.5px;color:#646E5E">Matrice de risque pays</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:4px">v4.2 — en vigueur du 01.01.2025</div></div>
+              <div style="border:1px solid #E7EBE1;border-radius:9px;padding:12px 14px"><div style="font-size:11.5px;color:#646E5E">Seuils AML</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:4px">v11 — inchangés depuis 09.2024</div></div>
+              <div style="border:1px solid #E7EBE1;border-radius:9px;padding:12px 14px"><div style="font-size:11.5px;color:#646E5E">Questionnaire KYC</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:4px">v7 — 9 sections obligatoires</div></div>
+              <div style="border:1px solid #E7EBE1;border-radius:9px;padding:12px 14px"><div style="font-size:11.5px;color:#646E5E">Workflow de visa</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:4px">WF-KYC-03 — quatre yeux</div></div>
+            </div>
+          </div>
+
+          <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="font-size:14px;font-weight:600;margin-bottom:11px">Intégrité documentaire</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:11px 14px"><span style="color:#3D9970">✓</span><div style="flex:1;font-size:12.5px">Acte de trust — v2</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#646E5E">empreinte ancrée le 14.11.2023</div></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:11px 14px"><span style="color:#3D9970">✓</span><div style="flex:1;font-size:12.5px">Passeport UBO — v1</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#646E5E">empreinte ancrée le 02.02.2024</div></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:11px 14px"><span style="color:#3D9970">✓</span><div style="flex:1;font-size:12.5px">Attestation d'origine des fonds — v1</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#646E5E">empreinte ancrée le 02.02.2024</div></div>
+            </div>
+            <div style="font-size:11.5px;color:#646E5E;margin-top:12px;line-height:1.6;text-wrap:pretty">Horodatage par tiers qualifié (RFC 3161 / ZertES). L'antériorité de chaque version est opposable sans dépendre du journal interne.</div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:24px 22px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+          <div style="font-size:14px;font-weight:600">Journal d'événements</div>
+          <div style="display:flex;flex-direction:column;gap:0;overflow:hidden">
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:#C44536"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:15px"><div style="font-size:12.5px;font-weight:600">Blocage sanctions — UBO listé</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">10.08.2026 14:22 · screening</div></div></div>
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:#D99A2B"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:15px"><div style="font-size:12.5px;font-weight:600">Passage CDD → EDD</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">18.06.2026 09:04 · moteur de règles v5.1</div></div></div>
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:15px;height:15px;border-radius:50%;background:#FFFFFF;border:3px solid #4A6B28;box-sizing:border-box;margin-left:-3px"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:15px"><div style="font-size:12.5px;font-weight:700;color:#3F4A38">Vous êtes ici — 12.03.2025</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">état reconstitué</div></div></div>
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:#7BA042"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:15px"><div style="font-size:12.5px;font-weight:600">Revue périodique validée</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">08.03.2025 16:41 · M. Bregy</div></div></div>
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:#C3CBBA"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:15px"><div style="font-size:12.5px">Screening périodique — aucun hit</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">01.03.2025 03:00 · système</div></div></div>
+            <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:#C3CBBA"></div></div><div><div style="font-size:12.5px">Entrée en relation</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">17.05.2019 11:08 · C. Morel</div></div></div>
+          </div>
+          <div style="margin-top:auto;background:#E7F0F7;border:1px solid #CBDEEC;border-radius:10px;padding:13px;font-size:11.5px;line-height:1.6;color:#2E5A80;text-wrap:pretty">Cette consultation est enregistrée : identité, dossier consulté, date de rejeu, horodatage. L'auditeur est tracé comme tout autre utilisateur.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 10 PARAMÉTRAGE — BAC À SABLE ═══════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#5F6959">ÉCRAN 10</div>
+    <div style="font-size:22px;font-weight:600">Paramétrage — bac à sable</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Changer un seuil sans savoir ce qu'il produit est le vrai risque opérationnel. Ici, l'effet est simulé sur l'historique réel avant toute mise en production, et l'application reste un acte signé.</div>
+  </div>
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <dc-import name="Nav" active="param" user="Sofia Berger" role="Compliance Officer" hint-size="248px,900px"></dc-import>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="font-size:17px;font-weight:600">AML-R17 — écart au profil de flux</div><span style="font-size:10.5px;font-weight:600;color:#6C58A8;background:#F0ECF9;border-radius:5px;padding:3px 8px">SIMULATION</span></div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">Version en production : v11 · dernière modification 12.09.2024 · 1 244 alertes générées depuis</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Historique des versions</div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:380px minmax(0,1fr)">
+        <div style="border-right:1px solid #E2E6DD;background:#FBFCF9;padding:24px 22px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+          <div><div style="font-size:14px;font-weight:600;margin-bottom:4px">Paramètres</div><div style="font-size:11.5px;color:#646E5E;line-height:1.5">Les modifications ne touchent que la simulation tant qu'elles ne sont pas appliquées.</div></div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Seuil d'écart déclenchant</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#6C58A8;font-weight:600">× 2,5</div></div>
+            <div style="position:relative;height:20px;display:flex;align-items:center"><div style="position:absolute;left:0;right:0;height:4px;background:#E7EBE1;border-radius:2px"></div><div style="position:absolute;left:0;width:42%;height:4px;background:#6C58A8;border-radius:2px"></div><div style="position:absolute;left:31%;width:2px;height:12px;background:#C3CBBA"></div><div style="position:absolute;left:42%;width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:3px solid #6C58A8;box-sizing:border-box"></div></div>
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#646E5E;margin-top:6px"><span>× 1,5</span><span style="color:#5C6655">production : × 2,0</span><span>× 5,0</span></div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Fenêtre d'observation</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#3F4A38;font-weight:600">30 j</div></div>
+            <div style="position:relative;height:20px;display:flex;align-items:center"><div style="position:absolute;left:0;right:0;height:4px;background:#E7EBE1;border-radius:2px"></div><div style="position:absolute;left:0;width:33%;height:4px;background:#4A6B28;border-radius:2px"></div><div style="position:absolute;left:33%;width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:3px solid #4A6B28;box-sizing:border-box"></div></div>
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#646E5E;margin-top:6px"><span>7 j</span><span>90 j</span></div>
+          </div>
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:#3F4A38;margin-bottom:9px">Populations concernées</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;border:1px solid #E7EBE1;background:#FFFFFF;border-radius:8px;padding:10px 12px"><div style="width:15px;height:15px;border-radius:4px;background:#4A6B28;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:10px">✓</div><div style="font-size:12.5px">Risque élevé et critique</div></div>
+              <div style="display:flex;align-items:center;gap:10px;border:1px solid #E7EBE1;background:#FFFFFF;border-radius:8px;padding:10px 12px"><div style="width:15px;height:15px;border-radius:4px;background:#4A6B28;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:10px">✓</div><div style="font-size:12.5px">Structures multi-niveaux</div></div>
+              <div style="display:flex;align-items:center;gap:10px;border:1px solid #E7EBE1;border-radius:8px;padding:10px 12px"><div style="width:15px;height:15px;border-radius:4px;border:1.5px solid #C3CBBA;box-sizing:border-box"></div><div style="font-size:12.5px;color:#646E5E">Risque faible et modéré</div></div>
+            </div>
+          </div>
+
+          <div style="margin-top:auto;background:#FAF8FE;border:1px solid #E7E2F2;border-radius:10px;padding:13px;font-size:11.5px;line-height:1.6;color:#2E2842;text-wrap:pretty">Proposition d'Olivia : ce réglage vient de l'analyse des 1 244 alertes historiques. Il n'a pas été appliqué et ne le sera pas sans validation humaine.</div>
+        </div>
+
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:baseline;gap:12px"><div style="font-size:16px;font-weight:600">Effet simulé sur l'historique</div><div style="font-size:12px;color:#646E5E">rejoué sur 24 mois de transactions réelles</div></div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px"><div style="font-size:11.5px;color:#646E5E">Alertes générées</div><div style="display:flex;align-items:baseline;gap:10px;margin-top:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600">812</div><div style="font-size:12px;color:#3C6B2E;font-weight:500">−432</div></div><div style="font-size:11px;color:#646E5E;margin-top:5px">contre 1 244 en production</div></div>
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px;border-left:3px solid #7BA042"><div style="font-size:11.5px;color:#646E5E">Faux positifs évités</div><div style="display:flex;align-items:baseline;gap:10px;margin-top:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#3C6B2E">419</div></div><div style="font-size:11px;color:#646E5E;margin-top:5px">≈ 260 h de contrôle</div></div>
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:12px;padding:18px 20px;border-left:3px solid #C44536"><div style="font-size:11.5px;color:#646E5E">Alertes fondées perdues</div><div style="display:flex;align-items:baseline;gap:10px;margin-top:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#A63A2D">13</div></div><div style="font-size:11px;color:#646E5E;margin-top:5px">dont 2 communications MROS</div></div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #C44536;border-radius:12px;padding:18px 20px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:9px">Les 13 alertes qui n'auraient pas été levées</div>
+            <div style="font-size:12.5px;line-height:1.6;color:#4A5740;max-width:780px;text-wrap:pretty">Le gain n'a de sens qu'avec son coût. Ces 13 cas sont listés nominativement, avec leur issue réelle, pour que la décision se prenne en connaissance de cause.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:13px">
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:10px 13px;font-size:12.5px"><div style="flex:1"><b>Cèdre Maritime SARL</b> · alerte de mars 2025</div><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">MROS COMMUNIQUÉ</span></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:10px 13px;font-size:12.5px"><div style="flex:1"><b>Atlas Commodities Ltd</b> · alerte de juin 2025</div><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">MROS COMMUNIQUÉ</span></div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid #E7EBE1;border-radius:9px;padding:10px 13px;font-size:12.5px"><div style="flex:1">11 autres · toutes classées sans suite</div><span style="font-size:10.5px;font-weight:600;color:#4A5740;background:#F0F3EB;border-radius:4px;padding:2px 7px">SANS SUITE</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;align-items:center;gap:14px;border-top:1px solid #E7EBE1;padding-top:16px">
+            <div style="font-size:11.5px;color:#646E5E;line-height:1.5;max-width:420px;text-wrap:pretty">L'application crée une nouvelle version datée et signée. La version précédente reste rejouable pour l'audit.</div>
+            <div style="flex:1"></div>
+            <div style="border:1px solid #DCE1D6;border-radius:8px;padding:9px 14px;font-size:12.5px;color:#3F4A38;white-space:nowrap">Enregistrer</div>
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:500;white-space:nowrap">Soumettre au comité</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

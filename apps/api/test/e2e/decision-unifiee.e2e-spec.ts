@@ -30,8 +30,8 @@ async function mkClient(name: string, riskLevel = "HIGH") {
   return owner.client.create({ data: { tenantId: T, name, structure: "SA", country: "CH", riskLevel } });
 }
 // Un dossier EN COURS dont les étapes sont des sections à visa (Collecte→Review→Validation),
-// préparées par RM1 (kyc_question_history ⇒ exclusion R13 sur RM1, jamais sur CO1/CO3).
-async function mkDossier(etapesSignees: string[] = []) {
+// préparées par prepPar (kyc_question_history ⇒ exclusion R13 sur le préparateur, jamais sur les autres).
+async function mkDossier(etapesSignees: string[] = [], prepPar = RM1.userId) {
   seq += 1;
   const kyc = await owner.kycFile.create({ data: {
     tenantId: T, clientId: (await mkClient(`Dossier-${seq}`)).id,
@@ -42,9 +42,9 @@ async function mkDossier(etapesSignees: string[] = []) {
     const sec = await owner.kycSection.create({ data: { kycFileId: kyc.id, code: ETAPES[i],
       label: ETAPES[i], orderIndex: i } as any });
     const q = await owner.kycQuestion.create({ data: { sectionId: sec.id, code: `q-${ETAPES[i]}`,
-      label: `q-${ETAPES[i]}`, answer: "réponse", answeredBy: RM1.userId, answeredAt: new Date() } as any });
+      label: `q-${ETAPES[i]}`, answer: "réponse", answeredBy: prepPar, answeredAt: new Date() } as any });
     await owner.kycQuestionHistory.create({ data: { questionId: q.id, previousValue: null,
-      newValue: "réponse", changedBy: RM1.userId, changedAt: new Date(), hash: "0".repeat(64) } });
+      newValue: "réponse", changedBy: prepPar, changedAt: new Date(), hash: "0".repeat(64) } });
     const signee = etapesSignees.includes(ETAPES[i]);
     await owner.kycVisa.create({ data: { kycFileId: kyc.id, sectionCode: ETAPES[i],
       requiredRole: "CO", status: signee ? "SIGNED" : "PENDING",
@@ -253,9 +253,9 @@ describe("Bloc 65 Volet B — décision unifiée (R474–R479, spec/BLOC-65 §1b
   });
 
   it("HR-20 [R477/R13] — optimiste mais honnête : le moteur refuse en clair, AUCUNE écriture de visa au journal", async () => {
-    const kyc = await mkDossier();
+    const kyc = await mkDossier([], CO1.userId);                 // CO1 a PRÉPARÉ la section qu'il tente de viser
     const avant = (await evsAgg(kyc.id)).length;
-    await expect(svc.decider(RM1, "KYC", kyc.code, { action: "VALIDER", etape: "Collecte" }))
+    await expect(svc.decider(CO1, "KYC", kyc.code, { action: "VALIDER", etape: "Collecte" }))
       .rejects.toThrow(/R13/);                                   // la règle revient EN CLAIR
     const v = await owner.kycVisa.findFirst({ where: { kycFileId: kyc.id, sectionCode: "Collecte" } });
     expect(v!.status).toBe("PENDING");                           // l'affichage optimiste n'a jamais été une écriture

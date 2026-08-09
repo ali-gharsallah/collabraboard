@@ -5,15 +5,16 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-09, après Bloc 65 Volet A — **CHANTIER DE SCHÉMATISATION SOLDÉ**)
+## État (2026-08-09, après Bloc 65 Volets A+B — **CHANTIER DE SCHÉMATISATION SOLDÉ**)
 
-**Tout type réellement émis via `emitEvent` porte désormais un schéma zod strict.** Les 278
+**Tout type réellement émis via `emitEvent` porte désormais un schéma zod strict.** Les 280
 types restants de TYPES_EN_ATTENTE sont TOUS instruits comme non-événements ou hors-périmètre
 (détail ci-dessous) — l'inventaire reste monotone (sur-capture assumée), la garde CI 3-C6
 attrape toute NOUVELLE émission non cataloguée. La doctrine de vie tient : les 13 types du
-Bloc 65 Volet A (revues harmonisées R466–R473) sont arrivés AVEC leurs schémas stricts.
+Bloc 65 Volet A (revues harmonisées R466–R473) et les 7 du Volet B (décision unifiée
+R474–R479) sont arrivés AVEC leurs schémas stricts.
 
-- **351 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
+- **358 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
   noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
   +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
   TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
@@ -40,8 +41,10 @@ Bloc 65 Volet A (revues harmonisées R466–R473) sont arrivés AVEC leurs sché
   +13 Bloc 65 Volet A (2026-08-09 : review.prerempli/reponse.modifiee/delta.vise/
   section.visee.bloc/verdict.pose/aiguillage.decide/membre.ouvert, tache.review.remediation/
   aiguillage, gar.ouverte/decision.visee/cloturee, REVIEW_CASCADE_TRIGGERED — harmonisation
-  KYC·AR·GAR, revue-harmonisee.service.ts).
-- **278 types EN ATTENTE — TOUS INSTRUITS, AUCUN à schématiser** :
+  KYC·AR·GAR, revue-harmonisee.service.ts), +7 Bloc 65 Volet B (2026-08-09 : STEP_SENT_BACK,
+  decision.visa.tombe/refusee/deleguee/annulee/boucles.signal, tache.reprise.creee — décision
+  unifiée R474–R479, decision-unifiee.service.ts).
+- **280 types EN ATTENTE — TOUS INSTRUITS, AUCUN à schématiser** :
   · **261 littéraux SANS_POINT non-événements** (classification exhaustive 2026-08-09, script
     emit/audit/autre sur src/modules+src/common) : ~140 CODES D'ACTION `audit.log` (chaîne
     HMAC `audit_logs` — PAS domain_events), ~116 statuts/valeurs de payload/exemples de
@@ -50,8 +53,9 @@ Bloc 65 Volet A (revues harmonisées R466–R473) sont arrivés AVEC leurs sché
     dynamiques déjà couvertes par le gabarit.
   · **11 `cpsi.*` du journal JUMEAU** cpsi_events (doctrine vague 3 — jamais emitEvent).
   · **4 faux positifs v11** (« fake-1.0 », « gwb.ch », « gwb-private.ch », « pacs.008 »).
-  · **2 clés de paramètre R-Q Bloc 65** (« review.groupe.criteres », « review.groupe.enabled »
-    — registre §Review, parametres.service.ts ; toutes-minuscules donc capturées par le scan).
+  · **4 clés de paramètre R-Q Bloc 65** (« review.groupe.criteres », « review.groupe.enabled »,
+    « decision.libelles », « decision.corbeille.tri » — registres §Review/§Decision,
+    parametres.service.ts ; toutes-minuscules donc capturées par le scan).
   Inventaire GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un

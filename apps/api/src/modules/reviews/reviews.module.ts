@@ -5,6 +5,7 @@ import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
 import { SECTIONS_BY_WORKFLOW } from "../kyc/kyc.templates";
 import { RevueHarmoniseeService } from "./revue-harmonisee.service";   // R283 : source UNIQUE du gabarit (import de données, pas de cycle DI)
+import { DecisionUnifieeService } from "./decision-unifiee.service";   // Bloc 65 Volet B (R474–R479)
 
 /**
  * Échéances de review — R272→R275 (RV-01..08), canon `spec/canon-debloquants-home.md` partie 1
@@ -350,9 +351,33 @@ export class RevueHarmoniseeController {
   @Post("params/modifier")             modifier(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreReview(r.ctx, b ?? {}); }                       // R473 (pop-up R445)
 }
 
+// ── Bloc 65 Volet B (repo R474–R479) — LA décision d'étape : un geste, trois issues, partout
+//    pareil. Un seul contrôleur pour tous les types (KYC · AR · GAR · BUSINESS_TRIP · OFFBOARDING). ──
+@Controller("decisions")
+export class DecisionUnifieeController {
+  constructor(private svc: DecisionUnifieeService) {}
+  @Get("corbeille")                    corbeille(@Req() r: any) { return this.svc.corbeille(r.ctx); }                                                             // HR-21 (R478)
+  @Get("params/registre")              params(@Req() r: any) { return this.svc.parametresDecision(r.ctx); }                                                       // R474–R479
+  @Post("params/modifier")             modifier(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreDecision(r.ctx, b ?? {}); }                     // pop-up R445
+  @Get(":type/:ref/barre")             barre(@Req() r: any, @Param("type") t: string, @Param("ref") ref: string) { return this.svc.barre(r.ctx, t, ref); }        // HR-15 (R474/R477)
+  @Post(":type/:ref/decider")          decider(@Req() r: any, @Param("type") t: string, @Param("ref") ref: string, @Body() b: any) { return this.svc.decider(r.ctx, t, ref, b ?? {}); } // HR-15..19 (R474–R476)
+  @Post(":type/:ref/annuler")          annuler(@Req() r: any, @Param("type") t: string, @Param("ref") ref: string, @Body() b: any) { return this.svc.annuler(r.ctx, t, ref, b ?? {}); } // HR-22 (R479)
+}
+
 @Module({
-  controllers: [ReviewsController, RevueHarmoniseeController],
-  providers: [ReviewsService, RevueHarmoniseeService],
-  exports: [ReviewsService, RevueHarmoniseeService],
+  controllers: [ReviewsController, RevueHarmoniseeController, DecisionUnifieeController],
+  providers: [ReviewsService, RevueHarmoniseeService,
+    // Le service de décision naît branché sur les revues (même module) ; KYC, Offboarding et
+    // Business Trip se branchent depuis LEUR module (branchement tardif R283 — pas de cycle).
+    {
+      provide: DecisionUnifieeService,
+      useFactory: (p: PrismaService, a: AuditService, rv: RevueHarmoniseeService) => {
+        const svc = new DecisionUnifieeService(p, a);
+        svc.brancherRevues(rv);
+        return svc;
+      },
+      inject: [PrismaService, AuditService, RevueHarmoniseeService],
+    }],
+  exports: [ReviewsService, RevueHarmoniseeService, DecisionUnifieeService],
 })
 export class ReviewsModule {}

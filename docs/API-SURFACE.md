@@ -5,7 +5,7 @@
 > La documentation VIVANTE (extraite du routeur au runtime) est servie par `GET /v1/apidoc` ;
 > ce document en est la projection committée, au même niveau que le snapshot.
 
-**439 routes** · **60 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
+**445 routes** · **61 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
 
 | Module | Routes |
 |---|---|
@@ -24,6 +24,7 @@
 | [`crm`](#crm) | 4 |
 | [`crossborder`](#crossborder) | 17 |
 | [`custody`](#custody) | 3 |
+| [`decisions`](#decisions) | 6 |
 | [`deploiements`](#deploiements) | 2 |
 | [`doc-matrix`](#doc-matrix) | 3 |
 | [`events`](#events) | 3 |
@@ -260,6 +261,17 @@
 | POST | `/v1/custody/ecarts/resoudre` |
 | GET | `/v1/custody/positions` |
 | GET | `/v1/custody/rapprochement` |
+
+## decisions
+
+| Méthode | Chemin |
+|---|---|
+| POST | `/v1/decisions/:type/:ref/annuler` |
+| GET | `/v1/decisions/:type/:ref/barre` |
+| POST | `/v1/decisions/:type/:ref/decider` |
+| GET | `/v1/decisions/corbeille` |
+| POST | `/v1/decisions/params/modifier` |
+| GET | `/v1/decisions/params/registre` |
 
 ## deploiements
 

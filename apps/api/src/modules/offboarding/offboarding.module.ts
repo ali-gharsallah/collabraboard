@@ -3,6 +3,8 @@ import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { OffboardingService, CoreBankingPort } from "./offboarding.service";
 import { OffboardingMoteurService } from "./offboarding-moteur.service";
+import { ReviewsModule } from "../reviews/reviews.module";            // Bloc 65 Volet B (R474)
+import { DecisionUnifieeService } from "../reviews/decision-unifiee.service";
 
 /**
  * Porte HTTP du bloc Offboarding (R267→R271). Délégation pure — l'auteur de chaque acte est
@@ -47,6 +49,7 @@ function fakeCorePort(): CoreBankingPort | undefined {
 }
 
 @Module({
+  imports: [ReviewsModule],                                           // Bloc 65 Volet B : la barre de décision (R474)
   controllers: [OffboardingController, OffboardingMoteurController],
   providers: [
     {
@@ -57,9 +60,12 @@ function fakeCorePort(): CoreBankingPort | undefined {
     },
     {
       provide: OffboardingMoteurService,
-      useFactory: (prisma: PrismaService, audit: AuditService) =>
-        new OffboardingMoteurService(prisma, audit, { core: fakeCorePort() }),
-      inject: [PrismaService, AuditService],
+      useFactory: (prisma: PrismaService, audit: AuditService, du: DecisionUnifieeService) => {
+        const svc = new OffboardingMoteurService(prisma, audit, { core: fakeCorePort() });
+        du.brancherMoteur(svc);         // R474 : Valider sur OFFBOARDING = moteur.viser — aucun fork
+        return svc;
+      },
+      inject: [PrismaService, AuditService, DecisionUnifieeService],
     },
   ],
   exports: [OffboardingService, OffboardingMoteurService],

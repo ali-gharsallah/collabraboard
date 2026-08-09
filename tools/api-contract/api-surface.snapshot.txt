@@ -45,6 +45,9 @@ GET    /v1/crossborder/reporting
 GET    /v1/crossborder/voyages/:id/conformite
 GET    /v1/custody/positions
 GET    /v1/custody/rapprochement
+GET    /v1/decisions/:type/:ref/barre
+GET    /v1/decisions/corbeille
+GET    /v1/decisions/params/registre
 GET    /v1/deploiements
 GET    /v1/doc-matrix/en-vigueur
 GET    /v1/events/sante
@@ -250,6 +253,9 @@ POST   /v1/crossborder/pre-acte
 POST   /v1/crossborder/reverse-solicitation
 POST   /v1/crossborder/reverse-solicitation/:id/visa
 POST   /v1/custody/ecarts/resoudre
+POST   /v1/decisions/:type/:ref/annuler
+POST   /v1/decisions/:type/:ref/decider
+POST   /v1/decisions/params/modifier
 POST   /v1/deploiements
 POST   /v1/doc-matrix
 POST   /v1/doc-matrix/completude

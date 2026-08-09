@@ -699,8 +699,9 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   // révision pré-remplie du dernier KYC approuvé (diff visé R467), verdicts normalisés à
   // conséquences PROPOSÉES (R468/R44), GAR = dossier parent projeté d'événements (R470),
   // cascades = événements anti-boucle (R471). Payloads RÉELS (revue-harmonisee.service.ts).
-  // NOTE sur-capture : « review.groupe.criteres » et « review.groupe.enabled » sont des CLÉS DE
-  // PARAMÈTRE R-Q (registre §Review, parametres.service.ts), pas des types d'événement — elles
+  // NOTE sur-capture : « review.groupe.criteres », « review.groupe.enabled » (Volet A) puis
+  // « decision.libelles », « decision.corbeille.tri » (Volet B) sont des CLÉS DE PARAMÈTRE R-Q
+  // (registres §Review/§Decision, parametres.service.ts), pas des types d'événement — elles
   // restent dans TYPES_EN_ATTENTE (inventaire monotone, même doctrine que gwb.ch/pacs.008).
   "review.prerempli": { version: 1, schema: z.object({ kycCode: z.string(),
     depuisKyc: z.string(), reprises: z.number() }).strict() },        // R467 : origine REPRISE au socle
@@ -737,6 +738,28 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "REVIEW_CASCADE_TRIGGERED": { version: 1, schema: z.object({ source: z.string(),
     parametre: z.string(), parent: z.string(), membres: z.array(z.string()),
     par: z.string() }).strict() },                                    // R471 : événement, anti-boucle invariant
+  // ── Bloc 65 Volet B (repo R474–R479, 2026-08-09) — décision unifiée : le renvoi est un
+  // rebroussement CIBLÉ tracé (chutes par événements, jamais d'effacement — R475/R49), le refus
+  // une issue paramétrée (R476), l'annulation tracée tant que non consommée (R479). Payloads
+  // RÉELS (decision-unifiee.service.ts). Le motif est STRUCTURÉ : { code, texte } (R476).
+  "STEP_SENT_BACK": { version: 1, schema: z.object({ cible: z.string(),
+    motif: z.object({ code: z.string(), texte: z.string() }).strict(),
+    sections: z.array(z.string()), par: z.string(), boucle: z.number(),
+    cause: z.string() }).strict() },                                  // R475 : étape cible + motif + points cochés
+  "decision.visa.tombe": { version: 1, schema: z.object({ section: z.string(), role: z.string(),
+    viseurOriginal: z.string().nullable(), cause: z.string() }).strict() }, // R475 : chute TRACÉE — le 1er passage reste lisible
+  "decision.refusee": { version: 1, schema: z.object({ etape: z.string(),
+    motif: z.object({ code: z.string(), texte: z.string() }).strict(),
+    issue: z.string(), par: z.string() }).strict() },                 // R476 : TERMINAL | RENVOI | CLOTURE_MOTIVEE
+  "decision.deleguee": { version: 1, schema: z.object({ etape: z.string(),
+    de: z.string().nullable(), a: z.string(), par: z.string() }).strict() }, // R4 : la main passée est un fait tracé
+  "decision.annulee": { version: 1, schema: z.object({ etape: z.string(),
+    par: z.string() }).strict() },                                    // R479 : le bandeau réversible, jamais un effacement
+  "decision.boucles.signal": { version: 1, schema: z.object({ ref: z.string(),
+    boucles: z.number(), seuil: z.number(), severite: z.string(),
+    manager: z.string() }).strict() },                                // R475/R39 : signal au manager — JAMAIS de blocage
+  "tache.reprise.creee": { version: 1, schema: z.object({ kycCode: z.string(), section: z.string(),
+    owner: z.string(), motif: z.object({ code: z.string(), texte: z.string() }).strict() }).strict() }, // R475 : nominative, motif en tête
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -1109,6 +1132,8 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "cpsi.param.rejected",
   "cpsi.scenario.defined",
   "cpsi.signal.ingested",
+  "decision.corbeille.tri",
+  "decision.libelles",
   "fake-1.0",
   "gwb-private.ch",
   "gwb.ch",

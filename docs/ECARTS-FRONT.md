@@ -1519,4 +1519,9 @@ re-soumis ici.
   unifiée. La carte « Circulation du dossier R85 » livrée en démo v2026-08-09.16 (session du
   09.08) est le précurseur ad hoc le plus récent — elle sera ABSORBÉE par la barre unifiée R474
   (Volet B), écart re-consigné si divergence de comportement.
+- **Volet B API livré (2026-08-09, HR-15..22 verts)** : le moteur existe — `decision-unifiee.service.ts`
+  + routes `/v1/decisions` (barre, decider, annuler, corbeille, params R445), branché sans fork
+  sur KYC·AR·GAR + Business Trip + Offboarding. RESTE côté écrans : migrer la carte circulation
+  démo et les boutons ad hoc vers la barre (étape 9 du drop) — le handoff UI v2 fournit le
+  gabarit cible (`DecisionPanel`, motif obligatoire, corbeille « Ma journée »).
 - **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.

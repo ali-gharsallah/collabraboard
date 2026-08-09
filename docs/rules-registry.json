@@ -17,9 +17,10 @@
     {
       "numero": "R2",
       "module": "kyc",
-      "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
+      "ancre": "apps/api/src/modules/kyc/kyc.module.ts",
       "statut": "actif",
       "citePar": [
+        "reviews",
         "workflow-engine"
       ]
     },
@@ -29,7 +30,9 @@
       "ancre": "apps/api/src/modules/kyc/kyc.service.ts",
       "statut": "actif",
       "citePar": [
-        "workflow-engine"
+        "workflow-engine",
+        "api",
+        "reviews"
       ]
     },
     {
@@ -69,6 +72,7 @@
         "onboarding",
         "oprisk",
         "regwatch",
+        "reviews",
         "cpsi-server-py",
         "annotations",
         "auth",
@@ -77,7 +81,6 @@
         "legal",
         "olivia",
         "pms",
-        "reviews",
         "surveillance-es",
         "api",
         "builder",
@@ -133,10 +136,11 @@
     },
     {
       "numero": "R13",
-      "module": "kyc",
-      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
       "statut": "actif",
       "citePar": [
+        "kyc",
         "parametres",
         "api",
         "businesstrip",
@@ -146,7 +150,6 @@
         "crossborder",
         "custody",
         "formations",
-        "reviews",
         "workflow-engine",
         "builder",
         "onboarding",
@@ -172,6 +175,7 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "reviews",
         "workflow-instances",
         "businesstrip",
         "kyc",
@@ -179,18 +183,19 @@
         "aml",
         "crossborder",
         "formations",
-        "reviews",
         "workflow-designer",
         "cpsi-server-py"
       ]
     },
     {
       "numero": "R16",
-      "module": "kyc",
-      "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
       "statut": "actif",
       "citePar": [
+        "kyc",
         "offboarding",
+        "parametres",
         "workflow-engine"
       ]
     },
@@ -282,14 +287,14 @@
       "statut": "actif",
       "citePar": [
         "aml",
+        "reviews",
         "api",
-        "businesstrip",
         "parametres",
+        "businesstrip",
         "screening",
         "builder",
         "common",
         "corebanking",
-        "reviews",
         "crossborder",
         "offboarding",
         "coc",
@@ -306,7 +311,8 @@
       "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
       "statut": "actif",
       "citePar": [
-        "api"
+        "api",
+        "reviews"
       ]
     },
     {
@@ -382,6 +388,7 @@
         "api",
         "parametres",
         "cpsi-server-py",
+        "reviews",
         "crossborder",
         "ged",
         "screening",
@@ -389,7 +396,6 @@
         "cpsi",
         "formations",
         "pms",
-        "reviews",
         "tasks",
         "bi",
         "coc",
@@ -422,13 +428,14 @@
     },
     {
       "numero": "R44",
-      "module": "aml",
-      "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
+      "module": "api",
+      "ancre": "apps/api/src/adapters/claude-ia.adapter.ts",
       "statut": "actif",
       "citePar": [
-        "api",
+        "aml",
         "cpsi-server-py",
         "screening",
+        "reviews",
         "surveillance-es",
         "ged",
         "olivia",
@@ -437,12 +444,12 @@
         "mros",
         "nba",
         "onboarding",
+        "parametres",
         "pms",
         "businesstrip",
         "cpsi",
         "crm",
         "crossborder",
-        "parametres",
         "personnes",
         "surveillance",
         "transactions",
@@ -469,6 +476,7 @@
         "screening",
         "cpsi",
         "offboarding",
+        "reviews",
         "workflow-designer",
         "workflow-instances",
         "common",
@@ -481,6 +489,7 @@
         "parametres",
         "tasks",
         "txflux",
+        "api",
         "aml",
         "ia",
         "legal",
@@ -501,14 +510,15 @@
         "kyc",
         "offboarding",
         "workflow-designer",
+        "api",
         "cpsi",
         "workflow-engine",
-        "api",
         "events",
         "ged",
         "ia",
         "mros",
         "parametres",
+        "reviews",
         "riskcases",
         "transactions",
         "workflow-instances"
@@ -778,6 +788,7 @@
       "statut": "actif",
       "citePar": [
         "inference",
+        "reviews",
         "cpsi-server-py"
       ]
     },
@@ -1333,7 +1344,8 @@
       "statut": "actif",
       "citePar": [
         "api",
-        "parametres"
+        "parametres",
+        "reviews"
       ]
     },
     {
@@ -2390,7 +2402,8 @@
         "api",
         "license",
         "olivia",
-        "onboarding"
+        "onboarding",
+        "reviews"
       ]
     },
     {
@@ -3707,7 +3720,8 @@
       "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "reviews"
       ]
     },
     {
@@ -3739,11 +3753,12 @@
     },
     {
       "numero": "R445",
-      "module": "offboarding",
-      "ancre": "apps/api/src/modules/offboarding/offboarding-moteur.service.ts",
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
+        "offboarding",
+        "reviews",
         "common",
         "businesstrip",
         "crossborder",
@@ -3757,7 +3772,8 @@
       "statut": "actif",
       "citePar": [
         "parametres",
-        "api"
+        "api",
+        "reviews"
       ]
     },
     {
@@ -3767,7 +3783,8 @@
       "statut": "actif",
       "citePar": [
         "parametres",
-        "api"
+        "api",
+        "reviews"
       ]
     },
     {
@@ -3921,50 +3938,138 @@
     {
       "numero": "R466",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
     },
     {
       "numero": "R467",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
     },
     {
       "numero": "R468",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
     },
     {
       "numero": "R469",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
     },
     {
       "numero": "R470",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
     },
     {
       "numero": "R471",
-      "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "module": "parametres",
+      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "reviews",
+        "api"
+      ]
     },
     {
       "numero": "R472",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
-      "statut": "actif"
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
     },
     {
       "numero": "R473",
       "module": "reviews",
-      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R474",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "businesstrip",
+        "offboarding",
+        "kyc",
+        "parametres",
+        "api"
+      ]
+    },
+    {
+      "numero": "R475",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R476",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R477",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
       "statut": "actif"
+    },
+    {
+      "numero": "R478",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R479",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/decision-unifiee.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
     }
   ],
   "brules": []
