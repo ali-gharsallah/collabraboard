@@ -41,3 +41,16 @@ fait d'ACTION fourni à l'appel de validate(), pas un état lisible — exclu de
   qualifié est un manque de complétude.
 - **Traitement** : divergence LÉGITIME et documentée — le ledger ne « corrige » pas la
   garde, la garde n'absorbe pas le ledger. Harmonisation éventuelle = revue humaine.
+
+
+## Bloc 65 — Migration des outcomes AR libres vers les verdicts normalisés (R468, arbitrage PO 09.08.2026)
+Mapping ARBITRÉ (option « mapping proposé ») — appliqué à la migration des Account Reviews
+existantes, JAMAIS corrigé silencieusement ; chaque ligne migrée émet son événement de
+migration avec l'outcome d'origine conservé au payload :
+| Outcome libre (existant) | Verdict normalisé | Conséquence PROPOSÉE (R44 — l'humain décide) |
+|---|---|---|
+| « EDD triggered » | NON CONFORME | proposition de passage EDD |
+| « Risk upgraded » | RÉSERVES | tâches de remédiation nominatives |
+| « Escalation required » | NON CONFORME | proposition Change of Circumstances |
+| « Completed » / « No change » | CONFORME | — |
+Toute valeur hors table → RÉSERVES + tâche de requalification humaine (défaut prudent).

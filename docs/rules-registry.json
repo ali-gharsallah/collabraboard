@@ -79,6 +79,7 @@
         "pms",
         "reviews",
         "surveillance-es",
+        "api",
         "builder",
         "coffre",
         "crossborder",
@@ -125,7 +126,10 @@
       "numero": "R12",
       "module": "kyc",
       "ancre": "apps/api/src/modules/kyc/kyc.controller.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R13",
@@ -134,6 +138,7 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "api",
         "businesstrip",
         "aml",
         "offboarding",
@@ -277,6 +282,7 @@
       "statut": "actif",
       "citePar": [
         "aml",
+        "api",
         "businesstrip",
         "parametres",
         "screening",
@@ -286,7 +292,6 @@
         "reviews",
         "crossborder",
         "offboarding",
-        "api",
         "coc",
         "inference",
         "txflux",
@@ -299,7 +304,10 @@
       "numero": "R30",
       "module": "personnes",
       "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R31",
@@ -327,6 +335,7 @@
       "statut": "actif",
       "citePar": [
         "ged",
+        "api",
         "parametres",
         "surveillance-es"
       ]
@@ -350,13 +359,19 @@
       "numero": "R36",
       "module": "personnes",
       "ancre": "apps/api/src/modules/personnes/personnes.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R38",
       "module": "tasks",
       "ancre": "apps/api/src/modules/tasks/tasks.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R39",
@@ -364,6 +379,7 @@
       "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres",
         "cpsi-server-py",
         "crossborder",
@@ -410,10 +426,10 @@
       "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "cpsi-server-py",
         "screening",
         "surveillance-es",
-        "api",
         "ged",
         "olivia",
         "ia",
@@ -570,6 +586,7 @@
       "statut": "actif",
       "citePar": [
         "olivia",
+        "api",
         "cpsi"
       ]
     },
@@ -869,6 +886,7 @@
       "ancre": "apps/api/src/modules/pms/pms.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -889,6 +907,7 @@
       "statut": "actif",
       "citePar": [
         "ia",
+        "api",
         "mros",
         "kyc",
         "parametres",
@@ -910,6 +929,7 @@
       "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "recherche",
         "ia",
         "mros",
@@ -982,6 +1002,7 @@
       "ancre": "apps/api/src/modules/onboarding/onboarding.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "ia"
       ]
     },
@@ -1115,6 +1136,7 @@
       "statut": "actif",
       "citePar": [
         "cpsi",
+        "api",
         "surveillance",
         "cpsi-server-py"
       ]
@@ -1142,6 +1164,7 @@
       "citePar": [
         "cpsi",
         "mros",
+        "api",
         "cpsi-server-py"
       ]
     },
@@ -1151,6 +1174,7 @@
       "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1174,6 +1198,7 @@
       "ancre": "apps/api/src/modules/ged/ged-ingestion.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres",
         "recherche",
         "chaines",
@@ -1186,6 +1211,7 @@
       "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "surveillance"
       ]
     },
@@ -1213,6 +1239,7 @@
       "ancre": "apps/api/src/modules/transactions/transaction-gate.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1223,6 +1250,7 @@
       "statut": "actif",
       "citePar": [
         "chaines",
+        "api",
         "corebanking",
         "parametres",
         "ports"
@@ -1234,7 +1262,8 @@
       "ancre": "apps/api/src/modules/ged/ged-consultation.service.ts",
       "statut": "actif",
       "citePar": [
-        "coffre"
+        "coffre",
+        "api"
       ]
     },
     {
@@ -1252,7 +1281,10 @@
       "numero": "R147",
       "module": "coffre",
       "ancre": "apps/api/src/modules/coffre/coffre.service.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R148",
@@ -1261,6 +1293,7 @@
       "statut": "actif",
       "citePar": [
         "chaines",
+        "api",
         "ia"
       ]
     },
@@ -1299,6 +1332,7 @@
       "ancre": "apps/api/src/modules/personnes/personne-lien.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1338,6 +1372,7 @@
       "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1357,6 +1392,7 @@
       "ancre": "apps/api/src/modules/annotations/annotation.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "chaines"
       ]
     },
@@ -1364,7 +1400,10 @@
       "numero": "R160",
       "module": "ia",
       "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R161",
@@ -1372,6 +1411,7 @@
       "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "corebanking"
       ]
     },
@@ -1379,7 +1419,10 @@
       "numero": "R162",
       "module": "ia",
       "ancre": "apps/api/src/modules/ia/ia-ged.service.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R163",
@@ -1390,6 +1433,7 @@
         "olivia",
         "parametres",
         "ports",
+        "api",
         "corebanking"
       ]
     },
@@ -1399,6 +1443,7 @@
       "ancre": "apps/api/src/modules/ged/vues.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1421,6 +1466,7 @@
       "statut": "actif",
       "citePar": [
         "txflux",
+        "api",
         "offboarding",
         "parametres",
         "ports",
@@ -1444,6 +1490,7 @@
         "txflux",
         "parametres",
         "sandbox",
+        "api",
         "crossborder",
         "ports",
         "screening"
@@ -1465,6 +1512,7 @@
       "ancre": "apps/api/src/modules/workflow/workflow-def.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "builder",
         "workflow-instances"
       ]
@@ -1485,6 +1533,7 @@
       "ancre": "apps/api/src/modules/workflow/workflow-def.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1494,6 +1543,7 @@
       "ancre": "apps/api/src/modules/ocr/ocr-extraction.service.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -1507,7 +1557,10 @@
       "numero": "R176",
       "module": "ocr",
       "ancre": "apps/api/src/modules/ocr/ocr-extraction.service.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R177",
@@ -1516,7 +1569,8 @@
       "statut": "actif",
       "citePar": [
         "swarm",
-        "common"
+        "common",
+        "api"
       ]
     },
     {
@@ -1529,7 +1583,10 @@
       "numero": "R179",
       "module": "license",
       "ancre": "apps/api/src/modules/license/license.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R180",
@@ -1566,6 +1623,7 @@
       "ancre": "apps/api/src/modules/workload/workload.controller.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres",
         "tasks"
       ]
@@ -1616,7 +1674,8 @@
       "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -1757,7 +1816,8 @@
       "ancre": "apps/api/src/modules/aml/aml-scoring.engine.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -1766,7 +1826,8 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -1865,6 +1926,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -2066,7 +2128,8 @@
       "ancre": "apps/api/src/modules/nba/nba.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -2075,6 +2138,7 @@
       "ancre": "apps/api/src/modules/nba/nba.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "tasks"
       ]
     },
@@ -2114,7 +2178,8 @@
       "statut": "actif",
       "citePar": [
         "parametres",
-        "cpsi-server-py"
+        "cpsi-server-py",
+        "api"
       ]
     },
     {
@@ -2145,7 +2210,8 @@
       "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
       "statut": "actif",
       "citePar": [
-        "swarm"
+        "swarm",
+        "api"
       ]
     },
     {
@@ -2163,6 +2229,7 @@
       "ancre": "apps/api/src/modules/olivia/olivia.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "swarm"
       ]
     },
@@ -2188,7 +2255,10 @@
       "numero": "R258",
       "module": "olivia",
       "ancre": "apps/api/src/modules/olivia/olivia-detecteurs.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R259",
@@ -2196,6 +2266,7 @@
       "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "olivia"
       ]
     },
@@ -2221,13 +2292,19 @@
       "numero": "R262",
       "module": "swarm",
       "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R263",
       "module": "swarm",
       "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R264",
@@ -2235,6 +2312,7 @@
       "ancre": "apps/api/src/modules/swarm/swarm.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "bi"
       ]
     },
@@ -2254,6 +2332,7 @@
       "statut": "actif",
       "citePar": [
         "common",
+        "api",
         "olivia"
       ]
     },
@@ -2265,6 +2344,7 @@
       "citePar": [
         "kyc",
         "common",
+        "api",
         "audit",
         "olivia"
       ]
@@ -2283,6 +2363,7 @@
       "citePar": [
         "builder",
         "custody",
+        "api",
         "coc"
       ]
     },
@@ -2292,6 +2373,7 @@
       "ancre": "apps/api/src/modules/offboarding/offboarding.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "mobile",
         "common",
         "olivia",
@@ -2327,6 +2409,7 @@
       "ancre": "apps/api/src/modules/reviews/reviews.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "coc"
       ]
     },
@@ -2366,7 +2449,10 @@
       "numero": "R277",
       "module": "coc",
       "ancre": "apps/api/src/modules/coc/coc.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R278",
@@ -2386,6 +2472,7 @@
       "ancre": "apps/api/src/modules/riskcases/risk-case.controller.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "events"
       ]
     },
@@ -2406,6 +2493,7 @@
       "statut": "actif",
       "citePar": [
         "audit",
+        "api",
         "builder",
         "parametres"
       ]
@@ -2418,6 +2506,7 @@
       "citePar": [
         "kyc",
         "builder",
+        "api",
         "parametres",
         "coc"
       ]
@@ -2442,6 +2531,7 @@
       "ancre": "apps/api/src/modules/events/outbox.worker.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "cpsi"
       ]
     },
@@ -2455,6 +2545,7 @@
         "surveillance-es",
         "txflux",
         "common",
+        "api",
         "cpsi"
       ]
     },
@@ -2542,6 +2633,7 @@
         "parametres",
         "mobile",
         "common",
+        "api",
         "txflux"
       ]
     },
@@ -2603,8 +2695,8 @@
       "ancre": "apps/api/src/modules/custody/custody.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
-        "api"
+        "api",
+        "parametres"
       ]
     },
     {
@@ -2622,8 +2714,8 @@
       "ancre": "apps/api/src/modules/builder/builder.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
-        "api"
+        "api",
+        "parametres"
       ]
     },
     {
@@ -2632,6 +2724,7 @@
       "ancre": "apps/api/src/modules/builder/builder.module.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "parametres"
       ]
     },
@@ -2663,12 +2756,12 @@
     },
     {
       "numero": "R309",
-      "module": "parametres",
-      "ancre": "apps/api/src/modules/parametres/parametres.service.ts",
+      "module": "api",
+      "ancre": "apps/api/src/app.module.ts",
       "statut": "actif",
       "citePar": [
-        "regwatch",
-        "api"
+        "parametres",
+        "regwatch"
       ]
     },
     {
@@ -2698,11 +2791,11 @@
     },
     {
       "numero": "R313",
-      "module": "legal",
-      "ancre": "apps/api/src/modules/legal/legal.module.ts",
+      "module": "api",
+      "ancre": "apps/api/src/app.module.ts",
       "statut": "actif",
       "citePar": [
-        "api"
+        "legal"
       ]
     },
     {
@@ -2721,8 +2814,8 @@
       "ancre": "apps/api/src/modules/bi/bi.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
-        "api"
+        "api",
+        "parametres"
       ]
     },
     {
@@ -2731,9 +2824,9 @@
       "ancre": "apps/api/src/modules/mobile/mobile.gate.ts",
       "statut": "actif",
       "citePar": [
+        "api",
         "common",
         "parametres",
-        "api",
         "auth"
       ]
     },
@@ -2749,8 +2842,8 @@
       "ancre": "apps/api/src/modules/mobile/mobile.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
-        "api"
+        "api",
+        "parametres"
       ]
     },
     {
@@ -2763,7 +2856,10 @@
       "numero": "R320",
       "module": "license",
       "ancre": "apps/api/src/modules/license/license.module.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
     },
     {
       "numero": "R321",
@@ -2771,8 +2867,8 @@
       "ancre": "apps/api/src/modules/oprisk/oprisk.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
         "api",
+        "parametres",
         "common"
       ]
     },
@@ -2791,8 +2887,8 @@
       "ancre": "apps/api/src/modules/oprisk/oprisk.module.ts",
       "statut": "actif",
       "citePar": [
-        "parametres",
         "api",
+        "parametres",
         "regwatch"
       ]
     },
@@ -2874,7 +2970,8 @@
       "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -3189,7 +3286,8 @@
       "ancre": "apps/api/src/modules/aml/aml-eval.service.ts",
       "statut": "actif",
       "citePar": [
-        "parametres"
+        "parametres",
+        "api"
       ]
     },
     {
@@ -3819,6 +3917,54 @@
       "citePar": [
         "api"
       ]
+    },
+    {
+      "numero": "R466",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R467",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R468",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R469",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R470",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R471",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R472",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R473",
+      "module": "reviews",
+      "ancre": "apps/api/src/modules/reviews/revue-harmonisee.service.ts",
+      "statut": "actif"
     }
   ],
   "brules": []

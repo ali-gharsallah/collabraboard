@@ -1491,3 +1491,32 @@ re-soumis ici.
   la tentative backend (démo = générateur local assumé) ; (c) statu quo documenté.
 - **ARBITRÉ (2026-08-08, PO) — EXÉCUTÉ (même jour)** : générateur local ASSUMÉ — la tentative backend `/api/v1/ai/workflow/*` est SUPPRIMÉE d'OcrSketchImport (`requestWorkflow` = générateur local seul, commentaire d'arbitrage en place). La vraie API vision attend l'arbitrage licence E-WD-2 (interface VisionExtractor côté produit). Écart CLOS.
 
+
+
+## E-HR-1 — AR = table plate hors moteur (Bloc 65, constaté 09.08.2026)
+- **Constat** (audit PO 08.08 + A0 repo 09.08) : en démo, `ACCOUNT_REVIEWS_DATA` est une table
+  plate (`status` muté à la main, `outcome` en texte libre, `nextReviewDate` posée à la main).
+  Au repo, le module reviews (R283) fait DÉJÀ de l'AR une révision du dossier KYC
+  (`review.lancee` porte revision/previousKycId/profil figé R29) — le delta R467 (diff
+  REPRISE/MODIFIÉE) s'y greffe, il ne crée pas de moteur neuf.
+- **Cible** : R466/R467/R468 (Bloc 65 Volet A). Statut : OUVERT — en cours d'exécution.
+
+## E-HR-2 — Critère de groupe codé en dur, config mutée sans pop-up (Bloc 65)
+- **Constat** : démo `AR_GROUP_CONFIG` muté en direct (PARAM_CHANGED sans pop-up ni versioning),
+  cascade par appels directs, critère UBO commun en dur.
+- **Cible** : R469 (référentiel paramétrable + projection) + R471 (cascades événements) +
+  pop-up R445. Statut : OUVERT.
+
+## E-HR-3 — GAR = configuration sans objet moteur (Bloc 65)
+- **Constat** : sections GAR et template GAW existent en config (Section Designer, WF_MGMT),
+  aucun dossier de groupe n'existe (ni démo moteur, ni repo) — la consolidation et la décision
+  de groupe n'ont aucun objet porteur. Deux couches de définition (WF_MGMT_TEMPLATES / WF_DEFS)
+  sans lien de compilation.
+- **Cible** : R470 (dossier parent) + R472 (compilation templates→WF_DEF). Statut : OUVERT.
+
+## E-HR-4 — Boutons de décision hétérogènes entre écrans (Bloc 65)
+- **Constat** : Approuver/Refuser ad hoc selon les écrans ; AUCUN renvoi ciblé ; aucune corbeille
+  unifiée. La carte « Circulation du dossier R85 » livrée en démo v2026-08-09.16 (session du
+  09.08) est le précurseur ad hoc le plus récent — elle sera ABSORBÉE par la barre unifiée R474
+  (Volet B), écart re-consigné si divergence de comportement.
+- **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.

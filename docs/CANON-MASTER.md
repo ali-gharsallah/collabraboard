@@ -2,7 +2,7 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-08 · commit `1675675`.** Ce document se périme visiblement :
+> **Généré le 2026-08-09 · commit `37b3850`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
@@ -13,7 +13,7 @@
 - **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 1
   - spec/SPEC-I18N.md (R29, R323, R324)
-- **Numéros R absents dans [1..466]** (plafond = sommet de l'amas contigu, hors réserves) : 26 — R405–R430
+- **Numéros R absents dans [1..480]** (plafond = sommet de l'amas contigu, hors réserves) : 26 — R405–R430
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -63,6 +63,20 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 | R444 | R451 | Bloc 63 — croisement formation × activité (MOD-43 fait foi) | BT-04 |
 | R445 | R452 | Bloc 63 — §BusinessTrip R-Q + pop-up généralisé (R445 repo) | BT-13 |
 | R458 | R465 | Bloc 63 — prospect né en voyage (ajout d'audit) | BT-16 |
+| R459 | R466 | Bloc 65 — KYC/AR/GAR trois TYPES du même dossier | HR-01, HR-12 |
+| R460 | R467 | Bloc 65 — l'AR part du dernier KYC approuvé, revue = DIFF visé | HR-02..03 |
+| R461 | R468 | Bloc 65 — verdict normalisé, conséquences proposées (R44) | HR-04..05 |
+| R462 | R469 | Bloc 65 — groupe = référentiel paramétrable, composition projetée | HR-06 |
+| R463 | R470 | Bloc 65 — GAR = dossier PARENT lié aux membres | HR-07..09 |
+| R464 | R471 | Bloc 65 — cascades = ÉVÉNEMENTS du moteur, anti-boucle | HR-10..11 |
+| R465 | R472 | Bloc 65 — une interface, une couche de définition | HR-13..14 |
+| R466 | R473 | Bloc 65 — §Review unifié (R-Q + pop-up R445) | HR-05..06, HR-11 |
+| R467 | R474 | Bloc 65 — décision d'étape uniforme (3 issues + déléguer) | HR-15 |
+| R468 | R475 | Bloc 65 — renvoi ciblé tracé, jamais une gomme | HR-16..18 |
+| R469 | R476 | Bloc 65 — refus motivé, issue paramétrée par étape | HR-17, HR-19 |
+| R470 | R477 | Bloc 65 — fluidité : décider ne coûte qu'un geste (optimiste honnête) | HR-20 |
+| R471 | R478 | Bloc 65 — corbeille unifiée « À décider » | HR-21 |
+| R472 | R479 | Bloc 65 — après la décision : SUIVANT/RESTER, annulation réversible | HR-22 |
 | R446 | R453 | Bloc 64 — matrice cross-border = PORT versionné (extension R293) | XB-01..02, XB-14 |
 | R447 | R454 | Bloc 64 — actes cross-border distants (2e surface R294 étendue) | XB-03..04 |
 | R448 | R455 | Bloc 64 — check pré-acte embarqué (MKT/ADVICE/ORDER, R295) | XB-05 |
@@ -78,7 +92,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-118 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+119 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
@@ -116,6 +130,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1–R52 | Catalogue normatif v2 — inventaire (source : OLive-Specifications-Moteur-Workflow-v2) | PROPOSÉ | — | — |
 | R1–R56 | O-Live — Catalogue des règles R1–R56 (état v2.4, 12.07.2026) & propositions R57–R62 | PROPOSÉ | BD, DV, EX, IA, PS, PT, RC, RT, SC, SG, ST | run_tests.py, test_cpsi_bloc1.py, test_bloc10_r58_r61.py, run_tests.py |
 | R1–R51 | sans-titre | PROPOSÉ | — | — |
+| R466–R479 | Bloc 65 · Harmonisation des revues — KYC · Account Review · Group Account Review | PROPOSÉ | HR | review-harmonisation.e2e-spec.ts |
 | R117–R120 | Catalogue O-Live — Amendement PROPOSÉ (R117 → R120) · Bloc 19 « Onboarding — l'entrée en relation » | RATIFIÉ | OB | onboarding.wiring.spec.ts |
 | R89–R99 | Catalogue O-Live — Amendements RATIFIÉS (R89 → R99) | RATIFIÉ | AU, KS, MF, OI, TM, TP | auth.spec.ts, fat-cloture-readiness.e2e-spec.ts, key-store.spec.ts, mfa.spec.ts |
 | R2, R4, R13, R39, R48–R49, R52, R58–R61, R84–R86, R100–R103 | Catalogue O-Live — Erratum & note de version **v4.0 → v4.1** | PROPOSÉ | CK, FE, HF, HM, LK, NV, SC, VQ | rules.spec.ts, run_tests.py, test_cpsi_bloc16.py, test_cpsi_bloc17.py |
