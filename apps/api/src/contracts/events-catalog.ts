@@ -695,6 +695,48 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     motif: z.string().optional() }).strict() },
   "COC_NON_RETENU": { version: 1, schema: z.object({ par: z.string(),
     motif: z.string() }).strict() },                                  // CC-07 : jamais une disparition silencieuse
+  // ── Bloc 65 Volet A (repo R466–R473, 2026-08-09) — harmonisation des revues : l'AR est une
+  // révision pré-remplie du dernier KYC approuvé (diff visé R467), verdicts normalisés à
+  // conséquences PROPOSÉES (R468/R44), GAR = dossier parent projeté d'événements (R470),
+  // cascades = événements anti-boucle (R471). Payloads RÉELS (revue-harmonisee.service.ts).
+  // NOTE sur-capture : « review.groupe.criteres » et « review.groupe.enabled » sont des CLÉS DE
+  // PARAMÈTRE R-Q (registre §Review, parametres.service.ts), pas des types d'événement — elles
+  // restent dans TYPES_EN_ATTENTE (inventaire monotone, même doctrine que gwb.ch/pacs.008).
+  "review.prerempli": { version: 1, schema: z.object({ kycCode: z.string(),
+    depuisKyc: z.string(), reprises: z.number() }).strict() },        // R467 : origine REPRISE au socle
+  "review.reponse.modifiee": { version: 1, schema: z.object({ kycCode: z.string(),
+    section: z.string(), question: z.string(), ancien: z.string().nullable(),
+    nouveau: z.string(), par: z.string() }).strict() },               // R467 : ancien/nouveau tracés
+  "review.delta.vise": { version: 1, schema: z.object({ kycCode: z.string(),
+    modifiees: z.number(), changements: z.array(z.any()), par: z.string(),
+    role: z.string() }).strict() },                                   // R467 : le visa RÉFÉRENCE le delta
+  "review.section.visee.bloc": { version: 1, schema: z.object({ kycCode: z.string(),
+    section: z.string(), par: z.string() }).strict() },               // R467 : « revu, inchangé » (tenant)
+  "review.verdict.pose": { version: 1, schema: z.object({ kycCode: z.string(),
+    verdict: z.enum(["CONFORME", "RESERVES", "NON_CONFORME"]),
+    motivation: z.string().nullable(), par: z.string(), role: z.string() }).strict() },  // R468 : art. 7 LBA
+  "review.aiguillage.decide": { version: 1, schema: z.object({ kycCode: z.string(),
+    option: z.string(), par: z.string(), role: z.string() }).strict() },   // R468/R44 : l'humain décide — événement distinct
+  "review.membre.ouvert": { version: 1, schema: z.object({ garId: z.string(), kycId: z.string(),
+    kycCode: z.string(), clientId: z.string(), origine: z.string(),
+    par: z.string() }).strict() },                                    // R470 : chaque membre lié au parent, origine tracée
+  "tache.review.remediation": { version: 1, schema: z.object({ kycCode: z.string(),
+    motif: z.string(), par: z.string() }).strict() },                 // R468 : RÉSERVES → tâches proposées
+  "tache.review.aiguillage": { version: 1, schema: z.object({ kycCode: z.string(),
+    options: z.array(z.string()), verdict: z.string(), par: z.string() }).strict() },  // R468 : proposé, jamais exécuté
+  "gar.ouverte": { version: 1, schema: z.object({ garId: z.string(), critere: z.string(),
+    composition: z.array(z.string()), membres: z.array(z.string()), sections: z.array(z.string()),
+    origine: z.record(z.any()).nullable(), par: z.string(),
+    dateInitiation: z.string() }).strict() },                         // R470 : composition FIGÉE (R29/R48)
+  "gar.decision.visee": { version: 1, schema: z.object({ garId: z.string(), par: z.string(),
+    role: z.string(), motivation: z.string(),
+    verdictsMembres: z.array(z.object({ kycCode: z.string(),
+      verdict: z.string() }).strict()) }).strict() },                 // R470 : le visa référence TOUS les verdicts membres
+  "gar.cloturee": { version: 1, schema: z.object({ garId: z.string(),
+    par: z.string() }).strict() },
+  "REVIEW_CASCADE_TRIGGERED": { version: 1, schema: z.object({ source: z.string(),
+    parametre: z.string(), parent: z.string(), membres: z.array(z.string()),
+    par: z.string() }).strict() },                                    // R471 : événement, anti-boucle invariant
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -1072,6 +1114,8 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "gwb.ch",
   "notification",
   "pacs.008",
+  "review.groupe.criteres",
+  "review.groupe.enabled",
 ]);
 
 export const versionDe = (type: string): number => SCHEMAS_EVENEMENTS[type]?.version ?? 1;

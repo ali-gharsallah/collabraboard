@@ -3,7 +3,8 @@ import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
-import { SECTIONS_BY_WORKFLOW } from "../kyc/kyc.templates";   // R283 : source UNIQUE du gabarit (import de données, pas de cycle DI)
+import { SECTIONS_BY_WORKFLOW } from "../kyc/kyc.templates";
+import { RevueHarmoniseeService } from "./revue-harmonisee.service";   // R283 : source UNIQUE du gabarit (import de données, pas de cycle DI)
 
 /**
  * Échéances de review — R272→R275 (RV-01..08), canon `spec/canon-debloquants-home.md` partie 1
@@ -325,9 +326,33 @@ export class ReviewsController {
   @Post("kyc/:code/signaler-changement") signaler(@Req() r: any, @Param("code") c: string, @Body() b: any) { return this.svc.signalerChangement(r.ctx, c, b ?? {}); } // RW-02/CC-01
 }
 
+// ── Bloc 65 Volet A (repo R466–R473) — harmonisation : diff visé, verdicts, GAR, cascades, §Review. ──
+@Controller("revues")
+export class RevueHarmoniseeController {
+  constructor(private svc: RevueHarmoniseeService) {}
+  @Post("deadlines/:id/ouvrir")        ouvrir(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.ouvrirRevue(r.ctx, id, b ?? {}); }        // HR-01/02 (R467)
+  @Post("kyc/:code/reponse")           reponse(@Req() r: any, @Param("code") c: string, @Body() b: any) { return this.svc.modifierReponse(r.ctx, c, b ?? {}); }   // HR-02 (R467)
+  @Get("kyc/:code/delta")              delta(@Req() r: any, @Param("code") c: string) { return this.svc.delta(r.ctx, c); }                                        // HR-03 (R467)
+  @Post("kyc/:code/delta/visa")        viserDelta(@Req() r: any, @Param("code") c: string) { return this.svc.viserDelta(r.ctx, c); }                              // HR-03 (R467/R13)
+  @Post("kyc/:code/visa-bloc")         viserBloc(@Req() r: any, @Param("code") c: string) { return this.svc.viserEnBloc(r.ctx, c); }                              // HR-03 (R467)
+  @Post("kyc/:code/verdict")           verdict(@Req() r: any, @Param("code") c: string, @Body() b: any) { return this.svc.poserVerdict(r.ctx, c, b ?? {}); }      // HR-04 (R468/R44)
+  @Post("kyc/:code/aiguillage")        aiguillage(@Req() r: any, @Param("code") c: string, @Body() b: any) { return this.svc.accepterAiguillage(r.ctx, c, b ?? {}); } // HR-04 (R44)
+  @Post("kyc/:code/cloturer")          cloturer(@Req() r: any, @Param("code") c: string) { return this.svc.cloturerRevue(r.ctx, c); }                             // HR-05 (R468)
+  @Post("clients/:id/risque")          risque(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.surChangementRisque(r.ctx, id, b ?? {}); } // HR-05 (R468)
+  @Get("groupes")                      groupes(@Req() r: any) { return this.svc.composerGroupes(r.ctx); }                                                         // HR-06 (R469)
+  @Post("groupes/declencher")          declencher(@Req() r: any, @Body() b: any) { return this.svc.declencherRevueGroupe(r.ctx, b ?? {}); }                       // HR-07 (R470)
+  @Post("membres/declencher")          membre(@Req() r: any, @Body() b: any) { return this.svc.declencherRevueMembre(r.ctx, b ?? {}); }                           // HR-10 (R471)
+  @Get("gar/:id/consolidee")           consolidee(@Req() r: any, @Param("id") id: string) { return this.svc.vueConsolidee(r.ctx, id); }                           // HR-09 (R470)
+  @Post("gar/:id/decision")            decision(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.viserDecisionGroupe(r.ctx, id, b ?? {}); } // HR-08/09 (R470/R13)
+  @Get("gar/:id/rejeu")                rejeu(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf?: string) { return this.svc.rejouerGar(r.ctx, id, asOf ? new Date(asOf) : undefined); } // HR-14 (R48/R29)
+  @Get("dossiers/:ref")                dossier(@Req() r: any, @Param("ref") ref: string) { return this.svc.dossier(r.ctx, ref); }                                 // HR-13 (R472)
+  @Get("params/registre")              params(@Req() r: any) { return this.svc.parametresReview(r.ctx); }                                                         // R473
+  @Post("params/modifier")             modifier(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreReview(r.ctx, b ?? {}); }                       // R473 (pop-up R445)
+}
+
 @Module({
-  controllers: [ReviewsController],
-  providers: [ReviewsService],
-  exports: [ReviewsService],
+  controllers: [ReviewsController, RevueHarmoniseeController],
+  providers: [ReviewsService, RevueHarmoniseeService],
+  exports: [ReviewsService, RevueHarmoniseeService],
 })
 export class ReviewsModule {}

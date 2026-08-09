@@ -344,7 +344,7 @@ jobs:
       # DM-03 affiné) — cf. test/e2e/QUARANTINE.md. `testPathIgnorePatterns` = /node_modules/ seul.
       # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky sous
       # charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake est absorbé.
-      - name: "4 · e2e API réelle + Postgres (73 suites 496/496, 0 quarantaine, 1 retry §8)"
+      - name: "4 · e2e API réelle + Postgres (74 suites 510/510, 0 quarantaine, 1 retry §8)"
         working-directory: apps/api
         run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 

@@ -30,9 +30,10 @@ async function mkKycValide(clientId: string, reponses: Record<string, Record<str
     riskScore: 61, riskLevel: "HIGH", status: "VALIDATED", createdBy: RM1.userId,
     validatedBy: CO1.userId, validatedAt: new Date() } });
   for (const [secCode, qs] of Object.entries(reponses)) {
-    const sec = await owner.kycSection.create({ data: { kycFileId: kyc.id, code: secCode } as any });
+    const sec = await owner.kycSection.create({ data: { kycFileId: kyc.id, code: secCode,
+      label: secCode, orderIndex: 0 } as any });
     for (const [qCode, answer] of Object.entries(qs))
-      await owner.kycQuestion.create({ data: { sectionId: sec.id, code: qCode, answer,
+      await owner.kycQuestion.create({ data: { sectionId: sec.id, code: qCode, label: qCode, answer,
         answeredBy: RM1.userId, answeredAt: new Date() } as any });
     await owner.kycVisa.create({ data: { kycFileId: kyc.id, sectionCode: secCode,
       requiredRole: "CO", status: "SIGNED", signedBy: CO1.userId, signedAt: new Date() } as any });
@@ -45,7 +46,7 @@ async function mkDeadline(clientId: string, kycId: string) {
 }
 // Le groupe se PROJETTE du graphe : une personne UBO liée à N clients (cible COMPTE, R30+/R152).
 async function mkGroupeUbo(nom: string, clientIds: string[]) {
-  const p = await owner.personne.create({ data: { tenantId: T, nom, type: "PHYSIQUE" } as any });
+  const p = await owner.person.create({ data: { tenantId: T, nom } as any });
   for (const cid of clientIds)
     await owner.personneLien.create({ data: { tenantId: T, personneId: p.id, typeCode: "UBO",
       categorie: "OFFICIEL", cibleType: "COMPTE", cibleId: cid, posePar: CO1.userId, poseAt: new Date() } });
@@ -88,7 +89,7 @@ describe("Bloc 65 Volet A — harmonisation des revues (R466–R473, spec/BLOC-6
       expect(Array.isArray(d.timeline)).toBe(true);
       expect(d.outcome).toBeUndefined();                       // aucun outcome en texte libre (E-HR-1)
     }
-    const arRow = await owner.kycFile.findFirst({ where: { code: ar.kycCode } });
+    const arRow = await owner.kycFile.findFirst({ where: { tenantId: T, code: ar.kycCode } });
     expect(arRow!.revision).toBe(2);                           // l'AR EST une révision du dossier — pas une table plate
     expect(arRow!.previousKycId).toBe(k1.id);
     (svc as any)._hr01 = { c1, k1, ar, gar, groupes };

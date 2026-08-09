@@ -5,7 +5,7 @@
 > La documentation VIVANTE (extraite du routeur au runtime) est servie par `GET /v1/apidoc` ;
 > ce document en est la projection committée, au même niveau que le snapshot.
 
-**421 routes** · **59 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
+**439 routes** · **60 modules** · préfixe global `/v1` · authentification JWT RS256 (le contexte tenant vient du jeton, R328) · RLS FORCE par tenant.
 
 | Module | Routes |
 |---|---|
@@ -53,6 +53,7 @@
 | [`readyz`](#readyz) | 1 |
 | [`regwatch`](#regwatch) | 5 |
 | [`reviews`](#reviews) | 10 |
+| [`revues`](#revues) | 18 |
 | [`riskcases`](#riskcases) | 8 |
 | [`sandbox`](#sandbox) | 5 |
 | [`screening`](#screening) | 14 |
@@ -619,6 +620,29 @@
 | POST | `/v1/reviews/kyc/:code/signaler-changement` |
 | GET | `/v1/reviews/profils` |
 | POST | `/v1/reviews/tick` |
+
+## revues
+
+| Méthode | Chemin |
+|---|---|
+| POST | `/v1/revues/clients/:id/risque` |
+| POST | `/v1/revues/deadlines/:id/ouvrir` |
+| GET | `/v1/revues/dossiers/:ref` |
+| GET | `/v1/revues/gar/:id/consolidee` |
+| POST | `/v1/revues/gar/:id/decision` |
+| GET | `/v1/revues/gar/:id/rejeu` |
+| GET | `/v1/revues/groupes` |
+| POST | `/v1/revues/groupes/declencher` |
+| POST | `/v1/revues/kyc/:code/aiguillage` |
+| POST | `/v1/revues/kyc/:code/cloturer` |
+| GET | `/v1/revues/kyc/:code/delta` |
+| POST | `/v1/revues/kyc/:code/delta/visa` |
+| POST | `/v1/revues/kyc/:code/reponse` |
+| POST | `/v1/revues/kyc/:code/verdict` |
+| POST | `/v1/revues/kyc/:code/visa-bloc` |
+| POST | `/v1/revues/membres/declencher` |
+| POST | `/v1/revues/params/modifier` |
+| GET | `/v1/revues/params/registre` |
 
 ## riskcases
 
