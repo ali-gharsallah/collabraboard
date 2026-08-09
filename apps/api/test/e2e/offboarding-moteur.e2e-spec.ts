@@ -149,7 +149,9 @@ describe("Bloc 62 — offboarding au moteur (R439–R445, spec/BLOC-62 §3)", ()
 
   it("OF-11 [R48/R51/R444] — rejeu à date d'un dossier clôturé : paramètres de la date d'initiation, audit trail par requête", async () => {
     const d1 = (svc as any)._of10;
-    const rejeu = await svc.etat(RM1, d1, new Date("2026-08-08T23:59:59Z"));
+    // Borne de rejeu STRICTEMENT future (jamais une date calendaire en dur : le test créait
+    // ses événements « maintenant » et une borne figée les excluait dès le lendemain).
+    const rejeu = await svc.etat(RM1, d1, new Date(Date.now() + 60_000));
     expect(rejeu.chaine).toEqual(["RM", "CO"]);                   // chaîne LOW figée à l'initiation
     expect(rejeu.checklist.some((i: any) => i.obligatoire)).toBe(true);
     const trail = await svc.auditTrail(RM1, d1);                  // requête directe, pas une reconstruction
