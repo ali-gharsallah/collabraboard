@@ -645,6 +645,56 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     motif: z.string() }).strict() },
   "OLIVIA_PROPOSAL_ADOPTED": { version: 1, schema: z.object({ par: z.string(),
     type: z.string() }).strict() },                                   // R44 : l'humain adopte
+  // ── SANS_POINT tranche 2 (C6, 2026-08-09) — instruction COMPLÈTE du bloc : sur les 274 littéraux
+  // MAJUSCULES restants, 13 seulement sont émis via emitEvent (schématisés ci-dessous). Les 261
+  // autres sont des CODES D'ACTION audit.log (~140, chaîne HMAC audit_logs — pas domain_events),
+  // des statuts/valeurs de payload/exemples de config/messages d'exception (~116, dont KYC_FILE/
+  // RISK_CASE/CPSI_RULES/CPSI_SCORE = valeurs du champ `quoi` d'OLIVIA_CONTEXT_DENIED, et
+  // COC_CONFIG_DEFINIE = code audit) — ils restent en attente par sur-capture monotone assumée.
+  // AUDIT_ACCESS a TROIS émetteurs (export BI massif R315, vérification d'intégrité SO-07,
+  // middleware surfaces sensibles SO) — champs par site optionnels sous strict.
+  "AUDIT_ACCESS": { version: 1, schema: z.object({ par: z.string(), role: z.string(),
+    vue: z.string().optional(), dimensions: z.array(z.string()).optional(),
+    lignes: z.number().optional(), seuil: z.number().optional(),
+    notifie: z.array(z.string()).optional(),
+    chemin: z.string().optional(), methode: z.string().optional() }).strict() },
+  "AUDIT_EXPORT": { version: 1, schema: z.object({ par: z.string(), role: z.string(),
+    perimetre: z.object({ aggregateId: z.string().nullable(),
+      type: z.string().nullable() }).strict(), n: z.number() }).strict() },  // SO-02 : at = génération
+  // dueDate/ancienneDate/nouvelleDate sortent de Prisma en instance Date — même doctrine que
+  // mros.gel.echeance (validées AVANT sérialisation JSON).
+  "REVIEW_DEADLINE_SET": { version: 1, schema: z.object({ clientId: z.string(),
+    ddlLevel: z.string(), cadenceMois: z.number(), dueDate: z.union([z.string(), z.date()]),
+    sourceKycId: z.string().optional(), remplace: z.string().optional(),
+    motif: z.string().optional(), par: z.string().optional() }).strict() },  // 2 émetteurs (pose/recalcul)
+  "REVIEW_DEADLINE_REALISEE": { version: 1, schema: z.object({ clientId: z.string(),
+    kycId: z.string(), par: z.string() }).strict() },
+  "REVIEW_DEADLINE_ANTICIPEE": { version: 1, schema: z.object({ clientId: z.string(),
+    declencheur: z.string(), ancienneDate: z.union([z.string(), z.date()]),
+    nouvelleDate: z.union([z.string(), z.date()]), motif: z.string(),
+    par: z.string() }).strict() },
+  "REVIEW_DEADLINE_REPORT_DEMANDE": { version: 1, schema: z.object({ nouvelleDate: z.string(),
+    motif: z.string(), par: z.string(), at: z.string() }).strict() },        // R273 : demandé…
+  "REVIEW_DEADLINE_REPORTEE": { version: 1, schema: z.object({ clientId: z.string(),
+    ancienneDate: z.union([z.string(), z.date()]), nouvelleDate: z.union([z.string(), z.date()]),
+    motif: z.string(), demandePar: z.string(), visePar: z.string() }).strict() },  // …et VISÉ (R13)
+  // configVersionAt : Date(0) pour la table livrée, DateTime Prisma pour les versions tenant
+  "COC_OUVERT": { version: 1, schema: z.object({ clientId: z.string(), typeCode: z.string(),
+    materialite: z.string(), actionRequise: z.string(),
+    configVersionAt: z.union([z.string(), z.date()]),
+    par: z.string() }).strict() },                                    // R29 : config à date FIGÉE
+  "COC_SIGNAL_NON_EMIS": { version: 1, schema: z.object({ clientId: z.string(),
+    pourquoi: z.string() }).strict() },                               // l'échec CPSI jamais silencieux
+  "COC_TRAITEMENT_DEMANDE": { version: 1, schema: z.object({ par: z.string(), at: z.string(),
+    revisionKycId: z.string().nullable(), majRefs: z.any(),
+    sansMajMotif: z.string().nullable() }).strict() },
+  "COC_TRAITE": { version: 1, schema: z.object({ par: z.string(),
+    demandePar: z.string().optional() }).strict() },                  // R13 quand four-eyes actif
+  // gabarit COC_${vers} (transitionner) — TRAITE y est interdit (route dédiée R277)
+  "COC_EN_TRAITEMENT": { version: 1, schema: z.object({ par: z.string(),
+    motif: z.string().optional() }).strict() },
+  "COC_NON_RETENU": { version: 1, schema: z.object({ par: z.string(),
+    motif: z.string() }).strict() },                                  // CC-07 : jamais une disparition silencieuse
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -768,8 +818,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "AML_GAP_SIGNAL",
   "ASSOCIE_DE",
   "AUCUN_CHECK",
-  "AUDIT_ACCESS",
-  "AUDIT_EXPORT",
   "AUDIT_HMAC_SECRET",
   "BLOQUANT_APPROBATION",
   "BLOQUEE_REVUE",
@@ -784,12 +832,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "CLOTURE_ANNULEE",
   "CLOTURE_DEMANDEE",
   "COC_CONFIG_DEFINIE",
-  "COC_EN_TRAITEMENT",
-  "COC_NON_RETENU",
-  "COC_OUVERT",
-  "COC_SIGNAL_NON_EMIS",
-  "COC_TRAITE",
-  "COC_TRAITEMENT_DEMANDE",
   "COFFRE_INTERNE",
   "CONSEILLER_EXTERNE",
   "CONSEIL_FONDATION",
@@ -951,11 +993,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "REGWATCH_COLLECTE",
   "REGWATCH_QUALIFIE",
   "REVIEW_ANTICIPEE",
-  "REVIEW_DEADLINE_ANTICIPEE",
-  "REVIEW_DEADLINE_REALISEE",
-  "REVIEW_DEADLINE_REPORTEE",
-  "REVIEW_DEADLINE_REPORT_DEMANDE",
-  "REVIEW_DEADLINE_SET",
   "REVIEW_LANCEE",
   "REVIEW_RECALCUL",
   "REVIEW_REPORTEE",

@@ -5,9 +5,14 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-09, après SANS_POINT tranche 1 — toutes les familles à points schématisées)
+## État (2026-08-09, après SANS_POINT tranche 2 — **CHANTIER DE SCHÉMATISATION SOLDÉ**)
 
-- **325 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
+**Tout type réellement émis via `emitEvent` porte désormais un schéma zod strict.** Les 276
+types restants de TYPES_EN_ATTENTE sont TOUS instruits comme non-événements ou hors-périmètre
+(détail ci-dessous) — l'inventaire reste monotone (sur-capture assumée), la garde CI 3-C6
+attrape toute NOUVELLE émission non cataloguée.
+
+- **338 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
   noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
   +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
   TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
@@ -25,12 +30,21 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
   (2026-08-09 : OLIVIA_* émis via emitEvent — CONTEXT_DENIED, CONVERSATION_FERMEE,
   MESSAGE_IN/OUT, INJECTION_SUSPECTEE, FEEDBACK, PROPOSAL_CREATED/CADUQUE/REJECTED/ADOPTED ;
   les 14 autres OLIVIA_* du scan = codes d'action audit.log [chaîne HMAC audit_logs, pas
-  domain_events] ou messages d'exception — sur-capture consignée au catalogue).
-- **289 types EN ATTENTE** = 274 SANS_POINT restants (MAJUSCULES, gabarits COC_ compris,
-  dont une part de codes audit.log à instruire tranche par tranche) + 11 `cpsi.*`
-  (journal jumeau, doctrine vague 3) + 4 FAUX POSITIFS du scan consignés (« fake-1.0 » version
-  de modèle factice olivia, « gwb.ch »/« gwb-private.ch » exemples loginDomaines, « pacs.008 »
-  type de message SWIFT — pas des types d'événement, sur-capture monotone assumée).
+  domain_events] ou messages d'exception — sur-capture consignée au catalogue), +13 SANS_POINT
+  tranche 2 (2026-08-09 : AUDIT_ACCESS [3 émetteurs : BI massif R315, intégrité SO-07,
+  middleware SO], AUDIT_EXPORT [at = génération, SO-02], REVIEW_DEADLINE_SET/REALISEE/
+  ANTICIPEE/REPORT_DEMANDE/REPORTEE [dates Prisma en union string|date, report R273
+  demandé→visé R13], COC_OUVERT/SIGNAL_NON_EMIS/TRAITEMENT_DEMANDE/TRAITE/EN_TRAITEMENT/
+  NON_RETENU [gabarit COC_${vers} : TRAITE interdit en transition, route dédiée R277]).
+- **276 types EN ATTENTE — TOUS INSTRUITS, AUCUN à schématiser** :
+  · **261 littéraux SANS_POINT non-événements** (classification exhaustive 2026-08-09, script
+    emit/audit/autre sur src/modules+src/common) : ~140 CODES D'ACTION `audit.log` (chaîne
+    HMAC `audit_logs` — PAS domain_events), ~116 statuts/valeurs de payload/exemples de
+    config/messages d'exception (dont KYC_FILE/RISK_CASE/CPSI_RULES/CPSI_SCORE = valeurs du
+    champ `quoi` d'OLIVIA_CONTEXT_DENIED, COC_CONFIG_DEFINIE = code audit), et les variantes
+    dynamiques déjà couvertes par le gabarit.
+  · **11 `cpsi.*` du journal JUMEAU** cpsi_events (doctrine vague 3 — jamais emitEvent).
+  · **4 faux positifs v11** (« fake-1.0 », « gwb.ch », « gwb-private.ch », « pacs.008 »).
   Inventaire GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
@@ -136,7 +150,12 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    (R177/R179). **INSTRUCTION des 4 littéraux suspects** : « fake-1.0 », « gwb.ch »,
    « gwb-private.ch », « pacs.008 » ne sont PAS des événements (voir État ci-dessus) —
    ils restent en attente par sur-capture monotone.
-   RESTE : le bloc SANS_POINT (284 littéraux MAJUSCULES, gabarits COC_ compris).
+   **SANS_POINT tranches 1-2 FAITES (2026-08-09) — le point 1 est SOLDÉ** : 10 OLIVIA_*
+   + 13 (AUDIT_*/REVIEW_DEADLINE_*/COC_*) schématisés ; les 261 littéraux MAJUSCULES
+   restants sont instruits NON-ÉVÉNEMENTS (voir État). Plus rien à schématiser : toute
+   écriture emitEvent est validée par un schéma strict. La suite de vie du catalogue :
+   chaque NOUVELLE émission doit arriver AVEC son schéma (la garde 3-C6 refuse le
+   littéral hors catalogue), et toute évolution de payload = version n+1 + upcaster.
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
