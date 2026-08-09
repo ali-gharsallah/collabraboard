@@ -5,17 +5,17 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-08, tranche C6)
+## État (2026-08-08, après vague 7)
 
-- **68 types SCHÉMATISÉS (vague 2 kyc.* — 18 schémas, 2026-08-08)** — anciennement : 50
-  (Bloc 62 offboarding-moteur : WORKFLOW_STARTED, TRANSITION_FIRED, VISA_APPOSE, GUARD_BLOCKED,
-  GUARD_WARNING, WORKFLOW_COMPLETED, CHECKLIST_ITEM_CHECKED, PARAM_CHANGED), 42 (vague 1
-  mros.*/trip.*/training.*), 27 (v1, strict)** : noyau KYC (verrou + handoff), screening/PEP,
-  ES-8 (`tx.flux.importee`, `kyc.validated`, `personne.pep.declare/leve`), bloc WD
-  (`wd.wir.importe/edite/ratifie`), ingestion de listes (`liste.*`), MROS (`mros.goaml.soumis`,
-  `mros.chrono.alerte`), gouvernance O (`olivia.curseur.change`), et la tranche C6 :
-  `kyc.created`, `prospect.retour.refuse.detecte`, `kyc.access.modifie`.
-- **530 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
+- **190 types SCHÉMATISÉS** — progression par vagues (toutes 2026-08-08) : 27 (v1 strict,
+  noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
+  +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
+  TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
+  (kyc.created, prospect.retour.refuse.detecte, kyc.access.modifie), +18 vague 2 (kyc.*),
+  +9 vague 3 (aml.* + cpsi.* emitEvent), +26 vague 4 (ged.*), +28 vague 5 (tache.*/task.*),
+  +18 vague 6 (personne.*), +17 Blocs 63/64 (trip.*/MATRIX_SYNCED/xb.*), +25 vague 7
+  (ia.* 9 + islamic.* 9 + pms.* 7).
+- **424 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
   littéral émis manque OU si un type est à double statut. La SUR-capture reste assumée.
@@ -57,8 +57,21 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    R30→R36 : création/minimale/homonymie signal jamais fusion auto, liens R152
    pose/retrait/accès refusé, rôles et archivage base légale LBA, CoC créé/propagé +
    rescreening, PEP propagé + alerte dé-PEPisation ADR-PEP-001, relations).
-   RESTENT : le reste par familles (ia.*, islamic.*,
-   pms.*, olivia.*, …) et le bloc SANS_POINT (284 littéraux MAJUSCULES, gabarits inclus).
+   **Vague 7 FAITE (2026-08-08)** : `ia.*` intégral (9 — l'IA propose, l'humain décide
+   R44/AI-04 : acces.refuse R163, production hachée R160 shaContexte/shaSortie,
+   proposition R161 confiance nullable, decision R162 enum ACCEPTEE/REJETEE + ecart mesuré
+   jamais coercé R39, prerevue.produite/point.traite/point.ecarte R121, prompt.versionne)
+   + `islamic.*` intégral (9 — signaux R207→R221 : signal.leve/operation.bloquee, et les
+   7 calculateurs ledger AAOIFI à spread `...rapport` : le wrapper `ledger()` DÉLÈGUE bien
+   à emitEvent, les shapes viennent des interfaces Rapport* de
+   `islamic-screening.engine.ts` — zakat.calcule, mudaraba.distribue, waqf.distribue
+   [motif optionnel : absent quand autorisé], qard.suivi, takaful.suivi, sukuk.maturite,
+   audit.shariah) + `pms.*` intégral (7 — R39 le système mesure et alerte, jamais ne
+   liquide : mandat.attache, drift.detecte borne z.tuple [min,max], pretrade.bloque/ok,
+   suitability.alerte, breach.escalade/clos) — 25 schémas stricts.
+   RESTENT : le reste par familles (mobile.*, olivia.*, riskcase.*, coffre.*, ocr.*,
+   offboarding.*, onboarding.*, oprisk.*, regwatch.*, ta.*, tx.*, …) et le bloc
+   SANS_POINT (~284 littéraux MAJUSCULES, gabarits inclus).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
