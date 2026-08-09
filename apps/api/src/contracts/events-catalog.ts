@@ -615,6 +615,36 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     motif: z.string() }).strict() },                                  // R177/R179
   "vendor.licence.acces.refuse": { version: 1, schema: z.object({ par: z.string(),
     role: z.string() }).strict() },
+  // ── SANS_POINT tranche 1 (C6, 2026-08-09) — OLIVIA_* réellement émis via emitEvent (10 types,
+  // module olivia R253–R258 : conversations hash-chaînées, contexte prouvé, propositions B.1-B.7).
+  // NOTE sur-capture : les 14 autres littéraux OLIVIA_* du scan sont des CODES D'ACTION audit.log
+  // (chaîne HMAC audit_logs, PAS domain_events : CONVERSATION_CREATED, MESSAGE, TOOL/AGENT_DECLARED,
+  // AGENT_RETIRED, RUN_PORTE(_EXPIREE)/EPUISE/TERMINE/GATE/INTERROMPU/STOP/REPLAY) ou des MESSAGES
+  // D'EXCEPTION (SCOPE_DENIED) — ils restent en attente par sur-capture monotone assumée.
+  "OLIVIA_CONTEXT_DENIED": { version: 1, schema: z.object({ qui: z.string(), quoi: z.string(),
+    pourquoi: z.string() }).strict() },                               // R255 : refus de contexte tracé
+  "OLIVIA_CONVERSATION_FERMEE": { version: 1, schema: z.object({ motif: z.string(),
+    roleFige: z.string(), roleCourant: z.string() }).strict() },      // le rôle est FIGÉ à l'ouverture
+  "OLIVIA_MESSAGE_IN": { version: 1, schema: z.object({ messageId: z.string(),
+    seq: z.number() }).strict() },
+  // deux émetteurs : refus hors périmètre (horsPerimetre) et sortie fournisseur (provider/model/…)
+  "OLIVIA_MESSAGE_OUT": { version: 1, schema: z.object({ messageId: z.string(), seq: z.number(),
+    horsPerimetre: z.boolean().optional(), provider: z.string().optional(),
+    model: z.string().optional(), latenceMs: z.number().optional(),
+    echec: z.string().nullish(), empreinte: z.string().optional() }).strict() },
+  "OLIVIA_INJECTION_SUSPECTEE": { version: 1, schema: z.object({ marqueur: z.string(),
+    seq: z.number() }).strict() },                                    // A.5 : suspicion tracée, jamais silencieuse
+  "OLIVIA_FEEDBACK": { version: 1, schema: z.object({ seq: z.number().nullable(),
+    note: z.enum(["UTILE", "INUTILE"]), par: z.string() }).strict() },
+  "OLIVIA_PROPOSAL_CREATED": { version: 1, schema: z.object({ type: z.string(),
+    cibleType: z.string(), cibleId: z.string(), messageId: z.string() }).strict() },  // payload minimal (B.1)
+  // decisionHumaine = la référence de l'acte humain {evenement, par?, le} (etatCible.refHumaine) — objet, nullable
+  "OLIVIA_PROPOSAL_CADUQUE": { version: 1, schema: z.object({ etatFige: z.string().nullable(),
+    etatCourant: z.string(), decisionHumaine: z.record(z.any()).nullable() }).strict() },  // B.7 : jugée contre l'état figé
+  "OLIVIA_PROPOSAL_REJECTED": { version: 1, schema: z.object({ par: z.string(),
+    motif: z.string() }).strict() },
+  "OLIVIA_PROPOSAL_ADOPTED": { version: 1, schema: z.object({ par: z.string(),
+    type: z.string() }).strict() },                                   // R44 : l'humain adopte
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -876,18 +906,8 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "OFFBOARDING_VISA",
   "OLIVIA_AGENT_DECLARED",
   "OLIVIA_AGENT_RETIRED",
-  "OLIVIA_CONTEXT_DENIED",
   "OLIVIA_CONVERSATION_CREATED",
-  "OLIVIA_CONVERSATION_FERMEE",
-  "OLIVIA_FEEDBACK",
-  "OLIVIA_INJECTION_SUSPECTEE",
   "OLIVIA_MESSAGE",
-  "OLIVIA_MESSAGE_IN",
-  "OLIVIA_MESSAGE_OUT",
-  "OLIVIA_PROPOSAL_ADOPTED",
-  "OLIVIA_PROPOSAL_CADUQUE",
-  "OLIVIA_PROPOSAL_CREATED",
-  "OLIVIA_PROPOSAL_REJECTED",
   "OLIVIA_RUN_EPUISE",
   "OLIVIA_RUN_GATE",
   "OLIVIA_RUN_INTERROMPU",

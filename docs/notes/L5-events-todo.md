@@ -5,9 +5,9 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-09, après vague 11 — TOUTES les familles à points sont schématisées)
+## État (2026-08-09, après SANS_POINT tranche 1 — toutes les familles à points schématisées)
 
-- **315 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
+- **325 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
   noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
   +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
   TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
@@ -21,8 +21,13 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
   review.* 3 + sso.* 4 + workflow.def.* 3 + workload.* 3 + xb.* reliquat 4), +33 vague 11
   (2026-08-09 : les 1-2 types et singletons — auth/builder/cablage/caviardage/central_file/
   client/crm/deploiement/divulgation/dq/fx/iam/matrice_documentaire/module/nba/param/rh/
-  risque/signal/swift/tenant/transport/tuning/vendor).
-- **299 types EN ATTENTE** = 284 SANS_POINT (MAJUSCULES, gabarits COC_ compris) + 11 `cpsi.*`
+  risque/signal/swift/tenant/transport/tuning/vendor), +10 SANS_POINT tranche 1
+  (2026-08-09 : OLIVIA_* émis via emitEvent — CONTEXT_DENIED, CONVERSATION_FERMEE,
+  MESSAGE_IN/OUT, INJECTION_SUSPECTEE, FEEDBACK, PROPOSAL_CREATED/CADUQUE/REJECTED/ADOPTED ;
+  les 14 autres OLIVIA_* du scan = codes d'action audit.log [chaîne HMAC audit_logs, pas
+  domain_events] ou messages d'exception — sur-capture consignée au catalogue).
+- **289 types EN ATTENTE** = 274 SANS_POINT restants (MAJUSCULES, gabarits COC_ compris,
+  dont une part de codes audit.log à instruire tranche par tranche) + 11 `cpsi.*`
   (journal jumeau, doctrine vague 3) + 4 FAUX POSITIFS du scan consignés (« fake-1.0 » version
   de modèle factice olivia, « gwb.ch »/« gwb-private.ch » exemples loginDomaines, « pacs.008 »
   type de message SWIFT — pas des types d'événement, sur-capture monotone assumée).
