@@ -14562,7 +14562,7 @@ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "rep
 ].map(k => (React.createElement("div", { key: k.label, style: { background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: 16 } },
 React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: k.color, fontFamily: "monospace" } }, k.value),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginTop: 4 } }, k.label))))),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["architecture", "⇌ Architecture"], ["mapping", "▤ Mapping par système"], ["migration", "↻ Migration KYC/Review"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setTab(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === id ? T.olive600 : "transparent", color: tab === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: tab === id ? 700 : 500 } }, label)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["architecture", "⇌ Architecture"], ["mapping", "▤ Mapping par système"], ["migration", "↻ Migration KYC/Review"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setTab(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === id ? T.olive600 : "transparent", color: tab === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: tab === id ? 700 : 500 } }, label)))),
 tab === "architecture" && (React.createElement("div", { style: { background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: 24 } },
 React.createElement("svg", { width: "100%", viewBox: "0 0 900 380", style: { minWidth: 760 } },
 CORE_SYSTEMS.map((sys, i) => {
@@ -14867,7 +14867,7 @@ React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.in
 React.createElement("div", { style: { fontSize: 13, color: T.inkMid, marginTop: 4, lineHeight: 1.6, maxWidth: 760 } },
 "On ne remplace pas LSEG / Dow Jones / ComplyAdvantage \u2014 on ajoute la couche de contexte manquante entre l'alerte brute et la d\u00E9cision. Enrichissement automatique KYC + UBO + relations, priorisation, et journal pr\u00EAt pour l'audit FINMA. ",
 React.createElement("strong", { style: { color: T.olive700 } }, "Objectif : 45 min \u2192 8\u201312 min par alerte."))));
-const Tabs = (React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["inbox", "▤ File d'alertes"], ["scenarios", "⚗ Scénarios"], ["dashboard", "▰ Compliance Ops"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => { setView(id); setSelId(null); }, style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: view === id ? T.olive600 : "transparent", color: view === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: view === id ? 700 : 500 } }, label)))));
+const Tabs = (React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["inbox", "▤ File d'alertes"], ["scenarios", "⚗ Scénarios"], ["dashboard", "▰ Compliance Ops"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => { setView(id); setSelId(null); }, style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: view === id ? T.olive600 : "transparent", color: view === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: view === id ? 700 : 500 } }, label)))));
 // ---- CASE VIEW ----
 if (view === "case" && selAlert) {
 const ctx = aiContextualizeAlert(selAlert);
@@ -16668,6 +16668,10 @@ const [roleVis, setRoleVis] = useState(SECTION_ROLE_VIS_LIVE);
 const [showMatrix, setShowMatrix] = useState(false);
 const [docGenOpen, setDocGenOpen] = useState(false);
 const [wfDiagramOpen, setWfDiagramOpen] = useState(false);
+// Circulation du dossier (demande PO 09.08, canon R85) : message OBLIGATOIRE à chaque passage.
+const [wfCircMsg, setWfCircMsg] = useState("");
+const [wfLocalPhase, setWfLocalPhase] = useState(null);
+const [wfLocalStatus, setWfLocalStatus] = useState(null);
 const [secNavCollapsed, setSecNavCollapsed] = useState(false);
 const [compareOpen, setCompareOpen] = useState(false);
 const [openStarId, setOpenStarId] = useState(null);
@@ -16687,7 +16691,7 @@ const KYC_VERSION = kyc?.revision || 2;
 const kyc_ddl = kyc?.workflow || client?.ddl || "EDD";
 const kyc_score = kyc?.riskScore || client?.score || 61;
 const kyc_status = kyc ? (KYC_STATUS_LABEL[kyc.status] || kyc.status) : (client?.status || "En revue");
-const kyc_wfPhase = kyc?.wfPhase || "COMPLIANCE";
+const kyc_wfPhase = (kyc && kyc.wfPhase) || wfLocalPhase || "COMPLIANCE";
 const kyc_rm = kyc?.rm || client?.rm || "—";
 const kyc_aum = kyc?.aum || client?.aum || "—";
 const kyc_country = kyc?.country || client?.country || "—";
@@ -16909,7 +16913,7 @@ React.createElement("strong", null, "apr\u00E8s validation"),
 (() => {
 const STEPS = WF_STEPS, order = WF_ORDER;
 const curIdx = Math.max(0, order.indexOf(kyc_wfPhase));
-const approved = kyc?.status === "APPROVED", rejected = kyc?.status === "REJECTED";
+const approved = ((kyc && kyc.status) || wfLocalStatus) === "APPROVED", rejected = ((kyc && kyc.status) || wfLocalStatus) === "REJECTED";
 const isFinal = !approved && !rejected && curIdx >= 4;
 const curLabel = approved ? "Validé" : rejected ? "Rejeté" : (STEPS[curIdx] || { label: "Approbation finale" }).label;
 const curRole = approved || rejected ? "—" : (STEPS[curIdx] || { role: "Head of PB + CEO" }).role;
@@ -16933,7 +16937,7 @@ React.createElement("button", { onClick: () => setWfDiagramOpen(true), style: { 
 wfDiagramOpen && (() => {
 const STEPS = WF_STEPS, order = WF_ORDER;
 const curIdx = Math.max(0, order.indexOf(kyc_wfPhase));
-const approved = kyc?.status === "APPROVED", rejected = kyc?.status === "REJECTED";
+const approved = ((kyc && kyc.status) || wfLocalStatus) === "APPROVED", rejected = ((kyc && kyc.status) || wfLocalStatus) === "REJECTED";
 const nodeState = (i) => (approved || rejected) ? "done" : i < curIdx ? "done" : i === curIdx ? "current" : "pending";
 const decState = approved ? "valide" : rejected ? "rejete" : curIdx >= 4 ? "current" : "pending";
 const STY = {
@@ -16995,7 +16999,7 @@ tab === "sections" && (React.createElement("div", null,
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 } },
 React.createElement("button", { onClick: () => setSecNavCollapsed(!secNavCollapsed), title: secNavCollapsed ? "Étendre les sections" : "Réduire les sections (logos seuls)", style: { width: 34, height: 34, borderRadius: 9, border: "1px solid " + T.line, background: T.surface, color: T.inkMid, cursor: "pointer", fontSize: 12, flexShrink: 0 } }, secNavCollapsed ? "▸" : "▾"),
 React.createElement("div", { style: { flex: 1 } },
-React.createElement("div", { style: { display: "flex", gap: 4, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginBottom: 6 } }, KYC_THEMES.map(th => {
+React.createElement("div", { style: { display: "flex", gap: 4, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto", marginBottom: 6 } }, KYC_THEMES.map(th => {
 const thSecs = visibleSections.filter(sx => th.secs.indexOf(sx.id) >= 0);
 if (thSecs.length === 0)
 return null;
@@ -17009,7 +17013,7 @@ fill,
 "/",
 tot)));
 })),
-React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, background: T.cream, padding: 4, borderRadius: 10, border: "1px solid " + T.lineSoft, width: "fit-content" } }, visibleSections.filter(sx => kycThemeOf(sec).secs.indexOf(sx.id) >= 0).sort((a, b) => wfSecOrder(a.id) - wfSecOrder(b.id)).map(s => {
+React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, background: T.cream, padding: 4, borderRadius: 10, border: "1px solid " + T.lineSoft, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, visibleSections.filter(sx => kycThemeOf(sec).secs.indexOf(sx.id) >= 0).sort((a, b) => wfSecOrder(a.id) - wfSecOrder(b.id)).map(s => {
 const done = s.filled === s.total;
 const stColor = SECTION_STATUS_STYLE[sectionStatusOf(s)][0];
 return (React.createElement("button", { key: s.id, onClick: () => setSec(s.id), title: s.label + " — " + s.filled + "/" + s.total + " — " + sectionStatusOf(s), style: { display: "flex", alignItems: "center", gap: 6, padding: secNavCollapsed ? "7px 9px" : "6px 12px", borderRadius: 8, border: "1px solid " + (sec === s.id ? T.olive600 : "transparent"), background: sec === s.id ? T.oliveSoft : "transparent", cursor: "pointer", position: "relative" } },
@@ -17136,6 +17140,64 @@ v.role,
 signed ? (" — " + (v.who || "") + (v.at ? (" · " + v.at) : "")) : " — en attente",
 canSign && React.createElement("button", { onClick: () => { setVisaModal({ vi: vi }); setVisaVerdict("OK"); setVisaMsg(""); }, style: { border: "none", background: T.amber, color: "#fff", borderRadius: 12, padding: "2px 8px", fontSize: 10, fontWeight: 700, cursor: "pointer", marginLeft: 2 } }, "Signer")));
 })));
+})(),
+sec === "workflow" && (() => {
+const approvedW = ((kyc && kyc.status) || wfLocalStatus) === "APPROVED";
+const rejectedW = ((kyc && kyc.status) || wfLocalStatus) === "REJECTED";
+const curIdxW = Math.max(0, WF_ORDER.indexOf(kyc_wfPhase));
+const enDecision = kyc_wfPhase === "APPROBATION";
+const stepLabelW = function (ph) { var s = WF_STEPS.find(function (x) { return x.ph === ph; }); return s ? s.label : "Approbation finale"; };
+const okMsg = wfCircMsg.trim().length > 0 && !kycLockedByOther;   // verrou R84 : un dossier détenu par un autre ne circule pas
+const consigner = function (action) {
+if (kyc) { kyc.trail = kyc.trail || []; kyc.trail.unshift({ date: "2026-08-09", actor: (user && user.name) || "—", action: action + " — « " + wfCircMsg.trim() + " »", phase: "WORKFLOW" }); }
+pushParamAudit((user && user.name) || "—", "KYC " + KYC_CODE + " — " + action);
+setWfCircMsg(""); lockBump(function (x) { return x + 1; });
+};
+const avancer = function () { if (!okMsg || enDecision) return; var nx = WF_ORDER[Math.min(curIdxW + 1, WF_ORDER.length - 1)];
+if (kyc) kyc.wfPhase = nx; else setWfLocalPhase(nx);
+consigner("Étape validée : " + stepLabelW(kyc_wfPhase) + " → " + stepLabelW(nx) + " (passage R85, message consigné)"); };
+const reculer = function () { if (!okMsg || curIdxW === 0) return; var pv = WF_ORDER[curIdxW - 1];
+if (kyc) kyc.wfPhase = pv; else setWfLocalPhase(pv);
+consigner("Renvoyé à l'étape précédente : " + stepLabelW(kyc_wfPhase) + " → " + stepLabelW(pv) + " (retour R85, message consigné)"); };
+const validerFinal = function () { if (!okMsg) return; if (kyc) kyc.status = "APPROVED"; else setWfLocalStatus("APPROVED");
+consigner("Décision finale : dossier VALIDÉ — propagation à la fiche client (R14/R15)"); };
+const rejeterDossier = function () { if (!okMsg) return; if (kyc) kyc.status = "REJECTED"; else setWfLocalStatus("REJECTED");
+consigner("Dossier REJETÉ — fiche client inchangée (motivé R7)"); };
+const btn = function (label, on, fn, bg, bd, fg) {
+return React.createElement("button", { onClick: fn, disabled: !on, title: on ? "" : "Message obligatoire (R85) — adressé à l'intervenant, consigné au dossier",
+style: { padding: "9px 16px", borderRadius: 9, border: "1.5px solid " + bd, background: on ? bg : T.surface,
+color: on ? fg : T.inkSoft, fontSize: 12, fontWeight: 800, cursor: on ? "pointer" : "not-allowed", whiteSpace: "nowrap" } }, label);
+};
+if (approvedW || rejectedW)
+return (React.createElement("div", { style: { marginTop: 16, padding: "12px 16px", borderRadius: 10,
+background: approvedW ? T.greenSoft : T.redSoft, border: "1px solid " + (approvedW ? T.green : T.red),
+fontSize: 12.5, fontWeight: 800, color: approvedW ? T.green : T.red } },
+approvedW ? "✓ Dossier VALIDÉ — le workflow est clos, la fiche client est propagée." : "✕ Dossier REJETÉ — le workflow est clos, la fiche client est inchangée."));
+return (React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px solid " + T.line } },
+React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: T.olive700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 } },
+"Circulation du dossier — passage de main R85"),
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
+WF_ORDER.map(function (ph, i) {
+return React.createElement("span", { key: ph, style: { display: "flex", alignItems: "center", gap: 8 } },
+React.createElement("span", { style: { fontSize: 10.5, fontWeight: i === curIdxW ? 800 : 500, padding: "4px 10px", borderRadius: 14,
+background: i < curIdxW ? T.greenSoft : i === curIdxW ? T.gold : T.surface,
+color: i < curIdxW ? T.green : i === curIdxW ? "#fff" : T.inkSoft,
+border: "1px solid " + (i < curIdxW ? T.green : i === curIdxW ? T.gold : T.line) } },
+(i < curIdxW ? "✓ " : "") + stepLabelW(ph)),
+i < WF_ORDER.length - 1 && React.createElement("span", { style: { color: T.inkSoft, fontSize: 10 } }, "→"));
+})),
+React.createElement("textarea", { value: wfCircMsg, onChange: function (e) { setWfCircMsg(e.target.value); },
+"aria-label": "circulation-message", rows: 2,
+placeholder: "Message à l'intervenant (OBLIGATOIRE à chaque passage — consigné au dossier, R85)…",
+style: { width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 9,
+border: "1.5px solid " + (okMsg ? T.olive600 : T.line), fontSize: 12, background: T.cream, resize: "vertical", marginBottom: 10 } }),
+React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
+curIdxW > 0 && btn("↩ Étape précédente", okMsg, reculer, T.surface, T.line, T.inkMid),
+!enDecision && btn("Valider → étape suivante", okMsg, avancer, T.olive600, T.olive600, "#fff"),
+enDecision && btn("✓ Valider le dossier (décision finale)", okMsg, validerFinal, T.gold, T.gold, "#fff"),
+btn("✕ Rejeter le dossier", okMsg, rejeterDossier, T.redSoft, T.red, T.red),
+React.createElement("span", { style: { fontSize: 10, color: T.inkSoft } },
+kycLockedByOther ? ("🔒 Dossier détenu par " + (kycLock && kycLock.by) + " — la circulation exige la main (R84).") : enDecision ? "Décision finale : quatre yeux HPB + CEO — valider propage, rejeter laisse la fiche inchangée." : "Le message est adressé à l'intervenant de l'étape et consigné (R48/R49)."))));
 })(),
 sec === "aml" && (() => {
 const ev = evalAmlRules(client, kyc);
@@ -17707,7 +17769,7 @@ React.createElement(KpiCard, { label: "Personnes r\u00E9f\u00E9renc\u00E9es", va
 React.createElement(KpiCard, { label: "R\u00F4les multiples", value: multiRoles, sub: `${totalRoles} rôles au total`, color: T.gold, icon: "\u29C9" }),
 React.createElement(KpiCard, { label: "PEP / Near-PEP", value: pepCount + nearPepCount, sub: `${pepCount} PEP, ${nearPepCount} near`, color: T.red, icon: "\u25EC" }),
 React.createElement(KpiCard, { label: "R\u00F4les document\u00E9s", value: totalRoles, sub: "liens officiels", color: T.leaf, icon: "\u21C4" }))),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["list", "Liste détaillée"], ["graph", "Vue graphe"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setView(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: view === id ? T.olive600 : "transparent", color: view === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: view === id ? 700 : 500 } }, label)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["list", "Liste détaillée"], ["graph", "Vue graphe"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setView(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: view === id ? T.olive600 : "transparent", color: view === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: view === id ? 700 : 500 } }, label)))),
 view === "list" && (React.createElement("div", { style: { background: T.surface, borderRadius: 14, border: `1px solid ${T.line}`, overflow: "hidden" } },
 React.createElement("div", { style: { padding: "12px 20px", borderBottom: `1px solid ${T.line}`, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" } },
 React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: T.ink } },
@@ -27978,7 +28040,7 @@ React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 11, color: T.violet, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 } }, "Vendor Console \u2014 On-Premise Licensing"),
 React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.ink } }, "Administration \u00C9diteur"),
 React.createElement("div", { style: { fontSize: 11.5, color: T.inkSoft, marginTop: 2, maxWidth: 680 } }, "Mod\u00E8le on-premise : aucun acc\u00E8s distant aux donn\u00E9es clients, licence v\u00E9rifi\u00E9e localement via fichier sign\u00E9, activation des modules pilot\u00E9e par la licence. Ce menu n'est jamais visible pour les utilisateurs de la banque.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", flexWrap: "wrap" } }, TABS.map(function (tb) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto", flexWrap: "wrap" } }, TABS.map(function (tb) {
 return (React.createElement("button", { key: tb[0], onClick: function () { setTab(tb[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === tb[0] ? T.violet : "transparent", color: tab === tb[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === tb[0] ? 700 : 500 } }, tb[1]));
 })),
 tab === "license" && (React.createElement("div", { style: card },
@@ -28878,7 +28940,7 @@ React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 11, color: T.olive700, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 } }, "Compliance Center"),
 React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.ink } }, "Gouvernance des r\u00E8gles AML \u2014 consultation, performance, am\u00E9lioration continue"),
 React.createElement("div", { style: { fontSize: 11.5, color: T.inkSoft, marginTop: 2 } }, "Principe non n\u00E9gociable : l'IA propose, l'humain d\u00E9ploie. Chaque changement est versionn\u00E9, justifi\u00E9, simul\u00E9 et r\u00E9versible.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, TABS.map(function (tb) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, TABS.map(function (tb) {
 return (React.createElement("button", { key: tb[0], onClick: function () { setTab(tb[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === tb[0] ? T.olive600 : "transparent", color: tab === tb[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === tb[0] ? 700 : 500 } }, tb[1]));
 })),
 tab === "rules" && React.createElement(AmlEncyclopediaScreen, { user: user }),
@@ -29345,7 +29407,7 @@ nLate,
 " revue(s) en retard \u00B7 ",
 nInc,
 " dossiers documentaires incomplets. Chaque ligne est reconstitu\u00E9e en direct depuis le dossier \u2014 c'est la vue que la soci\u00E9t\u00E9 d'audit \u00E9chantillonne.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["reg", "▤ Registre"], ["sample", "🎲 Échantillonnage d'audit"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["reg", "▤ Registre"], ["sample", "🎲 Échantillonnage d'audit"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "reg" && (React.createElement("div", { style: card },
@@ -29555,7 +29617,7 @@ nSoon,
 " \u00E9ch\u00E9ance(s) sous 90 jours \u00B7 ",
 checks.length,
 " contr\u00F4le(s) de coh\u00E9rence ouverts. R\u00E8gle : certification requise \u00E9chue \u2192 habilitations suspendues automatiquement.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["staff", "▤ Collaborateurs"], ["matrix", "🎓 Matrice certifications"], ["checks", "⚠ Contrôles de cohérence"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["staff", "▤ Collaborateurs"], ["matrix", "🎓 Matrice certifications"], ["checks", "⚠ Contrôles de cohérence"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } },
 x[1],
 x[0] === "checks" && checks.length > 0 && React.createElement("span", { style: { marginLeft: 6, fontSize: 9, fontWeight: 800, background: T.red, color: "#fff", padding: "1px 6px", borderRadius: 8 } }, checks.length)));
@@ -29714,7 +29776,7 @@ CB_RULES.length,
 " juridictions \u00D7 ",
 CB_ACTIVITIES.length,
 " activit\u00E9s. Base : positions FINMA sur les risques juridiques transfronti\u00E8res \u2014 chaque d\u00E9placement RM et chaque service offert \u00E0 un client domicili\u00E9 \u00E0 l'\u00E9tranger passe par cette matrice.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["matrix", "▤ Matrice pays"], ["trip", "🧳 Check pré-voyage"], ["client", "👤 Par client"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["matrix", "▤ Matrice pays"], ["trip", "🧳 Check pré-voyage"], ["client", "👤 Par client"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "matrix" && (React.createElement("div", { style: card },
@@ -29944,7 +30006,7 @@ TRANSFER_ORDERS.length,
 " ordres au registre \u00B7 ",
 pend,
 " en attente de validation four-eyes. Chaque ordre passe la cha\u00EEne de contr\u00F4le AVANT ex\u00E9cution ; un ordre ex\u00E9cut\u00E9 alimente le monitoring transactionnel (carte & r\u00E8gles AML).")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["orders", "▤ Ordres & validations"], ["new", "➕ Nouvel ordre"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["orders", "▤ Ordres & validations"], ["new", "➕ Nouvel ordre"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); setErrMsg(""); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } },
 x[1],
 x[0] === "orders" && pend > 0 && React.createElement("span", { style: { marginLeft: 6, fontSize: 9, fontWeight: 800, background: T.amber, color: "#fff", padding: "1px 6px", borderRadius: 8 } }, pend)));
@@ -30201,7 +30263,7 @@ relLate.length,
 ") \u00B7 ",
 opps.length,
 " opportunit\u00E9s")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["journal", "📇 Journal"], ["relances", "🔔 Relances & opportunités"], ["activite", "📊 Activité RM"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["journal", "📇 Journal"], ["relances", "🔔 Relances & opportunités"], ["activite", "📊 Activité RM"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } },
 x[1],
 x[0] === "relances" && relLate.length > 0 && React.createElement("span", { style: { marginLeft: 6, fontSize: 9, fontWeight: 800, background: T.red, color: "#fff", padding: "1px 6px", borderRadius: 8 } }, relLate.length)));
@@ -31117,7 +31179,7 @@ return (!cid || d.clientId === cid) && (!q || hay.indexOf(q.toLowerCase()) >= 0)
 return (React.createElement("div", null,
 React.createElement("div", { style: { marginBottom: 14 } },
 React.createElement("div", { style: { fontSize: 19, fontWeight: 800, color: T.ink } }, "\uD83D\uDDC4 GED \u2014 Gestion \u00E9lectronique des documents")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["vivant", "\uD83E\uDED2 GED vivante"], ["workflow", "\uD83D\uDD04 Workflow"], ["connexions", "\u21C6 Connexions"], ["puissance", "\uD83D\uDCAA Puissance"], ["fonctions", "\u2726 Fonctionnalit\u00E9s"], ["ocr", "\u2318 V\u00E9rification OCR"], ["docs", "▤ Documents"], ["plan", "🗂 Plan"], ["api", "⇌ API"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["vivant", "\uD83E\uDED2 GED vivante"], ["workflow", "\uD83D\uDD04 Workflow"], ["connexions", "\u21C6 Connexions"], ["puissance", "\uD83D\uDCAA Puissance"], ["fonctions", "\u2726 Fonctionnalit\u00E9s"], ["ocr", "\u2318 V\u00E9rification OCR"], ["docs", "▤ Documents"], ["plan", "🗂 Plan"], ["api", "⇌ API"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "vivant" && React.createElement(GedVivant, { user: user }),
@@ -31458,7 +31520,7 @@ PROSPECTION_EVENTS.length,
 " \u00E9v\u00E9nements \u00E0 venir \u00B7 ",
 xs.length,
 " opportunit\u00E9s de cross-selling sur la base existante")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["sourcing", "🧭 Où chercher"], ["events", "🎪 Événements"], ["crosssell", "⤴ Cross-selling"], ["journal", "📓 Journal"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["sourcing", "🧭 Où chercher"], ["events", "🎪 Événements"], ["crosssell", "⤴ Cross-selling"], ["journal", "📓 Journal"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "sourcing" && (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, PROSPECTION_CHANNELS.map(function (ch) {
@@ -32011,7 +32073,7 @@ React.createElement("span", { style: { color: T.amber, fontWeight: 800 } },
 expiring.length,
 " \u00E9ch\u00E9ances < 90 j"),
 " \u00B7 g\u00E9n\u00E9ration depuis le golden record \u2192 GED (05-CONTRAT)")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["contrats", "§ Contrathèque"], ["echeancier", "⏳ Échéancier"], ["generer", "⚡ Générer un contrat"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["contrats", "§ Contrathèque"], ["echeancier", "⏳ Échéancier"], ["generer", "⚡ Générer un contrat"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "contrats" && (React.createElement("div", { style: card },
@@ -32622,7 +32684,7 @@ const alerts = (typeof AML_ALERTS !== "undefined") ? AML_ALERTS : [];
 const sanc = alerts.filter(a => a.alertType === "SANCTIONS").length;
 const card = { background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: 16 };
 const dashTabBar = function (active) {
-return (React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["home", "▦ Vue d'ensemble"], ["cockpit", "🎯 Mon cockpit"], ["kpi", "📊 KPI"]].map(function (x) {
+return (React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["home", "▦ Vue d'ensemble"], ["cockpit", "🎯 Mon cockpit"], ["kpi", "📊 KPI"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setDashTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: active === x[0] ? T.olive600 : "transparent", color: active === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: active === x[0] ? 700 : 500 } }, x[1]));
 })));
 };
@@ -32891,7 +32953,7 @@ missing,
 " auto-certifications \u00E0 collecter) \u00B7 ",
 fat.length,
 " relations FATCA. XML g\u00E9n\u00E9r\u00E9s \u00E0 la demande depuis le portefeuille r\u00E9el \u2014 chaque g\u00E9n\u00E9ration est audit\u00E9e.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["crs", "▤ CRS / EAR"], ["fatca", "🇺🇸 FATCA"], ["sar", "🚨 SAR / goAML"], ["esisuisse", "🛟 esisuisse"], ["cal", "📅 Échéancier"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["crs", "▤ CRS / EAR"], ["fatca", "🇺🇸 FATCA"], ["sar", "🚨 SAR / goAML"], ["esisuisse", "🛟 esisuisse"], ["cal", "📅 Échéancier"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "crs" && (React.createElement("div", null,
@@ -33203,7 +33265,7 @@ TX_DATA.length,
 " transactions \u00B7 ",
 CONTACT_REPORTS.length,
 " contacts")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["views", "▦ Vues préconstruites"], ["explore", "🧮 Explorateur"], ["exports", "⬇ Extractions"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["views", "▦ Vues préconstruites"], ["explore", "🧮 Explorateur"], ["exports", "⬇ Extractions"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "views" && (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } },
@@ -33623,7 +33685,7 @@ nBr,
 " breach(es) de conformit\u00E9 investissement \u00B7 ",
 nDrift,
 " portefeuille(s) en d\u00E9rive \u2265 8% vs allocation cible. L'angle Olive : chaque ordre est contr\u00F4l\u00E9 AVANT ex\u00E9cution (suitability LSFin, concentration, ESG, Shariah).")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, [["mand", "▦ Mandats"], ["detail", "📈 Mandat détail"], ["ctrl", "⚖ Contrôles & dérives"], ["pretrade", "🧪 Pre-Trade Check"]].map(function (x) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["mand", "▦ Mandats"], ["detail", "📈 Mandat détail"], ["ctrl", "⚖ Contrôles & dérives"], ["pretrade", "🧪 Pre-Trade Check"]].map(function (x) {
 return (React.createElement("button", { key: x[0], onClick: function () { setTab(x[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === x[0] ? T.olive600 : "transparent", color: tab === x[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === x[0] ? 700 : 500 } }, x[1]));
 })),
 tab === "mand" && (React.createElement("div", { style: card },
@@ -39252,7 +39314,7 @@ h("div", { style: { fontSize: 11, color: T.inkMid, marginTop: 12, fontStyle: "it
 function ScreeningTabs({ user }) {
 const [t, setT] = useState("qualif");
 return (React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["qualif", "⚖ Qualification des hits"], ["batch", "↻ Re-screening & listes"], ["lev", "⌖ Test de screening"], ["watch", "▤ Watchlists & hits"], ["preuves", "🧪 Preuves moteur"], ["moteur", "⚙ Moteur configurable"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setT(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: t === id ? T.olive600 : "transparent", color: t === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: t === id ? 700 : 500 } }, label)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["qualif", "⚖ Qualification des hits"], ["batch", "↻ Re-screening & listes"], ["lev", "⌖ Test de screening"], ["watch", "▤ Watchlists & hits"], ["preuves", "🧪 Preuves moteur"], ["moteur", "⚙ Moteur configurable"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setT(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: t === id ? T.olive600 : "transparent", color: t === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: t === id ? 700 : 500 } }, label)))),
 t === "qualif" && React.createElement(ScreeningQualifPanel, { user: user }),
 t === "batch" && React.createElement(ScreeningBatchPanel, { user: user }),
 t === "lev" && React.createElement(ScreeningTestPanel, { user: user }),
@@ -41798,7 +41860,7 @@ React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 11, color: T.olive700, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 } }, "Workflow Management"),
 React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.ink } }, "12 workflows nomm\u00E9s \u2014 Onboarding, Perpetual KYC, Offboarding, Business Trip, Account Review, Group Account Review"),
 React.createElement("div", { style: { fontSize: 11.5, color: T.inkSoft, marginTop: 2 } }, "Un compliance officer doit comprendre en 5 secondes : o\u00F9 est le dossier, quelle \u00E9tape, qui doit agir, quelle validation manque.")),
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } }, TABS.map(function (tb) {
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, TABS.map(function (tb) {
 return (React.createElement("button", { key: tb[0], onClick: function () { setTab(tb[0]); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === tb[0] ? T.olive600 : "transparent", color: tab === tb[0] ? "#fff" : T.inkMid, fontSize: 12.5, fontWeight: tab === tb[0] ? 700 : 500 } }, tb[1]));
 })),
 tab === "dashboard" && (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 } }, WF_MGMT_TEMPLATES.map(function (tpl) {
@@ -42082,7 +42144,7 @@ const secMeta = KYC_SECTION_LIST.find(function (x) { return x.id === arSec; }) |
 return (React.createElement("div", { style: { marginBottom: 18 } },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 2 } }, "\u25CE Dossier par sections \u2014 m\u00EAme lecture que le KYC"),
 React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 10 } }, "La revue parcourt les 14 sections du dossier ; chaque section est marqu\u00E9e \u00AB revue \u00BB individuellement."),
-React.createElement("div", { style: { display: "flex", gap: 4, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginBottom: 6 } }, KYC_THEMES.map(function (t) {
+React.createElement("div", { style: { display: "flex", gap: 4, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto", marginBottom: 6 } }, KYC_THEMES.map(function (t) {
 var active = th.id === t.id;
 var revN = t.secs.filter(function (x) { return ar.sectionReviewed[x]; }).length;
 return (React.createElement("button", { key: t.id, onClick: function () { setArSec(t.secs[0]); }, style: { display: "flex", alignItems: "center", gap: 7, padding: "8px 15px", borderRadius: 8, border: "none", cursor: "pointer", background: active ? T.olive600 : "transparent" } },
@@ -42093,7 +42155,7 @@ revN,
 "/",
 t.secs.length)));
 })),
-React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, background: T.cream, padding: 4, borderRadius: 10, border: "1px solid " + T.lineSoft, width: "fit-content", marginBottom: 12 } }, th.secs.map(function (sid) {
+React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, background: T.cream, padding: 4, borderRadius: 10, border: "1px solid " + T.lineSoft, width: "fit-content", marginLeft: "auto", marginRight: "auto", marginBottom: 12 } }, th.secs.map(function (sid) {
 var m = KYC_SECTION_LIST.find(function (x) { return x.id === sid; }) || { label: sid };
 return (React.createElement("button", { key: sid, onClick: function () { setArSec(sid); }, style: { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: "1px solid " + (arSec === sid ? T.olive600 : "transparent"), background: arSec === sid ? T.oliveSoft : "transparent", cursor: "pointer" } },
 React.createElement("span", { style: { fontSize: 11.5, fontWeight: arSec === sid ? 700 : 500, color: arSec === sid ? T.olive700 : T.inkMid, whiteSpace: "nowrap" } }, m.label),
@@ -43325,7 +43387,7 @@ const sol = SOLIC[trip.solicitation];
 const xbCol = T[XB_C[trip.xbRisk]];
 const ind = indigita[trip.id];
 return (React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["trips", "Voyages"], ["quotas", "Paramétrage quotas"]].map(([k, l]) => (React.createElement("button", { key: k, onClick: () => setTab(k), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === k ? T.olive600 : "transparent", color: tab === k ? "#fff" : T.inkMid, fontSize: 13, fontWeight: tab === k ? 700 : 500 } }, l)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 18, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["trips", "Voyages"], ["quotas", "Paramétrage quotas"]].map(([k, l]) => (React.createElement("button", { key: k, onClick: () => setTab(k), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: tab === k ? T.olive600 : "transparent", color: tab === k ? "#fff" : T.inkMid, fontSize: 13, fontWeight: tab === k ? 700 : 500 } }, l)))),
 tab === "trips" && (React.createElement("div", null,
 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "380px 1fr", gap: 18 } },
 React.createElement("div", { style: { background: T.surface, borderRadius: 14, padding: 18, border: `1px solid ${T.line}` } },
@@ -43837,7 +43899,7 @@ const hubVol = {};
 TX_DATA.forEach(t => { hubVol[t.from] = (hubVol[t.from] || 0) + t.amt; hubVol[t.to] = (hubVol[t.to] || 0) + t.amt; });
 const arcPath = (a, b) => { const [x1, y1] = proj(...TX_HUBS[a]); const [x2, y2] = proj(...TX_HUBS[b]); const mx = (x1 + x2) / 2, my = (y1 + y2) / 2; const dx = x2 - x1, dy = y2 - y1; const d = Math.sqrt(dx * dx + dy * dy); const lift = Math.min(90, d * 0.28); const cx = mx - dy / d * lift, cy = my - Math.abs(dx) / d * lift - 6; return { p: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`, x2, y2 }; };
 return (React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content" } }, [["carte", "◉ Carte des corridors"], ["flux", "⇄ Top flux & détail"], ["liste", "▤ Transactions"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setTxView(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: txView === id ? T.olive600 : "transparent", color: txView === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: txView === id ? 700 : 500 } }, label)))),
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 16, background: T.surface, padding: 5, borderRadius: 12, border: `1px solid ${T.line}`, width: "fit-content", marginLeft: "auto", marginRight: "auto" } }, [["carte", "◉ Carte des corridors"], ["flux", "⇄ Top flux & détail"], ["liste", "▤ Transactions"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => setTxView(id), style: { padding: "9px 18px", borderRadius: 8, border: "none", cursor: "pointer", background: txView === id ? T.olive600 : "transparent", color: txView === id ? "#fff" : T.inkMid, fontSize: 13, fontWeight: txView === id ? 700 : 500 } }, label)))),
 txView === "flux" && (() => {
 const CH = hubsUsed.filter(h => TX_HUB_CC[h] === "🇨🇭");
 const isCH = h => CH.indexOf(h) >= 0;
@@ -44772,7 +44834,7 @@ function WorkflowDesignerScreen(props) {
 const [onglet, setOnglet] = useState("designer");
 const ONGLETS = [["designer", "\u270E Designer (canvas)"], ["import", "\u2726 Import IA"], ["gestion", "\u25A6 Gestion & versions"]];
 return React.createElement("div", null,
-React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 14, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content" } },
+React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 14, background: T.surface, padding: 5, borderRadius: 12, border: "1px solid " + T.line, width: "fit-content", marginLeft: "auto", marginRight: "auto" } },
 ONGLETS.map(function (o) { return React.createElement("button", { key: o[0], onClick: function () { setOnglet(o[0]); },
 style: { padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
 background: onglet === o[0] ? T.olive600 : "transparent", color: onglet === o[0] ? "#fff" : T.inkMid,
@@ -44895,7 +44957,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.15 \u00B7 remarques PO : lier-personne r\u00E9par\u00E9 \u00B7 matrice homog\u00E8ne \u00B7 nav classique \u00B7 param GED centralis\u00E9 \u00B7 cockpit du jour"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.16 \u00B7 circulation workflow KYC (valider/pr\u00E9c\u00E9dent/rejet, message R85) \u00B7 onglets centr\u00E9s"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -45081,7 +45143,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.15 \u00B7 remarques PO : lier-personne r\u00E9par\u00E9 \u00B7 matrice homog\u00E8ne \u00B7 nav classique \u00B7 param GED centralis\u00E9 \u00B7 cockpit du jour"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.16 \u00B7 circulation workflow KYC (valider/pr\u00E9c\u00E9dent/rejet, message R85) \u00B7 onglets centr\u00E9s"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
