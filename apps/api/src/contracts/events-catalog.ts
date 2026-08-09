@@ -533,6 +533,88 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
   "xb.ordre.enregistre": { version: 1, schema: z.object({ pays: z.string(),
     reverseSolicitation: z.boolean(), qualification: z.boolean(),
     preuveRef: z.string().nullable(), par: z.string() }).strict() },
+  // ── Vague 11 (C6, 2026-08-09) — familles 1-2 types + singletons : la DERNIÈRE vague à points.
+  // NOTE sur-capture : « fake-1.0 » (version de modèle factice olivia), « gwb.ch »/« gwb-private.ch »
+  // (exemples de config loginDomaines) et « pacs.008 » (type de message SWIFT) sont des littéraux
+  // capturés par le scan qui ne sont PAS des types d'événement — ils restent dans TYPES_EN_ATTENTE
+  // (inventaire monotone, sur-capture assumée, même doctrine que cpsi.* jumeau).
+  "auth.breakglass.utilise": { version: 1, schema: z.object({ email: z.string(),
+    par: z.string(), notifie: z.array(z.string()) }).strict() },      // R296 : toujours notifié SO/DIR
+  // rapport = le rapport d'impact JOINT à l'acte (WB-10) — projection gouvernée, objet non figé
+  "builder.simulation": { version: 1, schema: z.object({ empreinte: z.string(),
+    rapport: z.record(z.any()), par: z.string() }).strict() },        // R305 : publier sans simuler n'existe pas
+  "builder.publication": { version: 1, schema: z.object({ type: z.string(), code: z.string(),
+    version: z.number(), auteur: z.string(), publicateur: z.string(), depuisLe: z.string(),
+    rapport: z.record(z.any()) }).strict() },                         // R304 : gravée, datée, rapport joint
+  "cablage.caviarde.depose": { version: 1, schema: z.object({ cle: z.string(),
+    shaDerive: z.string() }).strict() },                              // CB-05 : sert la sortie, pas l'index
+  "caviardage.produit": { version: 1, schema: z.object({ caviardeId: z.string(),
+    par: z.string(), zones: z.number(), shaSource: z.string(), shaDerive: z.string() }).strict() },
+  "caviardage.refuse": { version: 1, schema: z.object({ par: z.string(),
+    role: z.string() }).strict() },
+  "central_file.dossier.ouvert": { version: 1, schema: z.object({ champ: z.string(),
+    constats: z.record(z.any()) }).strict() },
+  // corps REPRIS TEL QUEL du contrôleur (webhook CoC entrant) — gouverné mais volontairement ouvert
+  "client.coc": { version: 1, schema: z.record(z.any()) },
+  "crm.contact.cree": { version: 1, schema: z.object({ contactId: z.string(), type: z.string(),
+    origine: z.string(), par: z.string() }).strict() },
+  "crm.acces.refuse": { version: 1, schema: z.object({ par: z.string(),
+    role: z.string() }).strict() },
+  "deploiement.enregistre": { version: 1, schema: z.object({ version: z.string().nullable(),
+    smokeOk: z.boolean(), readyz: z.any(), note: z.string().nullable(),
+    par: z.string() }).strict() },                                    // RZ-04 : constat, readyz tel que servi
+  "divulgation.executee": { version: 1, schema: z.object({ par: z.string(),
+    caviardeId: z.string(), shaDerive: z.string(), destinataire: z.string() }).strict() },  // R159
+  "divulgation.refusee": { version: 1, schema: z.object({ par: z.string(),
+    motif: z.string() }).strict() },                                  // R159 : l'original ne sort pas
+  "dq.degraded": { version: 1, schema: z.object({ champsDegrades: z.array(z.string()),
+    scenariosDegrades: z.array(z.string()), completudeMin: z.number(),
+    par: z.string() }).strict() },                                    // GV-03 : jamais silencieux
+  "fx.seuil.franchi": { version: 1, schema: z.object({ devise: z.string(),
+    exposition: z.number(), seuil: z.number(), par: z.string() }).strict() },  // R39 : notifié, jamais bloqué
+  "iam.cumul_so_admin.autorise": { version: 1, schema: z.object({ de: z.string(),
+    vers: z.string(), par: z.string() }).strict() },                  // SO-05
+  "matrice_documentaire.publiee": { version: 1, schema: z.object({ version: z.number(),
+    enVigueurLe: z.string() }).strict() },                            // R282 — la 1re prise de la garde C6
+  "module.licence.chargee": { version: 1, schema: z.object({ modules: z.array(z.string()),
+    issuedAt: z.string(), expiresAt: z.string(), par: z.string() }).strict() },
+  "nba.decided": { version: 1, schema: z.object({ decision: z.enum(["ACCEPT", "ADJUST", "REJECT"]),
+    acteur: z.string(), adjustment: z.any() }).strict() },            // R244/R245 : aucune exécution directe
+  // avant/apres/valeur = valeurs de paramètre gouvernées (tout type JSON) — non figées
+  "param.change": { version: 1, schema: z.object({ avant: z.any(), apres: z.any(),
+    par: z.string(), motif: z.string(), effetAt: z.string() }).strict() },
+  "param.effet.applique": { version: 1, schema: z.object({ valeur: z.any() }).strict() },
+  "rh.bonification.snapshot": { version: 1, schema: z.object({ membres: z.array(z.any()),
+    note: z.string() }).strict() },                                   // le moteur ne décide rien
+  "risque.operationnel.incident": { version: 1, schema: z.object({ origine: z.string(),
+    section: z.string(), requiredRole: z.string(), motif: z.string() }).strict() },  // R12
+  "signal.aml.comportement": { version: 1, schema: z.object({ clientId: z.string(),
+    raisons: z.array(z.string()) }).strict() },
+  // extraction = shape PAR TYPE de message (MT/MX, bibliothèque gouvernée swift_types_actifs) — non figé
+  "swift.message.parse": { version: 1, schema: z.object({ extraction: z.record(z.any()),
+    transactionId: z.string().nullable(), clientId: z.string().nullable(),
+    par: z.string() }).strict() },
+  "swift.quarantaine": { version: 1, schema: z.object({ motif: z.string(),
+    apercu: z.string(), par: z.string() }).strict() },                // R169 : jamais deviné
+  "tenant.active": { version: 1, schema: z.object({ signePar: z.string(),
+    par: z.string() }).strict() },
+  "transport.deadletter": { version: 1, schema: z.object({ consumer: z.string(),
+    seq: z.number(), enSouffrance: z.number() }).strict() },
+  "transport.deadletter.rejouee": { version: 1, schema: z.object({ consumer: z.string(),
+    par: z.string() }).strict() },
+  "tuning.btl.campagne": { version: 1, schema: z.object({ scenarioCode: z.string(),
+    seuilKey: z.string(), seuil: z.number(), bande: z.tuple([z.number(), z.number()]),
+    bandePct: z.tuple([z.number(), z.number()]), taux: z.number(), populationInBand: z.number(),
+    sampleSize: z.number(), par: z.string() }).strict() },
+  "tuning.calibrage.annuel": { version: 1, schema: z.object({ matriceReference: z.string(),
+    totalScenarios: z.number(), couverts: z.number(), sansMatiere: z.number(),
+    tauxCouverture: z.number(), familles: z.number(), anglesMorts: z.number(),
+    placeholders: z.number(), par: z.string() }).strict() },          // GV-04
+  "vendor.licence.emise": { version: 1, schema: z.object({ version: z.string(),
+    modules: z.array(z.string()), effetAt: z.string(), par: z.string(),
+    motif: z.string() }).strict() },                                  // R177/R179
+  "vendor.licence.acces.refuse": { version: 1, schema: z.object({ par: z.string(),
+    role: z.string() }).strict() },
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
@@ -917,14 +999,6 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "XB_DEROGATION_DEMANDEE",
   "XB_DEROGATION_VISEE",
   "XB_ORDRE_ENREGISTRE",
-  "auth.breakglass.utilise",
-  "builder.publication",
-  "builder.simulation",
-  "cablage.caviarde.depose",
-  "caviardage.produit",
-  "caviardage.refuse",
-  "central_file.dossier.ouvert",
-  "client.coc",
   "cpsi.client.registered",
   "cpsi.fp.declared",
   "cpsi.group.defined",
@@ -936,36 +1010,11 @@ export const TYPES_EN_ATTENTE: ReadonlySet<string> = new Set([
   "cpsi.param.rejected",
   "cpsi.scenario.defined",
   "cpsi.signal.ingested",
-  "crm.acces.refuse",
-  "crm.contact.cree",
-  "deploiement.enregistre",
-  "divulgation.executee",
-  "divulgation.refusee",
-  "dq.degraded",
   "fake-1.0",
-  "fx.seuil.franchi",
   "gwb-private.ch",
   "gwb.ch",
-  "iam.cumul_so_admin.autorise",
-  "matrice_documentaire.publiee",
-  "module.licence.chargee",
-  "nba.decided",
   "notification",
   "pacs.008",
-  "param.change",
-  "param.effet.applique",
-  "rh.bonification.snapshot",
-  "risque.operationnel.incident",
-  "signal.aml.comportement",
-  "swift.message.parse",
-  "swift.quarantaine",
-  "tenant.active",
-  "transport.deadletter",
-  "transport.deadletter.rejouee",
-  "tuning.btl.campagne",
-  "tuning.calibrage.annuel",
-  "vendor.licence.acces.refuse",
-  "vendor.licence.emise",
 ]);
 
 export const versionDe = (type: string): number => SCHEMAS_EVENEMENTS[type]?.version ?? 1;

@@ -52,8 +52,10 @@ function fakeClient() {
   // ── type EN ATTENTE (migration douce) → écrit sans validation, version par défaut ──
   await it('C6 : type en attente de schéma → écrit tel quel (migration douce)', async () => {
     const c = fakeClient();
-    // « tuning.btl.campagne » : encore à l'inventaire (trip.submitted, l'ancien exemple, a reçu son schéma en vague 1)
-    await emitEvent(c, 't1', 'tuning.btl.campagne', 'TU1', { nimporte: 'quoi' });
+    // « cpsi.client.registered » : littéral du journal JUMEAU cpsi_events, en attente PAR DOCTRINE
+    // (vague 3) — exemple STABLE, contrairement aux ex-exemples trip.submitted (schématisé v1)
+    // et tuning.btl.campagne (schématisé vague 11).
+    await emitEvent(c, 't1', 'cpsi.client.registered', 'TU1', { nimporte: 'quoi' });
     ok(c.rows.length === 1 && c.rows[0].eventVersion === undefined, 'écrit, version laissée au défaut DB');
   });
 

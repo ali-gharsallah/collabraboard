@@ -5,9 +5,9 @@ Le catalogue (`docs/contracts/events-catalog.ts`, ré-export du canonique `apps/
 type « en attente » = passe sans validation (migration douce) ; type absent des deux = **refusé**.
 R49 : les événements stockés ne sont jamais touchés — la lecture reste aux upcasters.
 
-## État (2026-08-09, après vague 10)
+## État (2026-08-09, après vague 11 — TOUTES les familles à points sont schématisées)
 
-- **282 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
+- **315 types SCHÉMATISÉS** — progression par vagues : 27 (v1 strict,
   noyau KYC verrou + handoff, screening/PEP, ES-8, bloc WD, listes, MROS, gouvernance O),
   +15 vague 1 (mros.*/trip.*/training.*), +8 Bloc 62 (offboarding-moteur WORKFLOW_*/
   TRANSITION_FIRED/VISA_APPOSE/GUARD_*/CHECKLIST_ITEM_CHECKED/PARAM_CHANGED), +3 tranche C6
@@ -18,8 +18,15 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
   riskcase.* 6 + coffre.* 5 + ocr.* 5), +30 vague 9 (2026-08-09 : offboarding.* 5 +
   onboarding.* 5 + oprisk.* 5 + regwatch.* 5 + ta.* 5 + tx.* 5), +34 vague 10
   (2026-08-09 : annotation.* 3 + core.* 4 + legal.* 3 + licence.* 3 + recherche.* 4 +
-  review.* 3 + sso.* 4 + workflow.def.* 3 + workload.* 3 + xb.* reliquat 4).
-- **332 types EN ATTENTE** : inventaire désormais GARDÉ EN CI par
+  review.* 3 + sso.* 4 + workflow.def.* 3 + workload.* 3 + xb.* reliquat 4), +33 vague 11
+  (2026-08-09 : les 1-2 types et singletons — auth/builder/cablage/caviardage/central_file/
+  client/crm/deploiement/divulgation/dq/fx/iam/matrice_documentaire/module/nba/param/rh/
+  risque/signal/swift/tenant/transport/tuning/vendor).
+- **299 types EN ATTENTE** = 284 SANS_POINT (MAJUSCULES, gabarits COC_ compris) + 11 `cpsi.*`
+  (journal jumeau, doctrine vague 3) + 4 FAUX POSITIFS du scan consignés (« fake-1.0 » version
+  de modèle factice olivia, « gwb.ch »/« gwb-private.ch » exemples loginDomaines, « pacs.008 »
+  type de message SWIFT — pas des types d'événement, sur-capture monotone assumée).
+  Inventaire GARDÉ EN CI par
   `apps/api/scripts/verifier-catalogue-evenements.mjs` (step « 3-C6 ») — `--generer` le
   régénère de façon MONOTONE ((ancienne ∪ scan) − schématisés) ; le check échoue si un
   littéral émis manque OU si un type est à double statut. La SUR-capture reste assumée.
@@ -109,11 +116,22 @@ R49 : les événements stockés ne sont jamais touchés — la lecture reste aux
    porte sa mise en vigueur), `workload.*` (R183 : suggestion — la décision vous
    appartient), `xb.*` reliquat (check tracé, dérogation demandée→visée = payload
    REJOUÉ + visePar R13, ordre RS) — 34 schémas stricts.
-   RESTENT : familles à 1-2 types (builder.*, caviardage.*, crm.*, divulgation.*,
-   param.*, swift.*, transport.*, tuning.*, vendor.*, et ~19 singletons dont le
-   littéral suspect `fake-1` à instruire) et le bloc SANS_POINT (~284 littéraux
-   MAJUSCULES, gabarits inclus). Les 11 `cpsi.*` du journal jumeau restent en attente
-   par doctrine (sur-capture assumée).
+   **Vague 11 FAITE (2026-08-09) — clôture des familles à points** : 33 schémas —
+   auth.breakglass (notifié SO/DIR), builder.* (simulation/publication R304-R305,
+   rapport d'impact JOINT non figé), cablage.caviarde.depose, caviardage.*/divulgation.*
+   (R158-R159 : l'original ne sort pas), central_file, `client.coc` = corps webhook
+   repris TEL QUEL (z.record ouvert, seul schéma non-strict du catalogue, volontaire),
+   crm.*, deploiement.enregistre (RZ-04), dq.degraded (GV-03), fx.seuil.franchi (R39),
+   iam.cumul_so_admin, matrice_documentaire.publiee (R282 — la 1re prise de la garde),
+   module.licence, nba.decided (enum ACCEPT/ADJUST/REJECT, adjustment libre R244),
+   param.change/effet (valeurs gouvernées z.any), rh.bonification (le moteur ne décide
+   rien), risque.operationnel.incident (R12), signal.aml.comportement, swift.*
+   (extraction par type de message non figée, quarantaine R169), tenant.active,
+   transport.deadletter(.rejouee), tuning.* (BTL, calibrage GV-04), vendor.licence.*
+   (R177/R179). **INSTRUCTION des 4 littéraux suspects** : « fake-1.0 », « gwb.ch »,
+   « gwb-private.ch », « pacs.008 » ne sont PAS des événements (voir État ci-dessus) —
+   ils restent en attente par sur-capture monotone.
+   RESTE : le bloc SANS_POINT (284 littéraux MAJUSCULES, gabarits COC_ compris).
    Chaque schéma ajouté SORT le type de TYPES_EN_ATTENTE (version 1 → n avec upcaster
    de lecture si le payload évolue).
 2. **Creates directs restants** : **SOLDÉ (tranche C6 n°2, 2026-08-08)** — plus AUCUN
