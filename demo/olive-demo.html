@@ -16672,6 +16672,13 @@ const [wfDiagramOpen, setWfDiagramOpen] = useState(false);
 const [wfCircMsg, setWfCircMsg] = useState("");
 const [wfLocalPhase, setWfLocalPhase] = useState(null);
 const [wfLocalStatus, setWfLocalStatus] = useState(null);
+// Barre de décision unifiée (Bloc 65 R474–R479) — absorbe la carte circulation (E-HR-4) :
+// mêmes issues, même ordre, motif structuré, renvoi CIBLÉ, boucles comptées, délégation tracée.
+const [wfDecPanel, setWfDecPanel] = useState(null);
+const [wfMotifCode, setWfMotifCode] = useState("DOCS_INSUFFISANTS");
+const [wfRenvoiCible, setWfRenvoiCible] = useState("");
+const [wfDelegueA, setWfDelegueA] = useState("");
+const [wfBoucles, setWfBoucles] = useState(0);
 const [secNavCollapsed, setSecNavCollapsed] = useState(false);
 const [compareOpen, setCompareOpen] = useState(false);
 const [openStarId, setOpenStarId] = useState(null);
@@ -17153,29 +17160,47 @@ if (kyc) { kyc.trail = kyc.trail || []; kyc.trail.unshift({ date: "2026-08-09", 
 pushParamAudit((user && user.name) || "—", "KYC " + KYC_CODE + " — " + action);
 setWfCircMsg(""); lockBump(function (x) { return x + 1; });
 };
-const avancer = function () { if (!okMsg || enDecision) return; var nx = WF_ORDER[Math.min(curIdxW + 1, WF_ORDER.length - 1)];
+const bouclesW = (kyc && kyc.sentBackCount) || wfBoucles;
+const bumpBoucles = function () { var n = bouclesW + 1; if (kyc) kyc.sentBackCount = n; setWfBoucles(n); return n; };
+const MOTIFS_REFUS = ["DOCS_INSUFFISANTS", "RISQUE_INACCEPTABLE", "INFOS_CONTRADICTOIRES", "AUTRE"];
+const avancer = function () { if (!okMsg) return;
+if (enDecision) { if (kyc) kyc.status = "APPROVED"; else setWfLocalStatus("APPROVED");
+consigner("Décision finale : dossier VALIDÉ — visa R15 nommé, propagation à la fiche client (R14/R15)"); return; }
+var nx = WF_ORDER[Math.min(curIdxW + 1, WF_ORDER.length - 1)];
 if (kyc) kyc.wfPhase = nx; else setWfLocalPhase(nx);
-consigner("Étape validée : " + stepLabelW(kyc_wfPhase) + " → " + stepLabelW(nx) + " (passage R85, message consigné)"); };
-const reculer = function () { if (!okMsg || curIdxW === 0) return; var pv = WF_ORDER[curIdxW - 1];
-if (kyc) kyc.wfPhase = pv; else setWfLocalPhase(pv);
-consigner("Renvoyé à l'étape précédente : " + stepLabelW(kyc_wfPhase) + " → " + stepLabelW(pv) + " (retour R85, message consigné)"); };
-const validerFinal = function () { if (!okMsg) return; if (kyc) kyc.status = "APPROVED"; else setWfLocalStatus("APPROVED");
-consigner("Décision finale : dossier VALIDÉ — propagation à la fiche client (R14/R15)"); };
-const rejeterDossier = function () { if (!okMsg) return; if (kyc) kyc.status = "REJECTED"; else setWfLocalStatus("REJECTED");
-consigner("Dossier REJETÉ — fiche client inchangée (motivé R7)"); };
-const btn = function (label, on, fn, bg, bd, fg) {
-return React.createElement("button", { onClick: fn, disabled: !on, title: on ? "" : "Message obligatoire (R85) — adressé à l'intervenant, consigné au dossier",
+consigner("✓ Valider — visa R15 apposé : " + stepLabelW(kyc_wfPhase) + " → " + stepLabelW(nx) + " (message consigné R85)"); };
+const renvoyerVers = function (cible, prefixe) { var ci = WF_ORDER.indexOf(cible); if (ci < 0 || ci >= curIdxW) return;
+var tombes = WF_ORDER.slice(ci, curIdxW).map(stepLabelW).join(", ");
+var n = bumpBoucles();
+if (kyc) kyc.wfPhase = cible; else setWfLocalPhase(cible);
+consigner(prefixe + " STEP_SENT_BACK → " + stepLabelW(cible) + " [" + wfMotifCode + "] — visas tombés par ÉVÉNEMENTS (premier passage lisible, R475/R49) : " + tombes + " · tâche de reprise nominative à l'owner · boucle " + n +
+(n >= 3 ? " · ⚠ signal AVERTISSEMENT au manager (seuil 3 — jamais de blocage, R39)" : ""));
+setWfDecPanel(null); };
+const refuser = function () { if (!okMsg) return;
+if (enDecision || curIdxW === 0) { if (kyc) kyc.status = "REJECTED"; else setWfLocalStatus("REJECTED");
+consigner("✕ Refuser [" + wfMotifCode + "] — issue TERMINAL " + (curIdxW === 0 ? "(première étape : aucune étape antérieure — défaut prudent)" : "de l'étape finale") + " : dossier REJECTED (R476/R16), motivé R7"); setWfDecPanel(null); return; }
+renvoyerVers(WF_ORDER[curIdxW - 1], "✕ Refuser [issue RENVOI de l'étape, R476] —"); };
+const deleguer = function () { if (!okMsg || !wfDelegueA.trim()) return;
+consigner("⇄ Déléguer — main passée au remplaçant désigné « " + wfDelegueA.trim() + " » (R4, tracé) — le rôle requis reste le juge au visa");
+setWfDelegueA(""); setWfDecPanel(null); };
+const btn = function (label, on, fn, bg, bd, fg, racc) {
+return React.createElement("button", { onClick: fn, disabled: !on,
+title: on ? ("Raccourci : " + racc) : "Motif/message obligatoire (R476/R85) — pas de motif, pas de décision ; le blocage est annoncé AVANT le clic (R477)",
 style: { padding: "9px 16px", borderRadius: 9, border: "1.5px solid " + bd, background: on ? bg : T.surface,
 color: on ? fg : T.inkSoft, fontSize: 12, fontWeight: 800, cursor: on ? "pointer" : "not-allowed", whiteSpace: "nowrap" } }, label);
 };
+const selStyle = { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11.5, background: T.surface };
 if (approvedW || rejectedW)
 return (React.createElement("div", { style: { marginTop: 16, padding: "12px 16px", borderRadius: 10,
 background: approvedW ? T.greenSoft : T.redSoft, border: "1px solid " + (approvedW ? T.green : T.red),
 fontSize: 12.5, fontWeight: 800, color: approvedW ? T.green : T.red } },
 approvedW ? "✓ Dossier VALIDÉ — le workflow est clos, la fiche client est propagée." : "✕ Dossier REJETÉ — le workflow est clos, la fiche client est inchangée."));
 return (React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px solid " + T.line } },
-React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: T.olive700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 } },
-"Circulation du dossier — passage de main R85"),
+React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" } },
+React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: T.olive700, textTransform: "uppercase", letterSpacing: 0.6 } },
+"Décision d'étape — une barre, partout la même (R474 · passage de main R85)"),
+React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, padding: "2px 8px", borderRadius: 10, background: bouclesW >= 3 ? T.amber : T.surface, color: bouclesW >= 3 ? "#fff" : T.inkSoft, border: "1px solid " + (bouclesW >= 3 ? T.amber : T.line) } },
+"Boucles de renvoi : " + bouclesW + (bouclesW >= 3 ? " · signal manager (R39 : jamais de blocage)" : ""))),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
 WF_ORDER.map(function (ph, i) {
 return React.createElement("span", { key: ph, style: { display: "flex", alignItems: "center", gap: 8 } },
@@ -17188,16 +17213,36 @@ i < WF_ORDER.length - 1 && React.createElement("span", { style: { color: T.inkSo
 })),
 React.createElement("textarea", { value: wfCircMsg, onChange: function (e) { setWfCircMsg(e.target.value); },
 "aria-label": "circulation-message", rows: 2,
-placeholder: "Message à l'intervenant (OBLIGATOIRE à chaque passage — consigné au dossier, R85)…",
+placeholder: "Motif / message à l'intervenant (OBLIGATOIRE — texte libre du motif structuré R476, consigné au dossier R85)…",
 style: { width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 9,
 border: "1.5px solid " + (okMsg ? T.olive600 : T.line), fontSize: 12, background: T.cream, resize: "vertical", marginBottom: 10 } }),
 React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
-curIdxW > 0 && btn("↩ Étape précédente", okMsg, reculer, T.surface, T.line, T.inkMid),
-!enDecision && btn("Valider → étape suivante", okMsg, avancer, T.olive600, T.olive600, "#fff"),
-enDecision && btn("✓ Valider le dossier (décision finale)", okMsg, validerFinal, T.gold, T.gold, "#fff"),
-btn("✕ Rejeter le dossier", okMsg, rejeterDossier, T.redSoft, T.red, T.red),
+btn(enDecision ? "✓ Valider (décision finale)" : "✓ Valider", okMsg, avancer, T.olive600, T.olive600, "#fff", "V"),
+btn("✕ Refuser", okMsg, function () { setWfDecPanel(wfDecPanel === "REFUSER" ? null : "REFUSER"); }, T.redSoft, T.red, T.red, "R"),
+curIdxW > 0 && btn("↩ Renvoyer", okMsg, function () { setWfRenvoiCible(WF_ORDER[0]); setWfDecPanel(wfDecPanel === "RENVOYER" ? null : "RENVOYER"); }, T.surface, T.line, T.inkMid, "B"),
+btn("⇄ Déléguer", okMsg, function () { setWfDecPanel(wfDecPanel === "DELEGUER" ? null : "DELEGUER"); }, T.surface, T.line, T.inkMid, "D"),
 React.createElement("span", { style: { fontSize: 10, color: T.inkSoft } },
-kycLockedByOther ? ("🔒 Dossier détenu par " + (kycLock && kycLock.by) + " — la circulation exige la main (R84).") : enDecision ? "Décision finale : quatre yeux HPB + CEO — valider propage, rejeter laisse la fiche inchangée." : "Le message est adressé à l'intervenant de l'étape et consigné (R48/R49)."))));
+kycLockedByOther ? ("🔒 Dossier détenu par " + (kycLock && kycLock.by) + " — la circulation exige la main (R84).") : enDecision ? "Étape finale : Valider propage (R14/R15), Refuser = issue TERMINAL (R476)." : "Raccourcis V · R · B · D — le moteur reste seul juge (R13/R477), tout se consigne (R48/R49).")),
+wfDecPanel === "REFUSER" && React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", borderRadius: 9, border: "1px solid " + T.red + "55", background: T.redSoft, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: T.red } }, "Motif (code + texte ci-dessus) :"),
+React.createElement("select", { value: wfMotifCode, onChange: function (e) { setWfMotifCode(e.target.value); }, "aria-label": "motif-refus", style: selStyle },
+MOTIFS_REFUS.map(function (m) { return React.createElement("option", { key: m, value: m }, m); })),
+React.createElement("button", { onClick: refuser, style: { padding: "7px 14px", borderRadius: 8, border: "none", background: T.red, color: "#fff", fontSize: 11.5, fontWeight: 800, cursor: "pointer" } }, "Confirmer le refus"),
+React.createElement("span", { style: { fontSize: 10, color: T.inkMid } }, enDecision ? "Issue de l'étape finale : TERMINAL → REJECTED (R476/R16)." : curIdxW === 0 ? "Première étape (aucune antérieure) : TERMINAL → REJECTED — défaut prudent (R476)." : "Issue de cette étape : RENVOI vers l'étape précédente (mêmes effets que R475).")),
+wfDecPanel === "RENVOYER" && React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", borderRadius: 9, border: "1px solid " + T.line, background: T.surface, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: T.inkMid } }, "Rebroussement CIBLÉ (R475) — étape :"),
+React.createElement("select", { value: wfRenvoiCible, onChange: function (e) { setWfRenvoiCible(e.target.value); }, "aria-label": "renvoi-cible", style: selStyle },
+WF_ORDER.slice(0, curIdxW).map(function (ph) { return React.createElement("option", { key: ph, value: ph }, stepLabelW(ph)); })),
+React.createElement("select", { value: wfMotifCode, onChange: function (e) { setWfMotifCode(e.target.value); }, "aria-label": "renvoi-motif", style: selStyle },
+MOTIFS_REFUS.map(function (m) { return React.createElement("option", { key: m, value: m }, m); })),
+React.createElement("button", { onClick: function () { renvoyerVers(wfRenvoiCible || WF_ORDER[0], "↩ Renvoyer —"); }, style: { padding: "7px 14px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 11.5, fontWeight: 800, cursor: "pointer" } }, "Confirmer le renvoi"),
+React.createElement("span", { style: { fontSize: 10, color: T.inkSoft } }, "Les visas re-traversés tombent par événements — l'historique garde le premier passage (R49).")),
+wfDecPanel === "DELEGUER" && React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", borderRadius: 9, border: "1px solid " + T.line, background: T.surface, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: T.inkMid } }, "Remplaçant désigné (R4) :"),
+React.createElement("input", { value: wfDelegueA, onChange: function (e) { setWfDelegueA(e.target.value); }, "aria-label": "delegue-a", placeholder: "Nom du remplaçant…",
+style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 11.5, minWidth: 180 } }),
+React.createElement("button", { onClick: deleguer, disabled: !wfDelegueA.trim(), style: { padding: "7px 14px", borderRadius: 8, border: "none", background: wfDelegueA.trim() ? T.olive600 : T.line, color: "#fff", fontSize: 11.5, fontWeight: 800, cursor: wfDelegueA.trim() ? "pointer" : "not-allowed" } }, "Passer la main"),
+React.createElement("span", { style: { fontSize: 10, color: T.inkSoft } }, "La main passée est un fait tracé — le rôle requis reste le juge au visa."))));
 })(),
 sec === "aml" && (() => {
 const ev = evalAmlRules(client, kyc);
@@ -32723,6 +32768,29 @@ defs.push({ titre: "Habilitations suspendues", ecran: "formations", items: STAFF
 defs.push({ titre: "Ordres bloqués & en attente", ecran: "settlement", items: TRANSFER_ORDERS.filter(function (o) { return o.status !== "EXECUTED" && o.status !== "REJECTED"; }).map(function (o) { return [o.clientName, o.beneficiary + " · " + o.amt + "M " + o.cur, XFER_STATUS_META[o.status][0], o.status === "BLOCKED" ? T.red : T.amber]; }) });
 defs.push({ titre: "Échéances réglementaires à venir", ecran: "reporting", couleur: T.violet, items: REG_DEADLINES.filter(function (d) { return !d.done; }).map(function (d) { return [d.date, d.label, d.org, T.olive700]; }) });
 }
+// ── Corbeille « À décider » (Bloc 65 R478) : TOUTES les décisions en attente de l'utilisateur,
+// tous types confondus (KYC · AR · GAR · Business Trip), triées par SLA — l'échue EN TÊTE avec
+// badge rouge, chaque ligne ouvre l'écran directement à l'étape à décider. E-HR-4 absorbé. ──
+var corbeille = [];
+KYCS_DATA.filter(function (k) { return k.status === "IN_PROGRESS" || k.status === "UNDER_REVIEW"; }).slice(0, 8).forEach(function (k) {
+var c = clientById[k.clientId] || {};
+corbeille.push({ type: "KYC", ref: k.code, qui: c.name || k.clientId, etape: "visa — " + (k.wfPhase || "COMPLIANCE"), sla: k.dueDate || null, ecran: "kyc" });
+});
+ACCOUNT_REVIEWS_DATA.filter(function (a) { return a.status === "OVERDUE" || a.status === "IN_PROGRESS"; })
+.sort(function (a, b) { return (a.reviewDate || "9") < (b.reviewDate || "9") ? -1 : 1; }).slice(0, 5).forEach(function (a) {
+var ca = clientById[a.clientId] || {};
+corbeille.push({ type: "AR", ref: a.id, qui: ca.name || a.clientId, etape: a.status === "OVERDUE" ? "revue échue — delta à viser" : "delta à viser", sla: a.reviewDate || null, ecran: "review" });
+});
+Object.keys(groups).filter(function (g) { return groups[g] > 1; }).slice(0, 3).forEach(function (g) {
+corbeille.push({ type: "GAR", ref: "Groupe " + g, qui: groups[g] + " membres (UBO commun)", etape: "décision de groupe", sla: null, ecran: "review" });
+});
+(typeof BUSINESS_TRIPS !== "undefined" ? BUSINESS_TRIPS : []).filter(function (t) { return t.status === "PENDING"; }).forEach(function (t) {
+var curA = (t.approvals || []).find(function (x) { return x.state === "current"; });
+corbeille.push({ type: "BT", ref: t.id, qui: t.rm + " → " + t.city, etape: curA ? curA.label : "approbation", sla: t.from || null, ecran: "trip" });
+});
+var corbPlus7 = "2026-07-10";
+var corbBadge = function (sla) { if (!sla) return ["—", T.inkSoft]; return sla < today ? ["ÉCHU", T.red] : (sla <= corbPlus7 ? ["J-7", T.amber] : ["OK", T.green]); };
+corbeille.sort(function (a, b) { var an = a.sla === null, bn = b.sla === null; if (an !== bn) return an ? 1 : -1; return a.sla < b.sla ? -1 : a.sla > b.sla ? 1 : 0; });
 // Priorisation : le CRITIQUE d'abord dans chaque liste — le reste garde son ordre.
 defs.forEach(function (d) { d.items = d.items.filter(function (x) { return x[3] === T.red; }).concat(d.items.filter(function (x) { return x[3] !== T.red; })); });
 var total = defs.reduce(function (a, d) { return a + d.items.length; }, 0);
@@ -32755,6 +32823,27 @@ React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: cri
 React.createElement("span", { style: { fontSize: 11, color: T.inkMid } },
 "Cockpit ", React.createElement("strong", { style: { color: T.ink } }, (user && user.roleLabel) || role),
 " \u2014 chaque ligne ouvre l'\u00E9cran de travail.")),
+React.createElement("div", { style: Object.assign({}, card, { marginBottom: 14 }) },
+React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 } },
+React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: T.olive700, textTransform: "uppercase", letterSpacing: 0.5 } },
+"\u00C0 d\u00E9cider \u2014 corbeille unifi\u00E9e (tous types, tri SLA \u2014 R478)"),
+React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: corbeille.length ? T.ink : T.green, fontFamily: "monospace" } }, String(corbeille.length)),
+React.createElement("span", { style: { marginLeft: "auto", fontSize: 9.5, color: T.inkSoft } },
+"Chaque ligne ouvre le dossier \u00E0 l'\u00E9tape \u00E0 d\u00E9cider, barre de d\u00E9cision pr\u00EAte (R474).")),
+corbeille.length === 0 && React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, fontStyle: "italic" } }, "Rien \u00E0 d\u00E9cider \u2014 \u00E0 jour."),
+corbeille.slice(0, 8).map(function (it, i) {
+var b = corbBadge(it.sla);
+return (React.createElement("div", { key: i, onClick: ouvre(it.ecran), title: "Ouvrir \u00E0 l'\u00E9tape \u00E0 d\u00E9cider",
+onMouseEnter: function (e) { e.currentTarget.style.background = T.oliveSoft; },
+onMouseLeave: function (e) { e.currentTarget.style.background = "transparent"; },
+style: { display: "flex", gap: 10, alignItems: "baseline", fontSize: 10.5, padding: "5px 6px", margin: "0 -6px", borderRadius: 6, borderBottom: "1px solid " + T.lineSoft, cursor: "pointer" } },
+React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, color: "#fff", background: b[1], borderRadius: 8, padding: "2px 7px", minWidth: 34, textAlign: "center", flexShrink: 0 } }, b[0]),
+React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: T.olive700, minWidth: 30, flexShrink: 0 } }, it.type),
+React.createElement("span", { style: { fontWeight: 700, color: T.ink, flexShrink: 0 } }, it.ref),
+React.createElement("span", { style: { color: T.inkMid, flex: 1 } }, it.qui),
+React.createElement("span", { style: { fontSize: 9.5, color: T.inkSoft, whiteSpace: "nowrap" } }, it.etape + (it.sla ? " \u00B7 " + it.sla : ""))));
+}),
+corbeille.length > 8 && React.createElement("div", { style: { fontSize: 9.5, color: T.inkSoft, marginTop: 4 } }, "\u2026 et " + (corbeille.length - 8) + " autre(s).")),
 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, defs.map(SecEl))));
 }
 const W = (label, value, sub, color) => (React.createElement("div", { style: card },
@@ -44957,7 +45046,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.16 \u00B7 circulation workflow KYC (valider/pr\u00E9c\u00E9dent/rejet, message R85) \u00B7 onglets centr\u00E9s"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.17 \u00B7 Bloc 65 : barre de d\u00E9cision unifi\u00E9e R474 (Valider\u00B7Refuser\u00B7Renvoyer\u00B7D\u00E9l\u00E9guer) + corbeille \u00AB \u00C0 d\u00E9cider \u00BB R478"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -45143,7 +45232,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.16 \u00B7 circulation workflow KYC (valider/pr\u00E9c\u00E9dent/rejet, message R85) \u00B7 onglets centr\u00E9s"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.17 \u00B7 Bloc 65 : barre de d\u00E9cision unifi\u00E9e R474 (Valider\u00B7Refuser\u00B7Renvoyer\u00B7D\u00E9l\u00E9guer) + corbeille \u00AB \u00C0 d\u00E9cider \u00BB R478"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),

@@ -1521,7 +1521,14 @@ re-soumis ici.
   (Volet B), écart re-consigné si divergence de comportement.
 - **Volet B API livré (2026-08-09, HR-15..22 verts)** : le moteur existe — `decision-unifiee.service.ts`
   + routes `/v1/decisions` (barre, decider, annuler, corbeille, params R445), branché sans fork
-  sur KYC·AR·GAR + Business Trip + Offboarding. RESTE côté écrans : migrer la carte circulation
-  démo et les boutons ad hoc vers la barre (étape 9 du drop) — le handoff UI v2 fournit le
-  gabarit cible (`DecisionPanel`, motif obligatoire, corbeille « Ma journée »).
+  sur KYC·AR·GAR + Business Trip + Offboarding.
+- **Étape 9 (démo v2026-08-09.17) — E-HR-4 ABSORBÉ côté KYC** : la carte « Circulation R85 »
+  est devenue la barre de décision unifiée (✓ Valider · ✕ Refuser · ↩ Renvoyer · ⇄ Déléguer,
+  même ordre, raccourcis V/R/B/D, motif structuré code+texte, renvoi CIBLÉ avec chute tracée,
+  compteur de boucles + signal au seuil 3, refus à issue par étape — 1re étape/finale=TERMINAL,
+  intermédiaires=RENVOI) ; corbeille « À décider » (R478) en tête du cockpit « Ma journée »
+  (tri SLA, ÉCHU en tête badge rouge, types KYC·AR·GAR·BT, deep-link). Recette 15/15.
+  RESTE (étape 9 suite) : écran AR table plate → écran dossier unique + GAR même gabarit +
+  panneau admin AR → Paramétrage → Revues ; réutilisation de la barre sur les écrans BT et
+  Offboarding démo. Le handoff UI v2 fournit le gabarit cible (`DecisionPanel`, écran 06).
 - **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.
