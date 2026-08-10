@@ -13,6 +13,10 @@ import { DecisionPanel } from "./DecisionPanel";
 import { DiffTable, DiffRow, DIFF_GRID, DiffLigne } from "./DiffRow";
 import { ImpactPreview } from "./ImpactPreview";
 import { RevueSortie } from "./RevueSortie";
+import { SandboxSlider } from "./SandboxSlider";
+import { Pilotage } from "./Pilotage";
+import { AuditRejeu } from "./AuditRejeu";
+import { ParamSandbox } from "./ParamSandbox";
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -169,5 +173,49 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     const bandeau = screen.getAllByRole("status").find((e) => e.textContent?.includes("Événement émis")) as HTMLElement;
     expect(bandeau.textContent).toContain("il se corrige par un nouvel événement");
     expect(screen.queryByText("Annuler")).toBeNull();
+  });
+
+  it("U2-14 SandboxSlider + Pilotage : repère de production sous le rail ; la conclusion est ÉCRITE", () => {
+    const { container, unmount } = render(
+      <SandboxSlider label="Seuil" affichage="× 2,5" min={15} max={50} value={25}
+        onChange={() => undefined} ia production={{ valeur: 20, label: "production : × 2,0" }} />);
+    expect(container.querySelector("[data-repere-production]")).toBeTruthy();   // on voit d'où l'on part
+    expect(screen.getByText("production : × 2,0")).toBeTruthy();
+    unmount();
+    const onNavigate = vi.fn();
+    render(<Pilotage active="rapports" onNavigate={onNavigate} />);
+    // le Bar Meter ne laisse pas le lecteur conclure : la phrase nomme LE goulot
+    expect(screen.getByText(/seul goulot interne/).textContent).toContain("visa Compliance");
+    fireEvent.click(screen.getByText("Alertes AML ouvertes"));                  // toute tuile mène à sa liste
+    expect(onNavigate).toHaveBeenCalledWith("surveillance");
+  });
+
+  it("U2-15 AuditRejeu : le curseur reconstitue l'état À DATE — les événements postérieurs n'y figurent pas", () => {
+    render(<AuditRejeu active="rapports" onNavigate={() => undefined} />);
+    expect(screen.getByText("État du dossier au 12.03.2025")).toBeTruthy();
+    expect(screen.getByText("Validé")).toBeTruthy();                            // pas encore EDD ni blocage
+    expect(screen.getByText(/postérieurs à cette date/).textContent).toContain("Blocage sanctions");
+    expect(screen.getByText(/Vous êtes ici/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Date de rejeu"), { target: { value: "5" } });
+    expect(screen.getByText("État du dossier au 10.08.2026")).toBeTruthy();
+    expect(screen.getByText("Bloqué — sanctions")).toBeTruthy();                // l'état a suivi la date
+    expect(screen.queryByText(/postérieurs à cette date/)).toBeNull();
+    expect(screen.getByText(/v4\.5 — en vigueur du 01\.04\.2026/)).toBeTruthy(); // paramétrage à date (R29)
+    expect(screen.getByText(/Cette consultation est enregistrée/)).toBeTruthy(); // l'auditeur est tracé
+  });
+
+  it("U2-16 ParamSandbox : bouger le seuil recalcule l'effet ; le coût reste NOMINATIF ; rien ne s'applique", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    expect(screen.getByText("812")).toBeTruthy();                               // ×2,5 → chiffres maquette
+    expect(screen.getByText("419")).toBeTruthy();
+    expect(screen.getByText("Cèdre Maritime SARL")).toBeTruthy();               // le coût est listé nominativement
+    expect(screen.getAllByText("MROS COMMUNIQUÉ").length).toBe(2);
+    fireEvent.change(screen.getByLabelText("Seuil d'écart déclenchant"), { target: { value: "20" } });
+    expect(screen.getByText(/Aucune alerte fondée perdue/)).toBeTruthy();       // ×2,0 = production → coût nul
+    expect(screen.queryByText("Cèdre Maritime SARL")).toBeNull();
+    // R44 : la proposition d'Olivia est affichée comme NON appliquée ; soumettre ≠ appliquer
+    expect(screen.getByText(/ne le sera pas sans validation humaine/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Soumettre au comité"));
+    expect(screen.getByRole("status").textContent).toContain("v11 reste en production");
   });
 });

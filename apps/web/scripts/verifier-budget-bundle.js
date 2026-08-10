@@ -33,7 +33,12 @@ const zlib = require("zlib");
 // d'icônes vectoriel remplace les glyphes Unicode (tree-shaké, embarqué au build — aucun appel
 // sortant, on-premise) ; + écran 02 « Dossier KYC » (FieldCard/SectionChecklist) et palette ⌘K.
 // Tout reste dans le chunk LAZY ui2 (chargement initial inchangé) — mesure 250.8. Marge ≈ 9 kB.
-const BUDGET_TOTAL_KB = 260;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// 2026-08-10 (UI v2 étapes 6–8, commit motivé) : 260 → 270. Les cinq derniers écrans maquettés
+// du handoff (03/05 Surveillance, 06/07 Revue+CoC, 08/09/10 Pilotage/Audit/Sandbox) et leurs
+// composants (DecisionPanel, DiffTable/DiffRow, ImpactPreview, SandboxSlider, BarMeter) —
+// toujours DANS le chunk LAZY ui2, le chargement initial ne bouge pas. Mesure 262.7 à la fin
+// de l'étape 8. Marge ≈ 7 kB pour l'étape 9 (migrations par patterns), pas un blanc-seing.
+const BUDGET_TOTAL_KB = 270;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

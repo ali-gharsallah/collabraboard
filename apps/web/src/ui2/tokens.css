@@ -90,3 +90,16 @@
 /* Transitions : 120ms ease-out sur background/border uniquement — aucune animation de layout. */
 .ui2 button, .ui2 a, .ui2 [role="button"] { transition: background 120ms ease-out, border-color 120ms ease-out; }
 .ui2 :focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+/* SandboxSlider (composant 11) — rail 4px, poignée 16px bordure 3px. Le remplissage et le
+   repère de production sont dessinés par le conteneur ; le range natif ne fournit que la
+   poignée et le clavier. --slider-fill : brand (valeur humaine) ou ai-line (proposition IA). */
+.ui2 input[type="range"].ui2-slider { -webkit-appearance: none; appearance: none; width: 100%;
+  height: 16px; margin: 0; background: transparent; cursor: pointer; }
+.ui2 input[type="range"].ui2-slider::-webkit-slider-thumb { -webkit-appearance: none;
+  appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid var(--slider-fill, var(--brand)); background: var(--bg-surface);
+  box-shadow: 0 1px 3px rgba(24, 29, 35, 0.2); }
+.ui2 input[type="range"].ui2-slider::-moz-range-thumb { width: 10px; height: 10px;
+  border-radius: 50%; border: 3px solid var(--slider-fill, var(--brand));
+  background: var(--bg-surface); box-shadow: 0 1px 3px rgba(24, 29, 35, 0.2); }

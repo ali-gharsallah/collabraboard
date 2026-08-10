@@ -11,6 +11,9 @@ import { MaJournee } from "./MaJournee";
 import { DossierKyc } from "./DossierKyc";
 import { Surveillance } from "./Surveillance";
 import { RevueSortie } from "./RevueSortie";
+import { Pilotage } from "./Pilotage";
+import { AuditRejeu } from "./AuditRejeu";
+import { ParamSandbox } from "./ParamSandbox";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -56,10 +59,15 @@ export function Ui2Preview() {
   // autres entrées de nav montrent le spécimen tokens/composants en attendant leur étape.
   const [active, setActive] = useState("journee");
   const [variante, setVariante] = useState<"liste" | "dossier">("liste");
+  const [rapportsVue, setRapportsVue] = useState<"pilotage" | "audit">("pilotage");
   if (active === "journee") return <MaJournee active={active} onNavigate={setActive} />;
   if (active === "kyc") return <DossierKyc active={active} onNavigate={setActive} />;
   if (active === "surveillance") return <Surveillance active={active} onNavigate={setActive} />;
   if (active === "revue") return <RevueSortie active={active} onNavigate={setActive} />;
+  if (active === "rapports") return rapportsVue === "audit"
+    ? <AuditRejeu active={active} onNavigate={setActive} onRetour={() => setRapportsVue("pilotage")} />
+    : <Pilotage active={active} onNavigate={setActive} onOuvrirAudit={() => setRapportsVue("audit")} />;
+  if (active === "param") return <ParamSandbox active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}
