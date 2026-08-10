@@ -9,6 +9,7 @@ import { WorkQueueHeader, WorkQueueRow, WorkQueueItem } from "./WorkQueueRow";
 import { EventTimeline } from "./EventTimeline";
 import { MaJournee } from "./MaJournee";
 import { DossierKyc } from "./DossierKyc";
+import { Surveillance } from "./Surveillance";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -56,6 +57,7 @@ export function Ui2Preview() {
   const [variante, setVariante] = useState<"liste" | "dossier">("liste");
   if (active === "journee") return <MaJournee active={active} onNavigate={setActive} />;
   if (active === "kyc") return <DossierKyc active={active} onNavigate={setActive} />;
+  if (active === "surveillance") return <Surveillance active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}

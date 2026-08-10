@@ -9,6 +9,8 @@ import { scorer, chercher } from "./CommandPalette";
 import { FieldCard } from "./FieldCard";
 import { SectionChecklist } from "./SectionChecklist";
 import { DossierKyc } from "./DossierKyc";
+import { DecisionPanel } from "./DecisionPanel";
+import { DiffTable, DIFF_GRID, DiffLigne } from "./DiffRow";
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -97,5 +99,40 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     const ici = screen.getByText("Renvoi ciblé") as HTMLElement;
     expect(ici.style.fontWeight).toBe("700");
     expect((screen.getByText("Visa apposé") as HTMLElement).style.fontWeight).toBe("500");
+  });
+
+  it("U2-10 DecisionPanel : pas de motif, pas de décision — le bouton reste ACTIF et explique", () => {
+    const onDecider = vi.fn();
+    render(<DecisionPanel titre="Qualifier l'alerte" boutonLabel="Enregistrer la qualification"
+      mention="Un second regard MLRO est requis." effets={["L'alerte passe en investigation."]}
+      options={[{ id: "FAUX_POSITIF", titre: "Faux positif", sous: "Activité expliquée" },
+        { id: "INVESTIGATION", titre: "Ouvrir une investigation", sous: "Analyse approfondie" }]}
+      onDecider={onDecider} />);
+    const bouton = screen.getByText("Enregistrer la qualification").closest("button") as HTMLButtonElement;
+    expect(bouton.disabled).toBe(false);                          // JAMAIS grisé sans explication
+    fireEvent.click(bouton);                                      // clic sans option ni motif
+    expect(onDecider).not.toHaveBeenCalled();                     // rien n'est soumis…
+    expect(screen.getByRole("alert").textContent).toContain("Pas de motif, pas de décision");
+    // choisir une option + motiver → la décision part avec {option, motif}
+    fireEvent.click(screen.getByText("Ouvrir une investigation"));
+    fireEvent.change(screen.getByLabelText("Motif"), { target: { value: "Flux × 6 sans justificatif." } });
+    fireEvent.click(bouton);
+    expect(onDecider).toHaveBeenCalledWith({ option: "INVESTIGATION", motif: "Flux × 6 sans justificatif." });
+  });
+
+  it("U2-11 DiffTable : grille partagée en-tête/lignes ; la ligne DIVERGE se voit à la LIGNE (fond alerte)", () => {
+    const lignes: DiffLigne[] = [
+      { attribut: "Nom complet", gauche: "Viktor Volkov", droite: "Viktor Volkov",
+        concordance: { label: "92 %", mode: "pct" } },
+      { attribut: "Date de naissance", gauche: "14.03.1962", droite: "1962 (année seule)",
+        concordance: { label: "DIVERGE", mode: "diverge" } }];
+    const { container } = render(<DiffTable lignes={lignes} enteteGauche="Notre client" enteteDroite="Entrée de liste" />);
+    const rows = Array.from(container.querySelectorAll('[role="row"]')) as HTMLElement[];
+    expect(rows.length).toBe(3);
+    for (const r of rows) expect(r.style.gridTemplateColumns).toBe(DIFF_GRID);   // en-tête = lignes
+    const diverge = rows.find((r) => r.textContent?.includes("DIVERGE")) as HTMLElement;
+    expect(diverge.style.background).toContain("--alert-card");
+    const exact = rows.find((r) => r.textContent?.includes("92 %")) as HTMLElement;
+    expect(exact.style.background).not.toContain("--alert-card");
   });
 });
