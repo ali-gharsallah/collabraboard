@@ -5,6 +5,8 @@ import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { SandboxSlider } from "./SandboxSlider";
+import { EntityList } from "./Listes";
+import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -26,12 +28,82 @@ function simuler(seuilX10: number) {
     heures: Math.round((evitees - perdues) * 0.62) };
 }
 
+// ── V2-M6 : le Paramétrage PAR SECTIONS (cartographie ratifiée). Chaque section liste ses
+// clés GOUVERNÉES (/v1/parametres/registre — un dossier garde la version de sa création, R29)
+// et porte l'arbitrage n°1 : les 8 bacs à sable ont disparu comme écrans, la SIMULATION est
+// un onglet de chaque section (modèle écran 10, ci-contre sur AML-R17). Seeds au format API.
+type Cle = { cle: string; description?: string; valeur?: string; version?: string };
+const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
+  { id: "questionnaires", label: "Questionnaires", seed: [
+    { cle: "kyc.questionnaire", description: "Gabarit KYC — 9 sections obligatoires", valeur: "v7", version: "01.06.2026" },
+    { cle: "doc-matrix", description: "Matrice documentaire (exigences par niveau)", valeur: "v7", version: "01.06.2026" },
+    { cle: "review.profiles", description: "Profils de review AR/GAR × SDD/CDD/EDD (R283)", valeur: "v3", version: "12.04.2026" }] },
+  { id: "regles", label: "Règles", seed: [
+    { cle: "aml.R17.seuil", description: "Écart déclenchant AML-R17", valeur: "× 2,0 · 30 j", version: "v11 · 12.09.2024" },
+    { cle: "decision.renvoi.seuilBoucles", description: "Signal de boucles de renvoi (R476)", valeur: "3", version: "10.08.2026" },
+    { cle: "review.groupe.criteres", description: "Composition des revues groupées (R469)", valeur: "UBO ∪ garant", version: "10.08.2026" }] },
+  { id: "workflow", label: "Workflow", seed: [
+    { cle: "workflow.WF-KYC-03", description: "Circuit de visa KYC — quatre yeux (R13)", valeur: "v3", version: "01.01.2025" },
+    { cle: "businessTrip.chains", description: "Chaînes d'approbation BT par risque pays", valeur: "LOW: CO · HIGH: CO→MLRO", version: "05.05.2026" },
+    { cle: "offboarding.etapes", description: "Étapes de sortie (bloc 62)", valeur: "5 étapes fermées", version: "22.03.2026" }] },
+  { id: "acces", label: "Accès", seed: [
+    { cle: "iam.menus", description: "Menus par rôle (RM/CO/MLRO/AUDIT)", valeur: "4 profils", version: "18.02.2026" },
+    { cle: "iam.matrice", description: "Matrice de droits par section (R282)", valeur: "v2", version: "12.04.2026" },
+    { cle: "sso.saml", description: "SSO — fournisseur d'identité", valeur: "SAML 2.0", version: "18.02.2026" }] },
+  { id: "ia", label: "IA", seed: [
+    { cle: "olivia.gouvernance.curseur", description: "Curseur d'autonomie O1/O2/O3", valeur: "O2 — propose, l'humain décide", version: "01.08.2026" },
+    { cle: "olivia.budgets", description: "Budgets de runs par mission (R262)", valeur: "500 / jour", version: "01.08.2026" },
+    { cle: "olivia.outils", description: "Outils en liste blanche (R264)", valeur: "12 outils", version: "01.08.2026" }] },
+  { id: "general", label: "Général", seed: [
+    { cle: "core.langue", description: "Langues d'affichage (R326-R327)", valeur: "FR · EN · DE · IT · AR", version: "20.07.2026" },
+    { cle: "integrations.ports", description: "Ports d'intégration (R284/R286)", valeur: "2 actifs — pas de secret = refus gracieux", version: "15.07.2026" },
+    { cle: "audit.retention", description: "Rétention du journal (R49 — append-only)", valeur: "10 ans", version: "01.01.2025" }] },
+];
+
 export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [seuil, setSeuil] = useState(25);                  // ×2,5 — la proposition d'Olivia
   const [fenetre, setFenetre] = useState(30);
   const [pops, setPops] = useState({ eleve: true, multi: true, faible: false });
   const [soumis, setSoumis] = useState(false);
+  const [section, setSection] = useState<string>("sandbox");
+  const registre = useApiOrSeed<Cle[] | Record<string, unknown>>("/v1/parametres/registre", null as never);
+  const pilule = (id: string, label: string) => (
+    <button key={id} onClick={() => setSection(id)} aria-pressed={section === id}
+      style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
+        fontWeight: 600, cursor: "pointer",
+        border: section === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+        background: section === id ? "var(--brand-surface)" : "var(--bg-surface)",
+        color: section === id ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>);
+  const pilules = (
+    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+      {pilule("sandbox", t("Bac à sable AML-R17 (écran 10)"))}
+      {SECTIONS_PARAM.map((s) => pilule(s.id, t(s.label)))}
+    </div>);
+  const sectionActive = SECTIONS_PARAM.find((s) => s.id === section);
+
+  if (sectionActive) {
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderDossier nom={`${t("Paramétrage")} — ${t(sectionActive.label)}`} initiales="PR"
+          identifiants={registre.isDemo ? t("données maquette") : t("source : /v1/parametres/registre (config gouvernée par date, R29)")}
+          puces={<StatusChip mode="neutral">{t("GOUVERNÉ")}</StatusChip>}
+          actions={<Ui2Bouton primaire onClick={() => setSection("sandbox")}>{t("Simuler dans le bac à sable →")}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        <EntityList grid="200px 1.5fr 1fr 140px" onOpen={() => setSection("sandbox")}
+          entetes={[t("Clé"), t("Description"), t("Valeur en vigueur"), t("Version · effet")]}
+          lignes={sectionActive.seed.map((c) => ({ id: c.cle, cells: [
+            <span key="k" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text)" }}>{c.cle}</span>,
+            t(c.description ?? ""),
+            <span key="v" className="mono">{t(c.valeur ?? "—")}</span>,
+            <span key="e" className="mono">{c.version ?? "—"}</span>] }))} />
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          {t("Config gouvernée par date : un dossier garde la version en vigueur à sa création (R29) — jamais la « courante ». Les 8 bacs à sable ont disparu comme écrans (arbitrage n°1) : la SIMULATION est un onglet de chaque section, sur le modèle de l'écran 10 — effet rejoué sur l'historique, coût nominatif, version datée et signée.")}</div>
+      </Ui2Shell>);
+  }
   const sim = simuler(seuil);
   const fmt = (n: number) => n.toLocaleString("fr-CH");
 
@@ -89,6 +161,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
         identifiants={t("Version en production : v11 · dernière modification 12.09.2024 · 1 244 alertes générées depuis")}
         puces={<StatusChip mode="ai">{t("SIMULATION")}</StatusChip>}
         actions={<Ui2Bouton>{t("Historique des versions")}</Ui2Bouton>} t={t} />}>
+      {pilules}
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("Effet simulé sur l'historique")}</span>
         <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("rejoué sur 24 mois de transactions réelles")}</span>

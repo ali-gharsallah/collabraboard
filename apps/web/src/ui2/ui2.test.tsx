@@ -366,4 +366,21 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Pilotage (écran 08)"));                    // retour : écran 08 intact
     expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
   });
+
+  it("U2-25 V2-M6 Paramétrage par sections : clés gouvernées R29, Simulation partout (arbitrage n°1)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    // les 6 sections + le bac à sable en pilules (« IA » existe aussi comme badge Olivia → getAll)
+    for (const s of ["Questionnaires", "Règles", "Workflow", "Accès", "IA", "Général"])
+      expect(screen.getAllByText(s).length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getByText("Règles"));
+    expect(screen.getByText("decision.renvoi.seuilBoucles")).toBeTruthy();       // clé gouvernée du Bloc 65
+    expect(screen.getByText(/un dossier garde la version en vigueur à sa création \(R29\)/)).toBeTruthy();
+    expect(screen.getByText(/Les 8 bacs à sable ont disparu comme écrans \(arbitrage n°1\)/)).toBeTruthy();
+    fireEvent.click(screen.getByText("IA", { selector: "button" }));
+    expect(screen.getByText("O2 — propose, l'humain décide")).toBeTruthy();      // curseur O1/O2/O3 (R44 visible)
+    // « Simuler dans le bac à sable → » ramène au modèle écran 10
+    fireEvent.click(screen.getByText("Simuler dans le bac à sable →"));
+    expect(screen.getByText("Effet simulé sur l'historique")).toBeTruthy();
+    expect(screen.getByText("812")).toBeTruthy();
+  });
 });
