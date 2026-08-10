@@ -5,6 +5,7 @@ import { StatusChip } from "./StatusChip";
 import { StatTile } from "./StatTile";
 import { WorkQueueHeader, WorkQueueRow, WQ_GRID, WorkQueueItem } from "./WorkQueueRow";
 import { EventTimeline } from "./EventTimeline";
+import { scorer, chercher } from "./CommandPalette";
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -37,6 +38,21 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     const { container } = render(<WorkQueueRow item={item} onOpen={() => undefined} />);
     const row = container.querySelector('[role="row"]') as HTMLElement;
     expect(row.style.background).toContain("--alert-card");
+  });
+
+  it("U2-06 Palette ⌘K : recherche floue insensible aux accents, préfixes en tête, 5 par groupe", () => {
+    expect(scorer("reglages", "Réglages écran")).toBe(2);          // préfixe, accents aplatis
+    expect(scorer("ecran", "Réglages écran")).toBe(1);             // sous-chaîne
+    expect(scorer("xyz", "Réglages écran")).toBe(-1);
+    const tr = (s: string) => s;
+    const r = chercher("su", { ecrans: [{ id: "surveillance", libelle: "Surveillance" }],
+      clients: [{ id: "c1", name: "Suzuki Ltd" }, { id: "c2", name: "Nordwind" },
+        ...Array.from({ length: 9 }, (_, i) => ({ id: `s${i}`, name: `Sushi ${i}` }))],
+      kycs: [{ code: "KYC-2026-SU-1", status: "OPEN" }] }, tr);
+    expect(r.filter((x) => x.groupe === "Clients").length).toBe(5);      // plafond 5 par groupe
+    expect(r[0].groupe).toBe("Écrans");                                  // groupé par type
+    expect(r.some((x) => x.libelle === "Suzuki Ltd")).toBe(true);
+    expect(r.some((x) => x.libelle === "Nordwind")).toBe(false);         // pas de faux positif
   });
 
   it("U2-05 EventTimeline : le marqueur « vous êtes ici » passe le titre en graisse 700", () => {

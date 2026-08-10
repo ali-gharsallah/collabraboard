@@ -4,6 +4,7 @@ import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatTile } from "./StatTile";
 import { WorkQueueHeader, WorkQueueRow, WorkQueueItem } from "./WorkQueueRow";
+import { CommandPalette } from "./CommandPalette";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
@@ -62,6 +63,7 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
   const t = traduire(langue());
   const [onglet, setOnglet] = useState<"tout" | "bloques" | "delegues">("tout");
   const [tout, setTout] = useState(false);
+  const [palette, setPalette] = useState(false);               // ⌘K — le pivot des 10 entrées
   const corbeille = useApiOrSeed<CorbeilleApi>("/v1/decisions/corbeille", SEED_CORBEILLE);
 
   // API vivante → la corbeille R478 EST la file ; sinon le seed maquette (source signalée).
@@ -87,9 +89,12 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
       color: onglet === id ? "var(--brand)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
       {label} · <span className="mono">{n}</span></button>);
 
-  return (
+  return (<>
+    <CommandPalette ouvert={palette} onOuvrir={() => setPalette(true)}
+      onFermer={() => setPalette(false)} onNavigate={onNavigate} />
     <Ui2Shell
       nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager" onNavigate={onNavigate} t={t}
+        onSearch={() => setPalette(true)}
         badges={{ journee: { n: items.length || 12 }, dossiers: { n: 48, sobre: true },
           clients: { n: 214, sobre: true }, kyc: { n: 3, sobre: true },
           surveillance: { n: critiques || 5, alert: true } }}
@@ -167,5 +172,6 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
             fontWeight: 600, color: "var(--brand)" }}>
             {t("Voir les")} {visibles.length - 5} {t("dossiers restants →")}</button>)}
       </section>
-    </Ui2Shell>);
+    </Ui2Shell>
+  </>);
 }
