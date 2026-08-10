@@ -42,14 +42,18 @@ vitrine tant que la bascule n'est pas actée :
 9. Les ~50 écrans par patterns.
 Jeu d'icônes vectoriel : à proposer au PO avant intégration (le handoff l'exige).
 
-## Décisions PO EN ATTENTE (le handoff interdit de trancher seul)
+## Décisions PO — ARBITRÉES le 10.08.2026 (4× OUI, options recommandées)
 
-1. **Les 8 bacs à sable** disparaissent comme écrans → onglet Simulation dans chaque écran de
-   paramétrage ?
-2. **Doublon capacité d'équipe** (« Capacité équipe » vs « Capacité de l'équipe (live) ») → un
-   seul écran ?
+1. **Les 8 bacs à sable** disparaissent comme entrées de menu → onglet Simulation dans chaque
+   écran de paramétrage concerné (modèle écran 10) ; les deep-links existants redirigent.
+2. **Doublon capacité d'équipe** → UN seul écran : encart dans « Ma journée » + vue détaillée
+   dans Pilotage (écran 08).
 3. **Fusion des trois tableaux de bord** (Compliance Center · Dashboard central · Command
-   Center) → Ma journée (opérationnel) + Rapports (pilotage) ? NB : le Dashboard central
-   par rôle vient d'être refondu (v2026-08-09.15) — la fusion l'absorberait.
-4. **Modules verticaux** (PMS, FX, Custody, Mobile, OIL, Legal, Octopulse) hors navigation
-   principale → bloc « Métiers » optionnel affiché seulement si le module est licencié (R320) ?
+   Center) → « Ma journée » (opérationnel — absorbe le cockpit par rôle v.15 ET la corbeille
+   « À décider » R478) + « Rapports » (pilotage). Les trois écrans actuels quittent le menu.
+4. **Modules verticaux** (PMS, FX, Custody, Mobile, OIL, Legal, Octopulse) → bloc « Métiers »
+   optionnel, affiché uniquement si le module est licencié (R320).
+
+**Le plan est donc VALIDÉ** — la refonte peut démarrer par l'étape 1 du handoff (tokens +
+shell : variables de thème, Nav 248px à 3 blocs, les deux headers, la grille), avec montrée
+au PO avant de continuer, comme le PROMPT l'exige.
