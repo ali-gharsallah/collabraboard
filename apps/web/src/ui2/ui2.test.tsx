@@ -506,4 +506,37 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Soumettre le brouillon"));
     expect(screen.getByText(/le motif de publication est obligatoire \(R7\)/)).toBeTruthy();
   });
+
+  it("U2-35 V2-M11 types de CoC : registre à date, HAUTE force REVISION_KYC (SD-06 servi)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Règles"));
+    fireEvent.click(screen.getByText("coc.types"));
+    expect(screen.getByText("UBO_CHANGE")).toBeTruthy();
+    expect(screen.getAllByText("HAUTE").length).toBe(2);                       // UBO + nationalité
+    expect(screen.getByText(/refus typé SERVI par le moteur \(SD-06\)/)).toBeTruthy();
+    expect(screen.getByText(/re-screening PROPOSÉ, jamais exécuté \(R42\/R44\)/)).toBeTruthy();
+  });
+
+  it("U2-36 V2-M11 Config & Go-live : requis manquants NOMMÉS, activation bloquée (R127/R128)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Banque"));
+    fireEvent.click(screen.getByText("banque.golive"));
+    expect(screen.getByText(/GO-LIVE BLOQUÉ \(R128\)/)).toBeTruthy();
+    expect(screen.getByText(/gedDocTypes — types documentaires GED/)).toBeTruthy();   // nommé, pas compté
+    expect(screen.getByText(/coreSystemeRef — référence core banking/)).toBeTruthy();
+    expect(screen.getByText(/la signature du répondant bancaire/)).toBeTruthy();
+    expect(screen.getByText(/le refus vient du moteur/)).toBeTruthy();
+  });
+
+  it("U2-37 V2-M11 recette client BAT : verdicts, écart bloquant, NON PROMOTABLE motivé (R333)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Banque"));
+    fireEvent.click(screen.getByText("banque.bat"));
+    expect(screen.getAllByText("PASS").length).toBe(4);
+    expect(screen.getByText("ECHEC")).toBeTruthy();
+    expect(screen.getByText("BLOQUANT")).toBeTruthy();
+    expect(screen.getByText(/NON PROMOTABLE — le verdict fait autorité côté moteur/)).toBeTruthy();
+    expect(screen.getByText(/visa de campagne manquant \(R15\)/)).toBeTruthy();
+    expect(screen.getByText(/jamais un cahier rédigé à la main/)).toBeTruthy();
+  });
 });

@@ -42,7 +42,8 @@ const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
   { id: "regles", label: "Règles", seed: [
     { cle: "aml.R17.seuil", description: "Écart déclenchant AML-R17", valeur: "× 2,0 · 30 j", version: "v11 · 12.09.2024" },
     { cle: "decision.renvoi.seuilBoucles", description: "Signal de boucles de renvoi (R476)", valeur: "3", version: "10.08.2026" },
-    { cle: "review.groupe.criteres", description: "Composition des revues groupées (R469)", valeur: "UBO ∪ garant", version: "10.08.2026" }] },
+    { cle: "review.groupe.criteres", description: "Composition des revues groupées (R469)", valeur: "UBO ∪ garant", version: "10.08.2026" },
+    { cle: "coc.types", description: "Types de CoC — matérialité, action, rôle (R276-R278)", valeur: "4 types", version: "à date" }] },
   { id: "workflow", label: "Workflow", seed: [
     { cle: "workflow.WF-KYC-03", description: "Circuit de visa KYC — quatre yeux (R13)", valeur: "v3", version: "01.01.2025" },
     { cle: "businessTrip.chains", description: "Chaînes d'approbation BT par risque pays", valeur: "LOW: CO · HIGH: CO→MLRO", version: "05.05.2026" },
@@ -60,7 +61,9 @@ const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
   { id: "banque", label: "Banque", seed: [
     { cle: "banque.initialisation", description: "Paramètres initiaux du tenant (R-Q exécutable)", valeur: "2 requis à poser", version: "R125-R128" },
     { cle: "banque.licence", description: "Licence signée — modules activés, seats, échéance", valeur: "9 modules · 40 seats", version: "R320" },
-    { cle: "legal.structures", description: "Structures juridiques — barème de risque (R288)", valeur: "8 formes", version: "v2 · 01.05.2026" }] },
+    { cle: "legal.structures", description: "Structures juridiques — barème de risque (R288)", valeur: "8 formes", version: "v2 · 01.05.2026" },
+    { cle: "banque.golive", description: "Config à date & Go-live (R127/R128)", valeur: "BLOQUÉ — 2 requis", version: "R127/R128" },
+    { cle: "banque.bat", description: "Recette client (BAT) — cahier généré, promotion (R333)", valeur: "11/12 PASS", version: "R333" }] },
   { id: "general", label: "Général", seed: [
     { cle: "core.langue", description: "Langues d'affichage (R326-R327)", valeur: "FR · EN · DE · IT · AR", version: "20.07.2026" },
     { cle: "integrations.ports", description: "Ports d'intégration (R284/R286)", valeur: "2 actifs — pas de secret = refus gracieux", version: "15.07.2026" },

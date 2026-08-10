@@ -289,6 +289,83 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
       {doctrine(t("Le curseur est au niveau O2 : Olivia propose, l'humain décide (R44). Aucun chemin de code n'exécute une sanction, une PEPisation ou une clôture automatiquement — sortie autorisée : événement, tâche, proposition."))}
     </>);
     pied = "Monter le curseur est une décision de gouvernance versionnée, jamais un réglage technique.";
+  } else if (cle.cle === "coc.types") {
+    corps = (<>
+      <EntityList grid="130px 1.3fr 110px 130px 70px 90px" onOpen={() => undefined}
+        entetes={[t("Type"), t("Libellé"), t("Matérialité"), t("Action requise"), t("Rôle"), t("Sévérité CPSI")]}
+        lignes={[
+          { c: "UBO_CHANGE", l: "Changement d'UBO", m: "HAUTE", a: "REVISION_KYC", r: "CO", s: "3" },
+          { c: "NATIONALITE", l: "Changement de nationalité (identité)", m: "HAUTE", a: "REVISION_KYC", r: "CO", s: "3" },
+          { c: "ACTIVITE", l: "Changement d'activité économique", m: "MOYENNE", a: "MAJ_CIBLEE", r: "CO", s: "2" },
+          { c: "ADRESSE", l: "Changement d'adresse", m: "BASSE", a: "MAJ_CIBLEE", r: "RM", s: "1" },
+        ].map((x) => ({ id: x.c, cells: [
+          <span key="c" className="mono" style={{ fontSize: 10.5, fontWeight: 600 }}>{x.c}</span>, t(x.l),
+          <StatusChip key="m" mode={x.m === "HAUTE" ? "alert" : x.m === "MOYENNE" ? "warn" : "neutral"}>{t(x.m)}</StatusChip>,
+          <span key="a" className="mono" style={{ fontSize: 10.5 }}>{x.a}</span>,
+          <span key="r" className="mono">{x.r}</span>, <span key="s" className="mono">{x.s}</span>] }))} />
+      {doctrine(t("Registre versionné à date (R276-R278, /v1/coc/config) : chaque type porte sa matérialité, son action et son rôle traitant. La contrainte « matérialité HAUTE force la révision KYC » est un refus typé SERVI par le moteur (SD-06), jamais pré-calculé à l'écran ; un changement sur un champ d'identité déclenche un re-screening PROPOSÉ, jamais exécuté (R42/R44)."))}
+    </>);
+    pied = "Le CoC est un dossier à cycle de vie — la donnée vit sur la personne, les dossiers reçoivent des événements tracés, aucune bascule d'état par effet de bord.";
+  } else if (cle.cle === "banque.golive") {
+    corps = (<>
+      {carte(<>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>
+          {t("Configuration reconstruite au 10.08.2026 (R127)")}</div>
+        <div style={{ fontSize: 11.5, color: "var(--text-body)", lineHeight: 1.55 }}>
+          {t("34 clés résolues à date — chaque valeur est celle en vigueur à la date demandée, pas la « courante ».")}</div>
+      </>)}
+      <section role="alert" style={{ background: "var(--alert-card)", border: "1px solid var(--alert-line)",
+        borderRadius: "var(--r-card)", padding: "13px 16px", marginBottom: 12 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--alert-text)", marginBottom: 5 }}>
+          {t("GO-LIVE BLOQUÉ (R128) — les clés requises manquantes sont NOMMÉES")}</div>
+        {["gedDocTypes — types documentaires GED (R110/R112)", "coreSystemeRef — référence core banking (R167)"].map((x) => (
+          <div key={x} className="mono" style={{ fontSize: 11.5, color: "var(--text-body)", padding: "3px 0" }}>✗ {t(x)}</div>))}
+        <div style={{ fontSize: 11.5, color: "var(--text-body)", marginTop: 7, lineHeight: 1.55 }}>
+          {t("Pas de go-live sur un questionnaire troué : l'activation exige zéro requis manquant ET la signature du répondant bancaire — elle est irréversible et journalisée.")}</div>
+      </section>
+      {doctrine(t("L'activation (POST /v1/parametres/activer) gouverne la mise en production : la config activée est gravée, datée et signée ; les dossiers créés ensuite la portent (R29). Aucune règle côté écran — le refus vient du moteur."))}
+    </>);
+    pied = "Écran v1 « Config & Go-live » repris tel quel : reconstruction à date + activation gouvernée, rien de précalculé.";
+  } else if (cle.cle === "banque.bat") {
+    corps = (<>
+      <EntityList grid="110px 1.4fr 100px 130px" onOpen={() => undefined}
+        entetes={[t("Module"), t("Cas de recette"), t("Verdict"), t("Écart")]}
+        lignes={[
+          { m: "kyc", i: "Ouverture dossier CDD — visas par section", v: "PASS", e: "" },
+          { m: "screening", i: "Hit sanction — clôture motivée à 4 yeux", v: "PASS", e: "" },
+          { m: "aml", i: "Alerte R17 — instruction et issue tracée", v: "PASS", e: "" },
+          { m: "etl", i: "Lot EOD tout-ou-rien — rejet motivé", v: "PASS", e: "MINEUR" },
+          { m: "mros", i: "Communication goAML — export opposable", v: "ECHEC", e: "BLOQUANT" },
+        ].map((x) => ({ id: x.m + x.i, cells: [
+          <span key="m" className="mono" style={{ fontWeight: 600 }}>{x.m}</span>, t(x.i),
+          <StatusChip key="v" mode={x.v === "PASS" ? "ok" : "alert"}>{x.v}</StatusChip>,
+          x.e ? <StatusChip key="e" mode={x.e === "BLOQUANT" ? "alert" : "warn"}>{t(x.e)}</StatusChip>
+            : <span key="e" style={{ color: "var(--text-muted)" }}>—</span>] }))} />
+      <section style={{ background: "var(--warn-card)", border: "1px solid var(--warn-card-border)",
+        borderRadius: "var(--r-card)", padding: "12px 14px", margin: "12px 0" }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--warn-text)", marginBottom: 4 }}>
+          {t("NON PROMOTABLE — le verdict fait autorité côté moteur")}</div>
+        {["1 écart BLOQUANT ouvert (mros)", "visa de campagne manquant (R15)"].map((r) => (
+          <div key={r} style={{ fontSize: 11.5, color: "var(--text-body)", padding: "2px 0" }}>• {t(r)}</div>))}
+      </section>
+      {doctrine(t("Recette client (R333) : le cahier est GÉNÉRÉ et filtré par licence — un tenant ne teste que ses modules licenciés, jamais un cahier rédigé à la main. L'écran rend l'état ; la promotion n'est possible que campagne complète, sans écart bloquant, VISÉE."))}
+    </>);
+    pied = "La promotion est un acte visé (R15) — l'écran ne re-décide rien.";
+  } else if (cle.cle === "sso.saml") {
+    corps = (<>
+      {carte(<>
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12 }}>
+          <span><span className="microlabel">{t("Fournisseur d'identité")}</span>
+            <div className="mono">SAML 2.0 / OIDC</div></span>
+          <span><span className="microlabel">{t("Secret client")}</span>
+            <div><StatusChip mode="ok">{t("CONFIGURÉ — jamais servi au front")}</StatusChip></div></span>
+          <span><span className="microlabel">{t("Rotation JWKS")}</span>
+            <div className="mono">{t("dernière : 18.02.2026 · motivée")}</div></span>
+        </div>
+      </>)}
+      {doctrine(t("SSO gouverné (R290) : le backend ne sert que « configuré / absent » — le secret ne descend JAMAIS (IM-01) ; « Tester » est un dry-run tracé (IM-03) ; la rotation JWKS est motivée (R7) et la bascule de mode se fait à DEUX REGARDS et à date (IM-04, R13). Les refus arrivent du moteur, tels quels."))}
+    </>);
+    pied = "La config déclarée s'écrit par le registre (clé ssoOidc) — même gouvernance que toute clé (R29).";
   } else if (cle.cle === "legal.structures") {
     corps = (<>
       <EntityList grid="90px 1.5fr 90px 1.2fr" onOpen={() => undefined}
