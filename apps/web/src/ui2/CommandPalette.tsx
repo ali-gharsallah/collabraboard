@@ -5,6 +5,7 @@ import { apiGetSourced } from "../lib/api";
 import { traduire, langue } from "../lib/i18n";
 import clientsSeed from "../seed/clients.json";
 import kycSeed from "../seed/kyc.json";
+import { ECRANS_MIGRES } from "./cartographie";
 
 /**
  * UI v2 — étape 4 : la palette de commandes ⌘K (handoff §Interactions).
@@ -17,12 +18,15 @@ import kycSeed from "../seed/kyc.json";
 
 type Resultat = { groupe: string; libelle: string; detail: string; cible: string };
 
-const ECRANS: { id: string; libelle: string }[] = [
+// Les 10 entrées de la nav v2, PUIS la cartographie de migration (étape 9) : chaque écran v1
+// reste trouvable en deux frappes sous son ANCIEN nom et mène à sa destination v2.
+const ECRANS: { id: string; libelle: string; detail?: string }[] = [
   { id: "journee", libelle: "Ma journée" }, { id: "dossiers", libelle: "Mes dossiers" },
   { id: "clients", libelle: "Mes clients" }, { id: "entree", libelle: "Entrée en relation" },
   { id: "kyc", libelle: "Connaissance client" }, { id: "surveillance", libelle: "Surveillance" },
   { id: "revue", libelle: "Revue & sortie" }, { id: "rapports", libelle: "Rapports" },
   { id: "param", libelle: "Paramétrage" },
+  ...ECRANS_MIGRES,
 ];
 
 const plat = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -42,7 +46,7 @@ export function chercher(requete: string, sources: { ecrans: typeof ECRANS;
     xs.filter((x) => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((x) => x.r);
   return [
     ...rangs(sources.ecrans.map((e) => ({ score: scorer(requete, tr(e.libelle)),
-      r: { groupe: "Écrans", libelle: tr(e.libelle), detail: "", cible: e.id } }))),
+      r: { groupe: "Écrans", libelle: tr(e.libelle), detail: e.detail ? tr(e.detail) : "", cible: e.id } }))),
     ...rangs(sources.clients.map((c) => ({ score: Math.max(scorer(requete, c.name), scorer(requete, c.id)),
       r: { groupe: "Clients", libelle: c.name, detail: c.id, cible: "clients" } }))),
     ...rangs(sources.kycs.map((k) => ({ score: scorer(requete, k.code),

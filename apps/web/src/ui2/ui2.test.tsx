@@ -14,6 +14,9 @@ import { DiffTable, DiffRow, DIFF_GRID, DiffLigne } from "./DiffRow";
 import { ImpactPreview } from "./ImpactPreview";
 import { RevueSortie } from "./RevueSortie";
 import { SandboxSlider } from "./SandboxSlider";
+import { ECRANS_MIGRES } from "./cartographie";
+import { EntreeRelation } from "./EntreeRelation";
+import { EntityList } from "./Listes";
 import { Pilotage } from "./Pilotage";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
@@ -217,5 +220,44 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/ne le sera pas sans validation humaine/)).toBeTruthy();
     fireEvent.click(screen.getByText("Soumettre au comité"));
     expect(screen.getByRole("status").textContent).toContain("v11 reste en production");
+  });
+
+  it("U2-17 Cartographie ⌘K : chaque écran v1 est trouvable sous son ANCIEN nom et mène à sa destination v2", () => {
+    const tr = (s: string) => s;
+    const vide = { clients: [], kycs: [] };
+    // les 4 fusions arbitrées par le PO (10.08.2026) se résolvent dans la palette
+    const cc = chercher("command center", { ecrans: ECRANS_MIGRES, ...vide }, tr);
+    expect(cc[0].cible).toBe("journee");                          // dashboards → Ma journée
+    expect(cc[0].detail).toContain("fusionné");
+    expect(chercher("bacs à sable", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("param");
+    expect(chercher("capacité équipe", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("rapports");
+    expect(chercher("compliance center", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("surveillance");
+    // la table couvre bien les ~50 écrans des trois blocs du README
+    expect(ECRANS_MIGRES.length).toBeGreaterThanOrEqual(50);
+    const cibles = new Set(ECRANS_MIGRES.map((e) => e.id));
+    for (const c of cibles) expect(["journee", "dossiers", "clients", "entree", "kyc",
+      "surveillance", "revue", "rapports", "param"]).toContain(c);   // aucune destination orpheline
+  });
+
+  it("U2-18 EntreeRelation : la barrière KYC est annoncée DÈS l'écran ; l'aiguillage EDD a sa raison ; la personne se réutilise", () => {
+    render(<EntreeRelation active="entree" onNavigate={() => undefined} />);
+    expect(screen.getByText("bloquée tant que KYC ≠ validé")).toBeTruthy();     // au stepper, pas à la fin
+    expect(screen.getByText(/Cette règle n'est pas paramétrable/)).toBeTruthy();
+    expect(screen.getByText("DILIGENCE RENFORCÉE — EDD")).toBeTruthy();
+    expect(screen.getByText("Structure à deux niveaux de détention")).toBeTruthy(); // le critère est CITÉ
+    expect(screen.getByText(/Voir la règle appliquée et sa version/)).toBeTruthy(); // R29
+    expect(screen.getByText(/pas de nouvelle saisie, et tout changement futur se propagera/)).toBeTruthy();
+    expect(screen.getByText(/jamais découvert à la fin/)).toBeTruthy();
+  });
+
+  it("U2-19 EntityList : l'en-tête partage la grille des lignes ; chaque ligne s'ouvre", () => {
+    const onOpen = vi.fn();
+    const { container } = render(<EntityList grid="1.5fr 110px" entetes={["Client", "Risque"]}
+      onOpen={onOpen} lignes={[{ id: "c1", cells: ["Suzuki Ltd", "ÉLEVÉ"] }]} />);
+    const rows = Array.from(container.querySelectorAll('[role="row"]')) as HTMLElement[];
+    expect(rows.length).toBe(2);
+    for (const r of rows) expect(r.style.gridTemplateColumns).toBe("1.5fr 110px");
+    fireEvent.click(screen.getByText("Suzuki Ltd"));
+    expect(onOpen).toHaveBeenCalledWith("c1");
   });
 });

@@ -57,3 +57,22 @@ Jeu d'icônes vectoriel : à proposer au PO avant intégration (le handoff l'exi
 **Le plan est donc VALIDÉ** — la refonte peut démarrer par l'étape 1 du handoff (tokens +
 shell : variables de thème, Nav 248px à 3 blocs, les deux headers, la grille), avec montrée
 au PO avant de continuer, comme le PROMPT l'exige.
+
+## Clôture — 9 étapes LIVRÉES (10.08.2026, couche opt-in `apps/web/src/ui2/`)
+
+1. Tokens + shell · 2. Composants transverses · 3. Ma journée (corbeille R478 branchée) ·
+4. Palette ⌘K · 5. Dossier KYC (+ arbitrage PO « Lucide ») · 6. Surveillance 03+05
+(DecisionPanel R474–R476, DiffTable) · 7. Revue 06 + CoC 07 (delta R467 branché,
+ImpactPreview) · 8. Pilotage 08 + Audit-rejeu 09 (R48/R29) + Bac à sable 10 (SandboxSlider) ·
+9. Entrée en relation 04 (la 10ᵉ maquette), pattern Entity List (Mes dossiers `/v1/kyc`,
+Mes clients `/v1/clients` + onglet Personnes), et **cartographie de migration**
+(`ui2/cartographie.ts`, ~55 écrans v1 → destination v2 dans la palette ⌘K — les 4 fusions
+arbitrées comprises). **10/10 maquettes construites**, 19 tests vitest d'invariants du
+handoff, captures Playwright livrées au PO à chaque étape, budget bundle gouverné
+(220→270 par relèvements motivés, tout dans le chunk LAZY `ui2`).
+
+**Reliquats assumés (hors périmètre de la couche opt-in)** : la bascule de l'UI v1 vers la
+v2 (remplacer les écrans existants — décision PO séparée) ; vendorisation IBM Plex
+(on-premise) ; onglets secondaires non maquettés (Transactions de Surveillance, Sorties de
+Revue, sections de Paramétrage autres que l'écran 10) : couverts par la cartographie ⌘K et
+les patterns, à construire à la demande.
