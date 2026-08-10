@@ -1,3 +1,4 @@
+import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import React, { useState } from "react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav } from "./Nav";
@@ -7,6 +8,7 @@ import { StatTile } from "./StatTile";
 import { WorkQueueHeader, WorkQueueRow, WorkQueueItem } from "./WorkQueueRow";
 import { EventTimeline } from "./EventTimeline";
 import { MaJournee } from "./MaJournee";
+import { DossierKyc } from "./DossierKyc";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -53,6 +55,7 @@ export function Ui2Preview() {
   const [active, setActive] = useState("journee");
   const [variante, setVariante] = useState<"liste" | "dossier">("liste");
   if (active === "journee") return <MaJournee active={active} onNavigate={setActive} />;
+  if (active === "kyc") return <DossierKyc active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}
@@ -67,7 +70,7 @@ export function Ui2Preview() {
       nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager"
         onNavigate={setActive} t={t}
         badges={{ journee: { n: 12 }, surveillance: { n: 3, alert: true } }}
-        modulesLicencies={[{ id: "pms", label: "PMS", icon: "▦" }, { id: "fx", label: "Multi-devise & FX", icon: "💱" }]} />}
+        modulesLicencies={[{ id: "pms", label: "PMS", icon: <LayoutGrid size={16} strokeWidth={1.75} /> }, { id: "fx", label: "Multi-devise & FX", icon: <ArrowLeftRight size={16} strokeWidth={1.75} /> }]} />}
       header={header}
       side={<div>
         <div className="microlabel" style={{ marginBottom: 8 }}>{t("Colonne latérale — 340px")}</div>

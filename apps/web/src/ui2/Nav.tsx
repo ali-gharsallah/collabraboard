@@ -1,5 +1,7 @@
 import React from "react";
 import "./tokens.css";
+import { CalendarCheck, Folders, Users, UserPlus, ShieldCheck, Radar, RefreshCw,
+  BarChart3, Settings, Search, ChevronDown } from "lucide-react";
 
 /**
  * UI v2 — barre latérale (handoff §« Le shell applicatif », 248px, plan validé PO 10.08.2026).
@@ -20,31 +22,33 @@ export type Ui2NavProps = {
   role: string;                       // "Relationship Manager"
   onNavigate?: (id: Ui2NavId) => void;
   onSearch?: () => void;              // ouvrira la palette ⌘K (étape 4)
-  modulesLicencies?: { id: string; label: string; icon?: string }[];  // bloc « Métiers » (R320)
+  modulesLicencies?: { id: string; label: string; icon?: React.ReactNode }[];  // bloc « Métiers » (R320)
   // Badge : pilule brand (défaut), pilule d'alerte, ou nombre SOBRE en Mono (maquette 01 —
   // les compteurs informatifs ne crient pas, seuls l'actif et l'alerte prennent une pilule).
   badges?: Record<string, { n: number | string; alert?: boolean; sobre?: boolean }>;
   t?: (cle: string) => string;        // i18n (clé = FR) — brancher traduire(langue())
 };
 
-const BLOCS: { label: string; items: { id: Ui2NavId; label: string; icon: string }[] }[] = [
+// Jeu d'icônes VECTORIEL : Lucide (arbitrage PO 10.08.2026 — trait 1,75, taille 16, gouttière fixe).
+const ICONE = { size: 16, strokeWidth: 1.75 } as const;
+const BLOCS: { label: string; items: { id: Ui2NavId; label: string; icon: React.ReactNode }[] }[] = [
   { label: "Mon espace", items: [
-    { id: "journee", label: "Ma journée", icon: "◔" },
-    { id: "dossiers", label: "Mes dossiers", icon: "▤" },
-    { id: "clients", label: "Mes clients", icon: "☺" }] },
+    { id: "journee", label: "Ma journée", icon: <CalendarCheck {...ICONE} /> },
+    { id: "dossiers", label: "Mes dossiers", icon: <Folders {...ICONE} /> },
+    { id: "clients", label: "Mes clients", icon: <Users {...ICONE} /> }] },
   { label: "Parcours client", items: [
-    { id: "entree", label: "Entrée en relation", icon: "◉" },
-    { id: "kyc", label: "Connaissance client", icon: "◎" },
-    { id: "surveillance", label: "Surveillance", icon: "⛨" },
-    { id: "revue", label: "Revue & sortie", icon: "↻" }] },
+    { id: "entree", label: "Entrée en relation", icon: <UserPlus {...ICONE} /> },
+    { id: "kyc", label: "Connaissance client", icon: <ShieldCheck {...ICONE} /> },
+    { id: "surveillance", label: "Surveillance", icon: <Radar {...ICONE} /> },
+    { id: "revue", label: "Revue & sortie", icon: <RefreshCw {...ICONE} /> }] },
   { label: "Pilotage", items: [
-    { id: "rapports", label: "Rapports", icon: "▥" },
-    { id: "param", label: "Paramétrage", icon: "⚙" }] },
+    { id: "rapports", label: "Rapports", icon: <BarChart3 {...ICONE} /> },
+    { id: "param", label: "Paramétrage", icon: <Settings {...ICONE} /> }] },
 ];
 
 export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicencies, badges, t }: Ui2NavProps) {
   const tr = t ?? ((s: string) => s);
-  const entree = (it: { id: Ui2NavId; label: string; icon: string }) => {
+  const entree = (it: { id: Ui2NavId; label: string; icon: React.ReactNode }) => {
     const actif = active === it.id;
     const b = badges?.[it.id];
     return (
@@ -56,7 +60,8 @@ export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicenc
           color: actif ? "var(--nav-text-strong)" : "var(--nav-text)" }}
         onMouseEnter={(e) => { if (!actif) e.currentTarget.style.background = "var(--nav-hover)"; }}
         onMouseLeave={(e) => { if (!actif) e.currentTarget.style.background = "transparent"; }}>
-        <span aria-hidden style={{ width: 16, textAlign: "center", flexShrink: 0,
+        <span aria-hidden style={{ width: 16, display: "flex", alignItems: "center",
+          justifyContent: "center", flexShrink: 0,
           color: actif ? "var(--nav-active-icon)" : "var(--nav-icon)" }}>{it.icon}</span>
         <span style={{ whiteSpace: "nowrap", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
           {tr(it.label)}</span>
@@ -94,7 +99,7 @@ export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicenc
         background: "var(--nav-field)", border: "1px solid var(--nav-field-border)",
         color: "var(--nav-icon)", fontFamily: "inherit", fontSize: 12.5, width: "100%",
         boxSizing: "border-box" }}>
-        <span aria-hidden>⌕</span>
+        <span aria-hidden style={{ display: "flex" }}><Search size={13} strokeWidth={2} /></span>
         <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tr("Rechercher…")}</span>
         <span className="mono" style={{ marginLeft: "auto", flexShrink: 0, fontSize: 10,
           border: "1px solid var(--nav-field-border)", borderRadius: 5, padding: "1px 5px" }}>⌘K</span>
@@ -108,7 +113,7 @@ export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicenc
       {modulesLicencies && modulesLicencies.length > 0 && (
         <div>
           {blocLabel("Métiers")}
-          {modulesLicencies.map((m) => entree({ id: m.id, label: m.label, icon: m.icon ?? "▦" }))}
+          {modulesLicencies.map((m) => entree({ id: m.id, label: m.label, icon: m.icon ?? <Folders {...ICONE} /> }))}
         </div>)}
       {/* Pied : avatar, nom, rôle, chevron — épinglé en bas. */}
       <div style={{ marginTop: "auto", borderTop: "1px solid var(--nav-divider)",
@@ -123,7 +128,7 @@ export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicenc
           <span style={{ display: "block", color: "var(--nav-label)", fontSize: 10.5,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tr(role)}</span>
         </span>
-        <span aria-hidden style={{ marginLeft: "auto", color: "var(--nav-icon)", fontSize: 10 }}>▾</span>
+        <span aria-hidden style={{ marginLeft: "auto", color: "var(--nav-icon)", display: "flex" }}><ChevronDown size={13} strokeWidth={2} /></span>
       </div>
     </nav>);
 }

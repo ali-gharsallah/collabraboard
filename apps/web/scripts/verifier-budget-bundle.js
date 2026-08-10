@@ -29,7 +29,11 @@ const zlib = require("zlib");
 // 4 composants transverses + aperçu — UN chunk LAZY (route « ui2 », le chargement initial ne
 // bouge pas) mesuré à ~5,9 kB gz ; mesure totale 242.7. Marge résiduelle ≈ 7 kB — les étapes
 // suivantes du handoff (Ma journée, ⌘K…) motiveront CHACUNE leur relèvement, jamais un trou.
-const BUDGET_TOTAL_KB = 250;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// 2026-08-10 (UI v2 étapes 3–5, commit motivé) : 250 → 260. Arbitrage PO « Lucide » : le jeu
+// d'icônes vectoriel remplace les glyphes Unicode (tree-shaké, embarqué au build — aucun appel
+// sortant, on-premise) ; + écran 02 « Dossier KYC » (FieldCard/SectionChecklist) et palette ⌘K.
+// Tout reste dans le chunk LAZY ui2 (chargement initial inchangé) — mesure 250.8. Marge ≈ 9 kB.
+const BUDGET_TOTAL_KB = 260;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

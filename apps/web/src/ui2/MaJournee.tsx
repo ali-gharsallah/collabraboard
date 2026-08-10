@@ -1,3 +1,4 @@
+import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import React, { useState } from "react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
@@ -98,7 +99,7 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
         badges={{ journee: { n: items.length || 12 }, dossiers: { n: 48, sobre: true },
           clients: { n: 214, sobre: true }, kyc: { n: 3, sobre: true },
           surveillance: { n: critiques || 5, alert: true } }}
-        modulesLicencies={[{ id: "pms", label: "PMS", icon: "▦" }, { id: "fx", label: "Multi-devise & FX", icon: "💱" }]} />}
+        modulesLicencies={[{ id: "pms", label: "PMS", icon: <LayoutGrid size={16} strokeWidth={1.75} /> }, { id: "fx", label: "Multi-devise & FX", icon: <ArrowLeftRight size={16} strokeWidth={1.75} /> }]} />}
       header={<Ui2HeaderListe titre="Ma journée" sousTitre={new Intl.DateTimeFormat("fr-CH",
           { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date())}
         filtres={<><Ui2Bouton>{t("Tous mes portefeuilles")} ▾</Ui2Bouton><Ui2Bouton>{t("Priorité")} ▾</Ui2Bouton></>}

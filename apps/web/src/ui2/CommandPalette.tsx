@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./tokens.css";
+import { Search } from "lucide-react";
 import { apiGetSourced } from "../lib/api";
 import { traduire, langue } from "../lib/i18n";
 import clientsSeed from "../seed/clients.json";
@@ -93,7 +94,7 @@ export function CommandPalette({ ouvert, onOuvrir, onFermer, onNavigate }: {
         boxShadow: "0 18px 50px rgba(23,28,34,0.24)", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "13px 16px",
           borderBottom: "1px solid var(--border)" }}>
-          <span aria-hidden style={{ color: "var(--text-muted)" }}>⌕</span>
+          <span aria-hidden style={{ color: "var(--text-muted)", display: "flex" }}><Search size={15} strokeWidth={2} /></span>
           <input ref={champ} value={q}
             onChange={(e) => { setQ(e.target.value); setSel(0); }}
             onKeyDown={(e) => {

@@ -6,6 +6,9 @@ import { StatTile } from "./StatTile";
 import { WorkQueueHeader, WorkQueueRow, WQ_GRID, WorkQueueItem } from "./WorkQueueRow";
 import { EventTimeline } from "./EventTimeline";
 import { scorer, chercher } from "./CommandPalette";
+import { FieldCard } from "./FieldCard";
+import { SectionChecklist } from "./SectionChecklist";
+import { DossierKyc } from "./DossierKyc";
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -53,6 +56,37 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(r[0].groupe).toBe("Écrans");                                  // groupé par type
     expect(r.some((x) => x.libelle === "Suzuki Ltd")).toBe(true);
     expect(r.some((x) => x.libelle === "Nordwind")).toBe(false);         // pas de faux positif
+  });
+
+  it("U2-07 FieldCard : la provenance est OBLIGATOIRE quand renseigné ; manquant = bordure ambre permanente", () => {
+    const { container, rerender } = render(
+      <FieldCard label="Source des apports" etat="RENSEIGNE" valeur="Cession 2019"
+        provenance="acte notarié · empreinte vérifiée · M. Bregy" />);
+    expect(screen.getByText(/acte notarié · empreinte vérifiée/)).toBeTruthy();
+    rerender(<FieldCard label="Montant" etat="MANQUANT" saisie={<input aria-label="m" />} />);
+    const carte = container.querySelector("section") as HTMLElement;
+    expect(carte.style.border).toContain("--warn-card-border");   // ambre EN PERMANENCE, pas après soumission
+  });
+
+  it("U2-08 SectionChecklist : la section courante est une carte blanche, le compteur de manquants s'affiche", () => {
+    render(<SectionChecklist courante="fonds" onOuvrir={() => undefined} sections={[
+      { code: "ident", label: "Identification", etat: "visee" },
+      { code: "fonds", label: "Origine des fonds", etat: "encours", manquants: 2 }]} />);
+    const actif = screen.getByText("Origine des fonds").closest("button") as HTMLElement;
+    expect(actif.getAttribute("aria-current")).toBe("true");
+    expect(screen.getByText("2")).toBeTruthy();
+    expect(screen.getByText("1 / 2")).toBeTruthy();               // jauge : 1 visée sur 2
+  });
+
+  it("U2-09 DossierKyc : s'ouvre sur la PREMIÈRE section incomplète ; « Transmettre » actif énonce les manques", () => {
+    render(<DossierKyc active="kyc" onNavigate={() => undefined} />);
+    const courant = document.querySelector('button[aria-current="true"]') as HTMLElement;
+    expect(courant.textContent).toContain("Origine des fonds");   // première incomplète, jamais le 1er onglet
+    const bouton = screen.getByText("Transmettre pour visa") as HTMLElement;
+    expect((bouton.closest("button") as HTMLButtonElement).disabled).toBe(false);  // jamais grisé
+    fireEvent.click(bouton);
+    expect(screen.getByText(/Transmission impossible — il manque/)).toBeTruthy();
+    expect(screen.getAllByText(/2 champs obligatoires en origine des fonds/).length).toBeGreaterThanOrEqual(1);
   });
 
   it("U2-05 EventTimeline : le marqueur « vous êtes ici » passe le titre en graisse 700", () => {
