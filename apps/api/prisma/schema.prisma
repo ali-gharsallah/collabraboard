@@ -1543,3 +1543,55 @@ model MobileIdentite {
   @@unique([tenantId, clientId])
   @@map("mobile_identites")
 }
+
+// ── ETL core banking (R480→R489, spec ARBITRÉE PO 10.08.2026) — contrat versionné par date
+// d'effet (R480/R29), lots + staging append-only (R482), idempotence par référence externe
+// (R481, index partiel unique posé par post-deploy-v2.sql). RLS ENABLE+FORCE (invariant §5). ──
+model EtlContrat {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  connecteur  String                                     // GENERIQUE (Q1) · avaloq · finnova · temenos
+  famille     String                                     // CLIENTS | COMPTES | TRANSACTIONS (Q2)
+  version     Int
+  mapping     Json                                       // R487 : déclaratif { champs, requis } — jamais du code
+  mode        String   @default("TOUT_OU_RIEN")          // Q4 (paramètre gouverné)
+  enVigueurLe DateTime @map("en_vigueur_le")             // R29 : résolution à date, jamais « courante »
+  dryRunFait  Boolean  @default(false) @map("dry_run_fait") // R484 : la VERSION doit être simulée
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, connecteur, famille, version])
+  @@map("etl_contrats")
+}
+
+model EtlLot {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  connecteur     String
+  famille        String
+  recuLe         DateTime @map("recu_le")
+  contratId      String   @map("contrat_id") @db.Uuid
+  contratVersion Int      @map("contrat_version")
+  statut         String   @default("RECU")               // RECU | VALIDE | APPLIQUE | RECONCILIE | INCIDENT (R485)
+  nbSource       Int      @default(0) @map("nb_source")
+  nbValides      Int      @default(0) @map("nb_valides")
+  nbRejets       Int      @default(0) @map("nb_rejets")
+  nbAppliques    Int      @default(0) @map("nb_appliques")
+  nbNoop         Int      @default(0) @map("nb_noop")
+  createdAt      DateTime @default(now()) @map("created_at")
+  @@index([tenantId, connecteur, famille, recuLe])
+  @@map("etl_lots")
+}
+
+model EtlLigne {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  lotId       String   @map("lot_id") @db.Uuid
+  famille     String
+  externalRef String   @map("external_ref")              // R481 : l'identité d'import
+  data        Json     @default("{}")
+  statut      String   @default("STAGED")                // STAGED | VALIDE | REJETEE | APPLIQUEE | NOOP
+  motif       String?                                    // R483 : rejet motivé, jamais silencieux
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@index([tenantId, famille, externalRef, statut])
+  @@index([tenantId, lotId])
+  @@map("etl_lignes")
+}

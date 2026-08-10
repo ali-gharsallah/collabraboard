@@ -148,6 +148,7 @@ DO $$ DECLARE t text; BEGIN
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
     'olivia_tools', 'olivia_agents',                      -- Olivia v2 R264/R259 (registres)
     'olivia_runs', 'olivia_run_events',                   -- Olivia v2 R260 (runs + journal)
+    'etl_contrats', 'etl_lots', 'etl_lignes',            -- ETL core banking R480→R489 (spec arbitrée 10.08.2026)
     'transactions',                                       -- R297 (dégel V1, journal transactionnel tenanté)
     'builder_artefacts', 'builder_versions',              -- R304 (dégel V3, Builder tenanté)
     'mobile_identites',                                   -- R316 (dégel V7, population mobile tenantée)
@@ -310,6 +311,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE O
 --     });
 --   }
 --
+-- R481 (ETL) : idempotence par référence externe — défense en profondeur au stockage :
+-- une même référence ne peut être APPLIQUÉE qu'une fois par tenant × famille (le service
+-- fait le no-op AVANT ; cet index attrape toute course résiduelle, jamais un doublon).
+CREATE UNIQUE INDEX IF NOT EXISTS etl_lignes_appliquee_unique
+  ON etl_lignes(tenant_id, famille, external_ref) WHERE statut = 'APPLIQUEE';
+
 -- Déploiement en 2 temps (aucune interruption) :
 --   T1 : exécuter ce SQL — l'appli, encore connectée en propriétaire, bypasse
 --        la RLS → comportement inchangé ; l'isolation applicative continue seule.

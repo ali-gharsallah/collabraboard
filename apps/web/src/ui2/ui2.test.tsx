@@ -383,4 +383,15 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText("Effet simulé sur l'historique")).toBeTruthy();
     expect(screen.getByText("812")).toBeTruthy();
   });
+
+  it("U2-26 ETL : la fraîcheur s'affiche (R488) et l'incident de réconciliation SE VOIT (R485)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Intégrations (ETL)"));
+    expect(screen.getByText("LOT-2026-0810-EOD")).toBeTruthy();
+    expect(screen.getAllByText("RÉCONCILIÉ").length).toBe(2);
+    expect(screen.getByText("INCIDENT")).toBeTruthy();                           // la divergence est visible, R485
+    const doctrine = screen.getByText(/La fraîcheur s'affiche, ne se devine pas \(R488\)/).textContent;
+    expect(doctrine).toContain("l'import ne décide rien (R489)");                // R44 appliqué à l'ETL
+    expect(doctrine).toContain("tout-ou-rien");                                  // arbitrage Q4 affiché
+  });
 });

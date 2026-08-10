@@ -50,6 +50,8 @@ GET    /v1/decisions/corbeille
 GET    /v1/decisions/params/registre
 GET    /v1/deploiements
 GET    /v1/doc-matrix/en-vigueur
+GET    /v1/etl/contrats/en-vigueur
+GET    /v1/etl/fraicheur
 GET    /v1/events/sante
 GET    /v1/events/stream
 GET    /v1/formations/assignments
@@ -259,6 +261,12 @@ POST   /v1/decisions/params/modifier
 POST   /v1/deploiements
 POST   /v1/doc-matrix
 POST   /v1/doc-matrix/completude
+POST   /v1/etl/contrats
+POST   /v1/etl/lots
+POST   /v1/etl/lots/:id/appliquer
+POST   /v1/etl/lots/:id/dry-run
+POST   /v1/etl/lots/:id/reconcilier
+POST   /v1/etl/lots/:id/valider
 POST   /v1/events/dead-letters/:id/rejouer
 POST   /v1/formations/assignments
 POST   /v1/formations/assignments/:id/complete

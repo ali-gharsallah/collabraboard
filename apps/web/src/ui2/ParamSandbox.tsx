@@ -68,6 +68,16 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
   const [soumis, setSoumis] = useState(false);
   const [section, setSection] = useState<string>("sandbox");
   const registre = useApiOrSeed<Cle[] | Record<string, unknown>>("/v1/parametres/registre", null as never);
+  // V2-M7 (suite) : fraîcheur ETL par connecteur × famille (/v1/etl/fraicheur, R488).
+  const fraicheur = useApiOrSeed<{ cle: string; connecteur: string; famille: string;
+    dernierLot?: string; recuLe?: string; statut?: string }[]>("/v1/etl/fraicheur", [
+    { cle: "GENERIQUE/TRANSACTIONS", connecteur: "GENERIQUE", famille: "TRANSACTIONS",
+      dernierLot: "LOT-2026-0810-EOD", recuLe: "10.08.2026 22:05", statut: "RECONCILIE" },
+    { cle: "GENERIQUE/CLIENTS", connecteur: "GENERIQUE", famille: "CLIENTS",
+      dernierLot: "LOT-2026-0809-EOD", recuLe: "09.08.2026 22:03", statut: "RECONCILIE" },
+    { cle: "GENERIQUE/COMPTES", connecteur: "GENERIQUE", famille: "COMPTES",
+      dernierLot: "LOT-2026-0807-EOD", recuLe: "07.08.2026 22:04", statut: "INCIDENT" },
+  ]);
   const pilule = (id: string, label: string) => (
     <button key={id} onClick={() => setSection(id)} aria-pressed={section === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
@@ -79,8 +89,35 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
     <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
       {pilule("sandbox", t("Bac à sable AML-R17 (écran 10)"))}
       {SECTIONS_PARAM.map((s) => pilule(s.id, t(s.label)))}
+      {pilule("integrations", t("Intégrations (ETL)"))}
     </div>);
   const sectionActive = SECTIONS_PARAM.find((s) => s.id === section);
+
+  if (section === "integrations") {
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderDossier nom={`${t("Paramétrage")} — ${t("Intégrations (ETL)")}`} initiales="IN"
+          identifiants={fraicheur.isDemo ? t("données maquette") : t("source : /v1/etl/fraicheur (R488)")}
+          puces={<StatusChip mode="neutral">{t("EOD · GÉNÉRIQUE CSV/SFTP")}</StatusChip>}
+          actions={<Ui2Bouton onClick={() => setSection("sandbox")}>{t("← Bac à sable")}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        <EntityList grid="130px 140px 1fr 160px 130px" onOpen={() => undefined}
+          entetes={[t("Connecteur"), t("Famille"), t("Dernier lot"), t("Reçu le"), t("Statut")]}
+          lignes={(Array.isArray(fraicheur.data) ? fraicheur.data : []).map((f) => ({
+            id: f.cle, cells: [
+              <span key="c" className="mono" style={{ fontWeight: 600 }}>{f.connecteur}</span>,
+              <span key="f" className="mono">{f.famille}</span>,
+              <span key="l" className="mono" style={{ color: "var(--text)" }}>{f.dernierLot ?? "—"}</span>,
+              <span key="r" className="mono">{f.recuLe ?? "—"}</span>,
+              <StatusChip key="s" mode={f.statut === "INCIDENT" ? "alert" : "ok"}>
+                {t(f.statut === "INCIDENT" ? "INCIDENT" : "RÉCONCILIÉ")}</StatusChip>] }))} />
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          {t("Pipeline arbitré (PO 10.08.2026) : connecteur générique CSV/SFTP, fin de journée, tout-ou-rien. La fraîcheur s'affiche, ne se devine pas (R488) ; un lot dont la réconciliation diverge est un INCIDENT consigné (R485), jamais une correction silencieuse ; l'import ne décide rien (R489) — le portail R140 et le screening prennent la suite.")}</div>
+      </Ui2Shell>);
+  }
 
   if (sectionActive) {
     return (
