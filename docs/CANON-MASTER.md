@@ -2,7 +2,7 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-09 · commit `0d3d936`.** Ce document se périme visiblement :
+> **Généré le 2026-08-10 · commit `4140d92`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
@@ -130,7 +130,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1–R52 | Catalogue normatif v2 — inventaire (source : OLive-Specifications-Moteur-Workflow-v2) | PROPOSÉ | — | — |
 | R1–R56 | O-Live — Catalogue des règles R1–R56 (état v2.4, 12.07.2026) & propositions R57–R62 | PROPOSÉ | BD, DV, EX, IA, PS, PT, RC, RT, SC, SG, ST | run_tests.py, test_cpsi_bloc1.py, test_bloc10_r58_r61.py, run_tests.py |
 | R1–R51 | sans-titre | PROPOSÉ | — | — |
-| R466–R479 | Bloc 65 · Harmonisation des revues — KYC · Account Review · Group Account Review | PROPOSÉ | HR | decision-unifiee.e2e-spec.ts, review-harmonisation.e2e-spec.ts |
+| R466–R479 | Bloc 65 · Harmonisation des revues — KYC · Account Review · Group Account Review | RATIFIÉ | HR | decision-unifiee.e2e-spec.ts, review-harmonisation.e2e-spec.ts |
 | R117–R120 | Catalogue O-Live — Amendement PROPOSÉ (R117 → R120) · Bloc 19 « Onboarding — l'entrée en relation » | RATIFIÉ | OB | onboarding.wiring.spec.ts |
 | R89–R99 | Catalogue O-Live — Amendements RATIFIÉS (R89 → R99) | RATIFIÉ | AU, KS, MF, OI, TM, TP | auth.spec.ts, fat-cloture-readiness.e2e-spec.ts, key-store.spec.ts, mfa.spec.ts |
 | R2, R4, R13, R39, R48–R49, R52, R58–R61, R84–R86, R100–R103 | Catalogue O-Live — Erratum & note de version **v4.0 → v4.1** | PROPOSÉ | CK, FE, HF, HM, LK, NV, SC, VQ | rules.spec.ts, run_tests.py, test_cpsi_bloc16.py, test_cpsi_bloc17.py |

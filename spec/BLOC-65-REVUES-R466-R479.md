@@ -9,10 +9,14 @@
   Mapping des outcomes AR libres (arbitrage PO) : « EDD triggered »→NON CONFORME+proposition
   EDD · « Risk upgraded »→RÉSERVES+tâches · « Escalation required »→NON CONFORME+proposition
   CoC · « Completed / No change »→CONFORME — consigné dans MIGRATION_DIVERGENCES.md.
+  RATIFICATION PO le 10.08.2026 — après 22/22 verts (Volet A HR-01..14 · Volet B HR-15..22,
+  CI verte d0ccb41/b680964) et migration des écrans démo (étape 9, v2026-08-09.17/.18,
+  recettes 15/15 + 20/20). Reliquat consigné (ECARTS-FRONT E-HR-4) : barre R474 sur les
+  écrans BT/Offboarding démo.
 ════════════════════════════════════════════════════════════════════════════ -->
 
 # Bloc 65 · Harmonisation des revues — KYC · Account Review · Group Account Review
-**Règles R466–R479 · Scénarios HR-01…HR-22 · Statut : PROPOSITION — en attente de ratification PO**
+**Règles R466–R479 · Scénarios HR-01…HR-22 · Statut : RATIFIÉ (PO, 10.08.2026) — 22/22 verts**
 **Principe directeur** : un seul dossier, un seul moteur, un seul écran, **une seule façon de décider** — trois contenus. Le KYC, l'Account Review et la Group Account Review deviennent trois **types** du même objet dossier, jamais trois implémentations. La décision d'étape (valider · refuser · renvoyer) est un composant unique, fluide, réutilisé par tous les workflows du moteur.
 ---
 ## 0. Audit préalable (constat démo, 08.08.2026)
