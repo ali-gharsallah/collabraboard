@@ -7,6 +7,7 @@ import { OliveLogo } from "../components/OliveLogo";
 // <Suspense> unique ; patron conservé à l'IDENTIQUE lors de la réconciliation avec la
 // branche pilote (les 51 écrans, dont Home/CPSI/Olivia/Runs, passent tous en chunk à la
 // demande). Exports nommés ⇒ `.then((m) => ({ default: m.X }))`.
+const Ui2Preview = lazy(() => import("../ui2/Ui2Preview").then((m) => ({ default: m.Ui2Preview })));
 const ClientsList = lazy(() => import("../features/clients/ClientsList").then((m) => ({ default: m.ClientsList })));
 const KycList = lazy(() => import("../features/kyc/KycList").then((m) => ({ default: m.KycList })));
 const KycDetail = lazy(() => import("../features/kyc/KycDetail").then((m) => ({ default: m.KycDetail })));
@@ -93,7 +94,7 @@ const MobileAdmin = lazy(() => import("../features/mobile/MobileAdmin").then((m)
 const OpRisk = lazy(() => import("../features/oprisk/OpRisk").then((m) => ({ default: m.OpRisk })));
 
 export function Router() {
-  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "inference" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat" | "rapportsconf" | "gouvernanceo" | "prerevue" | "workload" | "surveillancees" | "wfdesigner">("home");
+  const [screen, setScreen] = useState<"home" | "clients" | "onboarding" | "kyc" | "aml" | "screening" | "alertes" | "dossiers" | "review" | "ubo" | "coc" | "ged" | "rejeu" | "dashboard" | "transactions" | "settlement" | "screeningadv" | "mros" | "gedcoffre" | "registrelba" | "inference" | "crm" | "contactreports" | "workflow" | "corroboration" | "parametrage" | "golive" | "pms" | "amlref" | "amlgap" | "sbaml" | "ports" | "nba" | "wfi" | "tasks" | "formations" | "trips" | "islamic" | "cpsiProfil" | "cpsiSeg" | "cpsiCases" | "cpsiParam" | "cpsiGuide" | "sbonb" | "offboarding" | "olivia" | "amlws" | "sdkyc" | "sdar" | "sdgar" | "paramfields" | "matricedoc" | "cocparam" | "sandboxes" | "oliviaruns" | "audit" | "command" | "paramnav" | "iamguide" | "ssoparam" | "compliance" | "auditit" | "integrations" | "prospection" | "crossborder" | "txrisk" | "fx" | "swiftlab" | "custodyta" | "builder" | "veille" | "legalreg" | "bi" | "mobileadmin" | "oprisk" | "sbkyc" | "sbbrm" | "sbcf" | "sbwf" | "bat" | "rapportsconf" | "gouvernanceo" | "prerevue" | "workload" | "surveillancees" | "wfdesigner" | "ui2">("home");
   const [kycCode, setKycCode] = useState<string | null>(null);
   const [lang, setLang] = useState<Langue>(langue());
   // JW-05 (R328) : session expirée → re-connexion SANS rechargement — les brouillons en
@@ -170,6 +171,7 @@ export function Router() {
       ["audit", "Audit & transport", "🔍"], ["auditit", "Audit IT", "🖥"],
       ["surveillancees", "Surveillance ES", "🛰"]] },
     { id: "g_param", label: "Paramétrage", icon: "⚙", items: [
+      ["ui2", "UI v2 — aperçu shell", "◩"],
       ["parametrage", "Paramétrage", "⚙"], ["golive", "Config & Go-live", "🚦"],
       ["sdkyc", "Sections & droits", "◎"], ["sdar", "Profils AR", "↻"], ["sdgar", "Profils GAR", "▦"],
       ["paramfields", "Registre paramètres", "▤"], ["matricedoc", "Matrice documentaire", "▦"], ["cocparam", "Types de CoC", "⇆"],
@@ -199,6 +201,16 @@ export function Router() {
       {open && <div>{g.items.map(([id, label, icon]) => navItem(id, label, icon, true))}</div>}
     </div>;
   };
+  // UI v2 (handoff, plan validé PO 10.08.2026) : l'aperçu du shell rend SA grille plein écran
+  // — hors du gabarit v1 — avec un retour flottant. Opt-in strict : aucun écran v1 ne bouge.
+  if (screen === "ui2") return <Suspense fallback={<div style={{ padding: 24, color: "#888" }}>{t("Chargement de l'écran…")}</div>}>
+    <div style={{ position: "relative" }}>
+      <Ui2Preview/>
+      <button onClick={() => setScreen("parametrage")} style={{ position: "fixed", right: 14, bottom: 14,
+        zIndex: 50, padding: "8px 14px", borderRadius: 9, border: "1px solid #E2E6DD", background: "#fff",
+        fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#3F4A38",
+        boxShadow: "0 2px 8px rgba(23,28,34,0.12)" }}>{t("← Retour à l'interface actuelle")}</button>
+    </div></Suspense>;
   return <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", background: "#FAFBF7", color: "#2B331F" }}>
     <aside style={{ width: 238, flexShrink: 0, height: "100vh", position: "sticky", top: 0, overflowY: "auto",
       background: "#FFFFFF", borderRight: "1px solid #E7EBDD", padding: "16px 10px" }}>

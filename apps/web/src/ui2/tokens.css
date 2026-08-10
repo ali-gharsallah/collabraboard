@@ -1,0 +1,92 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   UI v2 — DESIGN TOKENS (handoff docs/design/design_handoff_olive_ui_v2/README.md,
+   plan validé PO 10.08.2026). SOURCE UNIQUE : aucune couleur, taille ou espacement
+   en dur dans un composant ui2 — tout passe par ces variables.
+   Portée : la classe .ui2 (le shell v2) — zéro collision avec theme.css (:root v1),
+   les écrans existants ne bougent pas (boy-scout).
+   Polices : IBM Plex Sans / IBM Plex Mono — à VENDORISER pour l'on-premise (aucun
+   appel sortant) ; en attendant, piles de repli système équivalentes.
+   Accessibilité : tous les couples texte/fond du handoff sont AA ≥ 4,5:1 — ne pas
+   réintroduire #79837A ni #8A937F sur blanc, ni #5E6773 sur nav sombre.
+   ═════════════════════════════════════════════════════════════════════════════ */
+.ui2 {
+  /* ── Structure (neutres ardoise) ── */
+  --bg-app: #F6F7F3;            /* fond de la zone de contenu */
+  --bg-surface: #FFFFFF;        /* cartes, panneaux, tableaux */
+  --bg-subtle: #FBFCF9;         /* colonnes secondaires, en-têtes de tableau */
+  --bg-muted: #F0F3EB;          /* puces neutres, onglet actif discret */
+  --border: #E2E6DD;
+  --border-soft: #EDF0E9;
+  --border-row: #F2F4EE;
+  --border-input: #DCE1D6;
+  --text: #171C22;
+  --text-secondary: #3F4A38;
+  --text-body: #4A5740;
+  --text-muted: #646E5E;        /* AA vérifié */
+  --text-label: #5C6655;        /* micro-libellés capitales 9,5px */
+
+  /* ── Navigation (sombre) ── */
+  --nav-bg: #181D23;
+  --nav-field: #232A32;
+  --nav-field-border: #2E3741;
+  --nav-text: #C7CED7;
+  --nav-text-strong: #FFFFFF;
+  --nav-icon: #6E7885;
+  --nav-label: #8A939E;         /* minimum AA sur nav sombre */
+  --nav-active-bg: #2C3A20;
+  --nav-active-icon: #A4C56B;
+  --nav-divider: #2A323B;
+  --nav-hover: #232A32;
+  --nav-badge-alert-bg: #7A3129;
+  --nav-badge-alert-text: #F7DBD6;
+
+  /* ── Marque ── */
+  --brand: #4A6B28;
+  --brand-hover: #5A7D3A;
+  --brand-light: #7BA042;
+  --brand-pale: #A4C56B;
+  --brand-surface: #F5F8EF;
+  --brand-border: #D6E0C6;
+  --gold: #E3C75A;              /* l'olive du logo, UNIQUEMENT */
+
+  /* ── Sémantique réglementaire (risque, échéance, statut de contrôle — JAMAIS décoratif) ── */
+  --ok-line: #7BA042; --ok-alt: #3D9970; --ok-text: #3C6B2E; --ok-chip: #EDF3E4;
+  --warn-line: #D99A2B; --warn-text: #8A6212; --warn-chip: #FBF3E2; --warn-card: #FDFAF3; --warn-card-border: #E3C07A;
+  --alert-line: #C44536; --alert-text: #A63A2D; --alert-chip: #FAE9E6; --alert-card: #FDF7F5;
+  --info-line: #3E6B8A; --info-text: #2E5A80; --info-chip: #E7F0F7;
+  --ai-line: #6C58A8; --ai-text: #2E2842; --ai-chip: #F0ECF9; --ai-card: #FAF8FE; --ai-card-border: #E7E2F2;
+
+  /* ── Typographie ── */
+  --font-ui: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* ── Rayons ── */
+  --r-chip: 5px; --r-input: 9px; --r-card: 12px; --r-window: 14px; --r-pill: 20px;
+
+  /* ── Ombres ── */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-tile-hover: 0 2px 8px rgba(23,28,34,0.06);
+  --shadow-ai: 0 2px 8px rgba(217,154,43,0.10);
+
+  /* ── Grille du shell ── */
+  --nav-w: 248px;
+  --header-liste-h: 60px;
+  --header-dossier-h: 92px;
+  --stepper-h: 78px;
+
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg-app);
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Règle du handoff : tout nombre, identifiant, date ou pourcentage est en Mono. */
+.ui2 .mono { font-family: var(--font-mono); }
+/* Micro-libellé capitales (9,5–10px, Mono, letter-spacing 1,5–2px). */
+.ui2 .microlabel { font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-label); line-height: 1.2; }
+/* Transitions : 120ms ease-out sur background/border uniquement — aucune animation de layout. */
+.ui2 button, .ui2 a, .ui2 [role="button"] { transition: background 120ms ease-out, border-color 120ms ease-out; }
+.ui2 :focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
