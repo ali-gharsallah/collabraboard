@@ -21,6 +21,12 @@ import { Surveillance } from "./Surveillance";
 import { Pilotage } from "./Pilotage";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// Lu via fs (pas d'import ?raw : la config vitest stubbe les .css ; en jsdom
+// import.meta.url n'est pas file:) — la garde U2-38 porte sur le TEXTE du fichier.
+const tokensCss = readFileSync(join(process.cwd(), "src/ui2/tokens.css"), "utf8");
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -538,5 +544,15 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/NON PROMOTABLE — le verdict fait autorité côté moteur/)).toBeTruthy();
     expect(screen.getByText(/visa de campagne manquant \(R15\)/)).toBeTruthy();
     expect(screen.getByText(/jamais un cahier rédigé à la main/)).toBeTruthy();
+  });
+
+  it("U2-38 V2-M12 polices vendorisées : 7 @font-face locaux, aucun appel sortant (on-premise)", () => {
+    const faces = tokensCss.match(/@font-face/g) ?? [];
+    expect(faces.length).toBe(7);                                              // Sans 400/400i/500/600/700 + Mono 400/500
+    const sources = tokensCss.match(/src:\s*url\("([^"]+)"\)/g) ?? [];
+    expect(sources.length).toBe(7);
+    for (const s of sources) expect(s).toContain('url("./fonts/');             // vendorisé, chemin relatif bundlé
+    expect(tokensCss).not.toMatch(/https?:\/\//);                              // zéro URL sortante (CDN interdit)
+    expect(tokensCss).toContain("font-display: swap");                         // repli système sans blocage
   });
 });

@@ -72,7 +72,9 @@ handoff, captures Playwright livrées au PO à chaque étape, budget bundle gouv
 (220→270 par relèvements motivés, tout dans le chunk LAZY `ui2`).
 
 **Reliquats assumés (hors périmètre de la couche opt-in)** : la bascule de l'UI v1 vers la
-v2 (remplacer les écrans existants — décision PO séparée) ; vendorisation IBM Plex
-(on-premise) ; onglets secondaires non maquettés (Transactions de Surveillance, Sorties de
-Revue, sections de Paramétrage autres que l'écran 10) : couverts par la cartographie ⌘K et
-les patterns, à construire à la demande.
+v2 (remplacer les écrans existants — décision PO séparée) ; onglets secondaires non
+maquettés (Transactions de Surveillance, Sorties de Revue, sections de Paramétrage autres
+que l'écran 10) : couverts par la cartographie ⌘K et les patterns, à construire à la
+demande. ~~Vendorisation IBM Plex~~ — FAIT (V2-M12) : woff2 latin vendorisés dans
+`apps/web/src/ui2/fonts/` (OFL jointe), `@font-face` dans `tokens.css`, garde U2-38
+(zéro URL sortante).
