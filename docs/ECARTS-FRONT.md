@@ -1528,7 +1528,20 @@ re-soumis ici.
   compteur de boucles + signal au seuil 3, refus à issue par étape — 1re étape/finale=TERMINAL,
   intermédiaires=RENVOI) ; corbeille « À décider » (R478) en tête du cockpit « Ma journée »
   (tri SLA, ÉCHU en tête badge rouge, types KYC·AR·GAR·BT, deep-link). Recette 15/15.
-  RESTE (étape 9 suite) : écran AR table plate → écran dossier unique + GAR même gabarit +
-  panneau admin AR → Paramétrage → Revues ; réutilisation de la barre sur les écrans BT et
-  Offboarding démo. Le handoff UI v2 fournit le gabarit cible (`DecisionPanel`, écran 06).
+- **Étape 9 (2/2, démo v2026-08-09.18) — E-HR-1/E-HR-2 LEVÉS côté écrans, E-HR-3 réduit** :
+  · l'écran AR porte le **delta en tête** (déclencheur MODIFIÉ · reste REPRISE du KYC lié ·
+    points à reprendre — R460/R467) et le **verdict normalisé** CONFORME/RÉSERVES/NON CONFORME
+    avec conséquences PROPOSÉES (R44) ; les outcomes libres historiques s'affichent MIGRÉS
+    (« CONFORME (migré de “Risk unchanged”) », mapping arbitré) ; `nextReviewDate` est
+    CALCULÉE (périodicité EDD 12 · CDD 36 · SDD 60) partout — plus aucune saisie (E-HR-1) ;
+  · l'onglet Groupe porte la **décision de groupe** : visa référençant les verdicts membres,
+    guard « membres non clôturés » ANNONCÉ sur le bouton, clic → GUARD_BLOCKED détaillé sans
+    écriture (R463/R477) — la consolidation a un porteur à l'écran (E-HR-3 réduit ; le dossier
+    parent GAR complet vit au moteur, `/v1/revues`) ;
+  · le panneau admin AR est devenu **Paramétrage → Revues (KYC · AR · GAR)** : toggles
+    `review.groupe.*` gouvernés par le pop-up d'engagement R445 (annuler = aucune écriture),
+    registre §Review/§Decision affiché (E-HR-2 levé).
+  Recettes Playwright : 15/15 (barre/corbeille) + 20/20 (AR/GAR/paramétrage), smoke 81/81.
+  RESTE : réutilisation de la barre R474 sur les écrans BT/Offboarding démo (boutons ad hoc
+  Approuver/Refuser) — le handoff UI v2 (`DecisionPanel`) fournit le gabarit cible.
 - **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.

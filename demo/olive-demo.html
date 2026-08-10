@@ -40174,7 +40174,7 @@ const ADMIN_NAV = [
 { id: "sanctionssrc", icon: "⛔", label: "Listes de sanctions & embargos" },
 { id: "gov_admin", icon: "🎓", label: "Certifications & délais MROS" },
 { id: "trip_admin", icon: "✈", label: "Business Trip — quotas & rôles" },
-{ id: "ar_admin", icon: "↻", label: "Account Review — revue de groupe" },
+{ id: "ar_admin", icon: "↻", label: "Revues (KYC · AR · GAR)" },
 { id: "offboarding_admin", icon: "🚪", label: "Offboarding" },
 { id: "rmai_config", icon: "✦", label: "Assistants IA" },
 ] },
@@ -40239,23 +40239,53 @@ Object.keys(NBA_ACTIONS).map(function (k) { return NBA_ACTIONS[k].label; }).join
 ". Seuils et magnitude calcul\u00E9s d\u00E9terministiquement sur le portefeuille de d\u00E9monstration \u2014 brancher un flux de march\u00E9 r\u00E9el (Phase 2) pour une d\u00E9tection en production."))));
 }
 function AccountReviewAdminPanel() {
+// ── Bloc 65 (R473 §Review) : le panneau AR isolé devient « Paramétrage → Revues (KYC · AR · GAR) ».
+// AUCUNE écriture sans le pop-up d'engagement R445 (E-HR-2 levé) — ancien/nouveau, portée, tracé.
 const [, bump] = useState(0);
 const re = function () { bump(function (x) { return x + 1; }); };
+const [popupAR, setPopupAR] = useState(null);   // { cle, ancien, nouveau, appliquer }
 const card = { background: T.surface, border: "1px solid " + T.line, borderRadius: 14, padding: 16, marginBottom: 14 };
-const toggleGroupCfg = function (key) { AR_GROUP_CONFIG[key] = !AR_GROUP_CONFIG[key]; pushParamAudit("Admin", "Revue de groupe — " + key + " : " + AR_GROUP_CONFIG[key]); wfEmit("PARAM_CHANGED", null, { subjectId: "AR_GROUP_CONFIG/" + key, actor: "Admin", payload: { value: AR_GROUP_CONFIG[key] } }); re(); };
+const toggleGroupCfg = function (key) {
+var ancien = AR_GROUP_CONFIG[key];
+setPopupAR({ cle: "review.groupe." + key, ancien: ancien, nouveau: !ancien, appliquer: function () {
+AR_GROUP_CONFIG[key] = !ancien;
+pushParamAudit("Admin", "\u00A7Review \u2014 review.groupe." + key + " : " + ancien + " \u2192 " + AR_GROUP_CONFIG[key] + " (pop-up R445)");
+wfEmit("PARAM_CHANGED", null, { subjectId: "review.groupe." + key, actor: "Admin", payload: { ancien: ancien, nouveau: AR_GROUP_CONFIG[key] } });
+re();
+} });
+};
 return (React.createElement("div", null,
-React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 } }, "Param\u00E9trage d\u00E9di\u00E9 Account Review \u2014 d\u00E9clenchement individuel et de groupe."),
+React.createElement("div", { style: { fontSize: 11, color: T.inkSoft, marginBottom: 14, lineHeight: 1.5 } },
+"UN registre pour les trois types de revue (R466/R473) \u2014 p\u00E9riodicit\u00E9s, verdicts, groupe, cascades, d\u00E9cision. Toute modification passe par le pop-up d'engagement R445 ; grandfathering R29 sur les revues en cours."),
 React.createElement("div", { style: card },
-React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u21BB Account Review de groupe \u2014 cascade"),
-React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 10 } }, "Groupe = clients partageant le m\u00EAme ayant droit \u00E9conomique (UBO). Crit\u00E8re fixe dans cette d\u00E9mo ; d'autres crit\u00E8res (nom de famille, groupe corporate d\u00E9clar\u00E9) peuvent \u00EAtre ajout\u00E9s en Phase 2."),
-[["enabled", "Revue de groupe activée"], ["cascadeGroupToMembers", "Déclencher le groupe → déclenche tous les membres"], ["cascadeMemberToGroup", "Déclencher un membre → déclenche le groupe entier"]].map(function (row) {
+React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u21BB Groupe & cascades (R469/R471) \u2014 gouvern\u00E9s par pop-up R445"),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginBottom: 10 } }, "Le groupe est une PROJECTION du graphe personnes/liens \u2014 jamais une liste stock\u00E9e. Crit\u00E8res : UBO_COMMUN (actif) \u00B7 FAMILLE \u00B7 GROUPE_CORPORATE_DECLARE (registre \u00A7Review, R469)."),
+[["enabled", "Revue de groupe activ\u00E9e (review.groupe.enabled)"], ["cascadeGroupToMembers", "Cascade GAR \u2192 membres (review.groupe.cascadeGroupToMembers)"], ["cascadeMemberToGroup", "Cascade membre \u2192 GAR (review.groupe.cascadeMemberToGroup)"]].map(function (row) {
 return (React.createElement("label", { key: row[0], style: { display: "flex", alignItems: "center", gap: 8, padding: "6px 0", cursor: "pointer", fontSize: 12, color: T.inkMid } },
 React.createElement("input", { type: "checkbox", checked: AR_GROUP_CONFIG[row[0]], onChange: function () { toggleGroupCfg(row[0]); }, style: { accentColor: T.olive600 } }),
 row[1]));
 })),
 React.createElement("div", { style: card },
+React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "Verdicts & p\u00E9riodicit\u00E9s (R466/R461) \u2014 registre \u00A7Review, lecture"),
+React.createElement("div", { style: { fontSize: 11, color: T.inkMid, lineHeight: 1.8 } },
+React.createElement("div", null, "Verdicts normalis\u00E9s : CONFORME \u00B7 R\u00C9SERVES (\u2192 t\u00E2ches de rem\u00E9diation propos\u00E9es) \u00B7 NON CONFORME (\u2192 propositions EDD / CoC / offboarding) \u2014 cons\u00E9quences PROPOS\u00C9ES, jamais ex\u00E9cut\u00E9es seules (R44)."),
+React.createElement("div", null, "nextReviewDate : CALCUL\u00C9E \u00E0 la cl\u00F4ture (p\u00E9riodicit\u00E9 EDD 12 \u00B7 CDD 36 \u00B7 SDD 60 mois) \u2014 aucune saisie manuelle."),
+React.createElement("div", null, "D\u00E9cision unifi\u00E9e (\u00A7Decision, R474\u2013R479) : motifs de refus DOCS_INSUFFISANTS \u00B7 RISQUE_INACCEPTABLE \u00B7 INFOS_CONTRADICTOIRES \u00B7 AUTRE \u00B7 seuil de boucles 3 \u00B7 corbeille tri\u00E9e SLA."))),
+React.createElement("div", { style: card },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "Motifs de d\u00E9clenchement (r\u00E9f\u00E9rence)"),
-React.createElement("div", { style: { fontSize: 11, color: T.inkMid, lineHeight: 1.7 } }, "P\u00E9riodique (cycle CDD/EDD) \u00B7 Changement de circonstances \u00B7 Alerte AML \u00B7 Screening renouvel\u00E9 \u00B7 D\u00E9cision Compliance \u00B7 Cascade groupe."))));
+React.createElement("div", { style: { fontSize: 11, color: T.inkMid, lineHeight: 1.7 } }, "P\u00E9riodique (cycle CDD/EDD) \u00B7 Changement de circonstances \u00B7 Alerte AML \u00B7 Screening renouvel\u00E9 \u00B7 D\u00E9cision Compliance \u00B7 Cascade groupe.")),
+popupAR && React.createElement("div", { style: { position: "fixed", inset: 0, background: "rgba(30,35,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 320 } },
+React.createElement("div", { style: { background: "#fff", borderRadius: 16, padding: 22, width: 520, boxShadow: "0 18px 60px rgba(0,0,0,0.25)" } },
+React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: T.ink, marginBottom: 8 } }, "\u26A0 Engagement de responsabilit\u00E9 (R445)"),
+React.createElement("div", { style: { fontSize: 12, color: T.inkMid, lineHeight: 1.7 } },
+React.createElement("div", null, React.createElement("b", null, "Param\u00E8tre : "), popupAR.cle),
+React.createElement("div", null, React.createElement("b", null, "Ancien : "), String(popupAR.ancien), " \u2192 ", React.createElement("b", null, "Nouveau : "), String(popupAR.nouveau)),
+React.createElement("div", null, React.createElement("b", null, "Port\u00E9e : "), "revues FUTURES \u2014 les GAR en cours conservent leur composition d'initiation (grandfathering R29).")),
+React.createElement("div", { style: { marginTop: 10, padding: 10, borderRadius: 9, background: T.amberSoft || T.cream, border: "1px solid " + T.amber + "40", fontSize: 11.5, color: T.amber, fontWeight: 700 } },
+"Rappel : assouplir la p\u00E9riodicit\u00E9 ou les cascades de revue n'\u00E9teint aucune obligation de surveillance (R473)."),
+React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" } },
+React.createElement("button", { onClick: function () { setPopupAR(null); }, style: { padding: "8px 14px", borderRadius: 8, border: "1px solid " + T.line, background: "#fff", fontSize: 12, cursor: "pointer" } }, "Annuler \u2014 aucune \u00E9criture"),
+React.createElement("button", { onClick: function () { popupAR.appliquer(); setPopupAR(null); }, style: { padding: "8px 16px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" } }, "J'engage ma responsabilit\u00E9 \u2014 appliquer"))))));
 }
 function BusinessTripAdminPanel() {
 const [, bump] = useState(0);
@@ -42275,13 +42305,29 @@ q.by,
 q.at)));
 }))));
 }
+// ── Bloc 65 (R466/R461) : le verdict de revue est NORMALISÉ — CONFORME | RÉSERVES | NON CONFORME.
+// Les outcomes libres historiques MIGRENT par le mapping arbitré PO (MIGRATION_DIVERGENCES.md) ;
+// hors table : défaut prudent RÉSERVES + requalification. nextReviewDate est CALCULÉE, jamais saisie.
+const AR_VERDICTS = {
+CONFORME: { label: "CONFORME", coul: function (T) { return [T.green, T.greenSoft]; }, consequences: [] },
+RESERVES: { label: "RÉSERVES", coul: function (T) { return [T.amber, T.amberSoft || T.cream]; }, consequences: ["Tâches de remédiation nominatives (proposées)"] },
+NON_CONFORME: { label: "NON CONFORME", coul: function (T) { return [T.red, T.redSoft]; }, consequences: ["Proposer passage EDD", "Proposer Change of Circumstances", "Proposer ouverture d'offboarding (Bloc 62)"] },
+};
+const AR_VERDICT_DE_OUTCOME = { "Risk unchanged": "CONFORME", "Risk downgraded": "CONFORME", "Completed": "CONFORME", "No change": "CONFORME",
+"Risk upgraded": "RESERVES", "EDD triggered": "NON_CONFORME", "Escalation required": "NON_CONFORME" };
+function arVerdictCode(outcome) { if (!outcome) return null; if (AR_VERDICTS[outcome]) return outcome; return AR_VERDICT_DE_OUTCOME[outcome] || "RESERVES"; }
+function arVerdictAffiche(outcome) { var v = arVerdictCode(outcome); if (!v) return null;
+return AR_VERDICTS[v].label + (AR_VERDICTS[outcome] ? "" : " (migré de « " + outcome + " »)"); }
+const AR_CADENCE_MOIS = { EDD: 12, CDD: 36, SDD: 60 };                 // périodicité R272/R468 — calcul, jamais saisie
+function arCalcNextReview(client) { var mois = AR_CADENCE_MOIS[(client && client.ddl) || "CDD"] || 24;
+var d = new Date(); d.setMonth(d.getMonth() + mois); return d.toISOString().slice(0, 10); }
 function AccountReviewDetailScreen({ ar, onBack, onOpenAr, user }) {
 const [tab, setTab] = useState("info");
 const [, bump] = useState(0);
 const re = function () { bump(function (x) { return x + 1; }); };
 const [comments, setComments] = useState([{ who: ar.reviewer || "—", role: "Compliance", at: "il y a 2 jours", text: "Dossier ouvert suite à : " + ar.trigger + "." }]);
 const [draft, setDraft] = useState("");
-const [outcome, setOutcome] = useState(ar.outcome || "Risk unchanged");
+const [verdict, setVerdict] = useState(arVerdictCode(ar.outcome) || "CONFORME");
 const client = clientById[ar.clientId];
 const kyc = KYCS_DATA.find(function (k) { return k.code === ar.kycRef; }) || (kycsByClientId[ar.clientId] || [])[0];
 const profile = arProfileFor(ar, kyc);
@@ -42298,11 +42344,14 @@ return; setComments(comments.concat([{ who: (user && user.name) || "—", role: 
 const toggleChecklist = function (idx) { ar.checklistState[idx] = !ar.checklistState[idx]; pushParamAudit((user && user.name) || "—", "AR " + ar.id + " — checklist étape " + (idx + 1) + (ar.checklistState[idx] ? " cochée" : " décochée")); re(); };
 const finalize = function () {
 ar.status = "COMPLETED";
-ar.outcome = outcome;
-ar.nextReviewDate = "2027-07-04";
+ar.outcome = verdict;                                              // verdict NORMALISÉ (R466) — plus d'outcome libre
+ar.nextReviewDate = arCalcNextReview(client);                      // CALCULÉE (périodicité × risque, R461) — jamais saisie
 ar.reviewer = (user && user.name) || ar.reviewer;
-pushParamAudit((user && user.name) || "—", "AR " + ar.id + " — clôturée : " + outcome);
-wfEmit("INSTANCE_COMPLETED", wfd, { subjectId: ar.id, actor: (user && user.name) || "—", actorRole: (user && user.role) || "", payload: { outcome: outcome } });
+pushParamAudit((user && user.name) || "—", "AR " + ar.id + " — verdict visé : " + AR_VERDICTS[verdict].label + " · nextReviewDate calculée " + ar.nextReviewDate);
+wfEmit("INSTANCE_COMPLETED", wfd, { subjectId: ar.id, actor: (user && user.name) || "—", actorRole: (user && user.role) || "", payload: { verdict: verdict } });
+(AR_VERDICTS[verdict].consequences || []).forEach(function (cq) {  // conséquences PROPOSÉES — l'humain décide (R44)
+wfEmit("TASK_PROPOSED", wfd, { subjectId: ar.id, actor: "Système", payload: { proposition: cq, regle: "R461/R44 — jamais exécutée seule" } });
+});
 re();
 };
 const TABS = [["info", "Informations générales"], ["sections", "Sections"], ["validations", "Validations"], ["docs", "Documents"], ["comments", "Commentaires"], ["tasks", "Tâches"], ["decision", "Décision"]].concat(inGroup ? [["group", "Groupe (" + groupMembers.length + ")"]] : []);
@@ -42330,7 +42379,7 @@ return (React.createElement("button", { key: tb[0], onClick: function () { setTa
 })),
 tab === "info" && (React.createElement("div", { style: card },
 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 } }, [["Motif de déclenchement", ar.trigger], ["Date de revue", ar.reviewDate], ["Prochaine revue", ar.nextReviewDate || "—"],
-["Reviewer", ar.reviewer || "—"], ["RM", ar.rm || "—"], ["Résultat", ar.outcome || "— en cours —"],
+["Reviewer", ar.reviewer || "—"], ["RM", ar.rm || "—"], ["Verdict (R466)", arVerdictAffiche(ar.outcome) || "— en cours —"],
 ["Segment", client && client.segment || "—"], ["AUM", client && client.aum || "—"], ["Pays", (client && client.countryFlag) + " " + (client && client.country || "—")]].map(function (f) {
 return (React.createElement("div", { key: f[0] },
 React.createElement("div", { style: { fontSize: 9.5, color: T.inkSoft, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 } }, f[0]),
@@ -42403,13 +42452,35 @@ return (React.createElement("div", { key: idx, style: { fontSize: 12, color: T.i
 AR_CHECKLIST_LIBRARY[idx]));
 }))),
 tab === "decision" && (React.createElement("div", { style: card },
-React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 12 } }, "D\u00E9cision"),
-ar.status === "COMPLETED" ? (React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: T.green } },
-"\u2713 Cl\u00F4tur\u00E9e \u2014 ",
-ar.outcome)) : (React.createElement(React.Fragment, null,
-React.createElement("select", { value: outcome, onChange: function (e) { setOutcome(e.target.value); }, style: { padding: "9px 12px", borderRadius: 9, border: "1px solid " + T.line, fontSize: 12.5, marginBottom: 14, width: 280 } }, ["Risk unchanged", "Risk upgraded", "Risk downgraded", "EDD triggered", "Escalation required"].map(function (o) { return React.createElement("option", { key: o, value: o }, o); })),
-React.createElement("br", null),
-React.createElement("button", { onClick: finalize, style: { padding: "10px 20px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, "\u2713 Cl\u00F4turer la revue"))))),
+React.createElement("div", { style: { padding: "12px 14px", borderRadius: 10, background: T.cream, border: "1px solid " + T.line, marginBottom: 14 } },
+React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: T.olive700, marginBottom: 6 } },
+"\u0394 Delta \u2014 l'objet de la revue (R460/R467) : la revue prouve ce qui a boug\u00E9, elle ne re-saisit jamais le reste"),
+React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", fontSize: 11, color: T.inkMid } },
+React.createElement("span", { style: { background: T.amberSoft || T.cream, border: "1px solid " + T.amber, color: T.amber, fontWeight: 800, borderRadius: 8, padding: "3px 9px" } },
+"MODIFI\u00C9 \u00B7 d\u00E9clencheur : " + ar.trigger),
+React.createElement("span", { style: { background: T.greenSoft, border: "1px solid " + T.green, color: T.green, fontWeight: 700, borderRadius: 8, padding: "3px 9px" } },
+"REPRISE \u00B7 le reste du dossier vient du KYC " + (ar.kycRef || "\u2014") + " \u2014 visa en bloc \u00AB revu, inchang\u00E9 \u00BB (param\u00E8tre tenant)"),
+React.createElement("span", { style: { borderRadius: 8, padding: "3px 9px", border: "1px solid " + T.line, color: T.inkSoft } },
+profile.checklistIds.filter(function (idx) { return !ar.checklistState[idx]; }).length + " point(s) \u00E0 reprendre"))),
+React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 12 } }, "Verdict de revue \u2014 normalis\u00E9 art. 7 LBA (R461/R466)"),
+ar.status === "COMPLETED" ? (React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: (AR_VERDICTS[arVerdictCode(ar.outcome)] ? AR_VERDICTS[arVerdictCode(ar.outcome)].coul(T)[0] : T.green) } },
+"\u2713 Verdict vis\u00E9 \u2014 ",
+arVerdictAffiche(ar.outcome) || "\u2014",
+React.createElement("div", { style: { fontSize: 10.5, fontWeight: 500, color: T.inkSoft, marginTop: 4 } },
+"Prochaine revue CALCUL\u00C9E : " + (ar.nextReviewDate || "\u2014") + " (p\u00E9riodicit\u00E9 " + ((client && client.ddl) || "CDD") + " \u2014 jamais saisie, R461)"))) : (React.createElement(React.Fragment, null,
+React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 } }, Object.keys(AR_VERDICTS).map(function (v) {
+var c = AR_VERDICTS[v].coul(T); var actif = verdict === v;
+return React.createElement("button", { key: v, onClick: function () { setVerdict(v); }, style: { padding: "9px 16px", borderRadius: 9,
+border: "1.5px solid " + (actif ? c[0] : T.line), background: actif ? c[1] : T.surface, color: actif ? c[0] : T.inkMid,
+fontSize: 12, fontWeight: 800, cursor: "pointer" } }, AR_VERDICTS[v].label);
+})),
+(AR_VERDICTS[verdict].consequences || []).length > 0 && React.createElement("div", { style: { padding: "10px 12px", borderRadius: 9, background: T.violetSoft || T.cream, border: "1px solid " + T.line, marginBottom: 12 } },
+React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: T.violet || T.olive700, marginBottom: 5 } },
+"Cons\u00E9quences PROPOS\u00C9ES \u2014 l'humain accepte, ajuste ou rejette (R44) ; rien ne s'ex\u00E9cute seul"),
+AR_VERDICTS[verdict].consequences.map(function (cq, i) { return React.createElement("div", { key: i, style: { fontSize: 11.5, color: T.inkMid, padding: "2px 0" } }, "\u2192 " + cq); })),
+React.createElement("button", { onClick: finalize, style: { padding: "10px 20px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, "\u2713 Viser le verdict et cl\u00F4turer (R15)"),
+React.createElement("div", { style: { fontSize: 10.5, color: T.inkSoft, marginTop: 8 } },
+"\u00C0 la cl\u00F4ture : nextReviewDate CALCUL\u00C9E \u2192 " + arCalcNextReview(client) + " (p\u00E9riodicit\u00E9 " + ((client && client.ddl) || "CDD") + ") \u2014 aucune saisie manuelle possible (R461)."))))),
 tab === "group" && inGroup && (React.createElement("div", { style: card },
 React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: T.ink, marginBottom: 4 } },
 "\uD83D\uDC65 Vue consolid\u00E9e du groupe \u2014 UBO ",
@@ -42433,12 +42504,40 @@ React.createElement("td", { style: { padding: "9px 10px 9px 0", fontSize: 11, co
 React.createElement("td", { style: { padding: "9px 10px 9px 0", fontSize: 11, fontFamily: "monospace", color: T.inkSoft } }, g.ar ? g.ar.id : "—"),
 React.createElement("td", { style: { padding: "9px 10px 9px 0" } }, gcfg ? React.createElement("span", { style: { fontSize: 9.5, fontWeight: 700, color: gcfg[0], background: gcfg[1], padding: "2px 8px", borderRadius: 20 } }, gcfg[2]) : React.createElement("span", { style: { fontSize: 11, color: T.inkSoft, fontStyle: "italic" } }, "Aucune revue active")),
 React.createElement("td", { style: { padding: "9px 0" } }, !isMe && g.ar && React.createElement("button", { onClick: function () { onOpenAr(g.ar); }, style: { padding: "5px 11px", borderRadius: 7, border: "1px solid " + T.olive600, background: T.surface, color: T.olive700, fontSize: 10.5, fontWeight: 700, cursor: "pointer" } }, "Ouvrir \u2192"))));
-})))))));
+}))),
+(function () {
+// \u2500\u2500 R463/R470 : la d\u00e9cision de groupe = visa R15 qui R\u00c9F\u00c9RENCE les verdicts membres ;
+// guard \u00ab membres non cl\u00f4tur\u00e9s \u00bb ANNONC\u00c9 avant le clic (R477) \u2014 le moteur reste seul juge.
+var tousArs = groupMembers.map(function (m) { return ACCOUNT_REVIEWS_DATA.filter(function (x) { return x.clientId === m.id; })[0]; });
+var verdicts = groupMembers.map(function (m) { var last = ACCOUNT_REVIEWS_DATA.filter(function (x) { return x.clientId === m.id && x.status === "COMPLETED"; }).slice(-1)[0];
+return { membre: m.name, verdict: last ? arVerdictAffiche(last.outcome) : null }; });
+var ouverts = groupMembers.filter(function (m) { return ACCOUNT_REVIEWS_DATA.some(function (x) { return x.clientId === m.id && x.status !== "COMPLETED"; }); });
+var garde = ouverts.length > 0;
+return React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "1px solid " + T.line } },
+React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: T.olive700, marginBottom: 8 } },
+"D\u00e9cision de groupe \u2014 visa R15 r\u00e9f\u00e9ren\u00e7ant les verdicts membres (R463)"),
+React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 } },
+verdicts.map(function (v, i) { return React.createElement("span", { key: i, style: { fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 10,
+background: v.verdict ? T.greenSoft : T.cream, border: "1px solid " + (v.verdict ? T.green : T.line), color: v.verdict ? T.green : T.inkSoft } },
+v.membre + " : " + (v.verdict || "EN COURS")); })),
+React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" } },
+React.createElement("button", { onClick: function () {
+if (garde) { pushParamAudit((user && user.name) || "\u2014", "GAR " + (client && client.uboName) + " \u2014 GUARD_BLOCKED : " + ouverts.length + " membre(s) non cl\u00f4tur\u00e9(s)");
+alert("GUARD_BLOCKED \u2014 " + ouverts.length + " dossier(s) membre(s) non cl\u00f4tur\u00e9(s) : " + ouverts.map(function (m) { return m.name; }).join(", ") + "\n\nS\u00e9v\u00e9rit\u00e9 BLOQUANT (param\u00e8tre tenant, R463) \u2014 la d\u00e9cision de groupe attend la cl\u00f4ture des membres. Aucune \u00e9criture."); return; }
+pushParamAudit((user && user.name) || "\u2014", "GAR " + (client && client.uboName) + " \u2014 d\u00e9cision de groupe vis\u00e9e (r\u00e9f\u00e9rence les verdicts membres, R463)");
+wfEmit("GAR_DECISION_VISEE", null, { subjectId: "GAR:" + (client && client.uboName), actor: (user && user.name) || "\u2014", payload: { verdictsMembres: verdicts } });
+re();
+}, style: { padding: "9px 16px", borderRadius: 9, border: "1.5px solid " + (garde ? T.amber : T.olive600),
+background: garde ? T.surface : T.olive600, color: garde ? T.amber : "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" } },
+"\u2713 Viser la d\u00e9cision de groupe" + (garde ? " \u00b7 \u26a0 " + ouverts.length + " membre(s) non cl\u00f4tur\u00e9(s)" : "")),
+React.createElement("span", { style: { fontSize: 10, color: T.inkSoft } },
+garde ? "Le blocage est ANNONC\u00c9 avant le clic (R477) \u2014 cliquer montre le d\u00e9tail, le moteur reste seul juge." : "Tous les membres sont cl\u00f4tur\u00e9s \u2014 le guard passe (R463).")));
+})()))));
 }
 function AccountReviewScreen({ user }) {
 const [selArId, setSelArId] = useState(null);
 const [selIds, setSelIds] = useState([]);
-const [grpOutcome, setGrpOutcome] = useState("Risk unchanged");
+const [grpOutcome, setGrpOutcome] = useState("CONFORME");           // verdict NORMALISÉ (R466) — plus d'outcome libre
 const [, arBump] = useState(0);
 const [trigOpen, setTrigOpen] = useState(false);
 const [trigClientId, setTrigClientId] = useState("");
@@ -42449,8 +42548,8 @@ if (selIds.length === 0)
 return;
 ACCOUNT_REVIEWS_DATA.forEach(r => { if (selIds.indexOf(r.id) >= 0 && !lockHeldByOther(r.id, user)) {
 r.status = "COMPLETED";
-r.outcome = grpOutcome;
-r.nextReviewDate = "2027-07-04";
+r.outcome = grpOutcome;                                            // verdict R466
+r.nextReviewDate = arCalcNextReview(clientById[r.clientId]);       // CALCULÉE par dossier (R461) — jamais saisie
 r.reviewer = ((user && user.name) || "—") + " (revue groupée)";
 lockRelease(r.id, user, true);
 } });
@@ -42545,7 +42644,7 @@ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 800, color: T
 "\u2611 ",
 selIds.length,
 " review(s) s\u00E9lectionn\u00E9e(s)"),
-React.createElement("select", { value: grpOutcome, onChange: e => setGrpOutcome(e.target.value), style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 12 } }, ["Risk unchanged", "Risk downgraded", "Risk upgraded", "EDD triggered", "Escalation required"].map(o => React.createElement("option", { key: o, value: o }, o))),
+React.createElement("select", { value: grpOutcome, onChange: e => setGrpOutcome(e.target.value), style: { padding: "7px 10px", borderRadius: 8, border: "1px solid " + T.line, fontSize: 12 } }, Object.keys(AR_VERDICTS).map(o => React.createElement("option", { key: o, value: o }, AR_VERDICTS[o].label))),
 React.createElement("button", { onClick: applyGroup, style: { padding: "8px 16px", borderRadius: 8, border: "none", background: T.olive600, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" } }, "Cl\u00F4turer en revue group\u00E9e \u2192"),
 React.createElement("button", { onClick: () => setSelIds([]), style: { padding: "8px 12px", borderRadius: 8, border: "1px solid " + T.line, background: T.surface, color: T.inkMid, fontSize: 12, cursor: "pointer" } }, "Annuler"),
 React.createElement("span", { style: { fontSize: 10.5, color: T.inkSoft } }, "Les reviews verrouill\u00E9es par un autre intervenant sont ignor\u00E9es."))),
@@ -42571,7 +42670,7 @@ React.createElement("td", { style: { padding: "11px 14px", fontSize: 11, color: 
 React.createElement("td", { style: { padding: "11px 14px" } },
 React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: cfg[0], background: cfg[1], padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap" } }, cfg[2])),
 React.createElement("td", { style: { padding: "11px 14px", fontSize: 11, color: T.inkSoft, whiteSpace: "nowrap" } }, r.reviewDate),
-React.createElement("td", { style: { padding: "11px 14px", fontSize: 11, color: r.outcome ? T.inkMid : T.inkSoft, fontStyle: r.outcome ? "normal" : "italic", whiteSpace: "nowrap", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" } }, r.outcome || "—"),
+React.createElement("td", { style: { padding: "11px 14px", fontSize: 11, color: r.outcome ? T.inkMid : T.inkSoft, fontStyle: r.outcome ? "normal" : "italic", whiteSpace: "nowrap", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }, title: arVerdictAffiche(r.outcome) || "" }, arVerdictAffiche(r.outcome) || "—"),
 React.createElement("td", { style: { padding: "11px 14px", fontSize: 11, color: T.inkMid, whiteSpace: "nowrap" } }, r.reviewer?.split(" ").slice(-2).join(" ")),
 React.createElement("td", { style: { padding: "11px 14px", whiteSpace: "nowrap" }, onClick: e => e.stopPropagation() }, (() => {
 const l = lockGet(r.id);
@@ -45046,7 +45145,7 @@ loginError && React.createElement("div", { style: { background: T.redSoft, borde
 loginError),
 React.createElement("button", { onClick: handleLogin, style: { width: "100%", padding: "12px", borderRadius: 9, border: "none", background: T.olive600, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 14 }, onMouseEnter: e => e.target.style.background = T.olive700, onMouseLeave: e => e.target.style.background = T.olive600 }, "Se connecter \u2192"),
 React.createElement("div", { style: { fontSize: 10, color: T.inkSoft, textAlign: "center" } }, "\uD83D\uDD10 MFA activ\u00E9 \u00B7 Audit trail FINMA \u00B7 Sessions s\u00E9curis\u00E9es")),
-React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.17 \u00B7 Bloc 65 : barre de d\u00E9cision unifi\u00E9e R474 (Valider\u00B7Refuser\u00B7Renvoyer\u00B7D\u00E9l\u00E9guer) + corbeille \u00AB \u00C0 d\u00E9cider \u00BB R478"),
+React.createElement("div", { style: { fontSize: 9, color: "#8A9578", marginTop: 10, textAlign: "center", fontFamily: "monospace" } }, "v2026-08-09.18 \u00B7 Bloc 65 fin : AR = dossier unique (delta + verdicts R466, nextReviewDate calcul\u00E9e) \u00B7 d\u00E9cision de groupe GAR \u00B7 Param\u00E9trage \u2192 Revues (pop-up R445)"),
 React.createElement("div", { style: { flex: 1, padding: "28px 32px", overflowY: "auto" } },
 React.createElement("div", { style: { marginBottom: 16 } },
 React.createElement("div", { style: { fontSize: 10, color: T.olive700, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700, marginBottom: 4 } }, "Comptes de d\u00E9monstration"),
@@ -45232,7 +45331,7 @@ React.createElement("div", { style: { width: 28, height: 28, borderRadius: "50%"
 React.createElement("div", null,
 React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.ink } }, currentUser.name),
 React.createElement("div", { style: { fontSize: 9, color: currentUser.color, fontWeight: 700 } }, currentUser.roleLabel))),
-React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.17 \u00B7 Bloc 65 : barre de d\u00E9cision unifi\u00E9e R474 (Valider\u00B7Refuser\u00B7Renvoyer\u00B7D\u00E9l\u00E9guer) + corbeille \u00AB \u00C0 d\u00E9cider \u00BB R478"),
+React.createElement("div", { style: { fontSize: 8.5, color: T.inkSoft, marginBottom: 5, fontFamily: "monospace" } }, "v2026-08-09.18 \u00B7 Bloc 65 fin : AR = dossier unique (delta + verdicts R466, nextReviewDate calcul\u00E9e) \u00B7 d\u00E9cision de groupe GAR \u00B7 Param\u00E9trage \u2192 Revues (pop-up R445)"),
 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
 React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: T.green } }),
 React.createElement("span", { style: { fontSize: 10, color: T.green, fontWeight: 600 } }, "Syst\u00E8mes op\u00E9rationnels")),
