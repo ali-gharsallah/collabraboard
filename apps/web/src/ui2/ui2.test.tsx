@@ -260,4 +260,26 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Suzuki Ltd"));
     expect(onOpen).toHaveBeenCalledWith("c1");
   });
+
+  it("U2-20 V2-M1 DossierKyc : onglets Pièces (GED) / Corroboration / Cross-border, sources signalées", () => {
+    render(<DossierKyc active="kyc" onNavigate={() => undefined} />);
+    // onglet Pièces : métadonnées + empreintes, jamais le contenu (R145)
+    fireEvent.click(screen.getByText(/Pièces \(GED\)/));
+    expect(screen.getByText("Acte de trust")).toBeTruthy();
+    expect(screen.getByText(/v2 · ancrée le 14\.11\.2023/)).toBeTruthy();
+    expect(screen.getByText(/relecture vérifiée du coffre, par empreinte \(R145\)/)).toBeTruthy();
+    // onglet Corroboration : matrice versionnée, exigence manquante VISIBLE
+    fireEvent.click(screen.getByText("Corroboration"));
+    expect(screen.getByText("Corroboration du patrimoine (EDD)")).toBeTruthy();
+    expect(screen.getByText("MANQUANTE")).toBeTruthy();
+    expect(screen.getByText(/le dossier garde la version de sa création \(R29\)/)).toBeTruthy();
+    // onglet Cross-border : matrice R453, restriction dite en toutes lettres
+    fireEvent.click(screen.getByText("Cross-border"));
+    expect(screen.getByText("Émirats arabes unis")).toBeTruthy();
+    expect(screen.getByText("RESTREINT")).toBeTruthy();
+    // retour Dossier : l'invariant U2-09 tient toujours (1re section incomplète)
+    fireEvent.click(screen.getByText("Dossier"));
+    const courant = document.querySelector('button[aria-current="true"]') as HTMLElement;
+    expect(courant.textContent).toContain("Origine des fonds");
+  });
 });
