@@ -429,4 +429,53 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Simuler une modification →"));
     expect(screen.getByText("Effet simulé sur l'historique")).toBeTruthy();
   });
+
+  it("U2-30 V2-M9 éditeur matrice doc : renommage + cellule → diff avant/après ; motif R7 obligatoire", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Questionnaires"));
+    fireEvent.click(screen.getByText("doc-matrix"));
+    fireEvent.click(screen.getByText("Modifier (brouillon)"));
+    // renommer un libellé d'exigence
+    fireEvent.change(screen.getByLabelText("libellé ID-01"), { target: { value: "Pièce d'identité biométrique" } });
+    // durcir une cellule de composition
+    fireEvent.change(screen.getByLabelText("OF-02 CDD"), { target: { value: "OBLIGATOIRE" } });
+    const ecarts = screen.getByText(/Écarts du brouillon \(2\)/);
+    expect(ecarts).toBeTruthy();
+    expect(screen.getByText("Pièce d'identité biométrique", { selector: "span" })).toBeTruthy(); // après
+    expect(screen.getByText("Pièce d'identité certifiée")).toBeTruthy();                          // avant, visible
+    // soumission sans motif → refus R7 ; avec motif → SECOND habilité R13
+    fireEvent.click(screen.getByText("Soumettre le brouillon"));
+    expect(screen.getByText(/le motif de publication est obligatoire \(R7\)/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("motif de publication (R7)"), { target: { value: "durcissement SoF" } });
+    fireEvent.click(screen.getByText("Soumettre le brouillon"));
+    expect(screen.getByText(/SECOND habilité \(R13, l'auteur ne publie pas lui-même\)/)).toBeTruthy();
+    expect(screen.getByText(/La version en vigueur reste inchangée jusqu'à publication/)).toBeTruthy(); // R29
+  });
+
+  it("U2-31 V2-M9 composition du tableau : ajout et retrait d'exigence visibles dans le diff", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Questionnaires"));
+    fireEvent.click(screen.getByText("doc-matrix"));
+    fireEvent.click(screen.getByText("Modifier (brouillon)"));
+    fireEvent.click(screen.getByText("+ Ajouter une exigence"));
+    fireEvent.click(screen.getByLabelText("retirer FI-01"));
+    expect(screen.getByText("AJOUTÉ")).toBeTruthy();
+    expect(screen.getByText("RETIRÉ")).toBeTruthy();
+    expect(screen.getByText("États financiers (personnes morales)")).toBeTruthy(); // le retiré reste nommé
+  });
+
+  it("U2-32 V2-M9 questionnaire : renommer un champ + désactiver une section (composition)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Questionnaires"));
+    fireEvent.click(screen.getByText("kyc.questionnaire"));
+    fireEvent.click(screen.getByText("Modifier (brouillon)"));
+    fireEvent.change(screen.getByLabelText("champ ID.2"), { target: { value: "Prénoms usuels" } });
+    fireEvent.click(screen.getByLabelText("section Relation attendue (flux)"));
+    const ecarts = screen.getByText(/Écarts du brouillon \(2\)/);
+    expect(ecarts).toBeTruthy();
+    expect(screen.getByText(/Identification · ID.2/)).toBeTruthy();
+    // marquer une facultative comme requise → 3e écart
+    fireEvent.click(screen.getByLabelText("OF.2 requise"));
+    expect(screen.getByText(/Écarts du brouillon \(3\)/)).toBeTruthy();
+  });
 });

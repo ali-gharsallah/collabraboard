@@ -44,7 +44,11 @@ const zlib = require("zlib");
 // consultation /v1/aml/referentiel, onglet Transactions /v1/txflux — mesure 270.3). Toujours
 // dans le chunk LAZY ui2 (chargement initial inchangé). Annoncé au PO à la clôture de M1.
 // Marge ≈ 10 kB pour M3..M6, chaque lot reste un commit motivé — jamais un trou.
-const BUDGET_TOTAL_KB = 280;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 280 → 290 (V2-M9, 10.08.2026) : demande PO « modification des noms de champs et
+// composition de tableau depuis paramétrage comme dans la v1 » — éditeurs en formulaire
+// matrice doc + questionnaire (ParamEdit, circuit Builder R304-R308 : brouillon → diff →
+// R305 → R7/R13). Mesure 282.4 ; toujours dans le chunk LAZY ui2, chargement initial inchangé.
+const BUDGET_TOTAL_KB = 290;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

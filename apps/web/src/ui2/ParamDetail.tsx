@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { StatusChip } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { Ui2Bouton } from "./Header";
+import { EditeurMatriceDoc, EditeurQuestionnaire, SectionQuest } from "./ParamEdit";
 
 /**
  * UI v2 — V2-M8 : « tout voir avant la bascule ». Chaque clé GOUVERNÉE du Paramétrage s'ouvre
@@ -58,6 +59,26 @@ function celluleExigence(v: string, t: (s: string) => string) {
     : <StatusChip mode={mode}>{t(v)}</StatusChip>;
 }
 
+// V2-M9 : gabarit éditable du questionnaire (les champs des sections 1 et 4 servent
+// d'extrait concret ; la composition — activer/désactiver — porte sur les 9 sections).
+const SEED_QUESTIONNAIRE: SectionQuest[] = [
+  { section: "Identification", active: true, champs: [
+    { code: "ID.1", label: "Nom", requise: true }, { code: "ID.2", label: "Prénom(s)", requise: true },
+    { code: "ID.3", label: "Date de naissance", requise: true },
+    { code: "ID.4", label: "Nationalité(s)", requise: true }] },
+  { section: "Domiciliation & fiscalité", active: true, champs: [] },
+  { section: "Activité & profil économique", active: true, champs: [] },
+  { section: "Origine des fonds", active: true, champs: [
+    { code: "OF.1", label: "Provenance des avoirs déposés", requise: true },
+    { code: "OF.2", label: "Banque remettante", requise: false },
+    { code: "OF.3", label: "Justificatif de transfert", requise: true }] },
+  { section: "Origine de la fortune", active: true, champs: [] },
+  { section: "Structure & ayants droit", active: true, champs: [] },
+  { section: "Profil de risque & scoring", active: true, champs: [] },
+  { section: "Relation attendue (flux)", active: true, champs: [] },
+  { section: "Déclarations & signatures", active: true, champs: [] },
+];
+
 // ── Circuits de workflow : des ÉTAPES fermées, chacune portée par un rôle (quatre yeux R13).
 function Etapes({ etapes, t }: { etapes: { n: number; libelle: string; role: string;
   note?: string }[]; t: (s: string) => string }) {
@@ -95,6 +116,30 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
   cle: { cle: string; description?: string; valeur?: string; version?: string };
   t: (s: string) => string; onSandbox: () => void;
 }) {
+  // V2-M9 : les clés ÉDITABLES (Builder R304-R308 en formulaire) portent un onglet
+  // Consultation / Modifier (brouillon). Les autres restent consultation + simulation.
+  const editable = cle.cle === "doc-matrix" || cle.cle === "kyc.questionnaire";
+  const [mode, setMode] = useState<"consult" | "edit">("consult");
+  const ongletMode = editable && (
+    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      {([["consult", "Consultation"], ["edit", "Modifier (brouillon)"]] as const).map(([m, label]) => (
+        <button key={m} onClick={() => setMode(m)} aria-pressed={mode === m}
+          style={{ padding: "5px 12px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
+            fontWeight: 600, cursor: "pointer",
+            border: mode === m ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+            background: mode === m ? "var(--brand-surface)" : "var(--bg-surface)",
+            color: mode === m ? "var(--brand)" : "var(--text-secondary)" }}>{t(label)}</button>))}
+    </div>);
+  if (editable && mode === "edit") {
+    return (<>
+      {ongletMode}
+      {cle.cle === "doc-matrix"
+        ? <EditeurMatriceDoc base={MATRICE_DOC} t={t} />
+        : <EditeurQuestionnaire base={SEED_QUESTIONNAIRE} t={t} />}
+      <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+        {t("Même circuit que le Builder v1 (R304-R308), en formulaire : brouillon → diff → simulation R305 → publication motivée (R7) par un SECOND habilité (R13). La version en vigueur reste rejouable (R29/R48).")}</div>
+    </>);
+  }
   const fiche = carte(
     <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}>
       <div><div className="microlabel">{t("Clé")}</div>
@@ -225,6 +270,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
   }
 
   return (<>
+    {ongletMode}
     {fiche}
     {corps}
     {histo("valeur en vigueur")}
