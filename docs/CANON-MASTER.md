@@ -2,18 +2,18 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-08-10 · commit `4140d92`.** Ce document se périme visiblement :
+> **Généré le 2026-08-10 · commit `ff8c4a7`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-**28 anomalie(s) à traiter.**
+**27 anomalie(s) à traiter.**
 
 - **Doublons de numéro à titres divergents** : 0
 - **Familles de scénarios sans suite de test** : 1 — TB
 - **Artefacts porteurs de règles sans aucune famille de scénario** : 1
   - spec/SPEC-I18N.md (R29, R323, R324)
-- **Numéros R absents dans [1..480]** (plafond = sommet de l'amas contigu, hors réserves) : 26 — R405–R430
+- **Numéros R absents dans [1..490]** (plafond = sommet de l'amas contigu, hors réserves) : 25 — R405–R408, R410–R430
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -92,7 +92,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-119 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+120 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
@@ -125,7 +125,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1, R83, R125, R129–R133 | Catalogue O-Live — Patch v4.5 → v4.6 (RATIFICATION du 19.07.2026, fin de nuit) | PROPOSÉ | MR | mros.wiring.spec.ts |
 | R1, R125, R133–R136 | Catalogue O-Live — Patch v4.6 → v4.7 (RATIFICATION du 20.07.2026, aube) | PROPOSÉ | RK | risk-case.wiring.spec.ts |
 | R1, R109, R116, R125, R137–R139 | Catalogue O-Live — Patch v4.7 → v4.8 (RATIFICATION du 20.07.2026) | PROPOSÉ | IG | ged-ingestion.wiring.spec.ts |
-| R1, R125, R131, R140–R143 | Catalogue O-Live — Patch v4.8 → v4.9 (RATIFICATION du 20.07.2026, matin) | PROPOSÉ | TX | transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py, test_cpsi_bloc4.py |
+| R1, R125, R131, R140–R143 | Catalogue O-Live — Patch v4.8 → v4.9 (RATIFICATION du 20.07.2026, matin) | PROPOSÉ | TX | etl.wiring.spec.ts, transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py |
 | R1–R56, R109–R113, R115, R125, R137, R144–R147 | Catalogue O-Live — Patch v4.9 → v4.10 (RATIFICATION du 20.07.2026) | PROPOSÉ | CV, DB | coffre.wiring.spec.ts |
 | R1–R52 | Catalogue normatif v2 — inventaire (source : OLive-Specifications-Moteur-Workflow-v2) | PROPOSÉ | — | — |
 | R1–R56 | O-Live — Catalogue des règles R1–R56 (état v2.4, 12.07.2026) & propositions R57–R62 | PROPOSÉ | BD, DV, EX, IA, PS, PT, RC, RT, SC, SG, ST | run_tests.py, test_cpsi_bloc1.py, test_bloc10_r58_r61.py, run_tests.py |
@@ -148,7 +148,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R125–R128 | Catalogue O-Live — Amendement PROPOSÉ (R125 → R128) · Bloc 21 « Gouvernance des paramètres tenant — le R-Q exécutable » | RATIFIÉ | RQ | parametres.wiring.spec.ts |
 | R129–R132 | Catalogue O-Live — Amendement PROPOSÉ (R129 → R132) · Bloc 22 « Communication MROS — art. 9 LBA » | RATIFIÉ | MR | mros.wiring.spec.ts |
 | R133–R136 | Catalogue O-Live — Amendement PROPOSÉ (R133 → R136) · Bloc 23 « Risk cases — l'instruction AML » | RATIFIÉ | RK | risk-case.wiring.spec.ts |
-| R140–R143 | Catalogue O-Live — Amendement PROPOSÉ (R140 → R143) · Bloc 25 « Le portail transactionnel — prévenir, pas constater » | RATIFIÉ | TX | transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py, test_cpsi_bloc4.py |
+| R140–R143 | Catalogue O-Live — Amendement PROPOSÉ (R140 → R143) · Bloc 25 « Le portail transactionnel — prévenir, pas constater » | RATIFIÉ | TX | etl.wiring.spec.ts, transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py |
 | R152–R155 | Catalogue O-Live — Amendement PROPOSÉ (R152 → R155) · Bloc 28 « Les personnes liées — le lien est un acte » | RATIFIÉ | PL | personne-lien.wiring.spec.ts |
 | R156–R159 | Catalogue O-Live — Amendement PROPOSÉ (R156 → R159) · Bloc 29 « Annotations & caviardage — le regard sans la plume » | RATIFIÉ | AN | annotation.wiring.spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-gap-2g.e2e-spec.ts, fat-aml-live.e2e-spec.ts |
 | R160–R163 | Catalogue O-Live — Amendement PROPOSÉ (R160 → R163) · Bloc 31 « L'IA au service du dossier » | RATIFIÉ | AI | ia-ged.wiring.spec.ts |
@@ -174,6 +174,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R13, R435 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
 | R453–R464 | Bloc 64 · Cross-Border étendu (MOD-33 normatif) | RATIFIÉ | SW, XB | fat-swarm.e2e-spec.ts, util.ts, screens.test.tsx, cross-border-moteur.e2e-spec.ts |
 | R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, FilterBar.test.tsx, test.mjs, test.mjs |
+| R480–R489 | ETL & intégration core banking — spec V2-M7 | PROPOSÉ | ET | etl.wiring.spec.ts |
 | R29, R323–R324 | SPEC — I18N quadrilingue FR/EN/DE/AR (R323–R324, périmètre révisé) | RATIFIÉ | — | — |
 | R167–R169 | Catalogue O-Live — Amendement PROPOSÉ (R167 → R169) · Bloc 33 « Le core banking est un port » | RATIFIÉ | SY | core-sync.wiring.spec.ts |
 | R288 | O-Live — PROPOSITION R288 : les barèmes de scoring KYC sont des RÈGLES gouvernées | RATIFIÉ | BS, PA | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-cpsi.e2e-spec.ts |
