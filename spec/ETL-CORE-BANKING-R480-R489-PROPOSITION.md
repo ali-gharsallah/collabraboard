@@ -1,13 +1,17 @@
 # ETL & intégration core banking — spec V2-M7
 
-**Statut : PROPOSITION — à valider PO avant tout code.** Aucune ligne d'implémentation
-n'accompagne ce document (engagement V2-M7). Les questions ouvertes (§7) sont consignées
-pour revue humaine, pas tranchées.
+**Statut : ARBITRÉE (PO, 10.08.2026) — les 5 questions du §7 sont tranchées :**
 
-**Numérotation proposée : R480–R489.** Le créneau R480+ porte aujourd'hui la réservation
-On-premise PK (voir `spec/mapping-session-repo.md`) ; la règle établie est que
-« l'implémenté/ratifié prend le créneau contigu, la réservation glisse ». Si le PO ratifie,
-PK glisse à **R490+** — c'est la question Q5.
+- **Q1** : connecteur v1 = **générique CSV/SFTP** (il sert aussi de harnais aux
+  connecteurs propriétaires) ;
+- **Q2** : périmètre v1 = **clients + comptes + transactions** (positions titres en v2) ;
+- **Q3** : cadence v1 = **fin de journée (EOD)** ;
+- **Q4** : défaut d'application = **tout-ou-rien** (paramètre tenant gouverné, R483) ;
+- **Q5** : numérotation **R480–R489 RATIFIÉE** — la réservation On-premise PK glisse à
+  **R490+** (règle établie du mapping, consignée dans `spec/mapping-session-repo.md`).
+
+L'implémentation suit la discipline des blocs : ET-01..08 **rouges d'abord**, puis le
+moteur, puis l'écran « Intégrations » (Paramétrage §Général).
 
 ---
 
