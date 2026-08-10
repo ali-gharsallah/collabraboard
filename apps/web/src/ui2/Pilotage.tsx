@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatTile } from "./StatTile";
+import { StatusChip, ChipMode } from "./StatusChip";
+import { EntityList } from "./Listes";
+import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -38,10 +41,133 @@ function BarMeter({ lignes, max }: {
 const carte: React.CSSProperties = { background: "var(--bg-surface)", border: "1px solid var(--border)",
   borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", padding: "14px 16px" };
 
+// ── V2-M5 : les onglets du bloc Rapports (cartographie ratifiée), sources signalées ────────
+// Registre LBA (lecture PURE — il agrège communications MROS, verdicts de transactions en
+// revue et passages de screening) ; MROS/goAML (/v1/mros — relecture OPPOSABLE R130, brouillon
+// goAML généré, dossier FIGÉ) ; veille (/v1/regwatch/items — R309-R311, la veille PROPOSE,
+// R44) ; habilitations (/v1/formations — certifications à date R238).
+type EntreeRegistre = { id: string; type?: string; objet?: string; reference?: string; date?: string; statut?: string };
+const SEED_REGISTRE: EntreeRegistre[] = [
+  { id: "reg-1", type: "COMMUNICATION_MROS", objet: "Cèdre Maritime SARL — soupçon fondé", reference: "MROS-2026-0031", date: "10.08.2026", statut: "TRANSMISE" },
+  { id: "reg-2", type: "VERDICT_TRANSACTION", objet: "SWIFT MT103 800 000 CHF — retenue", reference: "TXR-2026-1187", date: "08.08.2026", statut: "MOTIVÉ" },
+  { id: "reg-3", type: "RUN_SCREENING", objet: "Passage périodique — 4 812 sujets, 1 hit", reference: "RUN-2026-0810", date: "10.08.2026", statut: "CONSIGNÉ" },
+];
+type Comm = { id: string; reference?: string; client?: string; statut?: string; date?: string };
+const SEED_MROS: Comm[] = [
+  { id: "mros-1", reference: "MROS-2026-0031", client: "Cèdre Maritime SARL", statut: "TRANSMISE", date: "10.08.2026" },
+  { id: "mros-2", reference: "MROS-2026-0027", client: "Atlas Commodities Ltd", statut: "ACCUSÉE", date: "18.06.2026" },
+  { id: "mros-3", reference: "MROS-2026-0019", client: "—", statut: "BROUILLON_GOAML", date: "04.05.2026" },
+];
+type Item = { id: string; source?: string; objet?: string; impact?: string; statut?: string; date?: string };
+const SEED_VEILLE: Item[] = [
+  { id: "rw-1", source: "FINMA", objet: "Circulaire 2026/2 — obligations de diligence numériques", impact: "Questionnaire KYC §identification", statut: "A_ANALYSER", date: "05.08.2026" },
+  { id: "rw-2", source: "SECO", objet: "Révision liste sanctions — 14 entrées", impact: "Re-screening déclenché", statut: "TRAITE", date: "30.07.2026" },
+  { id: "rw-3", source: "GAFI", objet: "Suivi renforcé — mise à jour pays", impact: "Matrice de risque pays v4.6 proposée", statut: "A_ANALYSER", date: "22.07.2026" },
+];
+type Habilitation = { id: string; collaborateur?: string; formation?: string; echeance?: string; statut?: string };
+const SEED_HABILITATIONS: Habilitation[] = [
+  { id: "h-1", collaborateur: "Sofia Berger", formation: "LBA — recyclage annuel", echeance: "30.09.2026", statut: "CERTIFIE" },
+  { id: "h-2", collaborateur: "Thomas Roth", formation: "Sanctions & embargos", echeance: "15.08.2026", statut: "A_RENOUVELER" },
+  { id: "h-3", collaborateur: "Ana Lopes", formation: "CDB 20 — certification", echeance: "01.07.2026", statut: "EN_RETARD" },
+];
+
 export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   active: Ui2NavId; onNavigate: (id: Ui2NavId) => void; onOuvrirAudit?: () => void;
 }) {
   const t = traduire(langue());
+  const [onglet, setOnglet] = useState<"pilotage" | "registre" | "mros" | "veille" | "habilitations">("pilotage");
+  const registre = useApiOrSeed<EntreeRegistre[]>("/v1/mros", SEED_REGISTRE);
+  const mros = useApiOrSeed<Comm[]>("/v1/mros", SEED_MROS);
+  const veille = useApiOrSeed<Item[]>("/v1/regwatch/items", SEED_VEILLE);
+  const habilitations = useApiOrSeed<Habilitation[]>("/v1/formations/assignments", SEED_HABILITATIONS);
+  const pilule = (id: typeof onglet, label: string) => (
+    <button key={id} onClick={() => setOnglet(id)} aria-pressed={onglet === id}
+      style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
+        fontWeight: 600, cursor: "pointer",
+        border: onglet === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+        background: onglet === id ? "var(--brand-surface)" : "var(--bg-surface)",
+        color: onglet === id ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>);
+  const pilules = (
+    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+      {pilule("pilotage", t("Pilotage (écran 08)"))}
+      {pilule("registre", t("Registre LBA"))}
+      {pilule("mros", t("MROS · goAML"))}
+      {pilule("veille", t("Veille"))}
+      {pilule("habilitations", t("Habilitations"))}
+    </div>);
+  const chipDe = (label: string, mode: ChipMode) => <StatusChip mode={mode}>{label}</StatusChip>;
+
+  if (onglet !== "pilotage") {
+    const sousTitres = {
+      registre: registre.isDemo ? t("données maquette") : t("source : /v1/mros + revue + runs (lecture pure — rien ne change d'état)"),
+      mros: mros.isDemo ? t("données maquette") : t("source : /v1/mros (relecture opposable R130)"),
+      veille: veille.isDemo ? t("données maquette") : t("source : /v1/regwatch/items (R309-R311)"),
+      habilitations: habilitations.isDemo ? t("données maquette") : t("source : /v1/formations (certifications à date R238)"),
+    } as const;
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Marc Bregy" role={t("Directeur Compliance")}
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderListe titre={t("Rapports")} sousTitre={sousTitres[onglet]}
+          action={<Ui2Bouton>{t("Exporter")}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        {onglet === "registre" && (<>
+          <EntityList grid="180px 1.5fr 140px 110px 110px" onOpen={() => undefined}
+            entetes={[t("Type"), t("Objet"), t("Référence"), t("Date"), t("Statut")]}
+            lignes={(Array.isArray(registre.data) ? registre.data : []).slice(0, 30).map((e) => ({
+              id: e.id, cells: [
+                <span key="t" className="mono" style={{ fontSize: 10.5 }}>{t(e.type ?? "—")}</span>,
+                <span key="o" style={{ fontWeight: 600, color: "var(--text)" }}>{t(e.objet ?? "—")}</span>,
+                <span key="r" className="mono">{e.reference ?? "—"}</span>,
+                <span key="d" className="mono">{e.date ?? "—"}</span>,
+                chipDe(t(e.statut ?? "—"), "neutral")] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Le registre LBA est une LECTURE PURE du journal : communications MROS, verdicts de transactions en revue, passages de screening — rien ne change d'état ici, tout est déjà consigné ailleurs (R49).")}</div>
+        </>)}
+        {onglet === "mros" && (<>
+          <EntityList grid="150px 1.4fr 150px 110px" onOpen={() => undefined}
+            entetes={[t("Référence"), t("Client"), t("Statut"), t("Date")]}
+            lignes={(Array.isArray(mros.data) ? mros.data : []).slice(0, 30).map((c) => ({
+              id: c.id, cells: [
+                <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{c.reference ?? c.id}</span>,
+                <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{c.client ?? "—"}</span>,
+                chipDe(t(c.statut === "BROUILLON_GOAML" ? "BROUILLON goAML" : c.statut ?? "—"),
+                  c.statut === "TRANSMISE" ? "warn" : c.statut === "ACCUSÉE" ? "ok" : "neutral"),
+                <span key="d" className="mono">{c.date ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("La relecture d'une communication est OPPOSABLE (R130) et l'accès est habilité (art. 10a, R132). Le brouillon goAML est GÉNÉRÉ pré-rempli ; le dossier communiqué est FIGÉ — toute suite est un nouvel acte motivé (R7).")}</div>
+        </>)}
+        {onglet === "veille" && (<>
+          <EntityList grid="90px 1.5fr 1.2fr 130px 110px" onOpen={() => undefined}
+            entetes={[t("Source"), t("Objet"), t("Impact identifié"), t("Statut"), t("Date")]}
+            lignes={(Array.isArray(veille.data) ? veille.data : []).slice(0, 30).map((i) => ({
+              id: i.id, cells: [
+                <span key="s" className="mono" style={{ fontWeight: 600 }}>{i.source ?? "—"}</span>,
+                <span key="o" style={{ fontWeight: 600, color: "var(--text)" }}>{t(i.objet ?? "—")}</span>,
+                t(i.impact ?? "—"),
+                chipDe(t(i.statut === "A_ANALYSER" ? "À ANALYSER" : "TRAITÉ"),
+                  i.statut === "A_ANALYSER" ? "warn" : "ok"),
+                <span key="d" className="mono">{i.date ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("La veille réglementaire (R309-R311) identifie l'impact et PROPOSE — l'application d'un changement de paramétrage reste un acte humain, daté et signé (R44), via le bac à sable.")}</div>
+        </>)}
+        {onglet === "habilitations" && (<>
+          <EntityList grid="1fr 1.3fr 120px 150px" onOpen={() => undefined}
+            entetes={[t("Collaborateur"), t("Formation"), t("Échéance"), t("Statut")]}
+            lignes={(Array.isArray(habilitations.data) ? habilitations.data : []).slice(0, 30).map((h) => ({
+              id: h.id, cells: [
+                <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{h.collaborateur ?? "—"}</span>,
+                t(h.formation ?? "—"),
+                <span key="e" className="mono">{h.echeance ?? "—"}</span>,
+                chipDe(t(h.statut === "CERTIFIE" ? "CERTIFIÉ" : h.statut === "A_RENOUVELER" ? "À RENOUVELER" : "EN RETARD"),
+                  h.statut === "CERTIFIE" ? "ok" : h.statut === "A_RENOUVELER" ? "warn" : "alert")] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Les certifications s'évaluent À DATE (R238) : une habilitation échue se voit — et un visa qui l'exige la vérifie au moment de l'acte, pas au moment du rapport.")}</div>
+        </>)}
+      </Ui2Shell>);
+  }
+
   return (
     <Ui2Shell nav={<Ui2Nav active={active} user="Marc Bregy" role={t("Directeur Compliance")}
       onNavigate={onNavigate} t={t}
@@ -51,6 +177,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         sousTitre={t("août 2026 · Banque Olive Suisse SA · Zurich et Genève")}
         action={<><Ui2Bouton>{t("30 derniers jours ⌄")}</Ui2Bouton><Ui2Bouton>{t("Exporter")}</Ui2Bouton>
           {onOuvrirAudit && <Ui2Bouton onClick={onOuvrirAudit}>{t("Rejeu d'audit →")}</Ui2Bouton>}</>} t={t} />}>
+      {pilules}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
         <StatTile label={t("Dossiers en cours")} valeur={438} note={t("+12 sur 30 jours")}
           onOpen={() => onNavigate("dossiers")} />

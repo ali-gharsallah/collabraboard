@@ -347,4 +347,23 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText("Décision comité — post-MROS")).toBeTruthy();
     expect(screen.getByText(/le courrier de clôture est GÉNÉRÉ \(R270\)/)).toBeTruthy();
   });
+
+  it("U2-24 V2-M5 Rapports : registre LBA en lecture pure, MROS/goAML opposable, veille R44, habilitations à date", () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Registre LBA"));
+    expect(screen.getByText(/Cèdre Maritime SARL — soupçon fondé/)).toBeTruthy();
+    expect(screen.getByText(/LECTURE PURE/).textContent).toContain("R49");       // le registre ne change rien
+    fireEvent.click(screen.getByText("MROS · goAML"));
+    expect(screen.getByText("MROS-2026-0031")).toBeTruthy();
+    expect(screen.getByText("BROUILLON goAML")).toBeTruthy();
+    expect(screen.getByText(/OPPOSABLE \(R130\)/).textContent).toContain("FIGÉ");
+    fireEvent.click(screen.getByText("Veille"));
+    expect(screen.getByText(/Circulaire 2026\/2/)).toBeTruthy();
+    expect(screen.getByText(/reste un acte humain, daté et signé \(R44\)/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Habilitations"));
+    expect(screen.getByText("EN RETARD")).toBeTruthy();                          // l'échue SE VOIT
+    expect(screen.getByText(/s'évaluent À DATE \(R238\)/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Pilotage (écran 08)"));                    // retour : écran 08 intact
+    expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
+  });
 });
