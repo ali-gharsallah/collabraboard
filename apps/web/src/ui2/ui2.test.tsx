@@ -10,7 +10,9 @@ import { FieldCard } from "./FieldCard";
 import { SectionChecklist } from "./SectionChecklist";
 import { DossierKyc } from "./DossierKyc";
 import { DecisionPanel } from "./DecisionPanel";
-import { DiffTable, DIFF_GRID, DiffLigne } from "./DiffRow";
+import { DiffTable, DiffRow, DIFF_GRID, DiffLigne } from "./DiffRow";
+import { ImpactPreview } from "./ImpactPreview";
+import { RevueSortie } from "./RevueSortie";
 
 // UI v2 étape 2 — les composants transverses tiennent leurs invariants du handoff.
 describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)", () => {
@@ -134,5 +136,38 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(diverge.style.background).toContain("--alert-card");
     const exact = rows.find((r) => r.textContent?.includes("92 %")) as HTMLElement;
     expect(exact.style.background).not.toContain("--alert-card");
+  });
+
+  it("U2-12 DiffRow + ImpactPreview : le constaté est en warn 500 ; SANS EFFET reste listé en opacity 0.7", () => {
+    const { container } = render(<div>
+      <DiffRow labelGauche="Au dossier — 2025" gauche="Négoce, Suisse et UE"
+        labelDroite="Constaté — 2026" droite="Import depuis les Émirats" />
+      <ImpactPreview titre="Propagation — 3 dossiers concernés" dossiers={[
+        { nom: "Vallon Nordic Holding AS", effet: { label: "REVUE ANTICIPÉE", mode: "warn" },
+          detail: "Sections rouvertes : fiscalité · 2 tâches créées" },
+        { nom: "Fondation Vallon", effet: { label: "SANS EFFET", mode: "neutral" }, sansEffet: true,
+          detail: "Aucune section rouverte" }]} />
+    </div>);
+    const constate = screen.getByText("Import depuis les Émirats") as HTMLElement;
+    expect(constate.style.color).toContain("--warn-text");        // « Constaté » se distingue à l'œil
+    expect(constate.style.fontWeight).toBe("500");
+    const sansEffet = container.querySelector('[data-sans-effet="true"]') as HTMLElement;
+    expect(sansEffet.style.opacity).toBe("0.7");                  // présent mais atténué — l'absence d'effet EST une information
+    expect(sansEffet.textContent).toContain("Fondation Vallon");
+  });
+
+  it("U2-13 RevueSortie : delta R467 rendu (reporter en bloc) ; l'événement CoC émis ne s'annule pas", () => {
+    render(<RevueSortie active="revue" onNavigate={() => undefined} />);
+    // écran 06 : l'effort évité vient du delta (28 reprises seed) et le report en bloc le consigne
+    fireEvent.click(screen.getByText(/Reporter les 28 sections inchangées/));
+    expect(screen.getByRole("status").textContent).toContain("preuve d'origine");
+    // bascule vers l'écran 07 depuis la carte DÉJÀ TRAITÉE
+    fireEvent.click(screen.getByText("Voir le changement de circonstances →"));
+    expect(screen.getByText("Propagation — 3 dossiers concernés")).toBeTruthy();
+    // émettre : le bandeau ✓ n'offre AUCUN « Annuler » — un événement se corrige, ne se supprime pas
+    fireEvent.click(screen.getByText("Émettre l'événement"));
+    const bandeau = screen.getAllByRole("status").find((e) => e.textContent?.includes("Événement émis")) as HTMLElement;
+    expect(bandeau.textContent).toContain("il se corrige par un nouvel événement");
+    expect(screen.queryByText("Annuler")).toBeNull();
   });
 });

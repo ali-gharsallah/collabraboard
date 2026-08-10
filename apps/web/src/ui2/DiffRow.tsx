@@ -13,6 +13,40 @@ export type DiffLigne = { attribut: string; gauche: React.ReactNode; droite: Rea
 
 export const DIFF_GRID = "180px 1fr 1fr 92px";
 
+/**
+ * DiffRow (composant 10) — la forme SIMPLE : deux colonnes égales, « Au dossier — <année> »
+ * en corps normal, « Constaté — <année> » en warn-text graisse 500. Utilisé en revue périodique
+ * (delta R467) et en changement de circonstances ; `encadre` matérialise le constat dans un
+ * cadre ambre (écran 07 — le changement se voit avant d'être émis).
+ */
+export function DiffRow({ labelGauche, gauche, sousGauche, labelDroite, droite, sousDroite,
+  encadre }: {
+  labelGauche: string; gauche: React.ReactNode; sousGauche?: string;
+  labelDroite: string; droite: React.ReactNode; sousDroite?: string; encadre?: boolean;
+}) {
+  // toujours UN conteneur par côté — un fragment éclaterait les enfants en items de grille
+  const cadre = (contenu: React.ReactNode, cote: "gauche" | "droite") => (
+    <div style={!encadre ? { minWidth: 0 } : { padding: "10px 12px", borderRadius: 10,
+      border: cote === "droite" ? "1.5px solid var(--warn-card-border)" : "1px solid var(--border)",
+      background: cote === "droite" ? "var(--warn-card)" : "var(--bg-subtle)" }}>{contenu}</div>);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: encadre ? "1fr 22px 1fr" : "1fr 1fr",
+      gap: encadre ? 8 : 18, alignItems: encadre ? "stretch" : "start" }}>
+      {cadre(<>
+        <div className="microlabel" style={{ marginBottom: 4 }}>{labelGauche}</div>
+        <div style={{ fontSize: 12.5, color: "var(--text-body)" }}>{gauche}</div>
+        {sousGauche && <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 3 }}>{sousGauche}</div>}
+      </>, "gauche")}
+      {encadre && <div aria-hidden style={{ alignSelf: "center", textAlign: "center",
+        color: "var(--text-muted)", fontSize: 14 }}>→</div>}
+      {cadre(<>
+        <div className="microlabel" style={{ marginBottom: 4 }}>{labelDroite}</div>
+        <div style={{ fontSize: 12.5, color: "var(--warn-text)", fontWeight: 500 }}>{droite}</div>
+        {sousDroite && <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 3 }}>{sousDroite}</div>}
+      </>, "droite")}
+    </div>);
+}
+
 export function DiffTable({ lignes, enteteGauche, enteteDroite, t }: {
   lignes: DiffLigne[]; enteteGauche: string; enteteDroite: string; t?: (cle: string) => string;
 }) {

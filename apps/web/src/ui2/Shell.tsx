@@ -9,9 +9,11 @@ import "./tokens.css";
  * portent leur propre overflow). minmax(0,1fr) est indispensable pour que les tableaux
  * ne débordent pas. Sous 1280px la colonne latérale se replie (tiroir — étape ultérieure).
  */
-export function Ui2Shell({ nav, header, stepper, side, sideWidth = 340, children }: {
+export function Ui2Shell({ nav, header, stepper, side, sideWidth = 340, sideGauche,
+  sideGaucheWidth = 300, children }: {
   nav: React.ReactNode; header: React.ReactNode; stepper?: React.ReactNode;
   side?: React.ReactNode; sideWidth?: 320 | 340 | 380 | 400 | number;
+  sideGauche?: React.ReactNode; sideGaucheWidth?: 262 | 300 | number;   // écrans 02 (262px) et 06 (300px)
   children: React.ReactNode;
 }) {
   return (
@@ -24,7 +26,9 @@ export function Ui2Shell({ nav, header, stepper, side, sideWidth = 340, children
           background: "var(--bg-surface)", borderBottom: "1px solid var(--border)",
           display: "flex", alignItems: "center", padding: "0 22px", boxSizing: "border-box" }}>{stepper}</div>}
         <div style={{ flex: 1, minHeight: 0, display: "grid",
-          gridTemplateColumns: side ? `minmax(0,1fr) ${sideWidth}px` : "minmax(0,1fr)" }}>
+          gridTemplateColumns: `${sideGauche ? `${sideGaucheWidth}px ` : ""}minmax(0,1fr)${side ? ` ${sideWidth}px` : ""}` }}>
+          {sideGauche && <aside style={{ overflowY: "auto", borderRight: "1px solid var(--border)",
+            padding: 18, boxSizing: "border-box" }}>{sideGauche}</aside>}
           <main style={{ minWidth: 0, overflowY: "auto", padding: 22, boxSizing: "border-box" }}>
             {children}
           </main>
