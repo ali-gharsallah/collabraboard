@@ -103,3 +103,56 @@
 .ui2 input[type="range"].ui2-slider::-moz-range-thumb { width: 10px; height: 10px;
   border-radius: 50%; border: 3px solid var(--slider-fill, var(--brand));
   background: var(--bg-surface); box-shadow: 0 1px 3px rgba(24, 29, 35, 0.2); }
+
+/* ── Responsive (tiroir + empilement) ─────────────────────────────────────────────────────
+   La barre haute mobile n'existe qu'en dessous du seuil ; au-dessus, le shell desktop du
+   handoff est inchangé. Les règles marquées !important gagnent volontairement sur les styles
+   en ligne des composants (c'est la SEULE couche autorisée à le faire). */
+.ui2 .ui2-topbar { display: none; }
+.ui2 .ui2-voile { display: none; }
+
+@media (max-width: 900px) {
+  /* la page redevient défilante : le « shell qui ne défile jamais » est un contrat desktop */
+  .ui2 { height: auto !important; min-height: 100vh; overflow: visible !important; }
+  .ui2 .ui2-corps { display: block !important; }
+  .ui2 .ui2-corps > main { overflow-y: visible !important; padding: 14px !important; }
+  .ui2 .ui2-corps > aside { width: auto !important; overflow-y: visible !important;
+    border-left: none !important; border-right: none !important;
+    border-top: 1px solid var(--border); padding: 14px !important; }
+
+  /* barre haute + nav en tiroir (voile de fermeture) */
+  .ui2 .ui2-topbar { display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    height: 52px; padding: 0 10px; background: var(--nav-bg); }
+  .ui2 .ui2-nav-conteneur { position: fixed; top: 0; bottom: 0; left: 0; z-index: 70;
+    transform: translateX(-105%); transition: transform 160ms ease-out;
+    box-shadow: 0 0 32px rgba(23, 28, 34, 0.4); }
+  .ui2[data-menu="ouvert"] .ui2-nav-conteneur { transform: none; }
+  .ui2 .ui2-nav-conteneur > nav { height: 100% !important; overflow-y: auto; }
+  .ui2 .ui2-voile { display: block; position: fixed; inset: 0; z-index: 60; border: none;
+    cursor: pointer; background: rgba(23, 28, 34, 0.45); }
+
+  /* headers et stepper : hauteur libre, retours à la ligne, défilement du stepper */
+  .ui2 .ui2-entete > * { height: auto !important; min-height: 0 !important;
+    flex-wrap: wrap !important; row-gap: 8px; padding: 10px 14px !important; }
+  /* le bloc d'actions du header (flexShrink 0 sur desktop) doit pouvoir replier ses boutons */
+  .ui2 .ui2-entete header > span { flex-shrink: 1 !important; flex-wrap: wrap !important;
+    row-gap: 6px; min-width: 0; }
+  .ui2 .ui2-stepper { height: auto !important; padding: 10px 14px !important;
+    overflow-x: auto; }
+  .ui2 .ui2-stepper > * { min-width: 640px; }
+
+  /* les grilles de page s'empilent ; les TABLEAUX à grille défilent DANS leur carte —
+     le corps de page, lui, ne défile jamais latéralement */
+  .ui2 main div:not([role="row"]) { grid-template-columns: 1fr !important; }
+  /* les rangées flex de premier niveau du contenu s'empilent : chaque colonne prend 100 % */
+  .ui2 main > div > * { flex-basis: 100% !important; }
+  .ui2 main section { overflow-x: auto; }
+  .ui2 [role="row"] { min-width: 600px; }
+  /* toute rangée flex du contenu et des colonnes peut replier ses enfants (boutons de pied
+     de carte, méta « Brouillon enregistré »…) — sans effet sur les grilles ni le desktop */
+  .ui2 main div, .ui2 main span, .ui2 .ui2-corps > aside div { flex-wrap: wrap; row-gap: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui2 .ui2-nav-conteneur { transition: none; }
+  }
+}
