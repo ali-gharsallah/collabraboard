@@ -295,6 +295,7 @@
         "builder",
         "common",
         "corebanking",
+        "etl",
         "crossborder",
         "offboarding",
         "coc",
@@ -450,6 +451,7 @@
         "cpsi",
         "crm",
         "crossborder",
+        "etl",
         "personnes",
         "surveillance",
         "transactions",
@@ -513,6 +515,7 @@
         "api",
         "cpsi",
         "workflow-engine",
+        "etl",
         "events",
         "ged",
         "ia",
@@ -2532,6 +2535,7 @@
       "citePar": [
         "common",
         "audit",
+        "etl",
         "events",
         "api",
         "offboarding",
@@ -2555,6 +2559,7 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "etl",
         "surveillance-es",
         "txflux",
         "common",
@@ -3578,7 +3583,8 @@
       "statut": "actif",
       "citePar": [
         "screening-engine",
-        "api"
+        "api",
+        "etl"
       ]
     },
     {
@@ -4069,6 +4075,90 @@
       "citePar": [
         "api",
         "parametres"
+      ]
+    },
+    {
+      "numero": "R480",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R481",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R482",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R483",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R484",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R485",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R486",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R487",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R488",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif"
+    },
+    {
+      "numero": "R489",
+      "module": "etl",
+      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
       ]
     }
   ],

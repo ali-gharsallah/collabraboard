@@ -760,6 +760,22 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     manager: z.string() }).strict() },                                // R475/R39 : signal au manager — JAMAIS de blocage
   "tache.reprise.creee": { version: 1, schema: z.object({ kycCode: z.string(), section: z.string(),
     owner: z.string(), motif: z.object({ code: z.string(), texte: z.string() }).strict() }).strict() }, // R475 : nominative, motif en tête
+  // ── ETL core banking (R480–R489, spec ARBITRÉE PO 10.08.2026) — 6 types : le pipeline
+  // consigne réception/validation/rejets/application/réconciliation ; AUCUN verdict (R489). ──
+  "etl.contrat.publie": { version: 1, schema: z.object({ connecteur: z.string(), famille: z.string(),
+    version: z.number().int(), mode: z.string(), par: z.string() }).strict() },       // R480/R487
+  "etl.lot.recu": { version: 1, schema: z.object({ connecteur: z.string(), famille: z.string(),
+    version: z.number().int(), nb: z.number().int(), par: z.string() }).strict() },   // R486
+  "etl.lot.valide": { version: 1, schema: z.object({ valides: z.number().int(),
+    rejets: z.number().int() }).strict() },                                           // R483
+  "etl.ligne.rejetee": { version: 1, schema: z.object({ externalRef: z.string(),
+    motif: z.string() }).strict() },                                                  // R483 : motivé, jamais silencieux
+  "etl.lot.applique": { version: 1, schema: z.object({ connecteur: z.string(), famille: z.string(),
+    appliques: z.number().int(), noop: z.number().int(), rejetes: z.number().int(),
+    par: z.string() }).strict() },                                                    // R481/R482 — pas de champ verdict (R489)
+  "etl.lot.reconcilie": { version: 1, schema: z.object({ source: z.number().int(),
+    appliques: z.number().int(), rejetes: z.number().int(), noop: z.number().int(),
+    ok: z.boolean() }).strict() },                                                    // R485 : divergence = incident
   "training.completed": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
     docId: z.string() }).strict() },
   "training.validated": { version: 1, schema: z.object({ userId: z.string(), formationCode: z.string(),
