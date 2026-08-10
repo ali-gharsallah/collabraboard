@@ -5,6 +5,7 @@ import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { DiffRow } from "./DiffRow";
 import { ImpactPreview } from "./ImpactPreview";
+import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
@@ -28,6 +29,15 @@ const SEED_DELTA: Delta = {
   reprises: Array.from({ length: 28 }, (_, i) => ({ section: `s${i}`, question: "q" })),
 };
 
+// ── V2-M4 : les sorties (/v1/offboarding, bloc 62) — onglet « Sorties » de Revue & sortie
+// (cartographie ratifiée). Courrier de clôture généré (R270/OF-09), bannières de statut OF-10.
+type Sortie = { id: string; reference?: string; clientId?: string; motif?: string; etape?: string; statut?: string };
+const SEED_SORTIES: Sortie[] = [
+  { id: "off-1", reference: "OFF-2026-0012", clientId: "Atlas Commodities Ltd", motif: "Décision comité — post-MROS", etape: "Transfert des avoirs", statut: "EN_COURS" },
+  { id: "off-2", reference: "OFF-2026-0009", clientId: "Baltika Trading GmbH", motif: "Rupture commerciale (client)", etape: "Courrier de clôture", statut: "EN_COURS" },
+  { id: "off-3", reference: "OFF-2026-0004", clientId: "Fonds Aurora LP", motif: "Fin de mandat", etape: "Clôturé", statut: "CLOS" },
+];
+
 function CarteEcart({ titre, chip, children }: {
   titre: string; chip: { label: string; mode: ChipMode }; children: React.ReactNode;
 }) {
@@ -47,7 +57,8 @@ function CarteEcart({ titre, chip, children }: {
 
 export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
-  const [ecran, setEcran] = useState<"revue" | "coc">("revue");
+  const [ecran, setEcran] = useState<"revue" | "coc" | "sorties">("revue");
+  const sorties = useApiOrSeed<Sortie[]>("/v1/offboarding", SEED_SORTIES);
   // ✓ locaux de l'aperçu — chaque écran garde les siens (leçon de l'étape 6 : pas d'état partagé)
   const [reporte, setReporte] = useState(false);
   const [emis, setEmis] = useState<"" | "emis" | "sans-propagation">("");
@@ -61,6 +72,28 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
       onNavigate={onNavigate} t={t}
       badges={ecran === "coc" ? { kyc: { n: 3 } } : { journee: { n: 12 }, dossiers: { n: 48, sobre: true },
         clients: { n: 214, sobre: true }, surveillance: { n: 5, alert: true }, revue: { n: 21 } }} />);
+
+  if (ecran === "sorties") {
+    return (
+      <Ui2Shell nav={navRevue}
+        header={<Ui2HeaderDossier nom={t("Revue & sortie — Sorties")} initiales="RS"
+          identifiants={sorties.isDemo ? t("données maquette") : t("source : /v1/offboarding (bloc 62)")}
+          puces={<StatusChip mode="neutral">{t("OFFBOARDING")}</StatusChip>}
+          actions={<Ui2Bouton onClick={() => setEcran("revue")}>{t("← Revue groupée")}</Ui2Bouton>} t={t} />}>
+        <EntityList grid="140px 1.3fr 1.3fr 150px 120px" onOpen={() => undefined}
+          entetes={[t("Référence"), t("Client"), t("Motif"), t("Étape"), t("Statut")]}
+          lignes={(Array.isArray(sorties.data) ? sorties.data : []).slice(0, 30).map((s) => ({
+            id: s.id, cells: [
+              <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{s.reference ?? s.id}</span>,
+              <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{s.clientId ?? "—"}</span>,
+              t(s.motif ?? "—"),
+              t(s.etape ?? "—"),
+              <StatusChip key="s" mode={s.statut === "EN_COURS" ? "warn" : "ok"}>
+                {t(s.statut === "EN_COURS" ? "EN COURS" : "CLOS")}</StatusChip>] }))} />
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          {t("La sortie est un workflow à étapes fermées (bloc 62) : le courrier de clôture est GÉNÉRÉ (R270), le statut du client porte des bannières pendant la sortie, et une clôture post-MROS reste cohérente avec la communication. Un terminal est toujours motivé.")}</div>
+      </Ui2Shell>);
+  }
 
   if (ecran === "coc") {
     return (
@@ -167,7 +200,8 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
       header={<Ui2HeaderDossier nom={t("Groupe Delacroix — revue groupée")} initiales="GD"
         identifiants={t("Dernière validation : 22.09.2025 · échéance 22.09.2026 · cycle annuel (risque élevé)")}
         puces={<StatusChip mode="neutral">{t("4 DOSSIERS")}</StatusChip>}
-        actions={<><Ui2Bouton>{t("Comparer à 2025")}</Ui2Bouton>
+        actions={<><Ui2Bouton onClick={() => setEcran("sorties")}>{`${t("Sorties")} · ${Array.isArray(sorties.data) ? sorties.data.length : 0} →`}</Ui2Bouton>
+          <Ui2Bouton>{t("Comparer à 2025")}</Ui2Bouton>
           <Ui2Bouton primaire>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("Ce qui a changé depuis la dernière revue")}</span>

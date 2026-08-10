@@ -326,4 +326,25 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Ouvrir le dossier KYC"));
     expect(onNavigate).toHaveBeenCalledWith("kyc");
   });
+
+  it("U2-23 V2-M4 : pipeline prospects fusionné + déplacements BT ; sorties (offboarding) dans Revue", () => {
+    const { unmount } = render(<EntreeRelation active="entree" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText(/Pipeline prospects/));
+    expect(screen.getByText("Baltic Ventures OÜ")).toBeTruthy();
+    expect(screen.getByText("À ONBOARDER")).toBeTruthy();
+    expect(screen.getByText(/la pré-prospection fusionnent ici/)).toBeTruthy();   // fusion arbitrée citée
+    fireEvent.click(screen.getByText(/Déplacements \(BT\)/));
+    expect(screen.getByText("BT-2026-0044")).toBeTruthy();
+    expect(screen.getByText("EN APPROBATION")).toBeTruthy();
+    expect(screen.getByText(/quotas de jours par pays \(R449\)/).textContent).toContain("R465");
+    // retour dossier : la barrière KYC de l'écran 04 est toujours là
+    fireEvent.click(screen.getByText("Dossier (écran 04)"));
+    expect(screen.getByText("bloquée tant que KYC ≠ validé")).toBeTruthy();
+    unmount();
+    render(<RevueSortie active="revue" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText(/Sorties · 3/));
+    expect(screen.getByText("OFF-2026-0012")).toBeTruthy();
+    expect(screen.getByText("Décision comité — post-MROS")).toBeTruthy();
+    expect(screen.getByText(/le courrier de clôture est GÉNÉRÉ \(R270\)/)).toBeTruthy();
+  });
 });

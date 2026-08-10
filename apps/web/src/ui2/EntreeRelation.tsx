@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Check } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip, ChipMode } from "./StatusChip";
+import { EntityList } from "./Listes";
+import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -27,13 +29,91 @@ const ETAPES = [
 const carte: React.CSSProperties = { background: "var(--bg-surface)", border: "1px solid var(--border)",
   borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", padding: "14px 16px", marginBottom: 14 };
 
+// ── V2-M4 : le pipeline prospects (/v1/onboarding — les 3 écrans « Prospect à contacter /
+// en contact / à onboarder » et la pré-prospection FUSIONNENT ici, cartographie ratifiée) et
+// les déplacements (/v1/trips — Business Trip R446+, quotas R449, certificat de liens CR,
+// prospects R465). Seeds au format des réponses API.
+type Prospect = { id: string; nom?: string; etape?: string; apporteur?: string; depuis?: string };
+const SEED_PIPELINE: Prospect[] = [
+  { id: "pro-1", nom: "Sablier Investments SA", etape: "A_ONBOARDER", apporteur: "M. Leconte", depuis: "04.08.2026" },
+  { id: "pro-2", nom: "Famille Okonkwo", etape: "EN_CONTACT", apporteur: "C. Morel", depuis: "28.07.2026" },
+  { id: "pro-3", nom: "Baltic Ventures OÜ", etape: "A_CONTACTER", apporteur: "sourcing — salon Genève", depuis: "22.07.2026" },
+  { id: "pro-4", nom: "Dr. Lena Vogel", etape: "EN_CONTACT", apporteur: "recommandation client", depuis: "15.07.2026" },
+];
+type Trip = { id: string; reference?: string; pays?: string; status?: string; depart?: string; visaChain?: string };
+const SEED_TRIPS: Trip[] = [
+  { id: "trip-1", reference: "BT-2026-0044", pays: "Émirats arabes unis", status: "EN_APPROBATION", depart: "22.08.2026", visaChain: "CO → MLRO" },
+  { id: "trip-2", reference: "BT-2026-0041", pays: "Luxembourg", status: "APPROUVE", depart: "18.08.2026", visaChain: "CO" },
+  { id: "trip-3", reference: "BT-2026-0037", pays: "Royaume-Uni", status: "CLOTURE", depart: "07.07.2026", visaChain: "CO" },
+];
+
 export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
+  const [onglet, setOnglet] = useState<"dossier" | "pipeline" | "trips">("dossier");
+  const pipeline = useApiOrSeed<Prospect[]>("/v1/onboarding", SEED_PIPELINE);
+  const trips = useApiOrSeed<Trip[]>("/v1/trips", SEED_TRIPS);
+  const pilule = (id: typeof onglet, label: string) => (
+    <button key={id} onClick={() => setOnglet(id)} aria-pressed={onglet === id}
+      style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
+        fontWeight: 600, cursor: "pointer",
+        border: onglet === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+        background: onglet === id ? "var(--brand-surface)" : "var(--bg-surface)",
+        color: onglet === id ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>);
+  const ETAPE_PIPELINE: Record<string, { label: string; mode: ChipMode }> = {
+    A_CONTACTER: { label: "À CONTACTER", mode: "neutral" }, EN_CONTACT: { label: "EN CONTACT", mode: "info" },
+    A_ONBOARDER: { label: "À ONBOARDER", mode: "warn" } };
+  const nav = (<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager"
+    onNavigate={onNavigate} t={t}
+    badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+      entree: { n: 6 } }} />);
+
+  if (onglet === "pipeline" || onglet === "trips") {
+    return (
+      <Ui2Shell nav={nav}
+        header={<Ui2HeaderDossier nom={t("Entrée en relation")} initiales="ER"
+          identifiants={onglet === "pipeline"
+            ? (pipeline.isDemo ? t("données maquette") : t("source : /v1/onboarding"))
+            : (trips.isDemo ? t("données maquette") : t("source : /v1/trips (R446+)"))}
+          puces={<StatusChip mode="neutral">{onglet === "pipeline" ? t("PIPELINE") : t("DÉPLACEMENTS")}</StatusChip>}
+          actions={<Ui2Bouton primaire onClick={() => setOnglet("dossier")}>{t("Ouvrir le dossier Sablier →")}</Ui2Bouton>} t={t} />}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+          {pilule("dossier", t("Dossier (écran 04)"))}
+          {pilule("pipeline", `${t("Pipeline prospects")} · ${Array.isArray(pipeline.data) ? pipeline.data.length : 0}`)}
+          {pilule("trips", `${t("Déplacements (BT)")} · ${Array.isArray(trips.data) ? trips.data.length : 0}`)}
+        </div>
+        {onglet === "pipeline" && (<>
+          <EntityList grid="1.4fr 140px 1.1fr 110px" onOpen={() => setOnglet("dossier")}
+            entetes={[t("Prospect"), t("Étape"), t("Apporteur / source"), t("Depuis")]}
+            lignes={(Array.isArray(pipeline.data) ? pipeline.data : []).slice(0, 30).map((p) => {
+              const e = ETAPE_PIPELINE[p.etape ?? ""] ?? { label: p.etape ?? "—", mode: "neutral" as ChipMode };
+              return { id: p.id, cells: [
+                <span key="n" style={{ fontWeight: 600, color: "var(--text)" }}>{p.nom ?? p.id}</span>,
+                <StatusChip key="e" mode={e.mode}>{t(e.label)}</StatusChip>,
+                t(p.apporteur ?? "—"),
+                <span key="d" className="mono">{p.depuis ?? "—"}</span>] };
+            })} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Les trois écrans « Prospect à contacter / en contact / à onboarder » et la pré-prospection fusionnent ici (cartographie ratifiée). Un prospect À ONBOARDER s'ouvre sur son dossier (écran 04) — la barrière « KYC validé » s'y annonce dès la première étape.")}</div>
+        </>)}
+        {onglet === "trips" && (<>
+          <EntityList grid="140px 1.2fr 150px 130px 110px" onOpen={() => setOnglet("dossier")}
+            entetes={[t("Référence"), t("Pays"), t("Statut"), t("Chaîne de visa"), t("Départ")]}
+            lignes={(Array.isArray(trips.data) ? trips.data : []).slice(0, 30).map((v) => ({
+              id: v.id, cells: [
+                <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{v.reference ?? v.id}</span>,
+                t(v.pays ?? "—"),
+                <StatusChip key="s" mode={v.status === "EN_APPROBATION" ? "warn" : v.status === "APPROUVE" ? "ok" : "neutral"}>
+                  {t(v.status === "EN_APPROBATION" ? "EN APPROBATION" : v.status === "APPROUVE" ? "APPROUVÉ" : "CLÔTURÉ")}</StatusChip>,
+                <span key="c" className="mono">{v.visaChain ?? "—"}</span>,
+                <span key="d" className="mono">{v.depart ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Business Trip : quotas de jours par pays (R449), certificat de liens pour les contact reports, prospects rencontrés en déplacement (R465) — le voyage se rejoue à date (R448/R48). La chaîne de visa suit le risque du pays.")}</div>
+        </>)}
+      </Ui2Shell>);
+  }
+
   return (
-    <Ui2Shell nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager"
-      onNavigate={onNavigate} t={t}
-      badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
-        entree: { n: 6 } }} />} sideWidth={320}
+    <Ui2Shell nav={nav} sideWidth={320}
       header={<Ui2HeaderDossier nom="Sablier Investments SA" initiales="SI"
         identifiants={t("PRO-0231 · Personne morale · Luxembourg · apporté par M. Leconte")}
         puces={<StatusChip mode="neutral">{t("PROSPECT")}</StatusChip>}
@@ -98,6 +178,11 @@ export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNav
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
           {t("L'ouverture du compte reste refusée tant que le KYC n'est pas au statut validé. Cette règle n'est pas paramétrable.")}</div>
       </div>}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        {pilule("dossier", t("Dossier (écran 04)"))}
+        {pilule("pipeline", `${t("Pipeline prospects")} · ${Array.isArray(pipeline.data) ? pipeline.data.length : 0}`)}
+        {pilule("trips", `${t("Déplacements (BT)")} · ${Array.isArray(trips.data) ? trips.data.length : 0}`)}
+      </div>
       <section style={carte}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 7 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t("Aiguillage du dossier")}</span>
