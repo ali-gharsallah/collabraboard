@@ -21,7 +21,9 @@ export type Ui2NavProps = {
   onNavigate?: (id: Ui2NavId) => void;
   onSearch?: () => void;              // ouvrira la palette ⌘K (étape 4)
   modulesLicencies?: { id: string; label: string; icon?: string }[];  // bloc « Métiers » (R320)
-  badges?: Record<string, { n: number | string; alert?: boolean }>;
+  // Badge : pilule brand (défaut), pilule d'alerte, ou nombre SOBRE en Mono (maquette 01 —
+  // les compteurs informatifs ne crient pas, seuls l'actif et l'alerte prennent une pilule).
+  badges?: Record<string, { n: number | string; alert?: boolean; sobre?: boolean }>;
   t?: (cle: string) => string;        // i18n (clé = FR) — brancher traduire(langue())
 };
 
@@ -58,11 +60,14 @@ export function Ui2Nav({ active, user, role, onNavigate, onSearch, modulesLicenc
           color: actif ? "var(--nav-active-icon)" : "var(--nav-icon)" }}>{it.icon}</span>
         <span style={{ whiteSpace: "nowrap", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
           {tr(it.label)}</span>
-        {b != null && <span style={{ marginLeft: "auto", flexShrink: 0, whiteSpace: "nowrap",
-          fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, padding: "1px 7px",
-          borderRadius: "var(--r-pill)",
-          background: b.alert ? "var(--nav-badge-alert-bg)" : "var(--brand)",
-          color: b.alert ? "var(--nav-badge-alert-text)" : "#fff" }}>{b.n}</span>}
+        {b != null && (b.sobre && !actif && !b.alert
+          ? <span style={{ marginLeft: "auto", flexShrink: 0, whiteSpace: "nowrap",
+              fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--nav-label)" }}>{b.n}</span>
+          : <span style={{ marginLeft: "auto", flexShrink: 0, whiteSpace: "nowrap",
+              fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, padding: "1px 7px",
+              borderRadius: "var(--r-pill)",
+              background: b.alert ? "var(--nav-badge-alert-bg)" : "var(--brand)",
+              color: b.alert ? "var(--nav-badge-alert-text)" : "#fff" }}>{b.n}</span>)}
       </button>);
   };
   const blocLabel = (label: string) => (

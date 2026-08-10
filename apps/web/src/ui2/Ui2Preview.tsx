@@ -6,6 +6,7 @@ import { StatusChip } from "./StatusChip";
 import { StatTile } from "./StatTile";
 import { WorkQueueHeader, WorkQueueRow, WorkQueueItem } from "./WorkQueueRow";
 import { EventTimeline } from "./EventTimeline";
+import { MaJournee } from "./MaJournee";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -47,8 +48,11 @@ const FILE_EXEMPLE: WorkQueueItem[] = [
 
 export function Ui2Preview() {
   const t = traduire(langue());
+  // Étape 3 : « Ma journée » est l'écran RÉEL (maquette 01, corbeille R478 branchée) ; les
+  // autres entrées de nav montrent le spécimen tokens/composants en attendant leur étape.
   const [active, setActive] = useState("journee");
   const [variante, setVariante] = useState<"liste" | "dossier">("liste");
+  if (active === "journee") return <MaJournee active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}

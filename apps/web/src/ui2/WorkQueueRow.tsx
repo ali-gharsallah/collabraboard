@@ -16,9 +16,11 @@ const CELL_PAD = "14px 10px 14px 0";
 export type WorkQueueItem = {
   id: string;
   client: string;
+  sous?: string;                         // « Trust · Jersey · CDB 20 art. 39 » (maquette 01)
   action: string;                        // « Qualifier un hit sanctions », pas « SCREENING_HIT »
   etape: string;
   echeance: string;                      // ISO ou libellé — rendu en Mono
+  echeanceMode?: "ok" | "warn" | "alert";
   risque: { label: string; mode: ChipMode };
   priorite: "ok" | "warn" | "alert";     // barre 5×34 + fond pâle si alert
 };
@@ -47,14 +49,18 @@ export function WorkQueueRow({ item, onOpen }: { item: WorkQueueItem; onOpen: (i
       onMouseLeave={(e) => { if (!critique) e.currentTarget.style.background = "var(--bg-surface)"; }}>
       <span aria-hidden style={{ width: 5, height: 34, borderRadius: 3,
         background: `var(--${item.priorite}-line)` }} />
-      <span style={{ padding: CELL_PAD, fontSize: 13, fontWeight: 600, color: "var(--text)",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.client}</span>
-      <span style={{ padding: CELL_PAD, fontSize: 12.5, color: "var(--text-body)",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.action}</span>
+      <span style={{ padding: CELL_PAD, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.client}</span>
+        {item.sous && <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)",
+          marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.sous}</span>}
+      </span>
+      <span style={{ padding: CELL_PAD, fontSize: 12.5, color: "var(--text-body)", lineHeight: 1.35 }}>{item.action}</span>
       <span style={{ padding: CELL_PAD, fontSize: 12, color: "var(--text-muted)",
         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.etape}</span>
-      <span className="mono" style={{ padding: CELL_PAD, fontSize: 11.5, color: "var(--text-muted)",
-        whiteSpace: "nowrap" }}>{item.echeance}</span>
+      <span className="mono" style={{ padding: CELL_PAD, fontSize: 11.5, whiteSpace: "nowrap",
+        fontWeight: item.echeanceMode === "alert" ? 600 : 400,
+        color: item.echeanceMode ? `var(--${item.echeanceMode}-text)` : "var(--text-muted)" }}>{item.echeance}</span>
       <span style={{ padding: "14px 0" }}><StatusChip mode={item.risque.mode}>{item.risque.label}</StatusChip></span>
     </button>);
 }
