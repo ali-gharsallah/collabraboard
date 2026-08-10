@@ -140,6 +140,65 @@ export function EditeurMatriceDoc({ base, t }: { base: LigneMatrice[]; t: (s: st
     </div>);
 }
 
+// ── Éditeur des STRUCTURES JURIDIQUES (V2-M10) : le barème de scoring est une RÈGLE
+// gouvernée (R288) — points par forme + exigence documentaire associée. Même circuit.
+export type LigneStructure = { code: string; libelle: string; points: number; exigence: string };
+export const EXIGENCES_STRUCTURE = ["—", "Formulaire A", "Formulaire K", "Formulaire T",
+  "Organigramme + registre", "Acte de trust + trustee"];
+
+export function EditeurStructures({ base, t }: { base: LigneStructure[]; t: (s: string) => string }) {
+  const [lignes, setLignes] = useState<LigneStructure[]>(base.map((l) => ({ ...l })));
+  const poser = (code: string, patch: Partial<LigneStructure>) =>
+    setLignes((ls) => ls.map((l) => (l.code === code ? { ...l, ...patch } : l)));
+
+  const diff: DiffItem[] = [];
+  for (const l of lignes) {
+    const b = base.find((x) => x.code === l.code);
+    if (!b) continue;
+    if (b.libelle !== l.libelle)
+      diff.push({ cible: `${l.code} · ${t("libellé")}`, avant: b.libelle, apres: l.libelle, genre: "MODIFIÉ" });
+    if (b.points !== l.points)
+      diff.push({ cible: `${l.code} · ${t("points")}`, avant: `${b.points} pts`, apres: `${l.points} pts`, genre: "MODIFIÉ" });
+    if (b.exigence !== l.exigence)
+      diff.push({ cible: `${l.code} · ${t("exigence")}`, avant: t(b.exigence), apres: t(l.exigence), genre: "MODIFIÉ" });
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, lineHeight: 1.5 }}>
+        {t("Le barème est une règle gouvernée (R288) : chaque point pèse dans le scoring de TOUS les nouveaux dossiers. Brouillon local — le barème en vigueur reste intouché.")}</div>
+      <section style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
+        borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", overflow: "hidden", overflowX: "auto" }}>
+        <div role="row" style={{ display: "grid", gridTemplateColumns: "90px 1.5fr 110px 1.2fr",
+          alignItems: "center", padding: "0 14px", background: "var(--bg-subtle)",
+          borderBottom: "1px solid var(--border)" }}>
+          {[t("Code"), t("Structure"), t("Points"), t("Exigence documentaire")].map((h) => (
+            <span key={h} className="microlabel" style={{ padding: "9px 8px 9px 0" }}>{h}</span>))}
+        </div>
+        {lignes.map((l) => (
+          <div role="row" key={l.code} style={{ display: "grid",
+            gridTemplateColumns: "90px 1.5fr 110px 1.2fr", alignItems: "center", gap: 6,
+            padding: "7px 14px", borderBottom: "1px solid var(--border-row)" }}>
+            <span className="mono" style={{ fontSize: 11, fontWeight: 600 }}>{l.code}</span>
+            <input aria-label={`${t("libellé")} ${l.code}`} value={l.libelle}
+              onChange={(e) => poser(l.code, { libelle: e.target.value })} style={inputStyle} />
+            <select aria-label={`${l.code} ${t("points")}`} value={l.points}
+              onChange={(e) => poser(l.code, { points: Number(e.target.value) })}
+              style={{ ...inputStyle, padding: "5px 6px", width: "auto" }}>
+              {[0, 5, 10, 15, 20, 25, 30, 35].map((p) => <option key={p} value={p}>{p} pts</option>)}
+            </select>
+            <select aria-label={`${l.code} ${t("exigence")}`} value={l.exigence}
+              onChange={(e) => poser(l.code, { exigence: e.target.value })}
+              style={{ ...inputStyle, padding: "5px 6px", width: "auto", minWidth: 0 }}>
+              {EXIGENCES_STRUCTURE.map((x) => <option key={x} value={x}>{t(x)}</option>)}
+            </select>
+          </div>))}
+      </section>
+      <DiffListe items={diff} t={t} />
+      <CircuitGouverne nbEcarts={diff.length} t={t} />
+    </div>);
+}
+
 // ── Éditeur du QUESTIONNAIRE : libellés de champs + composition des sections (le gabarit
 // R304 « SECTION » du Builder v1, en formulaire).
 export type SectionQuest = { section: string; active: boolean;

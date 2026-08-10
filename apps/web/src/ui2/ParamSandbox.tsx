@@ -55,6 +55,12 @@ const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
     { cle: "olivia.gouvernance.curseur", description: "Curseur d'autonomie O1/O2/O3", valeur: "O2 — propose, l'humain décide", version: "01.08.2026" },
     { cle: "olivia.budgets", description: "Budgets de runs par mission (R262)", valeur: "500 / jour", version: "01.08.2026" },
     { cle: "olivia.outils", description: "Outils en liste blanche (R264)", valeur: "12 outils", version: "01.08.2026" }] },
+  // V2-M10 : la BANQUE elle-même — paramètres initiaux du tenant (R-Q exécutable R125-R128),
+  // licence signée (R320) et référentiel des structures juridiques (barème R288).
+  { id: "banque", label: "Banque", seed: [
+    { cle: "banque.initialisation", description: "Paramètres initiaux du tenant (R-Q exécutable)", valeur: "2 requis à poser", version: "R125-R128" },
+    { cle: "banque.licence", description: "Licence signée — modules activés, seats, échéance", valeur: "9 modules · 40 seats", version: "R320" },
+    { cle: "legal.structures", description: "Structures juridiques — barème de risque (R288)", valeur: "8 formes", version: "v2 · 01.05.2026" }] },
   { id: "general", label: "Général", seed: [
     { cle: "core.langue", description: "Langues d'affichage (R326-R327)", valeur: "FR · EN · DE · IT · AR", version: "20.07.2026" },
     { cle: "integrations.ports", description: "Ports d'intégration (R284/R286)", valeur: "2 actifs — pas de secret = refus gracieux", version: "15.07.2026" },

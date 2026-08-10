@@ -478,4 +478,32 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByLabelText("OF.2 requise"));
     expect(screen.getByText(/Écarts du brouillon \(3\)/)).toBeTruthy();
   });
+
+  it("U2-33 V2-M10 section Banque : R-Q initial (REQUIS MANQUANT visible) + licence R320", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Banque"));
+    fireEvent.click(screen.getByText("banque.initialisation"));
+    expect(screen.getAllByText("REQUIS MANQUANT").length).toBe(2);     // gedDocTypes + coreSystemeRef
+    expect(screen.getByText("gedDocTypes")).toBeTruthy();
+    expect(screen.getByText(/un module dont la clé manque refuse gracieusement/)).toBeTruthy();
+    fireEvent.click(screen.getByText("← Banque"));
+    fireEvent.click(screen.getByText("banque.licence"));
+    expect(screen.getByText("Ed25519 VALIDE — vérifiable hors ligne")).toBeTruthy();
+    expect(screen.getByText(/une licence expirée reste authentique/)).toBeTruthy();  // R320
+    expect(screen.getByText("etl")).toBeTruthy();                      // module licencié visible
+  });
+
+  it("U2-34 V2-M10 structures juridiques : barème R288 consultable ET éditable (points TRUST)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Banque"));
+    fireEvent.click(screen.getByText("legal.structures"));
+    expect(screen.getByText("Société de domicile")).toBeTruthy();      // consultation : les 8 formes
+    expect(screen.getByText("35 pts")).toBeTruthy();                   // TRUST au sommet du barème
+    fireEvent.click(screen.getByText("Modifier (brouillon)"));
+    fireEvent.change(screen.getByLabelText("TRUST points"), { target: { value: "30" } });
+    expect(screen.getByText(/Écarts du brouillon \(1\)/)).toBeTruthy();
+    expect(screen.getByText("35 pts", { selector: "span" })).toBeTruthy();  // l'avant reste visible
+    fireEvent.click(screen.getByText("Soumettre le brouillon"));
+    expect(screen.getByText(/le motif de publication est obligatoire \(R7\)/)).toBeTruthy();
+  });
 });

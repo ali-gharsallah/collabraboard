@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { StatusChip } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { Ui2Bouton } from "./Header";
-import { EditeurMatriceDoc, EditeurQuestionnaire, SectionQuest } from "./ParamEdit";
+import { EditeurMatriceDoc, EditeurQuestionnaire, EditeurStructures, SectionQuest,
+  LigneStructure } from "./ParamEdit";
 
 /**
  * UI v2 — V2-M8 : « tout voir avant la bascule ». Chaque clé GOUVERNÉE du Paramétrage s'ouvre
@@ -79,6 +80,36 @@ const SEED_QUESTIONNAIRE: SectionQuest[] = [
   { section: "Déclarations & signatures", active: true, champs: [] },
 ];
 
+// V2-M10 : structures juridiques — miroir du barème MOTEUR (risk-engine.ts STRUCTURE_PTS,
+// règle gouvernée R288) + exigence documentaire associée.
+const STRUCTURES_JURIDIQUES: LigneStructure[] = [
+  { code: "PP", libelle: "Personne physique", points: 0, exigence: "—" },
+  { code: "SA", libelle: "Société anonyme", points: 10, exigence: "Formulaire K" },
+  { code: "SARL", libelle: "Société à responsabilité limitée", points: 10, exigence: "Formulaire K" },
+  { code: "FUND", libelle: "Fonds de placement", points: 15, exigence: "Formulaire K" },
+  { code: "HOLDING", libelle: "Société holding", points: 20, exigence: "Organigramme + registre" },
+  { code: "FOUNDATION", libelle: "Fondation", points: 25, exigence: "Formulaire A" },
+  { code: "DOMICILE", libelle: "Société de domicile", points: 30, exigence: "Formulaire A" },
+  { code: "TRUST", libelle: "Trust", points: 35, exigence: "Acte de trust + trustee" },
+];
+
+// V2-M10 : paramètres initiaux du tenant — extrait du R-Q exécutable (R125-R128,
+// parametres.service.ts fait foi ; /v1/parametres/registre + /v1/parametres/valeur/:cle).
+const RQ_INITIALISATION: { cle: string; regle: string; defaut: string; valeur?: string;
+  requis?: boolean }[] = [
+  { cle: "gedDocTypes", regle: "R110/R112", defaut: "aucun défaut", requis: true },
+  { cle: "coreSystemeRef", regle: "R167", defaut: "aucun défaut", requis: true },
+  { cle: "screeningSeuil", regle: "R100", defaut: "85", valeur: "85" },
+  { cle: "cumulRolesAutorise", regle: "R31", defaut: "non", valeur: "non" },
+  { cle: "depepDelaiJours", regle: "R33", defaut: "365", valeur: "365" },
+  { cle: "onboardingSlaJours", regle: "—", defaut: "30 / 45 / 10", valeur: "30 / 45 / 10" },
+  { cle: "workflowRoles", regle: "R173", defaut: "CO, ADMIN", valeur: "CO, ADMIN" },
+  { cle: "docStorage", regle: "R180", defaut: "COFFRE_INTERNE", valeur: "COFFRE_INTERNE" },
+];
+
+const MODULES_LICENCE = ["kyc", "screening", "aml", "riskcases", "ged", "businesstrip",
+  "crossborder", "mros", "etl"];
+
 // ── Circuits de workflow : des ÉTAPES fermées, chacune portée par un rôle (quatre yeux R13).
 function Etapes({ etapes, t }: { etapes: { n: number; libelle: string; role: string;
   note?: string }[]; t: (s: string) => string }) {
@@ -118,7 +149,8 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
 }) {
   // V2-M9 : les clés ÉDITABLES (Builder R304-R308 en formulaire) portent un onglet
   // Consultation / Modifier (brouillon). Les autres restent consultation + simulation.
-  const editable = cle.cle === "doc-matrix" || cle.cle === "kyc.questionnaire";
+  const editable = cle.cle === "doc-matrix" || cle.cle === "kyc.questionnaire"
+    || cle.cle === "legal.structures";
   const [mode, setMode] = useState<"consult" | "edit">("consult");
   const ongletMode = editable && (
     <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -133,8 +165,8 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
   if (editable && mode === "edit") {
     return (<>
       {ongletMode}
-      {cle.cle === "doc-matrix"
-        ? <EditeurMatriceDoc base={MATRICE_DOC} t={t} />
+      {cle.cle === "doc-matrix" ? <EditeurMatriceDoc base={MATRICE_DOC} t={t} />
+        : cle.cle === "legal.structures" ? <EditeurStructures base={STRUCTURES_JURIDIQUES} t={t} />
         : <EditeurQuestionnaire base={SEED_QUESTIONNAIRE} t={t} />}
       <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
         {t("Même circuit que le Builder v1 (R304-R308), en formulaire : brouillon → diff → simulation R305 → publication motivée (R7) par un SECOND habilité (R13). La version en vigueur reste rejouable (R29/R48).")}</div>
@@ -257,6 +289,49 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
       {doctrine(t("Le curseur est au niveau O2 : Olivia propose, l'humain décide (R44). Aucun chemin de code n'exécute une sanction, une PEPisation ou une clôture automatiquement — sortie autorisée : événement, tâche, proposition."))}
     </>);
     pied = "Monter le curseur est une décision de gouvernance versionnée, jamais un réglage technique.";
+  } else if (cle.cle === "legal.structures") {
+    corps = (<>
+      <EntityList grid="90px 1.5fr 90px 1.2fr" onOpen={() => undefined}
+        entetes={[t("Code"), t("Structure"), t("Points"), t("Exigence documentaire")]}
+        lignes={STRUCTURES_JURIDIQUES.map((l) => ({ id: l.code, cells: [
+          <span key="c" className="mono" style={{ fontWeight: 600 }}>{l.code}</span>, t(l.libelle),
+          <StatusChip key="p" mode={l.points >= 25 ? "warn" : l.points === 0 ? "ok" : "neutral"}>{`${l.points} pts`}</StatusChip>,
+          t(l.exigence)] }))} />
+      {doctrine(t("Le barème structure fait partie du scoring KYC (règle gouvernée R288) : la forme juridique pèse dans le niveau de vigilance, et l'exigence documentaire associée alimente la matrice. Une société de domicile ou un trust n'entre jamais en SDD."))}
+    </>);
+    pied = "Modifier le barème = nouvelle version de règle (R288) — onglet « Modifier (brouillon) », circuit R305/R7/R13.";
+  } else if (cle.cle === "banque.initialisation") {
+    corps = (<>
+      <EntityList grid="180px 90px 1fr 1fr 130px" onOpen={() => undefined}
+        entetes={[t("Clé"), t("Règle"), t("Défaut"), t("Valeur posée"), t("Statut")]}
+        lignes={RQ_INITIALISATION.map((l) => ({ id: l.cle, cells: [
+          <span key="k" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text)" }}>{l.cle}</span>,
+          <span key="r" className="mono">{l.regle}</span>, t(l.defaut),
+          <span key="v" className="mono" style={{ color: "var(--text)" }}>{l.valeur ?? "—"}</span>,
+          l.valeur ? <StatusChip key="s" mode="ok">{t("POSÉ")}</StatusChip>
+            : <StatusChip key="s" mode={l.requis ? "alert" : "neutral"}>{t(l.requis ? "REQUIS MANQUANT" : "DÉFAUT")}</StatusChip>] }))} />
+      {doctrine(t("Le R-Q exécutable (R125-R128) est la liste de naissance de chaque banque : les clés REQUISES sans défaut (types documentaires GED, référence core banking) doivent être posées avant la mise en production — un module dont la clé manque refuse gracieusement, il ne devine pas. Chaque pose passe par /v1/parametres/valeur/:cle, motivée et journalisée."))}
+    </>);
+    pied = "Un dossier garde la config en vigueur à sa création (R29) — l'initialisation ne se rejoue pas, elle se complète.";
+  } else if (cle.cle === "banque.licence") {
+    corps = (<>
+      {carte(<>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          {MODULES_LICENCE.map((m) => (
+            <span key={m} className="mono" style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px",
+              borderRadius: 999, border: "1px solid var(--brand-border)", background: "var(--brand-surface)",
+              color: "var(--brand)" }}>{m}</span>))}
+        </div>
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12 }}>
+          <span><span className="microlabel">{t("Seats")}</span><div className="mono">40</div></span>
+          <span><span className="microlabel">{t("Échéance")}</span><div className="mono">31.12.2026</div></span>
+          <span><span className="microlabel">{t("Signature")}</span>
+            <div><StatusChip mode="ok">{t("Ed25519 VALIDE — vérifiable hors ligne")}</StatusChip></div></span>
+        </div>
+      </>)}
+      {doctrine(t("La licence est un fichier SIGNÉ par l'éditeur (R320) : signature et expiration sont deux constats distincts — une licence expirée reste authentique, les modules deviennent inactifs mais l'audit reste lisible. Un tenant ne voit et ne teste que ses modules licenciés (cahier BAT filtré, R333)."))}
+    </>);
+    pied = "Le renouvellement passe par la console éditeur (espace séparé, rôle EDITOR) — jamais par ce paramétrage.";
   } else if (cle.cle === "aml.R17.seuil") {
     corps = carte(<>
       <div style={{ fontSize: 12.5, color: "var(--text-body)", lineHeight: 1.6 }}>
