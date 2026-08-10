@@ -16,7 +16,7 @@ import { RevueSortie } from "./RevueSortie";
 import { SandboxSlider } from "./SandboxSlider";
 import { ECRANS_MIGRES } from "./cartographie";
 import { EntreeRelation } from "./EntreeRelation";
-import { EntityList } from "./Listes";
+import { EntityList, MesClients } from "./Listes";
 import { Surveillance } from "./Surveillance";
 import { Pilotage } from "./Pilotage";
 import { AuditRejeu } from "./AuditRejeu";
@@ -307,5 +307,23 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Transactions"));
     expect(screen.getAllByText("Levant Shipping Co.").length).toBe(2);
     expect(screen.getAllByText("EN REVUE").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("U2-22 V2-M3 : cas de risque réconciliés (R280) ; fiche client avec profil CPSI rejouable (R48/R44)", async () => {
+    const { unmount } = render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText(/Cas de risque/));
+    expect(screen.getByText("RC-2026-0102")).toBeTruthy();
+    expect(screen.getByText("Alerte AML-2026-0447")).toBeTruthy();      // l'origine est LIÉE, pas dupliquée
+    expect(screen.getByText(/jamais un double pilotage/).textContent).toContain("R280");
+    expect(screen.getByText("CLOS — MROS")).toBeTruthy();               // clôture cohérente avec le MROS
+    unmount();
+    const onNavigate = vi.fn();
+    render(<MesClients active="clients" onNavigate={onNavigate} />);
+    fireEvent.click(await screen.findByText("Suzuki Ltd"));             // ligne → fiche en panneau
+    expect(screen.getByText("Profil CPSI")).toBeTruthy();
+    expect(screen.getByText("62")).toBeTruthy();
+    expect(screen.getByText(/rejouable à date \(R48\)/).textContent).toContain("R44");
+    fireEvent.click(screen.getByText("Ouvrir le dossier KYC"));
+    expect(onNavigate).toHaveBeenCalledWith("kyc");
   });
 });

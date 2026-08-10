@@ -80,6 +80,18 @@ export function MesDossiers({ active, onNavigate }: { active: Ui2NavId; onNaviga
     </Ui2Shell>);
 }
 
+// V2-M3 — profil CPSI de la fiche client (/v1/cpsi/clients/:cid/score) : le score PERPÉTUEL du
+// moteur Python, pur et REJOUABLE à date (asOf, R48). Le moteur PROPOSE — couplage au workflow
+// par propositions/tâches uniquement (R39/R44), jamais par effet de bord. Seed au format API.
+type ScoreCpsi = { clientId?: string; score?: number; niveau?: string; asOf?: string | null;
+  composantes?: { code: string; label?: string; points?: number }[] } | null;
+const SEED_SCORE: ScoreCpsi = { score: 62, niveau: "MOYEN", composantes: [
+  { code: "PAYS", label: "Risque pays (pondéré exposition)", points: 24 },
+  { code: "STRUCTURE", label: "Structure de détention (2 niveaux)", points: 18 },
+  { code: "FLUX", label: "Écart de flux constaté (30 j)", points: 14 },
+  { code: "ANCIENNETE", label: "Ancienneté de la relation", points: 6 },
+] };
+
 // Personnes du seed des écrans maquettés — une personne est unique, ses dossiers la référencent.
 const PERSONNES = [
   { id: "PER-01994", nom: "Henrik Vallon", detail: "Suède · UBO et signataire", refs: "3 dossiers" },
@@ -90,8 +102,11 @@ const PERSONNES = [
 export function MesClients({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [onglet, setOnglet] = useState<"clients" | "personnes">("clients");
+  const [ouvert, setOuvert] = useState<string | null>(null);       // fiche client (panneau latéral)
   const r = useApiOrSeed<ClientRow[]>("/v1/clients", clientsSeed as ClientRow[]);
   const lignes = (Array.isArray(r.data) ? r.data : []).slice(0, 30);
+  const client = ouvert ? lignes.find((c) => c.id === ouvert) ?? null : null;
+  const cpsi = useApiOrSeed<ScoreCpsi>(ouvert ? `/v1/cpsi/clients/${ouvert}/score` : "/v1/cpsi/__hors-api__", SEED_SCORE);
   const pilule = (id: "clients" | "personnes", label: string) => (
     <button key={id} onClick={() => setOnglet(id)} aria-pressed={onglet === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
@@ -107,9 +122,48 @@ export function MesClients({ active, onNavigate }: { active: Ui2NavId; onNavigat
           ? `${lignes.length} ${t("clients")} · ${r.isDemo ? t("données maquette") : t("source : /v1/clients")}`
           : t("une personne est unique — ses dossiers la référencent, rien n'est ressaisi")}
         filtres={<span style={{ display: "flex", gap: 8 }}>{pilule("clients", t("Clients"))}{pilule("personnes", t("Personnes"))}</span>}
-        action={<Ui2Bouton primaire>{t("Nouveau client")}</Ui2Bouton>} t={t} />}>
+        action={<Ui2Bouton primaire>{t("Nouveau client")}</Ui2Bouton>} t={t} />}
+      sideWidth={340}
+      side={client ? <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", minWidth: 0 }}>{client.name}</span>
+          <button aria-label={t("Fermer la fiche")} onClick={() => setOuvert(null)}
+            style={{ marginLeft: "auto", border: "none", background: "transparent", cursor: "pointer",
+              fontFamily: "inherit", fontSize: 14, color: "var(--text-muted)" }}>✕</button>
+        </div>
+        <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "2px 0 12px" }}>
+          {`${client.id} · ${client.structure ?? "—"} · ${client.country ?? "—"}`}</div>
+        <section style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
+          borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", padding: "12px 14px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t("Profil CPSI")}</span>
+            <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
+              {cpsi.isDemo ? t("données maquette") : t("source : /v1/cpsi (rejouable à date)")}</span>
+          </div>
+          <div className="mono" style={{ fontSize: 27, fontWeight: 600, lineHeight: 1.1, color: "var(--text)" }}>
+            {cpsi.data?.score ?? "—"}
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--warn-text)", marginLeft: 8 }}>
+              {t(cpsi.data?.niveau ?? "")}</span></div>
+          <div style={{ marginTop: 9 }}>
+            {(cpsi.data?.composantes ?? []).map((c) => (
+              <div key={c.code} style={{ display: "flex", alignItems: "baseline", gap: 8,
+                padding: "3.5px 0", borderBottom: "1px solid var(--border-row)" }}>
+                <span style={{ fontSize: 11.5, color: "var(--text-body)", minWidth: 0 }}>{t(c.label ?? c.code)}</span>
+                <span className="mono" style={{ marginLeft: "auto", fontSize: 11.5, fontWeight: 600 }}>
+                  {c.points != null ? `+${c.points}` : "—"}</span>
+              </div>))}
+          </div>
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Score perpétuel du moteur CPSI — pur et rejouable à date (R48). Le moteur PROPOSE ; toute suite passe par une proposition ou une tâche (R44), jamais par effet de bord.")}</div>
+        </section>
+        <button onClick={() => onNavigate("kyc")} style={{ display: "block", width: "100%",
+          marginTop: 12, padding: "10px 14px", borderRadius: "var(--r-input)",
+          border: "1px solid var(--brand)", background: "var(--brand)", color: "#fff",
+          fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+          {t("Ouvrir le dossier KYC")}</button>
+      </div> : undefined}>
       {onglet === "clients" ? (
-        <EntityList grid="1.5fr 110px 90px 110px" onOpen={() => onNavigate("kyc")}
+        <EntityList grid="1.5fr 110px 90px 110px" onOpen={(id) => setOuvert(id)}
           entetes={[t("Client"), t("Structure"), t("Pays"), t("Risque")]}
           lignes={lignes.map((c) => ({ id: c.id, cells: [
             <span key="n" style={{ fontWeight: 600, color: "var(--text)" }}>{c.name}</span>,

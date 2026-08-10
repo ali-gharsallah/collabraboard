@@ -38,6 +38,15 @@ const SEED_REGLES: Regle[] = [
   { code: "AML-R22", libelle: "Corridor à risque sans justificatif", seuils: "pays liste GAFI · > 50 k", version: "v3 · 18.04.2026", alertes12m: 87 },
   { code: "AML-R09", libelle: "Cash intensif hors profil", seuils: "> 15 k / mois espèces", version: "v9 · 12.09.2024", alertes12m: 158 },
 ];
+// Cas de risque (/v1/riskcases, R133–R136) — RÉCONCILIÉS avec les alertes/hits (R280 : un cas
+// né d'une alerte reste lié à elle, jamais un double pilotage) ; transitions fermées, terminaux
+// motivés, clôture cohérente avec le MROS.
+type Rc = { id: string; reference?: string; clientId?: string; origine?: string; statut?: string; createdAt?: string };
+const SEED_RC: Rc[] = [
+  { id: "rc-1", reference: "RC-2026-0102", clientId: "Cèdre Maritime SARL", origine: "Alerte AML-2026-0447", statut: "EN_INVESTIGATION", createdAt: "10.08.2026" },
+  { id: "rc-2", reference: "RC-2026-0098", clientId: "Meridian Trust Ltd", origine: "Hit screening — UBO listé", statut: "OUVERT", createdAt: "10.08.2026" },
+  { id: "rc-3", reference: "RC-2026-0071", clientId: "Atlas Commodities Ltd", origine: "Signalement gestionnaire", statut: "CLOS_MROS", createdAt: "12.06.2026" },
+];
 type Tx = { id: string; date?: string; contrepartie?: string; montant?: string; canal?: string; statut?: string };
 const SEED_TX: Tx[] = [
   { id: "tx-1", date: "08.08.2026", contrepartie: "Levant Shipping Co.", montant: "800 000 CHF", canal: "SWIFT MT103", statut: "EN_REVUE" },
@@ -57,10 +66,11 @@ function Chiffre({ label, valeur, mode }: { label: string; valeur: string; mode?
 
 export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
-  const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions">("alerte");
+  const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions" | "cas">("alerte");
   const hits = useApiOrSeed<Hit[]>("/v1/screening/hits", SEED_HITS);
   const regles = useApiOrSeed<Regle[]>("/v1/aml/referentiel", SEED_REGLES);
   const txs = useApiOrSeed<Tx[]>("/v1/txflux", SEED_TX);
+  const cas = useApiOrSeed<Rc[]>("/v1/riskcases", SEED_RC);
   // DEUX décisions distinctes (l'alerte AML et le hit screening) — l'état est par écran, et le
   // DecisionPanel porte key={ecran} pour que le motif saisi sur l'un ne fuie jamais sur l'autre.
   const [decisions, setDecisions] = useState<Partial<Record<"alerte" | "hit", { option: string; motif: string }>>>({});
@@ -94,14 +104,16 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
       {pilule("screening", `${t("File screening")} · ${Array.isArray(hits.data) ? hits.data.length : 0}`)}
       {pilule("regles", t("Règles AML"))}
       {pilule("transactions", t("Transactions"))}
+      {pilule("cas", `${t("Cas de risque")} · ${Array.isArray(cas.data) ? cas.data.length : 0}`)}
     </div>);
 
-  // ── V2-M2 : les trois vues « liste » du bloc Surveillance ──
-  if (ecran === "screening" || ecran === "regles" || ecran === "transactions") {
+  // ── V2-M2/M3 : les vues « liste » du bloc Surveillance ──
+  if (ecran === "screening" || ecran === "regles" || ecran === "transactions" || ecran === "cas") {
     const sousTitres = {
       screening: hits.isDemo ? t("données maquette") : t("source : /v1/screening/hits (R411 — sujet × temps, config du run référencée)"),
       regles: regles.isDemo ? t("données maquette") : t("source : /v1/aml/referentiel"),
       transactions: txs.isDemo ? t("données maquette") : t("source : /v1/txflux"),
+      cas: cas.isDemo ? t("données maquette") : t("source : /v1/riskcases (R133–R136)"),
     } as const;
     return (
       <Ui2Shell nav={nav}
@@ -151,6 +163,22 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
                   {t(x.statut === "EN_REVUE" ? "EN REVUE" : "RÉGLÉE")}</StatusChip>] }))} />
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
             {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
+        </>)}
+        {ecran === "cas" && (<>
+          <EntityList grid="140px 1.2fr 1.3fr 150px 110px" onOpen={() => setEcran("alerte")}
+            entetes={[t("Référence"), t("Client"), t("Origine"), t("Statut"), t("Ouvert le")]}
+            lignes={(Array.isArray(cas.data) ? cas.data : []).slice(0, 30).map((c) => ({
+              id: c.id, cells: [
+                <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{c.reference ?? c.id}</span>,
+                <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{c.clientId ?? "—"}</span>,
+                t(c.origine ?? "—"),
+                <StatusChip key="s" mode={c.statut === "EN_INVESTIGATION" ? "warn"
+                  : c.statut === "OUVERT" ? "alert" : "ok"}>
+                  {t(c.statut === "EN_INVESTIGATION" ? "EN INVESTIGATION"
+                    : c.statut === "OUVERT" ? "OUVERT" : "CLOS — MROS")}</StatusChip>,
+                <span key="d" className="mono">{c.createdAt ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Un cas de risque reste RÉCONCILIÉ avec l'alerte ou le hit qui l'a fait naître (R280) — jamais un double pilotage ; ses transitions sont fermées et ses terminaux motivés, la clôture est cohérente avec le MROS (R133–R136). Une ligne s'ouvre sur l'origine.")}</div>
         </>)}
       </Ui2Shell>);
   }
