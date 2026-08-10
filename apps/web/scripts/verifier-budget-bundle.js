@@ -38,7 +38,13 @@ const zlib = require("zlib");
 // composants (DecisionPanel, DiffTable/DiffRow, ImpactPreview, SandboxSlider, BarMeter) —
 // toujours DANS le chunk LAZY ui2, le chargement initial ne bouge pas. Mesure 262.7 à la fin
 // de l'étape 8. Marge ≈ 7 kB pour l'étape 9 (migrations par patterns), pas un blanc-seing.
-const BUDGET_TOTAL_KB = 270;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// 2026-08-10 (V2-M1/M2, commit motivé) : 270 → 280. Migration des modules dans le shell v2 :
+// M1 Connaissance client (sections réelles /v1/kyc, onglets GED/Corroboration/Cross-border,
+// mesure 268.9) puis M2 Surveillance (file screening /v1/screening/hits, règles AML en
+// consultation /v1/aml/referentiel, onglet Transactions /v1/txflux — mesure 270.3). Toujours
+// dans le chunk LAZY ui2 (chargement initial inchangé). Annoncé au PO à la clôture de M1.
+// Marge ≈ 10 kB pour M3..M6, chaque lot reste un commit motivé — jamais un trou.
+const BUDGET_TOTAL_KB = 280;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

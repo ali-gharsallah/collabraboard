@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
-import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
+import { Ui2HeaderDossier, Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { DecisionPanel } from "./DecisionPanel";
 import { DiffTable } from "./DiffRow";
+import { EntityList } from "./Listes";
+import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -18,6 +20,32 @@ import { traduire, langue } from "../lib/i18n";
 
 const nombre = (s: string) => <span className="mono">{s}</span>;
 
+// ── V2-M2 : les listes RÉELLES de la Surveillance, sources signalées ───────────────────────
+// File screening (/v1/screening/hits, R411 — sujet × temps, config du run référencée) ;
+// règles AML en CONSULTATION (/v1/aml/referentiel — la modification passe par le bac à
+// sable de l'écran 10) ; transactions (/v1/txflux). Les seeds miment ces formes.
+type Hit = { id: string; sujet?: string; nom?: string; liste?: string; score?: number;
+  statut?: string; at?: string };
+const SEED_HITS: Hit[] = [
+  { id: "hit-1", nom: "Andrei Volkov", liste: "UE consolidée 2026-07-31", score: 0.92, statut: "OPEN", at: "10.08.2026" },
+  { id: "hit-2", nom: "Cedar Maritime Ltd", liste: "OFAC SDN 2026-07-28", score: 0.71, statut: "FAUX_POSITIF", at: "06.08.2026" },
+  { id: "hit-3", nom: "Farid El-Masri", liste: "SECO 2026-07-30", score: 0.64, statut: "FAUX_POSITIF", at: "03.08.2026" },
+];
+type Regle = { code: string; libelle?: string; seuils?: string; version?: string; alertes12m?: number };
+const SEED_REGLES: Regle[] = [
+  { code: "AML-R17", libelle: "Écart au profil de flux déclaré", seuils: "× 2,0 · fenêtre 30 j", version: "v11 · 12.09.2024", alertes12m: 1244 },
+  { code: "AML-R04", libelle: "Structuration sous les seuils", seuils: "9 500 CHF · 5 op. / 7 j", version: "v6 · 03.02.2025", alertes12m: 312 },
+  { code: "AML-R22", libelle: "Corridor à risque sans justificatif", seuils: "pays liste GAFI · > 50 k", version: "v3 · 18.04.2026", alertes12m: 87 },
+  { code: "AML-R09", libelle: "Cash intensif hors profil", seuils: "> 15 k / mois espèces", version: "v9 · 12.09.2024", alertes12m: 158 },
+];
+type Tx = { id: string; date?: string; contrepartie?: string; montant?: string; canal?: string; statut?: string };
+const SEED_TX: Tx[] = [
+  { id: "tx-1", date: "08.08.2026", contrepartie: "Levant Shipping Co.", montant: "800 000 CHF", canal: "SWIFT MT103", statut: "EN_REVUE" },
+  { id: "tx-2", date: "07.08.2026", contrepartie: "Nordwind Energie GmbH", montant: "120 000 CHF", canal: "SEPA", statut: "REGLEE" },
+  { id: "tx-3", date: "05.08.2026", contrepartie: "Helvetia Kids (don)", montant: "25 000 CHF", canal: "Virement interne", statut: "REGLEE" },
+  { id: "tx-4", date: "04.08.2026", contrepartie: "Levant Shipping Co.", montant: "760 000 CHF", canal: "SWIFT MT103", statut: "EN_REVUE" },
+];
+
 function Chiffre({ label, valeur, mode }: { label: string; valeur: string; mode?: "alert" | "warn" }) {
   return (
     <span style={{ minWidth: 0 }}>
@@ -29,7 +57,10 @@ function Chiffre({ label, valeur, mode }: { label: string; valeur: string; mode?
 
 export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
-  const [ecran, setEcran] = useState<"alerte" | "hit">("alerte");
+  const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions">("alerte");
+  const hits = useApiOrSeed<Hit[]>("/v1/screening/hits", SEED_HITS);
+  const regles = useApiOrSeed<Regle[]>("/v1/aml/referentiel", SEED_REGLES);
+  const txs = useApiOrSeed<Tx[]>("/v1/txflux", SEED_TX);
   // DEUX décisions distinctes (l'alerte AML et le hit screening) — l'état est par écran, et le
   // DecisionPanel porte key={ecran} pour que le motif saisi sur l'un ne fuie jamais sur l'autre.
   const [decisions, setDecisions] = useState<Partial<Record<"alerte" | "hit", { option: string; motif: string }>>>({});
@@ -49,6 +80,80 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
         background: "transparent", color: "var(--ok-text)", fontFamily: "inherit", fontSize: 11.5,
         fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>{t("Annuler")}</button>
     </div>);
+
+  const pilule = (id: typeof ecran, label: string) => (
+    <button key={id} onClick={() => setEcran(id)} aria-pressed={ecran === id}
+      style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
+        fontWeight: 600, cursor: "pointer",
+        border: ecran === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+        background: ecran === id ? "var(--brand-surface)" : "var(--bg-surface)",
+        color: ecran === id ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>);
+  const pilules = (
+    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+      {pilule("alerte", t("Alerte AML"))}
+      {pilule("screening", `${t("File screening")} · ${Array.isArray(hits.data) ? hits.data.length : 0}`)}
+      {pilule("regles", t("Règles AML"))}
+      {pilule("transactions", t("Transactions"))}
+    </div>);
+
+  // ── V2-M2 : les trois vues « liste » du bloc Surveillance ──
+  if (ecran === "screening" || ecran === "regles" || ecran === "transactions") {
+    const sousTitres = {
+      screening: hits.isDemo ? t("données maquette") : t("source : /v1/screening/hits (R411 — sujet × temps, config du run référencée)"),
+      regles: regles.isDemo ? t("données maquette") : t("source : /v1/aml/referentiel"),
+      transactions: txs.isDemo ? t("données maquette") : t("source : /v1/txflux"),
+    } as const;
+    return (
+      <Ui2Shell nav={nav}
+        header={<Ui2HeaderListe titre={t("Surveillance")} sousTitre={sousTitres[ecran]}
+          action={ecran === "regles"
+            ? <Ui2Bouton primaire onClick={() => onNavigate("param")}>{t("Ouvrir le bac à sable →")}</Ui2Bouton>
+            : <Ui2Bouton onClick={() => setEcran("alerte")}>{t("Alerte en cours →")}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        {ecran === "screening" && (<>
+          <EntityList grid="1.3fr 1.3fr 90px 130px 110px"
+            onOpen={() => setEcran("hit")}
+            entetes={[t("Sujet"), t("Liste · version"), t("Score"), t("Statut"), t("Détecté")]}
+            lignes={(Array.isArray(hits.data) ? hits.data : []).slice(0, 30).map((h) => ({
+              id: h.id, cells: [
+                <span key="n" style={{ fontWeight: 600, color: "var(--text)" }}>{h.nom ?? h.sujet ?? h.id}</span>,
+                <span key="l" className="mono">{h.liste ?? "—"}</span>,
+                <span key="s" className="mono" style={{ fontWeight: 600 }}>{h.score != null ? `${Math.round(h.score * 100)} %` : "—"}</span>,
+                <StatusChip key="c" mode={h.statut === "OPEN" ? "warn" : h.statut === "CONFIRME" ? "alert" : "ok"}>
+                  {t(h.statut === "OPEN" ? "À QUALIFIER" : h.statut ?? "QUALIFIÉ")}</StatusChip>,
+                <span key="d" className="mono">{h.at ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Scoring : le moteur de screening du produit (Jaro-Winkler + IDF + blocking trigramme + Double Metaphone), golden set 127 cas asserté en CI. Une ligne s'ouvre sur la qualification (écran hit) — motif obligatoire.")}</div>
+        </>)}
+        {ecran === "regles" && (<>
+          <EntityList grid="110px 1.4fr 1fr 150px 110px" onOpen={() => onNavigate("param")}
+            entetes={[t("Règle"), t("Scénario"), t("Seuils effectifs"), t("Version"), t("Alertes 12 m")]}
+            lignes={(Array.isArray(regles.data) ? regles.data : []).slice(0, 30).map((s) => ({
+              id: s.code, cells: [
+                <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{s.code}</span>,
+                t(s.libelle ?? ""),
+                <span key="s" className="mono">{s.seuils ?? "—"}</span>,
+                <span key="v" className="mono">{s.version ?? "—"}</span>,
+                <span key="a" className="mono">{s.alertes12m != null ? s.alertes12m.toLocaleString("fr-CH") : "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Consultation seule : chaque règle est versionnée et rejouable. La modification passe par le bac à sable du Paramétrage (écran 10) — effet simulé sur l'historique, coût nominatif, version datée et signée.")}</div>
+        </>)}
+        {ecran === "transactions" && (<>
+          <EntityList grid="110px 1.3fr 140px 150px 120px" onOpen={() => setEcran("alerte")}
+            entetes={[t("Date"), t("Contrepartie"), t("Montant"), t("Canal"), t("Statut")]}
+            lignes={(Array.isArray(txs.data) ? txs.data : []).slice(0, 30).map((x) => ({
+              id: x.id, cells: [
+                <span key="d" className="mono">{x.date ?? "—"}</span>,
+                <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{x.contrepartie ?? x.id}</span>,
+                <span key="m" className="mono" style={{ fontWeight: 600 }}>{x.montant ?? "—"}</span>,
+                <span key="k" className="mono">{x.canal ?? "—"}</span>,
+                <StatusChip key="s" mode={x.statut === "EN_REVUE" ? "warn" : "ok"}>
+                  {t(x.statut === "EN_REVUE" ? "EN REVUE" : "RÉGLÉE")}</StatusChip>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
+        </>)}
+      </Ui2Shell>);
+  }
 
   if (ecran === "hit") {
     return (
@@ -122,6 +227,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
         boutonLabel={t("Enregistrer la qualification")}
         mention={t("Le second regard MLRO reste requis avant clôture.")}
         onDecider={setDecision} />}>
+      {pilules}
       {bandeauDecision}
       <section style={{ background: "var(--bg-surface)", border: "1px solid var(--alert-line)",
         borderLeft: "3px solid var(--alert-line)", borderRadius: "var(--r-card)",

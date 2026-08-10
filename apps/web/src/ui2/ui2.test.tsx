@@ -17,6 +17,7 @@ import { SandboxSlider } from "./SandboxSlider";
 import { ECRANS_MIGRES } from "./cartographie";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList } from "./Listes";
+import { Surveillance } from "./Surveillance";
 import { Pilotage } from "./Pilotage";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
@@ -281,5 +282,30 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Dossier"));
     const courant = document.querySelector('button[aria-current="true"]') as HTMLElement;
     expect(courant.textContent).toContain("Origine des fonds");
+  });
+
+  it("U2-21 V2-M2 Surveillance : file screening, règles AML en consultation, transactions", () => {
+    const onNavigate = vi.fn();
+    render(<Surveillance active="surveillance" onNavigate={onNavigate} />);
+    // file screening : une ligne s'ouvre sur la QUALIFICATION (écran hit, motif obligatoire)
+    fireEvent.click(screen.getByText(/File screening/));
+    expect(screen.getByText("Andrei Volkov")).toBeTruthy();
+    expect(screen.getByText("92 %")).toBeTruthy();
+    expect(screen.getByText("À QUALIFIER")).toBeTruthy();
+    expect(screen.getByText(/golden set 127 cas asserté en CI/)).toBeTruthy();   // le VRAI moteur, cité
+    fireEvent.click(screen.getByText("Andrei Volkov"));
+    expect(screen.getByText("Qualifier le hit")).toBeTruthy();                   // → écran 05
+    // règles AML : CONSULTATION seule — la modification renvoie au bac à sable (écran 10)
+    fireEvent.click(screen.getByText("← Alerte AML liée"));
+    fireEvent.click(screen.getByText("Règles AML"));
+    expect(screen.getByText("AML-R17")).toBeTruthy();
+    expect(screen.getByText("v11 · 12.09.2024")).toBeTruthy();
+    expect(screen.getByText(/La modification passe par le bac à sable/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Ouvrir le bac à sable →"));
+    expect(onNavigate).toHaveBeenCalledWith("param");
+    // transactions : EN REVUE visible, ligne → alerte liée
+    fireEvent.click(screen.getByText("Transactions"));
+    expect(screen.getAllByText("Levant Shipping Co.").length).toBe(2);
+    expect(screen.getAllByText("EN REVUE").length).toBeGreaterThanOrEqual(2);
   });
 });
