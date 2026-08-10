@@ -6,6 +6,7 @@ import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { SandboxSlider } from "./SandboxSlider";
 import { EntityList } from "./Listes";
+import { ParamCleDetail } from "./ParamDetail";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 
@@ -67,6 +68,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
   const [pops, setPops] = useState({ eleve: true, multi: true, faible: false });
   const [soumis, setSoumis] = useState(false);
   const [section, setSection] = useState<string>("sandbox");
+  const [cleOuverte, setCleOuverte] = useState<string | null>(null);   // V2-M8 : drill-down par clé
   const registre = useApiOrSeed<Cle[] | Record<string, unknown>>("/v1/parametres/registre", null as never);
   // V2-M7 (suite) : fraîcheur ETL par connecteur × famille (/v1/etl/fraicheur, R488).
   const fraicheur = useApiOrSeed<{ cle: string; connecteur: string; famille: string;
@@ -79,7 +81,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
       dernierLot: "LOT-2026-0807-EOD", recuLe: "07.08.2026 22:04", statut: "INCIDENT" },
   ]);
   const pilule = (id: string, label: string) => (
-    <button key={id} onClick={() => setSection(id)} aria-pressed={section === id}
+    <button key={id} onClick={() => { setSection(id); setCleOuverte(null); }} aria-pressed={section === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
         fontWeight: 600, cursor: "pointer",
         border: section === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
@@ -119,6 +121,26 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
       </Ui2Shell>);
   }
 
+  // V2-M8 : vue détaillée d'une clé gouvernée (grille doc-matrix, circuit de visa, matrice
+  // de droits…) — tout est visible en v2 avant toute bascule.
+  const cleDetail = cleOuverte && sectionActive?.seed.find((c) => c.cle === cleOuverte);
+  if (sectionActive && cleDetail) {
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderDossier nom={t(cleDetail.description ?? cleDetail.cle)} initiales="CL"
+          identifiants={`${t("Paramétrage")} — ${t(sectionActive.label)} · ` +
+            (registre.isDemo ? t("données maquette") : t("source : /v1/parametres/registre (config gouvernée par date, R29)"))}
+          puces={<StatusChip mode="neutral">{t("GOUVERNÉ")}</StatusChip>}
+          actions={<Ui2Bouton onClick={() => setCleOuverte(null)}>{`← ${t(sectionActive.label)}`}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        <ParamCleDetail cle={cleDetail} t={t}
+          onSandbox={() => { setSection("sandbox"); setCleOuverte(null); }} />
+      </Ui2Shell>);
+  }
+
   if (sectionActive) {
     return (
       <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
@@ -130,7 +152,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
           puces={<StatusChip mode="neutral">{t("GOUVERNÉ")}</StatusChip>}
           actions={<Ui2Bouton primaire onClick={() => setSection("sandbox")}>{t("Simuler dans le bac à sable →")}</Ui2Bouton>} t={t} />}>
         {pilules}
-        <EntityList grid="200px 1.5fr 1fr 140px" onOpen={() => setSection("sandbox")}
+        <EntityList grid="200px 1.5fr 1fr 140px" onOpen={(id) => setCleOuverte(id)}
           entetes={[t("Clé"), t("Description"), t("Valeur en vigueur"), t("Version · effet")]}
           lignes={sectionActive.seed.map((c) => ({ id: c.cle, cells: [
             <span key="k" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text)" }}>{c.cle}</span>,

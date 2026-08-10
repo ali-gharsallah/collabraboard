@@ -394,4 +394,39 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(doctrine).toContain("l'import ne décide rien (R489)");                // R44 appliqué à l'ETL
     expect(doctrine).toContain("tout-ou-rien");                                  // arbitrage Q4 affiché
   });
+
+  it("U2-27 V2-M8 matrice documentaire : la GRILLE SDD/CDD/EDD s'ouvre depuis la clé doc-matrix", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Questionnaires"));
+    fireEvent.click(screen.getByText("doc-matrix"));                             // la ligne ouvre le détail
+    for (const col of ["SDD", "CDD", "EDD"]) expect(screen.getByText(col)).toBeTruthy();
+    expect(screen.getByText("Formulaire A / K — ayant droit économique")).toBeTruthy();
+    expect(screen.getByText("Mémo PEP + approbation direction")).toBeTruthy();   // EDD seulement
+    expect(screen.getByText(/un durcissement ne réécrit jamais un dossier existant/)).toBeTruthy(); // R29
+    expect(screen.getByText(/reste rejouable pour l'audit/)).toBeTruthy();       // historique commun R48
+    fireEvent.click(screen.getByText("← Questionnaires"));                       // retour à la section
+    expect(screen.getByText("review.profiles")).toBeTruthy();
+  });
+
+  it("U2-28 V2-M8 circuit de visa WF-KYC-03 : étapes fermées, quatre yeux R13, R44 visible", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Workflow"));
+    fireEvent.click(screen.getByText("workflow.WF-KYC-03"));
+    expect(screen.getByText("Contrôle compliance — quatre yeux")).toBeTruthy();
+    expect(screen.getByText(/jamais le même acteur que l'étape 1/)).toBeTruthy();          // R13
+    expect(screen.getByText(/la PEPisation est décidée par un humain/)).toBeTruthy();      // R44
+    expect(screen.getByText(/l'ordre des gardes est contractuel/)).toBeTruthy();           // précédence
+  });
+
+  it("U2-29 V2-M8 matrice de droits IAM (R282) : sections × rôles, V = visa", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Accès"));
+    fireEvent.click(screen.getByText("iam.matrice"));
+    expect(screen.getByText("Communications MROS")).toBeTruthy();               // le MLRO seul écrit
+    expect(screen.getByText(/L = lecture · É = écriture · V = visa/)).toBeTruthy();
+    expect(screen.getByText(/un écran non autorisé n'apparaît pas/)).toBeTruthy();
+    // « Simuler une modification → » ramène au bac à sable (arbitrage n°1 — pas d'édition directe)
+    fireEvent.click(screen.getByText("Simuler une modification →"));
+    expect(screen.getByText("Effet simulé sur l'historique")).toBeTruthy();
+  });
 });
