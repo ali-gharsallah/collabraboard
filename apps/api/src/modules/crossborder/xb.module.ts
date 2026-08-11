@@ -463,6 +463,100 @@ export class XbService {
     return { clientId: dto.clientId, juridiction: dto.juridiction, du: dto.du, au: dto.au };
   }
 
+  // ══ LECTURES DE LISTE (R460, écart E-V2-5) — les trois familles d'objets cross-border
+  //    n'avaient que des routes d'ÉCRITURE : rien ne les relisait, et l'écran v2 devait tourner
+  //    sur des données de maquette. Elles se lisent désormais comme l'exposition : par
+  //    PROJECTION des événements, recalculée à chaque appel. Aucune table nouvelle, aucun
+  //    dénormalisé à maintenir — donc aucune seconde vérité à désynchroniser du journal (R49).
+  //
+  //    L'ÉTAT N'EST PAS UNE COLONNE : il se DÉDUIT de la présence des événements. Une dérogation
+  //    est « visée » parce que `xb.derogation.visee` existe, pas parce qu'un champ le dit. Il n'y
+  //    a d'ailleurs PAS d'événement de refus au moteur : la projection ne peut donc pas rendre un
+  //    état « refusée » — l'écran ne doit pas en inventer un.
+
+  /** Nom lisible d'un client, sans jamais faire échouer une liste sur un client disparu. */
+  private async nomsClients(ctx: Ctx): Promise<Map<string, string>> {
+    const clients = (await this.prisma.client.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    return new Map(clients.map((c) => [c.id, c.name ?? c.id]));
+  }
+
+  /** XB-03 : les dérogations — demande + visa éventuel, état DÉRIVÉ (R44 : le visa est humain). */
+  async derogations(ctx: Ctx) {
+    const evs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: { in: ["xb.derogation.demandee", "xb.derogation.visee"] } },
+      orderBy: { id: "asc" } })) as any[];
+    const visas = new Map<string, any>();
+    for (const e of evs) if (e.type === "xb.derogation.visee") visas.set(e.aggregateId, e.payload);
+    const lignes = evs.filter((e) => e.type === "xb.derogation.demandee").map((e) => {
+      const p = e.payload as any; const v = visas.get(e.aggregateId);
+      return { id: e.aggregateId, objet: p.voyageId ?? p.kycCode ?? null,
+        typeObjet: p.voyageId ? "voyage" : p.kycCode ? "dossier" : null,
+        juridiction: p.juridiction ?? null, motif: p.motif ?? null, demandePar: p.par ?? null,
+        at: e.createdAt ?? null,
+        etat: v ? "VISEE" : "EN_ATTENTE_VISA", visePar: v?.visePar ?? null };
+    });
+    return { lignes, calculeLe: new Date().toISOString() };
+  }
+
+  /** R454/R455 : les actes qui ont subi un check — pré-actes CONSIGNÉS et entretiens distants.
+   *  Chaque ligne porte la VERSION de matrice qui l'a jugée : c'est ce qui rend le rejeu
+   *  possible (R48). Sans elle, un verdict d'époque serait relu avec la matrice du jour. */
+  async actes(ctx: Ctx) {
+    const noms = await this.nomsClients(ctx);
+    const preActes = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "xb.preacte.verdict" }, orderBy: { id: "asc" } })) as any[];
+    const reports = (await this.prisma.crmContact.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const lignes = [
+      ...preActes.map((e) => {
+        const p = e.payload as any;
+        return { id: e.aggregateId, famille: "pre-acte", type: p.type ?? null,
+          clientId: p.clientId ?? null, client: noms.get(p.clientId) ?? p.clientId ?? null,
+          juridiction: p.juridiction ?? null, verdict: p.verdict ?? null, passe: !!p.passe,
+          versionMatrice: p.versionMatrice ?? null, at: p.at ?? null,
+          perimetre: p.perimetre ?? null, motif: p.motif ?? null, rejouable: true };
+      }),
+      ...reports.filter((r) => (r.contenu as any)?.verdictXb).map((r) => {
+        const v = (r.contenu as any).verdictXb;
+        return { id: r.id, famille: "acte-distant", type: r.type ?? null,
+          clientId: r.clientId ?? null, client: noms.get(r.clientId) ?? r.clientId ?? null,
+          juridiction: v.juridiction ?? null, verdict: v.verdict ?? null, passe: !!v.passe,
+          versionMatrice: v.versionMatrice ?? null,
+          at: r.at ? new Date(r.at).toISOString() : null,
+          canal: (r.contenu as any).canal ?? null, motif: v.motif ?? null, rejouable: false };
+      }),
+    ].sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
+    return { lignes, calculeLe: new Date().toISOString() };
+  }
+
+  /** R456/R457 : preuves de sollicitation inversée (visa R13) et localisations temporaires.
+   *  Une preuve NON VISÉE ne couvre rien — l'état de visa est donc porté, jamais sous-entendu ;
+   *  une localisation EXPIRE d'elle-même, l'expiration se CALCULE à la lecture (R48). */
+  async reverseSolicitation(ctx: Ctx, atIso?: string) {
+    const noms = await this.nomsClients(ctx);
+    const jour = (atIso ?? new Date().toISOString()).slice(0, 10);
+    const evs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId,
+        type: { in: ["xb.rs.enregistree", "xb.rs.visee", "xb.localisation.declaree"] } },
+      orderBy: { id: "asc" } })) as any[];
+    const visas = new Set(evs.filter((e) => e.type === "xb.rs.visee").map((e) => e.aggregateId));
+    const preuves = evs.filter((e) => e.type === "xb.rs.enregistree").map((e) => {
+      const p = e.payload as any;
+      return { id: e.aggregateId, clientId: p.clientId ?? null,
+        client: noms.get(p.clientId) ?? p.clientId ?? null, perimetre: p.perimetre ?? null,
+        nature: p.nature ?? null, docId: p.docId ?? null, date: p.date ?? null,
+        enregistreePar: p.par ?? null, visee: visas.has(e.aggregateId) };
+    });
+    const localisations = evs.filter((e) => e.type === "xb.localisation.declaree").map((e) => {
+      const p = e.payload as any;
+      const jours = p.du && p.au
+        ? Math.round((new Date(p.au).getTime() - new Date(p.du).getTime()) / 86_400_000) : null;
+      return { clientId: e.aggregateId, client: noms.get(e.aggregateId) ?? e.aggregateId,
+        juridiction: p.juridiction ?? null, du: p.du ?? null, au: p.au ?? null, jours,
+        active: !!(p.du && p.au && p.du <= jour && jour <= p.au) };
+    });
+    return { preuves, localisations, calculeLe: new Date().toISOString() };
+  }
+
   /** R460 : exposition consolidée — PROJECTION calculée des événements à chaque appel. */
   async expositionCrossBorder(ctx: Ctx) {
     const clients = (await this.prisma.client.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
@@ -549,6 +643,10 @@ export class XbController {
   @Post("reverse-solicitation/:id/visa") rsVisa(@Req() r: any, @Param("id") id: string) { return this.svc.viserPreuveRS(r.ctx, id); }    // R456/R13
   @Post("localisations")             loc(@Req() r: any, @Body() b: any) { return this.svc.declarerLocalisation(r.ctx, b ?? {}); }        // R457
   @Get("exposition")                 exposition(@Req() r: any) { return this.svc.expositionCrossBorder(r.ctx); }                         // R460
+  // ── Lectures de liste (E-V2-5) : projections des événements, comme l'exposition ──
+  @Get("derogations")                derogations(@Req() r: any) { return this.svc.derogations(r.ctx); }                                   // XB-03/R460
+  @Get("actes")                      actes(@Req() r: any) { return this.svc.actes(r.ctx); }                                              // R454/R455/R460
+  @Get("reverse-solicitation")       rsListe(@Req() r: any, @Query("at") at?: string) { return this.svc.reverseSolicitation(r.ctx, at); } // R456/R457/R460
   @Get("actes/:id/rejeu")            rejeu(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf: string) { return this.svc.rejouerActe(r.ctx, id, asOf); }   // R48
   @Get("params/registre")            params(@Req() r: any, @Query("date") d?: string) { return this.svc.parametresXB(r.ctx, d ? new Date(d) : undefined); }   // R462
   @Post("params/modifier")           modifierParam(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreXB(r.ctx, b ?? {}); }   // R462/R445

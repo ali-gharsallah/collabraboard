@@ -1622,4 +1622,11 @@ re-soumis ici.
   matrice.
 - **Cible** : trois routes de lecture au moteur (`GET /derogations`, `GET /actes`,
   `GET /reverse-solicitation`), projetées des événements comme l'est déjà l'exposition (R460).
-  Aucune table nouvelle. Statut : OUVERT — travail moteur, non front.
+  Aucune table nouvelle.
+- **SOLDÉ au lot V2-M30 (11.08.2026)** — les trois routes existent et l'écran est branché dessus.
+  Ce sont des projections pures : l'état d'une dérogation se DÉDUIT de la présence de l'événement
+  de visa, l'expiration d'une localisation se CALCULE à la lecture (R48), chaque acte porte la
+  version de matrice qui l'a jugé. Aucune table, aucun dénormalisé. Un constat au passage : le
+  moteur n'émet **pas** d'événement de refus de dérogation — la projection ne connaît donc que
+  deux états, et l'écran a cessé d'en afficher un troisième qu'il avait inventé en maquette.
+  Gardes XB-15 à XB-17 (base réelle) + U2-49. Statut : **FERMÉ**.

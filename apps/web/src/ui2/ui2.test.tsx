@@ -711,12 +711,15 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/Il ne sanctionne pas, ne clôt pas un dossier/)).toBeTruthy();
   });
 
-  it("U2-49 V2-M29 Cross-Border : un onglet sans route de LECTURE le déclare, et l'acte nomme sa garde", () => {
+  it("U2-49 V2-M30 Cross-Border : les dérogations se LISENT ; deux états, jamais un troisième inventé ; l'acte nomme sa garde", () => {
     render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
     fireEvent.click(screen.getByRole("button", { name: "Dérogations" }));
-    // la maquette est annoncée — on ne laisse pas croire à un câblage qui n'existe pas
-    expect(screen.getByText(/n'expose pas de route de lecture/)).toBeTruthy();
-    expect(screen.getByText(/écart E-V2-5/)).toBeTruthy();
+    // l'onglet est câblé sur la projection du moteur (E-V2-5 soldé) — plus de bandeau de maquette
+    expect(screen.queryByText(/n'expose pas de route de lecture/)).toBeNull();
+    expect(screen.getByText(/le moteur n'émet pas d'événement de refus/i)).toBeTruthy();
+    // l'état est dérivé du visa : seules ces deux valeurs peuvent apparaître
+    expect(screen.getAllByText(/VISÉE|EN ATTENTE DE VISA/).length).toBeGreaterThan(0);
+    expect(screen.queryByText("REFUSÉE")).toBeNull();
     // l'acte dit sa garde ET sa route ; il n'exécute rien
     fireEvent.click(screen.getByRole("button", { name: "Viser une dérogation" }));
     const dit = screen.getAllByRole("status").map((n) => n.textContent).join(" ");

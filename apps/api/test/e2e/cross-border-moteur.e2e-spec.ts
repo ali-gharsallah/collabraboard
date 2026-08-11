@@ -287,4 +287,58 @@ describe("Bloc 64 — cross-border étendu (R453–R462, spec/BLOC-64 §3)", () 
     expect(rejeu.verdict).toMatch(/COND/);
     expect(rejeu.verdict).not.toMatch(/^NON$/);                             // jamais recalculé avec la nouvelle
   });
+
+  // ══ E-V2-5 (V2-M30) — LECTURES DE LISTE. Les dérogations, les actes et les preuves de
+  //    sollicitation inversée s'écrivaient sans jamais se relire : l'écran v2 tournait sur des
+  //    données de maquette. Ces trois projections comblent le trou SANS table nouvelle.
+
+  it("XB-15 [E-V2-5/R460] — les dérogations se LISENT : état dérivé du visa, motif porté, aucun état inventé", async () => {
+    const d = await svc.demanderDerogation(RM1, { voyageId: randomUUID(), juridiction: "FR",
+      motif: "Réunion de gouvernance chez un client existant — aucun démarchage." });
+    const avantVisa = await svc.derogations(CO1);
+    const l1 = avantVisa.lignes.find((l: any) => l.id === d.id);
+    expect(l1).toBeTruthy();
+    expect(l1.etat).toBe("EN_ATTENTE_VISA");                                // dérivé de l'ABSENCE de visa
+    expect(l1.motif).toMatch(/aucun démarchage/);                           // R7 : le motif est porté, pas résumé
+    expect(l1.typeObjet).toBe("voyage");
+    expect(l1.visePar).toBeNull();
+    // le moteur n'a PAS d'événement de refus : la projection ne peut donc pas rendre « REFUSEE »
+    expect(avantVisa.lignes.every((l: any) => ["VISEE", "EN_ATTENTE_VISA"].includes(l.etat))).toBe(true);
+  });
+
+  it("XB-16 [E-V2-5/R454/R455] — les actes se LISENT avec la VERSION de matrice qui les a jugés (sans quoi le rejeu R48 est impossible)", async () => {
+    const objet = randomUUID();
+    await svc.checkPreActe(RM1, { type: "MEET", clientId: C_DE, objetId: objet });
+    await svc.contactReportDistant(RM1, { clientId: C_FR, canal: "Email", typeEntretien: "Courtoisie" });
+    const { lignes } = await svc.actes(CO1);
+    const pre = lignes.find((l: any) => l.id === objet);
+    expect(pre).toEqual(expect.objectContaining({ famille: "pre-acte", type: "MEET",
+      juridiction: "DE", passe: true, rejouable: true }));
+    expect(String(pre.versionMatrice).length).toBeGreaterThan(0);           // la version d'époque, portée
+    expect(lignes.some((l: any) => l.famille === "acte-distant" && l.canal === "Email")).toBe(true);
+    // le rejeu de CETTE ligne rend bien le verdict consigné (R48) — la liste et le rejeu concordent
+    const rejeu = await svc.rejouerActe(CO1, objet, new Date().toISOString());
+    expect(rejeu.versionMatrice).toBe(pre.versionMatrice);
+  });
+
+  it("XB-17 [E-V2-5/R456/R457] — preuves et localisations se LISENT : le visa est porté, l'expiration se CALCULE à la lecture", async () => {
+    const p = await svc.enregistrerPreuveRS(RM1, { clientId: C_FR, perimetre: "produit Z",
+      nature: "Courriel entrant du client", docId: "GED-XB-15", date: jourISO(-3) });
+    const avant = await svc.reverseSolicitation(CO1);
+    expect(avant.preuves.find((x: any) => x.id === p.preuveId).visee).toBe(false);   // non visée = ne couvre rien
+    await svc.viserPreuveRS(CO1, p.preuveId);
+    const apres = await svc.reverseSolicitation(CO1);
+    const preuve = apres.preuves.find((x: any) => x.id === p.preuveId);
+    expect(preuve.visee).toBe(true);
+    expect(preuve.docId).toBe("GED-XB-15");
+    expect(preuve.client).toBeTruthy();                                     // nom lisible, pas un UUID nu
+    // localisation : ACTIVE aujourd'hui, INACTIVE si on lit à une date hors période (R48)
+    await svc.declarerLocalisation(RM1, { clientId: C_DE, juridiction: "FR", du: jourISO(-2), au: jourISO(5) });
+    const auj = await svc.reverseSolicitation(CO1);
+    const loc = auj.localisations.find((l: any) => l.clientId === C_DE);
+    expect(loc.active).toBe(true);
+    expect(loc.jours).toBe(7);
+    const plusTard = await svc.reverseSolicitation(CO1, new Date(Date.now() + 30 * 86_400_000).toISOString());
+    expect(plusTard.localisations.find((l: any) => l.clientId === C_DE).active).toBe(false);
+  });
 });

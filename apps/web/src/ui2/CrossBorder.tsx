@@ -16,12 +16,12 @@ import { traduire, langue } from "../lib/i18n";
  * R293-R295 + R453-R462) et la v2 n'en exposait qu'une — la matrice, repliée dans un onglet du
  * dossier KYC. C'était le plus gros écart fonctionnel du produit (E-V2-1).
  *
- * CE QUE L'ÉCRAN DIT DE SES SOURCES. Quatre routes se LISENT et sont branchées :
- * exposition (R460), matrice à date (R453), reporting des ordres (XB-04/R39) et conformité d'un
- * voyage (XB-03). Les trois autres familles — dérogations, actes distants / pré-acte, reverse
- * solicitation et localisations — n'ont au moteur que des routes d'ÉCRITURE : aucune liste ne
- * s'en lit aujourd'hui. Ces onglets tournent donc sur des données de maquette et le disent en
- * toutes lettres ; l'écart est consigné (E-V2-5), il n'est pas maquillé.
+ * CE QUE L'ÉCRAN DIT DE SES SOURCES (V2-M30) — les SIX onglets lisent le moteur. Aux quatre
+ * routes de lecture d'origine (exposition R460, matrice à date R453, reporting des ordres
+ * XB-04/R39, conformité d'un voyage XB-03) s'ajoutent les trois qui manquaient : dérogations,
+ * actes & pré-actes, sollicitation inversée & localisations. Elles sont des PROJECTIONS des
+ * événements, calculées à chaque appel — aucune table nouvelle, donc aucune seconde vérité à
+ * désynchroniser du journal (R49). L'écart E-V2-5 est soldé.
  *
  * R44 : aucun bouton ci-dessous n'exécute une décision. Chaque acte NOMME sa garde et sa route ;
  * la dérogation se motive et se vise par un second regard, la preuve de reverse solicitation se
@@ -112,48 +112,66 @@ const SEED_REPORTING: Reporting = { parPays: {
   AE: { total: 14, reverseSolicitation: 9 }, DE: { total: 11, reverseSolicitation: 1 },
   SG: { total: 6, reverseSolicitation: 2 } } };
 
-// ── Les trois familles SANS route de lecture au moteur (écart E-V2-5) : maquette assumée. ──
-type Derogation = { id: string; reference: string; objet: string; juridiction: string; motif: string; etat: string };
-const SEED_DEROGATIONS: Derogation[] = [
-  { id: "d1", reference: "XBD-2026-0031", objet: "Voyage TRP-2026-0114 · Dubaï", juridiction: "AE",
-    motif: "Client existant, réunion de gouvernance du family office — aucun démarchage", etat: "VISEE" },
-  { id: "d2", reference: "XBD-2026-0034", objet: "Dossier KYC-2026-00447", juridiction: "FR",
-    motif: "Signature de documents chez le notaire du client, à sa demande écrite", etat: "EN_ATTENTE_VISA" },
-  { id: "d3", reference: "XBD-2026-0036", objet: "Voyage TRP-2026-0121 · Paris", juridiction: "FR",
-    motif: "Conférence sectorielle — présence sans rendez-vous client", etat: "REFUSEE" },
-];
-type ActeXb = { id: string; type: string; objet: string; juridiction: string; verdict: string;
-  version: string; at: string };
-const SEED_ACTES: ActeXb[] = [
-  { id: "a1", type: "Entretien à distance", objet: "CR-2026-0912 · Zhang Wei Family Office", juridiction: "SG",
-    verdict: "OUI", version: "XBM-2026-07", at: "08.08.2026" },
-  { id: "a2", type: "Pré-acte · ouverture", objet: "KYC-2026-00512 · Nordwind Energie GmbH", juridiction: "DE",
-    verdict: "NON", version: "XBM-2026-07", at: "07.08.2026" },
-  { id: "a3", type: "Pré-acte · proposition", objet: "OPP-2026-0233 · Levant Shipping Co.", juridiction: "AE",
-    verdict: "SOUS_CONDITION", version: "XBM-2026-06", at: "22.07.2026" },
-  { id: "a4", type: "Entretien à distance", objet: "CR-2026-0888 · Helvetia Kids", juridiction: "FR",
-    verdict: "OUI", version: "XBM-2026-06", at: "18.07.2026" },
-];
-type PreuveRs = { id: string; client: string; perimetre: string; nature: string; doc: string;
-  date: string; visee: boolean };
-const SEED_RS: PreuveRs[] = [
-  { id: "p1", client: "Zhang Wei Family Office", perimetre: "Mandat de gestion discrétionnaire",
-    nature: "Courriel entrant du client", doc: "GED-2026-4412", date: "12.03.2026", visee: true },
-  { id: "p2", client: "Levant Shipping Co.", perimetre: "Ouverture de compte courant",
-    nature: "Formulaire signé sur le portail", doc: "GED-2026-4790", date: "02.08.2026", visee: false },
-  { id: "p3", client: "Nordic Wealth AB", perimetre: "Crédit lombard",
-    nature: "Demande écrite du client", doc: "GED-2026-4501", date: "19.05.2026", visee: true },
-];
-type Localisation = { id: string; client: string; juridiction: string; du: string; au: string; jours: number };
-const SEED_LOCALISATIONS: Localisation[] = [
-  { id: "l1", client: "Henrik Vallon", juridiction: "AE", du: "01.07.2026", au: "30.09.2026", jours: 91 },
-  { id: "l2", client: "Pierre Delacroix", juridiction: "FR", du: "05.08.2026", au: "20.08.2026", jours: 15 },
-];
+// ── Les trois familles, DÉSORMAIS LUES (V2-M30) — mêmes formes que les projections du moteur
+//    (`GET /derogations`, `/actes`, `/reverse-solicitation`). Les seeds miment ces formes : quand
+//    l'API répond, rien ne change à l'écran. L'état d'une dérogation ne connaît que deux valeurs,
+//    parce que le moteur n'émet pas d'événement de refus — l'écran n'en invente pas un troisième.
+type Derogation = { id: string; objet: string | null; typeObjet: string | null;
+  juridiction: string | null; motif: string | null; demandePar: string | null;
+  etat: "VISEE" | "EN_ATTENTE_VISA"; visePar: string | null };
+const SEED_DEROGATIONS: { lignes: Derogation[] } = { lignes: [
+  { id: "XBD-2026-0031", objet: "TRP-2026-0114 · Dubaï", typeObjet: "voyage", juridiction: "AE",
+    motif: "Client existant, réunion de gouvernance du family office — aucun démarchage",
+    demandePar: "c.morel", etat: "VISEE", visePar: "m.bregy" },
+  { id: "XBD-2026-0034", objet: "KYC-2026-00447", typeObjet: "dossier", juridiction: "FR",
+    motif: "Signature de documents chez le notaire du client, à sa demande écrite",
+    demandePar: "s.berger", etat: "EN_ATTENTE_VISA", visePar: null },
+  { id: "XBD-2026-0036", objet: "TRP-2026-0121 · Paris", typeObjet: "voyage", juridiction: "FR",
+    motif: "Conférence sectorielle — présence sans rendez-vous client",
+    demandePar: "c.morel", etat: "EN_ATTENTE_VISA", visePar: null },
+] };
+
+type ActeXb = { id: string; famille: string; type: string | null; client: string | null;
+  juridiction: string | null; verdict: string | null; passe: boolean;
+  versionMatrice: string | null; at: string | null; canal?: string | null; rejouable: boolean };
+const SEED_ACTES: { lignes: ActeXb[] } = { lignes: [
+  { id: "CR-2026-0912", famille: "acte-distant", type: "Conseil", client: "Zhang Wei Family Office",
+    juridiction: "SG", verdict: "OUI", passe: true, versionMatrice: "XBM-2026-07",
+    at: "2026-08-08", canal: "Visioconférence", rejouable: false },
+  { id: "KYC-2026-00512", famille: "pre-acte", type: "PROSP", client: "Nordwind Energie GmbH",
+    juridiction: "DE", verdict: "NON", passe: false, versionMatrice: "XBM-2026-07",
+    at: "2026-08-07", rejouable: true },
+  { id: "OPP-2026-0233", famille: "pre-acte", type: "MKT", client: "Levant Shipping Co.",
+    juridiction: "AE", verdict: "SOUS_CONDITION", passe: true, versionMatrice: "XBM-2026-06",
+    at: "2026-07-22", rejouable: true },
+  { id: "CR-2026-0888", famille: "acte-distant", type: "Courtoisie", client: "Helvetia Kids",
+    juridiction: "FR", verdict: "OUI", passe: true, versionMatrice: "XBM-2026-06",
+    at: "2026-07-18", canal: "Email", rejouable: false },
+] };
+
+type PreuveRs = { id: string; client: string | null; perimetre: string | null; nature: string | null;
+  docId: string | null; date: string | null; visee: boolean };
+type Localisation = { clientId: string; client: string | null; juridiction: string | null;
+  du: string | null; au: string | null; jours: number | null; active: boolean };
+const SEED_RS: { preuves: PreuveRs[]; localisations: Localisation[] } = {
+  preuves: [
+    { id: "p1", client: "Zhang Wei Family Office", perimetre: "Mandat de gestion discrétionnaire",
+      nature: "Courriel entrant du client", docId: "GED-2026-4412", date: "2026-03-12", visee: true },
+    { id: "p2", client: "Levant Shipping Co.", perimetre: "Ouverture de compte courant",
+      nature: "Formulaire signé sur le portail", docId: "GED-2026-4790", date: "2026-08-02", visee: false },
+    { id: "p3", client: "Nordic Wealth AB", perimetre: "Crédit lombard",
+      nature: "Demande écrite du client", docId: "GED-2026-4501", date: "2026-05-19", visee: true },
+  ],
+  localisations: [
+    { clientId: "l1", client: "Henrik Vallon", juridiction: "AE", du: "2026-07-01", au: "2026-09-30", jours: 91, active: true },
+    { clientId: "l2", client: "Pierre Delacroix", juridiction: "FR", du: "2026-08-05", au: "2026-08-20", jours: 15, active: true },
+  ],
+};
 
 const MODE_VERDICT: Record<string, ChipMode> = { OUI: "ok", NON: "alert", SOUS_CONDITION: "warn" };
 const MODE_SEVERITE: Record<string, ChipMode> = { BLOQUANT: "alert", AVERTISSEMENT: "warn", AUTORISE: "ok" };
-const MODE_ETAT: Record<string, ChipMode> = { VISEE: "ok", EN_ATTENTE_VISA: "warn", REFUSEE: "alert" };
-const LIBELLE_ETAT: Record<string, string> = { VISEE: "VISÉE", EN_ATTENTE_VISA: "EN ATTENTE DE VISA", REFUSEE: "REFUSÉE" };
+const MODE_ETAT: Record<string, ChipMode> = { VISEE: "ok", EN_ATTENTE_VISA: "warn" };
+const LIBELLE_ETAT: Record<string, string> = { VISEE: "VISÉE", EN_ATTENTE_VISA: "EN ATTENTE DE VISA" };
 
 type Onglet = "exposition" | "matrice" | "derogations" | "actes" | "rs" | "ordres";
 
@@ -165,6 +183,10 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
   const expo = useApiOrSeed<typeof SEED_EXPO>("/v1/crossborder/exposition", SEED_EXPO);
   const matrice = useApiOrSeed<Matrice>("/v1/crossborder/matrice", SEED_MATRICE);
   const reporting = useApiOrSeed<Reporting>("/v1/crossborder/reporting", SEED_REPORTING);
+  // V2-M30 : les trois familles qui n'avaient que des routes d'écriture se LISENT (E-V2-5 soldé).
+  const derog = useApiOrSeed<typeof SEED_DEROGATIONS>("/v1/crossborder/derogations", SEED_DEROGATIONS);
+  const actes = useApiOrSeed<typeof SEED_ACTES>("/v1/crossborder/actes", SEED_ACTES);
+  const rs = useApiOrSeed<typeof SEED_RS>("/v1/crossborder/reverse-solicitation", SEED_RS);
 
   const lignes = Array.isArray(expo.data?.parJuridiction) ? expo.data.parJuridiction : [];
   const totalClients = lignes.reduce((s, l) => s + (l.clients ?? 0), 0);
@@ -206,23 +228,17 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
       </div>);
   };
 
-  // Les onglets sans route de LECTURE au moteur le disent — on ne laisse pas croire à un câblage.
-  const bandeauSansLecture = (familles: string) => (
-    <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)",
-      borderLeft: "3px solid var(--info-line)", borderRadius: 9, padding: "10px 13px",
-      marginBottom: 12, fontSize: 11.5, color: "var(--text-body)", lineHeight: 1.55 }}>
-      {t("Le moteur porte les ACTES de cette famille, pas encore sa route de lecture")} — {familles}.{" "}
-      {t("La liste ci-dessous est donc une maquette, et le restera tant que la route de lecture n'existe pas (écart E-V2-5). Les gardes annoncées par les boutons, elles, sont celles du moteur.")}
-    </div>);
-
   const sousTitre = {
     exposition: expo.isDemo ? t("données maquette")
       : t("source : /v1/crossborder/exposition (R460) — projection recalculée à chaque appel"),
     matrice: matrice.isDemo ? t("données maquette")
       : t("source : /v1/crossborder/matrice (R453) — version datée immuable"),
-    derogations: t("données maquette — le moteur n'expose pas de route de lecture (E-V2-5)"),
-    actes: t("données maquette — le moteur n'expose pas de route de lecture (E-V2-5)"),
-    rs: t("données maquette — le moteur n'expose pas de route de lecture (E-V2-5)"),
+    derogations: derog.isDemo ? t("données maquette")
+      : t("source : /v1/crossborder/derogations (XB-03 — état dérivé du visa, jamais une colonne)"),
+    actes: actes.isDemo ? t("données maquette")
+      : t("source : /v1/crossborder/actes (R454/R455 — chaque acte porte la version qui l'a jugé)"),
+    rs: rs.isDemo ? t("données maquette")
+      : t("source : /v1/crossborder/reverse-solicitation (R456/R457 — visa porté, expiration calculée)"),
     ordres: reporting.isDemo ? t("données maquette")
       : t("source : /v1/crossborder/reporting (XB-04/R39) — mesuré et notifié, jamais bloquant"),
   }[onglet];
@@ -312,66 +328,73 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
       </>)}
 
       {onglet === "derogations" && (<>
-        {bandeauSansLecture(t("demande, visa et conformité d'un voyage s'écrivent"))}
         {barreActes("derogations")}
         <EntityList grid="150px 1.5fr 90px 1.6fr 170px" onOpen={() => undefined}
           entetes={[t("Référence"), t("Objet"), t("Juridiction"), t("Motif"), t("État")]}
-          lignes={SEED_DEROGATIONS.map((d) => ({ id: d.id, cells: [
-            <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{d.reference}</span>,
-            t(d.objet),
-            <span key="j" className="mono">{d.juridiction}</span>,
-            <span key="m" style={{ fontSize: 11.5, color: "var(--text-body)" }}>{t(d.motif)}</span>,
-            <StatusChip key="e" mode={MODE_ETAT[d.etat] ?? "neutral"}>{t(LIBELLE_ETAT[d.etat] ?? d.etat)}</StatusChip>] }))} />
+          lignes={(derog.data?.lignes ?? []).map((d) => ({ id: d.id, cells: [
+            <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>
+              {String(d.id).slice(0, 14)}</span>,
+            <span key="o">{d.objet ?? "—"}
+              <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)" }}>
+                {t(d.typeObjet === "voyage" ? "voyage" : d.typeObjet === "dossier" ? "dossier KYC" : "—")}</span></span>,
+            <span key="j" className="mono">{d.juridiction ?? "—"}</span>,
+            <span key="m" style={{ fontSize: 11.5, color: "var(--text-body)" }}>{d.motif ?? "—"}</span>,
+            <StatusChip key="e" mode={MODE_ETAT[d.etat] ?? "neutral"}>
+              {t(LIBELLE_ETAT[d.etat] ?? d.etat)}</StatusChip>] }))} />
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-          {t("L'état d'une dérogation est DÉRIVÉ des événements — demande, visa, refus — et non porté par une colonne que l'on corrigerait. Le visa relève d'un rôle habilité (R294) et d'un second regard (R13) : l'initiateur ne vise pas sa propre demande.")}</div>
+          {t("L'état d'une dérogation est DÉRIVÉ des événements : elle est « visée » parce que l'événement de visa existe, pas parce qu'une colonne le dit — donc rien ici ne se corrige à la main. Le moteur n'émet pas d'événement de refus : il n'y a que deux états, et l'écran n'en invente pas un troisième. Le visa relève d'un rôle habilité (R294) et d'un second regard (R13).")}</div>
       </>)}
 
       {onglet === "actes" && (<>
-        {bandeauSansLecture(t("entretien distant, check pré-acte et rejeu s'exécutent"))}
         {barreActes("actes")}
-        <EntityList grid="180px 1.6fr 90px 150px 130px 110px" onOpen={() => undefined}
-          entetes={[t("Type"), t("Objet"), t("Juridiction"), t("Verdict consigné"),
+        <EntityList grid="130px 1.6fr 90px 150px 130px 110px" onOpen={() => undefined}
+          entetes={[t("Famille"), t("Objet"), t("Juridiction"), t("Verdict consigné"),
             t("Version de matrice"), t("Date")]}
-          lignes={SEED_ACTES.map((a) => ({ id: a.id, cells: [
-            <span key="t" style={{ fontSize: 11.5 }}>{t(a.type)}</span>,
-            <span key="o" style={{ fontWeight: 600, color: "var(--text)" }}>{a.objet}</span>,
-            <span key="j" className="mono">{a.juridiction}</span>,
-            <StatusChip key="v" mode={MODE_VERDICT[a.verdict] ?? "neutral"}>
-              {t(a.verdict === "SOUS_CONDITION" ? "SOUS CONDITION" : a.verdict)}</StatusChip>,
-            <span key="m" className="mono" style={{ fontSize: 11 }}>{a.version}</span>,
-            <span key="d" className="mono">{a.at}</span>] }))} />
+          lignes={(actes.data?.lignes ?? []).map((a) => ({ id: a.id, cells: [
+            <span key="f" style={{ fontSize: 11 }}>
+              {t(a.famille === "pre-acte" ? "Pré-acte" : "Entretien distant")}
+              <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)" }}>
+                {a.type ?? a.canal ?? "—"}</span></span>,
+            <span key="o" style={{ fontWeight: 600, color: "var(--text)" }}>{a.client ?? a.id}</span>,
+            <span key="j" className="mono">{a.juridiction ?? "—"}</span>,
+            <StatusChip key="v" mode={MODE_VERDICT[a.verdict ?? ""] ?? "neutral"}>
+              {t(a.verdict === "SOUS_CONDITION" ? "SOUS CONDITION" : a.verdict ?? "—")}</StatusChip>,
+            <span key="m" className="mono" style={{ fontSize: 11 }}>
+              {String(a.versionMatrice ?? "—").slice(0, 14)}</span>,
+            <span key="d" className="mono">{String(a.at ?? "—").slice(0, 10)}</span>] }))} />
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
           {t("Chaque ligne porte la VERSION de matrice qui l'a jugée. C'est ce qui rend le rejeu possible : le verdict d'époque se relit tel quel (R48), il ne se recalcule pas avec la matrice d'aujourd'hui — sans quoi un acte régulier hier deviendrait irrégulier demain, sans qu'aucun fait n'ait changé.")}</div>
       </>)}
 
       {onglet === "rs" && (<>
-        {bandeauSansLecture(t("enregistrement, visa et déclaration de localisation s'écrivent"))}
         {barreActes("rs")}
         <EntityList grid="1.4fr 1.4fr 1.3fr 130px 110px 110px" onOpen={() => undefined}
           entetes={[t("Client"), t("Périmètre"), t("Nature de la preuve"), t("Document GED"),
             t("Date"), t("Visa")]}
-          lignes={SEED_RS.map((p) => ({ id: p.id, cells: [
-            <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{p.client}</span>,
-            t(p.perimetre),
-            t(p.nature),
-            <span key="d" className="mono" style={{ fontSize: 11 }}>{p.doc}</span>,
-            <span key="t" className="mono">{p.date}</span>,
+          lignes={(rs.data?.preuves ?? []).map((p) => ({ id: p.id, cells: [
+            <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{p.client ?? "—"}</span>,
+            p.perimetre ?? "—",
+            p.nature ?? "—",
+            <span key="d" className="mono" style={{ fontSize: 11 }}>{p.docId ?? "—"}</span>,
+            <span key="t" className="mono">{String(p.date ?? "—").slice(0, 10)}</span>,
             <StatusChip key="v" mode={p.visee ? "ok" : "warn"}>
               {t(p.visee ? "VISÉE" : "À VISER")}</StatusChip>] }))} />
         <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", margin: "16px 0 8px" }}>
           {t("Localisations temporaires")} <span style={{ fontWeight: 400, fontSize: 11,
             color: "var(--text-muted)" }}>{t("(R457 — la juridiction applicable à un acte)")}</span></div>
-        <EntityList grid="1.4fr 90px 110px 110px 110px" onOpen={() => undefined}
-          entetes={[t("Client"), t("Juridiction"), t("Du"), t("Au"), t("Durée")]}
-          lignes={SEED_LOCALISATIONS.map((l) => ({ id: l.id, cells: [
-            <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{l.client}</span>,
-            <span key="j" className="mono">{l.juridiction}</span>,
-            <span key="d" className="mono">{l.du}</span>,
-            <span key="a" className="mono">{l.au}</span>,
-            <StatusChip key="x" mode={l.jours > 90 ? "warn" : "neutral"}>
-              {`${l.jours} ${t("j")}`}</StatusChip>] }))} />
+        <EntityList grid="1.4fr 90px 110px 110px 110px 110px" onOpen={() => undefined}
+          entetes={[t("Client"), t("Juridiction"), t("Du"), t("Au"), t("Durée"), t("En cours")]}
+          lignes={(rs.data?.localisations ?? []).map((l) => ({ id: l.clientId, cells: [
+            <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{l.client ?? l.clientId}</span>,
+            <span key="j" className="mono">{l.juridiction ?? "—"}</span>,
+            <span key="d" className="mono">{String(l.du ?? "—").slice(0, 10)}</span>,
+            <span key="a" className="mono">{String(l.au ?? "—").slice(0, 10)}</span>,
+            <StatusChip key="x" mode={(l.jours ?? 0) > 90 ? "warn" : "neutral"}>
+              {`${l.jours ?? "—"} ${t("j")}`}</StatusChip>,
+            <StatusChip key="e" mode={l.active ? "info" : "neutral"}>
+              {t(l.active ? "ACTIVE" : "ÉCHUE")}</StatusChip>] }))} />
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-          {t("Une localisation temporaire EXPIRE d'elle-même : elle n'a pas besoin d'être clôturée à la main, et le rejeu résout la juridiction qui s'appliquait à la date de l'acte. Au-delà de la durée gouvernée, ce n'est plus une localisation temporaire mais une question de résidence — le moteur refuse et demande une revue.")}</div>
+          {t("Une localisation temporaire EXPIRE d'elle-même : « en cours » n'est pas un statut stocké, il se CALCULE à la lecture en comparant la période à la date demandée (R48). Elle n'a donc pas besoin d'être clôturée à la main, et le rejeu résout la juridiction qui s'appliquait à la date de l'acte. Au-delà de la durée gouvernée, ce n'est plus une localisation temporaire mais une question de résidence — le moteur refuse et demande une revue.")}</div>
       </>)}
 
       {onglet === "ordres" && (<>
