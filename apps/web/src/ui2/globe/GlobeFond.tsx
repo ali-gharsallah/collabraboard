@@ -55,11 +55,16 @@ export function GlobeFond({ hauteur = 560, focus }: { hauteur?: number; focus: F
       canvas.width = W * dpr; canvas.height = H * dpr;
       canvas.style.width = W + "px"; canvas.style.height = H + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Le globe DÉBORDE volontairement la colonne de contenu : c'est le fond de l'écran, il
-      // doit se voir de part et d'autre de ce qui est posé dessus. Rayon calé sur la hauteur,
-      // pas sur la largeur — sinon il rétrécit dès que la fenêtre s'étrangle.
-      R = (H / 1.72) * zoom;
-      projection.scale(R).translate([W / 2, H / 2]);
+      // DEMI-GLOBE (V2-M23) : le globe est plus large que la scène et son centre est REMONTÉ,
+      // si bien qu'on n'en voit que la calotte supérieure — une coupole qui occupe le haut de
+      // l'écran. Le bas de la sphère passe derrière les transactions, qui sont translucides :
+      // la carte continue sous elles au lieu d'être masquée.
+      // Le rayon est borné par la LARGEUR et par la hauteur du centre : si la sphère déborde
+      // des deux côtés ET par le haut, on ne voit plus qu'une carte plate — c'est la courbure
+      // qui fait la coupole. Centre bas, arc supérieur dans le cadre.
+      const cy = H * 0.78;
+      R = Math.min(W / 2.1, cy - 40) * zoom;
+      projection.scale(R).translate([W / 2, cy]);
     };
     resize();
 

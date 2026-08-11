@@ -39,8 +39,8 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
 
   return (
     <section style={{ position: "relative", background: "var(--bg-app)",
-      borderRadius: "var(--r-card)", overflow: "hidden", padding: "26px 16px 22px",
-      minHeight: 700, display: "grid", alignContent: "center" }}>
+      borderRadius: "var(--r-card)", overflow: "hidden", padding: "18px 16px 20px",
+      minHeight: 760, display: "grid", alignContent: "end" }}>
       <Suspense fallback={null}>
         <GlobeFond focus={focus} />
       </Suspense>
@@ -84,9 +84,13 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
             </button>))}
         </div>
 
+        {/* LES TRANSACTIONS, EN BAS ET TRANSLUCIDES : le demi-globe continue derrière elles.
+            Le voile reste assez dense (0,72 + flou) pour que chaque montant se lise — un fond
+            transparent qui rend un chiffre douteux ne serait pas un effet, ce serait une faute. */}
         {children && (
-          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
-            borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+          <div style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)",
+            border: "1px solid rgba(226,230,221,0.9)", borderRadius: "var(--r-card)",
+            boxShadow: "0 2px 18px -10px rgba(22,27,18,0.28)", overflow: "hidden" }}>
             {children}</div>)}
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", fontSize: 11,
