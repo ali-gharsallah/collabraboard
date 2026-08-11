@@ -154,7 +154,7 @@ export const CAPACITES: Capacite[] = [
     destination: "rapports", onglet: "Veille", licence: "†REGWATCH",
     roles: ["CO", "MLRO"], statut: "livre" },
   { id: "bi", libelle: "BI — Reporting sur mesure", groupeV1: "Data & Intelligence",
-    destination: "rapports", onglet: "Sur mesure", licence: null,
+    destination: "rapports", onglet: "Sur mesure (BI)", licence: null,
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
   { id: "gedcoffre", libelle: "GED / coffre", groupeV1: "Data & Intelligence",
     destination: "kyc", onglet: "Coffre", licence: "GED",

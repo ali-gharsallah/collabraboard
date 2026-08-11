@@ -374,8 +374,44 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     fireEvent.click(screen.getByText("Habilitations"));
     expect(screen.getByText("EN RETARD")).toBeTruthy();                          // l'échue SE VOIT
     expect(screen.getByText(/s'évaluent À DATE \(R238\)/)).toBeTruthy();
-    fireEvent.click(screen.getByText("Pilotage (écran 08)"));                    // retour : écran 08 intact
+    fireEvent.click(screen.getAllByText("Compliance")[0]);                       // retour : écran 08 intact
     expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
+  });
+
+  it("U2-43 V2-M16 Rapports : reporting réglementaire — calendrier gouverné, retard SIGNALÉ jamais masqué", () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Réglementaire"));
+    expect(screen.getByText(/Communication au MROS/)).toBeTruthy();
+    expect(screen.getByText(/Déclaration FATCA/)).toBeTruthy();
+    expect(screen.getByText("EN RETARD")).toBeTruthy();                          // la revue de calibrage échue SE VOIT
+    expect(screen.getByText("EN PRÉPARATION")).toBeTruthy();
+    // O-Live n'énonce aucune obligation : la base légale est DÉCLARÉE par la banque.
+    expect(screen.getAllByText(/base déclarée/).length).toBeGreaterThanOrEqual(5);
+    expect(screen.getByText(/ne qualifie aucune base légale/)).toBeTruthy();
+    expect(screen.getByText(/Un retard est SIGNALÉ \(R39\)/)).toBeTruthy();
+  });
+
+  it("U2-44 V2-M16 Rapports : BI sur mesure — vues DÉCLARÉES, jamais les tables (R314-R315)", () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Sur mesure (BI)"));
+    expect(screen.getByText("dossiers_kyc")).toBeTruthy();
+    expect(screen.getByText("alertes_aml")).toBeTruthy();
+    expect(screen.getByText(/VUES DÉCLARÉES \(R314-R315\), jamais sur les tables/)).toBeTruthy();
+    // la portée est PORTÉE PAR LA REQUÊTE, pas appliquée après coup
+    expect(screen.getByText(/s'applique à la requête, pas après coup/)).toBeTruthy();
+  });
+
+  it("U2-45 V2-M16 Rapports : deux tableaux de bord par profil — Compliance et Direction", () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    // le dashboard Compliance (écran 08) reste le défaut
+    expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Direction"));
+    expect(screen.getByText(/Entrées en relation du mois/)).toBeTruthy();
+    expect(screen.getByText(/Charge par équipe/)).toBeTruthy();
+    expect(screen.getByText(/Tenue des délais/)).toBeTruthy();
+    // la charge se lit par ÉQUIPE — aucun indicateur de performance individuelle
+    expect(screen.getByText(/aucun indicateur individuel n'est calculé/)).toBeTruthy();
+    expect(screen.getByText(/SIGNALÉ, jamais bloquant \(R39\)/)).toBeTruthy();
   });
 
   it("U2-25 V2-M6 Paramétrage par sections : clés gouvernées R29, Simulation partout (arbitrage n°1)", () => {

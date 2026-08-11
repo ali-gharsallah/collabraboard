@@ -71,11 +71,43 @@ const SEED_HABILITATIONS: Habilitation[] = [
   { id: "h-3", collaborateur: "Ana Lopes", formation: "CDB 20 — certification", echeance: "01.07.2026", statut: "EN_RETARD" },
 ];
 
+// ── V2-M16 : reporting réglementaire, BI sur mesure, tableaux de bord par profil ───────────
+// Réglementaire : le CALENDRIER des obligations (période, échéance, base légale, état). O-Live
+// ne décide AUCUNE base légale — le calendrier est une config gouvernée par la banque (R29,
+// registre R-Q) ; l'écran l'affiche et signale les retards (R39), il ne les corrige pas.
+type Obligation = { id: string; obligation?: string; periode?: string; echeance?: string;
+  base?: string; statut?: string; responsable?: string };
+const SEED_REGLEMENTAIRE: Obligation[] = [
+  { id: "o-1", obligation: "Communication au MROS", periode: "au fil de l'eau", echeance: "sans délai",
+    base: "LBA art. 9", statut: "A_JOUR", responsable: "MLRO" },
+  { id: "o-2", obligation: "Rapport annuel LBA à la direction", periode: "exercice 2025", echeance: "31.03.2026",
+    base: "OBA-FINMA", statut: "DEPOSE", responsable: "MLRO" },
+  { id: "o-3", obligation: "Échange automatique de renseignements (AEOI/CRS)", periode: "exercice 2025",
+    echeance: "30.06.2026", base: "LEAR", statut: "DEPOSE", responsable: "Fiscalité" },
+  { id: "o-4", obligation: "Déclaration FATCA", periode: "exercice 2025", echeance: "30.09.2026",
+    base: "Accord FATCA", statut: "EN_PREPARATION", responsable: "Fiscalité" },
+  { id: "o-5", obligation: "Revue annuelle de calibrage AML", periode: "exercice 2026", echeance: "31.12.2026",
+    base: "R377", statut: "EN_RETARD", responsable: "Compliance" },
+];
+// BI sur mesure : l'ANNUAIRE des vues déclarées (/v1/bi/annuaire, R314-R315). Le libre-service
+// s'exerce sur des vues DÉCLARÉES, jamais sur les tables : le périmètre est une décision, pas
+// un effet de bord d'un accès base.
+type VueBi = { id: string; vue?: string; domaine?: string; colonnes?: number; portee?: string };
+const SEED_BI: VueBi[] = [
+  { id: "v-1", vue: "dossiers_kyc", domaine: "Connaissance client", colonnes: 14, portee: "tenant" },
+  { id: "v-2", vue: "alertes_aml", domaine: "Surveillance", colonnes: 11, portee: "tenant" },
+  { id: "v-3", vue: "revues_echues", domaine: "Revue périodique", colonnes: 9, portee: "tenant" },
+  { id: "v-4", vue: "charge_equipe", domaine: "Pilotage", colonnes: 7, portee: "équipe" },
+];
+
 export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   active: Ui2NavId; onNavigate: (id: Ui2NavId) => void; onOuvrirAudit?: () => void;
 }) {
   const t = traduire(langue());
-  const [onglet, setOnglet] = useState<"pilotage" | "registre" | "mros" | "veille" | "habilitations">("pilotage");
+  const [onglet, setOnglet] = useState<"pilotage" | "direction" | "reglementaire" | "surmesure"
+    | "registre" | "mros" | "veille" | "habilitations">("pilotage");
+  const reglementaire = useApiOrSeed<Obligation[]>("/v1/rapports/kpi", SEED_REGLEMENTAIRE);
+  const vuesBi = useApiOrSeed<VueBi[]>("/v1/bi/annuaire", SEED_BI);
   const registre = useApiOrSeed<EntreeRegistre[]>("/v1/mros", SEED_REGISTRE);
   const mros = useApiOrSeed<Comm[]>("/v1/mros", SEED_MROS);
   const veille = useApiOrSeed<Item[]>("/v1/regwatch/items", SEED_VEILLE);
@@ -89,7 +121,10 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         color: onglet === id ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>);
   const pilules = (
     <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-      {pilule("pilotage", t("Pilotage (écran 08)"))}
+      {pilule("pilotage", t("Compliance"))}
+      {pilule("direction", t("Direction"))}
+      {pilule("reglementaire", t("Réglementaire"))}
+      {pilule("surmesure", t("Sur mesure (BI)"))}
       {pilule("registre", t("Registre LBA"))}
       {pilule("mros", t("MROS · goAML"))}
       {pilule("veille", t("Veille"))}
@@ -97,8 +132,12 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
     </div>);
   const chipDe = (label: string, mode: ChipMode) => <StatusChip mode={mode}>{label}</StatusChip>;
 
-  if (onglet !== "pilotage") {
+  if (onglet !== "pilotage" && onglet !== "direction") {
     const sousTitres = {
+      reglementaire: reglementaire.isDemo ? t("données maquette")
+        : t("source : /v1/rapports/kpi — calendrier gouverné (R29), jamais un avis juridique"),
+      surmesure: vuesBi.isDemo ? t("données maquette")
+        : t("source : /v1/bi/annuaire (R314-R315) — vues déclarées, jamais les tables"),
       registre: registre.isDemo ? t("données maquette") : t("source : /v1/mros + revue + runs (lecture pure — rien ne change d'état)"),
       mros: mros.isDemo ? t("données maquette") : t("source : /v1/mros (relecture opposable R130)"),
       veille: veille.isDemo ? t("données maquette") : t("source : /v1/regwatch/items (R309-R311)"),
@@ -112,6 +151,33 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         header={<Ui2HeaderListe titre={t("Rapports")} sousTitre={sousTitres[onglet]}
           action={<Ui2Bouton>{t("Exporter")}</Ui2Bouton>} t={t} />}>
         {pilules}
+        {onglet === "reglementaire" && (<>
+          <EntityList grid="1.6fr 1fr 110px 1fr 130px" onOpen={() => undefined}
+            entetes={[t("Obligation"), t("Période"), t("Échéance"), t("Responsable"), t("État")]}
+            lignes={(reglementaire.data ?? []).map((o) => ({ id: o.id, cells: [
+              <span key="o"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(o.obligation ?? "—")}</span>
+                <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>
+                  {t("base déclarée")} : {o.base ?? "—"}</span></span>,
+              t(o.periode ?? "—"),
+              <span key="e" className="mono">{o.echeance ?? "—"}</span>,
+              t(o.responsable ?? "—"),
+              chipDe(t(o.statut === "DEPOSE" ? "DÉPOSÉ" : o.statut === "A_JOUR" ? "À JOUR"
+                : o.statut === "EN_PREPARATION" ? "EN PRÉPARATION" : "EN RETARD"),
+                o.statut === "EN_RETARD" ? "alert" : o.statut === "EN_PREPARATION" ? "warn" : "ok")] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Le calendrier des obligations est une configuration GOUVERNÉE de la banque, versionnée par date d'effet (R29) — O-Live ne qualifie aucune base légale et n'en déduit aucune obligation. Un retard est SIGNALÉ (R39), jamais corrigé ni masqué.")}</div>
+        </>)}
+        {onglet === "surmesure" && (<>
+          <EntityList grid="1.2fr 1.2fr 110px 120px" onOpen={() => undefined}
+            entetes={[t("Vue déclarée"), t("Domaine"), t("Colonnes"), t("Portée")]}
+            lignes={(vuesBi.data ?? []).map((v) => ({ id: v.id, cells: [
+              <span key="v" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{v.vue}</span>,
+              t(v.domaine ?? "—"),
+              <span key="c" className="mono">{v.colonnes ?? "—"}</span>,
+              chipDe(t(v.portee === "tenant" ? "TENANT" : "ÉQUIPE"), "info")] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Le libre-service s'exerce sur des VUES DÉCLARÉES (R314-R315), jamais sur les tables : le périmètre de ce qu'un analyste peut interroger est une décision gouvernée, pas un effet de bord d'un accès base. Le cloisonnement par tenant et par équipe s'applique à la requête, pas après coup.")}</div>
+        </>)}
         {onglet === "registre" && (<>
           <EntityList grid="180px 1.5fr 140px 110px 110px" onOpen={() => undefined}
             entetes={[t("Type"), t("Objet"), t("Référence"), t("Date"), t("Statut")]}
@@ -168,12 +234,64 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
       </Ui2Shell>);
   }
 
+  // ── Tableau de bord DIRECTION : la même doctrine que le dashboard Compliance (montrer où le
+  //    travail est bloqué, jamais une collection d'indicateurs), mais sur les questions d'un
+  //    directeur : capacité des équipes, tenue des délais, entrées et sorties du mois. Aucun
+  //    indicateur de performance individuelle — la charge se lit par équipe (R39). ──
+  if (onglet === "direction") {
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Marc Bregy" role={t("Directeur Compliance")}
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderListe titre={t("Direction")}
+          sousTitre={t("août 2026 · Banque Olive Suisse SA · vue consolidée des deux sites")}
+          action={<><Ui2Bouton>{t("30 derniers jours ⌄")}</Ui2Bouton><Ui2Bouton>{t("Exporter")}</Ui2Bouton></>} t={t} />}>
+        {pilules}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
+          <StatTile label={t("Entrées en relation du mois")} valeur={31} note={t("+6 vs juillet")}
+            onOpen={() => onNavigate("entree")} />
+          <StatTile label={t("Revues échues")} valeur={19} note={t("dont 7 au-delà de 30 j")} accent="warn"
+            onOpen={() => onNavigate("revue")} />
+          <StatTile label={t("Délai médian d'entrée en relation")} valeur={<>18 <span style={{ fontSize: 16 }}>j</span></>}
+            note={t("cible interne : 15 j")} accent="warn" onOpen={() => onNavigate("entree")} />
+          <StatTile label={t("Sorties prononcées")} valeur={4} note={t("dont 1 sur décision MLRO")}
+            onOpen={() => onNavigate("revue")} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 14, alignItems: "start" }}>
+          <section style={carte}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t("Charge par équipe")}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
+              {t("dossiers ouverts rapportés à la capacité déclarée")}</div>
+            <BarMeter max={140} lignes={[
+              { label: t("Gestion — Zurich"), valeur: 128, affichage: "128 %", mode: "alert" },
+              { label: t("Gestion — Genève"), valeur: 94, affichage: "94 %", mode: "ok" },
+              { label: t("Compliance"), valeur: 112, affichage: "112 %", mode: "warn" },
+              { label: t("Middle office"), valeur: 71, affichage: "71 %", mode: "ok" }]} />
+            <div style={{ fontSize: 11.5, color: "var(--text-body)", marginTop: 10, lineHeight: 1.55 }}>
+              {t("La lecture : Zurich est en surcharge durable (128 %) et c'est là que le délai d'entrée en relation dérive. Le déséquilibre est entre sites, pas entre personnes — la capacité déclarée est la seule référence, aucun indicateur individuel n'est calculé.")}</div>
+          </section>
+          <section style={carte}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t("Tenue des délais")}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
+              {t("part des dossiers dans le SLA, par étape")}</div>
+            <BarMeter max={100} lignes={[
+              { label: t("Entrée en relation"), valeur: 82, affichage: "82 %", mode: "warn" },
+              { label: t("Visa Compliance"), valeur: 91, affichage: "91 %", mode: "ok" },
+              { label: t("Revue périodique"), valeur: 68, affichage: "68 %", mode: "alert" }]} />
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5 }}>
+              {t("Un dépassement de SLA est SIGNALÉ, jamais bloquant (R39) : le système mesure et notifie, il ne coerce pas.")}</div>
+          </section>
+        </div>
+      </Ui2Shell>);
+  }
+
   return (
     <Ui2Shell nav={<Ui2Nav active={active} user="Marc Bregy" role={t("Directeur Compliance")}
       onNavigate={onNavigate} t={t}
       badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
         surveillance: { n: 5, alert: true } }} />}
-      header={<Ui2HeaderListe titre={t("Pilotage")}
+      header={<Ui2HeaderListe titre={t("Compliance")}
         sousTitre={t("août 2026 · Banque Olive Suisse SA · Zurich et Genève")}
         action={<><Ui2Bouton>{t("30 derniers jours ⌄")}</Ui2Bouton><Ui2Bouton>{t("Exporter")}</Ui2Bouton>
           {onOuvrirAudit && <Ui2Bouton onClick={onOuvrirAudit}>{t("Rejeu d'audit →")}</Ui2Bouton>}</>} t={t} />}>
