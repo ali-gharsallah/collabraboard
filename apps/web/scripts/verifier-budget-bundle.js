@@ -62,7 +62,7 @@ const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à ch
 // payé au chargement initial. On le MESURE et on l'AFFICHE (transparence, pas un trou), mais on
 // l'EXCLUT du total de base : l'inclure ferait rougir un budget que le premier écran ne consomme
 // pas. La garde reste entière — si le globe cessait d'être paresseux, il rentrerait dans le core.
-const EST_GLOBE = (f) => /^GlobeFlux[-.]/.test(f);
+const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le canvas seul)
 
 const dir = path.join(__dirname, "..", "dist", "assets");
 if (!fs.existsSync(dir)) { console.error("dist/assets absent — lancer `vite build` d'abord"); process.exit(1); }

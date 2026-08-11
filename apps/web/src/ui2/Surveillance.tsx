@@ -1,14 +1,14 @@
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState } from "react";
 import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { DecisionPanel } from "./DecisionPanel";
-// Le globe des flux (maquette du designer, V2-M19) est LOURD — atlas mondial + d3-geo, ~55 kB gz.
-// Chargement PARESSEUX : il n'est payé qu'à l'ouverture de l'onglet Transactions, et il est exclu
-// du budget cœur au même titre que les packs de langue (cf. verifier-budget-bundle.js).
-const GlobeFlux = lazy(() => import("./globe/GlobeFlux").then((m) => ({ default: m.GlobeFlux })));
+// La scène des flux (V2-M22) : le globe est le FOND de l'onglet Transactions, la table se lit
+// par-dessus. Le panneau part avec l'écran (~2 kB) ; seul le canvas (d3 + atlas, ~52 kB gz) est
+// paresseux et exclu du budget cœur — la table ne doit jamais attendre le décor.
+import { FluxPanneau } from "./globe/FluxPanneau";
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
@@ -155,12 +155,9 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
             {t("Consultation seule : chaque règle est versionnée et rejouable. La modification passe par le bac à sable du Paramétrage (écran 10) — effet simulé sur l'historique, coût nominatif, version datée et signée.")}</div>
         </>)}
         {ecran === "transactions" && (<>
-          <Suspense fallback={<div style={{ height: 440, display: "grid", placeItems: "center",
-            background: "#11161C", border: "1px solid var(--border)", borderRadius: "var(--r-card)",
-            color: "rgba(190,202,216,0.7)", fontSize: 12.5 }}>{t("Chargement du globe des flux…")}</div>}>
-            <GlobeFlux />
-          </Suspense>
-          <div style={{ height: 14 }} />
+          {/* V2-M22 : le globe est le FOND de l'onglet ; la table des transactions se lit
+              par-dessus, dans une surface opaque — la lisibilité prime sur l'effet. */}
+          <FluxPanneau>
           <EntityList grid="110px 1.3fr 140px 150px 120px" onOpen={() => setEcran("alerte")}
             entetes={[t("Date"), t("Contrepartie"), t("Montant"), t("Canal"), t("Statut")]}
             lignes={(Array.isArray(txs.data) ? txs.data : []).slice(0, 30).map((x) => ({
@@ -171,8 +168,10 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
                 <span key="k" className="mono">{x.canal ?? "—"}</span>,
                 <StatusChip key="s" mode={x.statut === "EN_REVUE" ? "warn" : "ok"}>
                   {t(x.statut === "EN_REVUE" ? "EN REVUE" : "RÉGLÉE")}</StatusChip>] }))} />
-          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-            {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
+              <div style={{ fontSize: 10.5, color: "var(--text-muted)", padding: "9px 12px 11px",
+                lineHeight: 1.5 }}>
+                {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
+          </FluxPanneau>
         </>)}
         {ecran === "cas" && (<>
           <EntityList grid="140px 1.2fr 1.3fr 150px 110px" onOpen={() => setEcran("alerte")}

@@ -378,16 +378,19 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
   });
 
-  it("U2-47 V2-M19 globe des flux : données du designer reprises verbatim, aucun appel sortant", async () => {
-    const { FLOWS } = await import("./globe/GlobeFlux");
+  it("U2-47 V2-M19/M22 globe des flux : données du designer verbatim, aucun appel sortant, table jamais bloquée", async () => {
+    const { FLOWS } = await import("./globe/flux-data");
     expect(FLOWS.length).toBe(16);                                   // les 16 corridors de la maquette
     expect(FLOWS.reduce((s, f) => s + f.v, 0)).toBe(2982);           // volume total, inchangé
     expect(FLOWS.filter((f) => f.s === "alert").length).toBe(3);     // Beyrouth, Panama, Nairobi
     // le module ne fait AUCUN appel sortant : ni CDN d3/topojson, ni atlas distant (on-premise)
-    const src = readFileSync(join(process.cwd(), "src/ui2/globe/GlobeFlux.tsx"), "utf8");
-    expect(src).not.toMatch(/https?:\/\//);
+    for (const f of ["flux-data.ts", "GlobeFond.tsx", "FluxPanneau.tsx"]) {
+      const src = readFileSync(join(process.cwd(), "src/ui2/globe/", f), "utf8");
+      expect(src).not.toMatch(/https?:\/\//);
+    }
     // et il ne qualifie rien : le globe est une vue, pas un moteur (R44)
-    expect(src).toContain("ne lève aucune alerte et ne décide d'aucun blocage");
+    expect(readFileSync(join(process.cwd(), "src/ui2/globe/FluxPanneau.tsx"), "utf8"))
+      .toContain("ne lève aucune alerte et ne décide d'aucun blocage");
   });
 
   it("U2-46 V2-M18 Rapports : les quatre capacités en consultation retrouvent leurs ACTES", () => {
