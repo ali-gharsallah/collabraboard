@@ -195,7 +195,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
 
   if (cle.cle === "doc-matrix") {
     corps = (<>
-      <EntityList grid="70px 1.6fr 1fr 1fr 1fr" onOpen={() => undefined}
+      <EntityList grid="70px 1.6fr 1fr 1fr 1fr" onOpen={onSandbox}
         entetes={[t("Code"), t("Exigence"), "SDD", "CDD", "EDD"]}
         lignes={MATRICE_DOC.map((l) => ({ id: l.code, cells: [
           <span key="c" className="mono" style={{ fontWeight: 600 }}>{l.code}</span>,
@@ -205,7 +205,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Consultation de la grille en vigueur — la modification passe par une proposition versionnée soumise au comité (R44).";
   } else if (cle.cle === "kyc.questionnaire") {
     corps = (<>
-      <EntityList grid="60px 1.6fr 110px 1fr" onOpen={() => undefined}
+      <EntityList grid="60px 1.6fr 110px 1fr" onOpen={onSandbox}
         entetes={["№", t("Section"), t("Champs"), t("Droits")]}
         lignes={["Identification", "Domiciliation & fiscalité", "Activité & profil économique",
           "Origine des fonds", "Origine de la fortune", "Structure & ayants droit",
@@ -219,7 +219,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Le gabarit est gouverné : un dossier ouvert sous v7 reste évalué sous v7 (R29).";
   } else if (cle.cle === "review.profiles") {
     corps = (<>
-      <EntityList grid="130px 1fr 1fr 1fr" onOpen={() => undefined}
+      <EntityList grid="130px 1fr 1fr 1fr" onOpen={onSandbox}
         entetes={[t("Profil"), "SDD", "CDD", "EDD"]}
         lignes={[{ p: "AR (annuelle)", v: ["36 mois", "24 mois", "12 mois"] },
           { p: "GAR (groupée)", v: ["24 mois", "12 mois", "6 mois"] }].map((l) => ({
@@ -240,7 +240,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Le circuit est versionné : un dossier suit le circuit en vigueur à sa création (R29).";
   } else if (cle.cle === "businessTrip.chains") {
     corps = (<>
-      <EntityList grid="140px 1fr 1fr" onOpen={() => undefined}
+      <EntityList grid="140px 1fr 1fr" onOpen={onSandbox}
         entetes={[t("Risque pays"), t("Chaîne d'approbation"), t("Quota / contrainte")]}
         lignes={[{ r: "FAIBLE", c: "CO", q: "quota annuel R449" },
           { r: "MOYEN", c: "CO → MLRO", q: "quota annuel R449" },
@@ -263,7 +263,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Les étapes sont versionnées ; une sortie entamée suit sa version (R29).";
   } else if (cle.cle === "iam.matrice" || cle.cle === "iam.menus") {
     corps = (<>
-      <EntityList grid="1.4fr 1fr 1fr 1fr 1fr" onOpen={() => undefined}
+      <EntityList grid="1.4fr 1fr 1fr 1fr 1fr" onOpen={onSandbox}
         entetes={[t("Section"), "RM", "CO", "MLRO", "AUDIT"]}
         lignes={IAM_SECTIONS.map((l) => ({ id: l.section, cells: [
           t(l.section), droit(l.rm), droit(l.co), droit(l.mlro), droit(l.audit)] }))} />
@@ -291,7 +291,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Monter le curseur est une décision de gouvernance versionnée, jamais un réglage technique.";
   } else if (cle.cle === "coc.types") {
     corps = (<>
-      <EntityList grid="130px 1.3fr 110px 130px 70px 90px" onOpen={() => undefined}
+      <EntityList grid="130px 1.3fr 110px 130px 70px 90px" onOpen={onSandbox}
         entetes={[t("Type"), t("Libellé"), t("Matérialité"), t("Action requise"), t("Rôle"), t("Sévérité CPSI")]}
         lignes={[
           { c: "UBO_CHANGE", l: "Changement d'UBO", m: "HAUTE", a: "REVISION_KYC", r: "CO", s: "3" },
@@ -328,7 +328,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Écran v1 « Config & Go-live » repris tel quel : reconstruction à date + activation gouvernée, rien de précalculé.";
   } else if (cle.cle === "banque.bat") {
     corps = (<>
-      <EntityList grid="110px 1.4fr 100px 130px" onOpen={() => undefined}
+      <EntityList grid="110px 1.4fr 100px 130px" onOpen={onSandbox}
         entetes={[t("Module"), t("Cas de recette"), t("Verdict"), t("Écart")]}
         lignes={[
           { m: "kyc", i: "Ouverture dossier CDD — visas par section", v: "PASS", e: "" },
@@ -368,7 +368,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "La config déclarée s'écrit par le registre (clé ssoOidc) — même gouvernance que toute clé (R29).";
   } else if (cle.cle === "legal.structures") {
     corps = (<>
-      <EntityList grid="90px 1.5fr 90px 1.2fr" onOpen={() => undefined}
+      <EntityList grid="90px 1.5fr 90px 1.2fr" onOpen={onSandbox}
         entetes={[t("Code"), t("Structure"), t("Points"), t("Exigence documentaire")]}
         lignes={STRUCTURES_JURIDIQUES.map((l) => ({ id: l.code, cells: [
           <span key="c" className="mono" style={{ fontWeight: 600 }}>{l.code}</span>, t(l.libelle),
@@ -379,7 +379,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     pied = "Modifier le barème = nouvelle version de règle (R288) — onglet « Modifier (brouillon) », circuit R305/R7/R13.";
   } else if (cle.cle === "banque.initialisation") {
     corps = (<>
-      <EntityList grid="180px 90px 1fr 1fr 130px" onOpen={() => undefined}
+      <EntityList grid="180px 90px 1fr 1fr 130px" onOpen={onSandbox}
         entetes={[t("Clé"), t("Règle"), t("Défaut"), t("Valeur posée"), t("Statut")]}
         lignes={RQ_INITIALISATION.map((l) => ({ id: l.cle, cells: [
           <span key="k" className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text)" }}>{l.cle}</span>,
@@ -460,6 +460,7 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
 function PopupEngagement({ cle, valeur, t }: { cle: string; valeur: string; t: (s: string) => string }) {
   const [ouvert, setOuvert] = useState(false);
   const [texte, setTexte] = useState("");
+  const [engage, setEngage] = useState(false);
   return carte(<>
     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
       <StatusChip mode="warn">{t("ENGAGEMENT REQUIS")}</StatusChip>
@@ -493,13 +494,19 @@ function PopupEngagement({ cle, valeur, t }: { cle: string; valeur: string; t: (
               padding: "8px 10px", borderRadius: "var(--r-input)", fontFamily: "inherit",
               border: "1px solid var(--border-input)", fontSize: 12, color: "var(--text)",
               background: "var(--bg-surface)" }} /></label>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Ui2Bouton primaire>{t("Engager et publier")}</Ui2Bouton>
-          <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>
-            {texte.trim()
-              ? t("Le moteur écrira une version datée et l'engagement nominatif au journal.")
-              : t("Sans texte d'engagement, le moteur REFUSE l'écriture — rien n'est publié.")}</span>
-        </div>
+        {engage ? (
+          <div role="status" style={{ background: "var(--ok-chip)", border: "1px solid var(--ok-line)",
+            borderRadius: 9, padding: "9px 12px", fontSize: 12, color: "var(--ok-text)", lineHeight: 1.5 }}>
+            ✓ {t("Engagement recueilli — le moteur écrirait ici une version datée et l'engagement nominatif au journal (POST /v1/crossborder/params/modifier). La portée reste les actes futurs.")}</div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Ui2Bouton primaire onClick={() => { if (texte.trim()) setEngage(true); }}>
+              {t("Engager et publier")}</Ui2Bouton>
+            <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>
+              {texte.trim()
+                ? t("Le moteur écrira une version datée et l'engagement nominatif au journal.")
+                : t("Sans texte d'engagement, le moteur REFUSE l'écriture — rien n'est publié.")}</span>
+          </div>)}
       </div>)}
   </>);
 }

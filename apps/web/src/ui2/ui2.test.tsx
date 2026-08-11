@@ -24,7 +24,7 @@ import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
 import { CrossBorder } from "./CrossBorder";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 // Lu via fs (pas d'import ?raw : la config vitest stubbe les .css ; en jsdom
@@ -773,5 +773,30 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText("128")).toBeTruthy();                     // le total, pas 128 lignes recopiées
     expect(screen.getByText("front v1 seulement")).toBeTruthy();      // l'écart est PORTÉ
     expect(screen.getByText(/E-AML-2 est ouvert, il n'est pas comblé/)).toBeTruthy();
+  });
+
+  it("U2-55 V2-M33 : aucun contrôle inerte dans l'UI v2 — un bouton qui ne fait rien MENT", () => {
+    // Garde de SOURCE : elle rougit si un placeholder revient, quel que soit l'écran. Un bouton
+    // sans action promet une capacité, occupe la place où l'utilisateur la cherchera, et fait
+    // passer l'écran pour plus avancé qu'il n'est. On l'interdit par un test, pas par une
+    // consigne : une consigne s'oublie au lot suivant.
+    const dir = join(process.cwd(), "src/ui2");
+    const fautes: string[] = [];
+    const parcourir = (d: string) => {
+      for (const e of readdirSync(d, { withFileTypes: true })) {
+        const p = join(d, e.name);
+        if (e.isDirectory()) { parcourir(p); continue; }
+        if (!e.name.endsWith(".tsx") || e.name.endsWith(".test.tsx")) continue;
+        const src = readFileSync(p, "utf8");
+        for (const [i, ligne] of src.split("\n").entries()) {
+          if (/on(Open|Click|Navigate)=\{\(\)\s*=>\s*undefined\}/.test(ligne))
+            fautes.push(`${e.name}:${i + 1} — gestionnaire inerte`);
+          if (/<Ui2Bouton(\s+primaire)?>/.test(ligne))
+            fautes.push(`${e.name}:${i + 1} — <Ui2Bouton> sans onClick`);
+        }
+      }
+    };
+    parcourir(dir);
+    expect(fautes).toEqual([]);
   });
 });

@@ -65,6 +65,11 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
   const [onglet, setOnglet] = useState<"tout" | "bloques" | "delegues">("tout");
   const [tout, setTout] = useState(false);
   const [palette, setPalette] = useState(false);               // ⌘K — le pivot des 10 entrées
+  // V2-M33 : les deux filtres du header AGISSENT sur la file. « Mon portefeuille » retient les
+  // lignes dont je suis le gestionnaire ; « urgents d'abord » remonte les priorités d'alerte
+  // sans jamais MASQUER une ligne — masquer du travail en retard serait pire que le montrer.
+  const [portefeuille, setPortefeuille] = useState<"tous" | "mien">("tous");
+  const [urgentDabord, setUrgentDabord] = useState(false);
   const corbeille = useApiOrSeed<CorbeilleApi>("/v1/decisions/corbeille", SEED_CORBEILLE);
 
   // API vivante → la corbeille R478 EST la file ; sinon le seed maquette (source signalée).
@@ -77,7 +82,10 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
   const items = corbeille.isDemo ? SEED_QUEUE : apiItems;
   const filtres: Record<typeof onglet, (i: WorkQueueItem) => boolean> = {
     tout: () => true, bloques: (i) => i.priorite === "alert", delegues: () => false };
-  const visibles = items.filter(filtres[onglet]);
+  const RANG = { alert: 0, warn: 1, ok: 2 } as const;
+  const visibles = items.filter(filtres[onglet])
+    .filter((i) => portefeuille === "tous" || !/Nordic|Mancini/.test(i.client))   // maquette : mon portefeuille
+    .sort((a, b) => urgentDabord ? (RANG[a.priorite] ?? 3) - (RANG[b.priorite] ?? 3) : 0);
   const affiches = tout ? visibles : visibles.slice(0, 5);
   const critiques = items.filter((i) => i.priorite === "alert").length;
 
@@ -102,8 +110,11 @@ export function MaJournee({ active, onNavigate }: { active: Ui2NavId; onNavigate
         modulesLicencies={MODULES_METIERS_DEMO} />}
       header={<Ui2HeaderListe titre="Ma journée" sousTitre={new Intl.DateTimeFormat("fr-CH",
           { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date())}
-        filtres={<><Ui2Bouton>{t("Tous mes portefeuilles")} ▾</Ui2Bouton><Ui2Bouton>{t("Priorité")} ▾</Ui2Bouton></>}
-        action={<Ui2Bouton primaire>{t("＋ Nouveau")}</Ui2Bouton>} t={t} />}
+        filtres={<><Ui2Bouton onClick={() => setPortefeuille(portefeuille === "tous" ? "mien" : "tous")}>
+            {t(portefeuille === "tous" ? "Tous mes portefeuilles" : "Mon portefeuille")} ▾</Ui2Bouton>
+          <Ui2Bouton onClick={() => setUrgentDabord(!urgentDabord)}>
+            {t(urgentDabord ? "Priorité — urgents d'abord" : "Priorité — ordre du moteur")} ▾</Ui2Bouton></>}
+        action={<Ui2Bouton primaire onClick={() => onNavigate("entree")}>{t("＋ Nouveau")}</Ui2Bouton>} t={t} />}
       sideWidth={340}
       side={<div style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
         <div className="microlabel" style={{ marginBottom: 8 }}>{t("Suggestions d'Olivia")} <span style={{ background: "var(--ai-chip)", padding: "1px 5px", borderRadius: 4 }}>IA</span></div>

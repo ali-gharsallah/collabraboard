@@ -6,6 +6,7 @@ import { StatTile } from "./StatTile";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -138,6 +139,10 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
 }) {
   const t = traduire(langue());
   const [acte, setActe] = useState<Acte | null>(null);
+  // V2-M33 : la fenêtre d'observation est un CHOIX, plus une étiquette. Elle ne recalcule pas
+  // les chiffres de maquette — elle dit sur quelle période ils sont lus, et le dira à l'API
+  // le jour du branchement (paramètre `since`).
+  const [periode, setPeriode] = useState<30 | 90 | 365>(30);
   const [onglet, setOnglet] = useState<"pilotage" | "direction" | "reglementaire" | "surmesure"
     | "registre" | "mros" | "veille" | "habilitations">("pilotage");
   const reglementaire = useApiOrSeed<Obligation[]>("/v1/rapports/kpi", SEED_REGLEMENTAIRE);
@@ -208,10 +213,13 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
           surveillance: { n: 5, alert: true } }} />}
         header={<Ui2HeaderListe titre={t("Rapports")} sousTitre={sousTitres[onglet]}
-          action={<Ui2Bouton>{t("Exporter")}</Ui2Bouton>} t={t} />}>
+          action={<Ui2Bouton onClick={() => exporterCsv(`olive-${onglet}-${jourFichier()}`,
+            [t("Onglet"), t("Période"), t("Exporté le")],
+            [[onglet, `${periode} ${t("jours")}`, new Date().toISOString().slice(0, 10)]])}>
+            {t("Exporter")}</Ui2Bouton>} t={t} />}>
         {pilules}
         {onglet === "reglementaire" && (<>
-          <EntityList grid="1.6fr 1fr 110px 1fr 130px" onOpen={() => undefined}
+          <EntityList grid="1.6fr 1fr 110px 1fr 130px" onOpen={() => onNavigate("rapports")}
             entetes={[t("Obligation"), t("Période"), t("Échéance"), t("Responsable"), t("État")]}
             lignes={(reglementaire.data ?? []).map((o) => ({ id: o.id, cells: [
               <span key="o"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(o.obligation ?? "—")}</span>
@@ -227,7 +235,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
             {t("Le calendrier des obligations est une configuration GOUVERNÉE de la banque, versionnée par date d'effet (R29) — O-Live ne qualifie aucune base légale et n'en déduit aucune obligation. Un retard est SIGNALÉ (R39), jamais corrigé ni masqué.")}</div>
         </>)}
         {onglet === "surmesure" && (<>
-          <EntityList grid="1.2fr 1.2fr 110px 120px" onOpen={() => undefined}
+          <EntityList grid="1.2fr 1.2fr 110px 120px" onOpen={() => onNavigate("rapports")}
             entetes={[t("Vue déclarée"), t("Domaine"), t("Colonnes"), t("Portée")]}
             lignes={(vuesBi.data ?? []).map((v) => ({ id: v.id, cells: [
               <span key="v" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{v.vue}</span>,
@@ -239,7 +247,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         </>)}
         {onglet === "registre" && (<>
           {barreActes("registre")}
-          <EntityList grid="180px 1.5fr 140px 110px 110px" onOpen={() => undefined}
+          <EntityList grid="180px 1.5fr 140px 110px 110px" onOpen={() => onNavigate("surveillance")}
             entetes={[t("Type"), t("Objet"), t("Référence"), t("Date"), t("Statut")]}
             lignes={(Array.isArray(registre.data) ? registre.data : []).slice(0, 30).map((e) => ({
               id: e.id, cells: [
@@ -253,7 +261,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         </>)}
         {onglet === "mros" && (<>
           {barreActes("mros")}
-          <EntityList grid="150px 1.4fr 150px 110px" onOpen={() => undefined}
+          <EntityList grid="150px 1.4fr 150px 110px" onOpen={() => onNavigate("surveillance")}
             entetes={[t("Référence"), t("Client"), t("Statut"), t("Date")]}
             lignes={(Array.isArray(mros.data) ? mros.data : []).slice(0, 30).map((c) => ({
               id: c.id, cells: [
@@ -267,7 +275,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         </>)}
         {onglet === "veille" && (<>
           {barreActes("veille")}
-          <EntityList grid="90px 1.5fr 1.2fr 130px 110px" onOpen={() => undefined}
+          <EntityList grid="90px 1.5fr 1.2fr 130px 110px" onOpen={() => onNavigate("param")}
             entetes={[t("Source"), t("Objet"), t("Impact identifié"), t("Statut"), t("Date")]}
             lignes={(Array.isArray(veille.data) ? veille.data : []).slice(0, 30).map((i) => ({
               id: i.id, cells: [
@@ -282,7 +290,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         </>)}
         {onglet === "habilitations" && (<>
           {barreActes("habilitations")}
-          <EntityList grid="1fr 1.3fr 120px 150px" onOpen={() => undefined}
+          <EntityList grid="1fr 1.3fr 120px 150px" onOpen={() => onNavigate("param")}
             entetes={[t("Collaborateur"), t("Formation"), t("Échéance"), t("Statut")]}
             lignes={(Array.isArray(habilitations.data) ? habilitations.data : []).slice(0, 30).map((h) => ({
               id: h.id, cells: [
@@ -309,7 +317,11 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
           surveillance: { n: 5, alert: true } }} />}
         header={<Ui2HeaderListe titre={t("Direction")}
           sousTitre={t("août 2026 · Banque Olive Suisse SA · vue consolidée des deux sites")}
-          action={<><Ui2Bouton>{t("30 derniers jours ⌄")}</Ui2Bouton><Ui2Bouton>{t("Exporter")}</Ui2Bouton></>} t={t} />}>
+          action={<><Ui2Bouton onClick={() => setPeriode(periode === 30 ? 90 : periode === 90 ? 365 : 30)}>
+            {`${periode} ${t("derniers jours")} ⌄`}</Ui2Bouton>
+            <Ui2Bouton onClick={() => exporterCsv(`olive-pilotage-${jourFichier()}`,
+              [t("Vue"), t("Période")], [["pilotage", `${periode} ${t("jours")}`]])}>
+            {t("Exporter")}</Ui2Bouton></>} t={t} />}>
         {pilules}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
           <StatTile label={t("Entrées en relation du mois")} valeur={31} note={t("+6 vs juillet")}
@@ -356,7 +368,11 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         surveillance: { n: 5, alert: true } }} />}
       header={<Ui2HeaderListe titre={t("Compliance")}
         sousTitre={t("août 2026 · Banque Olive Suisse SA · Zurich et Genève")}
-        action={<><Ui2Bouton>{t("30 derniers jours ⌄")}</Ui2Bouton><Ui2Bouton>{t("Exporter")}</Ui2Bouton>
+        action={<><Ui2Bouton onClick={() => setPeriode(periode === 30 ? 90 : periode === 90 ? 365 : 30)}>
+          {`${periode} ${t("derniers jours")} ⌄`}</Ui2Bouton>
+          <Ui2Bouton onClick={() => exporterCsv(`olive-direction-${jourFichier()}`,
+            [t("Vue"), t("Période")], [["direction", `${periode} ${t("jours")}`]])}>
+            {t("Exporter")}</Ui2Bouton>
           {onOuvrirAudit && <Ui2Bouton onClick={onOuvrirAudit}>{t("Rejeu d'audit →")}</Ui2Bouton>}</>} t={t} />}>
       {pilules}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>

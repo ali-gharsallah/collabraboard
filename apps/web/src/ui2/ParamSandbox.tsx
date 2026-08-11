@@ -8,6 +8,7 @@ import { SandboxSlider } from "./SandboxSlider";
 import { EntityList } from "./Listes";
 import { ParamCleDetail } from "./ParamDetail";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -133,7 +134,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
           puces={<StatusChip mode="neutral">{t("EOD · GÉNÉRIQUE CSV/SFTP")}</StatusChip>}
           actions={<Ui2Bouton onClick={() => setSection("sandbox")}>{t("← Bac à sable")}</Ui2Bouton>} t={t} />}>
         {pilules}
-        <EntityList grid="130px 140px 1fr 160px 130px" onOpen={() => undefined}
+        <EntityList grid="130px 140px 1fr 160px 130px" onOpen={(id) => setCleOuverte(id)}
           entetes={[t("Connecteur"), t("Famille"), t("Dernier lot"), t("Reçu le"), t("Statut")]}
           lignes={(Array.isArray(fraicheur.data) ? fraicheur.data : []).map((f) => ({
             id: f.cle, cells: [
@@ -246,7 +247,10 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
       header={<Ui2HeaderDossier nom={t("AML-R17 — écart au profil de flux")} initiales="R17"
         identifiants={t("Version en production : v11 · dernière modification 12.09.2024 · 1 244 alertes générées depuis")}
         puces={<StatusChip mode="ai">{t("SIMULATION")}</StatusChip>}
-        actions={<Ui2Bouton>{t("Historique des versions")}</Ui2Bouton>} t={t} />}>
+        actions={<Ui2Bouton onClick={() => exporterCsv(`olive-parametres-${section}-${jourFichier()}`,
+          [t("Clé"), t("Description"), t("Valeur en vigueur"), t("Version · effet")],
+          (sectionActive?.seed ?? []).map((c) => [c.cle, c.description ?? "", c.valeur ?? "", c.version ?? ""]))}>
+          {t("Exporter le registre de la section")}</Ui2Bouton>} t={t} />}>
       {pilules}
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("Effet simulé sur l'historique")}</span>
@@ -289,7 +293,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
             <span role="status" style={{ fontSize: 11.5, color: "var(--ok-text)" }}>
               ✓ {t("Soumis au comité — v12 proposée, datée et signée ; v11 reste en production et rejouable.")}</span>
           ) : (<>
-            <Ui2Bouton>{t("Enregistrer")}</Ui2Bouton>
+            <Ui2Bouton onClick={() => setSoumis(true)}>{t("Enregistrer")}</Ui2Bouton>
             <Ui2Bouton primaire onClick={() => setSoumis(true)}>{t("Soumettre au comité")}</Ui2Bouton>
           </>)}
         </span>

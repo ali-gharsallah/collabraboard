@@ -79,13 +79,13 @@ export function Ui2Preview() {
   if (active === "crossborder") return <CrossBorder active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
-        filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}
+        filtres={<Ui2Bouton onClick={() => setVariante("dossier")}>{t("Filtres")}</Ui2Bouton>}
         action={<Ui2Bouton primaire onClick={() => setVariante("dossier")}>{t("Voir le header dossier →")}</Ui2Bouton>} t={t} />
     : <Ui2HeaderDossier nom="Al-Maktoum Holdings SA" initiales="AM"
         identifiants="CLI-00001 · KYC-2026-CH-3693-R1 · EDD · CH"
         puces={<><Puce mode="warn">{t("EN REVUE")}</Puce><Puce mode="alert">{t("RISQUE ÉLEVÉ")}</Puce></>}
         actions={<><Ui2Bouton onClick={() => setVariante("liste")}>{t("← Header liste")}</Ui2Bouton>
-          <Ui2Bouton primaire>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />;
+          <Ui2Bouton primaire onClick={() => setActive("revue")}>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />;
   return (
     <Ui2Shell
       nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager"

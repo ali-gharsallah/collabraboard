@@ -11,6 +11,7 @@ import { FluxPanneau } from "./globe/FluxPanneau";
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
@@ -222,7 +223,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
           </FluxPanneau>
         </>)}
         {ecran === "amlgap" && (<>
-          <EntityList grid="90px 1.6fr 130px 90px 130px" onOpen={() => undefined}
+          <EntityList grid="90px 1.6fr 130px 90px 130px" onOpen={() => setEcran("regles")}
             entetes={[t("Code"), t("Scénario"), t("Bloc"), t("Niveau"), t("Signal émis")]}
             lignes={(Array.isArray(gap.data) ? gap.data : []).slice(0, 40).map((g) => ({
               id: g.code, cells: [
@@ -237,7 +238,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
           <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", margin: "16px 0 8px" }}>
             {t("Signaux à qualifier")} <span style={{ fontWeight: 400, fontSize: 11,
               color: "var(--text-muted)" }}>{t("(un signal n'est pas une alerte : il se qualifie TP ou FP)")}</span></div>
-          <EntityList grid="110px 1.5fr 130px 110px" onOpen={() => undefined}
+          <EntityList grid="110px 1.5fr 130px 110px" onOpen={() => setEcran("alerte")}
             entetes={[t("Scénario"), t("Client"), t("Qualification"), t("Détecté")]}
             lignes={(Array.isArray(signaux.data) ? signaux.data : []).slice(0, 20).map((x) => ({
               id: x.id, cells: [
@@ -250,7 +251,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
             {t("Le référentiel AML Gap est GÉNÉRÉ (tools/aml-gap/gen_aml_gap.py) et un test de fraîcheur rougit si le code dérive de la source. Un scénario ne DÉCIDE de rien : il émet un signal, qualifié TP ou FP par un humain, et cette qualification alimente le jeu de vérité terrain qui mesure le moteur (R44).")}</div>
         </>)}
         {ecran === "referentiel" && (<>
-          <EntityList grid="1.6fr 130px 90px 110px 1.4fr" onOpen={() => undefined}
+          <EntityList grid="1.6fr 130px 90px 110px 1.4fr" onOpen={() => setEcran("regles")}
             entetes={[t("Famille de règles"), t("Plage canon"), t("Règles"), t("Paramètres"), t("Où cela se lit")]}
             lignes={FAMILLES_DETECTION.map((f) => ({ id: f.famille, cells: [
               <span key="f"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(f.famille)}</span>
@@ -299,7 +300,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
           identifiants="Personne : Andrei Volkov · rôle UBO · liste UE consolidée · détecté il y a 2 h"
           puces={<StatusChip mode="warn">{t("À QUALIFIER")}</StatusChip>}
           actions={<><Ui2Bouton onClick={() => setEcran("alerte")}>{t("← Alerte AML liée")}</Ui2Bouton>
-            <Ui2Bouton>{t("Historique des screenings")}</Ui2Bouton></>} t={t} />}
+            <Ui2Bouton onClick={() => setEcran("screening")}>{t("Historique des screenings")}</Ui2Bouton></>} t={t} />}
         side={<DecisionPanel key={ecran} titre={t("Qualifier le hit")} t={t}
           sousTitre={t("Deux divergences sur cinq attributs. La décision engage la banque.")}
           options={[
@@ -352,7 +353,8 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
         identifiants="Cèdre Maritime SARL · corridor Genève → Beyrouth · ouverte il y a 2 h"
         puces={<><StatusChip mode="alert">{t("CRITIQUE")}</StatusChip><StatusChip mode="neutral">{t("EN COURS")}</StatusChip></>}
         actions={<><Ui2Bouton onClick={() => setEcran("hit")}>{t("Hit screening lié →")}</Ui2Bouton>
-          <Ui2Bouton>{t("Rejouer l'historique")}</Ui2Bouton><Ui2Bouton>{t("Escalader au MLRO")}</Ui2Bouton></>} t={t} />}
+          <Ui2Bouton onClick={() => onNavigate("rapports")}>{t("Rejouer l'historique")}</Ui2Bouton>
+          <Ui2Bouton onClick={() => setEcran("cas")}>{t("Escalader au MLRO")}</Ui2Bouton></>} t={t} />}
       side={<DecisionPanel key={ecran} titre={t("Qualifier l'alerte")} t={t}
         sousTitre={t("Toute qualification exige un motif. Elle est horodatée, nominative et opposable.")}
         options={[

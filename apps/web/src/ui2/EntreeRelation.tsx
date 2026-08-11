@@ -117,8 +117,9 @@ export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNav
       header={<Ui2HeaderDossier nom="Sablier Investments SA" initiales="SI"
         identifiants={t("PRO-0231 · Personne morale · Luxembourg · apporté par M. Leconte")}
         puces={<StatusChip mode="neutral">{t("PROSPECT")}</StatusChip>}
-        actions={<><Ui2Bouton>{t("Abandonner")}</Ui2Bouton><Ui2Bouton>{t("Enregistrer")}</Ui2Bouton>
-          <Ui2Bouton primaire>{t("Étape suivante")}</Ui2Bouton></>} t={t} />}
+        actions={<><Ui2Bouton onClick={() => onNavigate("journee")}>{t("Abandonner")}</Ui2Bouton>
+          <Ui2Bouton onClick={() => onNavigate("dossiers")}>{t("Enregistrer")}</Ui2Bouton>
+          <Ui2Bouton primaire onClick={() => onNavigate("kyc")}>{t("Étape suivante")}</Ui2Bouton></>} t={t} />}
       stepper={<div style={{ display: "flex", alignItems: "center", gap: 0, width: "100%" }}>
         {ETAPES.map((e, i) => (
           <React.Fragment key={e.n}>

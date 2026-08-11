@@ -80,7 +80,7 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
           identifiants={sorties.isDemo ? t("données maquette") : t("source : /v1/offboarding (bloc 62)")}
           puces={<StatusChip mode="neutral">{t("OFFBOARDING")}</StatusChip>}
           actions={<Ui2Bouton onClick={() => setEcran("revue")}>{t("← Revue groupée")}</Ui2Bouton>} t={t} />}>
-        <EntityList grid="140px 1.3fr 1.3fr 150px 120px" onOpen={() => undefined}
+        <EntityList grid="140px 1.3fr 1.3fr 150px 120px" onOpen={() => onNavigate("kyc")}
           entetes={[t("Référence"), t("Client"), t("Motif"), t("Étape"), t("Statut")]}
           lignes={(Array.isArray(sorties.data) ? sorties.data : []).slice(0, 30).map((s) => ({
             id: s.id, cells: [
@@ -102,7 +102,7 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
           identifiants="PER-01994 · Suède · référencé dans 3 dossiers · UBO et signataire"
           puces={<StatusChip mode="neutral">{t("PERSONNE UNIQUE")}</StatusChip>}
           actions={<><Ui2Bouton onClick={() => setEcran("revue")}>{t("← Revue groupée liée")}</Ui2Bouton>
-            <Ui2Bouton>{t("Voir la fiche personne")}</Ui2Bouton></>} t={t} />}
+            <Ui2Bouton onClick={() => onNavigate("clients")}>{t("Voir la fiche personne")}</Ui2Bouton></>} t={t} />}
         side={<div>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>{t("Appliquer le changement")}</div>
           <div style={{ fontSize: 11, color: "var(--text-muted)", margin: "3px 0 12px", lineHeight: 1.5 }}>
@@ -201,8 +201,8 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
         identifiants={t("Dernière validation : 22.09.2025 · échéance 22.09.2026 · cycle annuel (risque élevé)")}
         puces={<StatusChip mode="neutral">{t("4 DOSSIERS")}</StatusChip>}
         actions={<><Ui2Bouton onClick={() => setEcran("sorties")}>{`${t("Sorties")} · ${Array.isArray(sorties.data) ? sorties.data.length : 0} →`}</Ui2Bouton>
-          <Ui2Bouton>{t("Comparer à 2025")}</Ui2Bouton>
-          <Ui2Bouton primaire>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />}>
+          <Ui2Bouton onClick={() => setEcran("coc")}>{t("Comparer à 2025")}</Ui2Bouton>
+          <Ui2Bouton primaire onClick={() => setReporte(true)}>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("Ce qui a changé depuis la dernière revue")}</span>
         <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
@@ -214,7 +214,7 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
           {t("Le volume sortant a triplé au 2ᵉ trimestre vers une contrepartie absente du profil déclaré en 2025. Une alerte AML est ouverte sur ce point.")}</div>
         <div style={{ display: "flex", gap: 8, marginTop: 9 }}>
           <Ui2Bouton onClick={() => onNavigate("surveillance")}>{t("Ouvrir l'alerte liée")}</Ui2Bouton>
-          <Ui2Bouton>{t("Mettre à jour le profil de flux")}</Ui2Bouton>
+          <Ui2Bouton onClick={() => onNavigate("kyc")}>{t("Mettre à jour le profil de flux")}</Ui2Bouton>
         </div>
       </CarteEcart>
       {delta.data.modifiees.map((m) => (
@@ -243,7 +243,7 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
               ✓ {`${nbReprises} ${t("sections reportées en bloc, avec leur preuve d'origine (visa R467).")}`}</span>
           ) : (
             <Ui2Bouton onClick={() => setReporte(true)}>{`${t("Reporter les")} ${nbReprises} ${t("sections inchangées")}`}</Ui2Bouton>)}
-          <Ui2Bouton primaire>{t("Enregistrer")}</Ui2Bouton>
+          <Ui2Bouton primaire onClick={() => setReporte(true)}>{t("Enregistrer")}</Ui2Bouton>
         </span>
       </div>
     </Ui2Shell>);

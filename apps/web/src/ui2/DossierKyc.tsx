@@ -124,7 +124,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
           ? `${reel.code} · ${reel.status ?? ""} · ${t("source : /v1/kyc (API)")}`
           : `CLI-04812 · ${t("Personne morale · Zoug · relation depuis 2019")} · ${t("données maquette")}`}
         puces={<><StatusChip mode="alert">{t("RISQUE ÉLEVÉ")}</StatusChip><StatusChip mode="neutral">EDD</StatusChip></>}
-        actions={<><Ui2Bouton>{t("Chronologie")}</Ui2Bouton>
+        actions={<><Ui2Bouton onClick={() => onNavigate("clients")}>{t("Chronologie")}</Ui2Bouton>
           <Ui2Bouton onClick={() => setOnglet("pieces")}>{t("Documents")}</Ui2Bouton>
           <Ui2Bouton primaire onClick={() => { setOnglet("dossier"); setManques(true); }}>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />}
       sideWidth={320}
@@ -160,7 +160,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
       {onglet === "pieces" && (<>
         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
           {pieces.isDemo ? t("données maquette") : t("source : /v1/ged/documents (métadonnées et empreintes — jamais le contenu, R145)")}</div>
-        <EntityList grid="1.4fr 130px 110px 1fr" onOpen={() => undefined}
+        <EntityList grid="1.4fr 130px 110px 1fr" onOpen={() => setOnglet("pieces")}
           entetes={[t("Pièce"), t("Type"), t("Statut"), t("Version · empreinte")]}
           lignes={(Array.isArray(pieces.data) ? pieces.data : []).slice(0, 30).map((p) => ({
             id: p.id, cells: [
@@ -180,7 +180,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
           {(matrice.isDemo ? t("données maquette") : t("source : /v1/doc-matrix/en-vigueur")) +
             " · " + t("matrice") + " " + (matrice.data?.version ?? "")}</div>
-        <EntityList grid="1.2fr 1.4fr 130px" onOpen={() => undefined}
+        <EntityList grid="1.2fr 1.4fr 130px" onOpen={() => setOnglet("corroboration")}
           entetes={[t("Exigence"), t("Pièce attendue"), t("État")]}
           lignes={(matrice.data?.exigences ?? []).map((e) => ({ id: e.code, cells: [
             <span key="l" style={{ fontWeight: 600, color: "var(--text)" }}>{t(e.libelle)}</span>,
@@ -196,7 +196,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
           {(xb.isDemo ? t("données maquette") : t("source : /v1/crossborder/matrice (R453)")) +
             " · " + t("version") + " " + (xb.data?.version ?? "")}</div>
-        <EntityList grid="180px 1fr 110px" onOpen={() => undefined}
+        <EntityList grid="180px 1fr 110px" onOpen={() => setOnglet("crossborder")}
           entetes={[t("Juridiction"), t("Régime applicable"), t("État")]}
           lignes={(xb.data?.entrees ?? []).map((e) => ({ id: e.jurisdiction, cells: [
             <span key="j" style={{ fontWeight: 600, color: "var(--text)" }}>{e.jurisdiction}</span>,
@@ -275,8 +275,8 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
               {t("Acte notarié · états financiers 2018-2019 · attestation fiduciaire")}</div>
           </section>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <Ui2Bouton primaire>{t("Enregistrer et continuer")}</Ui2Bouton>
-            <Ui2Bouton>{t("Demander au client")}</Ui2Bouton>
+            <Ui2Bouton primaire onClick={() => setOnglet("pieces")}>{t("Enregistrer et continuer")}</Ui2Bouton>
+            <Ui2Bouton onClick={() => setOnglet("pieces")}>{t("Demander au client")}</Ui2Bouton>
             <span className="mono" style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-muted)" }}>
               {t("Brouillon enregistré")} · 14:02</span>
           </div>

@@ -7,6 +7,7 @@ import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -178,7 +179,14 @@ type Onglet = "exposition" | "matrice" | "derogations" | "actes" | "rs" | "ordre
 export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [onglet, setOnglet] = useState<Onglet>("exposition");
+  const [filtre, setFiltre] = useState<string | null>(null);   // juridiction ouverte depuis l'exposition
   const [acte, setActe] = useState<Acte | null>(null);
+  // V2-M33 : ouvrir une ligne mène à l'ACTE qui la concerne — un clic qui ne va nulle part
+  // vaut moins qu'une ligne non cliquable.
+  const ouvrirActe = (famille: string, cle: string) => {
+    const a = (ACTES[famille] ?? []).find((x) => x.cle === cle) ?? null;
+    if (a) setActe(a);
+  };
 
   const expo = useApiOrSeed<typeof SEED_EXPO>("/v1/crossborder/exposition", SEED_EXPO);
   const matrice = useApiOrSeed<Matrice>("/v1/crossborder/matrice", SEED_MATRICE);
@@ -251,7 +259,11 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
       modulesLicencies={MODULES_METIERS_DEMO} />}
       header={<Ui2HeaderListe titre={t("Cross-Border")} sousTitre={sousTitre}
         filtres={<StatusChip mode="info">{t("MODULE LICENCIÉ")}</StatusChip>}
-        action={<Ui2Bouton onClick={() => onNavigate("kyc")}>{t("Voir la matrice dans un dossier →")}</Ui2Bouton>} t={t} />}>
+        action={<><Ui2Bouton onClick={() => exporterCsv(`olive-crossborder-${onglet}-${jourFichier()}`,
+          [t("Onglet"), t("Juridiction filtrée"), t("Exporté le")],
+          [[onglet, filtre ?? t("toutes"), new Date().toISOString().slice(0, 10)]])}>
+          {t("Exporter")}</Ui2Bouton>
+          <Ui2Bouton onClick={() => onNavigate("kyc")}>{t("Voir la matrice dans un dossier →")}</Ui2Bouton></>} t={t} />}>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         {pilule("exposition", t("Exposition"))}
         {pilule("matrice", t("Matrice pays"))}
@@ -275,7 +287,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
           <StatTile valeur={String(totalPreuves)} label={t("preuves RS actives")}
             onOpen={() => setOnglet("rs")} />
         </div>
-        <EntityList grid="90px 90px 90px 110px 110px 110px 110px" onOpen={() => undefined}
+        <EntityList grid="90px 90px 90px 110px 110px 110px 110px" onOpen={(j) => { setOnglet("matrice"); setFiltre(j); }}
           entetes={[t("Juridiction"), t("Clients"), t("Voyages"), t("Actes distants"),
             t("Dérogations"), t("Preuves RS"), t("Certifications")]}
           lignes={lignes.map((l) => ({ id: l.juridiction, cells: [
@@ -293,6 +305,11 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
       </>)}
 
       {onglet === "matrice" && (<>
+        {filtre && (
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
+            <StatusChip mode="info">{`${t("juridiction")} ${filtre}`}</StatusChip>
+            <Ui2Bouton onClick={() => setFiltre(null)}>{t("Voir toutes les juridictions")}</Ui2Bouton>
+          </div>)}
         {barreActes("matrice")}
         <section style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
           borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", padding: "12px 16px",
@@ -316,9 +333,10 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
               {t(matrice.data.noteSync ?? "synchronisation en échec")} — {t("la dernière version connue continue d'être servie, et son ÂGE est porté à l'écran. Une matrice périmée qui se tait est plus dangereuse qu'une matrice absente.")}
             </div>)}
         </section>
-        <EntityList grid="90px 1.4fr 150px 1fr" onOpen={() => undefined}
+        <EntityList grid="90px 1.4fr 150px 1fr" onOpen={() => ouvrirActe("matrice", "asof")}
           entetes={[t("Juridiction"), t("Activité"), t("Sévérité"), t("Base déclarée")]}
-          lignes={(matrice.data?.entrees ?? []).map((e, i) => ({ id: `${e.juridiction}-${i}`, cells: [
+          lignes={(matrice.data?.entrees ?? []).filter((e) => !filtre || e.juridiction === filtre)
+            .map((e, i) => ({ id: `${e.juridiction}-${i}`, cells: [
             <span key="j" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{e.juridiction}</span>,
             t(e.activite),
             <StatusChip key="s" mode={MODE_SEVERITE[e.severite] ?? "neutral"}>{t(e.severite)}</StatusChip>,
@@ -329,7 +347,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
 
       {onglet === "derogations" && (<>
         {barreActes("derogations")}
-        <EntityList grid="150px 1.5fr 90px 1.6fr 170px" onOpen={() => undefined}
+        <EntityList grid="150px 1.5fr 90px 1.6fr 170px" onOpen={() => ouvrirActe("derogations", "viser")}
           entetes={[t("Référence"), t("Objet"), t("Juridiction"), t("Motif"), t("État")]}
           lignes={(derog.data?.lignes ?? []).map((d) => ({ id: d.id, cells: [
             <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>
@@ -347,7 +365,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
 
       {onglet === "actes" && (<>
         {barreActes("actes")}
-        <EntityList grid="130px 1.6fr 90px 150px 130px 110px" onOpen={() => undefined}
+        <EntityList grid="130px 1.6fr 90px 150px 130px 110px" onOpen={() => ouvrirActe("actes", "rejeu")}
           entetes={[t("Famille"), t("Objet"), t("Juridiction"), t("Verdict consigné"),
             t("Version de matrice"), t("Date")]}
           lignes={(actes.data?.lignes ?? []).map((a) => ({ id: a.id, cells: [
@@ -368,7 +386,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
 
       {onglet === "rs" && (<>
         {barreActes("rs")}
-        <EntityList grid="1.4fr 1.4fr 1.3fr 130px 110px 110px" onOpen={() => undefined}
+        <EntityList grid="1.4fr 1.4fr 1.3fr 130px 110px 110px" onOpen={() => ouvrirActe("rs", "rsvisa")}
           entetes={[t("Client"), t("Périmètre"), t("Nature de la preuve"), t("Document GED"),
             t("Date"), t("Visa")]}
           lignes={(rs.data?.preuves ?? []).map((p) => ({ id: p.id, cells: [
@@ -382,7 +400,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
         <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", margin: "16px 0 8px" }}>
           {t("Localisations temporaires")} <span style={{ fontWeight: 400, fontSize: 11,
             color: "var(--text-muted)" }}>{t("(R457 — la juridiction applicable à un acte)")}</span></div>
-        <EntityList grid="1.4fr 90px 110px 110px 110px 110px" onOpen={() => undefined}
+        <EntityList grid="1.4fr 90px 110px 110px 110px 110px" onOpen={() => ouvrirActe("rs", "localisation")}
           entetes={[t("Client"), t("Juridiction"), t("Du"), t("Au"), t("Durée"), t("En cours")]}
           lignes={(rs.data?.localisations ?? []).map((l) => ({ id: l.clientId, cells: [
             <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{l.client ?? l.clientId}</span>,
@@ -399,7 +417,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
 
       {onglet === "ordres" && (<>
         {barreActes("ordres")}
-        <EntityList grid="120px 130px 190px 160px" onOpen={() => undefined}
+        <EntityList grid="120px 130px 190px 160px" onOpen={() => ouvrirActe("ordres", "ordre")}
           entetes={[t("Pays"), t("Ordres reçus"), t("dont sollicitation inversée"), t("Part couverte")]}
           lignes={Object.entries(reporting.data?.parPays ?? {}).map(([pays, v]) => ({ id: pays, cells: [
             <span key="p" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{pays}</span>,

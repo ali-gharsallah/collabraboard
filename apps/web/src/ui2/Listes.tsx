@@ -84,7 +84,7 @@ export function MesDossiers({ active, onNavigate }: { active: Ui2NavId; onNaviga
       onNavigate={onNavigate} t={t} badges={badges} />}
       header={<Ui2HeaderListe titre={t("Mes dossiers")}
         sousTitre={`${lignes.length} ${t("dossiers")} · ${r.isDemo ? t("données maquette") : t("source : /v1/kyc")}`}
-        action={<Ui2Bouton primaire>{t("Nouveau dossier")}</Ui2Bouton>} t={t} />}>
+        action={<Ui2Bouton primaire onClick={() => onNavigate("entree")}>{t("Nouveau dossier")}</Ui2Bouton>} t={t} />}>
       <EntityList grid="1.4fr 1fr 110px 110px 110px" onOpen={() => onNavigate("kyc")}
         entetes={[t("Dossier"), t("Client"), t("Statut"), t("Risque"), t("Ouvert le")]}
         lignes={lignes.map((k) => ({ id: k.code, cells: [
@@ -138,7 +138,7 @@ export function MesClients({ active, onNavigate }: { active: Ui2NavId; onNavigat
           ? `${lignes.length} ${t("clients")} · ${r.isDemo ? t("données maquette") : t("source : /v1/clients")}`
           : t("une personne est unique — ses dossiers la référencent, rien n'est ressaisi")}
         filtres={<span style={{ display: "flex", gap: 8 }}>{pilule("clients", t("Clients"))}{pilule("personnes", t("Personnes"))}</span>}
-        action={<Ui2Bouton primaire>{t("Nouveau client")}</Ui2Bouton>} t={t} />}
+        action={<Ui2Bouton primaire onClick={() => onNavigate("entree")}>{t("Nouveau client")}</Ui2Bouton>} t={t} />}
       sideWidth={340}
       side={client ? <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

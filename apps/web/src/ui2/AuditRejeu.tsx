@@ -5,6 +5,7 @@ import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { EventTimeline } from "./EventTimeline";
+import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -65,7 +66,11 @@ export function AuditRejeu({ active, onNavigate, onRetour }: {
         identifiants={`CLI-02207 · ${t("état reconstitué au")} ${pos.date} · ${t("consultation tracée sous")} AUD-9931`}
         puces={<StatusChip mode="neutral">{t("LECTURE SEULE")}</StatusChip>}
         actions={<>{onRetour && <Ui2Bouton onClick={onRetour}>{t("← Pilotage")}</Ui2Bouton>}
-          <Ui2Bouton>{t("Exporter le dossier de preuve")}</Ui2Bouton></>} t={t} />}
+          <Ui2Bouton onClick={() => exporterCsv(`olive-dossier-de-preuve-${jourFichier()}`,
+            [t("Élément"), t("Valeur")],
+            [[t("Écran"), t("Audit & rejeu")], [t("Exporté le"), new Date().toISOString()],
+             [t("Portée"), t("le journal est append-only (R49) — l'export en est une LECTURE")]])}>
+            {t("Exporter le dossier de preuve")}</Ui2Bouton></>} t={t} />}
       stepper={<div style={{ display: "flex", alignItems: "center", gap: 14, width: "100%" }}>
         <span className="microlabel" style={{ flexShrink: 0 }}>{t("Date de rejeu")}</span>
         <div style={{ position: "relative", flex: 1, height: 16 }}>
