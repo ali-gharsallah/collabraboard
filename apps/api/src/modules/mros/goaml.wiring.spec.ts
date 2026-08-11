@@ -86,6 +86,26 @@ await t("GO-05 soumission MANUELLE tracée : référence exigée, événement ca
   assert.deepEqual(r.alertes, []);                               // soumis : le chronomètre s'éteint
 });
 
+await t("GO-08 (V2-M38) dépôt goAML sur une communication NON décidée DECLARER : REFUSÉ", async () => {
+  // Le chronomètre J+5 s'éteint dès qu'un dépôt est tracé. Tracer un dépôt sur une
+  // communication qu'on a décidé de NE PAS déclarer éteignait donc l'alarme de délai d'une
+  // communication qui n'en avait pas — et masquait celle qui en avait une.
+  const { p, events } = fake([{ ...COM, id: "M2", decision: "NE_PAS_DECLARER" }]);
+  const svc = new GoamlService(p);
+  await assert.rejects(svc.soumettre(CO, "M2", { reference: "GOAML-2026-0099" }),
+    /n'est pas décidée DECLARER/);
+  assert.equal(events.filter((e) => e.type === "mros.goaml.soumis").length, 0);
+});
+
+await t("GO-09 (V2-M38) second dépôt REFUSÉ, avec la référence du premier — un dépôt ne se retrace pas", async () => {
+  const { p, events } = fake([COM]);
+  const svc = new GoamlService(p);
+  await svc.soumettre(CO, "M1", { reference: "GOAML-2026-0042" });
+  await assert.rejects(svc.soumettre(CO, "M1", { reference: "GOAML-2026-0043" }),
+    /déjà tracé.*GOAML-2026-0042/);
+  assert.equal(events.filter((e) => e.type === "mros.goaml.soumis").length, 1);
+});
+
 await t("GO-06 cloisonnement art. 9a/10a : rôle non habilité REFUSÉ sur les trois chemins", async () => {
   const { p } = fake([COM]);
   const svc = new GoamlService(p);

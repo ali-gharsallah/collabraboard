@@ -96,7 +96,7 @@ echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-ava
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
 echo "── Câblage paramètres R-Q (RQ-01..07, R125→R128 · R78) ──"; run parametres.wiring.spec.js
-echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
+echo "── Câblage MROS (MR-01..08, R129→R132) ──"; run mros.wiring.spec.js
 echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js
 echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-ingestion.wiring.spec.js
 echo "── Câblage Portail TX (TX-01..06, R140→R143) ──"; run transaction-gate.wiring.spec.js
@@ -138,7 +138,7 @@ echo "── Inférence module A (IN-01..11, P-L7-1 profils Requirements) ──
 echo "── Inférence module A (DS-01..14, P-L7-2 DSL d'activation sûr) ──"; run dsl.spec.js
 echo "── Inférence module A (LG-01..08, P-L7-3 CaseFactsReader + RequirementLedger) ──"; run inference-ledger.wiring.spec.js
 echo "── Inférence module A (CO-01..05, P-L7-4 cohérence gardes ↔ ledger + miroir no-drift) ──"; run inference-coherence.spec.js
-echo "── MROS goAML + chronomètre (GO-01..07, P-L8-1) ──"; run goaml.wiring.spec.js
+echo "── MROS goAML + chronomètre (GO-01..09, P-L8-1) ──"; run goaml.wiring.spec.js
 echo "── KPI conformité (KP-01..05, P-L8-2) ──"; run kpi.wiring.spec.js
 echo "── Gouvernance module O (OO-01..05, P-L8-3) ──"; run gouvernance-o.wiring.spec.js
 echo "── Bloc WD — WIR v1 + validateur R434 (WD-01..06/12) ──"; run wir.wiring.spec.js

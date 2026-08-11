@@ -4,7 +4,7 @@
  * (default-deny + accès tracés). Faux Prisma en mémoire. Écrit AVANT l'implémentation.
  *
  * Harnais : compiler mros.service.ts + ce fichier ;
- *   echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
+ *   echo "── Câblage MROS (MR-01..08, R129→R132) ──"; run mros.wiring.spec.js
  */
 import { MrosService } from './mros.service';
 import { createHash } from 'crypto';
@@ -150,6 +150,31 @@ const decide = (s: MrosService, decision: "COMMUNIQUER" | "NE_PAS_COMMUNIQUER" =
     await rejects(s.lire({ ...MLRO, tenantId: 't2' }, r.communicationId), 'introuvable');
   });
 
-  console.log(`\nCâblage MROS (MR-01..06, R129→R132) — ${passed}/${passed + failed} tests verts`);
+  // ── MR-07 (R131, V2-M38) — la notification est VALIDÉE, et ne peut pas contredire un gel ──
+  await it('MR-07 notification : valeur hors énumération REFUSÉE ; NON_TRANSMISSION sous gel actif REFUSÉE', async () => {
+    const { s } = mk();
+    const r: any = await decide(s);
+    await rejects(s.saisirNotification(MLRO, r.communicationId, 'PEUT-ETRE' as any), 'R131');
+    await rejects(s.saisirNotification(MLRO, r.communicationId, undefined as any), 'R131');
+    await s.saisirNotification(MLRO, r.communicationId, 'TRANSMISSION_AUTORITE');
+    await s.poserGel(MLRO, r.communicationId, 'Notification MROS — transmission');
+    // contredire la transmission pendant un gel art. 10 : refusé, la levée est un acte à part
+    await rejects(s.saisirNotification(MLRO, r.communicationId, 'NON_TRANSMISSION'), 'lever le gel');
+  });
+
+  // ── MR-08 (R131, V2-M38) — on ne lève pas un gel qui n'existe pas ──
+  await it('MR-08 levée sans gel actif REFUSÉE — le journal ne porte pas la levée d\'un gel inexistant', async () => {
+    const { p, s } = mk();
+    const r: any = await decide(s);
+    await rejects(s.leverGel(MLRO, r.communicationId, 'levée sans gel'), 'aucun gel actif');
+    ok(evts(p, 'mros.gel.leve').length === 0, 'aucun événement de levée émis');
+    await s.saisirNotification(MLRO, r.communicationId, 'TRANSMISSION_AUTORITE');
+    await s.poserGel(MLRO, r.communicationId, 'motif de pose');
+    await s.leverGel(MLRO, r.communicationId, 'motif de levée');
+    ok(evts(p, 'mros.gel.leve').length === 1, 'une levée, une seule');
+    await rejects(s.leverGel(MLRO, r.communicationId, 'seconde levée'), 'aucun gel actif');
+  });
+
+  console.log(`\nCâblage MROS (MR-01..08, R129→R132) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

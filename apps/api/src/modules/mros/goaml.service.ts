@@ -82,6 +82,18 @@ export class GoamlService {
     const com = await this.prisma.mrosCommunication.findFirst({
       where: { tenantId: ctx.tenantId, id: communicationId } });
     if (!com) throw new NotFoundException("communication MROS introuvable");
+    // V2-M38 — DEUX gardes, et la première est la plus grave du lot. Le chronomètre J+5 ouvrés
+    // cesse d'alerter dès qu'un `mros.goaml.soumis` existe : sans ces gardes, tracer un dépôt
+    // sur une communication décidée « ne pas déclarer », ou le tracer deux fois, ÉTEIGNAIT
+    // l'alarme de délai. Une alarme qu'on peut éteindre par erreur ne protège personne.
+    if (com.decision !== "DECLARER")
+      throw new BadRequestException(
+        `dépôt goAML impossible : la communication n'est pas décidée DECLARER (décision ${com.decision})`);
+    const deja = await this.prisma.domainEvent.findFirst({ where: {
+      tenantId: ctx.tenantId, type: "mros.goaml.soumis", aggregateId: communicationId } });
+    if (deja)
+      throw new BadRequestException(
+        `dépôt goAML déjà tracé pour cette communication (référence ${(deja.payload as any)?.reference ?? "—"}) — un dépôt ne se retrace pas, il se corrige par un acte nommé`);
     await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "mros.goaml.soumis",
       communicationId, { reference: dto.reference, par: ctx.userId }));
     return { soumis: true, communicationId, reference: dto.reference };
