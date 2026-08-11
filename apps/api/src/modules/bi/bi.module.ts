@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Module, Post, Req, Injectable } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Module, Post, Req, Injectable } from "@nestjs/common";
 import * as fs from "fs";
 import * as path from "path";
 import { PrismaService } from "../../common/prisma.service";
@@ -94,7 +94,13 @@ export class BiService {
 export class BiController {
   constructor(private svc: BiService) {}
   @Post("requete") requete(@Req() r: any, @Body() b: any) { return this.svc.requete(r.ctx, b ?? {}); }   // BL-01..03
-  @Post("annuaire") annuaire() { return this.svc.vues(); }                                                 // l'annuaire déclaré (lecture)
+  // V2-M40 — l'annuaire est une LECTURE : il rend la liste des vues déclarées et n'écrit rien.
+  // Il n'était exposé qu'en POST, si bien que l'écran Rapports (« Sur mesure ») le demandait en
+  // GET, recevait une erreur, et retombait sur son seed SANS QUE PERSONNE NE LE VOIE — le
+  // bandeau « données maquette » disait vrai mais taisait la cause. Le GET est ajouté ; le POST
+  // reste en place, aucun appelant existant n'est cassé.
+  @Get("annuaire") annuaireLecture() { return this.svc.vues(); }                                          // BL-04 (lecture)
+  @Post("annuaire") annuaire() { return this.svc.vues(); }                                                 // conservé — compatibilité
 }
 
 @Module({ controllers: [BiController], providers: [BiService] })

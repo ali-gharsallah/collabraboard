@@ -120,6 +120,17 @@ function memeChemin(a: string, b: string): boolean {
   return sa.every((s, i) => s === sb[i] || s.startsWith(":") || sb[i].startsWith(":"));
 }
 
+/** Les LECTURES déclarées par les écrans : `useApiOrSeed<T>("route", SEED)`. */
+function lecturesDeclarees(): { fichier: string; route: string }[] {
+  const out: { fichier: string; route: string }[] = [];
+  for (const { nom, src } of fichiersTs(RACINE_UI2)) {
+    if (/\.test\./.test(nom)) continue;
+    for (const m of src.matchAll(/useApiOrSeed<[^>]*>\(\s*"([^"]+)"/g))
+      out.push({ fichier: nom, route: m[1] });
+  }
+  return out;
+}
+
 describe("Contrat écran ↔ moteur (V2-M39)", () => {
   const routes = routesDuMoteur();
   const actes = actesDeclares();
@@ -156,4 +167,23 @@ describe("Contrat écran ↔ moteur (V2-M39)", () => {
     }
     expect(inconnus).toEqual([]);
   });
+
+  it("AC-04 toute LECTURE déclarée existe au moteur EN GET — un GET manquant retombe sur le seed en silence", () => {
+    // Trouvé par cette garde : `/v1/bi/annuaire` n'était exposé qu'en POST. L'écran le
+    // demandait en GET, recevait une erreur, et `apiGetSourced` retombait sur le seed. Le
+    // bandeau « données maquette » disait vrai mais taisait la CAUSE — c'est la pire forme
+    // d'honnêteté : exacte et inutile. Le GET a été ajouté au moteur (V2-M40).
+    const lectures = lecturesDeclarees();
+    expect(lectures.length).toBeGreaterThanOrEqual(25);
+    const introuvables = lectures.filter((l) => {
+      const chemin = normaliser(l.route);
+      return !routes.some((r) => r.methode === "GET" && memeChemin(r.chemin, chemin));
+    }).map((l) => `${l.fichier} — ${l.route}`);
+    expect(introuvables).toEqual([]);
+  });
+
+  // CE QUE CES GARDES NE VÉRIFIENT PAS, et qu'il ne faut pas croire vérifié : la FORME des
+  // réponses. Un seed peut avoir les bonnes clés et le moteur en renvoyer d'autres — seule une
+  // API vivante le dirait. Ces gardes couvrent le contrat d'APPEL (route, verbe, champs
+  // envoyés), pas le contrat de RETOUR.
 });
