@@ -1588,3 +1588,16 @@ re-soumis ici.
 - **Cible** : inventaire de couverture capacité par capacité, puis (a) onglets dans la colonne
   existante pour ce qui suit le parcours, (b) écrans propres sous « Métiers » conditionnés par la
   licence. Statut : OUVERT.
+
+### E-V2-4 — Modules verticaux non ratifiés à MODULES_PRODUIT (V2-M14)
+- **Constat** : l'arbitrage PO du 11.08 veut « chaque module activable par profil et licence ».
+  Or `MODULES_PRODUIT` (canon R320, `license/vendor-license.service.ts`) ne liste que GED, OCR,
+  KYC, AML, COC, ACCREV, WORKFLOWS, ONBOARDING, SCREENING, PMS, IA. Huit verticaux réels du
+  moteur n'y figurent pas : **CROSSBORDER, CUSTODY, FX, MOBILE, ISLAMIC, LEGAL, OPRISK,
+  REGWATCH**.
+- **Traitement retenu** : le registre `apps/web/src/ui2/capacites.ts` les porte avec un préfixe
+  « † », traité comme une licence à part entière par `licenceActive()`. Le front N'A PAS modifié
+  le canon — la ratification de ces 8 modules à `MODULES_PRODUIT` est un acte de catalogue qui
+  reste à faire, et conditionne la facturation.
+- **Cible** : amendement du catalogue R320 (8 modules), puis retrait des marqueurs « † ».
+  Statut : OUVERT — arbitrage PO/éditeur requis.

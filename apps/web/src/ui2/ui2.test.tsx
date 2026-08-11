@@ -15,6 +15,7 @@ import { ImpactPreview } from "./ImpactPreview";
 import { RevueSortie } from "./RevueSortie";
 import { SandboxSlider } from "./SandboxSlider";
 import { ECRANS_MIGRES } from "./cartographie";
+import { CAPACITES, capacitesVisibles, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
 import { Surveillance } from "./Surveillance";
@@ -235,15 +236,19 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // les 4 fusions arbitrées par le PO (10.08.2026) se résolvent dans la palette
     const cc = chercher("command center", { ecrans: ECRANS_MIGRES, ...vide }, tr);
     expect(cc[0].cible).toBe("journee");                          // dashboards → Ma journée
-    expect(cc[0].detail).toContain("fusionné");
+    expect(cc[0].detail).toContain("Ma journée");
     expect(chercher("bacs à sable", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("param");
     expect(chercher("capacité équipe", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("rapports");
     expect(chercher("compliance center", { ecrans: ECRANS_MIGRES, ...vide }, tr)[0].cible).toBe("surveillance");
-    // la table couvre bien les ~50 écrans des trois blocs du README
-    expect(ECRANS_MIGRES.length).toBeGreaterThanOrEqual(50);
-    const cibles = new Set(ECRANS_MIGRES.map((e) => e.id));
-    for (const c of cibles) expect(["journee", "dossiers", "clients", "entree", "kyc",
-      "surveillance", "revue", "rapports", "param"]).toContain(c);   // aucune destination orpheline
+    // V2-M14 : la cartographie est DÉRIVÉE du registre — elle couvre les 86 capacités v1,
+    // plus seulement les ~50 écrites à la main (l'écart E-V2-3 devient impossible).
+    expect(ECRANS_MIGRES.length).toBe(CAPACITES.length);
+    const SPINE = ["journee", "dossiers", "clients", "entree", "kyc",
+      "surveillance", "revue", "rapports", "param"];
+    const VERTICAUX = ["crossborder", "custody", "oprisk", "legal", "cpsi",
+      "pms", "fx", "mobile", "islamic"];
+    for (const c of new Set(ECRANS_MIGRES.map((e) => e.id)))
+      expect([...SPINE, ...VERTICAUX]).toContain(c);                 // aucune destination orpheline
   });
 
   it("U2-18 EntreeRelation : la barrière KYC est annoncée DÈS l'écran ; l'aiguillage EDD a sa raison ; la personne se réutilise", () => {
@@ -554,5 +559,58 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     for (const s of sources) expect(s).toContain('url("./fonts/');             // vendorisé, chemin relatif bundlé
     expect(tokensCss).not.toMatch(/https?:\/\//);                              // zéro URL sortante (CDN interdit)
     expect(tokensCss).toContain("font-display: swap");                         // repli système sans blocage
+  });
+
+  // ══ V2-M14 — le registre des capacités : parcours client + TOUTE la v1, activable
+  //    par licence (R320) et par profil (R282). Arbitrage PO du 11.08.2026. ══
+
+  it("U2-39 V2-M14 registre : les 86 capacités v1 ont toutes une destination et un porteur", () => {
+    expect(CAPACITES.length).toBe(86);   // les 86 écrans du ROUTEUR v1, pas les 82 du menu
+    for (const c of CAPACITES) {
+      expect(c.destination).toBeTruthy();                    // aucune capacité sans destination
+      expect(c.roles.length).toBeGreaterThan(0);             // aucune capacité sans profil autorisé
+      expect(["livre", "a-construire"]).toContain(c.statut); // l'état est dit, jamais maquillé
+    }
+    // l'état réel est ASSUMÉ : 18 restent à bâtir — le registre ne prétend pas le contraire.
+    expect(CAPACITES.filter((c) => c.statut === "a-construire").length).toBe(18);
+    // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
+    expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
+  });
+
+  it("U2-40 V2-M14 licence (R320) : un module non licencié rend ses capacités INVISIBLES", () => {
+    const socle = ["KYC", "AML", "SCREENING", "GED", "ACCREV", "COC", "ONBOARDING", "WORKFLOWS", "IA"];
+    const sansPms = capacitesVisibles("RM", socle);
+    expect(sansPms.some((c) => c.id === "pms")).toBe(false);          // PMS absent, pas grisé
+    expect(capacitesVisibles("RM", [...socle, "PMS"]).some((c) => c.id === "pms")).toBe(true);
+    // le socle (licence null) reste servi quelle que soit la licence — même liste vide.
+    expect(capacitesVisibles("RM", []).every((c) => c.licence === null)).toBe(true);
+    expect(licenceActive(null, [])).toBe(true);
+    // un module marqué « † » (non encore ratifié à MODULES_PRODUIT) se teste sans son marqueur.
+    expect(licenceActive("†ISLAMIC", ["ISLAMIC"])).toBe(true);
+    expect(licenceActive("†ISLAMIC", [])).toBe(false);
+  });
+
+  it("U2-41 V2-M14 profil (R282) : un rôle ne voit que ses capacités — un écran non autorisé n'apparaît pas", () => {
+    const tout = CAPACITES.map((c) => (c.licence ?? "").replace(/^†/, "")).filter(Boolean);
+    const rm = capacitesVisibles("RM", tout);
+    const mlro = capacitesVisibles("MLRO", tout);
+    // le RM ne voit ni les communications MROS ni la supervision ES (matrice R282).
+    expect(rm.some((c) => c.id === "mros")).toBe(false);
+    expect(rm.some((c) => c.id === "surveillancees")).toBe(false);
+    expect(mlro.some((c) => c.id === "mros")).toBe(true);
+    // l'auditeur ne pilote rien : aucune capacité de paramétrage d'accès ne lui est ouverte.
+    expect(capacitesVisibles("AUDIT", tout).some((c) => c.id === "paramnav")).toBe(false);
+    // les deux gardes sont ET : le bon rôle sans la licence ne voit toujours rien.
+    expect(capacitesVisibles("RM", []).some((c) => c.id === "kyc")).toBe(false);
+  });
+
+  it("U2-42 V2-M14 navigation : les destinations découlent du registre, jamais d'une liste en dur", () => {
+    const tout = CAPACITES.map((c) => (c.licence ?? "").replace(/^†/, "")).filter(Boolean);
+    const dAudit = destinationsVisibles("AUDIT", tout);
+    expect(dAudit).toContain("rapports");
+    expect(dAudit).not.toContain("entree");            // l'auditeur n'entre pas en relation
+    // un RM pleinement licencié atteint les verticaux métiers ; sans licence, ils disparaissent.
+    expect(destinationsVisibles("RM", tout)).toContain("islamic");
+    expect(destinationsVisibles("RM", [])).not.toContain("islamic");
   });
 });
