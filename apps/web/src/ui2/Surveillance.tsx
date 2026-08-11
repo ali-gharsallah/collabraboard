@@ -14,6 +14,7 @@ import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
+import { useActeMoteur, RetourActe } from "./acte-moteur";
 
 /**
  * UI v2 — étape 6 : Surveillance — écrans 03 « AML Investigation » et 05 « Screening ».
@@ -122,19 +123,41 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   // DecisionPanel porte key={ecran} pour que le motif saisi sur l'un ne fuie jamais sur l'autre.
   const [decisions, setDecisions] = useState<Partial<Record<"alerte" | "hit", { option: string; motif: string }>>>({});
   const decision = decisions[ecran] ?? null;
+  // V2-M35 — LE PREMIER ACTE QUI PART. La décision n'est plus un état local : elle est POSÉE
+  // au moteur, et son issue — succès comme refus — est rendue à l'écran. Deux routes réelles :
+  //   hit screening  → POST /v1/screening/hits/:id/qualify   (R101/R7 : motif obligatoire)
+  //   alerte AML     → POST /v1/riskcases/:id/transition     (R133/R136 : transition motivée)
+  // Le motif saisi voyage TEL QUEL : c'est lui que le registre conservera, pas un résumé.
+  const acte = useActeMoteur();
+  const ROUTE_ACTE: Record<"alerte" | "hit", string> = {
+    hit: "/v1/screening/hits/hit-1/qualify",
+    alerte: "/v1/riskcases/rc-1/transition",
+  };
+  const poserDecision = (d: { option: string; motif: string }) => {
+    setDecision(d);
+    const corps = ecran === "hit"
+      ? { verdict: d.option, motif: d.motif }
+      : { vers: d.option, motif: d.motif };
+    void acte.poser(ROUTE_ACTE[ecran as "alerte" | "hit"], corps);
+  };
   const setDecision = (d: { option: string; motif: string } | null) =>
     setDecisions((prev) => ({ ...prev, [ecran]: d ?? undefined }));
   const nav = (
     <Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer" onNavigate={onNavigate} t={t}
       badges={{ journee: { n: 9 }, dossiers: { n: 17, sobre: true }, surveillance: { n: 5, alert: true } }}
       modulesLicencies={MODULES_METIERS_DEMO} />);
+  // Le bandeau ne DÉCLARE plus l'enregistrement : il rend ce que le moteur a répondu. Avant
+  // V2-M35 il affichait « Qualification enregistrée » alors qu'aucune écriture n'était partie.
   const bandeauDecision = decision && (
-    <div role="status" style={{ background: "var(--ok-chip)", border: "1px solid var(--ok-line)",
-      borderRadius: 9, padding: "9px 12px", marginBottom: 12, fontSize: 12, color: "var(--ok-text)" }}>
-      ✓ {t("Qualification enregistrée")} — <strong>{decision.option}</strong> · {t("motif consigné tel quel au registre.")}
-      <button onClick={() => setDecision(null)} style={{ marginLeft: 10, border: "none",
-        background: "transparent", color: "var(--ok-text)", fontFamily: "inherit", fontSize: 11.5,
-        fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>{t("Annuler")}</button>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 12, color: "var(--text-body)" }}>
+        {t("Décision soumise")} — <strong>{decision.option}</strong>{" "}
+        <button onClick={() => { setDecision(null); acte.reinitialiser(); }}
+          style={{ marginLeft: 6, border: "none", background: "transparent",
+            color: "var(--text-secondary)", fontFamily: "inherit", fontSize: 11.5,
+            fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>{t("Reprendre")}</button>
+      </div>
+      <RetourActe etat={acte.etat} route={ROUTE_ACTE[ecran as "alerte" | "hit"]} t={t} />
     </div>);
 
   const pilule = (id: typeof ecran, label: string) => (
@@ -311,7 +334,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
             t("Re-screening automatique à réception")]}
           boutonLabel={t("Enregistrer la qualification")}
           mention={t("Second regard MLRO requis sur toute correspondance confirmée.")}
-          onDecider={setDecision} />}>
+          onDecider={poserDecision} />}>
         {bandeauDecision}
         <DiffTable enteteGauche={t("Dossier O-Live")} enteteDroite={t("Liste source")} t={t} lignes={[
           { attribut: t("Nom complet"), gauche: "Andrei Volkov", droite: "Andrey Volkov", concordance: { label: "92 %", mode: "pct" } },
@@ -365,7 +388,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
           t("Compte non bloqué — aucun effet automatique")]}
         boutonLabel={t("Enregistrer la qualification")}
         mention={t("Le second regard MLRO reste requis avant clôture.")}
-        onDecider={setDecision} />}>
+        onDecider={poserDecision} />}>
       {pilules}
       {bandeauDecision}
       <section style={{ background: "var(--bg-surface)", border: "1px solid var(--alert-line)",

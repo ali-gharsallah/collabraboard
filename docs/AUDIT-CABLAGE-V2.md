@@ -49,6 +49,19 @@ réel — pas une application.
 
 Tant que le point 1 n'est pas fait, tout écran neuf ajoute de la vitrine.
 
+## Journal du câblage
+
+| Lot | Ce qui a été câblé | Écritures réelles de `src/ui2` |
+|---|---|---:|
+| V2-M34 | *(constat)* | 0 |
+| V2-M35 | `acte-moteur.tsx` + les deux décisions de Surveillance — qualification d'un hit (`POST /v1/screening/hits/:id/qualify`, R101/R7) et transition d'un cas de risque (`POST /v1/riskcases/:id/transition`, R133/R136) | 1 chemin · 1 écran |
+
+**Ce que V2-M35 change vraiment, et ce n'est pas le succès.** Le sujet est le REFUS. Le message
+du moteur est rendu tel quel (FE-04), la liste de refus voyage entière (R269/R306), le pop-up
+R445 est porté à l'écran. Et en mode démonstration, l'écran affiche **AUCUNE ÉCRITURE** au lieu
+d'un faux succès : avant ce lot, la Surveillance annonçait « Qualification enregistrée » alors
+que rien n'était parti. C'est ce mensonge-là qui est corrigé.
+
 ## Règle tirée de cet épisode
 
 Un audit qui compte des SURFACES produit un chiffre flatteur et faux. On compte désormais des

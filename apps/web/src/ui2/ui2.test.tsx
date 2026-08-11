@@ -806,19 +806,50 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // l'acte et que le moteur l'enregistre — le nombre était 0. Ce test AFFICHE la valeur au
     // lieu de la raconter, et le chiffre attendu se relève à chaque acte câblé.
     const dir = join(process.cwd(), "src/ui2");
-    let ecritures = 0;
+    let ecritures = 0, ecrans = 0;
     const parcourir = (d: string) => {
       for (const e of readdirSync(d, { withFileTypes: true })) {
         const p = join(d, e.name);
         if (e.isDirectory()) { parcourir(p); continue; }
         if (!/\.(tsx|ts)$/.test(e.name) || e.name.endsWith(".test.tsx")) continue;
         const src = readFileSync(p, "utf8");
-        ecritures += (src.match(/apiPost|apiPut|apiPatch|apiDelete|method:\s*"(POST|PUT|PATCH|DELETE)"/g) ?? []).length;
+        // On compte des APPELS, pas des mentions : un `apiPost` cité dans un commentaire ou
+        // listé dans un import n'écrit rien. D'où le `[<(]` exigé derrière le nom.
+        ecritures += (src.match(/\b(apiPost|apiPut|apiPatch|apiDelete)\s*[<(]/g) ?? []).length;
+        // « écran qui pose un acte » = celui qui APPELLE le hook, pas celui qui le définit.
+        ecrans += /=\s*useActeMoteur\s*\(/.test(src) ? 1 : 0;
       }
     };
     parcourir(dir);
     // Attendu = l'état RÉEL du jour. Relever ce nombre est le geste qui atteste un câblage ;
     // le baisser sans motif est une régression que ce test rend visible.
-    expect(ecritures).toBe(0);
+    // 0 → 1 au lot V2-M35 : UN chemin d'écriture (acte-moteur.tsx), emprunté par UN écran
+    // (Surveillance, deux actes). Relever ces nombres est le geste qui atteste un câblage.
+    expect(ecritures).toBe(1);
+    expect(ecrans).toBe(1);
+  });
+
+  it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
+    // Le sujet du lot n'est pas le succès, c'est le REFUS. Les gardes du produit (R7 motif,
+    // R13 second regard, R445 engagement, R294 rôle) ne vivent qu'au moteur : une UI qui avale
+    // les erreurs les rend invisibles — l'utilisateur croit avoir agi, la banque croit la garde
+    // active, et rien n'a été écrit.
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    // 1. la garde locale tient : sans motif, rien ne part (R7)
+    fireEvent.click(screen.getByText("Enregistrer la qualification"));
+    expect(screen.queryByText(/Décision soumise/)).toBeNull();
+    // 2. avec une option et un motif, l'acte est soumis et son ISSUE est rendue
+    fireEvent.click(screen.getByText("Faux positif"));
+    fireEvent.change(screen.getAllByLabelText("Motif")[0],
+      { target: { value: "Flux justifié par le contrat de vente produit." } });
+    fireEvent.click(screen.getByText("Enregistrer la qualification"));
+    expect(await screen.findByText(/Décision soumise/)).toBeTruthy();
+    // 3. l'API n'étant pas connectée en test, le moteur REFUSE : l'écran le dit, sans rien simuler
+    const alerte = await screen.findByRole("alert");
+    expect(alerte.textContent).toContain("AUCUNE ÉCRITURE");
+    expect(alerte.textContent).toMatch(/rien n'a été écrit et rien n'a été simulé/);
+    expect(alerte.textContent).toContain("/v1/riskcases");        // la route est nommée
+    // 4. et surtout : plus jamais « Qualification enregistrée » quand rien n'est parti
+    expect(screen.queryByText(/Qualification enregistrée/)).toBeNull();
   });
 });
