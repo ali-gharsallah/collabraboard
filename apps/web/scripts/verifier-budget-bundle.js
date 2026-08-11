@@ -54,19 +54,33 @@ const zlib = require("zlib");
 // lots suivants comblent 16 capacités absentes : une marge de 10 kB est le minimum honnête
 // pour ne pas relever ce budget à chaque commit. Mesure : 290,5 avant relève.
 const BUDGET_TOTAL_KB = 300;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
-const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
+const BUDGET_CHUNK_KB = 80;
+const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
+// Globe des flux (V2-M19) : atlas mondial vendorisé + d3-geo, ~53 kB gz. MÊME DOCTRINE que les
+// packs de langue — chargé PARESSEUSEMENT à l'ouverture de l'onglet Transactions, donc jamais
+// payé au chargement initial. On le MESURE et on l'AFFICHE (transparence, pas un trou), mais on
+// l'EXCLUT du total de base : l'inclure ferait rougir un budget que le premier écran ne consomme
+// pas. La garde reste entière — si le globe cessait d'être paresseux, il rentrerait dans le core.
+const EST_GLOBE = (f) => /^GlobeFlux[-.]/.test(f);
 
 const dir = path.join(__dirname, "..", "dist", "assets");
 if (!fs.existsSync(dir)) { console.error("dist/assets absent — lancer `vite build` d'abord"); process.exit(1); }
 
-let total = 0, packsLangue = 0; const horsBudget = [];
+let total = 0, packsLangue = 0, globe = 0; const horsBudget = [];
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
   const kb = zlib.gzipSync(fs.readFileSync(path.join(dir, f))).length / 1024;
   if (EST_PACK_LANGUE(f)) { packsLangue += kb; continue; }   // pack de langue paresseux : hors budget core
+  if (EST_GLOBE(f)) {                                        // globe des flux paresseux : hors budget core
+    globe += kb;
+    // ...mais PAS hors garde : un chunk paresseux reste borné, sinon « paresseux » devient un
+    // fourre-tout où l'on range ce qu'on ne veut pas mesurer.
+    if (kb > BUDGET_GLOBE_KB) horsBudget.push(`GLOBE — ${f} : ${kb.toFixed(1)} kB gz > ${BUDGET_GLOBE_KB} kB`);
+    continue;
+  }
   total += kb;
   if (kb > BUDGET_CHUNK_KB) horsBudget.push(`${f} : ${kb.toFixed(1)} kB gz > ${BUDGET_CHUNK_KB} kB`);
 }
-console.log(`budget bundle — core ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}) + packs langue ${packsLangue.toFixed(1)} kB gz (paresseux, à la demande), pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
+console.log(`budget bundle — core ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}) + packs langue ${packsLangue.toFixed(1)} kB gz + globe ${globe.toFixed(1)} kB gz (les deux paresseux, à la demande), pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
 if (total > BUDGET_TOTAL_KB) horsBudget.push(`CORE : ${total.toFixed(1)} kB gz > ${BUDGET_TOTAL_KB} kB`);
 if (horsBudget.length) { horsBudget.forEach((l) => console.error("HORS BUDGET —", l)); process.exit(1); }

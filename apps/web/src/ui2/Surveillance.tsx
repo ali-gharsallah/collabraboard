@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatusChip } from "./StatusChip";
 import { DecisionPanel } from "./DecisionPanel";
+// Le globe des flux (maquette du designer, V2-M19) est LOURD — atlas mondial + d3-geo, ~55 kB gz.
+// Chargement PARESSEUX : il n'est payé qu'à l'ouverture de l'onglet Transactions, et il est exclu
+// du budget cœur au même titre que les packs de langue (cf. verifier-budget-bundle.js).
+const GlobeFlux = lazy(() => import("./globe/GlobeFlux").then((m) => ({ default: m.GlobeFlux })));
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
@@ -151,6 +155,12 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
             {t("Consultation seule : chaque règle est versionnée et rejouable. La modification passe par le bac à sable du Paramétrage (écran 10) — effet simulé sur l'historique, coût nominatif, version datée et signée.")}</div>
         </>)}
         {ecran === "transactions" && (<>
+          <Suspense fallback={<div style={{ height: 440, display: "grid", placeItems: "center",
+            background: "#11161C", border: "1px solid var(--border)", borderRadius: "var(--r-card)",
+            color: "rgba(190,202,216,0.7)", fontSize: 12.5 }}>{t("Chargement du globe des flux…")}</div>}>
+            <GlobeFlux />
+          </Suspense>
+          <div style={{ height: 14 }} />
           <EntityList grid="110px 1.3fr 140px 150px 120px" onOpen={() => setEcran("alerte")}
             entetes={[t("Date"), t("Contrepartie"), t("Montant"), t("Canal"), t("Statut")]}
             lignes={(Array.isArray(txs.data) ? txs.data : []).slice(0, 30).map((x) => ({
