@@ -62,7 +62,7 @@ export function GlobeFond({ hauteur = 560, focus }: { hauteur?: number; focus: F
       // Le rayon est borné par la LARGEUR et par la hauteur du centre : si la sphère déborde
       // des deux côtés ET par le haut, on ne voit plus qu'une carte plate — c'est la courbure
       // qui fait la coupole. Centre bas, arc supérieur dans le cadre.
-      const cy = H * 0.78;
+      const cy = H * 0.94;   // coupole descendue (V2-M24) : plus d'arc visible en haut
       R = Math.min(W / 2.1, cy - 40) * zoom;
       projection.scale(R).translate([W / 2, cy]);
     };

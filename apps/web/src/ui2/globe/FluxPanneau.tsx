@@ -49,19 +49,6 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
           d'autre. C'est ce qui fait la différence entre un fond et une image cachée. */}
       <div style={{ position: "relative", zIndex: 1, display: "grid", gap: 12,
         width: "min(100%, 980px)", margin: "0 auto" }}>
-        <div className="globe-kpis" style={{ display: "grid",
-          gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 10 }}>
-          {KPI.map((k) => (
-            <div key={k.l} style={{ background: "rgba(255,255,255,0.86)", backdropFilter: "blur(8px)",
-              border: "1px solid var(--border)",
-              borderLeft: k.mode ? `3px solid ${COLOR[k.mode]}` : "1px solid var(--border)",
-              borderRadius: 11, padding: "10px 13px" }}>
-              <div className="mono" style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.02em",
-                color: k.mode ? COLOR[k.mode] : "var(--text)" }}>{k.v}</div>
-              <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 2 }}>{k.l}</div>
-            </div>))}
-        </div>
-
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
           {FLOWS.map((f) => (
             <button key={`${f.a}-${f.b}`} onClick={() => setFocus(focus === f ? null : f)}
@@ -69,7 +56,7 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
               style={{ flexShrink: 0, textAlign: "left", font: "inherit", cursor: "pointer",
                 borderRadius: 9, padding: "7px 11px", backdropFilter: "blur(6px)",
                 border: `1px solid ${focus === f ? COLOR[f.s] : "var(--border)"}`,
-                background: focus === f ? "var(--bg-surface)" : "rgba(255,255,255,0.82)" }}>
+                background: focus === f ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.5)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span aria-hidden style={{ width: 6, height: 6, borderRadius: 3, flexShrink: 0,
                   background: COLOR[f.s] }} />
@@ -88,10 +75,26 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
             Le voile reste assez dense (0,72 + flou) pour que chaque montant se lise — un fond
             transparent qui rend un chiffre douteux ne serait pas un effet, ce serait une faute. */}
         {children && (
-          <div style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(10px)",
-            border: "1px solid rgba(226,230,221,0.9)", borderRadius: "var(--r-card)",
-            boxShadow: "0 2px 18px -10px rgba(22,27,18,0.28)", overflow: "hidden" }}>
+          <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(226,230,221,0.75)", borderRadius: "var(--r-card)",
+            overflow: "hidden" }}>
             {children}</div>)}
+
+        {/* LES KPI EN BAS (V2-M24) : la coupole occupe le haut, les chiffres ferment l'écran.
+            Voile à 55 % — assez pour que le nombre reste net, assez peu pour que la carte
+            continue de se voir dessous. */}
+        <div className="globe-kpis" style={{ display: "grid",
+          gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 10 }}>
+          {KPI.map((k) => (
+            <div key={k.l} style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",
+              border: "1px solid rgba(226,230,221,0.75)",
+              borderLeft: k.mode ? `3px solid ${COLOR[k.mode]}` : "1px solid rgba(226,230,221,0.75)",
+              borderRadius: 11, padding: "10px 13px" }}>
+              <div className="mono" style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.02em",
+                color: k.mode ? COLOR[k.mode] : "var(--text)" }}>{k.v}</div>
+              <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 2 }}>{k.l}</div>
+            </div>))}
+        </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", fontSize: 11,
           color: "var(--text-muted)", alignItems: "center" }}>
