@@ -39,24 +39,26 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
 
   return (
     <section style={{ position: "relative", background: "var(--bg-app)",
-      borderRadius: "var(--r-card)", overflow: "hidden", padding: "12px 16px 16px",
+      borderRadius: "var(--r-card)", overflow: "hidden", padding: "5px 16px 16px",
       minHeight: 780, display: "grid", gridTemplateRows: "auto 1fr auto", gap: 10 }}>
       <Suspense fallback={null}>
         <GlobeFond focus={focus} />
       </Suspense>
 
-      {/* HAUT DE SCÈNE — les KPI, petits et SANS FOND (V2-M27). Ils se posent directement sur
-          la carte : plus de tuile, seul le liseré de statut subsiste pour les trois indicateurs
-          de risque. L'encre reste au-dessus de 7:1 sur les pastels de la carte. */}
+      {/* HAUT DE SCÈNE — les KPI, MINIATURES et SANS FOND (V2-M28). Ils sont posés au bord
+          supérieur, dans une bande que le canvas laisse libre (`margeHaut`) : ils ne
+          recouvrent plus la coupole, ils la précèdent. Seul le liseré de statut subsiste
+          pour les trois indicateurs de risque. */}
       <div className="globe-kpis" style={{ position: "relative", zIndex: 1, display: "grid",
-        gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8,
+        gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 6,
         width: "min(100%, 980px)", margin: "0 auto" }}>
         {KPI.map((k) => (
-          <div key={k.l} style={{ padding: "2px 0 2px 9px",
-            borderLeft: `2px solid ${k.mode ? COLOR[k.mode] : "rgba(23,28,34,0.18)"}` }}>
-            <div className="mono" style={{ fontSize: 15, fontWeight: 500, letterSpacing: "-0.01em",
+          <div key={k.l} style={{ padding: "0 0 0 7px",
+            borderLeft: `1.5px solid ${k.mode ? COLOR[k.mode] : "rgba(23,28,34,0.16)"}` }}>
+            <div className="mono" style={{ fontSize: 11.5, fontWeight: 500, lineHeight: 1.25,
+              letterSpacing: "-0.01em",
               color: k.mode ? COLOR[k.mode] : "var(--text)" }}>{k.v}</div>
-            <div style={{ fontSize: 9.5, color: "var(--text-muted)", marginTop: 1 }}>{k.l}</div>
+            <div style={{ fontSize: 8, lineHeight: 1.25, color: "var(--text-muted)" }}>{k.l}</div>
           </div>))}
       </div>
 

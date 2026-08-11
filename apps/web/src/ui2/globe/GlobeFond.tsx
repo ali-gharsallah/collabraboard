@@ -21,7 +21,8 @@ import { CITY, FLOWS, COLOR, RISK_TIERS, RISK_BY_COUNTRY, type Flux } from "./fl
  * CE QUE LE GLOBE DIT, ET NE DIT PAS : il montre des volumes et des statuts déjà qualifiés
  * ailleurs. Il ne qualifie rien, ne lève aucune alerte, ne décide d'aucun blocage (R44).
  */
-export function GlobeFond({ hauteur = 560, focus }: { hauteur?: number; focus: Flux | null }) {
+export function GlobeFond({ hauteur = 560, margeHaut = 46, focus }:
+  { hauteur?: number; margeHaut?: number; focus: Flux | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hoteRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<Flux | null>(null);
@@ -65,8 +66,11 @@ export function GlobeFond({ hauteur = 560, focus }: { hauteur?: number; focus: F
       // V2-M26 : la coupole REMONTE — sa ligne de diamètre est à 58 % de la hauteur, et le
       // rayon est borné par cette hauteur pour que l'arc entier tienne dans le haut du cadre.
       // Le bas de la scène se libère : les transactions y descendent, à plat sur la page.
-      const cy = H * 0.46;
-      R = Math.min(W / 2.15, cy - 14) * zoom;
+      // V2-M28 : `margeHaut` réserve la bande des KPI. L'arc ne monte plus jusqu'au bord :
+      // il s'arrête SOUS les indicateurs, qui cessent d'être posés sur la carte. Le centre
+      // descend d'autant (0,50 H) pour que la réserve ne coûte pas de rayon.
+      const cy = H * 0.50;
+      R = Math.min(W / 2.15, cy - margeHaut) * zoom;
       projection.scale(R).translate([W / 2, cy]);
     };
     resize();
@@ -173,7 +177,7 @@ export function GlobeFond({ hauteur = 560, focus }: { hauteur?: number; focus: F
       canvas.removeEventListener("pointercancel", up);
       canvas.removeEventListener("wheel", wheel);
     };
-  }, [hauteur]);
+  }, [hauteur, margeHaut]);
 
   return (
     <div ref={hoteRef} style={{ position: "absolute", inset: 0, display: "grid",
