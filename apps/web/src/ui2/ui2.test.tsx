@@ -605,10 +605,15 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     for (const c of CAPACITES) {
       expect(c.destination).toBeTruthy();                    // aucune capacité sans destination
       expect(c.roles.length).toBeGreaterThan(0);             // aucune capacité sans profil autorisé
-      expect(["livre", "a-construire"]).toContain(c.statut); // l'état est dit, jamais maquillé
+      expect(["livre", "partiel", "absent"]).toContain(c.statut);
+      // toute capacité non livrée DIT ce qui lui manque — pas de statut sans motif.
+      if (c.statut !== "livre") expect((c.motif ?? "").length).toBeGreaterThan(10);
     }
-    // l'état réel est ASSUMÉ : 18 restent à bâtir — le registre ne prétend pas le contraire.
-    expect(CAPACITES.filter((c) => c.statut === "a-construire").length).toBe(18);
+    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 56 livrées, 14 amputées,
+    // 16 absentes. Le registre ne prétend pas le contraire.
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(56);
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(14);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(16);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
