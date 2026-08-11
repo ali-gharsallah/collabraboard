@@ -294,6 +294,15 @@ jobs:
           out=$(python3 tools/aml-gap/test_gen_aml_gap.py); echo "$out"
           echo "$out" | grep -q "### 27/27 invariants AML Gap verts ###"
 
+      # ── Codification métier des règles (V2-M15) — fraîcheur + invariants ──
+      # Le code FAMILLE-SENnn (CIB-SEN01, ISLAMIC-SEN02…) s'AJOUTE au numéro R (canon) et à
+      # l'identifiant moteur (persisté en base). Un code attribué est immuable : le test ancre
+      # onze associations code↔règle et refuse toute dérive silencieuse d'une régénération.
+      - name: "3d-bis · Codification des règles — 128 règles / 20 familles (attendu TOUT VERT)"
+        run: |
+          out=$(python3 tools/codification/test_gen_codification.py); echo "$out"
+          echo "$out" | grep -q "### 128 règles · 20 familles · TOUT VERT ###"
+
       # ── AML Gap — moteur (blocs 50–60, R340–R398) : les suites Gherkin rouges deviennent vertes.
       # evaluateScenario (src/aml/engine.ts) MESURE des faits contre les paramètres tenant (R44),
       # ne décide rien. Le bloc 61 (Analytique 2G) reste EXCLU : détecteurs statistiques exécutés
