@@ -35,6 +35,44 @@ const SEED_HITS: Hit[] = [
   { id: "hit-2", nom: "Cedar Maritime Ltd", liste: "OFAC SDN 2026-07-28", score: 0.71, statut: "FAUX_POSITIF", at: "06.08.2026" },
   { id: "hit-3", nom: "Farid El-Masri", liste: "SECO 2026-07-30", score: 0.64, statut: "FAUX_POSITIF", at: "03.08.2026" },
 ];
+// ── V2-M32 — AML GAP (R340–R403, 64 règles réparties en 7 blocs). Le seed ci-dessous est
+// un ÉCHANTILLON représentatif : le référentiel complet est servi par /v1/aml/scenarios et
+// vit dans le générateur (tools/aml-gap/gen_aml_gap.py). On ne recopie pas 64 règles dans un
+// écran — un référentiel dupliqué à la main dérive, et c'est la copie qu'on finit par lire.
+type ScenarioGap = { code: string; ruleRef?: string; famille?: string; blocTitre?: string;
+  titre?: string; niveau?: number | null; blocking?: boolean; signal?: string };
+const SEED_GAP: ScenarioGap[] = [
+  { code: "SF-01", ruleRef: "R340", famille: "SF", blocTitre: "Screening en flux", titre: "Contrepartie PEP en flux", niveau: 2, blocking: false, signal: "PEP_CONTREPARTIE" },
+  { code: "SF-03", ruleRef: "R342", famille: "SF", blocTitre: "Screening en flux", titre: "Contrepartie sanctionnée sur un virement", niveau: 3, blocking: true, signal: "SANCTION_CONTREPARTIE" },
+  { code: "UB-02", ruleRef: "R351", famille: "UB", blocTitre: "Bénéficiaires effectifs", titre: "UBO commun à plusieurs structures", niveau: 2, blocking: false, signal: "UBO_PARTAGE" },
+  { code: "CO-04", ruleRef: "R358", famille: "CO", blocTitre: "Corridors", titre: "Corridor à risque sans justificatif", niveau: 3, blocking: false, signal: "CORRIDOR_NON_JUSTIFIE" },
+  { code: "ST-01", ruleRef: "R363", famille: "ST", blocTitre: "Structuration", titre: "Fractionnement sous le seuil de déclaration", niveau: 3, blocking: false, signal: "STRUCTURATION" },
+  { code: "CA-02", ruleRef: "R370", famille: "CA", blocTitre: "Cash", titre: "Cash intensif hors profil déclaré", niveau: 2, blocking: false, signal: "CASH_HORS_PROFIL" },
+  { code: "CR-05", ruleRef: "R381", famille: "CR", blocTitre: "Crypto", titre: "Contrepartie exchange non régulé", niveau: 3, blocking: true, signal: "VASP_NON_REGULE" },
+  { code: "TB-01", ruleRef: "R392", famille: "TB", blocTitre: "Trade based", titre: "Sur-facturation d'une marchandise", niveau: 2, blocking: false, signal: "TBML_PRIX" },
+];
+type SignalGap = { id: string; scenarioCode?: string; clientId?: string; statut?: string; at?: string };
+const SEED_SIGNAUX: SignalGap[] = [
+  { id: "sg-1", scenarioCode: "ST-01", clientId: "Levant Shipping Co.", statut: "OUVERT", at: "10.08.2026" },
+  { id: "sg-2", scenarioCode: "SF-01", clientId: "Zhang Wei Family Office", statut: "TP", at: "08.08.2026" },
+  { id: "sg-3", scenarioCode: "CO-04", clientId: "Nordwind Energie GmbH", statut: "FP", at: "05.08.2026" },
+];
+
+// ── V2-M32 — RÉFÉRENTIEL DE DÉTECTION : les QUATRE familles de règles du produit, telles
+// qu'inventoriées dans docs/REFERENTIEL-DETECTION.md (V2-M13). Ce tableau ne duplique aucune
+// règle : il dit QUEL moteur porte quoi, combien, et où cela se lit. La quatrième ligne porte
+// un écart assumé — la bibliothèque CPSI n'existe qu'en v1, sans moteur v2 (E-AML-2).
+const FAMILLES_DETECTION = [
+  { famille: "Surveillance transactionnelle", plage: "R189 → R206", n: 18, params: 20,
+    moteur: "moteur v2", ou: "onglet Règles AML", route: "/v1/aml/referentiel" },
+  { famille: "AML Gap", plage: "R340 → R403", n: 64, params: 80,
+    moteur: "moteur v2", ou: "onglet AML Gap", route: "/v1/aml/scenarios" },
+  { famille: "Conformité Shariah", plage: "R207 → R221", n: 15, params: 5,
+    moteur: "moteur v2", ou: "écran Finance Islamique (à construire)", route: "—" },
+  { famille: "Bibliothèque CPSI", plage: "R71 → R76", n: 31, params: 84,
+    moteur: "front v1 seulement", ou: "aucun écran v2", route: "— (écart E-AML-2)" },
+];
+
 type Regle = { code: string; libelle?: string; seuils?: string; version?: string; alertes12m?: number };
 const SEED_REGLES: Regle[] = [
   { code: "AML-R17", libelle: "Écart au profil de flux déclaré", seuils: "× 2,0 · fenêtre 30 j", version: "v11 · 12.09.2024", alertes12m: 1244 },
@@ -70,8 +108,12 @@ function Chiffre({ label, valeur, mode }: { label: string; valeur: string; mode?
 
 export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
-  const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions" | "cas">("alerte");
+  const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions"
+    | "cas" | "amlgap" | "referentiel">("alerte");
   const hits = useApiOrSeed<Hit[]>("/v1/screening/hits", SEED_HITS);
+  // V2-M32 : les deux capacités Compliance de la v1 qui manquaient encore sous Surveillance.
+  const gap = useApiOrSeed<ScenarioGap[]>("/v1/aml/scenarios", SEED_GAP);
+  const signaux = useApiOrSeed<SignalGap[]>("/v1/aml/signals", SEED_SIGNAUX);
   const regles = useApiOrSeed<Regle[]>("/v1/aml/referentiel", SEED_REGLES);
   const txs = useApiOrSeed<Tx[]>("/v1/txflux", SEED_TX);
   const cas = useApiOrSeed<Rc[]>("/v1/riskcases", SEED_RC);
@@ -108,15 +150,21 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
       {pilule("regles", t("Règles AML"))}
       {pilule("transactions", t("Transactions"))}
       {pilule("cas", `${t("Cas de risque")} · ${Array.isArray(cas.data) ? cas.data.length : 0}`)}
+      {pilule("amlgap", t("AML Gap"))}
+      {pilule("referentiel", t("Référentiel"))}
     </div>);
 
   // ── V2-M2/M3 : les vues « liste » du bloc Surveillance ──
-  if (ecran === "screening" || ecran === "regles" || ecran === "transactions" || ecran === "cas") {
+  if (ecran === "screening" || ecran === "regles" || ecran === "transactions" || ecran === "cas"
+    || ecran === "amlgap" || ecran === "referentiel") {
     const sousTitres = {
       screening: hits.isDemo ? t("données maquette") : t("source : /v1/screening/hits (R411 — sujet × temps, config du run référencée)"),
       regles: regles.isDemo ? t("données maquette") : t("source : /v1/aml/referentiel"),
       transactions: txs.isDemo ? t("données maquette") : t("source : /v1/txflux"),
       cas: cas.isDemo ? t("données maquette") : t("source : /v1/riskcases (R133–R136)"),
+      amlgap: gap.isDemo ? t("échantillon de maquette — le référentiel complet est servi par l'API")
+        : t("source : /v1/aml/scenarios (R340–R403, générateur = source de vérité)"),
+      referentiel: t("inventaire des quatre familles — docs/REFERENTIEL-DETECTION.md"),
     } as const;
     return (
       <Ui2Shell nav={nav}
@@ -172,6 +220,58 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
                 lineHeight: 1.5 }}>
                 {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
           </FluxPanneau>
+        </>)}
+        {ecran === "amlgap" && (<>
+          <EntityList grid="90px 1.6fr 130px 90px 130px" onOpen={() => undefined}
+            entetes={[t("Code"), t("Scénario"), t("Bloc"), t("Niveau"), t("Signal émis")]}
+            lignes={(Array.isArray(gap.data) ? gap.data : []).slice(0, 40).map((g) => ({
+              id: g.code, cells: [
+                <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{g.code}</span>,
+                <span key="s"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(g.titre ?? "—")}</span>
+                  <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>
+                    {g.ruleRef ?? "—"}{g.blocking ? ` · ${t("bloquant")}` : ""}</span></span>,
+                t(g.blocTitre ?? "—"),
+                <StatusChip key="n" mode={g.niveau === 3 ? "alert" : g.niveau === 2 ? "warn" : "neutral"}>
+                  {`N${g.niveau ?? "—"}`}</StatusChip>,
+                <span key="g" className="mono" style={{ fontSize: 10.5 }}>{g.signal ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", margin: "16px 0 8px" }}>
+            {t("Signaux à qualifier")} <span style={{ fontWeight: 400, fontSize: 11,
+              color: "var(--text-muted)" }}>{t("(un signal n'est pas une alerte : il se qualifie TP ou FP)")}</span></div>
+          <EntityList grid="110px 1.5fr 130px 110px" onOpen={() => undefined}
+            entetes={[t("Scénario"), t("Client"), t("Qualification"), t("Détecté")]}
+            lignes={(Array.isArray(signaux.data) ? signaux.data : []).slice(0, 20).map((x) => ({
+              id: x.id, cells: [
+                <span key="s" className="mono" style={{ fontWeight: 600 }}>{x.scenarioCode ?? "—"}</span>,
+                <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{x.clientId ?? "—"}</span>,
+                <StatusChip key="q" mode={x.statut === "TP" ? "alert" : x.statut === "FP" ? "ok" : "warn"}>
+                  {t(x.statut === "TP" ? "VRAI POSITIF" : x.statut === "FP" ? "FAUX POSITIF" : "À QUALIFIER")}</StatusChip>,
+                <span key="d" className="mono">{x.at ?? "—"}</span>] }))} />
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Le référentiel AML Gap est GÉNÉRÉ (tools/aml-gap/gen_aml_gap.py) et un test de fraîcheur rougit si le code dérive de la source. Un scénario ne DÉCIDE de rien : il émet un signal, qualifié TP ou FP par un humain, et cette qualification alimente le jeu de vérité terrain qui mesure le moteur (R44).")}</div>
+        </>)}
+        {ecran === "referentiel" && (<>
+          <EntityList grid="1.6fr 130px 90px 110px 1.4fr" onOpen={() => undefined}
+            entetes={[t("Famille de règles"), t("Plage canon"), t("Règles"), t("Paramètres"), t("Où cela se lit")]}
+            lignes={FAMILLES_DETECTION.map((f) => ({ id: f.famille, cells: [
+              <span key="f"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(f.famille)}</span>
+                <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>
+                  {t(f.moteur)}</span></span>,
+              <span key="p" className="mono" style={{ fontSize: 11 }}>{f.plage}</span>,
+              <span key="n" className="mono" style={{ fontWeight: 600 }}>{f.n}</span>,
+              <span key="x" className="mono">{f.params}</span>,
+              <span key="o">{t(f.ou)}
+                <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)" }}
+                  className="mono">{f.route}</span></span>] }))} />
+          <div style={{ display: "flex", gap: 18, marginTop: 12, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, color: "var(--text-body)" }}>
+              <strong style={{ color: "var(--text)" }}>128</strong> {t("règles de détection au total")}</span>
+            <span style={{ fontSize: 12, color: "var(--text-body)" }}>
+              <strong style={{ color: "var(--text)" }}>189</strong> {t("paramètres de réglage")}</span>
+            <span style={{ fontSize: 12, color: "var(--warn-text)" }}>
+              {t("1 famille sur 4 sans moteur v2")}</span>
+          </div>
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Ce tableau ne duplique aucune règle : il dit quel moteur porte quoi et où cela se lit. La bibliothèque CPSI (31 scénarios, 84 seuils) n'existe qu'en front v1 et n'a AUCUN moteur en v2 — l'écart E-AML-2 est ouvert, il n'est pas comblé par cet écran. La codification par famille (CIB-SEN01, ISLAMIC-SEN02…) est générée et figée par des ancres de stabilité en CI.")}</div>
         </>)}
         {ecran === "cas" && (<>
           <EntityList grid="140px 1.2fr 1.3fr 150px 110px" onOpen={() => setEcran("alerte")}

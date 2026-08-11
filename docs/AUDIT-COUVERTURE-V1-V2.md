@@ -1,7 +1,7 @@
 # Audit de couverture v1 → v2
 
 > Lot **V2-M17** (11.08.2026), tenu à jour à chaque construction — dernière mise à jour
-> **V2-M29** (Cross-Border passe de « absent » à « livré » : 61 / 10 / 15). Établi capacité par capacité, **vérifié dans le code de la v2**
+> **V2-M32** (Cross-Border V2-M29, puis AML Gap et Référentiel AML : 63 / 10 / 13). Établi capacité par capacité, **vérifié dans le code de la v2**
 > — pas déduit de la cartographie ni du registre. Le registre `apps/web/src/ui2/capacites.ts`
 > a été corrigé par cet audit : il déclarait « livrées » 14 capacités qui ne le sont qu'à moitié.
 
@@ -9,9 +9,9 @@
 
 | Verdict | Capacités | Ce que cela veut dire |
 |---|---:|---|
-| **Livré** | 61 | l'objet métier ET ses actes sont rendus en v2 |
+| **Livré** | 63 | l'objet métier ET ses actes sont rendus en v2 |
 | **Partiel** | 10 | l'objet est rendu mais amputé — consultation là où la v1 agissait, ou fraction du périmètre |
-| **Absent** | 15 | ni écran ni onglet ne porte l'objet |
+| **Absent** | 13 | ni écran ni onglet ne porte l'objet |
 | | **86** | les écrans du ROUTEUR v1 (pas les 82 du menu : 4 écrans n'ont aucune entrée) |
 
 ### La méthode, et sa limite
@@ -27,16 +27,14 @@ clés gouvernées et non le référentiel des 128 règles, l'onglet IA porte le 
 et non le journal des runs, l'onglet Workflow porte les définitions et non les instances en
 cours. Le chiffre honnête est donc 56, pas 72.
 
-## Ce qui manque — 15 capacités absentes
+## Ce qui manque — 13 capacités absentes
 
 | Capacité | Groupe v1 | Destination arrêtée | Ce qui manque |
 |---|---|---|---|
-| **AML Gap** | Compliance & Risque | `surveillance/AML Gap` | onglet de destination non construit |
 | **Checklist exigences** | Compliance & Risque | `kyc/Exigences` | onglet de destination non construit |
 | **Legal — Contrats** | Compliance & Risque | `legal` | écran vertical non construit |
 | **Octopulse OpRisk** | Compliance & Risque | `oprisk` | écran vertical non construit |
 | **Pré-revue IA** | Compliance & Risque | `kyc/Pré-revue IA` | onglet de destination non construit |
-| **Référentiel AML** | Compliance & Risque | `param/Règles` | l'onglet Règles porte des clés gouvernées, pas le référentiel des 128 règles |
 | **Olivia · Runs** | Data & Intelligence | `param/IA` | l'onglet IA porte le curseur et les budgets, pas le journal des runs |
 | **CPSI · Risk cases** | Profilage CPSI | `cpsi/Risk cases` | écran vertical non construit |
 | **CPSI · Segmentation** | Profilage CPSI | `cpsi/Segmentation` | écran vertical non construit |
@@ -54,8 +52,9 @@ Multi-devise & FX, Mobile Banking, Octopulse OpRisk, Legal — Contrats, et les 
 opérationnels (Segmentation, Risk cases). Leur destination est arrêtée dans le registre ; il
 reste à les bâtir. Le dixième, **Cross-Border, a été construit au lot V2-M29**.
 
-Les six autres sont des **onglets** dont la destination existe mais pas le contenu : AML Gap,
-Référentiel AML, Checklist exigences, Pré-revue IA, Olivia · Runs, Workflow Instances.
+Les quatre autres sont des **onglets** dont la destination existe mais pas le contenu :
+Checklist exigences, Pré-revue IA, Olivia · Runs, Workflow Instances. AML Gap et Référentiel AML
+ont été construits au lot **V2-M32**, sous Surveillance.
 
 ## Ce qui est amputé — 10 capacités partielles
 
@@ -99,7 +98,7 @@ personne n'ouvre vaut moins qu'une phrase lue au bon moment.
 | Audit | 3 | 0 | 0 |
 | Bacs à sable | 7 | 0 | 0 |
 | Clients & Relations | 7 | 0 | 0 |
-| Compliance & Risque | 7 | 6 | 6 |
+| Compliance & Risque | 9 | 6 | 4 |
 | Data & Intelligence | 5 | 2 | 1 |
 | Front & Croissance | 8 | 0 | 0 |
 | Paramétrage | 12 | 1 | 0 |
@@ -127,8 +126,9 @@ L'ordre que je recommande, du plus coûteux en usage réel au moins coûteux :
 2. ~~**Cross-Border en écran de plein droit**~~ — **FAIT (V2-M29)**. Écran à six onglets
    couvrant les six familles de routes ; quatre lectures branchées, trois familles d'objets sans
    route de lecture au moteur — l'écran le dit et l'écart est ouvert (E-V2-5).
-3. **Les six onglets sans contenu** — AML Gap, Référentiel AML, Runs, Instances, Checklist,
-   Pré-revue IA : la destination existe déjà, il n'y a qu'à la remplir.
+3. **Les onglets sans contenu** — ~~AML Gap, Référentiel AML~~ **FAITS (V2-M32, sous
+   Surveillance)** ; restent Runs, Instances, Checklist exigences et Pré-revue IA : la
+   destination existe déjà, il n'y a qu'à la remplir.
 4. **Les écrans verticaux licenciés** (PMS d'abord, seul module facturable des dix) puis les
    sept autres, sous réserve de la ratification R320 (écart E-V2-4).
 

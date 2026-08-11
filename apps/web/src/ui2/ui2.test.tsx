@@ -652,12 +652,12 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
       // toute capacité non livrée DIT ce qui lui manque — pas de statut sans motif.
       if (c.statut !== "livre") expect((c.motif ?? "").length).toBeGreaterThan(10);
     }
-    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 61 livrées, 10 amputées,
-    // 15 absentes — Cross-Border a rejoint les livrées au lot V2-M29. Le registre ne prétend
+    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 63 livrées, 10 amputées,
+    // 13 absentes — Cross-Border (V2-M29) puis AML Gap et Référentiel AML (V2-M32). Le registre ne prétend
     // jamais mieux que l'état du code : ces trois nombres se corrigent par une CONSTRUCTION.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(61);
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(63);
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(15);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(13);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -741,5 +741,37 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     for (const m of MODULES_METIERS_DEMO)
       expect(CAPACITES.some((c) => c.destination === m.id && c.libelle === m.label)).toBe(true);
     expect(MODULES_METIERS_DEMO.some((m) => m.id === "crossborder")).toBe(true);
+  });
+
+  it("U2-52 V2-M31 Paramétrage : le registre §CrossBorder se règle depuis le Paramétrage, sous engagement (R462/R445)", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cross-Border" }));
+    expect(screen.getByText("crossborder.preActe.severites")).toBeTruthy();
+    expect(screen.getByText("crossborder.localisationTemporaire.dureeMaxJours")).toBeTruthy();
+    // une clé ENGAGEANTE ouvre le pop-up de responsabilité ; sans texte, rien ne se publie
+    fireEvent.click(screen.getByText("crossborder.preActe.severites"));
+    expect(screen.getByText("ENGAGEMENT REQUIS")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Modifier avec engagement" }));
+    expect(screen.getByText(/le moteur REFUSE l'écriture/)).toBeTruthy();
+    expect(screen.getByText(/grandfathering R29/)).toBeTruthy();      // portée : actes futurs
+  });
+
+  it("U2-53 V2-M32 Surveillance : AML Gap sous Surveillance — un signal se qualifie, il ne décide pas (R44)", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "AML Gap" }));
+    expect(screen.getByText("SF-03")).toBeTruthy();                   // code de famille (V2-M15)
+    expect(screen.getByText("Contrepartie sanctionnée sur un virement")).toBeTruthy();
+    expect(screen.getByText("VRAI POSITIF")).toBeTruthy();            // la qualification est humaine
+    expect(screen.getByText(/Un scénario ne DÉCIDE de rien/)).toBeTruthy();
+  });
+
+  it("U2-54 V2-M32 Surveillance : le référentiel dit les 4 familles ET l'écart CPSI, sans dupliquer une règle", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Référentiel" }));
+    for (const f of ["Surveillance transactionnelle", "AML Gap", "Conformité Shariah", "Bibliothèque CPSI"])
+      expect(screen.getAllByText(f).length).toBeGreaterThan(0);   // « AML Gap » est aussi un onglet
+    expect(screen.getByText("128")).toBeTruthy();                     // le total, pas 128 lignes recopiées
+    expect(screen.getByText("front v1 seulement")).toBeTruthy();      // l'écart est PORTÉ
+    expect(screen.getByText(/E-AML-2 est ouvert, il n'est pas comblé/)).toBeTruthy();
   });
 });

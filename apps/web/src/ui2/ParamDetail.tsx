@@ -417,6 +417,26 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
         <Ui2Bouton primaire onClick={onSandbox}>{t("Ouvrir le bac à sable AML-R17 →")}</Ui2Bouton></div>
     </>);
     pied = "Production : × 2,0 · 30 j (v11, 12.09.2024) — 1 244 alertes générées depuis.";
+  } else if (cle.cle.startsWith("crossborder.")) {
+    // V2-M31 — le registre §CrossBorder (R462) se règle ICI, au Paramétrage, jamais dans
+    // l'écran métier. Le moteur reconnaît deux familles de clés : celles qui ENGAGENT la
+    // banque vis-à-vis d'un régulateur étranger (sévérités, entités, exemptions) et les
+    // autres. Les premières exigent un engagement de responsabilité NOMINATIF (R445) — sans
+    // confirmation, le moteur n'écrit RIEN : il refuse avec le pop-up en réponse.
+    const engage = /severite|entites|exemption/i.test(cle.cle);
+    corps = (<>
+      {engage && <PopupEngagement cle={cle.cle} valeur={cle.valeur ?? "—"} t={t} />}
+      {carte(<>
+        <div className="microlabel" style={{ marginBottom: 6 }}>{t("Portée d'une modification")}</div>
+        <div style={{ fontSize: 12.5, color: "var(--text-body)", lineHeight: 1.6 }}>
+          {t("Actes FUTURS uniquement. Les checks déjà consignés gardent la version de matrice et la sévérité qui les ont jugés (grandfathering R29) — sans quoi un acte régulier hier deviendrait irrégulier demain, sans qu'aucun fait n'ait changé.")}</div>
+        <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8 }}>
+          GET /v1/crossborder/params/registre · POST /v1/crossborder/params/modifier</div>
+      </>)}
+    </>);
+    pied = engage
+      ? "R462 + R445 — clé ENGAGEANTE : la diffusion transfrontière et les exemptions engagent la banque vis-à-vis des régulateurs étrangers. Le moteur refuse toute écriture sans engagement nominatif."
+      : "R462 — clé gouvernée par date (R29). Le country manual reste LA clé de lecture ; ce registre règle la façon dont le moteur s'en sert, jamais son contenu.";
   } else {
     pied = "Clé gouvernée par date (R29) — la modification passe par la simulation de la section, puis une version datée, signée et validée (R44).";
   }
@@ -427,5 +447,59 @@ export function ParamCleDetail({ cle, t, onSandbox }: {
     {corps}
     {histo("valeur en vigueur")}
     {doctrine(t(pied))}
+  </>);
+}
+
+
+/**
+ * Pop-up d'engagement de responsabilité (R445, mécanisme COMMUN du bloc 62 étendu au
+ * Cross-Border par R462). Ce n'est pas une confirmation de politesse : le moteur REFUSE
+ * l'écriture tant que le texte d'engagement et son auteur ne sont pas fournis, et le refus
+ * porte le pop-up en réponse. L'écran le montre tel quel — ancien, nouveau, portée, rappel.
+ */
+function PopupEngagement({ cle, valeur, t }: { cle: string; valeur: string; t: (s: string) => string }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [texte, setTexte] = useState("");
+  return carte(<>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <StatusChip mode="warn">{t("ENGAGEMENT REQUIS")}</StatusChip>
+      <span style={{ fontSize: 12, color: "var(--text-body)" }}>
+        {t("Cette clé engage la banque vis-à-vis de régulateurs étrangers.")}</span>
+      <span style={{ marginLeft: "auto" }}>
+        <Ui2Bouton onClick={() => setOuvert(!ouvert)}>
+          {t(ouvert ? "Fermer" : "Modifier avec engagement")}</Ui2Bouton></span>
+    </div>
+    {ouvert && (
+      <div style={{ marginTop: 12, background: "var(--warn-card)",
+        border: "1px solid var(--warn-card-border)", borderLeft: "3px solid var(--warn-line)",
+        borderRadius: 9, padding: "12px 14px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12,
+          marginBottom: 10 }}>
+          <div><div className="microlabel">{t("Clé")}</div>
+            <div className="mono" style={{ fontSize: 11.5 }}>{cle}</div></div>
+          <div><div className="microlabel">{t("Valeur actuelle")}</div>
+            <div className="mono" style={{ fontSize: 11.5 }}>{t(valeur)}</div></div>
+          <div><div className="microlabel">{t("Portée")}</div>
+            <div style={{ fontSize: 11.5 }}>{t("actes futurs (R29)")}</div></div>
+        </div>
+        <div style={{ fontSize: 11.5, color: "var(--warn-text)", lineHeight: 1.55, marginBottom: 10 }}>
+          {t("Rappel réglementaire — la diffusion transfrontière et les exemptions engagent la banque vis-à-vis des régulateurs étrangers. L'engagement est nominatif et consigné au journal.")}</div>
+        <label style={{ display: "block", fontSize: 11.5, fontWeight: 600,
+          color: "var(--text-secondary)", marginBottom: 6 }}>
+          {t("Texte d'engagement")}
+          <textarea value={texte} onChange={(e) => setTexte(e.target.value)}
+            aria-label={t("Texte d'engagement")} rows={2}
+            style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 5,
+              padding: "8px 10px", borderRadius: "var(--r-input)", fontFamily: "inherit",
+              border: "1px solid var(--border-input)", fontSize: 12, color: "var(--text)",
+              background: "var(--bg-surface)" }} /></label>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Ui2Bouton primaire>{t("Engager et publier")}</Ui2Bouton>
+          <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>
+            {texte.trim()
+              ? t("Le moteur écrira une version datée et l'engagement nominatif au journal.")
+              : t("Sans texte d'engagement, le moteur REFUSE l'écriture — rien n'est publié.")}</span>
+        </div>
+      </div>)}
   </>);
 }

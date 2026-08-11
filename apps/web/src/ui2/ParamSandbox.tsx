@@ -64,6 +64,24 @@ const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
     { cle: "legal.structures", description: "Structures juridiques — barème de risque (R288)", valeur: "8 formes", version: "v2 · 01.05.2026" },
     { cle: "banque.golive", description: "Config à date & Go-live (R127/R128)", valeur: "BLOQUÉ — 2 requis", version: "R127/R128" },
     { cle: "banque.bat", description: "Recette client (BAT) — cahier généré, promotion (R333)", valeur: "11/12 PASS", version: "R333" }] },
+  // V2-M31 : le registre §CrossBorder (R462) — la config du module se pose ICI, au Paramétrage,
+  // pas dans l'écran métier. Ces clés ENGAGENT la banque vis-à-vis de régulateurs étrangers :
+  // sévérités, exemptions d'entité et juridictions certifiées passent par le pop-up
+  // d'engagement de responsabilité (R445) et ne valent que pour les ACTES FUTURS — les checks
+  // déjà consignés gardent la version qui les a jugés (grandfathering R29).
+  { id: "crossborder", label: "Cross-Border", seed: [
+    { cle: "crossborder.fournisseur", description: "Source de la matrice pays — port déclaré (R453)", valeur: "INTERNE", version: "R453" },
+    { cle: "crossborder.syncFrequenceHeures", description: "Fréquence de synchronisation du country manual", valeur: "24 h", version: "R453" },
+    { cle: "crossborder.syncAlerteEchecJours", description: "Âge d'une sync en échec avant alerte — l'âge est PORTÉ, jamais tu", valeur: "2 j", version: "R453" },
+    { cle: "crossborder.paysDomestique", description: "Juridiction domestique — hors périmètre transfrontière", valeur: "CH", version: "R453" },
+    { cle: "crossborder.preActe.severites", description: "Sévérité par activité (MKT/ADVICE/ORDER) — BLOQUANT refuse l'acte", valeur: "3 activités BLOQUANT", version: "R455/R445" },
+    { cle: "crossborder.acteDistant.severiteNON", description: "Verdict NON sur un entretien distant : bloquer ou avertir", valeur: "AVERTISSEMENT", version: "R454/R445" },
+    { cle: "crossborder.reverseSolicitation.validiteMois", description: "Durée de validité d'une preuve de sollicitation inversée", valeur: "12 mois", version: "R456" },
+    { cle: "crossborder.reverseSolicitation.rolesEnregistrement", description: "Rôles habilités à enregistrer une preuve", valeur: "RM · CO · CO_SR", version: "R456" },
+    { cle: "crossborder.localisationTemporaire.dureeMaxJours", description: "Au-delà, ce n'est plus temporaire : revue de résidence", valeur: "90 j", version: "R457" },
+    { cle: "crossborder.certifications.severiteAbsence", description: "Absence de certification pour la juridiction visée", valeur: "BLOQUANT", version: "R458/R445" },
+    { cle: "crossborder.entites", description: "Entités du groupe et leurs exemptions (licence locale)", valeur: "aucune déclarée", version: "R461/R445" },
+    { cle: "crossborder.entiteParClient", description: "Rattachement booking d'un client à une entité", valeur: "aucun", version: "R461" }] },
   { id: "general", label: "Général", seed: [
     { cle: "core.langue", description: "Langues d'affichage (R326-R327)", valeur: "FR · EN · DE · IT · AR", version: "20.07.2026" },
     { cle: "integrations.ports", description: "Ports d'intégration (R284/R286)", valeur: "2 actifs — pas de secret = refus gracieux", version: "15.07.2026" },
