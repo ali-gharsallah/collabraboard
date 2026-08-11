@@ -799,4 +799,26 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     parcourir(dir);
     expect(fautes).toEqual([]);
   });
+
+  it("U2-56 V2-M34 : le CÂBLAGE se mesure — nombre d'écritures réelles de l'UI v2 vers le moteur", () => {
+    // Le compteur honnête (docs/AUDIT-CABLAGE-V2.md). L'audit de couverture comptait des
+    // SURFACES et annonçait 63 capacités livrées ; sous le seul critère qui compte — poser
+    // l'acte et que le moteur l'enregistre — le nombre était 0. Ce test AFFICHE la valeur au
+    // lieu de la raconter, et le chiffre attendu se relève à chaque acte câblé.
+    const dir = join(process.cwd(), "src/ui2");
+    let ecritures = 0;
+    const parcourir = (d: string) => {
+      for (const e of readdirSync(d, { withFileTypes: true })) {
+        const p = join(d, e.name);
+        if (e.isDirectory()) { parcourir(p); continue; }
+        if (!/\.(tsx|ts)$/.test(e.name) || e.name.endsWith(".test.tsx")) continue;
+        const src = readFileSync(p, "utf8");
+        ecritures += (src.match(/apiPost|apiPut|apiPatch|apiDelete|method:\s*"(POST|PUT|PATCH|DELETE)"/g) ?? []).length;
+      }
+    };
+    parcourir(dir);
+    // Attendu = l'état RÉEL du jour. Relever ce nombre est le geste qui atteste un câblage ;
+    // le baisser sans motif est une régression que ce test rend visible.
+    expect(ecritures).toBe(0);
+  });
 });

@@ -1,5 +1,13 @@
 # Audit de couverture v1 → v2
 
+> ⚠️ **CE DOCUMENT COMPTE DES SURFACES, PAS DES CAPACITÉS UTILISABLES.** Son critère
+> — « l'objet métier et ses actes sont RENDUS » — déclare livré un écran qui AFFICHE l'objet et
+> MONTRE un bouton nommant l'acte. Sous le seul critère qui compte pour un utilisateur — poser
+> l'acte et que le moteur l'enregistre — le nombre de capacités livrées en v2 est **0 sur 86** :
+> l'UI v2 ne fait **aucune écriture** vers le moteur (0 contre 149 en v1). Lire
+> **`docs/AUDIT-CABLAGE-V2.md`** AVANT ce document ; les chiffres ci-dessous mesurent la
+> navigation et la présence d'écrans, rien de plus.
+
 > Lot **V2-M17** (11.08.2026), tenu à jour à chaque construction — dernière mise à jour
 > **V2-M32** (Cross-Border V2-M29, puis AML Gap et Référentiel AML : 63 / 10 / 13). Établi capacité par capacité, **vérifié dans le code de la v2**
 > — pas déduit de la cartographie ni du registre. Le registre `apps/web/src/ui2/capacites.ts`
