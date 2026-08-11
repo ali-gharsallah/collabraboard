@@ -39,6 +39,10 @@ export function EntityList({ grid, entetes, lignes, onOpen, fond = "surface" }: 
       overflow: "hidden" }}>
       <div role="row" style={{ display: "grid", gridTemplateColumns: grid, alignItems: "center",
         padding: "0 16px", background: nu ? "transparent" : "var(--bg-subtle)",
+        // en mode nu la liste peut défiler dans un cadre : l'en-tête reste collé en haut,
+        // sinon on perd le sens des colonnes dès la troisième ligne.
+        position: nu ? "sticky" : undefined, top: nu ? 0 : undefined, zIndex: nu ? 1 : undefined,
+        backdropFilter: nu ? "blur(6px)" : undefined,
         borderBottom: nu ? "1px solid rgba(23,28,34,0.16)" : "1px solid var(--border)" }}>
         {entetes.map((h) => <span key={h} className="microlabel" style={{ padding: "9px 10px 9px 0" }}>{h}</span>)}
       </div>

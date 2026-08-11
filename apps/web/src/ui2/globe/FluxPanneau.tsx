@@ -39,78 +39,92 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
 
   return (
     <section style={{ position: "relative", background: "var(--bg-app)",
-      borderRadius: "var(--r-card)", overflow: "hidden", padding: "18px 16px 20px",
-      minHeight: 800, display: "grid", alignContent: "end" }}>
+      borderRadius: "var(--r-card)", overflow: "hidden", padding: "12px 16px 16px",
+      minHeight: 780, display: "grid", gridTemplateRows: "auto 1fr auto", gap: 10 }}>
       <Suspense fallback={null}>
         <GlobeFond focus={focus} />
       </Suspense>
 
-      {/* La colonne de contenu est plus étroite que la scène : le globe se voit de part et
-          d'autre. C'est ce qui fait la différence entre un fond et une image cachée. */}
-      <div style={{ position: "relative", zIndex: 1, display: "grid", gap: 12,
+      {/* HAUT DE SCÈNE — les KPI, petits et SANS FOND (V2-M27). Ils se posent directement sur
+          la carte : plus de tuile, seul le liseré de statut subsiste pour les trois indicateurs
+          de risque. L'encre reste au-dessus de 7:1 sur les pastels de la carte. */}
+      <div className="globe-kpis" style={{ position: "relative", zIndex: 1, display: "grid",
+        gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8,
         width: "min(100%, 980px)", margin: "0 auto" }}>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+        {KPI.map((k) => (
+          <div key={k.l} style={{ padding: "2px 0 2px 9px",
+            borderLeft: `2px solid ${k.mode ? COLOR[k.mode] : "rgba(23,28,34,0.18)"}` }}>
+            <div className="mono" style={{ fontSize: 15, fontWeight: 500, letterSpacing: "-0.01em",
+              color: k.mode ? COLOR[k.mode] : "var(--text)" }}>{k.v}</div>
+            <div style={{ fontSize: 9.5, color: "var(--text-muted)", marginTop: 1 }}>{k.l}</div>
+          </div>))}
+      </div>
+
+      {/* MILIEU — laissé vide : c'est la coupole qui l'occupe. */}
+      <div aria-hidden />
+
+      {/* BAS DE SCÈNE — corridors, légendes, puis la liste des transactions, transparente et
+          DÉFILANTE dans sa propre hauteur : la page ne s'allonge plus avec le nombre de lignes. */}
+      <div style={{ position: "relative", zIndex: 1, display: "grid", gap: 10,
+        width: "min(100%, 980px)", margin: "0 auto" }}>
+        <div className="globe-corridors" style={{ display: "flex", gap: 8, overflowX: "auto",
+          paddingBottom: 2 }}>
           {FLOWS.map((f) => (
             <button key={`${f.a}-${f.b}`} onClick={() => setFocus(focus === f ? null : f)}
               aria-pressed={focus === f}
               style={{ flexShrink: 0, textAlign: "left", font: "inherit", cursor: "pointer",
-                borderRadius: 9, padding: "7px 11px", backdropFilter: "blur(6px)",
-                border: `1px solid ${focus === f ? COLOR[f.s] : "var(--border)"}`,
-                background: focus === f ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.5)" }}>
+                borderRadius: 9, padding: "6px 10px", backdropFilter: "blur(6px)",
+                border: `1px solid ${focus === f ? COLOR[f.s] : "rgba(23,28,34,0.14)"}`,
+                background: focus === f ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span aria-hidden style={{ width: 6, height: 6, borderRadius: 3, flexShrink: 0,
                   background: COLOR[f.s] }} />
-                <span style={{ fontSize: 12, color: "var(--text)", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 11.5, color: "var(--text)", whiteSpace: "nowrap" }}>
                   {CITY[f.a].name} → {CITY[f.b].name}</span>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-body)",
+                <span className="mono" style={{ fontSize: 11, color: "var(--text-body)",
                   whiteSpace: "nowrap" }}>{f.v}</span>
               </div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 13,
+              <div style={{ fontSize: 9.5, color: "var(--text-muted)", marginLeft: 13,
                 whiteSpace: "nowrap" }}>
                 {f.n.toLocaleString("fr-CH")} {t("op.")} · {t(LABEL[f.s])}</div>
             </button>))}
         </div>
 
-        {/* LES KPI EN BAS (V2-M24) : la coupole occupe le haut, les chiffres ferment l'écran.
-            Voile à 55 % — assez pour que le nombre reste net, assez peu pour que la carte
-            continue de se voir dessous. */}
-        <div className="globe-kpis" style={{ display: "grid",
-          gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 10 }}>
-          {KPI.map((k) => (
-            <div key={k.l} style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",
-              border: "1px solid rgba(226,230,221,0.75)",
-              borderLeft: k.mode ? `3px solid ${COLOR[k.mode]}` : "1px solid rgba(226,230,221,0.75)",
-              borderRadius: 11, padding: "10px 13px" }}>
-              <div className="mono" style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.02em",
-                color: k.mode ? COLOR[k.mode] : "var(--text)" }}>{k.v}</div>
-              <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 2 }}>{k.l}</div>
-            </div>))}
-        </div>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", fontSize: 11,
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", fontSize: 10.5,
           color: "var(--text-muted)", alignItems: "center" }}>
           <span className="microlabel">{t("risque pays")}</span>
           {RISK_TIERS.map((r) => (
-            <span key={r.id} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span key={r.id} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               <i aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: r.fill,
                 border: `1px solid ${r.stroke}` }} />{t(r.label)}</span>))}
-          <span className="microlabel" style={{ marginLeft: 6 }}>{t("flux")}</span>
-          {(["ok", "watch", "alert"] as Statut[]).map((s) => (
-            <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <i aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: COLOR[s] }} />
-              {t(LABEL[s])}</span>))}
+          <span className="microlabel" style={{ marginLeft: 4 }}>{t("flux")}</span>
+          {(["ok", "watch", "alert"] as Statut[]).map((s2) => (
+            <span key={s2} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <i aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: COLOR[s2] }} />
+              {t(LABEL[s2])}</span>))}
           <span style={{ marginLeft: "auto" }}>{t("glisser pour tourner · molette pour zoomer")}</span>
         </div>
-        <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
-          {t("Le globe MONTRE des volumes et des statuts déjà qualifiés ailleurs. Il ne qualifie rien, ne lève aucune alerte et ne décide d'aucun blocage (R44). Les paliers de risque pays affichés sont une classification de démonstration — la matrice pays en vigueur est une configuration gouvernée.")}</div>
 
-        {/* LES TRANSACTIONS À NU (V2-M25, descendues en bas de scène V2-M26) : plus aucun voile entre la table et le globe. La
-            lisibilité tient parce que les teintes de la carte sont des pastels clairs —
-            l'encre reste au-dessus de 7:1 sur chacune d'elles. Séparateurs et survol en encre
-            translucide (cf. EntityList fond="transparent"). */}
-        {children}
+        {/* La liste défile dans sa propre hauteur — l'en-tête reste collé en haut du cadre. */}
+        {children && (
+          <div style={{ maxHeight: 236, overflowY: "auto", overscrollBehavior: "contain" }}>
+            {children}</div>)}
+
+        <div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.5 }}>
+          {t("Le globe MONTRE des volumes et des statuts déjà qualifiés ailleurs. Il ne qualifie rien, ne lève aucune alerte et ne décide d'aucun blocage (R44). Les paliers de risque pays affichés sont une classification de démonstration — la matrice pays en vigueur est une configuration gouvernée.")}</div>
       </div>
-      <style>{`@media (max-width: 900px){ .globe-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important} }`}</style>
+      {/* La règle mobile générale de tokens.css (`.ui2 main div → 1fr !important`) empile TOUTES
+          les grilles ; six KPI en colonne mangeraient l'écran avant que la coupole apparaisse.
+          On la surclasse en spécificité (classe répétée) pour garder une bande compacte. */}
+      <style>{`@media (max-width: 900px){
+        .ui2 main div.globe-kpis.globe-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+      }
+      @media (max-width: 520px){
+        .ui2 main div.globe-kpis.globe-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+      }
+      /* Même raison pour la bande de corridors : repliée, elle empile seize pastilles et
+         repousse la coupole d'un écran entier. Elle DÉFILE latéralement, dans son cadre. */
+      .ui2 main div.globe-corridors.globe-corridors{flex-wrap:nowrap!important}`}</style>
     </section>);
 }
 
