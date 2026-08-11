@@ -63,11 +63,15 @@ const LABEL: Record<Statut, string> = { ok: "nominal", watch: "surveillance", al
 
 // Paliers de risque pays — classification de DÉMONSTRATION inspirée des listes GAFI. Elle
 // n'engage aucune position de la banque : la vraie matrice pays est une config gouvernée.
+// L'échelle va du VERT au ROUGE : un pays sans risque se lit sans légende, et le palier
+// « modéré » prend un olive sourd, très proche du fond de la page — l'œil n'est attiré que par
+// ce qui mérite l'attention. La maquette du designer utilisait deux gris ardoise pour ces deux
+// paliers : lisibles, mais le globe restait froid et détaché de la page olive (demande PO).
 const RISK_TIERS = [
   { id: "critique", label: "Critique", fill: "#8E3B33", stroke: "#A8544B" },
   { id: "eleve", label: "Élevé", fill: "#7A5730", stroke: "#966C3C" },
-  { id: "modere", label: "Modéré", fill: "#4A5361", stroke: "#5A6472" },
-  { id: "faible", label: "Faible", fill: "#333B46", stroke: "#414A57" },
+  { id: "modere", label: "Modéré", fill: "#39432C", stroke: "#4A5539" },
+  { id: "faible", label: "Faible", fill: "#3F5A28", stroke: "#557634" },
 ];
 const RISK_BY_COUNTRY: Record<string, string> = {};
 const assign = (tier: string, noms: string[]) => noms.forEach((n) => { RISK_BY_COUNTRY[n] = tier; });
@@ -185,8 +189,8 @@ export function GlobeFlux({ hauteur = 440 }: { hauteur?: number }) {
       ctx.fillStyle = halo;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, 2 * Math.PI); ctx.fill();
 
-      ctx.beginPath(); chemin({ type: "Sphere" } as any); ctx.fillStyle = "#171D24"; ctx.fill();
-      ctx.beginPath(); chemin(graticule as any); ctx.strokeStyle = "#252D37"; ctx.lineWidth = 0.6; ctx.stroke();
+      ctx.beginPath(); chemin({ type: "Sphere" } as any); ctx.fillStyle = "#151B11"; ctx.fill();
+      ctx.beginPath(); chemin(graticule as any); ctx.strokeStyle = "#26301D"; ctx.lineWidth = 0.6; ctx.stroke();
 
       for (const palier of RISK_TIERS) {
         const feats = parPalier[palier.id];
@@ -196,9 +200,9 @@ export function GlobeFlux({ hauteur = 440 }: { hauteur?: number }) {
         ctx.strokeStyle = palier.stroke; ctx.lineWidth = 0.5; ctx.stroke();
       }
       ctx.beginPath(); chemin(frontieres as any);
-      ctx.strokeStyle = "#20272F"; ctx.lineWidth = 0.6; ctx.stroke();
+      ctx.strokeStyle = "#1D2416"; ctx.lineWidth = 0.6; ctx.stroke();
       ctx.beginPath(); chemin({ type: "Sphere" } as any);
-      ctx.strokeStyle = "rgba(190,202,216,0.42)"; ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.strokeStyle = "rgba(196,214,164,0.40)"; ctx.lineWidth = 1.1; ctx.stroke();
 
       const vu = focusRef.current;
       for (const p of prepares) {
@@ -279,6 +283,22 @@ export function GlobeFlux({ hauteur = 440 }: { hauteur?: number }) {
               aria-label={t("Globe des flux transfrontaliers — faites glisser pour tourner")} />
           </div>
           <div style={{ display: "grid", gap: 10 }}>{KPI.slice(3).map(tuile)}</div>
+        </div>
+        {/* Les deux légendes de la maquette, que le premier port avait perdues — une carte dont
+            la couleur porte du sens ne se lit pas sans elles. */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", padding: "0 18px 12px",
+          fontSize: 11, color: "rgba(214,224,199,0.72)" }}>
+          <span className="microlabel" style={{ color: "rgba(214,224,199,0.5)" }}>{t("risque pays")}</span>
+          {RISK_TIERS.map((r) => (
+            <span key={r.id} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <i aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: r.fill,
+                border: `1px solid ${r.stroke}` }} />{t(r.label)}</span>))}
+          <span className="microlabel" style={{ color: "rgba(214,224,199,0.5)", marginLeft: 8 }}>
+            {t("flux")}</span>
+          {(["ok", "watch", "alert"] as Statut[]).map((s) => (
+            <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <i aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: COLOR[s] }} />
+              {t(LABEL[s])}</span>))}
         </div>
         {/* Les corridors, en bande sous le globe : cliquer isole le flux sur la carte. */}
         <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 18px 14px" }}>
