@@ -159,6 +159,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
               par-dessus, dans une surface opaque — la lisibilité prime sur l'effet. */}
           <FluxPanneau>
           <EntityList grid="110px 1.3fr 140px 150px 120px" onOpen={() => setEcran("alerte")}
+            fond="transparent"
             entetes={[t("Date"), t("Contrepartie"), t("Montant"), t("Canal"), t("Statut")]}
             lignes={(Array.isArray(txs.data) ? txs.data : []).slice(0, 30).map((x) => ({
               id: x.id, cells: [

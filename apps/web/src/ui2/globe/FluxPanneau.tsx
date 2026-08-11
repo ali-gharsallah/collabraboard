@@ -71,14 +71,11 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
             </button>))}
         </div>
 
-        {/* LES TRANSACTIONS, EN BAS ET TRANSLUCIDES : le demi-globe continue derrière elles.
-            Le voile reste assez dense (0,72 + flou) pour que chaque montant se lise — un fond
-            transparent qui rend un chiffre douteux ne serait pas un effet, ce serait une faute. */}
-        {children && (
-          <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",
-            border: "1px solid rgba(226,230,221,0.75)", borderRadius: "var(--r-card)",
-            overflow: "hidden" }}>
-            {children}</div>)}
+        {/* LES TRANSACTIONS À NU (V2-M25) : plus aucun voile entre la table et le globe. La
+            lisibilité tient parce que les teintes de la carte sont des pastels clairs —
+            l'encre reste au-dessus de 7:1 sur chacune d'elles. Séparateurs et survol en encre
+            translucide (cf. EntityList fond="transparent"). */}
+        {children}
 
         {/* LES KPI EN BAS (V2-M24) : la coupole occupe le haut, les chiffres ferment l'écran.
             Voile à 55 % — assez pour que le nombre reste net, assez peu pour que la carte

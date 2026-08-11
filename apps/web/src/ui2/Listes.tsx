@@ -18,28 +18,40 @@ import kycSeed from "../seed/kyc.json";
  * Personnes — une personne est UNIQUE et référencée par ses dossiers, jamais dupliquée).
  */
 
-export function EntityList({ grid, entetes, lignes, onOpen }: {
+export function EntityList({ grid, entetes, lignes, onOpen, fond = "surface" }: {
   grid: string; entetes: string[];
   lignes: { id: string; cells: React.ReactNode[] }[];
   onOpen: (id: string) => void;
+  /**
+   * « transparent » (V2-M25) : la liste n'a NI carte NI fond — elle se pose telle quelle sur ce
+   * qui est derrière, aujourd'hui le globe des flux. Les séparateurs et le survol passent en
+   * encre translucide, seuls repères qui restent. Défaut inchangé partout ailleurs.
+   */
+  fond?: "surface" | "transparent";
 }) {
+  const nu = fond === "transparent";
+  const fondLigne = nu ? "transparent" : "var(--bg-surface)";
+  const fondSurvol = nu ? "rgba(23,28,34,0.055)" : "var(--bg-subtle)";
   return (
-    <section style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
-      borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+    <section style={{ background: nu ? "transparent" : "var(--bg-surface)",
+      border: nu ? "none" : "1px solid var(--border)",
+      borderRadius: "var(--r-card)", boxShadow: nu ? "none" : "var(--shadow-card)",
+      overflow: "hidden" }}>
       <div role="row" style={{ display: "grid", gridTemplateColumns: grid, alignItems: "center",
-        padding: "0 16px", background: "var(--bg-subtle)", borderBottom: "1px solid var(--border)" }}>
+        padding: "0 16px", background: nu ? "transparent" : "var(--bg-subtle)",
+        borderBottom: nu ? "1px solid rgba(23,28,34,0.16)" : "1px solid var(--border)" }}>
         {entetes.map((h) => <span key={h} className="microlabel" style={{ padding: "9px 10px 9px 0" }}>{h}</span>)}
       </div>
       {lignes.map((l) => (
         <button key={l.id} role="row" onClick={() => onOpen(l.id)}
           style={{ display: "grid", gridTemplateColumns: grid, alignItems: "center", width: "100%",
             textAlign: "left", padding: "0 16px", border: "none", cursor: "pointer",
-            fontFamily: "inherit", background: "var(--bg-surface)",
-            borderBottom: "1px solid var(--border-row)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-subtle)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--bg-surface)"; }}>
+            fontFamily: "inherit", background: fondLigne,
+            borderBottom: nu ? "1px solid rgba(23,28,34,0.09)" : "1px solid var(--border-row)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = fondSurvol; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = fondLigne; }}>
           {l.cells.map((c, i) => <span key={i} style={{ padding: "11px 10px 11px 0", minWidth: 0,
-            fontSize: 12.5, color: "var(--text-body)" }}>{c}</span>)}
+            fontSize: 12.5, color: nu ? "var(--text)" : "var(--text-body)" }}>{c}</span>)}
         </button>))}
     </section>);
 }
