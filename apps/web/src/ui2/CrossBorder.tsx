@@ -70,6 +70,7 @@ const ACTES: Record<string, Acte[]> = {
       methode: "POST", champs: [
         { cle: "type", libelle: "Activité", exemple: "MKT" },
         { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "objetId", libelle: "Objet à attacher le verdict", exemple: "KYC-2026-00512" },
         { cle: "perimetre", libelle: "Périmètre", exemple: "produit X" }],
       garde: "R455 — le check s'exécute AVANT l'acte et son verdict, avec la version de matrice, reste attaché à l'objet. Une sévérité BLOQUANT refuse l'acte ; elle ne l'« avertit » pas." },
     { cle: "rejeu", libelle: "Rejouer un verdict à date", route: "GET /v1/crossborder/actes/:id/rejeu",
@@ -103,7 +104,8 @@ const ACTES: Record<string, Acte[]> = {
       methode: "POST", champs: [
         { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
         { cle: "pays", libelle: "Pays d'émission", exemple: "AE" },
-        { cle: "reverseSolicitation", libelle: "Sollicitation inversée (oui/non)", exemple: "oui" }],
+        { cle: "qualificationInitiativeClient", libelle: "Initiative du client (true/false)", exemple: "true" },
+        { cle: "preuveRef", libelle: "Preuve GED (exigée en EDD)", exemple: "GED-2026-4790" }],
       garde: "XB-04/R295 — la réception d'un ordre depuis une juridiction sous contrainte est DOCUMENTÉE ou REFUSÉE ; en EDD, la preuve GED est exigée." },
   ],
   parametres: [

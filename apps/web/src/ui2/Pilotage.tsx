@@ -115,9 +115,10 @@ const ACTES: Record<string, ActeMoteur[]> = {
   mros: [
     { cle: "decider", libelle: "Décider d'une communication", route: "POST /v1/mros/decider",
       methode: "POST", champs: [
+        { cle: "riskCaseId", libelle: "Cas de risque", exemple: "RC-2026-0104" },
         { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
-        { cle: "decision", libelle: "Décision", exemple: "COMMUNIQUER" },
-        { cle: "motif", libelle: "Motif (R130 — opposable)" }],
+        { cle: "decision", libelle: "Décision (COMMUNIQUER | NE_PAS_COMMUNIQUER)", exemple: "COMMUNIQUER" },
+        { cle: "motif", libelle: "Motif (R7 — exigé dans les DEUX sens)" }],
       garde: "R129/R130 — la décision de communiquer est un acte HUMAIN motivé ; O-Live ne la prend jamais." },
     { cle: "goaml", libelle: "Générer le brouillon goAML", route: "GET /v1/mros/:id/goaml",
       methode: "GET", champs: [{ cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" }],
@@ -147,8 +148,8 @@ const ACTES: Record<string, ActeMoteur[]> = {
     { cle: "assigner", libelle: "Assigner une formation", route: "POST /v1/formations/assignments",
       methode: "POST", champs: [
         { cle: "userId", libelle: "Collaborateur", exemple: "u-004" },
-        { cle: "courseId", libelle: "Formation", exemple: "LBA-2026" },
-        { cle: "dueDate", libelle: "Échéance", exemple: "2026-12-31" }],
+        { cle: "formationCode", libelle: "Code de formation", exemple: "LBA-2026" },
+        { cle: "echeance", libelle: "Échéance", exemple: "2026-12-31" }],
       garde: "R236 — l'assignation nomme le collaborateur et l'échéance." },
     { cle: "viser", libelle: "Viser une complétion", route: "POST /v1/formations/assignments/:id/visa",
       methode: "POST", champs: [{ cle: ":id", libelle: "Assignation", exemple: "asg-12" }],
@@ -161,14 +162,15 @@ const ACTES: Record<string, ActeMoteur[]> = {
     { cle: "proposer", libelle: "Proposer une application", route: "POST /v1/regwatch/items/:empreinte/proposer",
       methode: "POST", champs: [
         { cle: ":empreinte", libelle: "Empreinte de la publication", exemple: "a1b2c3" },
-        { cle: "motif", libelle: "Ce que l'on propose d'appliquer" }],
+        { cle: "statut", libelle: "Statut proposé (PERTINENT | NON_PERTINENT)", exemple: "PERTINENT" },
+        { cle: "justification", libelle: "Justification (R7)" }],
       garde: "VR-04/R44 — la veille PROPOSE ; l'application passe par le bac à sable puis un visa daté." },
   ],
   registre: [
     { cle: "exporter", libelle: "Exporter le registre", route: "POST /v1/audit/export",
       methode: "POST", champs: [
-        { cle: "depuis", libelle: "Depuis", exemple: "2026-01-01" },
-        { cle: "jusqu", libelle: "Jusqu'au", exemple: "2026-08-11" }],
+        { cle: "aggregateId", libelle: "Objet (vide = tout le tenant)", exemple: "KYC-2026-00447" },
+        { cle: "type", libelle: "Type d'événement (facultatif)", exemple: "mros.gel.pose" }],
       garde: "R49 — l'export est une LECTURE horodatée du journal ; il ne modifie ni ne purge quoi que ce soit." },
   ],
 };
