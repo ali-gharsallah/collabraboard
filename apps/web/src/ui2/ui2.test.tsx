@@ -823,10 +823,11 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     parcourir(dir);
     // Attendu = l'état RÉEL du jour. Relever ce nombre est le geste qui atteste un câblage ;
     // le baisser sans motif est une régression que ce test rend visible.
-    // 0 → 1 au lot V2-M35 : UN chemin d'écriture (acte-moteur.tsx), emprunté par UN écran
-    // (Surveillance, deux actes). Relever ces nombres est le geste qui atteste un câblage.
+    // 0 → 1 au lot V2-M35 (UN chemin d'écriture, acte-moteur.tsx, emprunté par la Surveillance).
+    // 1 → 2 écrans au lot V2-M36 : Cross-Border pose ses dix actes par le même chemin.
+    // Relever ces nombres est le geste qui atteste un câblage.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(1);
+    expect(ecrans).toBe(2);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -851,5 +852,33 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(alerte.textContent).toContain("/v1/riskcases");        // la route est nommée
     // 4. et surtout : plus jamais « Qualification enregistrée » quand rien n'est parti
     expect(screen.queryByText(/Qualification enregistrée/)).toBeNull();
+  });
+
+  it("U2-58 V2-M36 Cross-Border : les actes se POSENT — champs du moteur, route résolue, refus affiché", async () => {
+    render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Dérogations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Demander une dérogation" }));
+    // les champs sont ceux que le CONTRÔLEUR exige, pas une invention d'écran
+    expect(screen.getByLabelText("Motif (R7 — obligatoire)")).toBeTruthy();
+    expect(screen.getByLabelText("Juridiction")).toBeTruthy();
+    // un acte INCOMPLET part quand même : la garde est au moteur, l'écran ne la re-implémente pas
+    fireEvent.click(screen.getByRole("button", { name: "Poser l'acte" }));
+    const refus = await screen.findByRole("alert");
+    expect(refus.textContent).toContain("AUCUNE ÉCRITURE");
+    expect(refus.textContent).toContain("/v1/crossborder/derogations");
+  });
+
+  it("U2-59 V2-M36 : un acte de LECTURE (rejeu R48) résout sa route et dit qu'aucune donnée réelle n'est servie", async () => {
+    render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Actes & pré-acte" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rejouer un verdict à date" }));
+    fireEvent.change(screen.getByLabelText("Objet"), { target: { value: "KYC-2026-00512" } });
+    fireEvent.change(screen.getByLabelText("Date du rejeu"), { target: { value: "2026-07-22" } });
+    fireEvent.click(screen.getByRole("button", { name: "Interroger le moteur" }));
+    const r = await screen.findByRole("alert");
+    expect(r.textContent).toMatch(/aucune donnée réelle n'est affichée/);
+    // la route porte l'objet ET la date : c'est ce qui distingue un rejeu d'une lecture courante
+    expect(r.textContent).toContain("KYC-2026-00512");
+    expect(r.textContent).toContain("asOf=2026-07-22");
   });
 });

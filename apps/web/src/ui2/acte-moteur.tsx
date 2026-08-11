@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { apiPost, isDemoMode, type OliveError } from "../lib/api";
+import { apiPost, apiGetSourced, isDemoMode, type OliveError } from "../lib/api";
 import { StatusChip } from "./StatusChip";
 
 /**
@@ -41,7 +41,21 @@ export function useActeMoteur() {
         : { code: "ERREUR", status: 0, message: String(e) } });
     }
   };
-  return { etat, poser, reinitialiser: () => setEtat({ phase: "repos" }) };
+  // Certaines familles d'actes sont des LECTURES qui font partie du geste — relire la matrice
+  // à une date (R453/R29), rejouer un verdict d'époque (R48), demander la conformité d'un
+  // voyage. Elles n'écrivent rien, et l'écran doit le dire aussi clairement que pour une
+  // écriture : une lecture qui retombe sur un seed n'est pas une lecture du moteur.
+  const lire = async (route: string) => {
+    setEtat({ phase: "envoi" });
+    const r = await apiGetSourced<unknown>(route, null);
+    if (r.isDemo) {
+      setEtat({ phase: "refus", erreur: { code: "DEMO_MODE", status: 0,
+        message: "Mode démonstration — le moteur n'a pas répondu, aucune donnée réelle n'est affichée" } });
+      return;
+    }
+    setEtat({ phase: "succes", reponse: r.data });
+  };
+  return { etat, poser, lire, reinitialiser: () => setEtat({ phase: "repos" }) };
 }
 
 /** Rendu de l'issue d'un acte — succès, refus, ou envoi. Rien n'est masqué, rien n'est reformulé. */

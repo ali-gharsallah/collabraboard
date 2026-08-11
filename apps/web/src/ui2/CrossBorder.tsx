@@ -8,6 +8,7 @@ import { EntityList } from "./Listes";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { exporterCsv, jourFichier } from "./actions";
+import { useActeMoteur, RetourActe } from "./acte-moteur";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -29,41 +30,82 @@ import { traduire, langue } from "../lib/i18n";
  * vise, le verdict d'un acte se REJOUE tel qu'il fut consigné (R48) — jamais recalculé.
  */
 
-type Acte = { cle: string; libelle: string; route: string; garde: string };
+// V2-M36 : un acte porte désormais de quoi être POSÉ — sa méthode, et les champs minimaux
+// que le moteur exige. Les champs sont ceux du contrôleur, pas une invention d'écran : c'est
+// pourquoi un acte incomplet part quand même et se fait REFUSER par le moteur. La garde est
+// au moteur ; l'écran ne la re-implémente pas, il la rend visible.
+type Champ = { cle: string; libelle: string; exemple?: string };
+type Acte = { cle: string; libelle: string; route: string; garde: string;
+  methode?: "POST" | "GET"; champs?: Champ[] };
 
 const ACTES: Record<string, Acte[]> = {
   matrice: [
     { cle: "sync", libelle: "Synchroniser le country manual", route: "POST /v1/crossborder/matrice/sync",
+      methode: "POST", champs: [],
       garde: "R453 — la synchronisation crée une VERSION datée immuable. Une dégradation crée des tâches nominatives et notifie (R459) ; elle n'annule aucun voyage ni aucun acte déjà consigné (R29/R44)." },
-    { cle: "asof", libelle: "Lire la matrice à une date", route: "GET /v1/crossborder/matrice?asOf=…",
+    { cle: "asof", libelle: "Lire la matrice à une date", route: "GET /v1/crossborder/matrice",
+      methode: "GET", champs: [{ cle: "asOf", libelle: "Date de lecture", exemple: "2026-07-01" }],
       garde: "R453/R29 — un acte garde la version en vigueur au moment où il a été posé. La matrice « courante » ne répond jamais pour un acte passé." },
   ],
   derogations: [
     { cle: "demander", libelle: "Demander une dérogation", route: "POST /v1/crossborder/derogations",
+      methode: "POST", champs: [
+        { cle: "voyageId", libelle: "Voyage ou dossier", exemple: "TRP-2026-0114" },
+        { cle: "juridiction", libelle: "Juridiction", exemple: "AE" },
+        { cle: "motif", libelle: "Motif (R7 — obligatoire)" }],
       garde: "R7 — une dérogation cross-border exige un MOTIF écrit, et un objet : un voyage ou un dossier KYC." },
     { cle: "viser", libelle: "Viser une dérogation", route: "POST /v1/crossborder/derogations/:id/visa",
+      methode: "POST", champs: [{ cle: ":id", libelle: "Référence de la dérogation", exemple: "XBD-2026-0034" }],
       garde: "R294 + R13 — le visa relève d'un rôle habilité (visa_derogation_xb) et exige un SECOND regard : l'initiateur ne vise pas sa propre demande." },
     { cle: "conformite", libelle: "Vérifier la conformité d'un voyage", route: "GET /v1/crossborder/voyages/:id/conformite",
+      methode: "GET", champs: [{ cle: ":id", libelle: "Référence du voyage", exemple: "TRP-2026-0114" }],
       garde: "XB-03 — l'état de conformité est DÉRIVÉ des événements du voyage, jamais saisi à la main." },
   ],
   actes: [
     { cle: "distant", libelle: "Consigner un entretien à distance", route: "POST /v1/crossborder/actes-distants",
+      methode: "POST", champs: [
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "canal", libelle: "Canal", exemple: "Visioconférence" },
+        { cle: "typeEntretien", libelle: "Type d'entretien", exemple: "Conseil" }],
       garde: "R454 — un entretien distant subit le même check qu'un déplacement, et le verdict est CONSIGNÉ dans le compte rendu. Verdict NON : la création exige une qualification Compliance préalable." },
     { cle: "preacte", libelle: "Vérifier avant un acte", route: "POST /v1/crossborder/pre-acte",
+      methode: "POST", champs: [
+        { cle: "type", libelle: "Activité", exemple: "MKT" },
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "perimetre", libelle: "Périmètre", exemple: "produit X" }],
       garde: "R455 — le check s'exécute AVANT l'acte et son verdict, avec la version de matrice, reste attaché à l'objet. Une sévérité BLOQUANT refuse l'acte ; elle ne l'« avertit » pas." },
-    { cle: "rejeu", libelle: "Rejouer un verdict à date", route: "GET /v1/crossborder/actes/:id/rejeu?asOf=…",
+    { cle: "rejeu", libelle: "Rejouer un verdict à date", route: "GET /v1/crossborder/actes/:id/rejeu",
+      methode: "GET", champs: [
+        { cle: ":id", libelle: "Objet", exemple: "KYC-2026-00512" },
+        { cle: "asOf", libelle: "Date du rejeu", exemple: "2026-07-22" }],
       garde: "R48/R49 — le rejeu rend le verdict d'époque tel qu'il fut consigné. Il n'est jamais recalculé avec la matrice d'aujourd'hui." },
   ],
   rs: [
     { cle: "preuve", libelle: "Enregistrer une preuve de sollicitation inversée", route: "POST /v1/crossborder/reverse-solicitation",
+      methode: "POST", champs: [
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "perimetre", libelle: "Périmètre", exemple: "Crédit lombard" },
+        { cle: "nature", libelle: "Nature de la preuve", exemple: "Courriel entrant du client" },
+        { cle: "docId", libelle: "Document GED", exemple: "GED-2026-4790" },
+        { cle: "date", libelle: "Date", exemple: "2026-08-02" }],
       garde: "R456 — la preuve est un OBJET : nature, document GED, date, périmètre. Les rôles habilités à l'enregistrer sont gouvernés (registre §CrossBorder, R462)." },
     { cle: "rsvisa", libelle: "Viser une preuve", route: "POST /v1/crossborder/reverse-solicitation/:id/visa",
+      methode: "POST", champs: [{ cle: ":id", libelle: "Référence de la preuve", exemple: "p2" }],
       garde: "R456 + R13 — une preuve non visée ne couvre rien : le second regard est la condition de son opposabilité." },
     { cle: "localisation", libelle: "Déclarer une localisation temporaire", route: "POST /v1/crossborder/localisations",
+      methode: "POST", champs: [
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "juridiction", libelle: "Juridiction", exemple: "FR" },
+        { cle: "du", libelle: "Du", exemple: "2026-09-01" },
+        { cle: "au", libelle: "Au", exemple: "2026-11-30" }],
       garde: "R457 — la localisation est un événement DATÉ qui expire de lui-même ; au-delà de la durée gouvernée, une revue de résidence est requise. Le rejeu résout la juridiction applicable à la date de l'acte." },
   ],
   ordres: [
     { cle: "ordre", libelle: "Enregistrer un ordre reçu", route: "POST /v1/crossborder/ordres",
+      methode: "POST", champs: [
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "pays", libelle: "Pays d'émission", exemple: "AE" },
+        { cle: "reverseSolicitation", libelle: "Sollicitation inversée (oui/non)", exemple: "oui" }],
       garde: "XB-04/R295 — la réception d'un ordre depuis une juridiction sous contrainte est DOCUMENTÉE ou REFUSÉE ; en EDD, la preuve GED est exigée." },
   ],
   parametres: [
@@ -183,6 +225,26 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
   const [acte, setActe] = useState<Acte | null>(null);
   // V2-M33 : ouvrir une ligne mène à l'ACTE qui la concerne — un clic qui ne va nulle part
   // vaut moins qu'une ligne non cliquable.
+  // V2-M36 : l'acte se POSE. Les valeurs saisies sont assemblées en corps de requête ;
+  // `:id` et `asOf` ne sont pas des champs du corps mais des morceaux de la ROUTE, résolus ici.
+  const moteur = useActeMoteur();
+  const [saisie, setSaisie] = useState<Record<string, string>>({});
+  const routeResolue = (a: Acte) => {
+    let r = a.route.replace(/^(POST|GET)\s+/, "");
+    r = r.replace(":id", encodeURIComponent(saisie[":id"] || ":id"));
+    if (a.methode === "GET" && saisie.asOf) r += `?asOf=${encodeURIComponent(saisie.asOf)}`;
+    return r;
+  };
+  const poserActe = (a: Acte) => {
+    const route = routeResolue(a);
+    if (a.methode === "GET") { void moteur.lire(route); return; }
+    const corps: Record<string, unknown> = {};
+    for (const c of a.champs ?? []) {
+      if (c.cle === ":id" || c.cle === "asOf") continue;      // partie de la route, pas du corps
+      if (saisie[c.cle]) corps[c.cle] = saisie[c.cle];
+    }
+    void moteur.poser(route, corps);                          // incomplet ? le MOTEUR refuse, pas l'écran
+  };
   const ouvrirActe = (famille: string, cle: string) => {
     const a = (ACTES[famille] ?? []).find((x) => x.cle === cle) ?? null;
     if (a) setActe(a);
@@ -220,7 +282,8 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {actes.map((a) => (
-            <Ui2Bouton key={a.cle} onClick={() => setActe(acte?.cle === a.cle ? null : a)}>
+            <Ui2Bouton key={a.cle} onClick={() => {
+              setActe(acte?.cle === a.cle ? null : a); setSaisie({}); moteur.reinitialiser(); }}>
               {t(a.libelle)}</Ui2Bouton>))}
         </div>
         {acte && actes.some((a) => a.cle === acte.cle) && (
@@ -232,6 +295,27 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
               {t(acte.garde)}</div>
             <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 6 }}>
               {acte.route}</div>
+            {/* Les champs que le MOTEUR exige. Un acte incomplet part quand même : c'est le
+                moteur qui refuse, avec sa règle — l'écran ne re-implémente pas la garde. */}
+            {(acte.champs ?? []).length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                gap: 8, marginTop: 10 }}>
+                {(acte.champs ?? []).map((c) => (
+                  <label key={c.cle} style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                    {t(c.libelle)}
+                    <input value={saisie[c.cle] ?? ""} aria-label={t(c.libelle)}
+                      placeholder={c.exemple ?? ""}
+                      onChange={(e) => setSaisie({ ...saisie, [c.cle]: e.target.value })}
+                      style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 4,
+                        padding: "7px 9px", borderRadius: "var(--r-input)", fontFamily: "inherit",
+                        border: "1px solid var(--border-input)", fontSize: 12, color: "var(--text)",
+                        background: "var(--bg-surface)" }} /></label>))}
+              </div>)}
+            <div style={{ marginTop: 10 }}>
+              <Ui2Bouton primaire onClick={() => poserActe(acte)}>
+                {t(acte.methode === "GET" ? "Interroger le moteur" : "Poser l'acte")}</Ui2Bouton>
+            </div>
+            <RetourActe etat={moteur.etat} route={routeResolue(acte)} t={t} />
           </div>)}
       </div>);
   };
