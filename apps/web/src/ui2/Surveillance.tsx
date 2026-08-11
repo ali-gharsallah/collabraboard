@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2HeaderListe, Ui2Bouton } from "./Header";
@@ -13,6 +12,7 @@ import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
+import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
 /**
  * UI v2 — étape 6 : Surveillance — écrans 03 « AML Investigation » et 05 « Screening ».
@@ -84,8 +84,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   const nav = (
     <Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer" onNavigate={onNavigate} t={t}
       badges={{ journee: { n: 9 }, dossiers: { n: 17, sobre: true }, surveillance: { n: 5, alert: true } }}
-      modulesLicencies={[{ id: "pms", label: "PMS", icon: <LayoutGrid size={16} strokeWidth={1.75} /> },
-        { id: "fx", label: "Multi-devise & FX", icon: <ArrowLeftRight size={16} strokeWidth={1.75} /> }]} />);
+      modulesLicencies={MODULES_METIERS_DEMO} />);
   const bandeauDecision = decision && (
     <div role="status" style={{ background: "var(--ok-chip)", border: "1px solid var(--ok-line)",
       borderRadius: 9, padding: "9px 12px", marginBottom: 12, fontSize: 12, color: "var(--ok-text)" }}>

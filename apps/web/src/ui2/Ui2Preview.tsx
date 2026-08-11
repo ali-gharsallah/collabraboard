@@ -1,4 +1,3 @@
-import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import React, { useState } from "react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav } from "./Nav";
@@ -16,7 +15,9 @@ import { EntreeRelation } from "./EntreeRelation";
 import { MesDossiers, MesClients } from "./Listes";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
+import { CrossBorder } from "./CrossBorder";
 import { traduire, langue } from "../lib/i18n";
+import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
 /**
  * UI v2 — APERÇU de l'étape 1 (tokens + shell), à VALIDER par le PO avant l'étape 2
@@ -73,6 +74,9 @@ export function Ui2Preview() {
   if (active === "entree") return <EntreeRelation active={active} onNavigate={setActive} />;
   if (active === "dossiers") return <MesDossiers active={active} onNavigate={setActive} />;
   if (active === "clients") return <MesClients active={active} onNavigate={setActive} />;
+  // V2-M29 : Cross-Border devient un écran de plein droit — il n'était atteignable que par un
+  // onglet du dossier KYC alors que le moteur porte dix-sept routes (E-V2-1 soldé).
+  if (active === "crossborder") return <CrossBorder active={active} onNavigate={setActive} />;
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton>{t("Filtres")}</Ui2Bouton>}
@@ -87,7 +91,7 @@ export function Ui2Preview() {
       nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager"
         onNavigate={setActive} t={t}
         badges={{ journee: { n: 12 }, surveillance: { n: 3, alert: true } }}
-        modulesLicencies={[{ id: "pms", label: "PMS", icon: <LayoutGrid size={16} strokeWidth={1.75} /> }, { id: "fx", label: "Multi-devise & FX", icon: <ArrowLeftRight size={16} strokeWidth={1.75} /> }]} />}
+        modulesLicencies={MODULES_METIERS_DEMO} />}
       header={header}
       side={<div>
         <div className="microlabel" style={{ marginBottom: 8 }}>{t("Colonne latérale — 340px")}</div>

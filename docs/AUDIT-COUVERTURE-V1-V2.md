@@ -1,6 +1,7 @@
 # Audit de couverture v1 → v2
 
-> Lot **V2-M17** (11.08.2026). Établi capacité par capacité, **vérifié dans le code de la v2**
+> Lot **V2-M17** (11.08.2026), tenu à jour à chaque construction — dernière mise à jour
+> **V2-M29** (Cross-Border passe de « absent » à « livré » : 61 / 10 / 15). Établi capacité par capacité, **vérifié dans le code de la v2**
 > — pas déduit de la cartographie ni du registre. Le registre `apps/web/src/ui2/capacites.ts`
 > a été corrigé par cet audit : il déclarait « livrées » 14 capacités qui ne le sont qu'à moitié.
 
@@ -8,9 +9,9 @@
 
 | Verdict | Capacités | Ce que cela veut dire |
 |---|---:|---|
-| **Livré** | 60 | l'objet métier ET ses actes sont rendus en v2 |
+| **Livré** | 61 | l'objet métier ET ses actes sont rendus en v2 |
 | **Partiel** | 10 | l'objet est rendu mais amputé — consultation là où la v1 agissait, ou fraction du périmètre |
-| **Absent** | 16 | ni écran ni onglet ne porte l'objet |
+| **Absent** | 15 | ni écran ni onglet ne porte l'objet |
 | | **86** | les écrans du ROUTEUR v1 (pas les 82 du menu : 4 écrans n'ont aucune entrée) |
 
 ### La méthode, et sa limite
@@ -26,7 +27,7 @@ clés gouvernées et non le référentiel des 128 règles, l'onglet IA porte le 
 et non le journal des runs, l'onglet Workflow porte les définitions et non les instances en
 cours. Le chiffre honnête est donc 56, pas 72.
 
-## Ce qui manque — 16 capacités absentes
+## Ce qui manque — 15 capacités absentes
 
 | Capacité | Groupe v1 | Destination arrêtée | Ce qui manque |
 |---|---|---|---|
@@ -37,7 +38,6 @@ cours. Le chiffre honnête est donc 56, pas 72.
 | **Pré-revue IA** | Compliance & Risque | `kyc/Pré-revue IA` | onglet de destination non construit |
 | **Référentiel AML** | Compliance & Risque | `param/Règles` | l'onglet Règles porte des clés gouvernées, pas le référentiel des 128 règles |
 | **Olivia · Runs** | Data & Intelligence | `param/IA` | l'onglet IA porte le curseur et les budgets, pas le journal des runs |
-| **Cross-Border** | Front & Croissance | `crossborder` | écran vertical non construit |
 | **CPSI · Risk cases** | Profilage CPSI | `cpsi/Risk cases` | écran vertical non construit |
 | **CPSI · Segmentation** | Profilage CPSI | `cpsi/Segmentation` | écran vertical non construit |
 | **Custody & TA** | Transactions & Marchés | `custody` | écran vertical non construit |
@@ -49,10 +49,10 @@ cours. Le chiffre honnête est donc 56, pas 72.
 
 ### Lecture
 
-Dix des seize sont des **écrans verticaux entiers** : Cross-Border, Custody & TA, Finance
-Islamique, PMS, Multi-devise & FX, Mobile Banking, Octopulse OpRisk, Legal — Contrats, et les
-deux écrans CPSI opérationnels (Segmentation, Risk cases). Leur destination est arrêtée dans le
-registre ; il reste à les bâtir.
+Neuf des quinze sont des **écrans verticaux entiers** : Custody & TA, Finance Islamique, PMS,
+Multi-devise & FX, Mobile Banking, Octopulse OpRisk, Legal — Contrats, et les deux écrans CPSI
+opérationnels (Segmentation, Risk cases). Leur destination est arrêtée dans le registre ; il
+reste à les bâtir. Le dixième, **Cross-Border, a été construit au lot V2-M29**.
 
 Les six autres sont des **onglets** dont la destination existe mais pas le contenu : AML Gap,
 Référentiel AML, Checklist exigences, Pré-revue IA, Olivia · Runs, Workflow Instances.
@@ -101,7 +101,7 @@ personne n'ouvre vaut moins qu'une phrase lue au bon moment.
 | Clients & Relations | 7 | 0 | 0 |
 | Compliance & Risque | 7 | 6 | 6 |
 | Data & Intelligence | 5 | 2 | 1 |
-| Front & Croissance | 7 | 0 | 1 |
+| Front & Croissance | 8 | 0 | 0 |
 | Paramétrage | 12 | 1 | 0 |
 | Profilage CPSI | 1 | 2 | 2 |
 | Transactions & Marchés | 1 | 3 | 5 |
@@ -124,8 +124,9 @@ personne n'ouvre vaut moins qu'une phrase lue au bon moment.
 L'ordre que je recommande, du plus coûteux en usage réel au moins coûteux :
 
 1. ~~Rendre les actes aux quatre capacités en consultation seule~~ — **FAIT (V2-M18)**.
-2. **Cross-Border en écran de plein droit** — 17 routes au moteur, une seule exposée ; c'est le
-   plus gros écart fonctionnel du produit.
+2. ~~**Cross-Border en écran de plein droit**~~ — **FAIT (V2-M29)**. Écran à six onglets
+   couvrant les six familles de routes ; quatre lectures branchées, trois familles d'objets sans
+   route de lecture au moteur — l'écran le dit et l'écart est ouvert (E-V2-5).
 3. **Les six onglets sans contenu** — AML Gap, Référentiel AML, Runs, Instances, Checklist,
    Pré-revue IA : la destination existe déjà, il n'y a qu'à la remplir.
 4. **Les écrans verticaux licenciés** (PMS d'abord, seul module facturable des dix) puis les

@@ -1558,7 +1558,14 @@ re-soumis ici.
   pas pour les actes (check avant un acte, preuve de reverse solicitation, séjour temporaire) qui
   sont portés par un ACTE et un COLLABORATEUR, pas par un dossier client.
 - **Cible** : arbitrage PO — écran de plein droit dans « Parcours client » (recommandé) ou
-  répartition par acte. Statut : OUVERT.
+  répartition par acte.
+- **SOLDÉ au lot V2-M29 (11.08.2026)** — l'option recommandée a été retenue et construite :
+  `apps/web/src/ui2/CrossBorder.tsx`, écran de plein droit atteignable par le bloc « Métiers »
+  (module licencié †CROSSBORDER), six onglets qui recouvrent les six familles de routes du
+  moteur — Exposition (R460), Matrice pays (R453), Dérogations (XB-03/R294/R13), Actes &
+  pré-acte (R454/R455/R48), Sollicitation inversée & localisations (R456/R457), Ordres &
+  reporting (XB-04/R39). L'onglet Cross-Border du dossier KYC est CONSERVÉ : la matrice d'un
+  dossier se lit là où le dossier se lit. Gardes U2-48 à U2-51. Statut : **FERMÉ**.
 
 ### E-V2-2 — R84 (la main sur un dossier) sans aucune surface écran (V2-M13)
 - **Constat** : R84 est ratifié et livré au moteur (`kyc/rules/kyc-lock.service.ts`, 4 routes :
@@ -1601,3 +1608,18 @@ re-soumis ici.
   reste à faire, et conditionne la facturation.
 - **Cible** : amendement du catalogue R320 (8 modules), puis retrait des marqueurs « † ».
   Statut : OUVERT — arbitrage PO/éditeur requis.
+
+### E-V2-5 — Cross-Border : trois familles d'objets sans route de LECTURE (V2-M29)
+- **Constat** : le moteur `crossborder` écrit les dérogations (`POST /derogations`, `/visa`), les
+  actes distants et pré-actes (`POST /actes-distants`, `POST /pre-acte`) et les preuves de
+  sollicitation inversée et localisations (`POST /reverse-solicitation`, `/visa`,
+  `POST /localisations`) — mais **n'expose aucune route qui les relise en liste**. Seules
+  quatre lectures existent : exposition (R460), matrice (R453), reporting (XB-04) et conformité
+  d'un voyage (XB-03), toutes branchées à l'écran.
+- **Conséquence assumée** : les trois onglets concernés tournent sur des données de maquette et
+  **le déclarent à l'écran**, avec le renvoi à cet écart. On ne fabrique pas une liste depuis le
+  journal côté front : ce serait une seconde vérité, exactement ce que R453 interdit pour la
+  matrice.
+- **Cible** : trois routes de lecture au moteur (`GET /derogations`, `GET /actes`,
+  `GET /reverse-solicitation`), projetées des événements comme l'est déjà l'exposition (R460).
+  Aucune table nouvelle. Statut : OUVERT — travail moteur, non front.

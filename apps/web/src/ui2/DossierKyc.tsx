@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { LayoutGrid, ArrowLeftRight } from "lucide-react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
@@ -11,6 +10,7 @@ import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { traduire, langue } from "../lib/i18n";
 import kycSeed from "../seed/kyc.json";
+import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
 /**
  * UI v2 — écran 02 « Dossier KYC » (handoff, maquette screenshots/02-dossier-kyc.png).
@@ -117,8 +117,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
       nav={<Ui2Nav active={active} user="Camille Morel" role="Relationship Manager" onNavigate={onNavigate} t={t}
         badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
           kyc: { n: 3, sobre: true }, surveillance: { n: 5, alert: true } }}
-        modulesLicencies={[{ id: "pms", label: "PMS", icon: <LayoutGrid size={16} strokeWidth={1.75} /> },
-          { id: "fx", label: "Multi-devise & FX", icon: <ArrowLeftRight size={16} strokeWidth={1.75} /> }]} />}
+        modulesLicencies={MODULES_METIERS_DEMO} />}
       header={<Ui2HeaderDossier nom={reel ? reel.clientId ?? reel.code : "Nordwind Holding AG"}
         initiales={reel ? (reel.clientId ?? reel.code).slice(0, 2).toUpperCase() : "NH"}
         identifiants={reel

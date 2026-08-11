@@ -53,7 +53,17 @@ const zlib = require("zlib");
 // veille, registre) coûte ~1,3 kB gz, et la marge restante après V2-M16 était de 0,8 kB. Les
 // lots suivants comblent 16 capacités absentes : une marge de 10 kB est le minimum honnête
 // pour ne pas relever ce budget à chaque commit. Mesure : 290,5 avant relève.
-const BUDGET_TOTAL_KB = 300;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 300 → 310 (V2-M29, 11.08.2026) : Cross-Border devient un écran de plein droit —
+// six onglets couvrant les six familles de routes du moteur (E-V2-1 soldé), ~5,5 kB gz.
+// Mesure 299,3 avant relève : la marge de 10 kB ouverte au lot V2-M18 est consommée.
+// CE QUE CETTE RELÈVE DIT AUSSI, ET QU'IL FAUT LIRE : il reste NEUF écrans verticaux à bâtir
+// (PMS, Custody & TA, FX, Mobile, Finance Islamique, Legal, OpRisk, et les deux CPSI). Au même
+// coût unitaire, les relever un par un mènerait ce budget à ~360 — ce serait un budget qui
+// suit la dette au lieu de la tenir. Les verticaux sont pourtant LICENCIÉS : un tenant sans
+// †CROSSBORDER ne devrait jamais télécharger cet écran. Le prochain lot vertical passera donc
+// par un chargement PARESSEUX par module et un compartiment borné dans cette garde — même
+// doctrine que les packs de langue et le globe — et non par une nouvelle relève.
+const BUDGET_TOTAL_KB = 310;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux

@@ -22,6 +22,8 @@ import { Surveillance } from "./Surveillance";
 import { Pilotage } from "./Pilotage";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
+import { CrossBorder } from "./CrossBorder";
+import { MODULES_METIERS_DEMO } from "./modules-metiers";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -650,11 +652,12 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
       // toute capacité non livrée DIT ce qui lui manque — pas de statut sans motif.
       if (c.statut !== "livre") expect((c.motif ?? "").length).toBeGreaterThan(10);
     }
-    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 60 livrées, 10 amputées,
-    // 16 absentes. Le registre ne prétend pas le contraire.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(60);
+    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 61 livrées, 10 amputées,
+    // 15 absentes — Cross-Border a rejoint les livrées au lot V2-M29. Le registre ne prétend
+    // jamais mieux que l'état du code : ces trois nombres se corrigent par une CONSTRUCTION.
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(61);
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(16);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(15);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -694,5 +697,46 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // un RM pleinement licencié atteint les verticaux métiers ; sans licence, ils disparaissent.
     expect(destinationsVisibles("RM", tout)).toContain("islamic");
     expect(destinationsVisibles("RM", [])).not.toContain("islamic");
+  });
+
+  it("U2-48 V2-M29 Cross-Border : écran de plein droit — six familles du moteur, sources dites, R44 tenu", () => {
+    render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
+    // les six familles de routes du moteur ont chacune leur onglet (E-V2-1 soldé)
+    for (const o of ["Exposition", "Matrice pays", "Dérogations", "Actes & pré-acte",
+      "Sollicitation inversée", "Ordres & reporting"])
+      expect(screen.getByRole("button", { name: o })).toBeTruthy();
+    // l'AUM n'est PAS reconstitué : le modèle ne le porte pas, l'écran le dit
+    expect(screen.getByText(/L'AUM par juridiction n'est PAS affiché/)).toBeTruthy();
+    // R44 : le moteur consigne un verdict, il ne sanctionne pas
+    expect(screen.getByText(/Il ne sanctionne pas, ne clôt pas un dossier/)).toBeTruthy();
+  });
+
+  it("U2-49 V2-M29 Cross-Border : un onglet sans route de LECTURE le déclare, et l'acte nomme sa garde", () => {
+    render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Dérogations" }));
+    // la maquette est annoncée — on ne laisse pas croire à un câblage qui n'existe pas
+    expect(screen.getByText(/n'expose pas de route de lecture/)).toBeTruthy();
+    expect(screen.getByText(/écart E-V2-5/)).toBeTruthy();
+    // l'acte dit sa garde ET sa route ; il n'exécute rien
+    fireEvent.click(screen.getByRole("button", { name: "Viser une dérogation" }));
+    const dit = screen.getAllByRole("status").map((n) => n.textContent).join(" ");
+    expect(dit).toContain("R294");
+    expect(dit).toContain("l'initiateur ne vise pas");
+    expect(dit).toContain("POST /v1/crossborder/derogations/:id/visa");
+  });
+
+  it("U2-50 V2-M29 matrice : la version datée est portée, et une sync en échec ne se tait pas (R453)", () => {
+    render(<CrossBorder active="crossborder" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Matrice pays" }));
+    expect(screen.getByText("XBM-2026-07")).toBeTruthy();            // la version, pas « à jour »
+    expect(screen.getByText(/synchronisation en échec depuis/)).toBeTruthy();
+    expect(screen.getByText(/plus dangereuse qu'une matrice absente/)).toBeTruthy();
+  });
+
+  it("U2-51 V2-M29 bloc Métiers : la nav lit le registre — un module ne peut pas y être nommé autrement", () => {
+    // le libellé du bloc « Métiers » vient de CAPACITES, jamais d'un littéral d'écran
+    for (const m of MODULES_METIERS_DEMO)
+      expect(CAPACITES.some((c) => c.destination === m.id && c.libelle === m.label)).toBe(true);
+    expect(MODULES_METIERS_DEMO.some((m) => m.id === "crossborder")).toBe(true);
   });
 });
