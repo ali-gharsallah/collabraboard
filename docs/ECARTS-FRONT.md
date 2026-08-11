@@ -1545,3 +1545,46 @@ re-soumis ici.
   RESTE : réutilisation de la barre R474 sur les écrans BT/Offboarding démo (boutons ad hoc
   Approuver/Refuser) — le handoff UI v2 (`DecisionPanel`) fournit le gabarit cible.
 - **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.
+
+### E-V2-1 — Cross-Border replié en un onglet de lecture (V2-M13)
+- **Constat** : le module `crossborder` porte **17 routes** (check pré-voyage et pré-acte,
+  dérogations + visa R13, conformité voyage, ordres, reporting, matrice + sync R453, actes
+  distants R454, reverse solicitation + visa R456, localisations R457, exposition R460, rejeu
+  R48, registre de paramètres R462). La v1 lui donne un écran dédié (3 onglets). La v2 n'en
+  expose **qu'une route** (`GET /crossborder/matrice`) en lecture seule, comme onglet du dossier
+  KYC — décision inscrite dans `apps/web/src/ui2/cartographie.ts:44` comme une fusion acquise,
+  jamais consignée comme un écart, donc invisible aux revues.
+- **Analyse** : la fusion se défend pour la matrice des juridictions d'un dossier ; elle ne tient
+  pas pour les actes (check avant un acte, preuve de reverse solicitation, séjour temporaire) qui
+  sont portés par un ACTE et un COLLABORATEUR, pas par un dossier client.
+- **Cible** : arbitrage PO — écran de plein droit dans « Parcours client » (recommandé) ou
+  répartition par acte. Statut : OUVERT.
+
+### E-V2-2 — R84 (la main sur un dossier) sans aucune surface écran (V2-M13)
+- **Constat** : R84 est ratifié et livré au moteur (`kyc/rules/kyc-lock.service.ts`, 4 routes :
+  `lock`, `release`, `request-hand`, `pass-hand` ; tables `kycLock`/`kycLockRequest` ; 4
+  événements ; séries CK/LK). **Aucun fichier de `apps/web` n'appelle ces routes** : ni bandeau
+  « détenu par X », ni bouton, ni distinction visuelle entre mode consultation et mode édition.
+- **Question de sémantique à trancher (ne pas décider dans l'écran)** : `peutConsulter()` renvoie
+  FAUX quand un autre détient le dossier — R84 tel qu'écrit interdit la *consultation*, pas
+  seulement l'édition. La demande PO exprimée le 11.08 dit l'inverse (consultation ouverte,
+  édition sous prise de main). La fonction n'est appelée nulle part hors tests : la lecture n'est
+  donc pas effectivement bloquée. Amender R84 au catalogue, ou l'appliquer — pas contourner.
+- **Ouvert aussi** : expiration du verrou (aucune libération automatique aujourd'hui) et reprise
+  forcée par un rôle habilité. Statut : OUVERT.
+
+### E-V2-3 — Modules verticaux absents de la v2, y compris de la cartographie ⌘K (V2-M13)
+- **Constat** : la cartographie v2 compte 60 entrées contre 82 entrées de navigation en v1.
+  N'y figurent **ni écran ni destination de recherche** : Finance Islamique, PMS, Multi-devise &
+  FX, Mobile Banking, Custody & TA, GED/coffre, Reporting MROS, Octopulse OpRisk, Legal —
+  Contrats, AML Gap, Référentiel AML, Olivia · Runs, Checklist exigences, Pré-revue IA. Les
+  quatre écrans CPSI opérationnels ne sont couverts que par un encart de la fiche client.
+- **Aggravant** : « PMS » et « Multi-devise & FX » sont AFFICHÉS dans le bloc « Métiers » de la
+  navigation (`Ui2Preview.tsx:90`) mais `Ui2Preview` n'a aucune branche pour ces identifiants —
+  ce sont des entrées mortes.
+- **Cadrage** : au sens R320, `MODULES_PRODUIT` = GED, OCR, KYC, AML, COC, ACCREV, WORKFLOWS,
+  ONBOARDING, SCREENING, **PMS**, IA. Les autres verticaux (Islamique, Mobile, Custody, FX,
+  Cross-Border) ne sont pas facturables : leur place relève d'un arbitrage de navigation.
+- **Cible** : inventaire de couverture capacité par capacité, puis (a) onglets dans la colonne
+  existante pour ce qui suit le parcours, (b) écrans propres sous « Métiers » conditionnés par la
+  licence. Statut : OUVERT.
