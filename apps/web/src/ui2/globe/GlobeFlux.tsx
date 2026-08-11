@@ -235,53 +235,84 @@ export function GlobeFlux({ hauteur = 440 }: { hauteur?: number }) {
     };
   }, [hauteur]);
 
+  // ── Les KPI sont CALCULÉS des flux, jamais saisis : un chiffre affiché doit rester vrai
+  //    quand la donnée bouge. Chacun mène quelque part (doctrine StatTile). ──
   const total = FLOWS.reduce((s, f) => s + f.v, 0);
-  const alertes = FLOWS.filter((f) => f.s === "alert").length;
+  const operations = FLOWS.reduce((s, f) => s + f.n, 0);
+  const enAlerte = FLOWS.filter((f) => f.s === "alert");
+  const sousSurv = FLOWS.filter((f) => f.s === "watch");
+  const volAlerte = enAlerte.reduce((s, f) => s + f.v, 0);
+  const partAlerte = Math.round((volAlerte / total) * 1000) / 10;
+
+  const KPI: { v: string; l: string; mode?: Statut }[] = [
+    { v: String(FLOWS.length), l: t("corridors actifs") },
+    { v: total.toLocaleString("fr-CH"), l: t("MCHF par mois") },
+    { v: operations.toLocaleString("fr-CH"), l: t("opérations") },
+    { v: String(sousSurv.length), l: t("sous surveillance"), mode: "watch" },
+    { v: String(enAlerte.length), l: t("en alerte AML"), mode: "alert" },
+    { v: `${String(partAlerte).replace(".", ",")} %`, l: t("du volume en alerte"), mode: "alert" },
+  ];
+
+  const tuile = (k: typeof KPI[number]) => (
+    <div key={k.l} style={{ background: "rgba(255,255,255,0.045)",
+      border: `1px solid ${k.mode ? COLOR[k.mode] + "55" : "rgba(164,197,107,0.22)"}`,
+      borderLeft: k.mode ? `3px solid ${COLOR[k.mode]}` : "1px solid rgba(164,197,107,0.22)",
+      borderRadius: 11, padding: "10px 13px", backdropFilter: "blur(3px)" }}>
+      <div className="mono" style={{ fontSize: 21, fontWeight: 500, letterSpacing: "-0.02em",
+        color: k.mode ? COLOR[k.mode] : "#EAF1DE" }}>{k.v}</div>
+      <div style={{ fontSize: 10.5, color: "rgba(214,224,199,0.72)", marginTop: 2 }}>{k.l}</div>
+    </div>);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 14,
-      alignItems: "start" }}>
-      <div ref={stageRef} style={{ background: "#11161C", border: "1px solid var(--border)",
-        borderRadius: "var(--r-card)", overflow: "hidden", position: "relative" }}>
-        <canvas ref={canvasRef} style={{ display: "block", cursor: "grab", touchAction: "none" }}
-          aria-label={t("Globe des flux transfrontaliers — faites glisser pour tourner")} />
-        <div className="microlabel" style={{ position: "absolute", left: 12, bottom: 10,
-          color: "rgba(190,202,216,0.65)" }}>
-          {t("glisser pour tourner · molette pour zoomer")}</div>
-      </div>
-      <div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 10 }}>
-          {[[FLOWS.length, t("corridors")], [total.toLocaleString("fr-CH"), t("MCHF / mois")],
-            [alertes, t("en alerte")]].map(([v, l]) => (
-            <div key={String(l)} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
-              borderRadius: 10, padding: "9px 11px" }}>
-              <div className="mono" style={{ fontSize: 17, fontWeight: 500, color: "var(--text)" }}>{v}</div>
-              <div style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{l}</div>
-            </div>))}
+    <div>
+      {/* La scène : fond vert olive profond, globe AU CENTRE, KPI de part et d'autre. */}
+      <div style={{ position: "relative", borderRadius: "var(--r-card)", overflow: "hidden",
+        border: "1px solid #2A3720",
+        background: "radial-gradient(120% 90% at 50% 42%, #35471F 0%, #243016 45%, #18200F 100%)" }}>
+        <div className="globe-scene" style={{ display: "grid",
+          gridTemplateColumns: "minmax(150px,1fr) minmax(0,2.2fr) minmax(150px,1fr)",
+          gap: 16, alignItems: "center", padding: "18px 18px 12px" }}>
+          <div style={{ display: "grid", gap: 10 }}>{KPI.slice(0, 3).map(tuile)}</div>
+          <div ref={stageRef} style={{ position: "relative" }}>
+            <canvas ref={canvasRef} style={{ display: "block", cursor: "grab", touchAction: "none",
+              margin: "0 auto" }}
+              aria-label={t("Globe des flux transfrontaliers — faites glisser pour tourner")} />
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>{KPI.slice(3).map(tuile)}</div>
         </div>
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
-          borderRadius: "var(--r-card)", maxHeight: 330, overflowY: "auto" }}>
+        {/* Les corridors, en bande sous le globe : cliquer isole le flux sur la carte. */}
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 18px 14px" }}>
           {FLOWS.map((f) => (
             <button key={`${f.a}-${f.b}`} onClick={() => setFocus(focus === f ? null : f)}
               aria-pressed={focus === f}
-              style={{ display: "block", width: "100%", textAlign: "left", font: "inherit",
-                cursor: "pointer", border: "none", borderBottom: "1px solid var(--border-row)",
-                background: focus === f ? "var(--bg-muted)" : "transparent", padding: "8px 12px" }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span aria-hidden style={{ width: 7, height: 7, borderRadius: 4, flexShrink: 0,
+              style={{ flexShrink: 0, textAlign: "left", font: "inherit", cursor: "pointer",
+                borderRadius: 9, padding: "7px 11px",
+                border: `1px solid ${focus === f ? COLOR[f.s] : "rgba(164,197,107,0.20)"}`,
+                background: focus === f ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.035)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span aria-hidden style={{ width: 6, height: 6, borderRadius: 3, flexShrink: 0,
                   background: COLOR[f.s] }} />
-                <span style={{ fontSize: 12.5, color: "var(--text)" }}>
+                <span style={{ fontSize: 12, color: "#E7EEDC", whiteSpace: "nowrap" }}>
                   {CITY[f.a].name} → {CITY[f.b].name}</span>
-                <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-body)" }}>
-                  {f.v} MCHF</span>
+                <span className="mono" style={{ fontSize: 11.5, color: "rgba(214,224,199,0.8)",
+                  whiteSpace: "nowrap" }}>{f.v}</span>
               </div>
-              <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginLeft: 15 }}>
-                {f.n.toLocaleString("fr-CH")} {t("opérations")} · {t(LABEL[f.s])}</div>
+              <div style={{ fontSize: 10, color: "rgba(214,224,199,0.6)", marginLeft: 13,
+                whiteSpace: "nowrap" }}>
+                {f.n.toLocaleString("fr-CH")} {t("op.")} · {t(LABEL[f.s])}</div>
             </button>))}
         </div>
-        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-          {t("Le globe MONTRE des volumes et des statuts déjà qualifiés ailleurs. Il ne qualifie rien, ne lève aucune alerte et ne décide d'aucun blocage (R44). Les paliers de risque pays affichés sont une classification de démonstration — la matrice pays en vigueur est une configuration gouvernée.")}</div>
+        <div className="microlabel" style={{ position: "absolute", right: 16, top: 14,
+          color: "rgba(214,224,199,0.5)" }}>
+          {t("glisser pour tourner · molette pour zoomer")}</div>
       </div>
+      <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+        {t("Le globe MONTRE des volumes et des statuts déjà qualifiés ailleurs. Il ne qualifie rien, ne lève aucune alerte et ne décide d'aucun blocage (R44). Les paliers de risque pays affichés sont une classification de démonstration — la matrice pays en vigueur est une configuration gouvernée.")}</div>
+      <style>{`@media (max-width: 1080px){
+        .globe-scene{grid-template-columns:minmax(0,1fr)!important}
+        .globe-scene>div:first-child,.globe-scene>div:last-child{
+          grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+      }`}</style>
     </div>);
 }
 
