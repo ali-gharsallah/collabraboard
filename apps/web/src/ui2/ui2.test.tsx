@@ -816,18 +816,20 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
         // On compte des APPELS, pas des mentions : un `apiPost` cité dans un commentaire ou
         // listé dans un import n'écrit rien. D'où le `[<(]` exigé derrière le nom.
         ecritures += (src.match(/\b(apiPost|apiPut|apiPatch|apiDelete)\s*[<(]/g) ?? []).length;
-        // « écran qui pose un acte » = celui qui APPELLE le hook, pas celui qui le définit.
-        ecrans += /=\s*useActeMoteur\s*\(/.test(src) ? 1 : 0;
+        // « écran qui pose un acte » : celui qui appelle le hook OU qui monte la barre
+        // mutualisée. On exclut le module qui les définit — il n'est l'écran de personne.
+        if (e.name !== "acte-moteur.tsx"
+          && (/=\s*useActeMoteur\s*\(/.test(src) || /<BarreActes\b/.test(src))) ecrans += 1;
       }
     };
     parcourir(dir);
     // Attendu = l'état RÉEL du jour. Relever ce nombre est le geste qui atteste un câblage ;
     // le baisser sans motif est une régression que ce test rend visible.
     // 0 → 1 au lot V2-M35 (UN chemin d'écriture, acte-moteur.tsx, emprunté par la Surveillance).
-    // 1 → 2 écrans au lot V2-M36 : Cross-Border pose ses dix actes par le même chemin.
-    // Relever ces nombres est le geste qui atteste un câblage.
+    // 1 → 2 écrans au lot V2-M36 (Cross-Border), → 3 au lot V2-M37 (Rapports : MROS,
+    // habilitations, veille, registre). Relever ces nombres atteste un câblage.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(2);
+    expect(ecrans).toBe(3);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -880,5 +882,35 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // la route porte l'objet ET la date : c'est ce qui distingue un rejeu d'une lecture courante
     expect(r.textContent).toContain("KYC-2026-00512");
     expect(r.textContent).toContain("asOf=2026-07-22");
+  });
+
+  it("U2-60 V2-M37 Rapports : les actes MROS se posent — et la LEVÉE de gel existe enfin", async () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "MROS · goAML" }));
+    // la garde du gel annonçait un acte symétrique que l'écran ne permettait pas : il est là
+    const lever = screen.getByRole("button", { name: "Lever un gel" });
+    expect(lever).toBeTruthy();
+    fireEvent.click(lever);
+    expect(screen.getByLabelText("Motif de la levée (R131)")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Poser l'acte" }));
+    const r = await screen.findByRole("alert");
+    expect(r.textContent).toContain("AUCUNE ÉCRITURE");
+    expect(r.textContent).toContain("/v1/mros");
+    expect(r.textContent).toContain("gel/lever");           // la route symétrique, résolue
+  });
+
+  it("U2-61 V2-M37 : la barre d'actes est MUTUALISÉE — un seul formulaire pour tous les écrans", () => {
+    // Trois écrans posent des actes ; une deuxième copie du formulaire aurait été le début de
+    // la dérive que ce chantier corrige. Le composant partagé est déclaré UNE fois.
+    const dir = join(process.cwd(), "src/ui2");
+    let definitions = 0, emplois = 0;
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (!e.isFile() || !e.name.endsWith(".tsx") || e.name.endsWith(".test.tsx")) continue;
+      const src = readFileSync(join(dir, e.name), "utf8");
+      definitions += (src.match(/export function BarreActes\b/g) ?? []).length;
+      emplois += /<BarreActes\b/.test(src) ? 1 : 0;
+    }
+    expect(definitions).toBe(1);
+    expect(emplois).toBeGreaterThanOrEqual(2);
   });
 });

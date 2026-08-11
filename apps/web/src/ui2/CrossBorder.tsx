@@ -8,7 +8,7 @@ import { EntityList } from "./Listes";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { exporterCsv, jourFichier } from "./actions";
-import { useActeMoteur, RetourActe } from "./acte-moteur";
+import { BarreActes, type ActeMoteur } from "./acte-moteur";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -34,9 +34,7 @@ import { traduire, langue } from "../lib/i18n";
 // que le moteur exige. Les champs sont ceux du contrôleur, pas une invention d'écran : c'est
 // pourquoi un acte incomplet part quand même et se fait REFUSER par le moteur. La garde est
 // au moteur ; l'écran ne la re-implémente pas, il la rend visible.
-type Champ = { cle: string; libelle: string; exemple?: string };
-type Acte = { cle: string; libelle: string; route: string; garde: string;
-  methode?: "POST" | "GET"; champs?: Champ[] };
+type Acte = ActeMoteur;                    // déclaré une seule fois — acte-moteur.tsx
 
 const ACTES: Record<string, Acte[]> = {
   matrice: [
@@ -222,33 +220,13 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
   const t = traduire(langue());
   const [onglet, setOnglet] = useState<Onglet>("exposition");
   const [filtre, setFiltre] = useState<string | null>(null);   // juridiction ouverte depuis l'exposition
-  const [acte, setActe] = useState<Acte | null>(null);
+  const [acteOuvert, setActeOuvert] = useState<string | null>(null);
   // V2-M33 : ouvrir une ligne mène à l'ACTE qui la concerne — un clic qui ne va nulle part
   // vaut moins qu'une ligne non cliquable.
   // V2-M36 : l'acte se POSE. Les valeurs saisies sont assemblées en corps de requête ;
   // `:id` et `asOf` ne sont pas des champs du corps mais des morceaux de la ROUTE, résolus ici.
-  const moteur = useActeMoteur();
-  const [saisie, setSaisie] = useState<Record<string, string>>({});
-  const routeResolue = (a: Acte) => {
-    let r = a.route.replace(/^(POST|GET)\s+/, "");
-    r = r.replace(":id", encodeURIComponent(saisie[":id"] || ":id"));
-    if (a.methode === "GET" && saisie.asOf) r += `?asOf=${encodeURIComponent(saisie.asOf)}`;
-    return r;
-  };
-  const poserActe = (a: Acte) => {
-    const route = routeResolue(a);
-    if (a.methode === "GET") { void moteur.lire(route); return; }
-    const corps: Record<string, unknown> = {};
-    for (const c of a.champs ?? []) {
-      if (c.cle === ":id" || c.cle === "asOf") continue;      // partie de la route, pas du corps
-      if (saisie[c.cle]) corps[c.cle] = saisie[c.cle];
-    }
-    void moteur.poser(route, corps);                          // incomplet ? le MOTEUR refuse, pas l'écran
-  };
-  const ouvrirActe = (famille: string, cle: string) => {
-    const a = (ACTES[famille] ?? []).find((x) => x.cle === cle) ?? null;
-    if (a) setActe(a);
-  };
+  // Une ligne de liste ouvre l'acte qui la concerne — la barre mutualisée s'en charge.
+  const ouvrirActe = (_famille: string, cle: string) => setActeOuvert(cle);
 
   const expo = useApiOrSeed<typeof SEED_EXPO>("/v1/crossborder/exposition", SEED_EXPO);
   const matrice = useApiOrSeed<Matrice>("/v1/crossborder/matrice", SEED_MATRICE);
@@ -265,7 +243,7 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
   const bloquantes = (matrice.data?.entrees ?? []).filter((e) => e.severite === "BLOQUANT").length;
 
   const pilule = (id: Onglet, label: string) => (
-    <button key={id} onClick={() => { setOnglet(id); setActe(null); }} aria-pressed={onglet === id}
+    <button key={id} onClick={() => { setOnglet(id); setActeOuvert(null); }} aria-pressed={onglet === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
         fontWeight: 600, cursor: "pointer",
         border: onglet === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
@@ -275,50 +253,8 @@ export function CrossBorder({ active, onNavigate }: { active: Ui2NavId; onNaviga
   // Barre d'actes : le clic n'exécute rien, il DIT l'acte, sa garde et sa route. Tant que
   // l'écran tourne sur la maquette, c'est la seule chose honnête à faire — et le branchement
   // reste trivial puisque la route est déjà nommée.
-  const barreActes = (cle: string) => {
-    const actes = ACTES[cle];
-    if (!actes) return null;
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {actes.map((a) => (
-            <Ui2Bouton key={a.cle} onClick={() => {
-              setActe(acte?.cle === a.cle ? null : a); setSaisie({}); moteur.reinitialiser(); }}>
-              {t(a.libelle)}</Ui2Bouton>))}
-        </div>
-        {acte && actes.some((a) => a.cle === acte.cle) && (
-          <div role="status" style={{ marginTop: 9, background: "var(--warn-card)",
-            border: "1px solid var(--warn-card-border)", borderLeft: "3px solid var(--warn-line)",
-            borderRadius: 9, padding: "11px 13px" }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{t(acte.libelle)}</div>
-            <div style={{ fontSize: 12, color: "var(--text-body)", marginTop: 4, lineHeight: 1.55 }}>
-              {t(acte.garde)}</div>
-            <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 6 }}>
-              {acte.route}</div>
-            {/* Les champs que le MOTEUR exige. Un acte incomplet part quand même : c'est le
-                moteur qui refuse, avec sa règle — l'écran ne re-implémente pas la garde. */}
-            {(acte.champs ?? []).length > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-                gap: 8, marginTop: 10 }}>
-                {(acte.champs ?? []).map((c) => (
-                  <label key={c.cle} style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                    {t(c.libelle)}
-                    <input value={saisie[c.cle] ?? ""} aria-label={t(c.libelle)}
-                      placeholder={c.exemple ?? ""}
-                      onChange={(e) => setSaisie({ ...saisie, [c.cle]: e.target.value })}
-                      style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 4,
-                        padding: "7px 9px", borderRadius: "var(--r-input)", fontFamily: "inherit",
-                        border: "1px solid var(--border-input)", fontSize: 12, color: "var(--text)",
-                        background: "var(--bg-surface)" }} /></label>))}
-              </div>)}
-            <div style={{ marginTop: 10 }}>
-              <Ui2Bouton primaire onClick={() => poserActe(acte)}>
-                {t(acte.methode === "GET" ? "Interroger le moteur" : "Poser l'acte")}</Ui2Bouton>
-            </div>
-            <RetourActe etat={moteur.etat} route={routeResolue(acte)} t={t} />
-          </div>)}
-      </div>);
-  };
+  const barreActes = (cle: string) =>
+    ACTES[cle] ? <BarreActes actes={ACTES[cle]} t={t} ouvrirCle={acteOuvert} /> : null;
 
   const sousTitre = {
     exposition: expo.isDemo ? t("données maquette")

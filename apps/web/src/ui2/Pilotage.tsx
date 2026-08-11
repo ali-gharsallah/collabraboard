@@ -7,6 +7,7 @@ import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { exporterCsv, jourFichier } from "./actions";
+import { BarreActes, type ActeMoteur } from "./acte-moteur";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -106,30 +107,68 @@ const SEED_BI: VueBi[] = [
 // d'agir, ce qui renvoie l'utilisateur vers la v1. Chaque acte ci-dessous existe au moteur ;
 // le bouton n'est JAMAIS grisé — il énonce l'acte, sa garde et la route qui le porte (motif
 // maison, cf. « Transmettre pour visa » du dossier KYC).
-type Acte = { cle: string; libelle: string; route: string; garde: string };
-const ACTES: Record<string, Acte[]> = {
+// V2-M37 : les actes des Rapports se POSENT. Trois d'entre eux n'étaient même pas offerts
+// alors que le moteur les porte — dont la LEVÉE de gel, que la garde du gel annonçait déjà
+// (« le gel se lève par un acte symétrique ») sans qu'aucun bouton ne permette de l'honorer.
+// Un écran qui énonce une règle et n'en donne pas le moyen est pire qu'un écran muet.
+const ACTES: Record<string, ActeMoteur[]> = {
   mros: [
     { cle: "decider", libelle: "Décider d'une communication", route: "POST /v1/mros/decider",
+      methode: "POST", champs: [
+        { cle: "clientId", libelle: "Client", exemple: "CLI-00001" },
+        { cle: "decision", libelle: "Décision", exemple: "COMMUNIQUER" },
+        { cle: "motif", libelle: "Motif (R130 — opposable)" }],
       garde: "R129/R130 — la décision de communiquer est un acte HUMAIN motivé ; O-Live ne la prend jamais." },
     { cle: "goaml", libelle: "Générer le brouillon goAML", route: "GET /v1/mros/:id/goaml",
+      methode: "GET", champs: [{ cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" }],
       garde: "Le brouillon est PRÉ-REMPLI du dossier ; le dépôt sur le portail goAML reste manuel et tracé ici." },
     { cle: "gel", libelle: "Poser un gel des avoirs", route: "POST /v1/mros/:id/gel",
+      methode: "POST", champs: [
+        { cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" },
+        { cle: "motif", libelle: "Motif (R131 — obligatoire)" }],
       garde: "R131 — motif obligatoire ; le gel se lève par un acte symétrique, jamais par expiration silencieuse." },
+    { cle: "lever", libelle: "Lever un gel", route: "POST /v1/mros/:id/gel/lever",
+      methode: "POST", champs: [
+        { cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" },
+        { cle: "motif", libelle: "Motif de la levée (R131)" }],
+      garde: "R131 — l'acte SYMÉTRIQUE annoncé par la pose du gel. Il se motive comme elle : un gel ne disparaît jamais de lui-même, il est levé par quelqu'un, à une date, pour une raison." },
+    { cle: "notification", libelle: "Saisir la notification reçue", route: "POST /v1/mros/:id/notification",
+      methode: "POST", champs: [
+        { cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" },
+        { cle: "notification", libelle: "Contenu de la notification" }],
+      garde: "R131 — la notification du bureau de communication est CONSIGNÉE telle que reçue ; c'est elle qui fait courir les délais." },
+    { cle: "soumettre", libelle: "Tracer le dépôt goAML", route: "POST /v1/mros/:id/goaml/soumettre",
+      methode: "POST", champs: [
+        { cle: ":id", libelle: "Communication", exemple: "MROS-2026-0007" },
+        { cle: "reference", libelle: "Référence du dépôt", exemple: "goAML-2026-8841" }],
+      garde: "Le dépôt sur le portail goAML est MANUEL — O-Live ne l'exécute pas. Ce qui est tracé ici, c'est le fait qu'il a eu lieu, par qui et quand." },
   ],
   habilitations: [
     { cle: "assigner", libelle: "Assigner une formation", route: "POST /v1/formations/assignments",
+      methode: "POST", champs: [
+        { cle: "userId", libelle: "Collaborateur", exemple: "u-004" },
+        { cle: "courseId", libelle: "Formation", exemple: "LBA-2026" },
+        { cle: "dueDate", libelle: "Échéance", exemple: "2026-12-31" }],
       garde: "R236 — l'assignation nomme le collaborateur et l'échéance." },
     { cle: "viser", libelle: "Viser une complétion", route: "POST /v1/formations/assignments/:id/visa",
+      methode: "POST", champs: [{ cle: ":id", libelle: "Assignation", exemple: "asg-12" }],
       garde: "R235/R13 — quatre yeux : celui qui a suivi la formation ne vise pas sa propre complétion." },
   ],
   veille: [
     { cle: "collecter", libelle: "Lancer une collecte", route: "POST /v1/regwatch/collecter",
+      methode: "POST", champs: [],
       garde: "VR-01/02 — la collecte rapporte les publications ; elle n'en déduit aucun changement." },
     { cle: "proposer", libelle: "Proposer une application", route: "POST /v1/regwatch/items/:empreinte/proposer",
+      methode: "POST", champs: [
+        { cle: ":empreinte", libelle: "Empreinte de la publication", exemple: "a1b2c3" },
+        { cle: "motif", libelle: "Ce que l'on propose d'appliquer" }],
       garde: "VR-04/R44 — la veille PROPOSE ; l'application passe par le bac à sable puis un visa daté." },
   ],
   registre: [
     { cle: "exporter", libelle: "Exporter le registre", route: "POST /v1/audit/export",
+      methode: "POST", champs: [
+        { cle: "depuis", libelle: "Depuis", exemple: "2026-01-01" },
+        { cle: "jusqu", libelle: "Jusqu'au", exemple: "2026-08-11" }],
       garde: "R49 — l'export est une LECTURE horodatée du journal ; il ne modifie ni ne purge quoi que ce soit." },
   ],
 };
@@ -138,7 +177,6 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   active: Ui2NavId; onNavigate: (id: Ui2NavId) => void; onOuvrirAudit?: () => void;
 }) {
   const t = traduire(langue());
-  const [acte, setActe] = useState<Acte | null>(null);
   // V2-M33 : la fenêtre d'observation est un CHOIX, plus une étiquette. Elle ne recalcule pas
   // les chiffres de maquette — elle dit sur quelle période ils sont lus, et le dira à l'API
   // le jour du branchement (paramètre `since`).
@@ -173,28 +211,10 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   // Barre d'actes d'un onglet + zone d'explication. Le clic n'exécute rien tant que l'écran
   // tourne sur des données de maquette : il DIT l'acte, sa garde et sa route — l'utilisateur
   // sait ce qui se passerait, et le branchement API est trivial (la route est déjà nommée).
-  const barreActes = (onglet: string) => {
-    const actes = ACTES[onglet];
-    if (!actes) return null;
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {actes.map((a) => (
-            <Ui2Bouton key={a.cle} onClick={() => setActe(acte?.cle === a.cle ? null : a)}>
-              {t(a.libelle)}</Ui2Bouton>))}
-        </div>
-        {acte && actes.some((a) => a.cle === acte.cle) && (
-          <div role="status" style={{ marginTop: 9, background: "var(--warn-card)",
-            border: "1px solid var(--warn-card-border)", borderLeft: "3px solid var(--warn-line)",
-            borderRadius: 9, padding: "11px 13px" }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{t(acte.libelle)}</div>
-            <div style={{ fontSize: 12, color: "var(--text-body)", marginTop: 4, lineHeight: 1.55 }}>
-              {t(acte.garde)}</div>
-            <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 6 }}>
-              {acte.route}</div>
-          </div>)}
-      </div>);
-  };
+  // La barre d'actes est MUTUALISÉE (acte-moteur.tsx) : Cross-Border et Rapports posent leurs
+  // actes par le même chemin, avec le même rendu du refus — pas de deuxième copie qui dérive.
+  const barreActes = (onglet: string) =>
+    ACTES[onglet] ? <BarreActes actes={ACTES[onglet]} t={t} /> : null;
 
   if (onglet !== "pilotage" && onglet !== "direction") {
     const sousTitres = {
