@@ -378,6 +378,32 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/seul goulot interne/)).toBeTruthy();
   });
 
+  it("U2-46 V2-M18 Rapports : les quatre capacités en consultation retrouvent leurs ACTES", () => {
+    render(<Pilotage active="rapports" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("MROS · goAML"));
+    // l'acte le plus lourd du produit : décider d'une communication — jamais pris par O-Live
+    const decider = screen.getByText("Décider d'une communication");
+    expect((decider.closest("button") as HTMLButtonElement).disabled).toBe(false);  // jamais grisé
+    fireEvent.click(decider);
+    expect(screen.getByText(/acte HUMAIN motivé ; O-Live ne la prend jamais/)).toBeTruthy();
+    expect(screen.getByText("POST /v1/mros/decider")).toBeTruthy();                 // la route est nommée
+    // le dépôt goAML reste manuel : O-Live ne transmet pas au régulateur
+    fireEvent.click(screen.getByText("Générer le brouillon goAML"));
+    expect(screen.getByText(/le dépôt sur le portail goAML reste manuel et tracé ici/)).toBeTruthy();
+    // habilitations : le visa de complétion est à quatre yeux
+    fireEvent.click(screen.getByText("Habilitations"));
+    fireEvent.click(screen.getByText("Viser une complétion"));
+    expect(screen.getByText(/celui qui a suivi la formation ne vise pas sa propre complétion/)).toBeTruthy();
+    // veille : proposer, jamais appliquer
+    fireEvent.click(screen.getByText("Veille"));
+    fireEvent.click(screen.getByText("Proposer une application"));
+    expect(screen.getByText(/la veille PROPOSE ; l'application passe par le bac à sable/)).toBeTruthy();
+    // registre : l'export est une lecture, il ne purge rien
+    fireEvent.click(screen.getByText("Registre LBA"));
+    fireEvent.click(screen.getByText("Exporter le registre"));
+    expect(screen.getByText(/LECTURE horodatée du journal ; il ne modifie ni ne purge/)).toBeTruthy();
+  });
+
   it("U2-43 V2-M16 Rapports : reporting réglementaire — calendrier gouverné, retard SIGNALÉ jamais masqué", () => {
     render(<Pilotage active="rapports" onNavigate={() => undefined} />);
     fireEvent.click(screen.getByText("Réglementaire"));
@@ -609,10 +635,10 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
       // toute capacité non livrée DIT ce qui lui manque — pas de statut sans motif.
       if (c.statut !== "livre") expect((c.motif ?? "").length).toBeGreaterThan(10);
     }
-    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 56 livrées, 14 amputées,
+    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 60 livrées, 10 amputées,
     // 16 absentes. Le registre ne prétend pas le contraire.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(56);
-    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(14);
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(60);
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
     expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(16);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);

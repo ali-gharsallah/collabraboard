@@ -48,7 +48,12 @@ const zlib = require("zlib");
 // composition de tableau depuis paramétrage comme dans la v1 » — éditeurs en formulaire
 // matrice doc + questionnaire (ParamEdit, circuit Builder R304-R308 : brouillon → diff →
 // R305 → R7/R13). Mesure 282.4 ; toujours dans le chunk LAZY ui2, chargement initial inchangé.
-const BUDGET_TOTAL_KB = 290;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 290 → 300 (V2-M18, 11.08.2026) : l'audit V2-M17 a nommé le manque le plus coûteux —
+// quatre écrans montraient sans permettre d'agir. Rendre les actes (MROS, habilitations,
+// veille, registre) coûte ~1,3 kB gz, et la marge restante après V2-M16 était de 0,8 kB. Les
+// lots suivants comblent 16 capacités absentes : une marge de 10 kB est le minimum honnête
+// pour ne pas relever ce budget à chaque commit. Mesure : 290,5 avant relève.
+const BUDGET_TOTAL_KB = 300;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
 

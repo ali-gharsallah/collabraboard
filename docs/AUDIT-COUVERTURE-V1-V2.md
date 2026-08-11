@@ -8,8 +8,8 @@
 
 | Verdict | Capacités | Ce que cela veut dire |
 |---|---:|---|
-| **Livré** | 56 | l'objet métier ET ses actes sont rendus en v2 |
-| **Partiel** | 14 | l'objet est rendu mais amputé — consultation là où la v1 agissait, ou fraction du périmètre |
+| **Livré** | 60 | l'objet métier ET ses actes sont rendus en v2 |
+| **Partiel** | 10 | l'objet est rendu mais amputé — consultation là où la v1 agissait, ou fraction du périmètre |
 | **Absent** | 16 | ni écran ni onglet ne porte l'objet |
 | | **86** | les écrans du ROUTEUR v1 (pas les 82 du menu : 4 écrans n'ont aucune entrée) |
 
@@ -57,7 +57,11 @@ registre ; il reste à les bâtir.
 Les six autres sont des **onglets** dont la destination existe mais pas le contenu : AML Gap,
 Référentiel AML, Checklist exigences, Pré-revue IA, Olivia · Runs, Workflow Instances.
 
-## Ce qui est amputé — 14 capacités partielles
+## Ce qui est amputé — 10 capacités partielles
+
+> **Mis à jour au lot V2-M18.** Les quatre capacités servies en consultation seule — MROS,
+> Formations, Veille réglementaire, Registre LBA — ont reçu leurs actes et passent à « livré ».
+> Le tableau ci-dessous liste ce qui reste.
 
 | Capacité | Ce qui est servi, ce qui ne l'est pas |
 |---|---|
@@ -65,23 +69,19 @@ Référentiel AML, Checklist exigences, Pré-revue IA, Olivia · Runs, Workflow 
 | **CPSI · Barèmes** | barèmes visibles en clé gouvernée ; l'éditeur de barème CPSI n'est pas repris |
 | **CPSI · Guide** | le guide CPSI est replié en doctrine, pas en écran |
 | **File d'alertes** | la file d'alertes est rendue, le tri et les filtres avancés v1 non repris |
-| **Formations** | habilitations en lecture ; ni inscription ni relance |
 | **GED / coffre** | onglet Pièces sert la GED ; le coffre n'a pas de surface |
 | **Guide IAM** | le guide IAM est replié en doctrine, pas en écran |
 | **Ports** | ports visibles dans Général ; la console de ports n'est pas reprise |
-| **Registre LBA** | registre en lecture pure — conforme à la doctrine, mais l'export v1 manque |
-| **Reporting MROS** | consultation des communications ; ni saisie ni transmission goAML |
 | **Screening avancé** | le screening avancé (paramètres de rapprochement) n'est pas exposé |
 | **Settlement** | onglet Transactions commun — pas de vue settlement dédiée |
 | **Transactions Risk Monitoring** | onglet Transactions commun — pas de vue risque transactionnel dédiée |
-| **Veille réglementaire** | veille en lecture ; l'analyse d'impact et l'application ne sont pas branchées |
 
 ### Trois familles de partiel
 
-**La consultation sans l'acte** (MROS, Formations, Veille, Registre LBA) : l'objet se lit, mais
-l'acte que la v1 permettait — saisir une communication, inscrire à une formation, appliquer un
-impact de veille, exporter le registre — n'a pas de bouton. C'est le manque le plus gênant en
-usage réel : un écran qui montre sans permettre d'agir renvoie l'utilisateur vers la v1.
+**~~La consultation sans l'acte~~ — RÉSOLU (V2-M18).** MROS, Formations, Veille et Registre LBA
+ont reçu leurs actes : décider d'une communication, générer le brouillon goAML, poser un gel,
+assigner une formation, viser une complétion, lancer une collecte, proposer une application,
+exporter le registre. Chaque bouton énonce sa garde et la route du moteur qui la porte.
 
 **La fusion qui écrase le détail** (Transactions Risk Monitoring, Settlement, Analyseur
 SWIFT/SEPA) : trois écrans v1 distincts partagent l'onglet Transactions de Surveillance. La
@@ -123,8 +123,7 @@ personne n'ouvre vaut moins qu'une phrase lue au bon moment.
 
 L'ordre que je recommande, du plus coûteux en usage réel au moins coûteux :
 
-1. **Rendre les actes aux quatre capacités en consultation seule** (MROS, Formations, Veille,
-   Registre) — c'est peu de code et cela supprime quatre renvois vers la v1.
+1. ~~Rendre les actes aux quatre capacités en consultation seule~~ — **FAIT (V2-M18)**.
 2. **Cross-Border en écran de plein droit** — 17 routes au moteur, une seule exposée ; c'est le
    plus gros écart fonctionnel du produit.
 3. **Les six onglets sans contenu** — AML Gap, Référentiel AML, Runs, Instances, Checklist,

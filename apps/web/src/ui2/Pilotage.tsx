@@ -100,10 +100,44 @@ const SEED_BI: VueBi[] = [
   { id: "v-4", vue: "charge_equipe", domaine: "Pilotage", colonnes: 7, portee: "équipe" },
 ];
 
+// ── V2-M18 : rendre les ACTES aux capacités servies en consultation seule ─────────────────
+// L'audit V2-M17 a nommé le manque le plus coûteux : quatre écrans montraient sans permettre
+// d'agir, ce qui renvoie l'utilisateur vers la v1. Chaque acte ci-dessous existe au moteur ;
+// le bouton n'est JAMAIS grisé — il énonce l'acte, sa garde et la route qui le porte (motif
+// maison, cf. « Transmettre pour visa » du dossier KYC).
+type Acte = { cle: string; libelle: string; route: string; garde: string };
+const ACTES: Record<string, Acte[]> = {
+  mros: [
+    { cle: "decider", libelle: "Décider d'une communication", route: "POST /v1/mros/decider",
+      garde: "R129/R130 — la décision de communiquer est un acte HUMAIN motivé ; O-Live ne la prend jamais." },
+    { cle: "goaml", libelle: "Générer le brouillon goAML", route: "GET /v1/mros/:id/goaml",
+      garde: "Le brouillon est PRÉ-REMPLI du dossier ; le dépôt sur le portail goAML reste manuel et tracé ici." },
+    { cle: "gel", libelle: "Poser un gel des avoirs", route: "POST /v1/mros/:id/gel",
+      garde: "R131 — motif obligatoire ; le gel se lève par un acte symétrique, jamais par expiration silencieuse." },
+  ],
+  habilitations: [
+    { cle: "assigner", libelle: "Assigner une formation", route: "POST /v1/formations/assignments",
+      garde: "R236 — l'assignation nomme le collaborateur et l'échéance." },
+    { cle: "viser", libelle: "Viser une complétion", route: "POST /v1/formations/assignments/:id/visa",
+      garde: "R235/R13 — quatre yeux : celui qui a suivi la formation ne vise pas sa propre complétion." },
+  ],
+  veille: [
+    { cle: "collecter", libelle: "Lancer une collecte", route: "POST /v1/regwatch/collecter",
+      garde: "VR-01/02 — la collecte rapporte les publications ; elle n'en déduit aucun changement." },
+    { cle: "proposer", libelle: "Proposer une application", route: "POST /v1/regwatch/items/:empreinte/proposer",
+      garde: "VR-04/R44 — la veille PROPOSE ; l'application passe par le bac à sable puis un visa daté." },
+  ],
+  registre: [
+    { cle: "exporter", libelle: "Exporter le registre", route: "POST /v1/audit/export",
+      garde: "R49 — l'export est une LECTURE horodatée du journal ; il ne modifie ni ne purge quoi que ce soit." },
+  ],
+};
+
 export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   active: Ui2NavId; onNavigate: (id: Ui2NavId) => void; onOuvrirAudit?: () => void;
 }) {
   const t = traduire(langue());
+  const [acte, setActe] = useState<Acte | null>(null);
   const [onglet, setOnglet] = useState<"pilotage" | "direction" | "reglementaire" | "surmesure"
     | "registre" | "mros" | "veille" | "habilitations">("pilotage");
   const reglementaire = useApiOrSeed<Obligation[]>("/v1/rapports/kpi", SEED_REGLEMENTAIRE);
@@ -131,6 +165,31 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
       {pilule("habilitations", t("Habilitations"))}
     </div>);
   const chipDe = (label: string, mode: ChipMode) => <StatusChip mode={mode}>{label}</StatusChip>;
+  // Barre d'actes d'un onglet + zone d'explication. Le clic n'exécute rien tant que l'écran
+  // tourne sur des données de maquette : il DIT l'acte, sa garde et sa route — l'utilisateur
+  // sait ce qui se passerait, et le branchement API est trivial (la route est déjà nommée).
+  const barreActes = (onglet: string) => {
+    const actes = ACTES[onglet];
+    if (!actes) return null;
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {actes.map((a) => (
+            <Ui2Bouton key={a.cle} onClick={() => setActe(acte?.cle === a.cle ? null : a)}>
+              {t(a.libelle)}</Ui2Bouton>))}
+        </div>
+        {acte && actes.some((a) => a.cle === acte.cle) && (
+          <div role="status" style={{ marginTop: 9, background: "var(--warn-card)",
+            border: "1px solid var(--warn-card-border)", borderLeft: "3px solid var(--warn-line)",
+            borderRadius: 9, padding: "11px 13px" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{t(acte.libelle)}</div>
+            <div style={{ fontSize: 12, color: "var(--text-body)", marginTop: 4, lineHeight: 1.55 }}>
+              {t(acte.garde)}</div>
+            <div className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 6 }}>
+              {acte.route}</div>
+          </div>)}
+      </div>);
+  };
 
   if (onglet !== "pilotage" && onglet !== "direction") {
     const sousTitres = {
@@ -179,6 +238,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
             {t("Le libre-service s'exerce sur des VUES DÉCLARÉES (R314-R315), jamais sur les tables : le périmètre de ce qu'un analyste peut interroger est une décision gouvernée, pas un effet de bord d'un accès base. Le cloisonnement par tenant et par équipe s'applique à la requête, pas après coup.")}</div>
         </>)}
         {onglet === "registre" && (<>
+          {barreActes("registre")}
           <EntityList grid="180px 1.5fr 140px 110px 110px" onOpen={() => undefined}
             entetes={[t("Type"), t("Objet"), t("Référence"), t("Date"), t("Statut")]}
             lignes={(Array.isArray(registre.data) ? registre.data : []).slice(0, 30).map((e) => ({
@@ -192,6 +252,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
             {t("Le registre LBA est une LECTURE PURE du journal : communications MROS, verdicts de transactions en revue, passages de screening — rien ne change d'état ici, tout est déjà consigné ailleurs (R49).")}</div>
         </>)}
         {onglet === "mros" && (<>
+          {barreActes("mros")}
           <EntityList grid="150px 1.4fr 150px 110px" onOpen={() => undefined}
             entetes={[t("Référence"), t("Client"), t("Statut"), t("Date")]}
             lignes={(Array.isArray(mros.data) ? mros.data : []).slice(0, 30).map((c) => ({
@@ -205,6 +266,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
             {t("La relecture d'une communication est OPPOSABLE (R130) et l'accès est habilité (art. 10a, R132). Le brouillon goAML est GÉNÉRÉ pré-rempli ; le dossier communiqué est FIGÉ — toute suite est un nouvel acte motivé (R7).")}</div>
         </>)}
         {onglet === "veille" && (<>
+          {barreActes("veille")}
           <EntityList grid="90px 1.5fr 1.2fr 130px 110px" onOpen={() => undefined}
             entetes={[t("Source"), t("Objet"), t("Impact identifié"), t("Statut"), t("Date")]}
             lignes={(Array.isArray(veille.data) ? veille.data : []).slice(0, 30).map((i) => ({
@@ -219,6 +281,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
             {t("La veille réglementaire (R309-R311) identifie l'impact et PROPOSE — l'application d'un changement de paramétrage reste un acte humain, daté et signé (R44), via le bac à sable.")}</div>
         </>)}
         {onglet === "habilitations" && (<>
+          {barreActes("habilitations")}
           <EntityList grid="1fr 1.3fr 120px 150px" onOpen={() => undefined}
             entetes={[t("Collaborateur"), t("Formation"), t("Échéance"), t("Statut")]}
             lignes={(Array.isArray(habilitations.data) ? habilitations.data : []).slice(0, 30).map((h) => ({
