@@ -40,7 +40,7 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
   return (
     <section style={{ position: "relative", background: "var(--bg-app)",
       borderRadius: "var(--r-card)", overflow: "hidden", padding: "18px 16px 20px",
-      minHeight: 760, display: "grid", alignContent: "end" }}>
+      minHeight: 800, display: "grid", alignContent: "end" }}>
       <Suspense fallback={null}>
         <GlobeFond focus={focus} />
       </Suspense>
@@ -70,12 +70,6 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
                 {f.n.toLocaleString("fr-CH")} {t("op.")} · {t(LABEL[f.s])}</div>
             </button>))}
         </div>
-
-        {/* LES TRANSACTIONS À NU (V2-M25) : plus aucun voile entre la table et le globe. La
-            lisibilité tient parce que les teintes de la carte sont des pastels clairs —
-            l'encre reste au-dessus de 7:1 sur chacune d'elles. Séparateurs et survol en encre
-            translucide (cf. EntityList fond="transparent"). */}
-        {children}
 
         {/* LES KPI EN BAS (V2-M24) : la coupole occupe le haut, les chiffres ferment l'écran.
             Voile à 55 % — assez pour que le nombre reste net, assez peu pour que la carte
@@ -109,6 +103,12 @@ export function FluxPanneau({ children }: { children?: React.ReactNode }) {
         </div>
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
           {t("Le globe MONTRE des volumes et des statuts déjà qualifiés ailleurs. Il ne qualifie rien, ne lève aucune alerte et ne décide d'aucun blocage (R44). Les paliers de risque pays affichés sont une classification de démonstration — la matrice pays en vigueur est une configuration gouvernée.")}</div>
+
+        {/* LES TRANSACTIONS À NU (V2-M25, descendues en bas de scène V2-M26) : plus aucun voile entre la table et le globe. La
+            lisibilité tient parce que les teintes de la carte sont des pastels clairs —
+            l'encre reste au-dessus de 7:1 sur chacune d'elles. Séparateurs et survol en encre
+            translucide (cf. EntityList fond="transparent"). */}
+        {children}
       </div>
       <style>{`@media (max-width: 900px){ .globe-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important} }`}</style>
     </section>);
