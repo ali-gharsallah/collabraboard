@@ -325,6 +325,41 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M47 : sous-onglet « Instances en cours » (/v1/workflow-instances)
 ];
 
+/**
+ * V2-M49 — LES ÉCRANS DE MODULE LICENCIÉ, ET LEUR CHUNK.
+ *
+ * Une licence préfixée `†` désigne un module VENDU À PART : un tenant qui ne l'achète pas ne
+ * doit ni le voir (R320, déjà tenu par `capacitesVisibles`) ni le TÉLÉCHARGER. La seconde
+ * moitié n'était pas tenue : tous les écrans v2 vivaient dans un seul paquet. Cette table dit,
+ * pour chaque destination de module †, le composant qui la sert — et sert de source unique à
+ * DEUX endroits qui devaient sinon être tenus à la main :
+ *   · `Ui2Preview.tsx`, qui doit l'importer PARESSEUSEMENT (jamais en import statique) ;
+ *   · `scripts/verifier-budget-bundle.js`, dont le compartiment borné le mesure hors socle.
+ * La garde U2-70 les compare : si les trois divergent, le front rougit.
+ *
+ * N'entrent ici que les écrans BÂTIS. Les neuf verticaux encore absents (PMS, Custody & TA, FX,
+ * Mobile, Finance Islamique, Legal, OpRisk, les deux CPSI) s'y ajouteront un par un, chacun
+ * dans son chunk — c'est précisément ce que ce lot rend possible sans relever le budget.
+ */
+export const ECRAN_MODULE_LICENCIE: Record<string, string> = { crossborder: "CrossBorder" };
+
+/**
+ * Destinations qui sont ENTIÈREMENT vendues à part — toutes leurs capacités portent un †.
+ *
+ * « Au moins une capacité † » serait faux, et la garde U2-70 l'a montré du premier coup :
+ * `rapports` héberge †REGWATCH à côté de capacités du socle. L'écran Rapports n'est pas un
+ * module vendu à part ; seul l'onglet Veille l'est, et sa visibilité relève déjà de R320. Un
+ * écran mixte doit rester dans le socle — l'en sortir priverait de leur écran des utilisateurs
+ * qui y ont droit.
+ */
+export function destinationsLicenciees(): string[] {
+  const par: Record<string, Capacite[]> = {};
+  for (const c of CAPACITES) (par[c.destination] ??= []).push(c);
+  return Object.entries(par)
+    .filter(([, cs]) => cs.every((c) => (c.licence ?? "").startsWith("†")))
+    .map(([d]) => d);
+}
+
 /** Le module est-il servi par la licence du tenant ? `null` (socle) = toujours oui. */
 export function licenceActive(licence: string | null, modulesActifs: string[]): boolean {
   if (licence === null) return true;

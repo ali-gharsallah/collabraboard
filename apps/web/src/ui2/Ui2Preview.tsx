@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { Ui2Shell } from "./Shell";
 import { Ui2Nav } from "./Nav";
 import { Ui2HeaderListe, Ui2HeaderDossier, Ui2Bouton } from "./Header";
@@ -15,7 +15,19 @@ import { EntreeRelation } from "./EntreeRelation";
 import { MesDossiers, MesClients } from "./Listes";
 import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
-import { CrossBorder } from "./CrossBorder";
+/**
+ * V2-M49 — UN MODULE LICENCIÉ NE SE TÉLÉCHARGE PLUS S'IL N'EST PAS SERVI.
+ *
+ * Arbitrage écrit à la relève de budget du lot V2-M29 et tenu ici : « le prochain lot vertical
+ * passera par un chargement PARESSEUX par module licencié et un compartiment borné dans la
+ * garde — et non par une nouvelle relève ». Un tenant sans †CROSSBORDER n'a aucune raison de
+ * payer le poids de cet écran au chargement initial ; c'est d'abord une question de licence
+ * (R320), le budget n'en est que la mesure. Les NEUF verticaux restants à bâtir (PMS, Custody &
+ * TA, FX, Mobile, Finance Islamique, Legal, OpRisk, les deux CPSI) suivront ce chemin : chacun
+ * son chunk, aucun dans le cœur. La garde `verifier-budget-bundle.js` borne le compartiment —
+ * « paresseux » ne doit pas devenir le tiroir où l'on range ce qu'on ne veut pas mesurer.
+ */
+const CrossBorder = lazy(() => import("./CrossBorder").then((m) => ({ default: m.CrossBorder })));
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
@@ -76,7 +88,11 @@ export function Ui2Preview() {
   if (active === "clients") return <MesClients active={active} onNavigate={setActive} />;
   // V2-M29 : Cross-Border devient un écran de plein droit — il n'était atteignable que par un
   // onglet du dossier KYC alors que le moteur porte dix-sept routes (E-V2-1 soldé).
-  if (active === "crossborder") return <CrossBorder active={active} onNavigate={setActive} />;
+  if (active === "crossborder") return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
+      {t("Chargement du module Cross-Border…")}</div>}>
+      <CrossBorder active={active} onNavigate={setActive} />
+    </Suspense>);
   const header = variante === "liste"
     ? <Ui2HeaderListe titre="Ma journée" sousTitre="dimanche 10 août 2026 · 12 éléments"
         filtres={<Ui2Bouton onClick={() => setVariante("dossier")}>{t("Filtres")}</Ui2Bouton>}

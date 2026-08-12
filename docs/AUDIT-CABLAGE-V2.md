@@ -583,3 +583,68 @@ run qui suivait immédiatement un redémarrage du cluster Postgres. Les deux run
 521/521. Les noms des suites en échec n'ont pas pu être relevés — le run était lancé avec
 `--silent`. Consigné en `docs/notes/flakes-e2e.md` (n°4) avec la conduite à tenir : **ne pas
 diagnostiquer un échec e2e sous `--silent`**.
+
+---
+
+## V2-M49 — un module vendu à part ne se télécharge plus : le compartiment paresseux
+
+**Demande PO** : « next ». Ce lot tient l'arbitrage écrit deux fois dans `verifier-budget-bundle.js`
+et jamais exécuté : *« le prochain lot vertical passera par un chargement PARESSEUX par module
+licencié et un compartiment borné dans cette garde — et non par une nouvelle relève »*. Neuf
+verticaux restent à bâtir ; au coût unitaire constaté, les relever un par un aurait mené le budget
+à ~360, c'est-à-dire un budget qui suit la dette au lieu de la tenir.
+
+### Ce que R320 tenait, et ce qu'elle ne tenait pas
+
+Une licence préfixée `†` désigne un module **vendu à part**. `capacitesVisibles()` tenait déjà la
+première moitié de la promesse : un tenant sans †CROSSBORDER ne **voit** pas cet écran. La seconde
+moitié n'était pas tenue — il le **téléchargeait** quand même, parce que tous les écrans v2
+vivaient dans un seul paquet de 289 kB. C'est d'abord une question de licence ; le budget n'en est
+que la mesure.
+
+### Le mécanisme
+
+`Ui2Preview` charge désormais Cross-Border par `lazy()` + `Suspense`. Le compartiment de la garde
+de budget l'exclut du socle — **avec deux plafonds, pas un** : 40 kB par module et 120 kB pour leur
+somme, parce que ce même fichier écrit depuis V2-M22 qu'un chunk paresseux doit rester borné, faute
+de quoi « paresseux » devient le tiroir où l'on range ce qu'on ne veut pas mesurer. La liste des
+modules est **explicite, jamais un joker** : un nouveau chunk ne s'exonère pas du budget en
+choisissant son nom de fichier.
+
+| mesure | avant | après |
+|---|---|---|
+| cœur (socle) | 312,8 kB gz | **304,7 kB gz** |
+| compartiment modules licenciés | — | 9,9 kB gz sur 120 |
+| **budget** | 315 | **310 — baissé** |
+
+**Le budget redescend, et c'est le point.** Garder 315 aurait transformé un gain d'architecture en
+marge dormante, c'est-à-dire en autorisation tacite de grossir. Les neuf verticaux n'ont plus
+besoin de cette marge : ils ont leur compartiment.
+
+### La garde a corrigé ma définition dès le premier passage
+
+J'avais défini « destination de module licencié » comme *au moins une capacité †*. U2-70 a
+immédiatement rougi sur `rapports` — qui héberge †REGWATCH à côté de capacités du socle. L'écran
+Rapports **n'est pas** un module vendu à part ; seul l'onglet Veille l'est, et sa visibilité relève
+déjà de R320. L'en sortir aurait privé de leur écran des utilisateurs qui y ont droit. Définition
+corrigée : une destination est vendue à part si **toutes** ses capacités le sont.
+
+### Deux gardes, parce qu'une seule aurait menti
+
+| garde | ce qu'elle tient |
+|---|---|
+| U2-70 | registre, écran et budget en accord : déclaré † ⇒ importé paresseusement, jamais statiquement, et connu du compartiment |
+| U2-71 | **le chunk se charge vraiment** — U2-70 ne lit que du texte ; une découpe cassée la laisserait verte et l'utilisateur devant un chargement éternel |
+
+U2-71 est la leçon de toute cette campagne appliquée à mon propre outillage : `Ui2Preview` n'était
+exercé par **aucun test** — la découpe aurait pu casser l'écran sans qu'une seule suite ne bouge.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **231/231** (229 + 2) |
+| budget bundle | cœur 304,7 sous 310 · compartiment 9,9 sur 120 |
+| e2e (`olive_e2e`) | 521/521 — aucun fichier API touché par ce lot |
+| cliquet i18n | 0 texte en dur |
+
+**Ce que ce lot ne fait pas** : il ne bâtit aucun des neuf verticaux. Il les rend bâtissables sans
+relever le budget à chaque fois — c'est tout, et c'était la condition posée.

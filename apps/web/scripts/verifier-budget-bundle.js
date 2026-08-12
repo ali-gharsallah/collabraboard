@@ -72,7 +72,12 @@ const zlib = require("zlib");
 // relève précédente tient toujours : chargement PARESSEUX par module licencié et compartiment
 // borné dans cette garde. Une marge courte est ici volontaire — elle force cette conversation
 // au prochain lot vertical au lieu de la reporter.
-const BUDGET_TOTAL_KB = 315;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// BAISSE 315 → 310 (V2-M49, 12.08.2026) — dans l'autre sens, et c'est le point. Sortir les
+// modules licenciés du socle rend 8 kB au cœur (312,8 → 304,7 mesurés). Garder 315 aurait
+// transformé un gain d'architecture en marge dormante, c'est-à-dire en autorisation tacite de
+// grossir. Le budget redescend donc, et la marge reste courte (≈ 5 kB) : les neuf verticaux à
+// venir n'ont plus besoin d'elle — ils ont leur compartiment.
+const BUDGET_TOTAL_KB = 310;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
@@ -83,13 +88,35 @@ const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à ch
 // pas. La garde reste entière — si le globe cessait d'être paresseux, il rentrerait dans le core.
 const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le canvas seul)
 
+// ── V2-M49 : LE COMPARTIMENT DES MODULES LICENCIÉS ────────────────────────────────────────
+// Les capacités dont la licence porte un † (crossborder, custody, fx, islamic, legal, mobile,
+// oprisk…) ne sont PAS du socle : un tenant qui ne les achète pas ne doit pas les télécharger.
+// Elles sortent donc du budget de base, comme les packs de langue et le globe — mais à la même
+// condition, écrite noir sur blanc dans ce fichier depuis V2-M22 : un chunk paresseux reste
+// BORNÉ, sinon « paresseux » devient le tiroir où l'on range ce qu'on ne veut pas mesurer.
+// D'où DEUX plafonds, pas un : chaque module, et la SOMME de tous.
+//
+// La liste est EXPLICITE, jamais un joker `*` : un nouveau chunk ne s'exonère pas du budget en
+// choisissant son nom de fichier. Elle est tenue en accord avec `capacites.ts` par la garde
+// U2-70 — si un écran de module licencié est bâti sans entrer ici, le front rougit.
+const MODULES_LICENCIES = ["CrossBorder"];              // écrans de modules † déjà bâtis
+const BUDGET_MODULE_KB = 40;                            // un module licencié reste mince
+const BUDGET_MODULES_TOTAL_KB = 120;                    // …et leur somme aussi (9 verticaux à venir)
+const EST_MODULE_LICENCIE = (f) =>
+  MODULES_LICENCIES.some((m) => new RegExp(`^${m}[-.]`).test(f));
+
 const dir = path.join(__dirname, "..", "dist", "assets");
 if (!fs.existsSync(dir)) { console.error("dist/assets absent — lancer `vite build` d'abord"); process.exit(1); }
 
-let total = 0, packsLangue = 0, globe = 0; const horsBudget = [];
+let total = 0, packsLangue = 0, globe = 0, modules = 0; const horsBudget = [];
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
   const kb = zlib.gzipSync(fs.readFileSync(path.join(dir, f))).length / 1024;
   if (EST_PACK_LANGUE(f)) { packsLangue += kb; continue; }   // pack de langue paresseux : hors budget core
+  if (EST_MODULE_LICENCIE(f)) {                              // module † : hors socle, mais BORNÉ
+    modules += kb;
+    if (kb > BUDGET_MODULE_KB) horsBudget.push(`MODULE LICENCIÉ — ${f} : ${kb.toFixed(1)} kB gz > ${BUDGET_MODULE_KB} kB`);
+    continue;
+  }
   if (EST_GLOBE(f)) {                                        // globe des flux paresseux : hors budget core
     globe += kb;
     // ...mais PAS hors garde : un chunk paresseux reste borné, sinon « paresseux » devient un
@@ -100,6 +127,8 @@ for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
   total += kb;
   if (kb > BUDGET_CHUNK_KB) horsBudget.push(`${f} : ${kb.toFixed(1)} kB gz > ${BUDGET_CHUNK_KB} kB`);
 }
-console.log(`budget bundle — core ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}) + packs langue ${packsLangue.toFixed(1)} kB gz + globe ${globe.toFixed(1)} kB gz (les deux paresseux, à la demande), pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
+console.log(`budget bundle — core ${total.toFixed(1)} kB gz (budget ${BUDGET_TOTAL_KB}) + packs langue ${packsLangue.toFixed(1)} kB gz + globe ${globe.toFixed(1)} kB gz + modules licenciés ${modules.toFixed(1)} kB gz sur ${BUDGET_MODULES_TOTAL_KB} (${MODULES_LICENCIES.join(", ") || "aucun"}), tous paresseux à la demande, pire chunk sous ${BUDGET_CHUNK_KB} kB : ${horsBudget.length === 0 ? "oui" : "NON"}`);
+if (modules > BUDGET_MODULES_TOTAL_KB)
+  horsBudget.push(`MODULES LICENCIÉS (somme) : ${modules.toFixed(1)} kB gz > ${BUDGET_MODULES_TOTAL_KB} kB`);
 if (total > BUDGET_TOTAL_KB) horsBudget.push(`CORE : ${total.toFixed(1)} kB gz > ${BUDGET_TOTAL_KB} kB`);
 if (horsBudget.length) { horsBudget.forEach((l) => console.error("HORS BUDGET —", l)); process.exit(1); }

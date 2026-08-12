@@ -15,7 +15,8 @@ import { ImpactPreview } from "./ImpactPreview";
 import { RevueSortie } from "./RevueSortie";
 import { SandboxSlider } from "./SandboxSlider";
 import { ECRANS_MIGRES } from "./cartographie";
-import { CAPACITES, capacitesVisibles, destinationsVisibles, licenceActive } from "./capacites";
+import { Ui2Preview } from "./Ui2Preview";
+import { CAPACITES, ECRAN_MODULE_LICENCIE, capacitesVisibles, destinationsLicenciees, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
 import { Surveillance } from "./Surveillance";
@@ -1007,6 +1008,44 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
       // toute capacité encore amputée dit soit le port, soit l'écran vertical à bâtir
       if (c.statut === "partiel") expect(c.motif ?? "").toMatch(/port/i);
     }
+  });
+
+  it("U2-70 V2-M49 licence : un écran de module VENDU À PART n'entre pas dans le paquet du socle", () => {
+    // R320 tenait la moitié de la promesse : un module non licencié était INVISIBLE. L'autre
+    // moitié — ne pas le TÉLÉCHARGER — ne l'était pas : tous les écrans v2 vivaient dans un
+    // seul paquet. Cette garde tient les trois endroits en accord (registre, écran, budget).
+    const dir = join(process.cwd(), "src/ui2");
+    const preview = readFileSync(join(dir, "Ui2Preview.tsx"), "utf8");
+    const budget = readFileSync(join(process.cwd(), "scripts/verifier-budget-bundle.js"), "utf8");
+    const declares = Object.entries(ECRAN_MODULE_LICENCIE);
+    expect(declares.length).toBeGreaterThan(0);
+    const licenciees = destinationsLicenciees();
+    for (const [destination, composant] of declares) {
+      // 1. la destination déclarée EST bien vendue à part — pas un écran du socle rangé au chaud
+      expect(licenciees).toContain(destination);
+      // 2. l'écran est chargé PARESSEUSEMENT, et n'est nulle part importé statiquement
+      expect(preview).toMatch(new RegExp(`lazy\\(\\(\\) => import\\("\\./${composant}"\\)`));
+      expect(preview).not.toMatch(new RegExp(`^import \\{[^}]*\\b${composant}\\b[^}]*\\} from`, "m"));
+      // 3. le compartiment borné du budget le connaît — sinon il retomberait dans le socle
+      expect(budget).toMatch(new RegExp(`MODULES_LICENCIES = \\[[^\\]]*"${composant}"`));
+    }
+    // 4. et l'inverse : une destination † rendue par l'aperçu DOIT être déclarée ici
+    for (const d of licenciees)
+      if (new RegExp(`active === "${d}"`).test(preview))
+        expect(Object.keys(ECRAN_MODULE_LICENCIE)).toContain(d);
+  });
+
+  it("U2-71 V2-M49 : le chunk paresseux se CHARGE vraiment — la garde de source ne suffit pas", async () => {
+    // U2-70 lit du texte ; elle ne prouve pas qu'un `lazy()` se résout. Une découpe qui casse
+    // l'écran laisserait U2-70 verte et l'utilisateur devant un écran de chargement éternel —
+    // c'est la différence entre une garde statique et une garde qui exerce le code, et c'est
+    // précisément le genre d'écart que cette campagne trouve à chaque lot.
+    render(<Ui2Preview />);
+    fireEvent.click(screen.getByRole("button", { name: "Cross-Border" }));
+    // l'attente est ASSUMÉE : le module n'est pas dans le paquet du socle, il arrive après
+    expect(screen.getByText(/Chargement du module Cross-Border/)).toBeTruthy();
+    // …puis il arrive, et c'est bien l'écran réel (six familles de routes, E-V2-1)
+    expect(await screen.findByRole("button", { name: "Dérogations" })).toBeTruthy();
   });
 
   it("U2-66 V2-M47 registre : plus aucune capacité « absent » ne s'excuse d'un onglet non construit", () => {
