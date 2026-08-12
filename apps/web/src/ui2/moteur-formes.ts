@@ -184,16 +184,18 @@ export type MatriceEcran = { version: string; exigences: ExigenceEcran[] };
  *
  * L'écran affichait une liste plate d'exigences (« justificatif d'origine des fonds », « pièce
  * d'identité de chaque UBO ») avec un ÉTAT — c'est la matrice de la v1, indexée par exigence.
- * Le moteur, lui, détient `contenu.exigences[structure][porteur].parJuridiction` : une matrice
- * indexée par TYPE D'ENTITÉ × PORTEUR × JURIDICTION, sans état — parce que l'état de complétude
- * d'un dossier n'appartient PAS à la matrice : la matrice dit ce qui est EXIGÉ, le dossier dit
- * ce qui est FOURNI. Les deux axes ne sont pas deux versions du même objet.
+ * Le moteur, lui, détient `contenu.exigences[structure][porteur]` : une matrice indexée par
+ * TYPE D'ENTITÉ × PORTEUR × JURIDICTION, sans état — parce que l'état de complétude d'un
+ * dossier n'appartient PAS à la matrice : la matrice dit ce qui est EXIGÉ, le dossier dit ce
+ * qui est FOURNI. Les deux axes ne sont pas deux versions du même objet.
  *
- * L'adaptateur APLATIT l'axe du moteur en lignes lisibles et LAISSE `etat` vide : rien dans
- * cette réponse ne permet de le remplir. L'écran affiche donc l'exigence telle qu'elle est
- * gouvernée, et non un état inventé au rendu. L'arbitrage sur l'axe cible (enrichir le contrat
- * `docmatrix` des rôles de la v1, ou garder l'axe du moteur) reste dû au PO — il est consigné
- * dans `docs/ECARTS-FRONT.md` et ce code ne le tranche pas en douce.
+ * ARBITRAGE PO DU 12.08.2026 : **enrichir le contrat**. Le moteur porte désormais
+ * `parRole: { <role>: [exigences] }` (R26 énonçait déjà « type d'entité × juridiction × RÔLE »,
+ * et le scénario S-03 nomme les rôles des personnes liées). L'adaptateur aplatit les deux axes :
+ * les exigences de socle sortent avec `PP · entite`, celles de rôle avec `SA · rôle UBO`.
+ *
+ * `etat` reste vide sur une réponse du moteur : rien dans cette réponse ne permet de le remplir.
+ * L'écran affiche l'exigence telle qu'elle est gouvernée, jamais un état inventé au rendu.
  */
 export function matriceDocumentaire(v: unknown): MatriceEcran {
   if (estObjet(v) && Array.isArray(v.exigences))                     // seed déjà au format écran
@@ -201,21 +203,35 @@ export function matriceDocumentaire(v: unknown): MatriceEcran {
   if (!estObjet(v) || !estObjet(v.contenu)) return { version: "", exigences: [] };
 
   const exigences: ExigenceEcran[] = [];
+  // Une exigence du moteur : soit un code documentaire nu, soit un groupe d'équivalence R27
+  // dont la juridiction choisit le document concret. On montre le groupe ET ses branches.
+  const ligne = (item: unknown, axe: string): ExigenceEcran | null => {
+    if (typeof item === "string") return { code: item, axe, attendu: "toutes juridictions" };
+    if (!estObjet(item)) return null;
+    const parJuridiction = estObjet(item.parJuridiction) ? item.parJuridiction : {};
+    const attendu = Object.entries(parJuridiction)
+      .map(([j, doc]) => `${j === "*" ? "défaut" : j} : ${doc}`).join(" · ");
+    return { code: String(item.groupe ?? ""), axe, attendu };
+  };
+
   const parStructure = estObjet(v.contenu.exigences) ? v.contenu.exigences : {};
-  for (const [structure, parPorteur] of Object.entries(parStructure)) {
-    if (!estObjet(parPorteur)) continue;
-    for (const [porteur, liste] of Object.entries(parPorteur)) {
+  for (const [structure, bloc] of Object.entries(parStructure)) {
+    if (!estObjet(bloc)) continue;
+    for (const [porteur, liste] of Object.entries(bloc)) {
+      // `parRole` n'est pas un porteur : c'est le SECOND axe (R26/rôle). Il se déplie d'un cran
+      // de plus — sans quoi l'écran afficherait une ligne « SA · parRole » qui ne veut rien dire.
+      if (porteur === "parRole") {
+        if (!estObjet(liste)) continue;
+        for (const [role, exigencesRole] of Object.entries(liste))
+          for (const item of Array.isArray(exigencesRole) ? exigencesRole : []) {
+            const l = ligne(item, `${structure} · rôle ${role}`);
+            if (l) exigences.push(l);
+          }
+        continue;
+      }
       for (const item of Array.isArray(liste) ? liste : []) {
-        const axe = `${structure} · ${porteur}`;
-        if (typeof item === "string") {
-          exigences.push({ code: item, axe, attendu: "toutes juridictions" });
-          continue;
-        }
-        if (!estObjet(item)) continue;
-        const parJuridiction = estObjet(item.parJuridiction) ? item.parJuridiction : {};
-        const attendu = Object.entries(parJuridiction)
-          .map(([j, doc]) => `${j === "*" ? "défaut" : j} : ${doc}`).join(" · ");
-        exigences.push({ code: String(item.groupe ?? ""), axe, attendu });
+        const l = ligne(item, `${structure} · ${porteur}`);
+        if (l) exigences.push(l);
       }
     }
   }

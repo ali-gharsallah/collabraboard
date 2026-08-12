@@ -32,23 +32,23 @@
     "certifications": 0
    }
   ],
-  "calculeLe": "2026-08-12T05:31:30.842Z"
+  "calculeLe": "2026-08-12T05:55:07.570Z"
  },
  "/v1/crossborder/reporting": {
   "parPays": {}
  },
  "/v1/crossborder/derogations": {
   "lignes": [],
-  "calculeLe": "2026-08-12T05:31:30.857Z"
+  "calculeLe": "2026-08-12T05:55:07.590Z"
  },
  "/v1/crossborder/actes": {
   "lignes": [],
-  "calculeLe": "2026-08-12T05:31:30.864Z"
+  "calculeLe": "2026-08-12T05:55:07.597Z"
  },
  "/v1/crossborder/reverse-solicitation": {
   "preuves": [],
   "localisations": [],
-  "calculeLe": "2026-08-12T05:31:30.874Z"
+  "calculeLe": "2026-08-12T05:55:07.605Z"
  },
  "/v1/kyc": [
   {
@@ -168,9 +168,9 @@
   ]
  },
  "/v1/doc-matrix/en-vigueur": {
-  "id": "bed827b4-a200-4a7c-8071-a3b7933afa76",
+  "id": "ee3f779f-9a01-44ed-ac27-ef7c55e30e3f",
   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
-  "version": 1,
+  "version": 2,
   "enVigueurLe": "2026-01-01T00:00:00.000Z",
   "contenu": {
    "exigences": {
@@ -185,6 +185,14 @@
        }
       }
      ],
+     "parRole": {
+      "AYANT_DROIT_ECO": [
+       "FORMULAIRE_A"
+      ],
+      "FONDE_DE_POUVOIR": [
+       "PROCURATION"
+      ]
+     },
      "personne_liee": [
       "PASSEPORT"
      ]
@@ -195,6 +203,18 @@
       "REGISTRE_COMMERCE",
       "STATUTS"
      ],
+     "parRole": {
+      "UBO": [
+       "FORMULAIRE_A",
+       "FORMULAIRE_K"
+      ],
+      "SIGNATAIRE": [
+       "PROCURATION"
+      ],
+      "ADMINISTRATEUR": [
+       "PV_CONSEIL"
+      ]
+     },
      "personne_liee": [
       "PASSEPORT"
      ]
@@ -202,7 +222,7 @@
    }
   },
   "publiePar": "fedc0fbf-465d-43f2-8082-6a33e0439633",
-  "publieLe": "2026-08-12T05:24:25.807Z"
+  "publieLe": "2026-08-12T05:53:48.939Z"
  },
  "/v1/onboarding": [
   {

@@ -124,3 +124,46 @@ que l'écran attend, puisque c'est l'écran qui l'a écrit.
 | Lot | Ce qui a été câblé | Écritures réelles de `src/ui2` |
 |---|---|---:|
 | V2-M41 | contrat de **RETOUR** : 6 formes de réponse adaptées, 2 fausses sources corrigées, vérificateur + fixtures capturées sur API vivante | *(inchangé)* |
+
+## V2-M42 — la matrice documentaire gagne son axe RÔLE (12.08.2026)
+
+L'arbitrage rendu au lot précédent est **enrichir le contrat**, pas aligner l'écran sur un
+moteur incomplet. Le mot « rôle » était déjà dans R26 et dans le scénario S-03 de la spec ; il
+n'était nulle part dans le code. Ce lot le met dans le code.
+
+**Ce que le moteur savait, et ce qu'il ne savait pas.** Il croisait type d'entité × juridiction
+× *porteur* (entité titulaire / personne liée / compte). Il ne distinguait pas les personnes
+entre elles : un bénéficiaire effectif et un simple signataire recevaient la même liste de
+pièces. La CDB 20 dit le contraire — formulaire A pour l'ayant droit économique (art. 27),
+formulaire K pour le détenteur du contrôle (art. 20), et rien de tout cela pour un signataire,
+à qui l'on demande une procuration que l'on ne demande pas à l'UBO.
+
+**Le contrat** — `exigences[typeEntite]` reçoit `parRole: { <role>: [exigences] }`. Les rôles
+vivent DANS le bloc du type d'entité : un « Settlor » n'existe que pour un trust, un
+« Administrateur » que pour une société — c'est exactement la structure de la v1
+(`DOC_STRUCTURES[].roles`), sans en recopier une ligne.
+
+**Ce qui ne bouge pas, et c'est le plus important.** Une version publiée sans `parRole` évalue
+au document près comme avant, même si le dossier porte désormais des rôles. C'est R29 : un
+dossier validé sous une matrice ne devient pas incomplet parce que le contrat s'est enrichi.
+La garde ne compare pas à une valeur écrite à la main — elle compare **les deux évaluations**,
+avec et sans rôles, et exige qu'elles soient identiques.
+
+**Un défaut trouvé en chemin, qui n'a rien à voir avec les rôles.** Publier une correction le
+jour même de la prise d'effet crée deux versions à la même date — le seed de démonstration
+vient d'en produire une. Le tri ne portait que sur la date : « en vigueur » dépendait donc de
+l'ordre que la base voulait bien rendre. Un rejeu qui ne rend pas deux fois le même verdict
+n'est pas un rejeu (R48). Tri désormais sur `(enVigueurLe desc, version desc)`.
+
+| Vérification | Résultat |
+|---|---|
+| `docmatrix.spec.ts` | **23/23** (13 avant) — les 10 nouveaux cassés un par un pour vérifier qu'ils rougissent |
+| `npm run test:rules` | 144 tests verts, code de sortie 0 |
+| e2e (base propre + migrations) | **521/521**, 75 suites |
+| front (`vitest run`) | **218/218**, dont FM-07 sur fixture capturée d'une API vivante |
+| budget bundle | 306,4 kB gz sous 310 |
+
+**Ce que ce lot ne fait pas.** `evaluerCompletude` n'est appelé que par son propre contrôleur :
+le calcul de complétude du dossier KYC ne passe **pas** encore par la matrice. L'axe rôle est
+donc juste, disponible et gardé — mais le workflow ne s'en sert pas. C'est le branchement
+suivant, et il vaut mieux le dire que le laisser croire.

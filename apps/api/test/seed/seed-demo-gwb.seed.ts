@@ -159,11 +159,27 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
     try {
       // R26/R27 : publier une matrice de démo si aucune n'est en vigueur (groupe d'équivalence par juridiction).
       const mat = (await request(http).get("/v1/doc-matrix/en-vigueur").set(cosr())).body;
-      if (!mat || !mat.version) {
+      // Idempotent PAR RÉFÉRENCE : la référence n'est pas « une matrice existe » mais « une
+      // matrice PORTANT L'AXE RÔLE est en vigueur ». Un tenant semé avant l'enrichissement du
+      // contrat reçoit donc une version 2 — append-only, la v1 reste lisible et les dossiers
+      // qu'elle a estampillés restent évalués contre elle (R29). Deux exécutions de suite ne
+      // publient qu'une fois : à la seconde, `parRole` est déjà là.
+      const porteLesRoles = Object.values(mat?.contenu?.exigences ?? {}).some((b: any) => b?.parRole);
+      if (!mat || !mat.version || !porteLesRoles) {
         await request(http).post("/v1/doc-matrix").set(cosr()).send({
+          // R26/rôle : `parRole` porte les exigences ADDITIONNELLES du rôle (le socle
+          // `personne_liee` s'applique à tout intervenant). Le contenu ci-dessous est de DÉMO,
+          // mais l'ADOSSEMENT est réel : formulaire A pour l'ayant droit économique (CDB 20
+          // art. 27), formulaire K pour le détenteur du contrôle d'une société opérationnelle
+          // non cotée (CDB 20 art. 20), procuration pour un signataire. C'est exactement la
+          // distinction que la v1 faisait en colonnes et que le moteur ignorait.
           contenu: { exigences: {
-            PP: { entite: [{ groupe: "preuve_identite", parJuridiction: { CH: "PASSEPORT_CH", "*": "PASSEPORT" } }], personne_liee: ["PASSEPORT"], compte: [] },
-            SA: { entite: ["REGISTRE_COMMERCE", "STATUTS"], personne_liee: ["PASSEPORT"], compte: [] } } },
+            PP: { entite: [{ groupe: "preuve_identite", parJuridiction: { CH: "PASSEPORT_CH", "*": "PASSEPORT" } }],
+              personne_liee: ["PASSEPORT"], compte: [],
+              parRole: { AYANT_DROIT_ECO: ["FORMULAIRE_A"], FONDE_DE_POUVOIR: ["PROCURATION"] } },
+            SA: { entite: ["REGISTRE_COMMERCE", "STATUTS"], personne_liee: ["PASSEPORT"], compte: [],
+              parRole: { UBO: ["FORMULAIRE_A", "FORMULAIRE_K"], ADMINISTRATEUR: ["PV_CONSEIL"],
+                SIGNATAIRE: ["PROCURATION"] } } } },
           enVigueurLe: "2026-01-01T00:00:00.000Z" }).catch(() => {});
       }
       // R17 : le dossier Nordwind est SUSPENDU (alerte AML) — crée son KYC puis suspend (idempotent).

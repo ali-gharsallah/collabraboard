@@ -1671,3 +1671,33 @@ re-soumis ici.
 - **Cible** : étendre le seed de démonstration à ces chapitres, PAR LES VRAIES ROUTES comme le
   reste (jamais d'INSERT direct). Tant que ce n'est pas fait, aucune de ces sept familles n'est
   démontrable sur données réelles. Statut : **OUVERT**.
+
+### E-V2-9 — Matrice documentaire : l'axe RÔLE manquait au moteur — **ARBITRÉ ET SOLDÉ** (V2-M42)
+- **La question posée** (V2-M41, confirmée sur API vivante) : l'écran affichait la matrice plate
+  de la v1 (une exigence, un état) ; le moteur détenait `exigences[typeEntite][porteur]`, sans
+  rôle. Un **bénéficiaire effectif** et un **simple signataire** exigeaient donc exactement les
+  mêmes pièces — alors que la CDB 20 n'exige le formulaire A que du premier (art. 27) et le
+  formulaire K que du détenteur du contrôle d'une société opérationnelle non cotée (art. 20).
+- **Ce n'était pas un choix de conception, c'était un manque.** R26 énonce déjà, mot pour mot
+  (`docs/audit/RULES_INVENTORY.md`), que « les documents requis se déduisent du croisement type
+  d'entité × juridiction × **rôle** », et le scénario S-03 de la spec nomme les rôles des
+  personnes liées (« BE, signataire »). La v1 le faisait en colonnes
+  (`DOC_STRUCTURES[].roles` × `DOC_LIST`, 7 structures × 23 pièces, `docRuleEval`).
+- **Arbitrage PO du 12.08.2026 : ENRICHIR LE CONTRAT.** Le moteur porte désormais
+  `parRole: { <role>: [exigences] }`, dans le bloc du type d'entité — les rôles sont donc
+  naturellement portés par la structure, exactement comme en v1.
+- **Trois propriétés non négociables, chacune sous garde** :
+  1. `parRole` **AJOUTE** au socle `personne_liee`, il ne le remplace jamais — sinon déclarer un
+     rôle RETIRERAIT des exigences et une matrice se relirait comme une dispense ;
+  2. une version publiée **sans** `parRole` évalue **exactement** comme avant, même si le dossier
+     porte des rôles (grandfathering R29 : un dossier validé ne devient pas rétroactivement
+     incomplet parce que le contrat s'est enrichi) ;
+  3. rien n'est deviné : un rôle absent de la matrice n'ajoute rien, une personne sans rôle
+     déclaré ne reçoit que le socle.
+- **Effet de bord trouvé en chemin** : deux versions à la MÊME date de vigueur (cas réel — le
+  seed de démo en produit une en corrigeant sa matrice le jour de sa prise d'effet) laissaient
+  la base choisir laquelle est « en vigueur ». Un rejeu qui ne rend pas deux fois le même verdict
+  n'est pas un rejeu (R48) : le tri porte désormais sur `(enVigueurLe desc, version desc)`.
+- **Gardes** : 10 tests ajoutés à `docmatrix.spec.ts` (13 → 23), chacun négativement testé en
+  cassant l'implémentation ; FM-07 côté écran, sur une fixture capturée d'une API vivante qui
+  porte réellement l'axe rôle. Statut : **FERMÉ**.

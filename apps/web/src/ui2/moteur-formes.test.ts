@@ -107,8 +107,31 @@ describe("Formes du moteur → écran (V2-M41)", () => {
       // l'état de complétude n'appartient pas à la matrice : il reste vide (voir ECARTS-FRONT)
       expect(e.etat).toBeUndefined();
     }
+    // « parRole » n'est PAS un porteur : sans dépliage on afficherait une ligne « SA · parRole »
+    expect(m.exigences.some((e) => e.axe === "SA · parRole")).toBe(false);
     // tolérance au seed : la forme plate de la maquette traverse inchangée
     const seed = { version: "v7", exigences: [{ code: "SOF-DOC", etat: "OK" }] };
     expect(matriceDocumentaire(seed).exigences[0].etat).toBe("OK");
+  });
+
+  it("FM-07 l'AXE RÔLE du contrat enrichi arrive à l'écran (arbitrage PO 12.08.2026)", () => {
+    // Le contrat `docmatrix` porte désormais `parRole` : une exigence peut viser un UBO sans
+    // viser un simple signataire — la distinction que la v1 faisait en colonnes et que le
+    // moteur ignorait. Cette garde vérifie qu'elle SURVIT jusqu'à l'écran ; si l'adaptateur
+    // reperdait le rôle, la matrice se relirait comme si tout intervenant devait tout fournir.
+    const brut = f["/v1/doc-matrix/en-vigueur"] as any;
+    const roles = brut?.contenu?.exigences?.SA?.parRole;
+    expect(roles, "la fixture capturée doit porter l'axe rôle").toBeTruthy();
+
+    const m = matriceDocumentaire(brut);
+    const parAxe = (axe: string) => m.exigences.filter((e) => e.axe === axe).map((e) => e.code).sort();
+    // chaque rôle du moteur produit ses propres lignes, sous son propre axe
+    for (const [role, exigences] of Object.entries(roles as Record<string, string[]>))
+      expect(parAxe(`SA · rôle ${role}`)).toEqual([...exigences].sort());
+    // et le socle reste distinct du rôle : le passeport est exigé de TOUT intervenant,
+    // le formulaire A du seul UBO — les deux ne se confondent pas dans la même ligne.
+    expect(parAxe("SA · personne_liee")).toEqual(["PASSEPORT"]);
+    expect(parAxe("SA · rôle UBO")).toContain("FORMULAIRE_A");
+    expect(parAxe("SA · personne_liee")).not.toContain("FORMULAIRE_A");
   });
 });
