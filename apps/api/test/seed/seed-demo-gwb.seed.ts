@@ -376,6 +376,38 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
           contenu: "PDF de démonstration — Passeport Famille Keller" }));
     } catch (e) { console.log("SEED GWB — chapitre GED toléré :", (e as any)?.message ?? e); }
 
+    // ── V2-M48 · TRANSACTIONS & MARCHÉS — les deux familles qui n'exigent AUCUN port ───────────
+    // Le flux transactionnel (R297) et donc l'agrégation de risque (R298) dépendent du port core
+    // banking : sans port, l'import REFUSE et c'est le bon comportement (R167 — jamais de donnée
+    // simulée). SWIFT (R300) et le registre nominatif TA (R302) n'en dépendent pas : ils
+    // s'alimentent par leurs VRAIES routes, et ces chapitres-ci donnent donc un corps aux deux.
+
+    // 8g. LABORATOIRE SWIFT (R300) — un message qui S'ANALYSE et un qui part en QUARANTAINE.
+    // Les deux comptent : une démonstration où rien n'est jamais refusé ment sur le moteur.
+    try {
+      const dejaSwift = (await request(http).get("/v1/swift/messages").set(co())).body;
+      const refDeja = (Array.isArray(dejaSwift) ? dejaSwift : []).some((m: any) => m.reference === "REF-DEMO-001");
+      if (!refDeja) {
+        await poser("message SWIFT MT103", request(http).post("/v1/swift/analyser").set(co()).send({
+          texte: "{1:F01GWBBCHZZAXXX0000000000}{2:I103DEUTDEFFXXXXN}{4:\n:20:REF-DEMO-001"
+            + "\n:32A:260810CHF12500,00\n:50K:/CH9300762011623852957\nNORDWIND HANDEL SA"
+            + "\n:59:/DE89370400440532013000\nALPHA GMBH\n:57A:DEUTDEFF\n-}" }));
+        await poser("message SWIFT en quarantaine", request(http).post("/v1/swift/analyser").set(co())
+          .send({ texte: "message sans en-tête SWIFT — doit partir en quarantaine motivée" }));
+      }
+    } catch (e) { console.log("SEED GWB — chapitre SWIFT toléré :", (e as any)?.message ?? e); }
+
+    // 8h. REGISTRE NOMINATIF TA (R302) — une souscription. Idempotent par RÉFÉRENCE : le moteur
+    // refuse lui-même un rejeu (« un mouvement ne se rejoue pas »), on ne le provoque pas.
+    try {
+      const reg: any = (await request(http).get("/v1/ta/registre").set(co())).body;
+      const dejaTa = (reg?.mouvements ?? []).some((m: any) => m.reference === "TA-DEMO-001");
+      if (!dejaTa)
+        await poser("mouvement TA (souscription)", request(http).post("/v1/ta/mouvements").set(co()).send({
+          type: "SOUSCRIPTION", titre: "GWB Global Equity Fund", titulaire: "Nordwind Handel SA",
+          quantite: 1500, reference: "TA-DEMO-001" }));
+    } catch (e) { console.log("SEED GWB — chapitre TA toléré :", (e as any)?.message ?? e); }
+
     console.log("SEED GWB — chapitres V2-M45 :\n  " + (journalChapitres.join("\n  ") || "(aucun — tout était déjà semé)"));
 
     // ── La PREUVE — comptée ; l'idempotence se vérifie en relançant (DM-02, cf. run 2) ──

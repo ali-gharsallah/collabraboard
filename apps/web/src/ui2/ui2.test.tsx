@@ -663,8 +663,8 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
     // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
     // lui manque encore le référentiel de profils, pas l'écran.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(66);
-    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(11);
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(67);   // V2-M48 : + swiftlab
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
     expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(9);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
@@ -968,6 +968,45 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText("KYC:CDD")).toBeTruthy();                      // type du moteur
     expect(screen.getByText("1/2")).toBeTruthy();                          // compte de visas du moteur (R13/R15)
     expect(screen.getByText(/aucune circulation ne se déclenche depuis cette liste/)).toBeTruthy();
+  });
+
+  // ── V2-M48 : Transactions & Marchés — construire ce que le moteur peut servir, NOMMER ce qui
+  // dépend d'un port. Le périmètre du lot a été décidé par l'API vivante, pas par le registre.
+
+  it("U2-67 V2-M48 Surveillance : l'onglet SWIFT/SEPA POSE l'analyse et conserve la quarantaine", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "SWIFT/SEPA" }));
+    // l'acte réel, avec la garde du moteur en toutes lettres (R300)
+    fireEvent.click(screen.getByRole("button", { name: "Analyser un message SWIFT/SEPA" }));
+    expect(screen.getByText(/QUARANTAINE MOTIVÉE/)).toBeTruthy();
+    expect(screen.getByText(/jamais une extraction devinée/)).toBeTruthy();
+    // un message refusé n'est pas jeté : son motif reste lisible
+    expect(screen.getByText(/en-tête SWIFT absent/)).toBeTruthy();
+    // un message sans transaction correspondante est dit ORPHELIN, pas rattaché au hasard
+    expect(screen.getByText("ORPHELINE")).toBeTruthy();
+  });
+
+  it("U2-68 V2-M48 Surveillance : la vue Settlement DIT l'absence de port au lieu de simuler des lots", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Settlement" }));
+    expect(screen.getByText("AUCUN PORT CORE BANKING")).toBeTruthy();
+    expect(screen.getByText(/l'import REFUSE explicitement/)).toBeTruthy();
+    expect(screen.getByText(/ce qui manque à cette vue n'est pas un écran, c'est un port/)).toBeTruthy();
+    // et surtout : aucun lot inventé
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("U2-69 V2-M48 registre : une capacité bloquée par un PORT nomme ce port — plus de motif vague", () => {
+    // Avant ce lot, trois capacités disaient « onglet Transactions commun ». C'est un constat
+    // d'écran, pas un diagnostic : il laissait croire qu'il suffisait de construire une vue.
+    // La garde interdit le retour du motif vague sur cette famille.
+    const famille = CAPACITES.filter((c) => c.groupeV1 === "Transactions & Marchés");
+    expect(famille.length).toBeGreaterThan(0);
+    for (const c of famille) {
+      expect(c.motif ?? "").not.toMatch(/onglet Transactions commun/);
+      // toute capacité encore amputée dit soit le port, soit l'écran vertical à bâtir
+      if (c.statut === "partiel") expect(c.motif ?? "").toMatch(/port/i);
+    }
   });
 
   it("U2-66 V2-M47 registre : plus aucune capacité « absent » ne s'excuse d'un onglet non construit", () => {

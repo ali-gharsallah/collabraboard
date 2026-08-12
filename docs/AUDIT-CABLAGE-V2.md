@@ -497,3 +497,89 @@ est du **référentiel**, pas de l'écran, et le registre doit dire lequel des d
 | `verifier-formes-api.mjs` (API vivante) | 39 lectures · **0 écart non traité** |
 | budget bundle | 310,8 kB gz — relève motivée 310 → **315** |
 | typecheck · lint · gate screening | 0 · 0 · 4/4 |
+
+---
+
+## V2-M48 — Transactions & Marchés : construire ce que le moteur sert, NOMMER ce qui dépend d'un port
+
+**Demande PO** : « next » — poursuite de l'harmonisation v1 ↔ v2.
+
+Le plus gros bloc de capacités amputées restant portait le même motif, répété trois fois :
+« onglet Transactions commun — pas d'analyseur SWIFT/SEPA », « …pas de vue settlement dédiée »,
+« …pas de vue risque transactionnel dédiée ». Trois fois le même constat d'écran.
+
+### La confrontation AVANT la construction
+
+Le lot précédent a montré ce que coûte un écran bâti sur une donnée qu'on n'a pas observée. Cette
+fois, la première action n'a pas été d'écrire du JSX mais d'interroger le moteur vivant :
+
+| route | réponse réelle | lecture |
+|---|---|---|
+| `/v1/swift/messages` · `/quarantaine` | `[]` · `[]` | vides, **mais alimentables** : `POST /v1/swift/analyser` ne demande aucun port |
+| `/v1/ta/registre` | `{positions:[],mouvements:[],contrepassations:[]}` | idem — `POST /v1/ta/mouvements` n'exige aucun port |
+| `/v1/corebanking/etat` | `{lots:0,enQuarantaine:0}` | **port injecté vide par construction** — phase 1 lecture seule (R114/R167) |
+| `/v1/txflux/etat` | `{portConfigure:false,transactions:0}` | idem, R297 |
+| `/v1/txrisk/tendances` | `{parMois:{}}` | **conséquence** : R298 agrège le flux, le flux est vide |
+
+Le motif « onglet Transactions commun » était donc un **constat, pas un diagnostic**. Il laissait
+croire qu'il suffisait de construire trois vues. La réalité mesurée : **une seule des trois est un
+manque d'écran**. Les deux autres sont un manque de **port**, et aucune quantité de JSX ne les
+comblera.
+
+### Ce qui est construit
+
+**Onglet SWIFT/SEPA** (`swiftlab` → **livré**). L'analyse est un acte réel posé par l'écran
+(`POST /v1/swift/analyser`), avec la garde R300 affichée avant la saisie. Deux listes dérivées du
+journal, sans table nouvelle : les messages extraits, et la **quarantaine avec son motif** — un
+message refusé est conservé, jamais jeté. Un message sans transaction correspondante est marqué
+**ORPHELIN** plutôt que rattaché au hasard.
+
+**Onglet Settlement** (`settlement` → reste **partiel**, motif précis). La vue rend l'état réel du
+core banking et **dit l'absence de port en toutes lettres**. C'est le point : un écran de
+settlement qui afficherait des lots inventés serait indiscernable d'un vrai, et c'est exactement ce
+que R167 interdit. Ce qui manque à cette vue n'est pas un écran, c'est un port — et le registre le
+dit maintenant.
+
+**`txrisk`** reste partiel, motif réécrit pour nommer la dépendance mesurée (R297 → R298) au lieu
+du constat d'écran.
+
+### Le semis, par les vraies routes
+
+Deux chapitres ajoutés à `seed-demo-gwb.seed.ts` : un MT103 qui s'analyse, un message qui part en
+quarantaine (**une démonstration où rien n'est jamais refusé ment sur le moteur**), et un mouvement
+TA. Idempotence vérifiée en exécution sur une base neuve : les trois chapitres apparaissent au
+premier passage et **disparaissent au second**.
+
+### La garde de contrat a rougi sur mon propre code
+
+`AC-05` a signalé « POST /v1/swift/analyser : le moteur lit un corps, l'acte ne déclare aucun
+champ » alors que le champ `texte` était bien déclaré. Elle avait raison : son parseur lit le bloc
+d'un acte **jusqu'à `garde:`**, et j'avais placé `champs` après. La convention du fichier
+(champs, puis garde) n'était pas cosmétique. Corrigé côté déclaration, pas côté garde — affaiblir
+une garde pour faire passer son propre code est le contraire du travail.
+
+### Registre après le lot
+
+**67 livrées / 10 amputées / 9 absentes.** Les deux capacités encore amputées de cette famille
+nomment désormais leur blocage : un port, pas un écran.
+
+| garde | ce qu'elle tient |
+|---|---|
+| U2-67 | l'onglet SWIFT pose l'acte, affiche la garde R300, conserve la quarantaine, dit l'ORPHELIN |
+| U2-68 | Settlement DIT l'absence de port et n'affiche aucun lot inventé |
+| U2-69 | **anti-régression** : aucune capacité « Transactions & Marchés » ne revient au motif vague ; toute capacité partielle nomme le port |
+
+| Vérification | Résultat |
+|---|---|
+| `npm run test:rules` | sortie 0, aucun ✗ |
+| e2e (`olive_e2e`) | **521/521** — voir la réserve ci-dessous |
+| front `npx vitest run` | **229/229** (226 + 3) |
+| semis démo, base neuve puis re-semis | 3 chapitres créés puis **0** — idempotent |
+| budget bundle | 312,8 kB gz sous le budget 315 (relevé au lot précédent) — **aucune relève** |
+| typecheck · lint · gate screening · cliquet i18n | 0 · 0 · 4/4 · 0 texte en dur |
+
+**Réserve honnête sur l'e2e** : le premier des trois runs a affiché `2 failed, 519 passed`, dans le
+run qui suivait immédiatement un redémarrage du cluster Postgres. Les deux runs suivants sont à
+521/521. Les noms des suites en échec n'ont pas pu être relevés — le run était lancé avec
+`--silent`. Consigné en `docs/notes/flakes-e2e.md` (n°4) avec la conduite à tenir : **ne pas
+diagnostiquer un échec e2e sous `--silent`**.

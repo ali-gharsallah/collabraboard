@@ -276,8 +276,7 @@ export const CAPACITES: Capacite[] = [
     motif: "écran vertical non construit" },
   { id: "swiftlab", libelle: "Analyseur SWIFT/SEPA", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
-    roles: ["CO", "MLRO"], statut: "partiel",
-    motif: "onglet Transactions commun — pas d'analyseur SWIFT/SEPA" },
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M48 : onglet « SWIFT/SEPA » — analyse (R300), messages, quarantaine
   { id: "custodyta", libelle: "Custody & TA", groupeV1: "Transactions & Marchés",
     destination: "custody", onglet: undefined, licence: "†CUSTODY",
     roles: ["RM", "CO", "MLRO"], statut: "absent",
@@ -301,11 +300,17 @@ export const CAPACITES: Capacite[] = [
   { id: "settlement", libelle: "Settlement", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
     roles: ["CO", "MLRO"], statut: "partiel",
-    motif: "onglet Transactions commun — pas de vue settlement dédiée" },
+    // V2-M48 : la vue EXISTE (onglet « Settlement ») et rend l'état réel du core banking.
+    // Ce qui manque n'est pas l'écran mais le PORT : phase 1 lecture seule, port injecté vide,
+    // l'import refuse par construction (R114/R167). Vérifié sur l'API vivante : lots 0.
+    motif: "vue livrée sur /v1/corebanking/etat ; aucun port core banking configuré (phase 1 lecture seule, R114/R167) — l'écran dit l'absence, il ne simule aucun lot" },
   { id: "txrisk", libelle: "Transactions Risk Monitoring", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
     roles: ["CO", "MLRO"], statut: "partiel",
-    motif: "onglet Transactions commun — pas de vue risque transactionnel dédiée" },
+    // V2-M48 : le blocage est NOMMÉ au lieu d'être vague. R298 agrège le flux transactionnel,
+    // lui-même alimenté par le port core banking (R297) — vérifié sur l'API vivante :
+    // /v1/txrisk/tendances répond {parMois:{}} parce que /v1/txflux est vide, faute de port.
+    motif: "dépend du port core banking (R297) : sans flux transactionnel, R298 n'a rien à agréger — /v1/txrisk/tendances répond {parMois:{}} sur moteur vivant. Manque un port, pas un écran" },
   { id: "transactions", libelle: "Transferts & ordres", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
     roles: ["CO", "MLRO"], statut: "livre" },

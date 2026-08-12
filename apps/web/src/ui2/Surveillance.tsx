@@ -15,7 +15,7 @@ import { listeReglesAml } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
-import { useActeMoteur, RetourActe } from "./acte-moteur";
+import { useActeMoteur, RetourActe, BarreActes, ActeMoteur } from "./acte-moteur";
 
 /**
  * UI v2 — étape 6 : Surveillance — écrans 03 « AML Investigation » et 05 « Screening ».
@@ -109,10 +109,55 @@ function Chiffre({ label, valeur, mode }: { label: string; valeur: string; mode?
     </span>);
 }
 
+/**
+ * V2-M48 — TRANSACTIONS & MARCHÉS : les deux vues que l'onglet Transactions ne portait pas.
+ *
+ * Le registre disait « onglet Transactions commun — pas d'analyseur SWIFT/SEPA » et « …pas de
+ * vue settlement dédiée ». Confrontation au moteur vivant AVANT de construire — c'est elle qui
+ * a décidé du périmètre :
+ *   · /v1/swift/*        → aucun port requis, l'analyse est un ACTE que l'écran peut poser ;
+ *   · /v1/corebanking/*  → port core banking VIDE par construction (phase 1 lecture seule,
+ *                          R114/R167) : la vue existe, elle DIT l'absence, elle ne l'invente pas ;
+ *   · /v1/txrisk/*       → agrège le flux transactionnel, lui-même alimenté par le port core
+ *                          banking (R297). Sans port, aucune tendance — ce n'est pas un manque
+ *                          d'écran mais un manque de port, et `capacites.ts` le dit désormais.
+ * Formes RELEVÉES sur l'API vivante (seed conforme au moteur, pas l'inverse).
+ */
+type SwiftMsg = { type?: string; reference?: string; dateValeur?: string; devise?: string;
+  montant?: number; donneurOrdre?: string; beneficiaire?: string; banqueBeneficiaire?: string;
+  transactionId?: string | null; at?: string };
+type SwiftQuar = { motif?: string; apercu?: string; at?: string };
+type EtatCore = { lots?: number; enQuarantaine?: number };
+type EtatFlux = { portConfigure?: boolean; transactions?: number };
+
+const SEED_SWIFT: SwiftMsg[] = [
+  { type: "MT103", reference: "REF-DEMO-001", dateValeur: "2026-08-10", devise: "CHF", montant: 12500,
+    donneurOrdre: "/CH9300762011623852957\nNORDWIND HANDEL SA",
+    beneficiaire: "/DE89370400440532013000\nALPHA GMBH", banqueBeneficiaire: "DEUTDEFF",
+    transactionId: null, at: "2026-08-12T20:25:44.104Z" },
+];
+const SEED_SWIFT_Q: SwiftQuar[] = [
+  { motif: "en-tête SWIFT absent (bloc {2:}) — non parsable, quarantaine",
+    apercu: "ceci n est pas un message SWIFT", at: "2026-08-12T20:25:44.196Z" },
+];
+
+// R300 : l'analyse est le SEUL acte de la famille SWIFT — le contrôleur ne porte pas d'émission,
+// et l'écran ne peut donc pas en inventer une.
+const ACTES_SWIFT: ActeMoteur[] = [
+  // L'ORDRE des clés n'est pas cosmétique : la garde de contrat AC-05 lit le bloc d'un acte
+  // JUSQU'À `garde:` — déclarer `champs` après ferait voir un acte SANS champ, et la garde a
+  // effectivement rougi sur ce point. Convention du fichier tenue : champs, puis garde.
+  { cle: "swift.analyser", libelle: "Analyser un message SWIFT/SEPA",
+    route: "POST /v1/swift/analyser", methode: "POST",
+    champs: [{ cle: "texte", libelle: "Message brut (MT ou pacs.008)",
+      exemple: "{1:F01…}{2:I103…}{4::20:REF-…:32A:260810CHF12500,00…-}" }],
+    garde: "R300 : un message hors bibliothèque déclarée (swift_types_actifs) ou non parsable part en QUARANTAINE MOTIVÉE — jamais un rejet muet, jamais une extraction devinée. L'analyse ne crée aucune transaction : elle se rattache par référence à une transaction existante, ou reste orpheline et le dit." },
+];
+
 export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions"
-    | "cas" | "amlgap" | "referentiel">("alerte");
+    | "cas" | "amlgap" | "referentiel" | "swift" | "settlement">("alerte");
   const hits = useApiOrSeed<Hit[]>("/v1/screening/hits", SEED_HITS);
   // V2-M32 : les deux capacités Compliance de la v1 qui manquaient encore sous Surveillance.
   const gap = useApiOrSeed<ScenarioGap[]>("/v1/aml/scenarios", SEED_GAP);
@@ -120,6 +165,11 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   const regles = useApiOrSeed<Regle[]>("/v1/aml/referentiel", SEED_REGLES);
   const txs = useApiOrSeed<Tx[]>("/v1/txflux", SEED_TX);
   const cas = useApiOrSeed<Rc[]>("/v1/riskcases", SEED_RC);
+  // V2-M48 : les quatre lectures des deux vues neuves.
+  const swift = useApiOrSeed<SwiftMsg[]>("/v1/swift/messages", SEED_SWIFT);
+  const swiftQ = useApiOrSeed<SwiftQuar[]>("/v1/swift/quarantaine", SEED_SWIFT_Q);
+  const core = useApiOrSeed<EtatCore>("/v1/corebanking/etat", { lots: 0, enQuarantaine: 0 });
+  const fluxEtat = useApiOrSeed<EtatFlux>("/v1/txflux/etat", { portConfigure: false, transactions: 0 });
   // DEUX décisions distinctes (l'alerte AML et le hit screening) — l'état est par écran, et le
   // DecisionPanel porte key={ecran} pour que le motif saisi sur l'un ne fuie jamais sur l'autre.
   const [decisions, setDecisions] = useState<Partial<Record<"alerte" | "hit", { option: string; motif: string }>>>({});
@@ -174,6 +224,8 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
       {pilule("screening", `${t("File screening")} · ${Array.isArray(hits.data) ? hits.data.length : 0}`)}
       {pilule("regles", t("Règles AML"))}
       {pilule("transactions", t("Transactions"))}
+      {pilule("swift", t("SWIFT/SEPA"))}
+      {pilule("settlement", t("Settlement"))}
       {pilule("cas", `${t("Cas de risque")} · ${Array.isArray(cas.data) ? cas.data.length : 0}`)}
       {pilule("amlgap", t("AML Gap"))}
       {pilule("referentiel", t("Référentiel"))}
@@ -181,7 +233,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
 
   // ── V2-M2/M3 : les vues « liste » du bloc Surveillance ──
   if (ecran === "screening" || ecran === "regles" || ecran === "transactions" || ecran === "cas"
-    || ecran === "amlgap" || ecran === "referentiel") {
+    || ecran === "amlgap" || ecran === "referentiel" || ecran === "swift" || ecran === "settlement") {
     const sousTitres = {
       screening: hits.isDemo ? t("données maquette") : t("source : /v1/screening/hits (R411 — sujet × temps, config du run référencée)"),
       regles: regles.isDemo ? t("données maquette") : t("source : /v1/aml/referentiel"),
@@ -190,6 +242,10 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
       amlgap: gap.isDemo ? t("échantillon de maquette — le référentiel complet est servi par l'API")
         : t("source : /v1/aml/scenarios (R340–R403, générateur = source de vérité)"),
       referentiel: t("inventaire des quatre familles — docs/REFERENTIEL-DETECTION.md"),
+      // V2-M48 : chaque vue neuve NOMME sa source ; Settlement nomme les deux qu'elle croise.
+      swift: swift.isDemo ? t("données maquette") : t("source : /v1/swift/messages + /v1/swift/quarantaine (R300)"),
+      settlement: core.isDemo ? t("données maquette")
+        : t("source : /v1/corebanking/etat + /v1/txflux/etat (R167-R169 — le core est un PORT)"),
     } as const;
     return (
       <Ui2Shell nav={nav}
@@ -246,6 +302,88 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
                 {t("Les transactions EN REVUE sont rapprochées des alertes AML — une ligne s'ouvre sur l'alerte liée. L'analyseur SWIFT/SEPA reste un outil contextuel depuis une transaction.")}</div>
           </FluxPanneau>
         </>)}
+        {/* ── V2-M48 · SWIFT/SEPA — le laboratoire d'analyse (R300). L'écran POSE l'acte réel et
+            rend le verdict du moteur : extraction, ou quarantaine AVEC son motif. Deux listes
+            dérivées du journal (aucune table nouvelle) : ce qui a été lu, ce qui a été refusé. ── */}
+        {ecran === "swift" && (<>
+          <BarreActes actes={ACTES_SWIFT} t={t} />
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "14px 0 8px" }}>
+            <span style={{ fontSize: 13.5, fontWeight: 600 }}>{t("Messages analysés")}</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              {swift.isDemo ? t("données maquette") : "/v1/swift/messages"}</span>
+          </div>
+          {!(Array.isArray(swift.data) ? swift.data : []).length ? (
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {t("Aucun message analysé — le journal est vide.")}</div>
+          ) : (
+          <EntityList grid="90px 130px 110px 130px 1fr 110px" onOpen={() => setEcran("transactions")}
+            entetes={[t("Type"), t("Référence"), t("Date valeur"), t("Montant"),
+              t("Donneur d'ordre → bénéficiaire"), t("Transaction liée")]}
+            lignes={(Array.isArray(swift.data) ? swift.data : []).map((m, i) => ({
+              id: `${m.reference ?? i}`, cells: [
+                <span key="t" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{m.type ?? "—"}</span>,
+                <span key="r" className="mono">{m.reference ?? "—"}</span>,
+                <span key="d" className="mono">{m.dateValeur ?? "—"}</span>,
+                <span key="m" className="mono" style={{ fontWeight: 600 }}>
+                  {m.montant != null ? `${m.montant.toLocaleString("fr-CH")} ${m.devise ?? ""}` : "—"}</span>,
+                <span key="p" style={{ fontSize: 11 }}>
+                  {`${(m.donneurOrdre ?? "—").split("\n").pop()} → ${(m.beneficiaire ?? "—").split("\n").pop()}`}
+                  {m.banqueBeneficiaire ? <span style={{ color: "var(--text-muted)" }}>{` · ${m.banqueBeneficiaire}`}</span> : null}</span>,
+                m.transactionId
+                  ? <StatusChip key="x" mode="ok">{t("RATTACHÉE")}</StatusChip>
+                  : <StatusChip key="x" mode="neutral">{t("ORPHELINE")}</StatusChip>] }))} />)}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "16px 0 8px" }}>
+            <span style={{ fontSize: 13.5, fontWeight: 600 }}>{t("Quarantaine")}</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              {t("un message refusé est CONSERVÉ avec son motif — jamais jeté")}</span>
+          </div>
+          {!(Array.isArray(swiftQ.data) ? swiftQ.data : []).length ? (
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("Aucun message en quarantaine.")}</div>
+          ) : (
+          <EntityList grid="1.2fr 1fr 130px" onOpen={() => setEcran("swift")}
+            entetes={[t("Motif du refus"), t("Aperçu du message"), t("Reçu le")]}
+            lignes={(Array.isArray(swiftQ.data) ? swiftQ.data : []).map((q, i) => ({
+              id: `q-${i}`, cells: [
+                <span key="m" style={{ fontSize: 11.5, color: "var(--warn-text)" }}>{q.motif ?? "—"}</span>,
+                <span key="a" className="mono" style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{q.apercu ?? "—"}</span>,
+                <span key="d" className="mono" style={{ fontSize: 11 }}>{(q.at ?? "").slice(0, 10) || "—"}</span>] }))} />)}
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Le laboratoire LIT, il n'émet pas : le contrôleur ne porte aucune route d'émission (R300/TF-11). L'extraction se rattache à une transaction par sa RÉFÉRENCE ; sans transaction correspondante le message reste ORPHELIN et l'écran le dit, plutôt que d'inventer un rattachement. Les champs donneur d'ordre et bénéficiaire sont des données sensibles (R79).")}</div>
+        </>)}
+
+        {/* ── V2-M48 · SETTLEMENT — la vue qui dit l'absence de port. Le core banking est un PORT
+            (R167→R169) et la phase 1 est LECTURE SEULE, port injecté vide : il n'y a rien à
+            afficher, et c'est précisément ce qu'il faut afficher. Un écran qui montrerait des
+            lots inventés serait pire que cet écran-ci. ── */}
+        {ecran === "settlement" && (<>
+          <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+            {([[t("Lots reçus du core"), String(core.data?.lots ?? 0), "/v1/corebanking/etat"],
+               [t("Lots en quarantaine"), String(core.data?.enQuarantaine ?? 0), "/v1/corebanking/etat"],
+               [t("Transactions au journal"), String(fluxEtat.data?.transactions ?? 0), "/v1/txflux/etat"]] as const)
+              .map(([l, v, src]) => (
+              <div key={l} style={{ flex: 1, minWidth: 180, background: "var(--bg-surface)",
+                border: "1px solid var(--border)", borderLeft: "3px solid var(--border-input)",
+                borderRadius: "var(--r-card)", boxShadow: "var(--shadow-card)", padding: "12px 14px" }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>{l}</div>
+                <div className="mono" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.1 }}>{v}</div>
+                <div className="mono" style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3 }}>{src}</div>
+              </div>))}
+          </div>
+          <section style={{ background: "var(--warn-card)", border: "1px solid var(--warn-card-border)",
+            borderRadius: "var(--r-card)", padding: "13px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
+              <StatusChip mode={fluxEtat.data?.portConfigure ? "ok" : "warn"}>
+                {t(fluxEtat.data?.portConfigure ? "PORT CONFIGURÉ" : "AUCUN PORT CORE BANKING")}</StatusChip>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>
+                {t("Settlement / exécution — phase 1, lecture seule")}</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--text-body)", lineHeight: 1.6 }}>
+              {t("Le core banking est un PORT (R167→R169) : Avaloq, Temenos, Finnova ou ERI en sont des implémentations, jamais réimplémentées ici. Tant qu'aucun port n'est configuré, l'import REFUSE explicitement (R114/R167) et le journal transactionnel reste vide — ce qui manque à cette vue n'est pas un écran, c'est un port. Aucun lot n'est simulé : une donnée de settlement inventée serait indiscernable d'une vraie, et c'est ce que R167 interdit.")}</div>
+          </section>
+          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+            {t("Conséquence à consigner, pas à masquer : sans flux transactionnel, l'agrégation de risque (R298, onglet à venir) n'a rien à agréger. Les trois capacités « Transactions & Marchés » de la v1 dépendent donc du même port, et le registre des capacités le nomme désormais.")}</div>
+        </>)}
+
         {ecran === "amlgap" && (<>
           <EntityList grid="90px 1.6fr 130px 90px 130px" onOpen={() => setEcran("regles")}
             entetes={[t("Code"), t("Scénario"), t("Bloc"), t("Niveau"), t("Signal émis")]}

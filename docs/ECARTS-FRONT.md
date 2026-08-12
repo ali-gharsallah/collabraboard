@@ -1828,3 +1828,35 @@ donc pas pu être relevée sur l'API vivante en V2-M47.
 lire le moteur **à date** (R29), comme la résolution d'agent (SW-01/SW-02) le fait déjà — pour
 qu'une désactivation ne réécrive pas le contexte des runs passés. Détail :
 `docs/notes/missions-olivia-sans-cle-gouvernee.md`.
+
+### E-V2-15 — Trois capacités « Transactions & Marchés » : une seule manquait d'écran (V2-M48)
+
+**PARTIELLEMENT SOLDÉ.** Le registre portait trois fois le même motif — « onglet Transactions
+commun » — qui décrivait l'écran sans diagnostiquer la cause. Mesure sur API vivante :
+
+| capacité | ce qui manquait RÉELLEMENT | issue |
+|---|---|---|
+| `swiftlab` | rien d'autre que l'écran — `/v1/swift/*` n'exige aucun port | **soldé** : onglet SWIFT/SEPA (acte + messages + quarantaine) |
+| `settlement` | le **port core banking** — phase 1 lecture seule, port injecté vide (R114/R167) | vue livrée, **reste partiel** : elle dit l'absence de port |
+| `txrisk` | le même port — R298 agrège le flux (R297), qui est vide sans port | **reste partiel**, blocage nommé |
+
+`/v1/txrisk/tendances` répond `{parMois:{}}` non par défaut d'implémentation mais parce que
+`/v1/txflux` est vide, faute de port. Un écran de tendances aurait affiché un graphe vide en
+laissant croire à une absence de risque.
+
+**Arbitrage dû au PO** : configurer un port core banking (Avaloq / Temenos / Finnova / ERI) est une
+décision d'intégration, pas une tâche d'écran. Tant qu'elle n'est pas prise, ces deux capacités
+restent honnêtement amputées — et la doctrine R167 interdit de combler le vide par une fixture en
+production.
+
+### E-V2-16 — Le chapitre « veille » du semis n'est pas idempotent (V2-M48)
+
+**OUVERT** — observé, non corrigé (hors périmètre).
+
+Au second passage du semis sur une base déjà semée, tous les chapitres se taisent SAUF « source de
+veille » et « collecte de veille », qui se re-posent à chaque exécution. Cause : la garde
+d'idempotence teste `/v1/regwatch/items`, or le flux de test est env-gaté (`REGWATCH_FAKE_FEED`) —
+sans lui la collecte ne produit aucun item, la garde reste donc toujours vraie et le chapitre
+rejoue. Conséquence pratique nulle aujourd'hui (la source est un upsert de paramètre), mais c'est
+une idempotence apparente et non réelle : elle mérite d'être corrigée par une garde qui teste ce
+que le chapitre écrit VRAIMENT, pas ce qu'il espère produire.
