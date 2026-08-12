@@ -86,6 +86,29 @@ describe("FE-CORE — couche API et session", () => {
     window.removeEventListener("olive:session-expiree", ecouteur);
   });
 
+  it("FE-04b (V2-M47) Un REFUS en LECTURE porte son message — le seed n'efface plus le moteur", async () => {
+    // Trouvé en confrontant l'onglet Exigences à l'API vivante : le moteur répondait 404 avec
+    // « P-L7-1 : aucun CompletionProfile pour (PP, CH) » et l'écran n'en montrait rien. Un refus
+    // motivé transformé en silence est le défaut que ce projet interdit.
+    w.OLIVE_API_URL = "http://api.test";
+    mockFetch(404, { error: "Not Found",
+      message: "P-L7-1 : aucun CompletionProfile pour (PP, CH) — ni profil exact, ni repli « * »" });
+    const r = await apiGetSourced("/v1/inference/K1/ledger", null);
+    expect(r.isDemo).toBe(true);                                           // la donnée reste le seed
+    expect(r.refus?.status).toBe(404);
+    expect(r.refus?.message).toContain("aucun CompletionProfile pour (PP, CH)");  // mot pour mot
+  });
+
+  it("FE-04c (V2-M47) Une PANNE réseau n'invente pas de refus — l'absence de message reste l'absence", async () => {
+    // La garde négative : sans elle, `refus` deviendrait un fourre-tout et l'écran afficherait
+    // un « refus du moteur » là où le moteur n'a jamais répondu.
+    w.OLIVE_API_URL = "http://api.test";
+    (globalThis as any).fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"));
+    const r = await apiGetSourced("/v1/inference/K1/ledger", null);
+    expect(r.isDemo).toBe(true);
+    expect(r.refus).toBeUndefined();
+  });
+
   it("FE-06 (A1) Préfixe unique : base + chemin /v1, aucune URL construite ailleurs", async () => {
     w.OLIVE_API_URL = "https://demo.olive.local";
     const fn = mockFetch(200, []);

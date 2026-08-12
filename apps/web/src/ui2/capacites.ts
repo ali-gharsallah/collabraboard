@@ -108,8 +108,11 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO"], statut: "livre" },
   { id: "inference", libelle: "Checklist exigences", groupeV1: "Compliance & Risque",
     destination: "kyc", onglet: "Exigences", licence: "KYC",
-    roles: ["CO", "MLRO"], statut: "absent",
-    motif: "onglet de destination non construit" },
+    roles: ["CO", "MLRO"], statut: "partiel",
+    // V2-M47 : l'onglet EXISTE et lit le ledger réel (/v1/inference/:kycId/ledger). Ce qui
+    // manque n'est pas de l'écran mais du RÉFÉRENTIEL : sans CompletionProfile publié pour la
+    // paire (type d'entité, juridiction), le moteur refuse — et l'écran affiche son refus.
+    motif: "onglet livré sur le ledger réel ; aucun CompletionProfile publié au référentiel — le moteur refuse, l'écran affiche le refus mot pour mot" },
   { id: "compliance", libelle: "Compliance Center", groupeV1: "Compliance & Risque",
     destination: "surveillance", onglet: undefined, licence: null,
     roles: ["CO", "MLRO"], statut: "livre" },
@@ -136,8 +139,7 @@ export const CAPACITES: Capacite[] = [
     motif: "écran vertical non construit" },
   { id: "prerevue", libelle: "Pré-revue IA", groupeV1: "Compliance & Risque",
     destination: "kyc", onglet: "Pré-revue IA", licence: "IA",
-    roles: ["CO", "MLRO"], statut: "absent",
-    motif: "onglet de destination non construit" },
+    roles: ["CO", "MLRO"], statut: "livre" },     // V2-M47 : /v1/ia/prerevue/kyc/:id/traitement
   { id: "rapportsconf", libelle: "Rapports conformité", groupeV1: "Compliance & Risque",
     destination: "rapports", onglet: "Conformité", licence: null,
     roles: ["CO", "MLRO", "AUDIT"], statut: "livre" },
@@ -181,8 +183,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
   { id: "oliviaruns", libelle: "Olivia · Runs", groupeV1: "Data & Intelligence",
     destination: "param", onglet: "IA", licence: "IA",
-    roles: ["CO", "MLRO", "ADMIN"], statut: "absent",
-    motif: "l'onglet IA porte le curseur et les budgets, pas le journal des runs" },
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M47 : sous-onglet « Runs Olivia » (/v1/olivia/runs)
   { id: "ged", libelle: "Pièces (GED)", groupeV1: "Data & Intelligence",
     destination: "kyc", onglet: "Pièces", licence: "GED",
     roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
@@ -316,8 +317,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["ADMIN"], statut: "livre" },
   { id: "wfi", libelle: "Workflow Instances", groupeV1: "Workflow",
     destination: "param", onglet: "Workflow", licence: "WORKFLOWS",
-    roles: ["CO", "MLRO", "ADMIN"], statut: "absent",
-    motif: "l'onglet Workflow porte les définitions, pas les instances en cours" },
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M47 : sous-onglet « Instances en cours » (/v1/workflow-instances)
 ];
 
 /** Le module est-il servi par la licence du tenant ? `null` (socle) = toujours oui. */

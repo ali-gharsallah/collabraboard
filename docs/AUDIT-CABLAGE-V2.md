@@ -407,3 +407,93 @@ rouge avant la correction.
 défaut : une donnée absente ou mal nommée qui ne provoque pas d'erreur, mais un résultat vide —
 `seuil` undefined, identifiant non-UUID, entrées non normalisées. Aucun n'était visible en
 lecture de code ; les trois sont sortis dès qu'on a fait parler deux morceaux ensemble.
+
+---
+
+## V2-M47 — les quatre onglets qui n'existaient pas, et un refus que l'écran effaçait
+
+**Demande PO** : « on continue à harmoniser le v2 avec la v1 ».
+
+`capacites.ts` mesurait l'écart sans le farder : 86 capacités, **63 livrées / 10 amputées /
+13 absentes**. Parmi les 13 absentes, quatre ne réclamaient pas un écran vertical neuf mais un
+simple **onglet dans un écran qui existe déjà** — leur motif le disait mot pour mot :
+
+| capacité | motif consigné avant ce lot | destination |
+|---|---|---|
+| `inference` — Checklist exigences | « onglet de destination non construit » | Dossier KYC → Exigences |
+| `prerevue` — Pré-revue IA | « onglet de destination non construit » | Dossier KYC → Pré-revue IA |
+| `oliviaruns` — Olivia · Runs | « l'onglet IA porte le curseur et les budgets, pas le journal des runs » | Paramétrage → IA |
+| `wfi` — Workflow Instances | « l'onglet Workflow porte les définitions, pas les instances en cours » | Paramétrage → Workflow |
+
+Ce sont les quatre du lot. Les neuf autres sont des verticaux entiers (PMS, Custody & TA, FX,
+Mobile, Finance Islamique, Legal, OpRisk, les deux CPSI) : ils relèvent d'un arbitrage de portée,
+pas d'un onglet.
+
+### Le blocage qu'il a fallu lever d'abord
+
+`/v1/inference/:kycId/ledger` et `/v1/ia/prerevue/kyc/:id/traitement` prennent un **identifiant de
+dossier**. Or `/v1/kyc` ne le rendait pas : la liste portait `code`, `status`, `riskLevel`, et rien
+pour désigner la ligne. Les deux routes étaient donc **inatteignables depuis l'écran**, quelle que
+soit la qualité de l'onglet qu'on y aurait construit. Correction additive (R334, expand) :
+`kyc.service.ts` expose `id`. Aucun champ retiré, aucun renommé.
+
+### Ce que l'API vivante a dit, et que le code ne disait pas
+
+Trois routes confrontées avec un vrai jeton sur la base de démonstration :
+
+```
+GET /v1/workflow-instances  → 2 instances réelles {id, code, type, subjectRef, status,
+                               currentStep, revision, visas, majAt}
+GET /v1/ia/prerevue/…       → {"bloquant":false,"ouverts":[]}
+GET /v1/inference/…/ledger  → 404 « P-L7-1 : aucun CompletionProfile pour (PP, CH) —
+                               ni profil exact, ni repli « * » »
+```
+
+Ce 404 **est le bon comportement du moteur** (P-L7-1 : pas d'exigences par défaut, silencieuses).
+Le défaut était ailleurs, et c'est la confrontation qui l'a montré : `apiGetSourced` attrapait
+toute réponse non-2xx dans un `catch` muet et retombait sur le seed. Le message du moteur — qui
+**nomme la paire (type d'entité, juridiction) non couverte**, la seule information exploitable —
+n'arrivait jamais à l'écran. Un refus motivé transformé en blanc : exactement le silence que ce
+projet interdit, et cette fois dans la couche transverse que tous les écrans traversent.
+
+**Correction** : `apiGetSourced` remonte `refus: { code, status, message }` — champ **additif**,
+tous les appelants existants inchangés — et l'onglet Exigences affiche le message **mot pour mot**
+(FE-04). La garde négative **FE-04c** interdit l'excès inverse : une panne réseau ne fabrique pas
+un refus, l'absence de message reste l'absence.
+
+### Ce qui n'a PAS pu être vérifié, et pourquoi c'est dit ici
+
+`/v1/olivia/runs` répond `[]`. Aucun run n'existe et il est **impossible d'en créer un** :
+`missions_actives` est vide (défaut juste — SW-18, la v2 est éteinte tant qu'on ne l'allume pas)
+et la clé `missionsActives` **n'existe pas au registre gouverné** (251 clés, aucune pour les
+missions). L'interrupteur que SW-18 exige n'a pas de chemin R125. Le seed de l'écran s'appuie donc
+sur la projection `vue()` **lue dans `swarm.module.ts`**, pas observée — preuve plus faible, écrite
+telle quelle dans le commentaire du composant. Découverte hors périmètre, consignée sans
+correction opportuniste : `docs/notes/missions-olivia-sans-cle-gouvernee.md`.
+
+### Registre après le lot
+
+**66 livrées / 11 amputées / 9 absentes** (86 inchangé). `inference` passe à **partiel**, pas à
+livré : l'onglet lit le ledger réel, mais aucun `CompletionProfile` n'est publié — ce qui manque
+est du **référentiel**, pas de l'écran, et le registre doit dire lequel des deux.
+
+### Gardes du lot (chacune cassée avant d'être crue)
+
+| garde | ce qu'elle tient |
+|---|---|
+| U2-62 | l'onglet Exigences existe et n'affiche AUCUNE exigence sans réponse du moteur |
+| U2-63 | l'onglet Pré-revue IA nomme sa source ; aucun visa ni clôture n'y est possible (R44) |
+| U2-64 | le journal des runs porte le budget FIGÉ (R262) et la porte humaine (R263), en lecture seule |
+| U2-65 | les instances portent l'étape et le compte de visas du moteur ; aucune circulation depuis la liste |
+| U2-66 | **anti-régression** : plus aucune capacité « absent » ne s'excuse d'un onglet non construit |
+| FE-04b | un refus en LECTURE porte son message jusqu'à l'écran |
+| FE-04c | une panne réseau n'invente pas de refus |
+
+| Vérification | Résultat |
+|---|---|
+| `npm run test:rules` | sortie 0, aucun ✗ (144 ✓) |
+| e2e (base neuve `olive_e2e`) | **521/521** |
+| front `npx vitest run` | **226/226** (219 + 7) |
+| `verifier-formes-api.mjs` (API vivante) | 39 lectures · **0 écart non traité** |
+| budget bundle | 310,8 kB gz — relève motivée 310 → **315** |
+| typecheck · lint · gate screening | 0 · 0 · 4/4 |

@@ -7,6 +7,7 @@ import { StatusChip } from "./StatusChip";
 import { SandboxSlider } from "./SandboxSlider";
 import { EntityList } from "./Listes";
 import { ParamCleDetail } from "./ParamDetail";
+import { tableau, jour } from "./moteur-formes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
@@ -89,6 +90,33 @@ const SECTIONS_PARAM: { id: string; label: string; seed: Cle[] }[] = [
     { cle: "audit.retention", description: "Rétention du journal (R49 — append-only)", valeur: "10 ans", version: "01.01.2025" }] },
 ];
 
+/**
+ * V2-M47 — deux sections du Paramétrage portaient la CONFIGURATION sans son EXÉCUTION :
+ * l'onglet IA réglait le curseur et les budgets sans montrer un seul run, l'onglet Workflow
+ * portait les définitions sans une seule instance en cours. C'était l'écart honnêtement
+ * consigné dans `capacites.ts` (`oliviaruns` et `wfi` en `absent`). Chaque section gagne donc
+ * un sous-onglet JOURNAL, branché sur la route réelle du moteur — jamais sur un agrégat
+ * reconstruit à l'écran. Les noms de champs sont ceux du moteur (`missionCode`, `statut`,
+ * `currentStep`…) : le moteur nomme, l'écran suit. Lecture seule : R44 — la vue ne décide rien,
+ * ni reprise, ni arrêt, ni visa depuis cette liste.
+ */
+type RunOlivia = { id: string; missionCode?: string; statut?: string; roleCode?: string;
+  ancrageType?: string; ancrageId?: string; porteEnAttente?: boolean; createdAt?: string;
+  budget?: { maxEtapes?: number; maxDureeS?: number; maxCoutTokens?: number };
+  consomme?: { etapes?: number; duree_s?: number; tokens?: number } };
+type InstanceWf = { id: string; code?: string; type?: string; subjectRef?: string; status?: string;
+  currentStep?: string; revision?: number; visas?: string; majAt?: string };
+
+// Statuts de la machine à états des runs (R260 : PLANIFIE → EN_COURS → {TERMINE|ECHOUE|
+// INTERROMPU|EPUISE}, ↑ PAUSE_PORTE). Un statut inconnu de l'écran reste AFFICHÉ tel quel en
+// neutre — on ne masque pas ce qu'on n'a pas prévu.
+const MODE_RUN = (statut?: string): "ok" | "alert" | "ai" | "neutral" =>
+  statut === "TERMINE" ? "ok"
+  : statut === "ECHOUE" || statut === "INTERROMPU" || statut === "EPUISE" ? "alert"
+  : statut === "PAUSE_PORTE" ? "ai" : "neutral";
+const MODE_WF = (status?: string): "ok" | "alert" | "neutral" =>
+  status === "VALIDATED" ? "ok" : status === "REJECTED" ? "alert" : "neutral";
+
 export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [seuil, setSeuil] = useState(25);                  // ×2,5 — la proposition d'Olivia
@@ -97,6 +125,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
   const [soumis, setSoumis] = useState(false);
   const [section, setSection] = useState<string>("sandbox");
   const [cleOuverte, setCleOuverte] = useState<string | null>(null);   // V2-M8 : drill-down par clé
+  const [journal, setJournal] = useState(false);                       // V2-M47 : clés gouvernées ↔ journal d'exécution
   const registre = useApiOrSeed<Cle[] | Record<string, unknown>>("/v1/parametres/registre", null as never);
   // V2-M7 (suite) : fraîcheur ETL par connecteur × famille (/v1/etl/fraicheur, R488).
   const fraicheur = useApiOrSeed<{ cle: string; connecteur: string; famille: string;
@@ -108,8 +137,36 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
     { cle: "GENERIQUE/COMPTES", connecteur: "GENERIQUE", famille: "COMPTES",
       dernierLot: "LOT-2026-0807-EOD", recuLe: "07.08.2026 22:04", statut: "INCIDENT" },
   ]);
+  // V2-M47 : les deux journaux d'exécution. Un seed qui invente un nom de champ fabrique une
+  // capacité que la production n'a pas — les deux seeds portent donc les noms du moteur, mais
+  // leur PREUVE n'est pas la même et il faut le dire :
+  //   · /v1/workflow-instances : forme RELEVÉE sur l'API vivante (2 instances réelles, GWB) ;
+  //   · /v1/olivia/runs : l'API vivante répond `[]` — aucun run n'existe en base et la mission
+  //     ne peut pas être activée (`missionsActives` n'a AUCUNE clé au registre gouverné R125 :
+  //     251 clés, zéro pour les missions — consigné dans docs/notes/, hors périmètre du lot).
+  //     La forme vient donc de la projection `vue()` du moteur, LUE dans swarm.module.ts, pas
+  //     observée. C'est une preuve plus faible ; elle sera confirmée au premier run réel.
+  const runs = useApiOrSeed<RunOlivia[]>("/v1/olivia/runs", [
+    { id: "run-demo-1", missionCode: "PREREVUE_DOSSIER", statut: "TERMINE", roleCode: "ANALYSTE_KYC",
+      ancrageType: "KYC", ancrageId: "KYC-2026-0142", createdAt: "2026-08-10T09:12:00.000Z",
+      budget: { maxEtapes: 20, maxDureeS: 300, maxCoutTokens: 120000 },
+      consomme: { etapes: 7, duree_s: 48, tokens: 18400 } },
+    { id: "run-demo-2", missionCode: "ANALYSE_CORRELATION", statut: "PAUSE_PORTE", roleCode: "ANALYSTE_AML",
+      ancrageType: "RISK_CASE", ancrageId: "RC-2026-0031", porteEnAttente: true,
+      createdAt: "2026-08-11T14:03:00.000Z",
+      budget: { maxEtapes: 20, maxDureeS: 300, maxCoutTokens: 120000 },
+      consomme: { etapes: 4, duree_s: 22, tokens: 9100 } },
+  ]);
+  const instances = useApiOrSeed<InstanceWf[]>("/v1/workflow-instances", [
+    { id: "wfi-demo-1", code: "KYC-2026-0142", type: "KYC:CDD", subjectRef: "CLI-0142",
+      status: "UNDER_REVIEW", currentStep: "Revue & visas", revision: 3, visas: "1/2",
+      majAt: "2026-08-10T09:12:00.000Z" },
+    { id: "wfi-demo-2", code: "KYC-2026-0139", type: "KYC:EDD", subjectRef: "CLI-0139",
+      status: "VALIDATED", currentStep: "Validé", revision: 5, visas: "2/2",
+      majAt: "2026-08-04T16:41:00.000Z" },
+  ]);
   const pilule = (id: string, label: string) => (
-    <button key={id} onClick={() => { setSection(id); setCleOuverte(null); }} aria-pressed={section === id}
+    <button key={id} onClick={() => { setSection(id); setCleOuverte(null); setJournal(false); }} aria-pressed={section === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,
         fontWeight: 600, cursor: "pointer",
         border: section === id ? "1px solid var(--brand)" : "1px solid var(--border-input)",
@@ -169,6 +226,75 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
       </Ui2Shell>);
   }
 
+  // V2-M47 : sous-onglet « journal d'exécution » — seules les deux sections qui en ont un.
+  const journalDe = sectionActive?.id === "ia" ? { label: "Runs Olivia", route: "/v1/olivia/runs",
+      demo: runs.isDemo, vide: "Aucun run — le journal d'exécution est vide (R266)." }
+    : sectionActive?.id === "workflow" ? { label: "Instances en cours", route: "/v1/workflow-instances",
+      demo: instances.isDemo, vide: "Aucune instance de workflow ouverte." }
+    : null;
+  const sousPilules = journalDe && (
+    <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
+      {([[false, t("Clés gouvernées")], [true, t(journalDe.label)]] as const).map(([j, label]) => (
+        <button key={String(j)} onClick={() => { setJournal(j); setCleOuverte(null); }} aria-pressed={journal === j}
+          style={{ padding: "5px 11px", borderRadius: 8, fontFamily: "inherit", fontSize: 11.5,
+            fontWeight: 600, cursor: "pointer",
+            border: journal === j ? "1px solid var(--brand)" : "1px solid var(--border-input)",
+            background: journal === j ? "var(--brand-surface)" : "var(--bg-surface)",
+            color: journal === j ? "var(--brand)" : "var(--text-secondary)" }}>{label}</button>))}
+      <span className="mono" style={{ fontSize: 10, color: "var(--text-muted)" }}>
+        {journal ? (journalDe.demo ? t("données maquette") : journalDe.route) : ""}</span>
+    </div>);
+
+  if (sectionActive && journalDe && journal) {
+    const lignesRuns = tableau<RunOlivia>(runs.data).map((r) => ({ id: r.id, cells: [
+      <span key="m" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{r.missionCode ?? "—"}</span>,
+      <StatusChip key="s" mode={MODE_RUN(r.statut)}>{r.statut ?? "—"}</StatusChip>,
+      <span key="a" className="mono" style={{ fontSize: 11 }}>
+        {r.ancrageType ? `${r.ancrageType} · ${r.ancrageId ?? "—"}` : "—"}</span>,
+      <span key="r" className="mono" style={{ fontSize: 11 }}>{r.roleCode ?? "—"}</span>,
+      <span key="b" className="mono" style={{ fontSize: 11 }}>
+        {`${r.consomme?.etapes ?? 0}/${r.budget?.maxEtapes ?? "—"} ${t("étapes")} · ${r.consomme?.tokens ?? 0}/${r.budget?.maxCoutTokens ?? "—"} tok`}</span>,
+      <span key="p" className="mono" style={{ fontSize: 11 }}>{jour(r.createdAt) ?? "—"}</span>] }));
+    const lignesWf = tableau<InstanceWf>(instances.data).map((i) => ({ id: i.id, cells: [
+      <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{i.code ?? i.id}</span>,
+      <span key="t" className="mono" style={{ fontSize: 11 }}>{i.type ?? "—"}</span>,
+      <span key="s" className="mono" style={{ fontSize: 11 }}>{i.subjectRef ?? "—"}</span>,
+      t(i.currentStep ?? "—"),
+      <span key="v" className="mono" style={{ fontSize: 11 }}>{i.visas ?? "—"}</span>,
+      <StatusChip key="st" mode={MODE_WF(i.status)}>{i.status ?? "—"}</StatusChip>,
+      <span key="m" className="mono" style={{ fontSize: 11 }}>{jour(i.majAt) ?? "—"}</span>] }));
+    const lignes = sectionActive.id === "ia" ? lignesRuns : lignesWf;
+    return (
+      <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
+        onNavigate={onNavigate} t={t}
+        badges={{ journee: { n: 12 }, dossiers: { n: 48, sobre: true }, clients: { n: 214, sobre: true },
+          surveillance: { n: 5, alert: true } }} />}
+        header={<Ui2HeaderDossier nom={`${t("Paramétrage")} — ${t(journalDe.label)}`} initiales="JX"
+          identifiants={journalDe.demo ? t("données maquette") : `${t("source")} : ${journalDe.route}`}
+          puces={<StatusChip mode="neutral">{t("LECTURE SEULE")}</StatusChip>}
+          actions={<Ui2Bouton onClick={() => setJournal(false)}>{`← ${t(sectionActive.label)}`}</Ui2Bouton>} t={t} />}>
+        {pilules}
+        {sousPilules}
+        {lignes.length === 0 ? (
+          <div style={{ fontSize: 12, color: "var(--text-muted)", background: "var(--bg-surface)",
+            border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: "14px 16px" }}>
+            {t(journalDe.vide)}</div>
+        ) : sectionActive.id === "ia" ? (
+          <EntityList grid="190px 130px 1fr 130px 220px 110px" onOpen={() => {}}
+            entetes={[t("Mission"), t("Statut"), t("Ancrage"), t("Rôle"), t("Consommé / budget"), t("Créé le")]}
+            lignes={lignes} />
+        ) : (
+          <EntityList grid="150px 110px 120px 1fr 80px 130px 110px" onOpen={() => {}}
+            entetes={[t("Code"), t("Type"), t("Sujet"), t("Étape courante"), t("Visas"), t("Statut"), t("Mis à jour")]}
+            lignes={lignes} />
+        )}
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          {sectionActive.id === "ia"
+            ? t("Le journal des runs (R266) : chaque run porte sa mission, son ancrage, son budget FIGÉ à la création (R262) et son statut. Un run en PAUSE_PORTE attend une décision humaine (R263) — elle se prend dans le run, jamais depuis cette liste : la vue ne décide rien (R44).")
+            : t("Les instances en cours du moteur de workflow — définitions à l'onglet Workflow, exécution ici. L'étape courante et le compte de visas sont ceux du moteur (R13/R15) ; aucune circulation ne se déclenche depuis cette liste, elle se prend dans le dossier.")}</div>
+      </Ui2Shell>);
+  }
+
   if (sectionActive) {
     return (
       <Ui2Shell nav={<Ui2Nav active={active} user="Sofia Berger" role="Compliance Officer"
@@ -180,6 +306,7 @@ export function ParamSandbox({ active, onNavigate }: { active: Ui2NavId; onNavig
           puces={<StatusChip mode="neutral">{t("GOUVERNÉ")}</StatusChip>}
           actions={<Ui2Bouton primaire onClick={() => setSection("sandbox")}>{t("Simuler dans le bac à sable →")}</Ui2Bouton>} t={t} />}>
         {pilules}
+        {sousPilules}
         <EntityList grid="200px 1.5fr 1fr 140px" onOpen={(id) => setCleOuverte(id)}
           entetes={[t("Clé"), t("Description"), t("Valeur en vigueur"), t("Version · effet")]}
           lignes={sectionActive.seed.map((c) => ({ id: c.cle, cells: [

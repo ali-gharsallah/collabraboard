@@ -591,7 +591,12 @@ export class KycService {
     if (scope) where.clientId = { in: scope };
     if (statut) where.status = statut;
     const rows = await this.prisma.kycFile.findMany({ where, orderBy: { createdAt: "desc" }, take: 500 });
-    return rows.map((k: any) => ({ code: k.code, clientId: k.clientId, status: k.status, riskLevel: k.riskLevel, createdAt: k.createdAt }));
+    // V2-M47 : l'`id` du dossier voyage avec la ligne. Sans lui, un écran qui liste les dossiers
+    // ne peut appeler AUCUNE route qui prend le kycFileId — inférence (checklist d'exigences,
+    // R-INF) et pré-revue IA (R121) étaient inatteignables depuis la liste, faute d'identifiant.
+    // Ajout purement additif (expand, R334) : aucun consommateur existant ne lit moins qu'avant.
+    return rows.map((k: any) => ({ id: k.id, code: k.code, clientId: k.clientId, status: k.status,
+      riskLevel: k.riskLevel, createdAt: k.createdAt }));
   }
 
   // T2/HO-05 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de MON périmètre.

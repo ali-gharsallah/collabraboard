@@ -68,14 +68,24 @@ const SEED_XB = { version: "2026-07-15 · synchronisée", entrees: [
   { jurisdiction: "Suède", regime: "Libre prestation (UE) — notification faite", etat: "ok" },
 ] };
 
+// V2-M47 — formes RÉELLES des deux moteurs (relevées sur API vivante, cf. AUDIT-CABLAGE-V2).
+type LedgerV2 = { profil?: string; statuts?: { id: string; satisfied: boolean; satisfiedBy?: string;
+  derivedBy?: string }[]; gap?: { id: string; severity?: string; basis?: string }[] } | null;
+type PrerevueV2 = { bloquant?: boolean; ouverts?: { idx?: number; libelle?: string; point?: string }[] } | null;
+
 export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
-  const [onglet, setOnglet] = useState<"dossier" | "pieces" | "corroboration" | "crossborder">("dossier");
+  const [onglet, setOnglet] = useState<"dossier" | "pieces" | "corroboration" | "crossborder"
+    | "exigences" | "prerevue">("dossier");
   // V2-M1 : le dossier RÉEL si l'API répond (premier de /v1/kyc puis /v1/kyc/:code) — sinon
   // la maquette, source signalée. Les invariants (1re section incomplète, bouton jamais
   // grisé) valent pour les DEUX sources.
-  const liste = useApiOrSeed<{ code: string; clientId?: string }[]>("/v1/kyc", kycSeed as never);
+  const liste = useApiOrSeed<{ id?: string; code: string; clientId?: string }[]>("/v1/kyc", kycSeed as never);
   const code = Array.isArray(liste.data) && liste.data[0]?.code ? liste.data[0].code : "";
+  // V2-M47 : l'`id` technique du dossier. La liste ne le portait pas — les deux moteurs qui le
+  // prennent en paramètre (checklist d'exigences, pré-revue IA) étaient donc INATTEIGNABLES
+  // depuis l'écran, non par manque d'écran mais par manque d'identifiant.
+  const kycId = (Array.isArray(liste.data) ? liste.data : []).find((k) => k.id)?.id ?? "";
   const detail = useApiOrSeed<KycDetail>(code ? `/v1/kyc/${code}` : "/v1/kyc/__hors-api__", null);
   const reel = !detail.isDemo && detail.data?.sections?.length ? detail.data : null;
   const sections: SectionEtat[] = reel
@@ -94,6 +104,14 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
     : MANQUES;
   const pieces = useApiOrSeed<Piece[]>(
     reel?.clientId ? `/v1/ged/documents?clientId=${reel.clientId}` : "/v1/ged/documents", SEED_PIECES);
+  // Checklist d'exigences (module d'inférence) : le ledger DIT ce qui est exigé, ce qui est
+  // satisfait et PAR QUOI. Aucun repli maquette : si le moteur refuse (aucun profil pour la
+  // paire entité × juridiction), l'écran affiche SON message, il n'invente pas d'exigences.
+  const ledger = useApiOrSeed<LedgerV2>(
+    kycId ? `/v1/inference/${kycId}/ledger` : "/v1/inference/__hors-api__", null as never);
+  // Pré-revue IA (R121-R123) : les points OUVERTS et le caractère bloquant. L'IA PROPOSE (R44).
+  const prerevue = useApiOrSeed<PrerevueV2>(
+    kycId ? `/v1/ia/prerevue/kyc/${kycId}/traitement` : "/v1/ia/prerevue/__hors-api__", null as never);
   const matrice = useApiOrSeed<typeof SEED_MATRICE>("/v1/doc-matrix/en-vigueur", SEED_MATRICE);
   const matriceReelle = matriceDocumentaire(matrice.data);
   const xb = useApiOrSeed<typeof SEED_XB>("/v1/crossborder/matrice", SEED_XB);
@@ -158,6 +176,8 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
         {pilule("pieces", `${t("Pièces (GED)")} · ${Array.isArray(pieces.data) ? pieces.data.length : 0}`)}
         {pilule("corroboration", t("Corroboration"))}
         {pilule("crossborder", t("Cross-border"))}
+        {pilule("exigences", t("Exigences"))}
+        {pilule("prerevue", t("Pré-revue IA"))}
       </div>
       {onglet === "pieces" && (<>
         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
@@ -214,6 +234,75 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
           {t("La matrice cross-border est synchronisée par le port et versionnée (R453) ; tout acte est évalué contre la version en vigueur à sa date (R48).")}</div>
       </>)}
+      {/* V2-M47 — CHECKLIST D'EXIGENCES (module d'inférence). Le ledger est une VUE : il dit ce
+          qui est exigé, ce qui est satisfait, et PAR QUOI (`satisfiedBy` = la preuve, `derivedBy`
+          = le chemin d'inférence). R44 : il ne décide rien, il explique. Quand aucun profil ne
+          couvre la paire (type d'entité, juridiction), le moteur REFUSE — et l'écran affiche son
+          refus mot pour mot, parce qu'inventer des exigences par défaut serait pire que rien. */}
+      {onglet === "exigences" && (<>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{t("Exigences du dossier")}</span>
+          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+            {ledger.data?.profil ? `${t("profil")} ${ledger.data.profil}` : t("aucun profil résolu")}</span>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
+          {kycId ? t("source : /v1/inference/:kycId/ledger — lecture pure (R44)")
+            : t("aucun dossier identifié : la liste ne porte pas d'id")}</div>
+        {!ledger.data?.statuts?.length ? (
+          <div style={{ background: "var(--warn-card)", border: "1px solid var(--warn-card-border)",
+            borderRadius: "var(--r-card)", padding: "12px 14px", fontSize: 12, color: "var(--text-body)" }}>
+            {/* FE-04 : quand le moteur REFUSE, c'est SON message qui s'affiche — il nomme la paire
+                (type d'entité, juridiction) non couverte, ce qu'aucun texte d'écran ne saurait dire. */}
+            {ledger.refus ? (<>
+              <span className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: "var(--warn-text)" }}>
+                {`${t("refus du moteur")} · ${ledger.refus.status}`}</span>
+              <div style={{ marginTop: 5 }}>{ledger.refus.message}</div>
+              <div style={{ marginTop: 5, fontSize: 10.5, color: "var(--text-muted)" }}>
+                {t("Publier le profil au référentiel lève ce refus — l'écran n'invente aucune exigence par défaut.")}</div>
+            </>) : t("Le moteur ne rend aucune exigence pour ce dossier. Le référentiel de profils (type d'entité × juridiction) doit être publié — l'écran n'en fabrique pas.")}
+          </div>
+        ) : (<>
+          <EntityList grid="1.2fr 120px 1.4fr" onOpen={() => setOnglet("dossier")}
+            entetes={[t("Exigence"), t("État"), t("Satisfaite par / déduite de")]}
+            lignes={ledger.data.statuts.map((r) => ({ id: r.id, cells: [
+              <span key="i" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{r.id}</span>,
+              <StatusChip key="s" mode={r.satisfied ? "ok" : "warn"}>
+                {t(r.satisfied ? "SATISFAITE" : "MANQUANTE")}</StatusChip>,
+              <span key="p" style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                {r.satisfiedBy ?? r.derivedBy ?? t("—")}</span>] }))} />
+          {!!ledger.data.gap?.length && (
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+              {`${ledger.data.gap.length} ${t("exigence(s) non satisfaite(s) — bloquantes d'abord")} · `
+                + ledger.data.gap.slice(0, 4).map((g) => `${g.id}${g.basis ? ` (${g.basis})` : ""}`).join(" · ")}</div>)}
+        </>)}
+      </>)}
+
+      {/* V2-M47 — PRÉ-REVUE IA (R121-R123). L'IA PROPOSE des points à traiter ; elle ne vise rien
+          et ne clôt rien (R44). Le caractère BLOQUANT est un paramètre gouverné (R123) : l'écran
+          l'affiche, il ne le décide pas. */}
+      {onglet === "prerevue" && (<>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{t("Pré-revue IA")}</span>
+          {prerevue.data?.bloquant !== undefined && (
+            <StatusChip mode={prerevue.data.bloquant ? "alert" : "neutral"}>
+              {t(prerevue.data.bloquant ? "TRAITEMENT EXIGÉ AVANT VISA" : "NON BLOQUANTE")}</StatusChip>)}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
+          {kycId ? t("source : /v1/ia/prerevue/kyc/:id/traitement — l'IA propose, l'humain décide (R44)")
+            : t("aucun dossier identifié : la liste ne porte pas d'id")}</div>
+        {!prerevue.data?.ouverts?.length ? (
+          <div style={{ fontSize: 12, color: "var(--text-body)" }}>
+            {t("Aucun point de pré-revue ouvert sur ce dossier.")}</div>
+        ) : (
+          <EntityList grid="80px 1fr" onOpen={() => setOnglet("dossier")}
+            entetes={[t("Point"), t("Ce que l'IA signale")]}
+            lignes={prerevue.data.ouverts.map((o, i) => ({ id: String(o.idx ?? i), cells: [
+              <span key="n" className="mono">{String(o.idx ?? i + 1)}</span>,
+              t(o.libelle ?? o.point ?? "—")] }))} />)}
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          {t("Un point de pré-revue est une PROPOSITION : le traiter est un acte humain, tracé. Le port IA est déclaré et sa résidence gouvernée (R163) ; sans port configuré, le moteur le dit et rien n'est inventé.")}</div>
+      </>)}
+
       {onglet === "dossier" && (
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
         <SectionChecklist sections={sections} courante={sectionActive} onOuvrir={setSection} t={t}

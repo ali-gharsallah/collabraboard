@@ -1783,3 +1783,48 @@ re-soumis ici.
   est idempotente, donc le format interne traverse inchangé. Garde **SC-0B** (les deux formats),
   écrite ROUGE avant la correction. Démonstration : hit score 100 sur « Nordwind Handel SA ».
   Gate golden du matcher inchangé (R405–R407, R410). Statut : **FERMÉ**.
+
+### E-V2-13 — Un refus du moteur en LECTURE n'atteignait jamais l'écran — **SOLDÉ** (V2-M47)
+
+`apiGetSourced` (couche transverse, traversée par TOUS les écrans) attrapait toute réponse
+non-2xx dans un `catch` muet et retombait sur le seed. Un 404 **motivé** du moteur devenait donc
+un écran silencieux.
+
+Trouvé en confrontant le nouvel onglet Exigences à l'API vivante :
+
+```
+GET /v1/inference/<kycId>/ledger
+  → 404  P-L7-1 : aucun CompletionProfile pour (PP, CH) — ni profil exact, ni repli « * »
+  écran → seed vide, aucun message
+```
+
+Le message perdu était **la seule information exploitable** : il nomme la paire
+(type d'entité, juridiction) qu'il faut publier au référentiel. Sans lui, l'utilisateur voit un
+onglet vide et n'a aucun moyen de savoir quoi faire.
+
+**Soldé** : `apiGetSourced` remonte `refus: { code, status, message }` (champ ADDITIF — aucun
+appelant existant modifié), `useApiOrSeed` le propage, l'onglet l'affiche mot pour mot (FE-04).
+Gardes **FE-04b** (le message arrive) et **FE-04c** (une panne réseau n'invente pas de refus).
+
+**Portée** : la correction est dans la couche transverse — tout écran qui veut afficher un refus
+de lecture peut désormais le faire. Les écrans existants ne changent pas de comportement tant
+qu'ils ne lisent pas `refus`. Les recâbler un par un est un travail à part, non fait ici.
+
+### E-V2-14 — `missionsActives` : l'interrupteur exigé par SW-18 n'a aucune clé gouvernée (V2-M47)
+
+**OUVERT** — consigné, non corrigé (hors périmètre du lot).
+
+`swarm.module.ts:248` lit `settings.missionsActives` directement dans les settings du tenant.
+Le défaut `[]` est juste (SW-18/B.5 : la v2 est ÉTEINTE tant qu'on ne l'allume pas). Ce qui
+manque est l'**interrupteur** : `POST /v1/parametres/valeur/missionsActives` répond
+« R125 : clé inconnue du registre », et le registre gouverné compte 251 clés dont **aucune** ne
+concerne les missions, les runs ou Olivia. Le seul chemin d'activation aujourd'hui est un
+`UPDATE` direct sur `tenants.settings` — précisément ce que R125-R128 existent pour empêcher.
+
+**Conséquence mesurée** : `/v1/olivia/runs` répond `[]` et le restera ; la forme des lignes n'a
+donc pas pu être relevée sur l'API vivante en V2-M47.
+
+**Piste (à arbitrer, pas décidée)** : déclarer `olivia.missionsActives` au registre R125 et faire
+lire le moteur **à date** (R29), comme la résolution d'agent (SW-01/SW-02) le fait déjà — pour
+qu'une désactivation ne réécrive pas le contexte des runs passés. Détail :
+`docs/notes/missions-olivia-sans-cle-gouvernee.md`.

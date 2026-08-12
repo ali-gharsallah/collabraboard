@@ -658,12 +658,14 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
       // toute capacité non livrée DIT ce qui lui manque — pas de statut sans motif.
       if (c.statut !== "livre") expect((c.motif ?? "").length).toBeGreaterThan(10);
     }
-    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17) : 63 livrées, 10 amputées,
-    // 13 absentes — Cross-Border (V2-M29) puis AML Gap et Référentiel AML (V2-M32). Le registre ne prétend
+    // L'état réel est ASSUMÉ, vérifié écran par écran (audit V2-M17). Le registre ne prétend
     // jamais mieux que l'état du code : ces trois nombres se corrigent par une CONSTRUCTION.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(63);
-    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(13);
+    // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
+    // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
+    // lui manque encore le référentiel de profils, pas l'écran.
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(66);
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(11);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(9);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -918,5 +920,60 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     }
     expect(definitions).toBe(1);
     expect(emplois).toBeGreaterThanOrEqual(2);
+  });
+
+  // ── V2-M47 : les quatre capacités v1 dont l'ONGLET DE DESTINATION n'existait pas ──────────
+  // `capacites.ts` les portait honnêtement en « absent » avec pour motif « onglet non
+  // construit ». Les construire ferme l'écart ; ces quatre gardes vérifient qu'il reste fermé.
+
+  it("U2-62 V2-M47 DossierKyc : l'onglet Exigences existe, et il n'INVENTE aucune exigence", () => {
+    render(<DossierKyc active="kyc" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Exigences" }));
+    // Sans API, le ledger ne rend rien : l'écran DIT que le référentiel doit être publié.
+    // C'est le contraire d'une checklist par défaut — inventer des exigences serait pire que rien.
+    expect(screen.getByText(/le moteur ne rend aucune exigence/i)).toBeTruthy();
+    expect(screen.getByText(/n'en fabrique pas/i)).toBeTruthy();
+    // et aucune puce SATISFAITE ne peut apparaître sans réponse du moteur
+    expect(screen.queryByText("SATISFAITE")).toBeNull();
+  });
+
+  it("U2-63 V2-M47 DossierKyc : l'onglet Pré-revue IA nomme sa source et rappelle que l'IA PROPOSE (R44)", () => {
+    render(<DossierKyc active="kyc" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Pré-revue IA" }));
+    expect(screen.getByText(/PROPOSITION/)).toBeTruthy();
+    expect(screen.getByText(/le traiter est un acte humain/i)).toBeTruthy();
+    // aucun visa, aucune clôture depuis cet onglet
+    expect(screen.queryByRole("button", { name: /Viser|Clôturer/ })).toBeNull();
+  });
+
+  it("U2-64 V2-M47 Paramétrage · IA : le journal des runs porte le budget FIGÉ et la porte humaine", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "IA" }));
+    expect(screen.getByText("olivia.gouvernance.curseur")).toBeTruthy();   // les clés d'abord
+    fireEvent.click(screen.getByRole("button", { name: "Runs Olivia" }));
+    // les NOMS sont ceux du moteur (missionCode, statuts de la machine R260) — pas des libellés d'écran
+    expect(screen.getByText("PREREVUE_DOSSIER")).toBeTruthy();
+    expect(screen.getByText("PAUSE_PORTE")).toBeTruthy();
+    expect(screen.getByText(/étapes · 18400\/120000 tok/)).toBeTruthy();   // consommé / budget figé (R262)
+    expect(screen.getByText(/elle se prend dans le run, jamais depuis cette liste/)).toBeTruthy();
+    expect(screen.getByText("LECTURE SEULE")).toBeTruthy();
+  });
+
+  it("U2-65 V2-M47 Paramétrage · Workflow : les définitions ET les instances en cours, sans circulation", () => {
+    render(<ParamSandbox active="param" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Workflow" }));
+    expect(screen.getByText("workflow.WF-KYC-03")).toBeTruthy();           // définitions
+    fireEvent.click(screen.getByRole("button", { name: "Instances en cours" }));
+    expect(screen.getByText("KYC-2026-0142")).toBeTruthy();
+    expect(screen.getByText("KYC:CDD")).toBeTruthy();                      // type du moteur
+    expect(screen.getByText("1/2")).toBeTruthy();                          // compte de visas du moteur (R13/R15)
+    expect(screen.getByText(/aucune circulation ne se déclenche depuis cette liste/)).toBeTruthy();
+  });
+
+  it("U2-66 V2-M47 registre : plus aucune capacité « absent » ne s'excuse d'un onglet non construit", () => {
+    // La garde qui empêche la régression de ce lot : si un onglet est déclaré comme destination
+    // d'une capacité et que le motif d'absence est « onglet non construit », l'écart est ouvert.
+    const restants = CAPACITES.filter((c) => c.statut === "absent" && /onglet de destination non construit/.test(c.motif ?? ""));
+    expect(restants.map((c) => c.id)).toEqual([]);
   });
 });

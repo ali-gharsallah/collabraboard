@@ -63,7 +63,16 @@ const zlib = require("zlib");
 // †CROSSBORDER ne devrait jamais télécharger cet écran. Le prochain lot vertical passera donc
 // par un chargement PARESSEUX par module et un compartiment borné dans cette garde — même
 // doctrine que les packs de langue et le globe — et non par une nouvelle relève.
-const BUDGET_TOTAL_KB = 310;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 310 → 315 (V2-M47, 12.08.2026) : les QUATRE capacités v1 dont l'onglet de destination
+// n'existait pas — Exigences et Pré-revue IA au dossier KYC, Runs Olivia et Instances en cours au
+// Paramétrage — plus la propagation du message de refus du moteur en lecture (FE-04b). Mesure
+// 308,1 avant, 310,8 après : +2,7 kB gz pour quatre écarts fermés. Relève de 5 kB seulement, et
+// pas de 10 : les NEUF verticaux restants (PMS, Custody & TA, FX, Mobile, Finance Islamique,
+// Legal, OpRisk, les deux CPSI) ne doivent PAS passer par une relève — l'arbitrage écrit à la
+// relève précédente tient toujours : chargement PARESSEUX par module licencié et compartiment
+// borné dans cette garde. Une marge courte est ici volontaire — elle force cette conversation
+// au prochain lot vertical au lieu de la reporter.
+const BUDGET_TOTAL_KB = 315;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
