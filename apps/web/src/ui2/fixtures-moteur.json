@@ -1,0 +1,583 @@
+{
+ "/v1/crossborder/exposition": {
+  "parJuridiction": [
+   {
+    "juridiction": "CH",
+    "clients": 1,
+    "aum": null,
+    "voyages": 0,
+    "actesDistants": 0,
+    "derogations": 0,
+    "preuvesActives": 0,
+    "certifications": 0
+   },
+   {
+    "juridiction": "DE",
+    "clients": 1,
+    "aum": null,
+    "voyages": 0,
+    "actesDistants": 0,
+    "derogations": 0,
+    "preuvesActives": 0,
+    "certifications": 0
+   },
+   {
+    "juridiction": "SG",
+    "clients": 1,
+    "aum": null,
+    "voyages": 0,
+    "actesDistants": 0,
+    "derogations": 0,
+    "preuvesActives": 0,
+    "certifications": 0
+   }
+  ],
+  "calculeLe": "2026-08-12T05:31:30.842Z"
+ },
+ "/v1/crossborder/reporting": {
+  "parPays": {}
+ },
+ "/v1/crossborder/derogations": {
+  "lignes": [],
+  "calculeLe": "2026-08-12T05:31:30.857Z"
+ },
+ "/v1/crossborder/actes": {
+  "lignes": [],
+  "calculeLe": "2026-08-12T05:31:30.864Z"
+ },
+ "/v1/crossborder/reverse-solicitation": {
+  "preuves": [],
+  "localisations": [],
+  "calculeLe": "2026-08-12T05:31:30.874Z"
+ },
+ "/v1/kyc": [
+  {
+   "code": "KYC-2026-DE-0001-R1",
+   "clientId": "58cfd770-8451-4740-b919-56aaf0acc93f",
+   "status": "SUSPENDED",
+   "riskLevel": "LOW",
+   "createdAt": "2026-08-12T05:24:25.848Z"
+  },
+  {
+   "code": "KYC-2026-CH-0001-R1",
+   "clientId": "a521ee5d-5534-4843-a7cc-87bbb644dba3",
+   "status": "IN_PROGRESS",
+   "riskLevel": "LOW",
+   "createdAt": "2026-08-12T05:24:25.282Z"
+  }
+ ],
+ "/v1/kyc/KYC-2026-DE-0001-R1": {
+  "id": "fcb9e9c2-be5f-4848-a6cc-f16c2295ed4c",
+  "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+  "clientId": "58cfd770-8451-4740-b919-56aaf0acc93f",
+  "code": "KYC-2026-DE-0001-R1",
+  "year": 2026,
+  "countryCode": "DE",
+  "sequence": 1,
+  "revision": 1,
+  "previousKycId": null,
+  "workflow": "SDD",
+  "riskScore": 10,
+  "riskLevel": "LOW",
+  "status": "SUSPENDED",
+  "createdBy": "ca7acc2c-5920-47d5-ba15-dcd4523cf2ad",
+  "validatedBy": null,
+  "validatedAt": null,
+  "createdAt": "2026-08-12T05:24:25.848Z",
+  "handoffPhase": 0,
+  "version": 1,
+  "restrictions": {
+   "entrees": false,
+   "sorties": false
+  },
+  "lectureSeule": false,
+  "sections": [
+   {
+    "id": "af8d28c6-5daf-4d07-8bc7-f0b1f91ace84",
+    "kycFileId": "fcb9e9c2-be5f-4848-a6cc-f16c2295ed4c",
+    "code": "IDENTITY",
+    "label": "Identité & relation",
+    "orderIndex": 0,
+    "questions": [
+     {
+      "id": "99202f6a-1119-4073-9c70-7bd4e641ef61",
+      "sectionId": "af8d28c6-5daf-4d07-8bc7-f0b1f91ace84",
+      "code": "IDE-Q1",
+      "label": "Identité du titulaire vérifiée (document officiel)",
+      "answer": null,
+      "answeredBy": null,
+      "answeredAt": null,
+      "right": "VIEW"
+     },
+     {
+      "id": "1b566569-8767-42df-8888-ba06e95d8e2b",
+      "sectionId": "af8d28c6-5daf-4d07-8bc7-f0b1f91ace84",
+      "code": "IDE-Q2",
+      "label": "Nationalité(s) et résidence(s) fiscale(s)",
+      "answer": null,
+      "answeredBy": null,
+      "answeredAt": null,
+      "right": "VIEW"
+     },
+     {
+      "id": "642a1ba4-5f1f-40e7-95e2-d8e7c0ec75d4",
+      "sectionId": "af8d28c6-5daf-4d07-8bc7-f0b1f91ace84",
+      "code": "IDE-Q3",
+      "label": "Statut PEP (déclaration)",
+      "answer": null,
+      "answeredBy": null,
+      "answeredAt": null,
+      "right": "EDIT"
+     }
+    ]
+   },
+   {
+    "id": "9428f375-0a1a-4ade-a240-ef3454beff69",
+    "kycFileId": "fcb9e9c2-be5f-4848-a6cc-f16c2295ed4c",
+    "code": "SOF",
+    "label": "Origine des fonds",
+    "orderIndex": 1,
+    "questions": [
+     {
+      "id": "b1a2ffea-635d-489f-be39-4ca3f28242f0",
+      "sectionId": "9428f375-0a1a-4ade-a240-ef3454beff69",
+      "code": "SOF-Q1",
+      "label": "Source des fonds documentée",
+      "answer": null,
+      "answeredBy": null,
+      "answeredAt": null,
+      "right": "VIEW"
+     }
+    ]
+   }
+  ],
+  "visas": [
+   {
+    "id": "21b58928-d493-4271-97ad-46e6c91af7c1",
+    "kycFileId": "fcb9e9c2-be5f-4848-a6cc-f16c2295ed4c",
+    "sectionCode": "IDENTITY",
+    "requiredRole": "CO",
+    "validateur": null,
+    "status": "PENDING",
+    "signedBy": null,
+    "signedAt": null,
+    "verdict": null,
+    "message": null,
+    "version": 0
+   }
+  ]
+ },
+ "/v1/doc-matrix/en-vigueur": {
+  "id": "bed827b4-a200-4a7c-8071-a3b7933afa76",
+  "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+  "version": 1,
+  "enVigueurLe": "2026-01-01T00:00:00.000Z",
+  "contenu": {
+   "exigences": {
+    "PP": {
+     "compte": [],
+     "entite": [
+      {
+       "groupe": "preuve_identite",
+       "parJuridiction": {
+        "*": "PASSEPORT",
+        "CH": "PASSEPORT_CH"
+       }
+      }
+     ],
+     "personne_liee": [
+      "PASSEPORT"
+     ]
+    },
+    "SA": {
+     "compte": [],
+     "entite": [
+      "REGISTRE_COMMERCE",
+      "STATUTS"
+     ],
+     "personne_liee": [
+      "PASSEPORT"
+     ]
+    }
+   }
+  },
+  "publiePar": "fedc0fbf-465d-43f2-8082-6a33e0439633",
+  "publieLe": "2026-08-12T05:24:25.807Z"
+ },
+ "/v1/onboarding": [
+  {
+   "id": "da25eda6-4aac-44d4-842e-b6b45be80d29",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "prospectNom": "Famille Keller (PP)",
+   "rmId": null,
+   "etape": "PROSPECT",
+   "etapeDepuis": "2026-08-12T05:24:24.952Z",
+   "slaSignale": false,
+   "kycFileId": null,
+   "motifTerminal": null,
+   "terminePar": null,
+   "createdAt": "2026-08-12T05:24:24.953Z"
+  },
+  {
+   "id": "e6cf902d-f18c-42e9-a383-5aa3ae64d714",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "prospectNom": "Nordwind Handel SA",
+   "rmId": null,
+   "etape": "PROSPECT",
+   "etapeDepuis": "2026-08-12T05:24:24.978Z",
+   "slaSignale": false,
+   "kycFileId": null,
+   "motifTerminal": null,
+   "terminePar": null,
+   "createdAt": "2026-08-12T05:24:24.979Z"
+  },
+  {
+   "id": "eb27ac59-91c8-412a-9973-41e14fbe1faa",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "prospectNom": "Meridian Trust",
+   "rmId": null,
+   "etape": "PROSPECT",
+   "etapeDepuis": "2026-08-12T05:24:24.998Z",
+   "slaSignale": false,
+   "kycFileId": null,
+   "motifTerminal": null,
+   "terminePar": null,
+   "createdAt": "2026-08-12T05:24:24.999Z"
+  }
+ ],
+ "/v1/clients": {
+  "data": [
+   {
+    "id": "4a5acc79-29c9-46de-bb8a-6b137649b9d2",
+    "name": "Meridian Trust",
+    "structure": "TRUST",
+    "country": "SG",
+    "riskLevel": "MEDIUM",
+    "corrLang": "FR"
+   },
+   {
+    "id": "58cfd770-8451-4740-b919-56aaf0acc93f",
+    "name": "Nordwind Handel SA",
+    "structure": "SA",
+    "country": "DE",
+    "riskLevel": "MEDIUM",
+    "corrLang": "FR"
+   },
+   {
+    "id": "a521ee5d-5534-4843-a7cc-87bbb644dba3",
+    "name": "Famille Keller",
+    "structure": "PP",
+    "country": "CH",
+    "riskLevel": "MEDIUM",
+    "corrLang": "FR"
+   }
+  ],
+  "next_cursor": null
+ },
+ "/v1/decisions/corbeille": {
+  "tri": "SLA",
+  "items": []
+ },
+ "/v1/parametres/registre": [
+  {
+   "cle": "cumulRolesAutorise",
+   "type": "bool",
+   "defaut": false,
+   "regle": "R31",
+   "requis": true,
+   "description": "Une personne peut-elle cumuler plusieurs rôles sur un même client ?"
+  },
+  {
+   "cle": "depepDelaiJours",
+   "type": "int",
+   "defaut": 365,
+   "regle": "R33",
+   "requis": false,
+   "description": "Délai de revue après perte de statut PEP (grandfathering)"
+  },
+  {
+   "cle": "goldenRecordMapping",
+   "type": "json",
+   "defaut": [
+    "riskLevel"
+   ],
+   "regle": "R104",
+   "requis": false,
+   "description": "Champs propagés du KYC validé vers le client (liste fermée)"
+  }
+ ],
+ "/v1/bi/annuaire": [
+  {
+   "code": "clients_par_pays",
+   "source": "clients",
+   "dimensions": [
+    "country",
+    "riskLevel",
+    "structure"
+   ],
+   "mesures": [
+    "n"
+   ],
+   "sensibilite": "NORMALE"
+  },
+  {
+   "code": "kyc_par_statut",
+   "source": "kyc_files",
+   "dimensions": [
+    "status",
+    "workflow"
+   ],
+   "mesures": [
+    "n"
+   ],
+   "sensibilite": "NORMALE"
+  },
+  {
+   "code": "tx_par_devise",
+   "source": "transactions",
+   "dimensions": [
+    "devise",
+    "sens",
+    "type"
+   ],
+   "mesures": [
+    "n",
+    "volume"
+   ],
+   "sensibilite": "NORMALE"
+  }
+ ],
+ "/v1/offboarding": [
+  {
+   "id": "6d93ba4e-4fab-4fde-b091-3fa70eda7432",
+   "clientId": "4a5acc79-29c9-46de-bb8a-6b137649b9d2",
+   "type": "EXIT_COMPLIANCE",
+   "statut": "CLOTURE_DEMANDEE",
+   "createdAt": "2026-08-12T05:24:26.957Z",
+   "clotureEffectiveAt": null,
+   "retentionJusqua": null
+  }
+ ],
+ "/v1/aml/scenarios": [
+  {
+   "code": "SF-01",
+   "ruleRef": "R340",
+   "bloc": 50,
+   "blocTitre": "Screening en flux",
+   "famille": "SF",
+   "titre": "Contrepartie PEP en flux",
+   "desc": "Screening PEP de la contrepartie de chaque transaction entrante/sortante, pas seulement du client à l'onboarding.",
+   "niveau": 2,
+   "kind": "detection",
+   "blocking": false,
+   "signal": "PEP_COUNTERPARTY",
+   "params": [
+    {
+     "key": "seuil_match_pep_flux",
+     "label": "Score de similarité minimal",
+     "default": 78
+    },
+    {
+     "key": "listes_pep",
+     "label": "Fournisseurs de listes PEP actives",
+     "default": "tenant"
+    }
+   ],
+   "gherkin": {
+    "given": "Un virement entrant de CHF 180k provient d'une contrepartie non cliente matchant une liste PEP (ministre en fonction, pays tiers).",
+    "when": "Le screening en flux (nom + pays + date de naissance si dispo) matche la contrepartie avec un score >= seuil tenant.",
+    "then": "Signal PEP_COUNTERPARTY (Niveau 2) — alerte CO avec fiche de match, aucune contamination du statut client sans revue humaine (R44)."
+   },
+   "version": 1,
+   "i18n": {
+    "en": {
+     "nom": "PEP counterparty (in-flow)",
+     "desc": "PEP screening of each transaction counterparty, inbound and outbound — not only the client at onboarding."
+    },
+    "de": {
+     "nom": "PEP-Gegenpartei im Zahlungsfluss",
+     "desc": "PEP-Screening der Gegenpartei jeder ein- und ausgehenden Transaktion – nicht nur des Kunden bei Aufnahme der Geschäftsbeziehung."
+    },
+    "it": {
+     "nom": "Controparte PEP nei flussi",
+     "desc": "Screening PEP della controparte di ogni transazione in entrata e in uscita — non solo del cliente all'apertura della relazione."
+    },
+    "ar": {
+     "nom": "الطرف المقابل من فئة الأشخاص المعرّضين سياسيًا (في التدفق)",
+     "desc": "فرز الأشخاص المعرّضين سياسيًا للطرف المقابل في كل معاملة واردة/صادرة، وليس فقط للعميل عند بدء العلاقة."
+    }
+   }
+  },
+  {
+   "code": "SF-02",
+   "ruleRef": "R341",
+   "bloc": 50,
+   "blocTitre": "Screening en flux",
+   "famille": "SF",
+   "titre": "Adverse media sur contrepartie",
+   "desc": "Presse négative (blanchiment, fraude, corruption) sur la contrepartie d'une transaction au moment du flux.",
+   "niveau": 2,
+   "kind": "detection",
+   "blocking": false,
+   "signal": "ADVERSE_COUNTERPARTY",
+   "params": [
+    {
+     "key": "rang_source_min",
+     "label": "Rang minimal de fiabilité de la source",
+     "default": 2
+    },
+    {
+     "key": "categories_am",
+     "label": "Catégories retenues (ML, fraude, corruption, TF)",
+     "default": "tenant"
+    }
+   ],
+   "gherkin": {
+    "given": "Une sortie de CHF 60k vise une société citée la veille dans une enquête pour corruption (source de rang 1).",
+    "when": "Le screening adverse media en flux matche la contrepartie avec une catégorie AML-pertinente et une source pondérée >= seuil.",
+    "then": "Signal ADVERSE_COUNTERPARTY (Niveau 2) — alerte avec extrait sourcé et daté ; l'humain qualifie."
+   },
+   "version": 1,
+   "i18n": {
+    "en": {
+     "nom": "Adverse media on counterparty",
+     "desc": "Negative news (money laundering, fraud, corruption) on the transaction counterparty at the time of the flow."
+    },
+    "de": {
+     "nom": "Adverse Media zur Gegenpartei",
+     "desc": "Negative Medienberichte (Geldwäscherei, Betrug, Korruption) über die Gegenpartei zum Zeitpunkt der Transaktion."
+    },
+    "it": {
+     "nom": "Adverse media sulla controparte",
+     "desc": "Notizie negative (riciclaggio, frode, corruzione) sulla controparte al momento del flusso."
+    },
+    "ar": {
+     "nom": "أخبار سلبية عن الطرف المقابل",
+     "desc": "تغطية إعلامية سلبية (غسل أموال، احتيال، فساد) عن الطرف المقابل لمعاملة وقت حدوث التدفق."
+    }
+   }
+  },
+  {
+   "code": "SF-03",
+   "ruleRef": "R342",
+   "bloc": 50,
+   "blocTitre": "Screening en flux",
+   "famille": "SF",
+   "titre": "Re-screening périodique (perpetual)",
+   "desc": "Re-screening automatique périodique de tout le stock clients + personnes liées (sanctions/PEP/adverse), différentiel uniquement.",
+   "niveau": 2,
+   "kind": "detection",
+   "blocking": false,
+   "signal": "SCREENING_DELTA",
+   "params": [
+    {
+     "key": "frequence_rescreen",
+     "label": "Fréquence du re-screening du stock (heures)",
+     "default": 24
+    },
+    {
+     "key": "scope_personnes_liees",
+     "label": "Inclure les personnes liées",
+     "default": true
+    }
+   ],
+   "gherkin": {
+    "given": "Le batch nocturne re-screene 5'000 clients ; un client existant apparaît nouvellement sur une liste PEP suite à une nomination.",
+    "when": "Le différentiel (nouveau hit vs dernier run) est détecté et rattaché au dossier.",
+    "then": "Événement screening.delta → ouverture automatique d'un Change of Circumstances typé SCREENING_DELTA, routé au rôle Compliance (registre CoC)."
+   },
+   "version": 1,
+   "i18n": {
+    "en": {
+     "nom": "Periodic re-screening (perpetual)",
+     "desc": "Automatic periodic re-screening of the entire client base and related parties (sanctions/PEP/adverse media), delta-only."
+    },
+    "de": {
+     "nom": "Periodisches Re-Screening (perpetual)",
+     "desc": "Automatisches periodisches Re-Screening des gesamten Kundenbestands inkl. verbundener Personen (Sanktionen/PEP/Adverse Media), nur Deltas."
+    },
+    "it": {
+     "nom": "Re-screening periodico (perpetuo)",
+     "desc": "Re-screening automatico periodico dell'intero portafoglio clienti e delle persone collegate (sanzioni/PEP/adverse media), solo differenziale."
+    },
+    "ar": {
+     "nom": "إعادة الفرز الدورية (مستمرة)",
+     "desc": "إعادة فرز آلية دورية لكامل قاعدة العملاء والأشخاص المرتبطين (عقوبات/أشخاص معرّضون سياسيًا/أخبار سلبية)، بالفروقات فقط."
+    }
+   }
+  }
+ ],
+ "/v1/aml/referentiel": {
+  "scenarios": [
+   {
+    "regle": "R189",
+    "type": "STRUCTURING",
+    "niveau": 2,
+    "libelle": "Structuring : fractionnement sous le seuil, même bénéficiaire",
+    "seuils": [
+     "amlStructuringAlertCount",
+     "amlStructuringSeuilChf",
+     "amlStructuringFenetreH"
+    ]
+   },
+   {
+    "regle": "R190",
+    "type": "CROSS_BORDER_CIRCULAR",
+    "niveau": 2,
+    "libelle": "Cross-border circular : même UBO, ≥N pays, fenêtre courte",
+    "seuils": [
+     "amlCrossBorderFenetreH",
+     "amlCrossBorderMinPays"
+    ]
+   },
+   {
+    "regle": "R191",
+    "type": "UNUSUAL_VELOCITY",
+    "niveau": 2,
+    "libelle": "Unusual velocity : réveil d'un compte dormant",
+    "seuils": [
+     "amlVelocityDormantMois",
+     "amlVelocityMultiplicateur"
+    ]
+   }
+  ],
+  "seuils": {
+   "structuringAlertCount": 5,
+   "structuringSeuilChf": 100000,
+   "structuringFenetreH": 48,
+   "crossBorderFenetreH": 48,
+   "crossBorderMinPays": 2,
+   "velocityDormantMois": 18,
+   "velocityMultiplicateur": 5,
+   "inOutFenetreH": 6,
+   "circularFenetreJours": 10,
+   "hriPays": [
+    "Iran",
+    "Syrie",
+    "Corée du Nord"
+   ],
+   "roundSeuilPct": 70,
+   "cashWirePct": 80,
+   "cashWireFenetreH": 24,
+   "counterpartyFacteurPct": 150,
+   "crsResidences": [
+    "France",
+    "Allemagne",
+    "Italie"
+   ],
+   "crsSeuilChf": 1000000,
+   "fiduciaireSeuilPct": 10,
+   "concentrationSeuilPct": 80,
+   "taxHavens": [
+    "Luxembourg",
+    "Jersey",
+    "Guernesey"
+   ],
+   "listesReglementaires": [
+    "OFAC",
+    "EU",
+    "UN"
+   ]
+  }
+ }
+}

@@ -11,6 +11,7 @@ import { FluxPanneau } from "./globe/FluxPanneau";
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { listeReglesAml } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
@@ -215,7 +216,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
         {ecran === "regles" && (<>
           <EntityList grid="110px 1.4fr 1fr 150px 110px" onOpen={() => onNavigate("param")}
             entetes={[t("Règle"), t("Scénario"), t("Seuils effectifs"), t("Version"), t("Alertes 12 m")]}
-            lignes={(Array.isArray(regles.data) ? regles.data : []).slice(0, 30).map((s) => ({
+            lignes={listeReglesAml(regles.data).slice(0, 30).map((s) => ({
               id: s.code, cells: [
                 <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{s.code}</span>,
                 t(s.libelle ?? ""),

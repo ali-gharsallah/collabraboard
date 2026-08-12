@@ -6,6 +6,7 @@ import { StatTile } from "./StatTile";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { listeVuesBi } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { BarreActes, type ActeMoteur } from "./acte-moteur";
 import { traduire, langue } from "../lib/i18n";
@@ -185,7 +186,15 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   const [periode, setPeriode] = useState<30 | 90 | 365>(30);
   const [onglet, setOnglet] = useState<"pilotage" | "direction" | "reglementaire" | "surmesure"
     | "registre" | "mros" | "veille" | "habilitations">("pilotage");
-  const reglementaire = useApiOrSeed<Obligation[]>("/v1/rapports/kpi", SEED_REGLEMENTAIRE);
+  // V2-M41 — CORRECTION D'UNE FAUSSE SOURCE. Cet onglet lisait `/v1/rapports/kpi`, qui répond
+  // 400 sans période puis, avec période, rend des INDICATEURS de conformité (screening,
+  // risk cases, MROS, charge) — pas un calendrier d'obligations. L'écran retombait donc
+  // TOUJOURS sur le seed en affichant « données maquette » : exact, mais il aurait affiché
+  // « source : /v1/rapports/kpi » le jour où la route aurait répondu 200, en donnant à voir
+  // des chiffres qui ne sont pas des obligations. Aucune route ne porte ce calendrier — c'est
+  // une config gouvernée qui n'existe pas encore au moteur (consigné dans ECARTS-FRONT).
+  // Tant qu'elle n'existe pas, l'écran ne prétend PAS être branché.
+  const reglementaire = { data: SEED_REGLEMENTAIRE, isDemo: true };
   const vuesBi = useApiOrSeed<VueBi[]>("/v1/bi/annuaire", SEED_BI);
   const registre = useApiOrSeed<EntreeRegistre[]>("/v1/mros", SEED_REGISTRE);
   const mros = useApiOrSeed<Comm[]>("/v1/mros", SEED_MROS);
@@ -220,8 +229,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
 
   if (onglet !== "pilotage" && onglet !== "direction") {
     const sousTitres = {
-      reglementaire: reglementaire.isDemo ? t("données maquette")
-        : t("source : /v1/rapports/kpi — calendrier gouverné (R29), jamais un avis juridique"),
+      reglementaire: t("maquette — aucun moteur ne porte ce calendrier (R29 : config gouvernée à créer)"),
       surmesure: vuesBi.isDemo ? t("données maquette")
         : t("source : /v1/bi/annuaire (R314-R315) — vues déclarées, jamais les tables"),
       registre: registre.isDemo ? t("données maquette") : t("source : /v1/mros + revue + runs (lecture pure — rien ne change d'état)"),
@@ -259,7 +267,7 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         {onglet === "surmesure" && (<>
           <EntityList grid="1.2fr 1.2fr 110px 120px" onOpen={() => onNavigate("rapports")}
             entetes={[t("Vue déclarée"), t("Domaine"), t("Colonnes"), t("Portée")]}
-            lignes={(vuesBi.data ?? []).map((v) => ({ id: v.id, cells: [
+            lignes={listeVuesBi(vuesBi.data).map((v) => ({ id: v.id, cells: [
               <span key="v" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{v.vue}</span>,
               t(v.domaine ?? "—"),
               <span key="c" className="mono">{v.colonnes ?? "—"}</span>,

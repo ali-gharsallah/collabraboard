@@ -1630,3 +1630,44 @@ re-soumis ici.
   moteur n'émet **pas** d'événement de refus de dérogation — la projection ne connaît donc que
   deux états, et l'écran a cessé d'en afficher un troisième qu'il avait inventé en maquette.
   Gardes XB-15 à XB-17 (base réelle) + U2-49. Statut : **FERMÉ**.
+
+### E-V2-6 — Aucune route ne liste les revues PRÉ-REMPLIES (R467) — trouvé sur API vivante (V2-M41)
+- **Constat** : l'écran « Revue & sortie » lisait `/v1/revues/kyc/KYC-2026-00447/delta` — une
+  référence de MAQUETTE écrite en dur, qui n'existe dans aucune base. Sur une instance réelle
+  la route répondait 404 et l'écran retombait éternellement sur son seed. Corrigé au lot : la
+  référence est désormais RÉSOLUE depuis `/v1/kyc`.
+- **Ce qui reste ouvert** : le delta n'existe que pour un dossier porteur d'un événement
+  `review.prerempli` (ouverture d'une revue harmonisée, `POST /v1/revues/deadlines/:id/ouvrir`).
+  Ce marqueur **n'est exposé par aucune lecture** : ni `/v1/kyc` ni `/v1/revues/deadlines` ne
+  disent quels dossiers ont un delta. L'écran ne peut donc pas choisir un dossier valide — il
+  essaie le premier et retombe sur le seed en le disant.
+- **Cible** : soit un `GET /v1/revues/ouvertes` (projection des événements `review.prerempli`,
+  aucune table nouvelle — même patron que les trois lectures de E-V2-5), soit un champ
+  `revueOuverte` sur la liste KYC. Statut : **OUVERT** — arbitrage moteur requis.
+
+### E-V2-7 — Le calendrier des obligations réglementaires n'a PAS de moteur (V2-M41)
+- **Constat** : l'onglet « Réglementaire » du Pilotage lisait `/v1/rapports/kpi`. Cette route
+  répond 400 sans période, et **avec** période elle rend des INDICATEURS de conformité
+  (screening, risk cases, MROS, charge par analyste) — pas un calendrier d'obligations. L'écran
+  retombait donc toujours sur son seed ; il aurait affiché « source : /v1/rapports/kpi » le jour
+  où la route aurait répondu 200, en donnant à voir des chiffres qui ne sont pas des obligations.
+- **Traitement retenu** : l'écran **cesse de prétendre** être branché. Il porte la mention
+  « maquette — aucun moteur ne porte ce calendrier ». Une fausse source est pire qu'une source
+  absente : elle survit aux relectures.
+- **Cible** : le calendrier des échéances réglementaires (LBA art. 9, OBA-FINMA, AEOI/CRS,
+  FATCA) est une **config gouvernée par la banque** (R29, registre R-Q), pas un calcul. Il lui
+  faut une entrée de paramétrage versionnée par date d'effet, puis une lecture. Statut :
+  **OUVERT** — décision produit (personne ne doit décider d'une base légale dans un écran).
+
+### E-V2-8 — Le tenant de démonstration ne peuple pas sept lectures (V2-M41)
+- **Constat, mesuré** : sur les 34 lectures des écrans v2 interrogées contre l'API vivante,
+  **14** rendent un conteneur vide — `screening/hits`, `aml/signals`, `txflux`, `riskcases`,
+  `trips`, `regwatch/items`, `formations/assignments`, `ged/documents`, et les quatre
+  projections Cross-Border. La forme de leurs ÉLÉMENTS reste donc **invérifiée** : le
+  vérificateur le dit au lieu de compter un succès.
+- **Deux causes distinctes, à ne pas confondre** : le seed GWB (R329) ne raconte pas ces
+  chapitres (hits, alertes, déplacements, veille, formations) ; et `/v1/crossborder/matrice`
+  répond 404 « synchronisez le port » — la démo ne synchronise jamais le port XB (R453).
+- **Cible** : étendre le seed de démonstration à ces chapitres, PAR LES VRAIES ROUTES comme le
+  reste (jamais d'INSERT direct). Tant que ce n'est pas fait, aucune de ces sept familles n'est
+  démontrable sur données réelles. Statut : **OUVERT**.

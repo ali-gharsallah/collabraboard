@@ -6,6 +6,7 @@ import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { listeProspects } from "./moteur-formes";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -78,13 +79,13 @@ export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNav
           actions={<Ui2Bouton primaire onClick={() => setOnglet("dossier")}>{t("Ouvrir le dossier Sablier →")}</Ui2Bouton>} t={t} />}>
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           {pilule("dossier", t("Dossier (écran 04)"))}
-          {pilule("pipeline", `${t("Pipeline prospects")} · ${Array.isArray(pipeline.data) ? pipeline.data.length : 0}`)}
+          {pilule("pipeline", `${t("Pipeline prospects")} · ${listeProspects(pipeline.data).length}`)}
           {pilule("trips", `${t("Déplacements (BT)")} · ${Array.isArray(trips.data) ? trips.data.length : 0}`)}
         </div>
         {onglet === "pipeline" && (<>
           <EntityList grid="1.4fr 140px 1.1fr 110px" onOpen={() => setOnglet("dossier")}
             entetes={[t("Prospect"), t("Étape"), t("Apporteur / source"), t("Depuis")]}
-            lignes={(Array.isArray(pipeline.data) ? pipeline.data : []).slice(0, 30).map((p) => {
+            lignes={listeProspects(pipeline.data).slice(0, 30).map((p) => {
               const e = ETAPE_PIPELINE[p.etape ?? ""] ?? { label: p.etape ?? "—", mode: "neutral" as ChipMode };
               return { id: p.id, cells: [
                 <span key="n" style={{ fontWeight: 600, color: "var(--text)" }}>{p.nom ?? p.id}</span>,
@@ -181,7 +182,7 @@ export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNav
       </div>}>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         {pilule("dossier", t("Dossier (écran 04)"))}
-        {pilule("pipeline", `${t("Pipeline prospects")} · ${Array.isArray(pipeline.data) ? pipeline.data.length : 0}`)}
+        {pilule("pipeline", `${t("Pipeline prospects")} · ${listeProspects(pipeline.data).length}`)}
         {pilule("trips", `${t("Déplacements (BT)")} · ${Array.isArray(trips.data) ? trips.data.length : 0}`)}
       </div>
       <section style={carte}>

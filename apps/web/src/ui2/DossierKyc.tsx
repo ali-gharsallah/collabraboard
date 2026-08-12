@@ -8,6 +8,7 @@ import { SectionChecklist, SectionEtat } from "./SectionChecklist";
 import { EventTimeline } from "./EventTimeline";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { matriceDocumentaire } from "./moteur-formes";
 import { traduire, langue } from "../lib/i18n";
 import kycSeed from "../seed/kyc.json";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
@@ -94,6 +95,7 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
   const pieces = useApiOrSeed<Piece[]>(
     reel?.clientId ? `/v1/ged/documents?clientId=${reel.clientId}` : "/v1/ged/documents", SEED_PIECES);
   const matrice = useApiOrSeed<typeof SEED_MATRICE>("/v1/doc-matrix/en-vigueur", SEED_MATRICE);
+  const matriceReelle = matriceDocumentaire(matrice.data);
   const xb = useApiOrSeed<typeof SEED_XB>("/v1/crossborder/matrice", SEED_XB);
   // Ouverture : PREMIÈRE section incomplète (celle qui porte des manquants) — le principe n°1.
   const premiereIncomplete = sections.find((s) => s.etat !== "visee")?.code ?? sections[0].code;
@@ -179,13 +181,20 @@ export function DossierKyc({ active, onNavigate }: { active: Ui2NavId; onNavigat
         </div>
         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
           {(matrice.isDemo ? t("données maquette") : t("source : /v1/doc-matrix/en-vigueur")) +
-            " · " + t("matrice") + " " + (matrice.data?.version ?? "")}</div>
+            " · " + t("matrice") + " " + (matriceReelle.version || "—")}</div>
+        {/* V2-M41 : l'axe affiché est celui que le MOTEUR détient — type d'entité × porteur ×
+            juridiction (R26/R27/R282) — et non la liste plate de la maquette. L'ÉTAT de
+            complétude n'appartient pas à la matrice (elle dit ce qui est EXIGÉ, le dossier dit
+            ce qui est FOURNI) : sur une réponse du moteur il reste « non évaluée » au lieu
+            d'afficher « MANQUANTE » pour toutes les lignes, ce qui serait faux. */}
         <EntityList grid="1.2fr 1.4fr 130px" onOpen={() => setOnglet("corroboration")}
           entetes={[t("Exigence"), t("Pièce attendue"), t("État")]}
-          lignes={(matrice.data?.exigences ?? []).map((e) => ({ id: e.code, cells: [
-            <span key="l" style={{ fontWeight: 600, color: "var(--text)" }}>{t(e.libelle)}</span>,
-            t(e.attendu),
-            <StatusChip key="c" mode={e.etat === "OK" ? "ok" : "warn"}>{t(e.etat === "OK" ? "COUVERTE" : "MANQUANTE")}</StatusChip>] }))} />
+          lignes={matriceReelle.exigences.map((e, i) => ({ id: `${e.code}-${i}`, cells: [
+            <span key="l" style={{ fontWeight: 600, color: "var(--text)" }}>{t(e.libelle ?? e.code)}
+              {e.axe && <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>{" · " + e.axe}</span>}</span>,
+            t(e.attendu ?? "—"),
+            <StatusChip key="c" mode={e.etat === undefined ? "neutral" : e.etat === "OK" ? "ok" : "warn"}>
+              {t(e.etat === undefined ? "NON ÉVALUÉE" : e.etat === "OK" ? "COUVERTE" : "MANQUANTE")}</StatusChip>] }))} />
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
           {t("La matrice est versionnée (R26/R27) et le dossier garde la version de sa création (R29) — jamais la « courante ».")}</div>
       </>)}

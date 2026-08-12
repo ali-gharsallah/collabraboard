@@ -73,3 +73,54 @@ Un audit qui compte des SURFACES produit un chiffre flatteur et faux. On compte 
 **actes exécutables** : la garde U2-56 mesure, à chaque exécution des tests, le nombre
 d'écritures réelles de `src/ui2` — elle passe de 0 à quelque chose au premier acte câblé, et
 le chiffre est affiché plutôt que raconté.
+
+## V2-M41 — l'API vivante, enfin (12.08.2026)
+
+Les quatre lots précédents ont vérifié le contrat d'APPEL par lecture statique du code. Aucun
+n'avait tourné contre un moteur qui répond. Ce lot l'a fait : Postgres démarré, tenant de
+démonstration semé par les vraies routes (`OLIVE_SEED_DEMO=1 npm run seed:demo`), jeton obtenu
+sur `/v1/auth/token` avec un vrai mot de passe, puis **34 lectures interrogées une par une**.
+
+### Ce que l'API vivante a dit, et que la lecture du code ne pouvait pas dire
+
+| Route | Ce que l'écran lisait | Ce que le moteur rend | Effet à l'écran |
+|---|---|---|---|
+| `/v1/clients` | un tableau | `{ data, next_cursor }` (R281) | **zéro client affiché, sans bandeau maquette** — la requête avait réussi |
+| `/v1/onboarding` | `nom`, `depuis`, `apporteur` | `prospectNom`, `etapeDepuis`, *(pas d'apporteur)* | trois colonnes vides |
+| `/v1/offboarding` | `reference`, `motif`, `etape` | `id`, `type`, `statut` | colonnes vides **et** « CLOS » affiché pour un dossier `CLOTURE_DEMANDEE` — l'inverse de son état |
+| `/v1/bi/annuaire` | `vue`, `domaine`, `colonnes` | `code`, `source`, `dimensions[]`, `mesures[]` | tableau vide |
+| `/v1/aml/referentiel` | un tableau de règles | `{ scenarios[], seuils{} }` | tableau vide |
+| `/v1/doc-matrix/en-vigueur` | exigences plates + `etat` | `contenu.exigences[structure][porteur].parJuridiction` | **l'écart d'AXE que le PO soupçonnait** — confirmé sur données réelles |
+| `/v1/rapports/kpi` | des obligations réglementaires | des indicateurs de conformité (400 sans période) | fausse source (E-V2-7) |
+| `/v1/revues/kyc/KYC-2026-00447/delta` | une référence écrite en dur | 404 : ce dossier n'existe pas | seed éternel (E-V2-6) |
+
+Aucune de ces huit lignes n'était visible en mode démonstration : le seed a toujours la forme
+que l'écran attend, puisque c'est l'écran qui l'a écrit.
+
+### Ce qui a été livré
+
+- `scripts/verifier-formes-api.mjs` — le vérificateur. Il empaquète les VRAIS seeds des écrans
+  par esbuild (export injecté, aucune recopie), appelle le moteur, compare les formes en
+  profondeur, et distingue quatre verdicts : conforme · écart assumé par un adaptateur ·
+  **réponse vide donc invérifiable** · erreur. Il n'est pas en CI et ne doit pas y aller : il
+  exige une API et une base.
+- `src/ui2/fixtures-moteur.json` — 16 réponses réelles, capturées par ce script (`--capturer`),
+  écrêtées à 3 éléments par tableau pour rester relisibles.
+- `src/ui2/moteur-formes.ts` — les adaptateurs, gouvernés par une règle : **le moteur nomme,
+  l'écran suit**. Ils traduisent, ils n'inventent pas : là où le moteur n'a pas l'information
+  (apporteur d'affaires, état de complétude d'une exigence), le champ reste vide.
+- `src/ui2/moteur-formes.test.ts` — FM-00 à FM-06, sur les payloads capturés. Les six
+  adaptateurs ont été cassés un par un pour vérifier que les gardes rougissent.
+
+### Les deux choses que ce lot ne prouve toujours pas
+
+1. **Aucune ÉCRITURE n'a été posée contre le moteur vivant.** Les 21 actes câblés aux lots M35
+   à M38 ont été vérifiés statiquement (route, verbe, champs), jamais exécutés. Le lot qui
+   poserait un acte réel et lirait son événement au journal reste à faire.
+2. **Sept familles de données restent invérifiées** parce que le tenant de démonstration ne les
+   peuple pas (E-V2-8). Une réponse `[]` ne dit rien de la forme de ses éléments, et le rapport
+   le dit ainsi plutôt que de compter un succès.
+
+| Lot | Ce qui a été câblé | Écritures réelles de `src/ui2` |
+|---|---|---:|
+| V2-M41 | contrat de **RETOUR** : 6 formes de réponse adaptées, 2 fausses sources corrigées, vérificateur + fixtures capturées sur API vivante | *(inchangé)* |

@@ -33,3 +33,6 @@ venv/
 # Le dataset data/aml-gap-dataset-gt.json, lui, est versé et gardé no-drift (CI 3d).
 data/c50gap.gen.js
 data/aml-gap-sections/
+
+# Compilation locale hors CI (V2-M41) : sortie de `tsc --outDir` pour démarrer l'API à la main.
+apps/api/dist-run/

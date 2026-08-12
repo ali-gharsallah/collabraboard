@@ -7,6 +7,7 @@ import { DiffRow } from "./DiffRow";
 import { ImpactPreview } from "./ImpactPreview";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { listeSorties, sortieClose } from "./moteur-formes";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -62,7 +63,14 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
   // ✓ locaux de l'aperçu — chaque écran garde les siens (leçon de l'étape 6 : pas d'état partagé)
   const [reporte, setReporte] = useState(false);
   const [emis, setEmis] = useState<"" | "emis" | "sans-propagation">("");
-  const delta = useApiOrSeed<Delta>("/v1/revues/kyc/KYC-2026-00447/delta", SEED_DELTA);
+  // V2-M41 : la référence du dossier était ÉCRITE EN DUR (« KYC-2026-00447 »), une référence de
+  // maquette qui n'existe dans aucune base — la route répondait 404 sur toute instance réelle et
+  // l'écran retombait éternellement sur le seed. Elle est désormais RÉSOLUE : premier dossier
+  // rendu par `/v1/kyc`. Sans dossier (base vide), on n'appelle pas une route qu'on sait fausse.
+  const dossiers = useApiOrSeed<{ code?: string }[]>("/v1/kyc", []);
+  const codeRevue = (Array.isArray(dossiers.data) ? dossiers.data : []).find((d) => d.code)?.code ?? "";
+  const delta = useApiOrSeed<Delta>(
+    codeRevue ? `/v1/revues/kyc/${codeRevue}/delta` : "/v1/revues/__hors-api__", SEED_DELTA);
   const nbModifiees = delta.data.modifiees.length;
   const nbReprises = delta.data.reprises.length;
   const nbSections = nbModifiees + nbReprises + 3;         // + 3 écarts venus d'autres moteurs (alerte, doc, CoC)
@@ -82,14 +90,16 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
           actions={<Ui2Bouton onClick={() => setEcran("revue")}>{t("← Revue groupée")}</Ui2Bouton>} t={t} />}>
         <EntityList grid="140px 1.3fr 1.3fr 150px 120px" onOpen={() => onNavigate("kyc")}
           entetes={[t("Référence"), t("Client"), t("Motif"), t("Étape"), t("Statut")]}
-          lignes={(Array.isArray(sorties.data) ? sorties.data : []).slice(0, 30).map((s) => ({
+          lignes={listeSorties(sorties.data).slice(0, 30).map((s) => ({
             id: s.id, cells: [
               <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{s.reference ?? s.id}</span>,
               <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{s.clientId ?? "—"}</span>,
               t(s.motif ?? "—"),
               t(s.etape ?? "—"),
-              <StatusChip key="s" mode={s.statut === "EN_COURS" ? "warn" : "ok"}>
-                {t(s.statut === "EN_COURS" ? "EN COURS" : "CLOS")}</StatusChip>] }))} />
+              // V2-M41 : le moteur porte CLOTURE_DEMANDEE, CLOTURE_VISEE… — l'écran affichait
+              // « CLOS » pour tout ce qui n'était pas EN_COURS, donc l'inverse de l'état réel.
+              <StatusChip key="s" mode={sortieClose(s.statut) ? "ok" : "warn"}>
+                {t(s.statut ?? "—")}</StatusChip>] }))} />
         <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
           {t("La sortie est un workflow à étapes fermées (bloc 62) : le courrier de clôture est GÉNÉRÉ (R270), le statut du client porte des bannières pendant la sortie, et une clôture post-MROS reste cohérente avec la communication. Un terminal est toujours motivé.")}</div>
       </Ui2Shell>);
@@ -200,7 +210,7 @@ export function RevueSortie({ active, onNavigate }: { active: Ui2NavId; onNaviga
       header={<Ui2HeaderDossier nom={t("Groupe Delacroix — revue groupée")} initiales="GD"
         identifiants={t("Dernière validation : 22.09.2025 · échéance 22.09.2026 · cycle annuel (risque élevé)")}
         puces={<StatusChip mode="neutral">{t("4 DOSSIERS")}</StatusChip>}
-        actions={<><Ui2Bouton onClick={() => setEcran("sorties")}>{`${t("Sorties")} · ${Array.isArray(sorties.data) ? sorties.data.length : 0} →`}</Ui2Bouton>
+        actions={<><Ui2Bouton onClick={() => setEcran("sorties")}>{`${t("Sorties")} · ${listeSorties(sorties.data).length} →`}</Ui2Bouton>
           <Ui2Bouton onClick={() => setEcran("coc")}>{t("Comparer à 2025")}</Ui2Bouton>
           <Ui2Bouton primaire onClick={() => setReporte(true)}>{t("Transmettre pour visa")}</Ui2Bouton></>} t={t} />}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>

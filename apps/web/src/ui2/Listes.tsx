@@ -4,6 +4,7 @@ import { Ui2Nav, Ui2NavId } from "./Nav";
 import { Ui2HeaderListe, Ui2Bouton } from "./Header";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
+import { listeClients } from "./moteur-formes";
 import { traduire, langue } from "../lib/i18n";
 import clientsSeed from "../seed/clients.json";
 import kycSeed from "../seed/kyc.json";
@@ -120,7 +121,9 @@ export function MesClients({ active, onNavigate }: { active: Ui2NavId; onNavigat
   const [onglet, setOnglet] = useState<"clients" | "personnes">("clients");
   const [ouvert, setOuvert] = useState<string | null>(null);       // fiche client (panneau latéral)
   const r = useApiOrSeed<ClientRow[]>("/v1/clients", clientsSeed as ClientRow[]);
-  const lignes = (Array.isArray(r.data) ? r.data : []).slice(0, 30);
+  // V2-M41 : le moteur rend `{ data, next_cursor }` (R281). `Array.isArray` était donc FAUX et
+  // l'écran affichait zéro client — sans bandeau maquette, puisque la requête avait réussi.
+  const lignes = listeClients(r.data).slice(0, 30) as ClientRow[];
   const client = ouvert ? lignes.find((c) => c.id === ouvert) ?? null : null;
   const cpsi = useApiOrSeed<ScoreCpsi>(ouvert ? `/v1/cpsi/clients/${ouvert}/score` : "/v1/cpsi/__hors-api__", SEED_SCORE);
   const pilule = (id: "clients" | "personnes", label: string) => (
