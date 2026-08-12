@@ -167,3 +167,67 @@ n'est pas un rejeu (R48). Tri désormais sur `(enVigueurLe desc, version desc)`.
 le calcul de complétude du dossier KYC ne passe **pas** encore par la matrice. L'axe rôle est
 donc juste, disponible et gardé — mais le workflow ne s'en sert pas. C'est le branchement
 suivant, et il vaut mieux le dire que le laisser croire.
+
+## V2-M43 — le calendrier réglementaire existe (12.08.2026)
+
+E-V2-7 disait : *« aucune route ne porte ce calendrier — c'est une config gouvernée qui
+n'existe pas encore au moteur »*. Elle existe maintenant : R490→R492,
+`spec/CALENDRIER-REGLEMENTAIRE-R490-R492.md`.
+
+**Où il vit, et pourquoi pas ailleurs.** Le calendrier est une clé du registre R-Q
+(`calendrierReglementaire`), pas une table. Il hérite ainsi, sans une ligne de code, de tout ce
+que R125–R128 garantissent déjà : un changement motivé (R7), daté, append-only, jamais
+rétroactif, rejouable à date. Une table d'obligations à côté du registre aurait été une seconde
+vérité — exactement ce que R125 interdit.
+
+**Ce que le moteur calcule, et ce qu'il refuse de calculer.** Cinq statuts, tous recalculés à
+chaque lecture depuis la config à date et le journal : `DEPOSEE`, `SANS_ECHEANCE`, `EN_RETARD`,
+`DUE`, `A_VENIR`. Aucun n'est stocké — deux lectures à la même date rendent le même verdict,
+c'est ce qui rend l'écran opposable (R48).
+
+Et une chose qu'il ne fait pas : **une obligation sans échéance n'est jamais en retard.** La
+communication au MROS est due « sans délai » (LBA art. 9) — il n'y a pas de date. Fabriquer une
+échéance pour pouvoir afficher un retard aurait été un jugement juridique que personne n'a
+demandé au moteur. L'écran écrit « sans délai » dans la colonne Échéance et pose une pastille
+neutre.
+
+**Le dépôt est un acte humain.** Motivé (R7) et **référencé** — l'accusé de dépôt EST la preuve ;
+sans lui on consignerait une affirmation. Deux refus, vérifiés contre l'API vivante :
+
+```
+POST /v1/reglementaire/obligations/PAS-DECLAREE/depot
+  → [R490] obligation « PAS-DECLAREE » absente du calendrier en vigueur
+POST /v1/reglementaire/obligations/AEOI-2025/depot   (le second)
+  → [R492] dépôt déjà consigné pour AEOI-2025 / 2025 — référence AFC-ACK-88214 (…).
+    Un second dépôt est un incident, pas une opération neutre.
+```
+
+**Le premier acte d'ÉCRITURE de cette campagne posé contre un moteur vivant.** Les lots M35 à
+M42 ont câblé 21 actes et ne les ont jamais exécutés ; l'audit le disait en toutes lettres.
+Ce lot pose un dépôt réel et lit son événement au journal :
+
+```
+ type                         | aggregate_id | ref           | base
+ reglementaire.depot.consigne | RAP-LBA-2025 | DIR-2026-0031 | OBA-FINMA
+ reglementaire.depot.consigne | AEOI-2025    | AFC-ACK-88214 | LEAR
+```
+
+et la relecture du calendrier bascule `AEOI-2025` de `EN_RETARD` à `DEPOSEE` — la projection
+suit le journal, sans qu'aucun statut n'ait été écrit nulle part.
+
+| Vérification | Résultat |
+|---|---|
+| `reglementaire.wiring.spec.ts` | **12/12** (CR-01..10), dont la garde « le moteur n'a consigné AUCUN dépôt de sa propre initiative » |
+| `npm run test:rules` | sortie 0 |
+| registre des règles / catalogue d'événements | verts — R490–R492 enregistrés, 2 types schématisés |
+| e2e (base propre + migrations) | **521/521** |
+| front (`vitest run`) | **218/218** |
+| forme écran ↔ moteur (API vivante) | `/v1/reglementaire/calendrier` **conforme** |
+| budget bundle | 306,4 kB gz sous 310 |
+
+**Ce qui reste dû, et ne doit pas se perdre.** Le CONTENU du calendrier de démonstration
+(quatre obligations, leurs bases, leurs dates) vient de la maquette v1 et **n'a pas été validé
+juridiquement** — question Q-CR-1, consignée dans la spec. Trois autres questions y attendent
+un arbitrage : la reconduction d'un exercice à l'autre (Q-CR-2, recommandation : pas de
+reconduction automatique), le statut du préavis (Q-CR-3), et le rapprochement avec le module
+MROS (Q-CR-4, non fait).

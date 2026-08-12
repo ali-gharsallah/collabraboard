@@ -427,7 +427,13 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/Communication au MROS/)).toBeTruthy();
     expect(screen.getByText(/Déclaration FATCA/)).toBeTruthy();
     expect(screen.getByText("EN RETARD")).toBeTruthy();                          // la revue de calibrage échue SE VOIT
-    expect(screen.getByText("EN PRÉPARATION")).toBeTruthy();
+    // V2-M43 : les statuts affichés sont ceux que le MOTEUR calcule (R491) — « EN PRÉPARATION »
+    // était une invention de maquette. Et « sans délai » (LBA art. 9) reste sans délai : ni
+    // échéance fabriquée, ni pastille de retard sur une obligation que la loi n'a pas datée.
+    expect(screen.getByText("DUE")).toBeTruthy();
+    expect(screen.getAllByText("DÉPOSÉE").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("SANS DÉLAI")).toBeTruthy();
+    expect(screen.getByText("sans délai")).toBeTruthy();                          // la colonne Échéance
     // O-Live n'énonce aucune obligation : la base légale est DÉCLARÉE par la banque.
     expect(screen.getAllByText(/base déclarée/).length).toBeGreaterThanOrEqual(5);
     expect(screen.getByText(/ne qualifie aucune base légale/)).toBeTruthy();

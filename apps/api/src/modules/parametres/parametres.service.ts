@@ -20,6 +20,16 @@ type Entree = { cle: string; type: "int" | "bool" | "json" | "string"; defaut: a
 
 /** LE registre — s'enrichit par amendement, comme le catalogue. Généré → questionnaire R-Q. */
 export const REGISTRE_RQ: Entree[] = [
+  // ── Calendrier réglementaire (R490, V2-M43) — le CONTENU est un arbitrage de l'établissement.
+  // Le moteur ne fabrique aucune obligation et ne décide d'aucune base légale : il lit cette
+  // clé, calcule un statut à date (R491) et signale les retards (R39). `echeance: null` est un
+  // CAS DE DROIT (LBA art. 9 : « sans délai ») — jamais un retard.
+  { cle: "calendrierReglementaire", type: "json", defaut: [], regle: "R490", requis: false,
+    exemple: [{ code: "AEOI-2025", obligation: "Auto-déclaration AEOI/CRS", periode: "2025",
+      echeance: "2026-06-30", base: "LEAR", responsable: "Fiscalité" }],
+    description: "Obligations réglementaires de l'établissement : intitulé, période couverte, échéance (ISO ou null quand la loi n'en fixe pas), base légale citée, responsable. Publier ce calendrier est un acte de gouvernance daté (R126) — il ne se reconduit pas tout seul d'un exercice à l'autre, et c'est voulu : une obligation qui se reconduit sans que personne ne la relise est une obligation qu'on oublie." },
+  { cle: "reglementairePreavisJours", type: "int", defaut: 30, regle: "R491", requis: false,
+    description: "Combien de jours avant l'échéance une obligation passe de À VENIR à DUE. Confort d'affichage, pas une règle de droit — le retard, lui, se calcule sur l'échéance elle-même." },
   { cle: "cumulRolesAutorise", type: "bool", defaut: false, regle: "R31", requis: true,
     description: "Une personne peut-elle cumuler plusieurs rôles sur un même client ?" },
   { cle: "depepDelaiJours", type: "int", defaut: 365, regle: "R33", requis: false,

@@ -59,6 +59,31 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
     await request(http).post("/v1/parametres/valeur/loginDomaines").set(boss)
       .send({ valeur: ["gwb-demo.ch"], motif: "R329 : domaine de résolution login" }).expect(201);
 
+    // ── Calendrier réglementaire (R490, V2-M43) — CONTENU DE DÉMONSTRATION, non validé
+    // juridiquement (question Q-CR-1 de spec/CALENDRIER-REGLEMENTAIRE-R490-R492.md, consignée
+    // pour revue humaine). Le moteur ne décide d'aucune base légale : il lit cette clé.
+    // `echeance: null` sur la communication MROS n'est PAS un oubli — « sans délai » (LBA
+    // art. 9) n'est pas une date, et le moteur ne doit jamais en fabriquer une pour pouvoir
+    // afficher un retard. Idempotent par nature : écrire la même valeur ne change rien.
+    await request(http).post("/v1/parametres/valeur/calendrierReglementaire").set(boss)
+      .send({ motif: "R490 : calendrier de démonstration — À VALIDER par un juriste (Q-CR-1)",
+        valeur: [
+          { code: "LBA-9", obligation: "Communication au MROS", periode: "au fil de l'eau",
+            echeance: null, base: "LBA art. 9", responsable: "MLRO" },
+          { code: "RAP-LBA-2025", obligation: "Rapport annuel LBA à la direction", periode: "2025",
+            echeance: "2026-03-31", base: "OBA-FINMA", responsable: "MLRO" },
+          { code: "AEOI-2025", obligation: "Échange automatique de renseignements (AEOI/CRS)",
+            periode: "2025", echeance: "2026-06-30", base: "LEAR", responsable: "Fiscalité" },
+          { code: "FATCA-2025", obligation: "Déclaration FATCA", periode: "2025",
+            echeance: "2026-09-30", base: "Accord FATCA", responsable: "Fiscalité" },
+        ] }).expect(201);
+    // Un dépôt CONSIGNÉ, pour que la démonstration montre les deux faces : l'obligation due et
+    // celle qui est faite, avec son accusé. Idempotent : le second dépôt est refusé (R492), et
+    // c'est exactement ce qu'on veut montrer — un doublon de déclaration est un incident.
+    await request(http).post("/v1/reglementaire/obligations/RAP-LBA-2025/depot").set(cosr())
+      .send({ periode: "2025", reference: "DIR-2026-0031",
+        motif: "rapport annuel remis à la direction le 12.03.2026" });
+
     // ── L'HISTOIRE — 1. PROSPECTS → onboarding (pipeline réel, find-or-create par nom) ──
     const pipeline = (await request(http).get("/v1/onboarding").set(rm())).body;
     const parNom = new Map((pipeline.onboardings ?? pipeline.data ?? pipeline ?? []).map?.((o: any) => [o.prospectNom, o]) ?? []);

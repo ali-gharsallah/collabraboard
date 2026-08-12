@@ -421,6 +421,15 @@ export const SCHEMAS_EVENEMENTS: Record<string, EntreeCatalogue> = {
     par: z.string() }).strict() },
   "regwatch.digest": { version: 1, schema: z.object({ parStatut: z.record(z.number()),
     notifie: z.array(z.string()), par: z.string() }).strict() },
+  // ── Calendrier réglementaire (R490→R492, V2-M43) — deux types, et deux seulement : ce qu'un
+  // humain CONSIGNE, et ce que le moteur SIGNALE. Rien qui déclare, dépose ou régularise. ──
+  "reglementaire.depot.consigne": { version: 1, schema: z.object({ code: z.string(),
+    periode: z.string(), reference: z.string(), motif: z.string(), base: z.string(),
+    deposeLe: z.string(), par: z.string() }).strict() },
+  "reglementaire.retard.signale": { version: 1, schema: z.object({ parStatut: z.record(z.number()),
+    enRetard: z.array(z.object({ code: z.string(), echeance: z.string().nullable(),
+      base: z.string(), responsable: z.string().nullable() }).strict()),
+    par: z.string() }).strict() },
   "ta.mouvement.enregistre": { version: 1, schema: z.object({ type: z.string(),
     titre: z.string(), titulaire: z.string(), versTitulaire: z.string().nullable(),
     quantite: z.number(), reference: z.string(), roleVisa: z.string().nullable(),

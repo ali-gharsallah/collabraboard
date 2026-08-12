@@ -17,6 +17,7 @@ import { TaModule } from "./modules/custody/ta.module"; // R302 : registre nomin
 import { CustodyModule } from "./modules/custody/custody.module"; // R301/R303 : positions port + rapprochement
 import { BuilderModule } from "./modules/builder/builder.module"; // R304-R308 : le Builder (dégel V3)
 import { RegwatchModule } from "./modules/regwatch/regwatch.module"; // R309-R311 : regwatch (dégel V4)
+import { ReglementaireModule } from "./modules/reglementaire/reglementaire.module"; // R490-R492 : calendrier réglementaire
 import { LegalModule } from "./modules/legal/legal.module"; // R312-R313 : legal (dégel V5)
 import { BiModule } from "./modules/bi/bi.module"; // R314-R315 : BI libre (dégel V6)
 import { MobileModule } from "./modules/mobile/mobile.module"; // R316-R318 : mobile banking (dégel V7)
@@ -58,7 +59,7 @@ import { SwarmModule } from "./modules/swarm/swarm.module";
 import { SurveillanceEsModule } from "./modules/surveillance-es/surveillance-es.module";   // sidecar ES (docs/SURVEILLANCE-ES.md)
 import { InferenceModule } from "./modules/inference/inference.module";   // module A (L7 — le ledger est une VUE)
 
-@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, WorkflowDesignerModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule, RapportsModule, SurveillanceEsModule, InferenceModule, EtlModule] })
+@Module({ imports: [CoreModule, AuthModule, AuditModule, ApidocModule, XbModule, TxFluxModule, TxRiskModule, FxModule, SwiftModule, TaModule, CustodyModule, BuilderModule, RegwatchModule, ReglementaireModule, LegalModule, BiModule, MobileModule, OpRiskModule, ReadinessModule, ClientsModule, KycModule, EventsModule, OnboardingModule, PreRevueModule, GedModule, ParametresModule, CrmModule, WorkloadModule, AmlModule, IslamicModule, RiskCaseModule, ScreeningModule, PersonnesModule, TransactionsModule, MrosModule, CorebankingModule, WorkflowModule, WorkflowDesignerModule, PmsModule, PortsModule, WorkflowInstancesModule, FormationsModule, BusinessTripModule, TasksModule, NbaModule, CpsiModule, OliviaModule, OffboardingModule, LicenseModule, ReviewsModule, CocModule, SandboxModule, SwarmModule, RapportsModule, SurveillanceEsModule, InferenceModule, EtlModule] })
 export class AppModule {
   configure(c: MiddlewareConsumer) { c.apply(SecurityHeadersMiddleware, TenantMiddleware).forRoutes("*"); }
 }

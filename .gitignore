@@ -36,3 +36,4 @@ data/aml-gap-sections/
 
 # Compilation locale hors CI (V2-M41) : sortie de `tsc --outDir` pour démarrer l'API à la main.
 apps/api/dist-run/
+apps/api/dist-rules/

@@ -65,6 +65,7 @@
         "custody",
         "ia",
         "offboarding",
+        "reglementaire",
         "riskcases",
         "transactions",
         "workflow",
@@ -145,9 +146,9 @@
         "api",
         "businesstrip",
         "aml",
+        "crossborder",
         "offboarding",
         "auth",
-        "crossborder",
         "custody",
         "formations",
         "workflow-engine",
@@ -293,13 +294,14 @@
         "businesstrip",
         "screening",
         "builder",
+        "etl",
         "common",
         "corebanking",
-        "etl",
         "crossborder",
         "offboarding",
         "coc",
         "inference",
+        "reglementaire",
         "txflux",
         "workflow",
         "workflow-designer",
@@ -397,6 +399,7 @@
         "cpsi",
         "formations",
         "pms",
+        "reglementaire",
         "tasks",
         "bi",
         "coc",
@@ -441,6 +444,8 @@
         "ged",
         "olivia",
         "ia",
+        "reglementaire",
+        "crossborder",
         "inference",
         "mros",
         "nba",
@@ -450,7 +455,6 @@
         "businesstrip",
         "cpsi",
         "crm",
-        "crossborder",
         "etl",
         "personnes",
         "surveillance",
@@ -477,13 +481,13 @@
         "kyc",
         "screening",
         "cpsi",
+        "crossborder",
         "offboarding",
         "reviews",
         "workflow-designer",
         "workflow-instances",
         "common",
         "businesstrip",
-        "crossborder",
         "custody",
         "events",
         "ged",
@@ -496,6 +500,7 @@
         "ia",
         "legal",
         "mros",
+        "reglementaire",
         "riskcases",
         "transactions",
         "workflow"
@@ -515,12 +520,15 @@
         "api",
         "cpsi",
         "workflow-engine",
+        "aml",
+        "crossborder",
         "etl",
         "events",
         "ged",
         "ia",
         "mros",
         "parametres",
+        "reglementaire",
         "reviews",
         "riskcases",
         "transactions",
@@ -655,10 +663,11 @@
     },
     {
       "numero": "R71",
-      "module": "cpsi-server-py",
-      "ancre": "services/cpsi-server-py/bridge.py",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/codification.gen.ts",
       "statut": "actif",
       "citePar": [
+        "cpsi-server-py",
         "cpsi"
       ]
     },
@@ -701,10 +710,11 @@
     },
     {
       "numero": "R76",
-      "module": "cpsi-server-py",
-      "ancre": "services/cpsi-server-py/olive_cpsi/engine.py",
+      "module": "aml",
+      "ancre": "apps/api/src/modules/aml/codification.gen.ts",
       "statut": "actif",
       "citePar": [
+        "cpsi-server-py",
         "cpsi",
         "riskcases"
       ]
@@ -1073,6 +1083,7 @@
         "ged",
         "aml",
         "onboarding",
+        "reglementaire",
         "common",
         "mros",
         "riskcases",
@@ -1088,7 +1099,8 @@
       "citePar": [
         "auth",
         "aml",
-        "onboarding"
+        "onboarding",
+        "reglementaire"
       ]
     },
     {
@@ -1098,7 +1110,8 @@
       "statut": "actif",
       "citePar": [
         "parametres",
-        "auth"
+        "auth",
+        "reglementaire"
       ]
     },
     {
@@ -1482,6 +1495,7 @@
       "citePar": [
         "txflux",
         "api",
+        "etl",
         "offboarding",
         "parametres",
         "ports",
@@ -1842,6 +1856,7 @@
       "statut": "actif",
       "citePar": [
         "parametres",
+        "aml",
         "api"
       ]
     },
@@ -1849,7 +1864,10 @@
       "numero": "R208",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R209",
@@ -1857,6 +1875,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "aml",
         "parametres"
       ]
     },
@@ -1866,6 +1885,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "aml",
         "parametres"
       ]
     },
@@ -1875,6 +1895,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "aml",
         "parametres"
       ]
     },
@@ -1882,7 +1903,10 @@
       "numero": "R212",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R213",
@@ -1890,6 +1914,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "aml",
         "parametres"
       ]
     },
@@ -1897,43 +1922,64 @@
       "numero": "R214",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R215",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R216",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R217",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R218",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R219",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R220",
       "module": "islamic",
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
-      "statut": "actif"
+      "statut": "actif",
+      "citePar": [
+        "aml"
+      ]
     },
     {
       "numero": "R221",
@@ -1941,6 +1987,7 @@
       "ancre": "apps/api/src/modules/islamic/islamic-screening.engine.ts",
       "statut": "actif",
       "citePar": [
+        "aml",
         "api",
         "parametres"
       ]
@@ -4080,7 +4127,7 @@
     {
       "numero": "R480",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4089,7 +4136,7 @@
     {
       "numero": "R481",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4098,7 +4145,7 @@
     {
       "numero": "R482",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4107,7 +4154,7 @@
     {
       "numero": "R483",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4116,13 +4163,13 @@
     {
       "numero": "R484",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif"
     },
     {
       "numero": "R485",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4131,7 +4178,7 @@
     {
       "numero": "R486",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4140,7 +4187,7 @@
     {
       "numero": "R487",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif",
       "citePar": [
         "api"
@@ -4149,13 +4196,41 @@
     {
       "numero": "R488",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
       "statut": "actif"
     },
     {
       "numero": "R489",
       "module": "etl",
-      "ancre": "apps/api/src/modules/etl/etl.service.ts",
+      "ancre": "apps/api/src/modules/etl/etl.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api"
+      ]
+    },
+    {
+      "numero": "R490",
+      "module": "reglementaire",
+      "ancre": "apps/api/src/modules/reglementaire/reglementaire.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "api",
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R491",
+      "module": "reglementaire",
+      "ancre": "apps/api/src/modules/reglementaire/reglementaire.module.ts",
+      "statut": "actif",
+      "citePar": [
+        "parametres"
+      ]
+    },
+    {
+      "numero": "R492",
+      "module": "reglementaire",
+      "ancre": "apps/api/src/modules/reglementaire/reglementaire.module.ts",
       "statut": "actif",
       "citePar": [
         "api"

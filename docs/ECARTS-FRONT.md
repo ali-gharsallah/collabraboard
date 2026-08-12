@@ -1656,8 +1656,20 @@ re-soumis ici.
   absente : elle survit aux relectures.
 - **Cible** : le calendrier des échéances réglementaires (LBA art. 9, OBA-FINMA, AEOI/CRS,
   FATCA) est une **config gouvernée par la banque** (R29, registre R-Q), pas un calcul. Il lui
-  faut une entrée de paramétrage versionnée par date d'effet, puis une lecture. Statut :
-  **OUVERT** — décision produit (personne ne doit décider d'une base légale dans un écran).
+  faut une entrée de paramétrage versionnée par date d'effet, puis une lecture.
+- **SOLDÉ au lot V2-M43 (12.08.2026)** — R490→R492, `spec/CALENDRIER-REGLEMENTAIRE-R490-R492.md`.
+  Le calendrier est une clé du registre R-Q (`calendrierReglementaire`) : motivée, datée,
+  append-only, rejouable — donc **aucune table nouvelle et aucune seconde vérité**. Le statut de
+  chaque obligation est CALCULÉ à la lecture (R491) ; le dépôt est un acte humain motivé et
+  référencé (R492/R7), refusé deux fois pour de bonnes raisons (obligation non déclarée ;
+  second dépôt, dont le refus nomme la première référence). Le moteur SIGNALE les retards
+  (R39/R44), il ne dépose ni ne régularise rien.
+  **Ce qu'il ne fait pas, et c'est délibéré** : une obligation sans échéance (« sans délai »,
+  LBA art. 9) n'est JAMAIS déclarée en retard. Fabriquer une date pour pouvoir colorer une
+  pastille aurait été un jugement juridique que personne n'a demandé au moteur.
+  **Le CONTENU reste à valider** : les quatre obligations du tenant de démonstration viennent de
+  la maquette v1 et n'ont pas été vérifiées juridiquement (question Q-CR-1, consignée dans la
+  spec pour revue humaine). Statut : **FERMÉ** côté mécanisme, contenu en attente de juriste.
 
 ### E-V2-8 — Le tenant de démonstration ne peuple pas sept lectures (V2-M41)
 - **Constat, mesuré** : sur les 34 lectures des écrans v2 interrogées contre l'API vivante,

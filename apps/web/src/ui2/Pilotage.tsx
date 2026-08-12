@@ -78,20 +78,36 @@ const SEED_HABILITATIONS: Habilitation[] = [
 // Réglementaire : le CALENDRIER des obligations (période, échéance, base légale, état). O-Live
 // ne décide AUCUNE base légale — le calendrier est une config gouvernée par la banque (R29,
 // registre R-Q) ; l'écran l'affiche et signale les retards (R39), il ne les corrige pas.
-type Obligation = { id: string; obligation?: string; periode?: string; echeance?: string;
-  base?: string; statut?: string; responsable?: string };
+// V2-M43 : la forme est celle du moteur (`GET /v1/reglementaire/calendrier`, R490/R491) —
+// `code` identifie l'obligation, `statut` est CALCULÉ à la lecture, `depot` porte l'accusé.
+type Obligation = { code: string; obligation?: string; periode?: string; echeance?: string | null;
+  base?: string; statut?: string; responsable?: string; depot?: { reference?: string } | null };
+// Les cinq statuts que le MOTEUR calcule (R491) — l'écran les affiche, il n'en invente aucun.
+// `SANS_ECHEANCE` est neutre et non « en retard » : la loi n'a pas fixé de date (LBA art. 9).
+const LIBELLE_STATUT: Record<string, string> = { DEPOSEE: "DÉPOSÉE", SANS_ECHEANCE: "SANS DÉLAI",
+  EN_RETARD: "EN RETARD", DUE: "DUE", A_VENIR: "À VENIR" };
+const MODE_STATUT: Record<string, ChipMode> = { DEPOSEE: "ok", SANS_ECHEANCE: "neutral",
+  EN_RETARD: "alert", DUE: "warn", A_VENIR: "info" };
+
+// Seed de MAQUETTE, au format du moteur. Son contenu vient de la v1 et n'a PAS été validé
+// juridiquement (question Q-CR-1 de la spec, consignée pour revue) : ces intitulés, ces bases
+// et ces dates sont là pour montrer l'écran, pas pour dire le droit.
 const SEED_REGLEMENTAIRE: Obligation[] = [
-  { id: "o-1", obligation: "Communication au MROS", periode: "au fil de l'eau", echeance: "sans délai",
-    base: "LBA art. 9", statut: "A_JOUR", responsable: "MLRO" },
-  { id: "o-2", obligation: "Rapport annuel LBA à la direction", periode: "exercice 2025", echeance: "31.03.2026",
-    base: "OBA-FINMA", statut: "DEPOSE", responsable: "MLRO" },
-  { id: "o-3", obligation: "Échange automatique de renseignements (AEOI/CRS)", periode: "exercice 2025",
-    echeance: "30.06.2026", base: "LEAR", statut: "DEPOSE", responsable: "Fiscalité" },
-  { id: "o-4", obligation: "Déclaration FATCA", periode: "exercice 2025", echeance: "30.09.2026",
-    base: "Accord FATCA", statut: "EN_PREPARATION", responsable: "Fiscalité" },
-  { id: "o-5", obligation: "Revue annuelle de calibrage AML", periode: "exercice 2026", echeance: "31.12.2026",
+  { code: "LBA-9", obligation: "Communication au MROS", periode: "au fil de l'eau", echeance: null,
+    base: "LBA art. 9", statut: "SANS_ECHEANCE", responsable: "MLRO" },
+  { code: "RAP-LBA-2025", obligation: "Rapport annuel LBA à la direction", periode: "2025", echeance: "2026-03-31",
+    base: "OBA-FINMA", statut: "DEPOSEE", responsable: "MLRO", depot: { reference: "DIR-2026-0031" } },
+  { code: "AEOI-2025", obligation: "Échange automatique de renseignements (AEOI/CRS)", periode: "2025",
+    echeance: "2026-06-30", base: "LEAR", statut: "DEPOSEE", responsable: "Fiscalité", depot: { reference: "AFC-ACK-88214" } },
+  { code: "FATCA-2025", obligation: "Déclaration FATCA", periode: "2025", echeance: "2026-09-30",
+    base: "Accord FATCA", statut: "DUE", responsable: "Fiscalité" },
+  { code: "AML-CALIB-2026", obligation: "Revue annuelle de calibrage AML", periode: "2026", echeance: "2026-07-31",
     base: "R377", statut: "EN_RETARD", responsable: "Compliance" },
 ];
+// Nommé, et pas en ligne : `scripts/verifier-formes-api.mjs` ne sait comparer à l'API vivante
+// qu'un seed qu'il peut évaluer — un littéral anonyme échappe à la vérification de forme.
+const SEED_CALENDRIER = { obligations: SEED_REGLEMENTAIRE, preavisJours: 30 };
+
 // BI sur mesure : l'ANNUAIRE des vues déclarées (/v1/bi/annuaire, R314-R315). Le libre-service
 // s'exerce sur des vues DÉCLARÉES, jamais sur les tables : le périmètre est une décision, pas
 // un effet de bord d'un accès base.
@@ -186,15 +202,11 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   const [periode, setPeriode] = useState<30 | 90 | 365>(30);
   const [onglet, setOnglet] = useState<"pilotage" | "direction" | "reglementaire" | "surmesure"
     | "registre" | "mros" | "veille" | "habilitations">("pilotage");
-  // V2-M41 — CORRECTION D'UNE FAUSSE SOURCE. Cet onglet lisait `/v1/rapports/kpi`, qui répond
-  // 400 sans période puis, avec période, rend des INDICATEURS de conformité (screening,
-  // risk cases, MROS, charge) — pas un calendrier d'obligations. L'écran retombait donc
-  // TOUJOURS sur le seed en affichant « données maquette » : exact, mais il aurait affiché
-  // « source : /v1/rapports/kpi » le jour où la route aurait répondu 200, en donnant à voir
-  // des chiffres qui ne sont pas des obligations. Aucune route ne porte ce calendrier — c'est
-  // une config gouvernée qui n'existe pas encore au moteur (consigné dans ECARTS-FRONT).
-  // Tant qu'elle n'existe pas, l'écran ne prétend PAS être branché.
-  const reglementaire = { data: SEED_REGLEMENTAIRE, isDemo: true };
+  // V2-M43 — E-V2-7 SOLDÉ : le calendrier réglementaire EXISTE au moteur (R490→R492). Il vient
+  // du registre R-Q, versionné par date d'effet, et chaque statut est calculé à la lecture.
+  // L'onglet lisait auparavant `/v1/rapports/kpi`, qui rend des indicateurs et non des
+  // obligations — une fausse source, retirée au lot précédent.
+  const reglementaire = useApiOrSeed<typeof SEED_CALENDRIER>("/v1/reglementaire/calendrier", SEED_CALENDRIER);
   const vuesBi = useApiOrSeed<VueBi[]>("/v1/bi/annuaire", SEED_BI);
   const registre = useApiOrSeed<EntreeRegistre[]>("/v1/mros", SEED_REGISTRE);
   const mros = useApiOrSeed<Comm[]>("/v1/mros", SEED_MROS);
@@ -229,7 +241,8 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
 
   if (onglet !== "pilotage" && onglet !== "direction") {
     const sousTitres = {
-      reglementaire: t("maquette — aucun moteur ne porte ce calendrier (R29 : config gouvernée à créer)"),
+      reglementaire: reglementaire.isDemo ? t("données maquette")
+        : t("source : /v1/reglementaire/calendrier — config gouvernée (R490), statuts calculés à date (R491)"),
       surmesure: vuesBi.isDemo ? t("données maquette")
         : t("source : /v1/bi/annuaire (R314-R315) — vues déclarées, jamais les tables"),
       registre: registre.isDemo ? t("données maquette") : t("source : /v1/mros + revue + runs (lecture pure — rien ne change d'état)"),
@@ -251,16 +264,16 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
         {onglet === "reglementaire" && (<>
           <EntityList grid="1.6fr 1fr 110px 1fr 130px" onOpen={() => onNavigate("rapports")}
             entetes={[t("Obligation"), t("Période"), t("Échéance"), t("Responsable"), t("État")]}
-            lignes={(reglementaire.data ?? []).map((o) => ({ id: o.id, cells: [
+            lignes={(reglementaire.data?.obligations ?? []).map((o) => ({ id: o.code, cells: [
               <span key="o"><span style={{ fontWeight: 600, color: "var(--text)" }}>{t(o.obligation ?? "—")}</span>
                 <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>
                   {t("base déclarée")} : {o.base ?? "—"}</span></span>,
               t(o.periode ?? "—"),
-              <span key="e" className="mono">{o.echeance ?? "—"}</span>,
+              // « sans délai » (LBA art. 9) n'est pas une date : on l'écrit, on n'invente pas
+              // d'échéance pour pouvoir colorer une pastille.
+              <span key="e" className="mono">{o.echeance ?? t("sans délai")}</span>,
               t(o.responsable ?? "—"),
-              chipDe(t(o.statut === "DEPOSE" ? "DÉPOSÉ" : o.statut === "A_JOUR" ? "À JOUR"
-                : o.statut === "EN_PREPARATION" ? "EN PRÉPARATION" : "EN RETARD"),
-                o.statut === "EN_RETARD" ? "alert" : o.statut === "EN_PREPARATION" ? "warn" : "ok")] }))} />
+              chipDe(t(LIBELLE_STATUT[o.statut ?? ""] ?? o.statut ?? "—"), MODE_STATUT[o.statut ?? ""] ?? "neutral")] }))} />
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
             {t("Le calendrier des obligations est une configuration GOUVERNÉE de la banque, versionnée par date d'effet (R29) — O-Live ne qualifie aucune base légale et n'en déduit aucune obligation. Un retard est SIGNALÉ (R39), jamais corrigé ni masqué.")}</div>
         </>)}
