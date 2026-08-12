@@ -24,6 +24,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
   src/modules/parametres/parametres.service.ts src/modules/parametres/parametres.wiring.spec.ts \
   src/modules/reglementaire/reglementaire.service.ts src/modules/reglementaire/reglementaire.wiring.spec.ts \
+  src/common/identifiant.ts src/common/identifiant.spec.ts \
   src/modules/mros/mros.service.ts src/modules/mros/mros.wiring.spec.ts \
   src/modules/riskcases/risk-case.service.ts src/modules/riskcases/risk-case.wiring.spec.ts \
   src/modules/ged/ged-ingestion.service.ts src/modules/ged/ged-ingestion.wiring.spec.ts \
@@ -98,6 +99,7 @@ echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboardin
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
 echo "── Câblage paramètres R-Q (RQ-01..07, R125→R128 · R78) ──"; run parametres.wiring.spec.js
 echo "── Câblage calendrier réglementaire (CR-01..10, R490→R492) ──"; run reglementaire.wiring.spec.js
+echo "── Identifiants malformés — refus typé, jamais 500 (ID-01..05) ──"; run identifiant.spec.js
 echo "── Câblage MROS (MR-01..08, R129→R132) ──"; run mros.wiring.spec.js
 echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js
 echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-ingestion.wiring.spec.js

@@ -231,3 +231,74 @@ juridiquement** — question Q-CR-1, consignée dans la spec. Trois autres quest
 un arbitrage : la reconduction d'un exercice à l'autre (Q-CR-2, recommandation : pas de
 reconduction automatique), le statut du préavis (Q-CR-3), et le rapprochement avec le module
 MROS (Q-CR-4, non fait).
+
+## V2-M44 — les 24 actes, exécutés (12.08.2026)
+
+Le lot précédent a posé UN acte réel. Celui-ci les pose TOUS : `verifier-actes-api.mjs` lit les
+actes déclarés par les écrans, résout les paramètres de route sur des données vivantes, envoie
+le corps construit à partir des `exemple` déclarés, et classe la réponse. Contre une base
+JETABLE — jamais la démonstration.
+
+### Le premier passage : cinq 500
+
+Cinq actes sur vingt-quatre ont rendu **500 Internal server error**. Pas un refus : un
+plantage. Une cause unique, quatre fois sur cinq :
+
+```
+Inconsistent column data: Error creating UUID, invalid character … found `L` at 2
+  at XbService.juridictionClient (xb.module.ts:292)
+```
+
+Un identifiant venu de la requête — `CLI-00001`, `u-004`, les `exemple` mêmes que les écrans
+déclarent — atteint un `where` Prisma sur une colonne UUID, et le driver lève une erreur brute.
+La cinquième : `lireCle(obj, undefined)` → `undefined.split(".")`, quand l'appel ne dit pas
+quel paramètre modifier.
+
+**Pourquoi c'est un vrai défaut.** L'écran rend le message du moteur VERBATIM (FE-04) : sur un
+500 il affiche « Internal server error » — le contraire d'un refus opposable. Et n'importe quel
+appelant le déclenche : il suffit de coller une référence d'écran là où le moteur attend une
+clé technique.
+
+**La correction, et ce qu'elle ne touche pas.** Un helper minuscule (`common/identifiant.ts`)
+qui refuse en NOMMANT l'objet et la valeur reçue. Appelé au point de LECTURE de l'identifiant,
+jamais en tête d'acte : la précédence des refus est un comportement contractuel, et une
+validation posée trop tôt transformerait « R7 : motif requis » en « identifiant invalide ».
+Vérifié : `Demander une dérogation` rend toujours « R7 : une dérogation cross-border exige un
+motif », inchangé.
+
+### Ce que l'exécution a trouvé et qu'aucune garde statique ne pouvait voir
+
+L'acte « Modifier un paramètre §CrossBorder » **ne déclarait aucun champ**. Le bouton existait,
+le formulaire était vide, le moteur refusait « cle attendue ». AC-03 ne pouvait pas le voir :
+elle vérifie que les champs DÉCLARÉS sont lus, jamais que ce que le moteur EXIGE est déclaré.
+Les quatre champs du contrat sont désormais déclarés, et **AC-05** garde le cas : un acte POST
+dont le contrôleur lit un corps doit déclarer au moins un champ. Une fois câblé, cet acte va
+jusqu'au bout de sa garde — il rend `409 R445_CONFIRMATION_REQUISE` avec le pop-up
+d'engagement, ancien et nouveau compris. C'est la garde R445 qui fonctionne, prouvée en
+l'exécutant.
+
+### Le second passage
+
+| classe | n | lecture |
+|---|--:|---|
+| ✓ acceptés | 6 | l'acte s'exécute de bout en bout |
+| ⊘ refus typés | 2 | R7 motif · R445 engagement — **la garde du moteur fonctionne** |
+| ⚠ habilitation | 8 | MROS (R129/R132), visa XB (R294), audit (R284) — comportement, pas défaut |
+| ∅ objet absent | 4 | le tenant de démonstration n'a pas de preuve XB, d'assignation, d'item de veille (E-V2-8) |
+| ▸ refus de contrat | 4 | 400 typé et lisible sur un identifiant de maquette — c'était les 500 |
+| ✗ **défauts** | **0** | |
+
+**Ce que ce balayage ne prouve pas.** Il vérifie que l'acte ARRIVE au moteur et que le moteur
+répond quelque chose de sensé — pas que l'effet MÉTIER est le bon. Qu'un hit qualifié se
+retrouve dans le bon état, qu'un gel gèle : cela demande un scénario par acte, avec ses
+préconditions. C'est la marche suivante, et elle est plus longue que celle-ci.
+
+| Vérification | Résultat |
+|---|---|
+| balayage d'exécution (API vivante, base jetable) | **0 défaut** sur 24 actes |
+| `identifiant.spec.ts` | 5/5 (ID-01..05), négativement testé |
+| `actes-contrat.test.ts` | 5/5 — **AC-05** ajoutée, négativement testée |
+| `npm run test:rules` | sortie 0 |
+| e2e (base propre) | 521/521 |
+| front | **219/219** |
+| budget bundle | 306,4 kB gz sous 310 |

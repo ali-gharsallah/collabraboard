@@ -1713,3 +1713,28 @@ re-soumis ici.
 - **Gardes** : 10 tests ajoutés à `docmatrix.spec.ts` (13 → 23), chacun négativement testé en
   cassant l'implémentation ; FM-07 côté écran, sur une fixture capturée d'une API vivante qui
   porte réellement l'axe rôle. Statut : **FERMÉ**.
+
+### E-V2-10 — Identifiants non validés : 500 au lieu d'un refus typé — **SOLDÉ** (V2-M44)
+- **Trouvé par l'EXÉCUTION**, pas par la lecture : le balayage des 24 actes déclarés contre une
+  API vivante a rendu cinq `500 Internal server error`. Quatre fois la même cause — un
+  identifiant venu de la requête (`CLI-00001`, `u-004`) atteint un `where` Prisma sur une
+  colonne UUID et le driver lève une erreur brute. La cinquième : `lireCle(obj, undefined)`.
+- **Pourquoi ce n'est pas cosmétique** : l'écran rend le message du moteur verbatim (FE-04).
+  Sur un 500 il affiche « Internal server error », soit le contraire d'un refus opposable — et
+  n'importe quel appelant le déclenche en collant une référence d'écran.
+- **Correction** : `common/identifiant.ts` (`uuidOuRefus`), appelé **au point de lecture** de
+  l'identifiant et jamais en tête d'acte — la précédence des refus est contractuelle et n'a pas
+  bougé (vérifié : « R7 : une dérogation cross-border exige un motif » sort toujours en premier).
+  Gardes ID-01..05, négativement testées. Statut : **FERMÉ**.
+
+### E-V2-11 — Un acte déclaré sans aucun champ — **SOLDÉ** (V2-M44)
+- **Constat** : « Modifier un paramètre §CrossBorder » ne déclarait aucun champ — bouton présent,
+  formulaire vide, refus « cle attendue » côté moteur. Invisible pour AC-03, qui vérifie que les
+  champs déclarés sont LUS, jamais que ce que le moteur EXIGE est DÉCLARÉ.
+- **Correction** : les quatre champs du contrat (`cle`, `valeur`, `enVigueurLe`, `confirmation`)
+  sont déclarés ; l'acte va désormais jusqu'au pop-up d'engagement R445 (`409
+  R445_CONFIRMATION_REQUISE`, ancien et nouveau compris). Garde **AC-05** : un acte POST dont le
+  contrôleur lit un corps doit déclarer au moins un champ. Statut : **FERMÉ**.
+- **Ce qui reste ouvert dans cette famille** : AC-05 ne couvre que le cas extrême (zéro champ).
+  Un acte qui déclare *deux* champs sur les *quatre* exigés reste invisible statiquement — le
+  moteur ne distingue pas, dans son DTO, le requis de l'optionnel. Seule l'exécution le dit.

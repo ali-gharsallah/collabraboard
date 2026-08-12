@@ -182,6 +182,21 @@ describe("Contrat écran ↔ moteur (V2-M39)", () => {
     expect(introuvables).toEqual([]);
   });
 
+  it("AC-05 un acte POST dont le moteur LIT un corps doit déclarer au moins un champ", () => {
+    // Trouvé par l'EXÉCUTION, pas par la lecture (V2-M44) : « Modifier un paramètre §CrossBorder »
+    // ne déclarait aucun champ. Le bouton existait, le formulaire était vide, et le moteur
+    // refusait « cle attendue ». AC-03 ne pouvait pas le voir — elle vérifie que les champs
+    // DÉCLARÉS sont lus, jamais que ce que le moteur EXIGE est déclaré. Cette garde couvre le
+    // cas extrême et vérifiable statiquement : zéro champ face à un contrôleur qui lit un corps.
+    const muets = actes.filter((a) => {
+      if ((a.methode || "POST") !== "POST" || a.champs.length) return false;
+      const chemin = normaliser(a.route);
+      const r = routes.find((x) => x.methode === "POST" && memeChemin(x.chemin, chemin));
+      return !!r && r.clesCorps.size > 0;                 // le moteur attend un corps, l'écran n'en propose pas
+    }).map((a) => `${a.fichier} — ${a.route} : le moteur lit un corps, l'acte ne déclare aucun champ`);
+    expect(muets).toEqual([]);
+  });
+
   // CE QUE CES GARDES NE VÉRIFIENT PAS, et qu'il ne faut pas croire vérifié : la FORME des
   // réponses. Un seed peut avoir les bonnes clés et le moteur en renvoyer d'autres — seule une
   // API vivante le dirait. Ces gardes couvrent le contrat d'APPEL (route, verbe, champs

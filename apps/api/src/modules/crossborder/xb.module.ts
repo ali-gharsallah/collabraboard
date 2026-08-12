@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { loadSettings } from "../../common/tenant-settings";
+import { uuidOuRefus } from "../../common/identifiant";
 import { fusionProfonde, modifierParametreGouverne, resoudreParametresGouvernes } from "../../common/param-engagement";
 import { Tx } from "../../common/tx";
 
@@ -154,8 +155,9 @@ export class XbService {
       throw new UnprocessableEntityException(
         "XB_QUALIFICATION_REQUISE : pays restreint — l'ordre n'est enregistrable qu'avec la qualification « à l'initiative du client » tracée (R295)");
     if (restreint) {
-      const kyc = await this.prisma.kycFile.findFirst({
-        where: { tenantId: ctx.tenantId, clientId: dto.clientId }, orderBy: { createdAt: "desc" } });
+      const kyc = await this.prisma.kycFile.findFirst({                       // V2-M44 : idem
+        where: { tenantId: ctx.tenantId, clientId: uuidOuRefus(dto.clientId, "client") },
+        orderBy: { createdAt: "desc" } });
       const exigePreuve = (s.preuve_reverse_solicitation ?? "declaration") === "preuve" || kyc?.workflow === "EDD";
       if (exigePreuve && !dto.preuveRef?.trim())
         throw new UnprocessableEntityException(
@@ -289,7 +291,11 @@ export class XbService {
 
   /** Juridiction RÉSOLUE d'un client : localisation temporaire (R457) sinon domicile. */
   private async juridictionClient(ctx: Ctx, clientId: string, atIso: string) {
-    const client: any = await this.prisma.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });
+    // V2-M44 : validé ICI, au point de lecture — pas en tête d'acte. Une référence d'écran
+    // (« CLI-00001 ») arrivait telle quelle au `where` UUID et faisait tomber le moteur en 500 ;
+    // l'écran affichait « Internal server error » au lieu d'un refus lisible.
+    const client: any = await this.prisma.client.findFirst({
+      where: { id: uuidOuRefus(clientId, "client"), tenantId: ctx.tenantId } });
     if (!client) throw new NotFoundException("Client introuvable");
     const locs = (await this.prisma.domainEvent.findMany({
       where: { tenantId: ctx.tenantId, aggregateId: clientId, type: "xb.localisation.declaree" },

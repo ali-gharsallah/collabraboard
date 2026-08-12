@@ -57,6 +57,11 @@ export async function modifierParametreGouverne(prisma: any, ctx: { tenantId: st
     extraPopup?: (cle: string) => Record<string, any>;    // ex. rappelLBA / rappel réglementaire
     apresEmission?: (tx: Tx) => Promise<void>;            // audit spécifique du module
   }) {
+  // V2-M44 : sans clé, `lireCle` faisait `undefined.split(".")` — un TypeError remonté en 500.
+  // Un paramètre gouverné qu'on modifie sans dire lequel est une erreur d'appel, pas un incident
+  // serveur : elle se refuse, et le refus le dit.
+  if (!opts?.cle || typeof opts.cle !== "string")
+    throw new BadRequestException(`Paramètre à modifier non précisé (cle attendue) — registre ${opts?.aggregate ?? "?"}`);
   const enVigueur = new Date(opts.enVigueurLe);
   const actuel = await resoudreParametresGouvernes(prisma, ctx.tenantId, opts.aggregate, opts.base, enVigueur);
   let ancien = lireCle(actuel, opts.cle);

@@ -109,7 +109,16 @@ const ACTES: Record<string, Acte[]> = {
       garde: "XB-04/R295 — la réception d'un ordre depuis une juridiction sous contrainte est DOCUMENTÉE ou REFUSÉE ; en EDD, la preuve GED est exigée." },
   ],
   parametres: [
+    // V2-M44 : cet acte ne déclarait AUCUN champ — le bouton existait, le formulaire était vide,
+    // et le moteur refusait « cle attendue ». Une garde statique ne pouvait pas le voir : elle
+    // vérifie que les champs déclarés sont lus, pas que ce que le moteur EXIGE est déclaré.
+    // Seule l'exécution le dit. Les quatre champs ci-dessous sont ceux du contrat `modifierParametreXB`.
     { cle: "param", libelle: "Modifier un paramètre §CrossBorder", route: "POST /v1/crossborder/params/modifier",
+      methode: "POST", champs: [
+        { cle: "cle", libelle: "Paramètre (chemin dans §CrossBorder)", exemple: "preActe.severites.ADVICE" },
+        { cle: "valeur", libelle: "Nouvelle valeur", exemple: "AVERTISSEMENT" },
+        { cle: "enVigueurLe", libelle: "Date de mise en vigueur (R29 — jamais rétroactive)", exemple: "2026-09-01" },
+        { cle: "confirmation", libelle: "Engagement de responsabilité (R445 — pop-up, texte + auteur)" }],
       garde: "R462 + R445 — pop-up d'engagement de responsabilité : la diffusion transfrontière et les exemptions engagent la banque vis-à-vis des régulateurs étrangers. La portée est « actes futurs » — grandfathering R29 sur les checks déjà consignés." },
   ],
 };
