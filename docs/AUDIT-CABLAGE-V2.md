@@ -360,3 +360,50 @@ ment.
 *(Note d'exécution : un premier passage e2e a montré 1 échec XB-13 — base non recréée, des
 connexions ouvertes ayant fait échouer le DROP. Sur base réellement neuve : 521/521. Le
 diagnostic est consigné parce qu'un « 520/521 » sans explication vaut moins que rien.)*
+
+## V2-M46 — pourquoi le screening ne trouvait rien (12.08.2026)
+
+E-V2-12 restait ouvert : la démonstration ne produisait aucun hit, même avec une entrée de liste
+au nom exact du client. Diagnostic mené sur le moteur nu, sans deviner.
+
+**Ce n'était pas** le seuil (corrigé au lot précédent), ni le pré-filtre (`blocking.js` fusionne
+ses défauts documentés), ni le type de sujet. C'était **un désaccord de format entre deux routes
+du même module** :
+
+| route | ce qu'elle fait des entrées |
+|---|---|
+| `POST /v1/screening/listes/importer` | les NORMALISE — `ingererListe` : `name` → `nom_complet`, `id` → `uid` |
+| `POST /v1/screening/run` | indexait `dto.entries` **BRUTES** |
+
+Une entrée au format documenté de l'import (`{id, name}`) donnait donc un index trigramme **sans
+aucun trigramme** — `nom_complet` valant `undefined`. Mesure directe sur le moteur :
+
+```
+BRUT      → candidats : 0
+NORMALISÉ → candidats : 1        (score 100, retenu au seuil 85)
+```
+
+Zéro candidat, zéro hit, et un run persisté « 0 hit ». Pour un moteur de screening, c'est le pire
+résultat possible : il ressemble à un dossier propre.
+
+**Pourquoi aucun test ne le voyait.** Les suites parlaient déjà le format INTERNE du moteur
+(`{uid, nom_complet}`) — elles vérifiaient le scoring, jamais l'accord entre les deux routes.
+Personne n'avait fait tourner ENSEMBLE l'import et le run. C'est le semis de la démonstration
+par les vraies routes (V2-M45) qui les a confrontées, et le silence du résultat qui a alerté.
+
+**Correction** : `run()` normalise par `ingererListe`, exactement comme l'import ; la fonction est
+idempotente, donc le format interne traverse inchangé. Garde **SC-0B** — les DEUX formats — écrite
+rouge avant la correction.
+
+| Vérification | Résultat |
+|---|---|
+| démonstration semée | **hit score 100** · « Nordwind Handel SA » · statut BRUT · via SD-1 |
+| `services/screening/gate.test.mjs` | 4/4 — rappel 97,92 % · précision 100 % · blocking ×17,8 |
+| `npm run test:rules` | sortie 0, aucun ✗ |
+| e2e (base neuve) | 521/521 |
+| front | 219/219 |
+
+**Ce que cet épisode dit de la méthode.** Trois lots de suite ont trouvé la même forme de
+défaut : une donnée absente ou mal nommée qui ne provoque pas d'erreur, mais un résultat vide —
+`seuil` undefined, identifiant non-UUID, entrées non normalisées. Aucun n'était visible en
+lecture de code ; les trois sont sortis dès qu'on a fait parler deux morceaux ensemble.

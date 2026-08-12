@@ -5,7 +5,7 @@ import { ScreeningQualificationService, EntreeListe, Verdict } from "./rules/scr
 import { Tx } from "../../common/tx";
 import { parserSwift } from "../txflux/swift.module";
 import { emitEvent } from "../../common/domain-event";
-import { construireIndex, construireIndexCache, construireIdfLocal, candidats, rapprocherDetail } from "@olive/screening-engine";
+import { construireIndex, construireIndexCache, construireIdfLocal, candidats, rapprocherDetail, ingererListe } from "@olive/screening-engine";
 
 /**
  * Cablage persistant des regles screening R100->R103 (SC-01..04, ratifiees 15.07.2026).
@@ -217,11 +217,17 @@ export class ScreeningService {
       const phon = cfg.moteur && (cfg.moteur as any).phonetique
         ? { phonetique: true as const, phonetiqueMethode: (((cfg.moteur as any).phonetiqueMethode as string) === "double" ? "double" : "metaphone") as "metaphone" | "double" }
         : null;
+      // V2-M46 — NORMALISER les entrées comme le fait la route d'import (R409). `run()` indexait
+      // `dto.entries` BRUTES : un appelant envoyant le format DOCUMENTÉ de l'import ({id, name})
+      // produisait un index sans trigrammes → zéro candidat → ZÉRO HIT, et un run persisté
+      // « 0 hit » — soit, pour un moteur de screening, un dossier propre qui ne l'est pas.
+      // `ingererListe` est IDEMPOTENTE : une entrée déjà au format moteur traverse inchangée.
+      const entrees = ingererListe(dto.entries as any) as any[];
       const cacheKey = `${dto.liste}@${dto.version}${phon ? `#${phon.phonetiqueMethode}` : ""}`;
-      const idx = construireIndexCache(cacheKey, dto.entries as any, phon ?? undefined);
+      const idx = construireIndexCache(cacheKey, entrees, phon ?? undefined);
       // C8 (L5) — IDF LOCAL AU RUN : plus d'état module-global ; deux runs interleavés (tenants/listes
       // différents) ne peuvent plus se contaminer. IDF : n<2 donnerait log(1)=0 -> NaN ; construit à partir de 2.
-      const idf = dto.entries.length >= 2 ? construireIdfLocal(dto.entries as any) : undefined;
+      const idf = entrees.length >= 2 ? construireIdfLocal(entrees) : undefined;
 
       // Passe de SCORING synchrone (aucun await) : pre-filtre trigramme puis score composite du
       // meilleur candidat au-dessus du seuil (R408). Isole l'etat IDF global des await de persistance.

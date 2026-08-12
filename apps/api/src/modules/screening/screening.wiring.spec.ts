@@ -131,6 +131,26 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
   });
 
   // ── SC-04 (R103) — preuve de fraîcheur, même sans hit ──
+  await it("SC-0B [V2-M46] une entrée au FORMAT D'IMPORT ({id,name}) est screenée comme les autres", async () => {
+    // LE défaut le plus grave trouvé de toute la campagne, et le plus silencieux. `run()`
+    // construisait son index trigramme sur `dto.entries` BRUTES, alors que la route d'import
+    // (`/listes/importer`) les normalise (`ingererListe` : name→nom_complet, id→uid). Un appelant
+    // qui envoie le format DOCUMENTÉ de l'import obtenait donc un index sans trigrammes → zéro
+    // candidat → ZÉRO HIT — et un run persisté « 0 hit », c'est-à-dire un dossier propre.
+    // Les tests ne le voyaient pas : ils parlaient déjà le format interne du moteur.
+    const p = fakePrisma(CLIENTS.map((c) => ({ ...c })));
+    const s = new ScreeningService(p, fakeAudit());
+    await s.run(CTX, { ...CFG, entries: [{ id: "SAN-1", name: "Viktor Volkov", est_entite: false }] } as any);
+    const run = p._db.runs[p._db.runs.length - 1];
+    ok(run.nbHits === 1, `le hit sort au format d'import (obtenu ${run.nbHits})`);
+    ok(p._db.hits.some((h: any) => h.entreeUid === "SAN-1"), "l'uid est repris de `id`");
+
+    // et le format INTERNE continue de marcher à l'identique — la normalisation est idempotente
+    const p2 = fakePrisma(CLIENTS.map((c) => ({ ...c })));
+    await new ScreeningService(p2, fakeAudit()).run(CTX, { ...CFG, entries: [ENTREE] } as any);
+    ok(p2._db.runs[p2._db.runs.length - 1].nbHits === 1, "format interne inchangé");
+  });
+
   await it("SC-00 [V2-M45] un run SANS seuil retombe sur le paramètre GOUVERNÉ, il ne tombe pas en 500", async () => {
     // Trouvé en semant la démonstration par les vraies routes : `seuil` absent de l'appel
     // rendait la comparaison `score >= undefined` toujours fausse — ZÉRO hit, en silence — puis

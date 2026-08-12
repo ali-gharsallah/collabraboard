@@ -1764,4 +1764,22 @@ re-soumis ici.
 - **Ce qui a été corrigé en chemin, et qui n'était pas ça** : un run sans `seuil` faisait
   `score >= undefined` (toujours faux, donc zéro hit EN SILENCE) puis tombait en 500 sur
   `screeningRun.create`. Le seuil effectif retombe désormais sur le paramètre gouverné
-  `screeningSeuil` (R100, défaut 85). Garde SC-00. Statut : **OUVERT** — investigation dédiée.
+  `screeningSeuil` (R100, défaut 85). Garde SC-00.
+
+- **CAUSE TROUVÉE ET CORRIGÉE au lot V2-M46.** Ce n'était ni le seuil, ni le pré-filtre, ni le
+  type de sujet — c'était un **désaccord de format entre deux routes du même module** :
+  - `POST /v1/screening/listes/importer` NORMALISE les entrées (`ingererListe` : `name` →
+    `nom_complet`, `id` → `uid`) ;
+  - `POST /v1/screening/run` indexait `dto.entries` **BRUTES**.
+  Une entrée au format DOCUMENTÉ de l'import (`{id, name}`) produisait donc un index trigramme
+  **sans aucun trigramme** — `nom_complet` étant `undefined`. Zéro candidat, zéro hit, et un run
+  persisté « 0 hit » : pour un moteur de screening, un dossier propre qui ne l'est pas.
+  Mesuré en isolant le moteur : index sur entrées brutes → **0 candidat** ; sur entrées
+  normalisées → **1 candidat, score 100**.
+  Pourquoi aucun test ne le voyait : les suites parlaient déjà le format INTERNE
+  (`{uid, nom_complet}`). Personne n'avait jamais fait tourner ENSEMBLE la route d'import et la
+  route de run — c'est le semis de la démonstration par les vraies routes qui les a confrontées.
+  **Correction** : `run()` normalise par `ingererListe`, exactement comme l'import. La fonction
+  est idempotente, donc le format interne traverse inchangé. Garde **SC-0B** (les deux formats),
+  écrite ROUGE avant la correction. Démonstration : hit score 100 sur « Nordwind Handel SA ».
+  Gate golden du matcher inchangé (R405–R407, R410). Statut : **FERMÉ**.
