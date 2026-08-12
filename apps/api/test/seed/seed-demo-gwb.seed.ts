@@ -263,6 +263,121 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
         .send({ clientId: clients["Meridian Trust"], type: "EXIT_COMPLIANCE",
           motif: "Sortie conformité — art. 10a (démo)", motifSensible: "Soupçon documenté (visible CO_SR seulement)" }).expect(201);
 
+    // ══ 8. LES CHAPITRES QUI MANQUAIENT (V2-M45, écart E-V2-8) ═══════════════════════════════
+    // ATTENTION — supertest ne LÈVE PAS sur un 4xx. Un chapitre enveloppé dans un try/catch
+    // « réussit » donc en n'écrivant rien : le silence exact qu'on refuse partout ailleurs.
+    // `poser()` regarde le statut et le DIT. Un chapitre qui échoue ne casse pas l'histoire
+    // principale — mais il ne passe plus inaperçu.
+    const journalChapitres: string[] = [];
+    const poser = async (quoi: string, req: request.Test) => {
+      const r = await req;
+      if (r.status >= 200 && r.status < 300) { journalChapitres.push(`✓ ${quoi}`); return r; }
+      journalChapitres.push(`✗ ${quoi} → ${r.status} ${JSON.stringify(r.body?.message ?? r.body).slice(0, 160)}`);
+      return r;
+    };
+
+    // Le balayage d'exécution (V2-M44) et le vérificateur de formes (V2-M41) butaient sur le même
+    // mur : sept familles de données que la démonstration ne raconte PAS. Une réponse `[]` ne
+    // prouve rien de la forme de ses éléments, et un acte sur un objet inexistant ne prouve rien
+    // du tout. Ces chapitres sont semés PAR LES VRAIES ROUTES, comme le reste — jamais d'INSERT
+    // direct sur une table de moteur. Chacun est best-effort et idempotent par référence : un
+    // chapitre qui échoue ne casse pas l'histoire principale, il se signale.
+
+    // 8a. SCREENING — une liste de sanctions (démo) puis un run qui PRODUIT des hits (R100/R409).
+    try {
+      const listes = (await request(http).get("/v1/screening/listes").set(co())).body;
+      if (!(Array.isArray(listes) ? listes : listes?.listes ?? []).some((l: any) => l.source === "SECO-DEMO"))
+        await poser("liste de screening", request(http).post("/v1/screening/listes/importer").set(co()).send({
+          source: "SECO-DEMO", version: "2026-08-01",
+          entries: [
+            // Le nom de l'entrée est celui du client, à la lettre : un hit de démonstration doit
+            // venir d'un vrai rapprochement, pas d'un seuil qu'on aurait baissé pour en fabriquer un.
+            { id: "SD-1", name: "Nordwind Handel SA", est_entite: true, nationalites: ["DE"] },
+            { id: "SD-2", name: "Andrei Volkov", est_entite: false, nationalites: ["RU"] },
+          ] }));
+      // La référence est le RUN, pas le hit : ce tenant n'en produit aucun (E-V2-12), et garder
+      // les hits comme repère faisait rejouer le screening à chaque semis — DM-02 rompu.
+      const runsVus = await prisma.screeningRun.count({ where: { tenantId: TENANT_GWB } });
+      if (!runsVus)
+        await poser("run de screening", request(http).post("/v1/screening/run").set(co()).send({
+          liste: "SECO-DEMO", version: "2026-08-01", sujet: "client",
+          entries: [
+            { id: "SD-1", name: "Nordwind Handel SA", est_entite: true },
+            { id: "SD-2", name: "Andrei Volkov", est_entite: false },
+          ] }));
+    } catch (e) { console.log("SEED GWB — chapitre screening toléré :", (e as any)?.message ?? e); }
+
+    // 8b. SIGNAL AML puis CAS DE RISQUE — dans cet ordre, parce que « R133 : un risk case naît
+    // d'au moins un signal ». Le moteur a raison ; c'est la démonstration qui commençait par la fin.
+    try {
+      const casVus = (await request(http).get("/v1/riskcases").set(co())).body;
+      if (!(Array.isArray(casVus) ? casVus : []).length) {
+        // Le code de scénario vient du RÉFÉRENTIEL du moteur (`SF-01`…), pas d'un numéro de
+        // règle : « R189 » est la règle CITÉE par le scénario, pas son identifiant. On lit le
+        // référentiel plutôt que de coder un identifiant en dur qui dériverait au prochain lot.
+        const ref = (await request(http).get("/v1/aml/scenarios").set(co())).body;
+        const premier = (Array.isArray(ref) ? ref : ref?.scenarios ?? [])
+          .find((x: any) => x?.kind === "detection") ?? (Array.isArray(ref) ? ref : [])[0];
+        const sig = await poser(`signal AML (${premier?.code ?? "?"})`, request(http).post("/v1/aml/signals").set(co()).send({
+          scenarioCode: premier?.code, clientId: clients["Nordwind Handel SA"],
+          faits: { motif: "fractionnement observé sur 7 jours (démo)" } }));
+        const signalId = sig.body?.signal?.id ?? sig.body?.id;
+        if (signalId)
+          await poser("cas de risque", request(http).post("/v1/riskcases").set(co())
+            .send({ clientId: clients["Nordwind Handel SA"], signalIds: [signalId] }));
+      }
+    } catch (e) { console.log("SEED GWB — chapitre risk case toléré :", (e as any)?.message ?? e); }
+
+    // 8c. DÉPLACEMENT (Business Trip R446+) — la scène cross-border a besoin d'un voyage réel.
+    try {
+      const trips = (await request(http).get("/v1/trips").set(rm())).body;
+      if (!(Array.isArray(trips) ? trips : []).length)
+        await poser("déplacement", request(http).post("/v1/trips").set(rm()).send({
+          destinations: ["AE"], dateStart: "2026-09-08", dateEnd: "2026-09-11",
+          purpose: "Rencontre client — Dubaï (démo)", activites: ["MEET"] }));
+    } catch (e) { console.log("SEED GWB — chapitre déplacement toléré :", (e as any)?.message ?? e); }
+
+    // 8d. FORMATIONS (R232/R236) — catalogue au registre, puis une assignation à un persona RÉEL.
+    // `userId` est un UUID de collaborateur : depuis V2-M44 le moteur refuse tout autre chose.
+    try {
+      const cat = (await request(http).get("/v1/formations/catalog").set(co())).body;
+      if (!(Array.isArray(cat) ? cat : []).some((f: any) => f.code === "LBA-2026"))
+        await poser("catalogue formations", request(http).post("/v1/parametres/valeur/trainingCatalog").set(boss).send({
+          motif: "R231 : catalogue de formations de démonstration",
+          valeur: [{ code: "LBA-2026", libelle: "LBA / CDB 20 — actualisation annuelle", dureeMinutes: 90,
+            rolesCibles: ["RM", "CO", "CO_SR"], periodiciteMois: 12 }] }));
+      const assigns = (await request(http).get("/v1/formations/assignments").set(co())).body;
+      if (!(Array.isArray(assigns) ? assigns : []).length)
+        await poser("assignation formation", request(http).post("/v1/formations/assignments").set(co())
+          .send({ userId: ids.RM, formationCode: "LBA-2026", echeance: "2026-12-31" }));
+    } catch (e) { console.log("SEED GWB — chapitre formations toléré :", (e as any)?.message ?? e); }
+
+    // 8e. VEILLE RÉGLEMENTAIRE (R309) — une source déclarée + une collecte. Le flux de test est
+    // env-gaté (REGWATCH_FAKE_FEED) : sans lui la source reste ÉTEINTE et rien ne casse (R167).
+    try {
+      const items = (await request(http).get("/v1/regwatch/items").set(co())).body;
+      if (!(Array.isArray(items) ? items : []).length) {
+        await poser("source de veille", request(http).post("/v1/parametres/valeur/regwatch_sources").set(boss).send({
+          motif: "R309 : source de veille de démonstration",
+          valeur: [{ code: "FINMA", libelle: "FINMA — communications", credentials: "demo" }] }));
+        await poser("collecte de veille", request(http).post("/v1/regwatch/collecter").set(co()).send({}));
+      }
+    } catch (e) { console.log("SEED GWB — chapitre veille toléré :", (e as any)?.message ?? e); }
+
+    // 8f. PIÈCES GED (R110) — le dossier KYC affiche ses pièces ; sans elles l'onglet est vide.
+    try {
+      // Un document INGÉRÉ est « à classer » et sans client (R137) : le chercher par clientId ne
+      // le retrouve jamais et il se recréait à chaque semis. La référence est son NOM de fichier.
+      const dejaIngere = await prisma.document.findFirst({
+        where: { tenantId: TENANT_GWB, nom: "passeport-keller.pdf" } });
+      if (!dejaIngere)
+        await poser("pièce GED", request(http).post("/v1/ged/documents").set(rm()).send({
+          canal: "SCAN", source: "guichet-geneve", nomFichier: "passeport-keller.pdf",
+          contenu: "PDF de démonstration — Passeport Famille Keller" }));
+    } catch (e) { console.log("SEED GWB — chapitre GED toléré :", (e as any)?.message ?? e); }
+
+    console.log("SEED GWB — chapitres V2-M45 :\n  " + (journalChapitres.join("\n  ") || "(aucun — tout était déjà semé)"));
+
     // ── La PREUVE — comptée ; l'idempotence se vérifie en relançant (DM-02, cf. run 2) ──
     const preuve = {
       utilisateurs: await prisma.user.count({ where: { tenantId: TENANT_GWB } }),

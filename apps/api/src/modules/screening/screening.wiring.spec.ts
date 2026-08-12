@@ -131,6 +131,25 @@ const mk = () => { const p = fakePrisma(CLIENTS.map((c) => ({ ...c }))); const a
   });
 
   // ── SC-04 (R103) — preuve de fraîcheur, même sans hit ──
+  await it("SC-00 [V2-M45] un run SANS seuil retombe sur le paramètre GOUVERNÉ, il ne tombe pas en 500", async () => {
+    // Trouvé en semant la démonstration par les vraies routes : `seuil` absent de l'appel
+    // rendait la comparaison `score >= undefined` toujours fausse — ZÉRO hit, en silence — puis
+    // faisait échouer `screeningRun.create` sur une colonne non nulle, en 500. Le repli est le
+    // paramètre R-Q `screeningSeuil` (R100), celui que l'écran de paramétrage édite ; à défaut, 85.
+    const p = fakePrisma(CLIENTS.map((c) => ({ ...c })), [], [], [], [], [{ id: 't1', settings: { screeningSeuil: 60 } }]);
+    const s = new ScreeningService(p, fakeAudit());
+    const { seuil: _ignore, ...sansSeuil } = CFG;
+    await s.run(CTX, { ...sansSeuil, entries: [ENTREE] } as any);
+    const run = p._db.runs[p._db.runs.length - 1];
+    ok(!!run, "le run est PERSISTÉ (avant : 500 sur colonne non nulle)");
+    ok(run.seuil === 60, `seuil gouverné repris (obtenu ${run.seuil})`);
+
+    // et sans paramètre au registre : le défaut du canon (85), jamais undefined
+    const p2 = fakePrisma(CLIENTS.map((c) => ({ ...c })), [], [], [], [], [{ id: 't1', settings: {} }]);
+    await new ScreeningService(p2, fakeAudit()).run(CTX, { ...sansSeuil, entries: [ENTREE] } as any);
+    ok(p2._db.runs[p2._db.runs.length - 1].seuil === 85, "défaut R100 = 85");
+  });
+
   await it('SC-04 zéro hit → run persisté : périmètre, version, seuil, pré-filtre, horodatage', async () => {
     const { p, s } = mk();
     const AUTRE = { uid: 'SAN-9', nom_complet: 'Personne Introuvable' };

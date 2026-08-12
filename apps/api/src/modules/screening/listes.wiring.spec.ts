@@ -35,6 +35,10 @@ function fakePrisma(clients: any[]) {
       return { count: avant - rows.length }; },
   });
   const p: any = { _db: db,
+    // V2-M45 : le moteur lit le tenant pour résoudre le SEUIL gouverné (R100) quand l'appel ne
+    // le porte pas. Le faux doit modéliser ce que le moteur lit vraiment — sinon il prouve un
+    // comportement que la production n'a pas.
+    tenant: { findFirst: async () => db.tenants?.[0] ?? { id: 't1', settings: {} } },
     client: table(db.clients, 'CLI'), listeVersion: table(db.versions, 'VER'),
     screeningRun: table(db.runs, 'RUN'), screeningHit: table(db.hits, 'HIT'),
     screeningQualification: table(db.quals, 'Q'), task: table(db.tasks, 'TSK'),

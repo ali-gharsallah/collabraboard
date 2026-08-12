@@ -302,3 +302,61 @@ préconditions. C'est la marche suivante, et elle est plus longue que celle-ci.
 | e2e (base propre) | 521/521 |
 | front | **219/219** |
 | budget bundle | 306,4 kB gz sous 310 |
+
+## V2-M45 — la démonstration raconte enfin les chapitres manquants (12.08.2026)
+
+Deux lots de suite ont buté sur le même mur : sept familles de données que le tenant de
+démonstration ne peuple pas. Une réponse `[]` ne prouve rien de la forme de ses éléments
+(V2-M41), et un acte sur un objet inexistant ne prouve rien du tout (V2-M44). Ce lot sème ces
+chapitres — **par les vraies routes**, jamais d'INSERT direct sur une table de moteur.
+
+Dix chapitres : liste de sanctions et run de screening · signal AML · cas de risque · déplacement
+(BT) · catalogue et assignation de formation · source et collecte de veille · pièce GED ingérée.
+Idempotence prouvée sur base neuve : le second semis n'écrit rien.
+
+### La leçon de méthode, payée comptant
+
+**Supertest ne lève pas sur un 4xx.** Mes chapitres, enveloppés dans un `try/catch`,
+« réussissaient » en n'écrivant rien — le silence exact que ce projet refuse partout ailleurs, et
+que j'ai reproduit dans mon propre code. Un helper de trois lignes qui regarde le statut et le
+DIT a tout changé :
+
+```
+✗ signal AML → 404 "[R340] scénario inconnu : R189"
+✗ déplacement → 400 "dateStart et dateEnd requis"
+✗ pièce GED → 400 "R137 : canal « undefined » hors registre R-Q"
+✗ cas de risque → 400 "R133 : un risk case naît d'au moins un signal"
+```
+
+Quatre contrats que j'avais appelés de travers, dont un vrai malentendu : « R189 » est la règle
+CITÉE par un scénario AML, pas son identifiant (`SF-01`). Le seed lit désormais le référentiel
+plutôt que de coder un identifiant en dur.
+
+### Un troisième 500 de la même famille que V2-M44
+
+`POST /v1/screening/run` **sans `seuil`** : `score >= undefined` est toujours faux — donc ZÉRO
+hit, en silence — puis `screeningRun.create` tombait en 500 sur une colonne non nulle. Le seuil
+effectif retombe maintenant sur le paramètre **gouverné** `screeningSeuil` (R100, défaut 85) :
+celui-là même que l'écran de paramétrage édite. Rien n'est inventé. Garde **SC-00**, et le faux
+Prisma de la suite listes modélise désormais la lecture du tenant — un faux qui ne modèle pas ce
+que le moteur lit prouve un comportement que la production n'a pas.
+
+### Ce que ce lot NE résout pas, et qu'il faut regarder ensuite
+
+Le screening de démonstration ne produit **aucun hit**, même avec une entrée de liste au nom
+exact du client, périmètre de 3 clients, seuil abaissé à 50 (E-V2-12). Pour un moteur de
+screening, « 0 hit » est le résultat le plus dangereux qui soit : il ressemble à un dossier
+propre. La cause n'est pas identifiée et **ne doit pas être devinée** — elle mérite son propre
+lot. J'aurais pu fabriquer un hit en abaissant un seuil : ç'aurait été une démonstration qui
+ment.
+
+| Vérification | Résultat |
+|---|---|
+| seed démo, base neuve | 10 chapitres ✓ · second passage : rien écrit (DM-02) |
+| `npm run test:rules` | sortie 0, aucun ✗ |
+| e2e (base propre) | **521/521** |
+| front | 219/219 |
+
+*(Note d'exécution : un premier passage e2e a montré 1 échec XB-13 — base non recréée, des
+connexions ouvertes ayant fait échouer le DROP. Sur base réellement neuve : 521/521. Le
+diagnostic est consigné parce qu'un « 520/521 » sans explication vaut moins que rien.)*

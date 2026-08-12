@@ -1738,3 +1738,30 @@ re-soumis ici.
 - **Ce qui reste ouvert dans cette famille** : AC-05 ne couvre que le cas extrême (zéro champ).
   Un acte qui déclare *deux* champs sur les *quatre* exigés reste invisible statiquement — le
   moteur ne distingue pas, dans son DTO, le requis de l'optionnel. Seule l'exécution le dit.
+
+### E-V2-8 — Sept familles invérifiables faute de données — **LARGEMENT SOLDÉ** (V2-M45)
+- Le seed de démonstration raconte désormais dix chapitres de plus, **par les vraies routes** :
+  liste de sanctions + run de screening, signal AML, cas de risque, déplacement (BT), catalogue
+  et assignation de formation, source et collecte de veille, pièce GED ingérée.
+- **Idempotence prouvée** (DM-02) : deux semis consécutifs sur base neuve → le second n'écrit
+  rien (« aucun — tout était déjà semé »), les compteurs restent à 1.
+- **Une leçon de méthode, payée comptant** : supertest ne LÈVE PAS sur un 4xx. Les chapitres
+  enveloppés dans un `try/catch` « réussissaient » en n'écrivant rien — le silence exact que ce
+  projet refuse partout ailleurs. Un helper `poser()` regarde le statut et le DIT ; c'est lui
+  qui a révélé les quatre contrats mal appelés (`dateStart` et non `depart`, `canal` obligatoire
+  R137, `scenarioCode` = identifiant du référentiel et non numéro de règle, un cas de risque qui
+  exige un signal). **Reste ouvert** : les hits de screening (E-V2-12).
+
+### E-V2-12 — Le screening de démonstration ne produit AUCUN hit, même sur un nom exact (V2-M45)
+- **Mesuré** : liste importée avec l'entrée « Nordwind Handel SA », client du tenant nommé
+  « Nordwind Handel SA », périmètre = 3 clients, run persisté (R103), `nbHits = 0`. Abaisser le
+  seuil à 50 ne change rien. Le pré-filtre applique pourtant ses défauts documentés
+  (`minPartages: 2, maxTrigrammes: 12, plafond: 400`, fusionnés dans `blocking.js`).
+- **Pourquoi c'est sérieux** : pour un moteur de screening, « 0 hit » est le résultat le plus
+  dangereux qui soit — il ressemble à un dossier propre. La cause n'est PAS identifiée ici et ne
+  doit pas être devinée : piste à instruire en priorité, le type de sujet (`est_entite` du client
+  déduit de sa structure) face au type de l'entrée de liste, et la pénalité de type associée.
+- **Ce qui a été corrigé en chemin, et qui n'était pas ça** : un run sans `seuil` faisait
+  `score >= undefined` (toujours faux, donc zéro hit EN SILENCE) puis tombait en 500 sur
+  `screeningRun.create`. Le seuil effectif retombe désormais sur le paramètre gouverné
+  `screeningSeuil` (R100, défaut 85). Garde SC-00. Statut : **OUVERT** — investigation dédiée.

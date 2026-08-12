@@ -197,6 +197,15 @@ export class ScreeningService {
 
       // R414 - config EFFECTIVE (scenario versionne AmlScenario.params + override d'appel).
       const cfg = await this.resoudreConfig(tx, ctx.tenantId, dto, at);
+      // V2-M45 — le SEUIL EFFECTIF. Sans `seuil` à l'appel, deux choses cassaient en silence
+      // puis en fracas : la comparaison `score >= undefined` est toujours fausse (donc ZÉRO hit,
+      // sans que rien ne le dise), et `screeningRun.create` tombait ensuite en 500 sur une
+      // colonne non nulle. Le repli n'invente rien : c'est le paramètre GOUVERNÉ `screeningSeuil`
+      // (R100, registre R-Q, défaut 85) — celui-là même que l'écran de paramétrage édite.
+      const tnt = await tx.tenant.findFirst({ where: { id: ctx.tenantId } });
+      const seuilGouverne = ((tnt?.settings as any) ?? {}).screeningSeuil;
+      const seuil: number = typeof dto.seuil === "number" ? dto.seuil
+        : typeof seuilGouverne === "number" ? seuilGouverne : 85;
 
       // R409 - index trigramme MÉMOÏSÉ par liste@version (PERF : le rescreening répété d'un portefeuille
       // contre la même liste ne le reconstruit plus). L'index ne porte que des données de LISTE (jamais
@@ -220,7 +229,7 @@ export class ScreeningService {
       for (const s of sujets) {
         const requete = { nom: s.name, dob: s.dob, est_entite: s.est_entite, nationalites: s.nationalites }; // R417 - nationalité
         const cand = candidats(idx, s.name, { ...cfg.prefiltre, ...(phon ?? {}) }); // R409/R414/R416 - pre-filtre (config + phonétique en vigueur)
-        const r = rapprocherDetail(requete, cand, dto.seuil, cfg.moteur, idf); // R408/R414 - score fin (knobs en vigueur), IDF du run (C8)
+        const r = rapprocherDetail(requete, cand, seuil, cfg.moteur, idf); // R408/R414 - score fin (knobs en vigueur), IDF du run (C8)
         if (!r) continue;
         trouves.push({ sujetId: s.id, uid: r.uid, score: r.score, entree: r.entree as any,
           detail: { via: r.detail.via, nameScore: Math.round(r.detail.nameScore),
@@ -250,7 +259,7 @@ export class ScreeningService {
       // R103 - la trace de passage s'ecrit TOUJOURS, hits ou pas, pre-filtre inclus
       const run = await tx.screeningRun.create({ data: {
         tenantId: ctx.tenantId, liste: dto.liste, listeVersion: dto.version, sujetType,
-        seuil: dto.seuil, prefiltre: cfg.prefiltre, perimetre: sujets.length,
+        seuil, prefiltre: cfg.prefiltre, perimetre: sujets.length,
         nbHits: hits.length, at,
         // R414/R415 - config effective + scenario/version + perimetre exact : de quoi REJOUER a l'identique.
         config: { ...cfg, clientIds: sujets.map((s) => s.id) } as any } });
