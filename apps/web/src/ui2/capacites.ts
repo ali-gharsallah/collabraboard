@@ -279,8 +279,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO"], statut: "livre" },   // V2-M48 : onglet « SWIFT/SEPA » — analyse (R300), messages, quarantaine
   { id: "custodyta", libelle: "Custody & TA", groupeV1: "Transactions & Marchés",
     destination: "custody", onglet: undefined, licence: "†CUSTODY",
-    roles: ["RM", "CO", "MLRO"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },   // V2-M50 : écran vertical, chunk paresseux
   { id: "islamic", libelle: "Finance Islamique", groupeV1: "Transactions & Marchés",
     destination: "islamic", onglet: undefined, licence: "†ISLAMIC",
     roles: ["RM", "CO", "MLRO"], statut: "absent",
@@ -341,7 +340,9 @@ export const CAPACITES: Capacite[] = [
  * Mobile, Finance Islamique, Legal, OpRisk, les deux CPSI) s'y ajouteront un par un, chacun
  * dans son chunk — c'est précisément ce que ce lot rend possible sans relever le budget.
  */
-export const ECRAN_MODULE_LICENCIE: Record<string, string> = { crossborder: "CrossBorder" };
+export const ECRAN_MODULE_LICENCIE: Record<string, string> = {
+  crossborder: "CrossBorder", custody: "Custody",
+};
 
 /**
  * Destinations qui sont ENTIÈREMENT vendues à part — toutes leurs capacités portent un †.

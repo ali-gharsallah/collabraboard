@@ -648,3 +648,82 @@ exercé par **aucun test** — la découpe aurait pu casser l'écran sans qu'une
 
 **Ce que ce lot ne fait pas** : il ne bâtit aucun des neuf verticaux. Il les rend bâtissables sans
 relever le budget à chaque fois — c'est tout, et c'était la condition posée.
+
+---
+
+## V2-M50 — Custody & Transfer Agent : le premier vertical du compartiment
+
+**Demande PO** : « next ». Le lot précédent a ouvert le compartiment paresseux ; celui-ci y bâtit le
+premier des neuf verticaux — **sans toucher au budget**.
+
+### Pourquoi celui-ci d'abord
+
+Neuf verticaux restaient. Le choix n'a pas été fait sur le nom mais sur ce que le moteur sert
+**aujourd'hui**, vérifié route par route avant d'écrire une ligne d'écran :
+
+```
+GET  /v1/ta/registre            → positions, mouvements, contrepassations — DONNÉES RÉELLES
+GET  /v1/ta/registre?asOf=…     → registre vide avant le premier mouvement (rejeu R48 prouvé)
+POST /v1/ta/mouvements/…/contrepasser (sans motif)
+                                → 400 « R7 : corriger le registre exige un motif — la
+                                  contre-passation ne s'improvise pas »
+POST /v1/ta/mouvements/…/visa   → 400 « Ce type de mouvement n'exige pas de visa »
+POST /v1/ta/mouvements/INEXISTANT/…  → 404 « Mouvement introuvable »
+```
+
+Des données réelles, quatre actes gouvernés, des refus typés et motivés. C'est le seul des neuf
+dans ce cas — bâtir sur des routes vides aurait répété la faiblesse consignée en V2-M47.
+
+### Ce que l'écran montre, parce que c'est la doctrine du moteur (R302)
+
+- l'état du registre à toute date est un **REJEU du journal** (R48), pas une table d'états ;
+- un mouvement **en attente de visa n'est PAS au registre**, et l'initiateur ne vise jamais
+  lui-même (R13) : la liste ne se lit donc pas comme « tout ce qui a été saisi » ;
+- corriger, c'est **contre-passer avec un motif** (R7), jamais réécrire — le journal est
+  inviolable (R49), et un mouvement contre-passé **reste affiché** avec sa contre-partie ;
+- une position **SOLDÉE ou NÉGATIVE reste visible**. Le moteur ne la supprime pas ; l'écran ne la
+  masque pas. Une ligne qui disparaît est une ligne qu'on cesse de surveiller.
+
+### Deux compteurs m'ont corrigé, et c'est leur métier
+
+**U2-56 (le câblage se mesure)** : j'allais l'inscrire à 5 en comptant V2-M48. Faux — la
+Surveillance posait déjà des actes depuis V2-M35 ; lui ajouter la barre SWIFT enrichit un écran
+déjà câblé, ça n'en câble pas un nouveau. Le compteur passe de 3 à **4**, et V2-M48 ne l'a pas
+relevé. Un chiffre qu'on relève « parce qu'on a travaillé » ne mesure plus rien.
+
+**U2-73 (positions soldées et négatives)** : cassée pour vérification, elle est restée **verte** —
+mon seed ne contenait qu'une position positive, la garde s'exécutait sans rien vérifier. Le seed
+porte désormais une position à zéro et une négative ; la garde rougit maintenant quand on filtre.
+
+### Mesures
+
+| | |
+|---|---|
+| cœur (socle) | 304,9 kB gz sous 310 — **aucune relève** |
+| compartiment modules licenciés | 12,8 kB gz sur 120 (CrossBorder, Custody) |
+| registre des capacités | 67/10/9 → **68/10/8** |
+
+### L'API vivante a révélé cinq écarts — qui ne sont pas de ce lot
+
+Le vérificateur de formes annonce **5 écarts non traités** là où il en annonçait 0 au lot V2-M47.
+Ce n'est pas une régression : ces routes étaient **vides** avant, et une réponse vide ne prouve
+rien sur la forme des éléments — le vérificateur le disait déjà lui-même. Les semis successifs les
+ont peuplées, et la comparaison devient enfin possible. Détail et conduite : **E-V2-17** dans
+`docs/ECARTS-FRONT.md`. Ces cinq écrans liront `undefined` sur des champs nommés ; c'est le lot
+suivant, pas une correction opportuniste glissée dans celui-ci.
+
+### Une incohérence de ma propre doctrine, mesurée et consignée
+
+La règle écrite au lot V2-M49 — « un module vendu à part n'entre pas dans le socle » — n'est
+appliquée qu'à la couche v2. Les écrans **v1** des mêmes modules restent comptés dans le cœur :
+`CustodyTa` 1,26 · `LegalRegistre` 1,22 · `OpRisk` 1,59 · `PmsMandats` 1,87 · `MobileAdmin` 1,69
+kB gz — **7,6 kB** au total. Ils sont déjà chargés paresseusement par le routeur v1 ; il ne manque
+que leur entrée au compartiment. Consigné en E-V2-18, non corrigé ici : élargir le compartiment
+demande de statuer sur le sort de la couche v1, ce qui n'est pas un geste de ce lot.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **233/233** (231 + 2) |
+| budget bundle | cœur 304,9 sous 310 · compartiment 12,8 sur 120 |
+| `verifier-formes-api.mjs` (API vivante) | 44 lectures · 7 conformes · **5 écarts → E-V2-17** |
+| cliquet i18n | 0 texte en dur |

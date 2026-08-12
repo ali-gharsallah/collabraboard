@@ -1860,3 +1860,41 @@ sans lui la collecte ne produit aucun item, la garde reste donc toujours vraie e
 rejoue. Conséquence pratique nulle aujourd'hui (la source est un upsert de paramètre), mais c'est
 une idempotence apparente et non réelle : elle mérite d'être corrigée par une garde qui teste ce
 que le chapitre écrit VRAIMENT, pas ce qu'il espère produire.
+
+### E-V2-17 — Cinq écrans liront `undefined` : les seeds nomment ce que le moteur ne sert pas (V2-M50)
+
+**OUVERT** — mesuré sur API vivante, non corrigé (hors périmètre du lot V2-M50).
+
+Le vérificateur de formes annonçait « 0 écart non traité » tant que ces routes répondaient `[]`.
+Il l'avait écrit lui-même : *une réponse vide ne prouve rien sur la forme des éléments*. Les semis
+des lots V2-M45 et V2-M48 les ont peuplées, et la comparaison devient possible :
+
+| écran | route | champs que l'écran attend et que le moteur NE SERT PAS |
+|---|---|---|
+| `EntreeRelation` | `/v1/trips` | `reference`, `pays`, `depart`, `visaChain` |
+| `Pilotage` | `/v1/formations/assignments` | `collaborateur`, `formation` |
+| `Surveillance` | `/v1/screening/hits` | `nom`, `liste` |
+| `Surveillance` | `/v1/aml/signals` | `statut`, `at` |
+| `Surveillance` | `/v1/riskcases` | `reference`, `origine` |
+
+Le moteur sert autre chose sous d'autres noms — par exemple, pour les hits de screening :
+`entreeUid`, `listeVersion`, `matchScript`, `detail.nameScore`. **La file de screening afficherait
+donc des colonnes vides en production**, ce qui est plus grave que les autres : c'est l'écran de
+qualification des hits.
+
+**Conduite** : appliquer la règle déjà posée en V2-M41 — *le moteur nomme, l'écran suit*. Soit un
+adaptateur dans `moteur-formes.ts` (avec fixture capturée en vrai, jamais écrite à la main), soit
+un renommage côté écran. Jamais un ajout de champ au moteur pour faire plaisir à un écran.
+
+### E-V2-18 — Le compartiment paresseux ignore la couche v1 des mêmes modules (V2-M50)
+
+**OUVERT** — mesuré, non corrigé.
+
+La doctrine posée en V2-M49 dit qu'un module vendu à part ne doit pas peser sur le socle. Elle
+n'est appliquée qu'aux écrans v2. Les écrans v1 des mêmes modules licenciés sont pourtant comptés
+dans le cœur : `CustodyTa` 1,26 · `LegalRegistre` 1,22 · `OpRisk` 1,59 · `PmsMandats` 1,87 ·
+`MobileAdmin` 1,69 kB gz — **7,6 kB**.
+
+Ils sont déjà chargés paresseusement par le routeur v1 : il ne manque que leur entrée au
+compartiment. Mais les y verser revient à statuer sur le sort de la couche v1 (destinée à
+disparaître avec la migration v2 ?), ce qui est un arbitrage PO et non un geste technique.

@@ -16,6 +16,7 @@ import { RevueSortie } from "./RevueSortie";
 import { SandboxSlider } from "./SandboxSlider";
 import { ECRANS_MIGRES } from "./cartographie";
 import { Ui2Preview } from "./Ui2Preview";
+import { Custody } from "./Custody";
 import { CAPACITES, ECRAN_MODULE_LICENCIE, capacitesVisibles, destinationsLicenciees, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
@@ -664,9 +665,9 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
     // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
     // lui manque encore le référentiel de profils, pas l'écran.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(67);   // V2-M48 : + swiftlab
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(68);   // V2-M48 +swiftlab · V2-M50 +custodyta
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(9);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(8);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -837,8 +838,13 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // 0 → 1 au lot V2-M35 (UN chemin d'écriture, acte-moteur.tsx, emprunté par la Surveillance).
     // 1 → 2 écrans au lot V2-M36 (Cross-Border), → 3 au lot V2-M37 (Rapports : MROS,
     // habilitations, veille, registre). Relever ces nombres atteste un câblage.
+    // → 4 au lot V2-M50 (Custody & TA : enregistrer, viser R13, contre-passer R7, rejeu R48).
+    // V2-M48 n'a PAS relevé ce compteur, et c'est le compteur qui me l'a appris : la
+    // Surveillance posait déjà des actes depuis V2-M35 ; lui ajouter la barre SWIFT enrichit un
+    // écran déjà câblé, ça n'en câble pas un nouveau. Un chiffre qu'on relève « parce qu'on a
+    // travaillé » ne mesure plus rien.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(3);
+    expect(ecrans).toBe(4);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -1033,6 +1039,37 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     for (const d of licenciees)
       if (new RegExp(`active === "${d}"`).test(preview))
         expect(Object.keys(ECRAN_MODULE_LICENCIE)).toContain(d);
+  });
+
+  it("U2-72 V2-M50 Custody & TA : le registre est un REJEU, et il le dit — pas une table d'états", () => {
+    render(<Custody active={"custody" as never} onNavigate={() => undefined} />);
+    // R48 : l'état affiché est reconstruit du journal, et l'acte de rejeu le dit. (Le sous-titre
+    // d'en-tête, lui, annonce « données maquette » tant que l'API n'est pas branchée : c'est le
+    // bandeau d'honnêteté du hook, on ne l'assertit donc pas ici.)
+    fireEvent.click(screen.getByRole("button", { name: "Rejouer le registre à une date" }));
+    expect(screen.getByText(/REJEU du journal, jamais une photo stockée/)).toBeTruthy();
+    // les quatre actes du moteur, avec leurs gardes en toutes lettres
+    fireEvent.click(screen.getByRole("button", { name: "Contre-passer un mouvement" }));
+    expect(screen.getByText(/la contre-passation ne s'improvise pas/)).toBeTruthy();
+    expect(screen.getByText(/jamais une réécriture/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Viser un mouvement" }));
+    expect(screen.getByText(/l'initiateur ne vise JAMAIS son propre mouvement/)).toBeTruthy();
+  });
+
+  it("U2-73 V2-M50 Custody & TA : une position SOLDÉE ou NÉGATIVE reste VISIBLE", () => {
+    // Le moteur ne supprime pas ces lignes — l'écran ne doit pas les masquer non plus. Une
+    // ligne qui disparaît est une ligne qu'on cesse de surveiller, et une position négative
+    // est justement l'anomalie qu'il faut voir.
+    render(<Custody active={"custody" as never} onNavigate={() => undefined} />);
+    expect(screen.getByText("OUVERTE")).toBeTruthy();
+    expect(screen.getByText("SOLDÉE")).toBeTruthy();      // quantité 0 — toujours affichée
+    expect(screen.getByText("NÉGATIVE")).toBeTruthy();    // quantité < 0 — l'anomalie à voir
+    expect(screen.getByText("-250")).toBeTruthy();
+    expect(screen.getByText(/une position négative est justement l'anomalie/)).toBeTruthy();
+    // et la liste des mouvements dit pourquoi elle n'est pas la saisie
+    fireEvent.click(screen.getByRole("button", { name: /Mouvements/ }));
+    expect(screen.getByText(/un mouvement en attente de visa n'y figure pas/)).toBeTruthy();
+    expect(screen.getByText(/corriger n'est pas effacer/)).toBeTruthy();
   });
 
   it("U2-71 V2-M49 : le chunk paresseux se CHARGE vraiment — la garde de source ne suffit pas", async () => {
