@@ -820,3 +820,48 @@ garde tourner à vide.
 **Restent absents** : 7 — Legal (routes vides, à semer d'abord), les deux CPSI, PMS, FX, Mobile,
 Islamic (routes vides ou dépendantes d'un port). Le prochain « next » suivra la même règle : semer
 d'abord, bâtir ensuite.
+
+---
+
+## V2-M53 — la couche v1 versée au compartiment (arbitrage PO) : E-V2-18 soldé
+
+**Demande PO** : « verse la couche v1 au compartiment » — l'arbitrage attendu depuis V2-M50.
+
+Les six chunks v1 des modules vendus à part rejoignent le compartiment de la garde de budget. Ils
+étaient **déjà paresseux** dans le routeur v1 (vérifié : aucun import statique nulle part) — il ne
+leur manquait que l'entrée dans la liste, et ils pesaient donc sur le budget du socle sans qu'un
+tenant non licencié ne les paie jamais au chargement initial.
+
+### Deux corrections d'inventaire, dites plutôt que découvertes plus tard
+
+1. **`PmsMandats` n'entre pas** : E-V2-18 le listait, à tort — la licence de PMS ne porte pas de
+   `†` au registre des capacités. Ce n'est pas un module vendu à part ; il reste au socle. Verser
+   un écran du socle au compartiment aurait été exactement le « tiroir où l'on range ce qu'on ne
+   veut pas mesurer » que la garde interdit.
+2. **Le chunk v1 `CrossBorder` était déjà compté** — même préfixe de nom que l'écran v2, le
+   matcher l'attrapait par accident depuis V2-M49. L'accident devient une décision écrite : les
+   deux couches d'un même module † vivent dans le même compartiment.
+
+### Mesures
+
+| | avant | après |
+|---|---|---|
+| cœur (socle) | 305,3 kB gz | **297,6** |
+| compartiment | 16,1 sur 120 | **23,8** sur 120 (9 chunks) |
+| budget | 310 | **302 — baissé** |
+
+Troisième mouvement de budget en quatre lots, et le deuxième vers le bas : le budget suit la
+mesure, dans les deux sens.
+
+### La garde qui empêche la liste de mentir
+
+**U2-76** relit la liste **du fichier de budget** et vérifie chaque nom contre le code qui le
+charge : présent dans un `lazy(import(...))` (Ui2Preview pour la couche v2, router.tsx pour la
+v1), et importé statiquement nulle part. Cassée dans les deux sens avant d'être crue : un écran
+repassé en import statique rougit, un nom fantôme dans la liste rougit aussi.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **241/241** (240 + 1) |
+| budget bundle | cœur 297,6 sous 302 · compartiment 23,8 sur 120 |
+| cliquet i18n | 0 texte en dur |

@@ -77,7 +77,10 @@ const zlib = require("zlib");
 // transformé un gain d'architecture en marge dormante, c'est-à-dire en autorisation tacite de
 // grossir. Le budget redescend donc, et la marge reste courte (≈ 5 kB) : les neuf verticaux à
 // venir n'ont plus besoin d'elle — ils ont leur compartiment.
-const BUDGET_TOTAL_KB = 310;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// BAISSE 310 → 302 (V2-M53) : verser la couche v1 des modules † rend ~7,7 kB au cœur
+// (305,3 → 297,6 mesurés). Même doctrine qu'à la baisse précédente : une marge gagnée par
+// l'architecture ne reste pas dormante — le budget suit la mesure, dans les deux sens.
+const BUDGET_TOTAL_KB = 302;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux
@@ -99,7 +102,21 @@ const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le c
 // La liste est EXPLICITE, jamais un joker `*` : un nouveau chunk ne s'exonère pas du budget en
 // choisissant son nom de fichier. Elle est tenue en accord avec `capacites.ts` par la garde
 // U2-70 — si un écran de module licencié est bâti sans entrer ici, le front rougit.
-const MODULES_LICENCIES = ["CrossBorder", "Custody", "Oprisk"];  // écrans de modules † déjà bâtis
+// V2-M53 (arbitrage PO « verse la couche v1 au compartiment », E-V2-18 soldé) : les écrans V1
+// des modules † rejoignent le compartiment. Ils étaient DÉJÀ paresseux dans le routeur v1 —
+// il ne leur manquait que l'entrée ici, et ils pesaient donc sur le budget du socle sans
+// qu'aucun tenant non licencié ne les télécharge jamais au chargement initial.
+// Deux précisions d'inventaire, dites plutôt que découvertes plus tard :
+//   · le chunk v1 `CrossBorder` était DÉJÀ compté — même préfixe de nom que l'écran v2, le
+//     matcher l'attrapait par accident. L'accident devient une décision : les deux couches du
+//     même module † vivent dans le même compartiment.
+//   · `PmsMandats` N'ENTRE PAS : la licence de PMS ne porte pas de † (ce n'est pas un module
+//     vendu à part au registre des capacités). E-V2-18 le listait à tort — corrigé là-bas.
+const MODULES_LICENCIES = [
+  "CrossBorder", "Custody", "Oprisk",                          // couche v2 (Ui2Preview, lazy)
+  "CustodyTa", "LegalRegistre", "OpRisk", "MobileAdmin",       // couche v1 (router.tsx, lazy)
+  "FxExposition", "FinanceIslamique",
+];
 const BUDGET_MODULE_KB = 40;                            // un module licencié reste mince
 const BUDGET_MODULES_TOTAL_KB = 120;                    // …et leur somme aussi (9 verticaux à venir)
 const EST_MODULE_LICENCIE = (f) =>

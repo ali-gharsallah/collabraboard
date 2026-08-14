@@ -1116,6 +1116,30 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(await screen.findByRole("button", { name: "Dérogations" })).toBeTruthy();
   });
 
+  it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {
+    // Arbitrage PO (V2-M53) : la couche v1 des modules † rejoint le compartiment. Le danger
+    // d'une liste de noms est qu'elle survive au code : un écran repassé en import statique
+    // resterait « hors budget » sur le papier tout en pesant sur le socle en vrai. Cette garde
+    // relit la liste DU FICHIER DE BUDGET et vérifie chaque nom contre le code qui le charge.
+    const budget = readFileSync(join(process.cwd(), "scripts/verifier-budget-bundle.js"), "utf8");
+    const bloc = budget.match(/MODULES_LICENCIES = \[([\s\S]*?)\];/);
+    expect(bloc).toBeTruthy();
+    const noms = [...bloc![1].matchAll(/"([A-Za-z]+)"/g)].map((m) => m[1]);
+    expect(noms.length).toBeGreaterThanOrEqual(9);
+    const preview = readFileSync(join(process.cwd(), "src/ui2/Ui2Preview.tsx"), "utf8");
+    const router = readFileSync(join(process.cwd(), "src/app/router.tsx"), "utf8");
+    const composantsV2 = Object.values(ECRAN_MODULE_LICENCIE);
+    for (const nom of noms) {
+      const source = composantsV2.includes(nom) ? preview : router;
+      // chargé par lazy(import(...)) quelque part…
+      expect(source, `${nom} doit être chargé par lazy()`).toMatch(
+        new RegExp(`lazy\\(\\(\\) => import\\("[^"]*/${nom}"\\)`));
+      // …et importé STATIQUEMENT nulle part (préfixe partagé toléré : \b + fin de nom)
+      expect(source, `${nom} ne doit pas être importé statiquement`).not.toMatch(
+        new RegExp(`^import \\{[^}]*\\b${nom}\\b[^}]*\\} from`, "m"));
+    }
+  });
+
   it("U2-66 V2-M47 registre : plus aucune capacité « absent » ne s'excuse d'un onglet non construit", () => {
     // La garde qui empêche la régression de ce lot : si un onglet est déclaré comme destination
     // d'une capacité et que le motif d'absence est « onglet non construit », l'écart est ouvert.

@@ -1890,9 +1890,20 @@ qualification des hits.
 adaptateur dans `moteur-formes.ts` (avec fixture capturée en vrai, jamais écrite à la main), soit
 un renommage côté écran. Jamais un ajout de champ au moteur pour faire plaisir à un écran.
 
-### E-V2-18 — Le compartiment paresseux ignore la couche v1 des mêmes modules (V2-M50)
+### E-V2-18 — Le compartiment paresseux ignore la couche v1 des mêmes modules (V2-M50) — **SOLDÉ** (V2-M53)
 
-**OUVERT** — mesuré, non corrigé.
+**SOLDÉ** sur arbitrage PO (« verse la couche v1 au compartiment ») : les six chunks v1 des
+modules † (`CustodyTa`, `LegalRegistre`, `OpRisk`, `MobileAdmin`, `FxExposition`,
+`FinanceIslamique`) rejoignent le compartiment — ils étaient déjà paresseux dans le routeur v1,
+il ne leur manquait que l'entrée. Cœur : 305,3 → **297,6 kB gz** ; budget baissé 310 → **302**
+(la marge gagnée ne dort pas). Garde **U2-76** : chaque nom de la liste doit être réellement
+chargé par `lazy()` et jamais importé statiquement — un nom fantôme ou un retour à l'import
+statique rougit.
+
+**Correction du constat initial** : `PmsMandats` y était listé à tort — la licence de PMS ne
+porte pas de `†` au registre des capacités (ce n'est pas un module vendu à part), il reste donc
+au socle. Et le chunk v1 `CrossBorder` était déjà capté par accident de préfixe de nom ;
+l'accident est désormais une décision écrite dans la garde de budget. Constat d'origine :
 
 La doctrine posée en V2-M49 dit qu'un module vendu à part ne doit pas peser sur le socle. Elle
 n'est appliquée qu'aux écrans v2. Les écrans v1 des mêmes modules licenciés sont pourtant comptés
