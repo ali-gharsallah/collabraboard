@@ -30,6 +30,8 @@ import { ParamSandbox } from "./ParamSandbox";
 const CrossBorder = lazy(() => import("./CrossBorder").then((m) => ({ default: m.CrossBorder })));
 // V2-M50 : le PREMIER vertical bâti dans le compartiment — †CUSTODY, son propre chunk.
 const Custody = lazy(() => import("./Custody").then((m) => ({ default: m.Custody })));
+// V2-M52 : †OPRISK — deuxième vertical du compartiment, son propre chunk.
+const Oprisk = lazy(() => import("./Oprisk").then((m) => ({ default: m.Oprisk })));
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 
@@ -90,6 +92,11 @@ export function Ui2Preview() {
   if (active === "clients") return <MesClients active={active} onNavigate={setActive} />;
   // V2-M29 : Cross-Border devient un écran de plein droit — il n'était atteignable que par un
   // onglet du dossier KYC alors que le moteur porte dix-sept routes (E-V2-1 soldé).
+  if (active === "oprisk") return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
+      {t("Chargement du module OpRisk…")}</div>}>
+      <Oprisk active={active} onNavigate={setActive} />
+    </Suspense>);
   if (active === "custody") return (
     <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
       {t("Chargement du module Custody & TA…")}</div>}>

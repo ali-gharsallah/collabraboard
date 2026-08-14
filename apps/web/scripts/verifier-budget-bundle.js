@@ -99,7 +99,7 @@ const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le c
 // La liste est EXPLICITE, jamais un joker `*` : un nouveau chunk ne s'exonère pas du budget en
 // choisissant son nom de fichier. Elle est tenue en accord avec `capacites.ts` par la garde
 // U2-70 — si un écran de module licencié est bâti sans entrer ici, le front rougit.
-const MODULES_LICENCIES = ["CrossBorder", "Custody"];    // écrans de modules † déjà bâtis
+const MODULES_LICENCIES = ["CrossBorder", "Custody", "Oprisk"];  // écrans de modules † déjà bâtis
 const BUDGET_MODULE_KB = 40;                            // un module licencié reste mince
 const BUDGET_MODULES_TOTAL_KB = 120;                    // …et leur somme aussi (9 verticaux à venir)
 const EST_MODULE_LICENCIE = (f) =>

@@ -762,3 +762,61 @@ adaptées. Gardes FM-08..FM-12 contre fixtures capturées.
 
 Reste ouvert de la demande « rectifie ça » : **E-V2-18** (couche v1 des modules licenciés hors
 compartiment) demande l'arbitrage PO sur le sort de la couche v1 — non tranché ici.
+
+---
+
+## V2-M52 — Octopulse OpRisk : deuxième vertical du compartiment
+
+**Demande PO** : « next ». Même règle de choix qu'au lot V2-M50 : entre les verticaux restants,
+celui que le moteur sert. Mesuré sur l'API vivante : OpRisk porte un incident réel et une heatmap
+à sept catégories ; `/v1/legal/*` répond `[]`. **OpRisk d'abord, Legal attendra d'être semé.**
+
+### Les trois refus observés avant d'écrire l'écran
+
+```
+POST /v1/oprisk/incidents  {categorie:"INVENTEE"}
+  → 400 « R321 : classification OBLIGATOIRE dans la taxonomie Bâle du tenant — reçu
+    « INVENTEE », admis : FRAUDE_INTERNE, …, EXECUTION_PROCESSUS »
+POST /v1/oprisk/incidents/:id/transition  {vers:"CLOS"}   (depuis DECLARE)
+  → 400 « R321 : transition DECLARE → CLOS hors chemin (admis : EN_ANALYSE) »
+POST /v1/oprisk/incidents/:id/transition  {vers:"DECLARE"}
+  → 400 « R321 : transition DECLARE → DECLARE hors chemin »
+```
+
+Ces refus sont cités dans les gardes des actes de l'écran — l'utilisateur lit ce qui sera refusé
+AVANT de saisir.
+
+### Ce que l'écran tient, parce que c'est la doctrine du moteur (R321-R323)
+
+- **Pas de catégorie « Autre »** : la taxonomie Bâle du tenant est default-deny (clé R-Q
+  `oprisk_taxonomie`) ; un incident inclassable est un problème de taxonomie, qui se règle au
+  Paramétrage — pas une ligne fourre-tout ;
+- le chemin est **fermé** (DECLARE → EN_ANALYSE → CLOS) et la clôture se **motive** (R7) ;
+- la heatmap est **calculée, jamais peinte** (R322/OP-03 — structurel : aucune route d'écriture de
+  cellule n'existe), rejouable à date comme le registre TA ; une **cellule à zéro reste affichée**
+  — l'absence d'incident dans une catégorie est une information, pas un vide ;
+- le **retard d'une action est un fait calculé** (R274), jamais un blocage : l'écran la montre en
+  retard, il ne l'empêche pas.
+
+Le seed porte l'incident réel du tenant GWB, la heatmap réelle, et une action EN RETARD ajoutée
+délibérément — leçon U2-73 du lot précédent : un seed qui ne montre jamais l'état limite laisse la
+garde tourner à vide.
+
+### Mesures
+
+| | |
+|---|---|
+| registre des capacités | 68/10/8 → **69/10/7** |
+| compteur de câblage (U2-56) | 4 → **5** écrans (OpRisk pose quatre actes réels) |
+| compartiment modules licenciés | 12,8 → **16,1 kB gz** sur 120 (3 modules) |
+| cœur | 305,3 sous 310 — **aucune relève** |
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **240/240** (238 + 2, gardes U2-74/75 cassées avant d'être crues) |
+| `verifier-formes-api.mjs` | **47 lectures · 0 écart non traité** — les 3 lectures OpRisk conformes |
+| budget · cliquet i18n | 0 · 0 |
+
+**Restent absents** : 7 — Legal (routes vides, à semer d'abord), les deux CPSI, PMS, FX, Mobile,
+Islamic (routes vides ou dépendantes d'un port). Le prochain « next » suivra la même règle : semer
+d'abord, bâtir ensuite.
