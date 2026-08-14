@@ -727,3 +727,38 @@ demande de statuer sur le sort de la couche v1, ce qui n'est pas un geste de ce 
 | budget bundle | cœur 304,9 sous 310 · compartiment 12,8 sur 120 |
 | `verifier-formes-api.mjs` (API vivante) | 44 lectures · 7 conformes · **5 écarts → E-V2-17** |
 | cliquet i18n | 0 texte en dur |
+
+---
+
+## V2-M51 — E-V2-17 soldé : cinq adaptateurs, cinq fixtures capturées, zéro invention
+
+**Demande PO** : « Ok rectifie ça et next » — rectifier les cinq écrans qui liraient `undefined`.
+
+Méthode inchangée depuis V2-M41 : **le moteur nomme, l'écran suit**. Cinq adaptateurs dans
+`moteur-formes.ts`, chacun asserté contre une fixture **capturée sur l'API vivante** (jamais
+écrite à la main), et enregistrés dans `ROUTES_ADAPTEES` pour que le vérificateur les compte
+comme écarts ASSUMÉS.
+
+| route | traduit | reste VIDE (et pourquoi) |
+|---|---|---|
+| `/v1/trips` | `pays ← destinations[]` · `depart ← dateStart` | `reference`, `visaChain` — la chaîne de visa vit dans la config BT, résolue à l'acte, pas dans la projection |
+| `/v1/formations/assignments` | `formation ← formationCode` · `collaborateur ← userId` | — (`userId` est un **id**, pas un nom : la projection ne joint pas l'annuaire, fabriquer un nom serait inventer) |
+| `/v1/screening/hits` | `nom ← detail.via` · `liste ← listeVersion` | — le plus grave des cinq : la file de qualification a de nouveau un NOM à lire (R411) |
+| `/v1/aml/signals` | `statut ← outcome ?? status` (qualifié d'abord) · `at ← createdAt` | — |
+| `/v1/riskcases` | `origine ← compte des signaux réconciliés (R280)` | `reference` — le cas n'a que son id, l'écran retombe déjà dessus |
+
+Trois écrans branchés (Surveillance ×3 lectures, EntreeRelation, Pilotage) — le seed traverse
+inchangé, les adaptateurs sont idempotents sur le format écran (asserté dans FM-12).
+
+**Vérificateur de formes, avant → après** : 5 écarts non traités → **0**, 6 → **11** routes
+adaptées. Gardes FM-08..FM-12 contre fixtures capturées.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **238/238** (233 + 5) |
+| `verifier-formes-api.mjs` | 44 lectures · **0 écart non traité** |
+| budget bundle | cœur 305,1 sous 310 — aucune relève |
+| cliquet i18n | 0 texte en dur |
+
+Reste ouvert de la demande « rectifie ça » : **E-V2-18** (couche v1 des modules licenciés hors
+compartiment) demande l'arbitrage PO sur le sort de la couche v1 — non tranché ici.

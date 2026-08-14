@@ -599,5 +599,107 @@
     "UN"
    ]
   }
- }
+ },
+ "/v1/trips": [
+  {
+   "id": "4c16b82f-ea25-4b84-a4a5-f77914203eb1",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "travelerId": "ca7acc2c-5920-47d5-ba15-dcd4523cf2ad",
+   "status": "DRAFT",
+   "purpose": "Rencontre client — Dubaï (démo)",
+   "dateStart": "2026-09-08",
+   "dateEnd": "2026-09-11",
+   "destinations": [
+    "AE"
+   ],
+   "clients": [],
+   "advisories": [],
+   "signals": [],
+   "activites": [
+    "MEET"
+   ],
+   "budget": null,
+   "revision": 1,
+   "previousTripId": null,
+   "createdAt": "2026-08-12T20:31:37.739Z"
+  }
+ ],
+ "/v1/formations/assignments": [
+  {
+   "id": "e37101ab-cb9f-4d04-9618-778460ea503a",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "userId": "ca7acc2c-5920-47d5-ba15-dcd4523cf2ad",
+   "formationCode": "LBA-2026",
+   "echeance": "2026-12-31",
+   "statut": "ASSIGNED",
+   "attestationDocId": null,
+   "visaStatut": null,
+   "visePar": null,
+   "viseAt": null,
+   "createdAt": "2026-08-12T20:31:37.773Z"
+  }
+ ],
+ "/v1/screening/hits": [
+  {
+   "id": "fd159641-729a-4e92-83ce-d84eb82c6a6d",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "runId": "65ce32cd-f05b-46b6-a230-b229f18262dd",
+   "clientId": "58cfd770-8451-4740-b919-56aaf0acc93f",
+   "sujetType": "client",
+   "entreeUid": "SD-1",
+   "entreeHash": "9a60173f80d1128f",
+   "score": 100,
+   "listeVersion": "2026-08-01",
+   "statut": "BRUT",
+   "channel": null,
+   "matchScript": null,
+   "detail": {
+    "via": "Nordwind Handel SA",
+    "nameScore": 100,
+    "typePenalty": 0,
+    "dobContribution": 0,
+    "natContribution": 0
+   },
+   "at": "2026-08-12T20:31:37.654Z"
+  }
+ ],
+ "/v1/aml/signals": [
+  {
+   "id": "2ca729d3-4a04-4d8f-ac17-0afeb9684fb2",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "scenarioCode": "SF-01",
+   "scenarioVer": 1,
+   "ruleRef": "R340",
+   "clientId": "58cfd770-8451-4740-b919-56aaf0acc93f",
+   "uboGroupId": null,
+   "payload": {
+    "motif": "fractionnement observé sur 7 jours (démo)"
+   },
+   "niveau": 2,
+   "blocking": false,
+   "status": "NEW",
+   "outcome": null,
+   "motif": null,
+   "idemKey": "SF-01:58cfd770-8451-4740-b919-56aaf0acc93f:ecd15013",
+   "emisPar": "176479df-643d-402b-babe-8fda5c56aa38",
+   "createdAt": "2026-08-12T20:31:37.704Z"
+  }
+ ],
+ "/v1/riskcases": [
+  {
+   "id": "ea4dd09f-2f33-4ac8-8431-3682b04b04d1",
+   "tenantId": "9b1de001-0000-4000-8000-00000000006b",
+   "clientId": "58cfd770-8451-4740-b919-56aaf0acc93f",
+   "statut": "NOUVELLE",
+   "etatDepuis": "2026-08-12T20:31:37.717Z",
+   "slaSignale": false,
+   "signalIds": [
+    "2ca729d3-4a04-4d8f-ac17-0afeb9684fb2"
+   ],
+   "ouvertPar": "176479df-643d-402b-babe-8fda5c56aa38",
+   "motifTerminal": null,
+   "terminePar": null,
+   "createdAt": "2026-08-12T20:31:37.718Z"
+  }
+ ]
 }

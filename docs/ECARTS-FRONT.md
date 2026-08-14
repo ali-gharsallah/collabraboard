@@ -1861,9 +1861,13 @@ rejoue. Conséquence pratique nulle aujourd'hui (la source est un upsert de para
 une idempotence apparente et non réelle : elle mérite d'être corrigée par une garde qui teste ce
 que le chapitre écrit VRAIMENT, pas ce qu'il espère produire.
 
-### E-V2-17 — Cinq écrans liront `undefined` : les seeds nomment ce que le moteur ne sert pas (V2-M50)
+### E-V2-17 — Cinq écrans liront `undefined` : les seeds nomment ce que le moteur ne sert pas (V2-M50) — **SOLDÉ** (V2-M51)
 
-**OUVERT** — mesuré sur API vivante, non corrigé (hors périmètre du lot V2-M50).
+**SOLDÉ** par cinq adaptateurs (`moteur-formes.ts`, FM-08..12 contre fixtures capturées sur API
+vivante) : `nom ← detail.via`, `liste ← listeVersion`, `formation ← formationCode`,
+`statut ← outcome ?? status`, `origine ← compte des signaux (R280)`, `pays ← destinations[]`.
+Les champs que le moteur ne détient pas (`visaChain`, `reference` des cas/voyages) restent VIDES,
+et les commentaires disent pourquoi. Vérificateur : 5 écarts → 0. Historique du constat :
 
 Le vérificateur de formes annonçait « 0 écart non traité » tant que ces routes répondaient `[]`.
 Il l'avait écrit lui-même : *une réponse vide ne prouve rien sur la forme des éléments*. Les semis

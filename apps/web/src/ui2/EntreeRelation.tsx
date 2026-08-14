@@ -6,7 +6,7 @@ import { Ui2HeaderDossier, Ui2Bouton } from "./Header";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
-import { listeProspects } from "./moteur-formes";
+import { listeDeplacements, listeProspects } from "./moteur-formes";
 import { traduire, langue } from "../lib/i18n";
 
 /**
@@ -52,7 +52,8 @@ export function EntreeRelation({ active, onNavigate }: { active: Ui2NavId; onNav
   const t = traduire(langue());
   const [onglet, setOnglet] = useState<"dossier" | "pipeline" | "trips">("dossier");
   const pipeline = useApiOrSeed<Prospect[]>("/v1/onboarding", SEED_PIPELINE);
-  const trips = useApiOrSeed<Trip[]>("/v1/trips", SEED_TRIPS);
+  const trips0 = useApiOrSeed<unknown>("/v1/trips", SEED_TRIPS);
+  const trips = { ...trips0, data: listeDeplacements(trips0.data) };
   const pilule = (id: typeof onglet, label: string) => (
     <button key={id} onClick={() => setOnglet(id)} aria-pressed={onglet === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,

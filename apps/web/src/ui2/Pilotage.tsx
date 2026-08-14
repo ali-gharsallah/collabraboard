@@ -6,7 +6,7 @@ import { StatTile } from "./StatTile";
 import { StatusChip, ChipMode } from "./StatusChip";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
-import { listeVuesBi } from "./moteur-formes";
+import { listeVuesBi, listeHabilitations } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { BarreActes, type ActeMoteur } from "./acte-moteur";
 import { traduire, langue } from "../lib/i18n";
@@ -211,7 +211,8 @@ export function Pilotage({ active, onNavigate, onOuvrirAudit }: {
   const registre = useApiOrSeed<EntreeRegistre[]>("/v1/mros", SEED_REGISTRE);
   const mros = useApiOrSeed<Comm[]>("/v1/mros", SEED_MROS);
   const veille = useApiOrSeed<Item[]>("/v1/regwatch/items", SEED_VEILLE);
-  const habilitations = useApiOrSeed<Habilitation[]>("/v1/formations/assignments", SEED_HABILITATIONS);
+  const habs0 = useApiOrSeed<unknown>("/v1/formations/assignments", SEED_HABILITATIONS);
+  const habilitations = { ...habs0, data: listeHabilitations(habs0.data) };
   const pilule = (id: typeof onglet, label: string) => (
     <button key={id} onClick={() => setOnglet(id)} aria-pressed={onglet === id}
       style={{ padding: "6px 13px", borderRadius: 999, fontFamily: "inherit", fontSize: 12,

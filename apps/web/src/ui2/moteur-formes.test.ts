@@ -3,6 +3,7 @@ import fixtures from "./fixtures-moteur.json";
 import {
   tableau, listeClients, listeProspects, listeSorties, sortieClose,
   listeVuesBi, listeReglesAml, matriceDocumentaire,
+  listeDeplacements, listeHabilitations, listeHitsScreening, listeSignauxAml, listeCasRisque,
 } from "./moteur-formes";
 
 /**
@@ -133,5 +134,58 @@ describe("Formes du moteur → écran (V2-M41)", () => {
     expect(parAxe("SA · personne_liee")).toEqual(["PASSEPORT"]);
     expect(parAxe("SA · rôle UBO")).toContain("FORMULAIRE_A");
     expect(parAxe("SA · personne_liee")).not.toContain("FORMULAIRE_A");
+  });
+
+  // ── V2-M51 — les cinq adaptateurs de E-V2-17, chacun contre sa fixture CAPTURÉE (jamais
+  // écrite à la main). La règle des six premiers tient : traduit, déplié, jamais inventé.
+
+  it("FM-08 /v1/trips : pays ← destinations, depart ← dateStart ; reference et visaChain restent VIDES", () => {
+    const rows = listeDeplacements(f["/v1/trips"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].pays).toBe("AE");                       // destinations[] déplié, codes du moteur
+    expect(rows[0].depart).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+    // le moteur ne détient NI référence métier NI chaîne de visa dans la projection : vides,
+    // pas brodés — l'écran affiche « — », c'est le contrat.
+    expect(rows[0].reference).toBeUndefined();
+    expect(rows[0].visaChain).toBeUndefined();
+  });
+
+  it("FM-09 /v1/formations/assignments : formation ← formationCode, collaborateur ← userId (un ID, pas un nom)", () => {
+    const rows = listeHabilitations(f["/v1/formations/assignments"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].formation).toBe("LBA-2026");
+    // la projection ne joint pas l'annuaire : fabriquer un nom serait inventer — l'id s'affiche
+    expect(rows[0].collaborateur).toMatch(/^[0-9a-f-]{36}$/);
+    expect(rows[0].echeance).toBe("31.12.2026");
+  });
+
+  it("FM-10 /v1/screening/hits : nom ← detail.via, liste ← listeVersion — la file de qualification a un NOM à lire", () => {
+    // Le plus grave des cinq écarts : l'écran de qualification affichait des colonnes vides.
+    const rows = listeHitsScreening(f["/v1/screening/hits"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].nom).toBe("Nordwind Handel SA");        // le nom QUI A MATCHÉ (R411)
+    expect(rows[0].liste).toBe("2026-08-01");
+    expect(rows[0].score).toBe(100);
+    expect(rows[0].statut).toBe("BRUT");
+  });
+
+  it("FM-11 /v1/aml/signals : statut ← outcome ?? status (qualifié d'abord), at ← createdAt", () => {
+    const rows = listeSignauxAml(f["/v1/aml/signals"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].statut).toBe("NEW");                    // outcome null → status
+    expect(listeSignauxAml([{ id: "x", status: "NEW", outcome: "TP" }])[0].statut).toBe("TP");
+    expect(rows[0].at).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+  });
+
+  it("FM-12 /v1/riskcases : origine ← COMPTE des signaux réconciliés (R280) — une donnée, pas une prose", () => {
+    const rows = listeCasRisque(f["/v1/riskcases"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].origine).toBe("1 signal (R280)");
+    expect(listeCasRisque([{ id: "x", signalIds: ["a", "b"] }])[0].origine).toBe("2 signaux (R280)");
+    // reference n'existe pas au moteur : vide — l'écran retombe déjà sur l'id
+    expect(rows[0].reference).toBeUndefined();
+    // et le format ÉCRAN (seed) traverse inchangé : l'adaptateur est idempotent
+    expect(listeCasRisque([{ id: "s", reference: "RC-1", origine: "Alerte X" }])[0])
+      .toMatchObject({ reference: "RC-1", origine: "Alerte X" });
   });
 });

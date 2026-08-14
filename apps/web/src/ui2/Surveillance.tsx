@@ -11,7 +11,7 @@ import { FluxPanneau } from "./globe/FluxPanneau";
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
-import { listeReglesAml } from "./moteur-formes";
+import { listeReglesAml, listeHitsScreening, listeSignauxAml, listeCasRisque } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
@@ -158,13 +158,16 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   const t = traduire(langue());
   const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions"
     | "cas" | "amlgap" | "referentiel" | "swift" | "settlement">("alerte");
-  const hits = useApiOrSeed<Hit[]>("/v1/screening/hits", SEED_HITS);
+  const hitsBruts = useApiOrSeed<unknown>("/v1/screening/hits", SEED_HITS);
+  const hits = { ...hitsBruts, data: listeHitsScreening(hitsBruts.data) };
   // V2-M32 : les deux capacités Compliance de la v1 qui manquaient encore sous Surveillance.
   const gap = useApiOrSeed<ScenarioGap[]>("/v1/aml/scenarios", SEED_GAP);
-  const signaux = useApiOrSeed<SignalGap[]>("/v1/aml/signals", SEED_SIGNAUX);
+  const signauxBruts = useApiOrSeed<unknown>("/v1/aml/signals", SEED_SIGNAUX);
+  const signaux = { ...signauxBruts, data: listeSignauxAml(signauxBruts.data) };
   const regles = useApiOrSeed<Regle[]>("/v1/aml/referentiel", SEED_REGLES);
   const txs = useApiOrSeed<Tx[]>("/v1/txflux", SEED_TX);
-  const cas = useApiOrSeed<Rc[]>("/v1/riskcases", SEED_RC);
+  const cas0 = useApiOrSeed<unknown>("/v1/riskcases", SEED_RC);
+  const cas = { ...cas0, data: listeCasRisque(cas0.data) };
   // V2-M48 : les quatre lectures des deux vues neuves.
   const swift = useApiOrSeed<SwiftMsg[]>("/v1/swift/messages", SEED_SWIFT);
   const swiftQ = useApiOrSeed<SwiftQuar[]>("/v1/swift/quarantaine", SEED_SWIFT_Q);

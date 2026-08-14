@@ -32,6 +32,13 @@ export const ROUTES_ADAPTEES: Record<string, string> = {
   "/v1/bi/annuaire": "listeVuesBi",
   "/v1/aml/referentiel": "listeReglesAml",
   "/v1/doc-matrix/en-vigueur": "matriceDocumentaire",
+  // V2-M51 (E-V2-17) : les cinq routes que le vérificateur a pu comparer une fois SEMÉES —
+  // vides, elles passaient pour conformes ; peuplées, elles ont montré leurs écarts de noms.
+  "/v1/trips": "listeDeplacements",
+  "/v1/formations/assignments": "listeHabilitations",
+  "/v1/screening/hits": "listeHitsScreening",
+  "/v1/aml/signals": "listeSignauxAml",
+  "/v1/riskcases": "listeCasRisque",
 };
 
 // ── Outils communs ──────────────────────────────────────────────────────────────────────────
@@ -238,4 +245,125 @@ export function matriceDocumentaire(v: unknown): MatriceEcran {
   const version = v.version !== undefined
     ? `v${v.version}${v.enVigueurLe ? ` — en vigueur du ${jour(v.enVigueurLe)}` : ""}` : "";
   return { version, exigences };
+}
+
+// ── V2-M51 — les cinq adaptateurs de E-V2-17. Même règle que les six premiers : le moteur
+// nomme, l'écran suit. On TRADUIT un nom, on DÉPLIE une structure — on n'invente jamais une
+// valeur. Un champ que le moteur ne détient pas reste vide, et le commentaire dit pourquoi.
+
+// ── Déplacements (/v1/trips, blocs 63/R446+) ────────────────────────────────────────────────
+
+export type DeplacementEcran = { id: string; reference?: string; pays?: string; status?: string;
+  depart?: string; visaChain?: string };
+
+/**
+ * Moteur : `{ id, travelerId, status, purpose, dateStart, dateEnd, destinations[], activites[],
+ * revision, … }`. `pays` = les destinations telles quelles (codes ISO — le moteur ne détient
+ * pas de libellé) ; `depart` = dateStart. `reference` et `visaChain` N'EXISTENT PAS au moteur :
+ * le voyage n'a pas de référence métier distincte de son id, et la chaîne de visa vit dans la
+ * config BT (businessTrip.chains), résolue à l'acte — pas dans la projection. Ils restent vides.
+ */
+export function listeDeplacements(v: unknown): DeplacementEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => ({
+    id: String(x.id ?? ""),
+    reference: x.reference as string | undefined,
+    pays: (x.pays as string | undefined)
+      ?? (Array.isArray(x.destinations) ? x.destinations.join(" · ") : undefined),
+    status: x.status as string | undefined,
+    depart: jour(x.depart ?? x.dateStart),
+    visaChain: x.visaChain as string | undefined,
+  }));
+}
+
+// ── Habilitations (/v1/formations/assignments, R236-R238) ───────────────────────────────────
+
+export type HabilitationEcran = { id: string; collaborateur?: string; formation?: string;
+  echeance?: string; statut?: string };
+
+/**
+ * Moteur : `{ id, userId, formationCode, echeance, statut, visaStatut, … }`. `formation` =
+ * formationCode. `collaborateur` = userId — un IDENTIFIANT, pas un nom : la projection ne joint
+ * pas l'annuaire, et fabriquer un nom ici serait inventer. L'écran affiche l'id, honnêtement.
+ */
+export function listeHabilitations(v: unknown): HabilitationEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => ({
+    id: String(x.id ?? ""),
+    collaborateur: (x.collaborateur ?? x.userId) as string | undefined,
+    formation: (x.formation ?? x.formationCode) as string | undefined,
+    echeance: jour(x.echeance),
+    statut: x.statut as string | undefined,
+  }));
+}
+
+// ── Hits de screening (/v1/screening/hits, R100/R411) ───────────────────────────────────────
+
+export type HitEcran = { id: string; nom?: string; sujet?: string; liste?: string; score?: number;
+  statut?: string; at?: string };
+
+/**
+ * Moteur : `{ id, clientId, sujetType, entreeUid, entreeHash, score, listeVersion, statut,
+ * detail: { via, nameScore, … }, at }`. `nom` = detail.via — le NOM QUI A MATCHÉ, ce que
+ * l'analyste doit lire en premier (R411 : la décomposition du moteur, pas une reformulation) ;
+ * `liste` = listeVersion. C'était le plus grave des cinq écarts de E-V2-17 : la file de
+ * qualification affichait des colonnes vides.
+ */
+export function listeHitsScreening(v: unknown): HitEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => {
+    const detail = estObjet(x.detail) ? x.detail : {};
+    return {
+      id: String(x.id ?? ""),
+      nom: (x.nom as string | undefined) ?? (detail.via as string | undefined),
+      sujet: (x.sujet ?? x.clientId) as string | undefined,
+      liste: (x.liste ?? x.listeVersion) as string | undefined,
+      score: x.score as number | undefined,
+      statut: x.statut as string | undefined,
+      at: jour(x.at),
+    };
+  });
+}
+
+// ── Signaux AML (/v1/aml/signals, R340+) ────────────────────────────────────────────────────
+
+export type SignalEcran = { id: string; scenarioCode?: string; clientId?: string; statut?: string;
+  at?: string };
+
+/**
+ * Moteur : `{ id, scenarioCode, clientId, status, outcome, niveau, blocking, createdAt, … }`.
+ * `statut` = outcome s'il est posé (TP/FP — la qualification humaine), sinon status (NEW…) :
+ * c'est l'ordre de lecture de l'écran, « qualifié d'abord ». `at` = createdAt.
+ */
+export function listeSignauxAml(v: unknown): SignalEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => ({
+    id: String(x.id ?? ""),
+    scenarioCode: x.scenarioCode as string | undefined,
+    clientId: x.clientId as string | undefined,
+    statut: (x.statut ?? x.outcome ?? x.status) as string | undefined,
+    at: jour(x.at ?? x.createdAt),
+  }));
+}
+
+// ── Cas de risque (/v1/riskcases, R133-R136) ────────────────────────────────────────────────
+
+export type CasRisqueEcran = { id: string; reference?: string; clientId?: string; origine?: string;
+  statut?: string; createdAt?: string };
+
+/**
+ * Moteur : `{ id, clientId, statut, etatDepuis, signalIds[], ouvertPar, motifTerminal, … }`.
+ * `reference` N'EXISTE PAS (le cas n'a que son id) — l'écran retombe déjà sur l'id. `origine` =
+ * le COMPTE des signaux réconciliés (R280) : « 2 signaux » est une donnée réelle du moteur ;
+ * le libellé de chaque signal vit sur le signal, pas sur le cas.
+ */
+export function listeCasRisque(v: unknown): CasRisqueEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => {
+    const nb = Array.isArray(x.signalIds) ? x.signalIds.length : undefined;
+    return {
+      id: String(x.id ?? ""),
+      reference: x.reference as string | undefined,
+      clientId: x.clientId as string | undefined,
+      origine: (x.origine as string | undefined)
+        ?? (nb !== undefined ? `${nb} ${nb > 1 ? "signaux" : "signal"} (R280)` : undefined),
+      statut: x.statut as string | undefined,
+      createdAt: jour(x.createdAt),
+    };
+  });
 }
