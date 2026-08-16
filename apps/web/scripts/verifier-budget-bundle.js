@@ -113,7 +113,7 @@ const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le c
 //   · `PmsMandats` N'ENTRE PAS : la licence de PMS ne porte pas de † (ce n'est pas un module
 //     vendu à part au registre des capacités). E-V2-18 le listait à tort — corrigé là-bas.
 const MODULES_LICENCIES = [
-  "CrossBorder", "Custody", "Oprisk",                          // couche v2 (Ui2Preview, lazy)
+  "CrossBorder", "Custody", "Oprisk", "Legal",                 // couche v2 (Ui2Preview, lazy)
   "CustodyTa", "LegalRegistre", "OpRisk", "MobileAdmin",       // couche v1 (router.tsx, lazy)
   "FxExposition", "FinanceIslamique",
 ];

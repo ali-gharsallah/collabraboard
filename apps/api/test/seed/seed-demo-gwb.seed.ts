@@ -408,6 +408,41 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
           quantite: 1500, reference: "TA-DEMO-001" }));
     } catch (e) { console.log("SEED GWB — chapitre TA toléré :", (e as any)?.message ?? e); }
 
+    // 8i. REGISTRE LEGAL (R312-R313, V2-M54) — la PIÈCE d'abord, l'objet ensuite : un contrat
+    // sans document GED n'existe pas (R312, vérifié en vrai — le moteur refuse). Deux objets
+    // aux statuts calculés DIFFÉRENTS : un contrat dont le préavis est OUVERT (dateFin proche,
+    // préavis 90 j) et un mémo SANS_ECHEANCE — une démonstration où toutes les échéances sont
+    // « courantes » ne montrerait pas ce que R313 calcule.
+    try {
+      const objetsLegal = (await request(http).get("/v1/legal/objets").set(co())).body;
+      const dejaLegal = (Array.isArray(objetsLegal) ? objetsLegal : [])
+        .some((o: any) => o.reference === "LEG-2026-0001");
+      if (!dejaLegal) {
+        const piece = await poser("pièce GED du contrat legal", request(http).post("/v1/ged/documents").set(rm()).send({
+          canal: "SCAN", source: "juridique-geneve", nomFichier: "contrat-custody-nordwind.pdf",
+          contenu: "PDF de démonstration — Contrat de garde Nordwind Handel SA" }));
+        // La route GED renvoie `documentId`, PAS `id` — lu `piece.body?.id` au premier jet, les
+        // deux objets legal sautaient EN SILENCE (undefined → if faux → rien). C'est la famille
+        // de défaut que cette campagne traque (une donnée mal nommée, aucun message) — d'où le
+        // `poser` d'échec explicite si la clé venait à changer de nom : plus jamais un saut muet.
+        const documentId = piece.body?.documentId;
+        if (!documentId) {
+          journalChapitres.push(`✗ objets legal SAUTÉS — la route GED n'a pas rendu documentId (reçu : ${JSON.stringify(piece.body).slice(0, 120)})`);
+        } else {
+          const dansTrenteJours = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+          await poser("contrat legal (préavis ouvert)", request(http).post("/v1/legal/objets").set(co()).send({
+            type: "CONTRAT", reference: "LEG-2026-0001",
+            parties: ["Gharsallah Wealth Bank", "Nordwind Handel SA"], documentId,
+            dateEffet: "2025-09-01", dateFin: dansTrenteJours, preavisJours: 90, tacite: true,
+            fournisseur: null, rattachements: { juridiction: "CH" } }));
+          await poser("mémo legal (sans échéance)", request(http).post("/v1/legal/objets").set(co()).send({
+            type: "MEMO", reference: "LEG-2026-0002",
+            parties: ["Gharsallah Wealth Bank"], documentId,
+            rattachements: { juridiction: "AE" } }));
+        }
+      }
+    } catch (e) { console.log("SEED GWB — chapitre legal toléré :", (e as any)?.message ?? e); }
+
     console.log("SEED GWB — chapitres V2-M45 :\n  " + (journalChapitres.join("\n  ") || "(aucun — tout était déjà semé)"));
 
     // ── La PREUVE — comptée ; l'idempotence se vérifie en relançant (DM-02, cf. run 2) ──

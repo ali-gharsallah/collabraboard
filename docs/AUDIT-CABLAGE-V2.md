@@ -865,3 +865,64 @@ repassé en import statique rougit, un nom fantôme dans la liste rougit aussi.
 | front `npx vitest run` | **241/241** (240 + 1) |
 | budget bundle | cœur 297,6 sous 302 · compartiment 23,8 sur 120 |
 | cliquet i18n | 0 texte en dur |
+
+---
+
+## V2-M54 — Legal : semer d'abord, bâtir ensuite — troisième vertical du compartiment
+
+**Demande PO** : « next ». `/v1/legal/*` répondait `[]` : le lot a donc commencé par un chapitre
+de semis **par les vraies routes** (8i), et l'écran est câblé sur des formes observées.
+
+### La pièce d'abord, l'objet ensuite — et les deux refus observés
+
+R312 : le registre legal vit **sur la GED**. Le moteur l'a prouvé en vrai avant toute écriture
+d'écran :
+
+```
+POST /v1/legal/objets  (sans documentId)
+  → 400 « R312 : le registre sans PREUVE n'existe pas — rattachez le document GED »
+POST /v1/legal/objets  (documentId inconnu)
+  → 400 « R312 : documentId inconnu de la GED du tenant — un identifiant ne prouve rien »
+```
+
+Le semis ingère la pièce (`contrat-custody-nordwind.pdf`) puis crée deux objets aux **statuts
+calculés différents** : un CONTRAT au préavis OUVERT (fin +30 j, préavis 90 j) et un MEMO
+SANS_ECHEANCE — une liste où tout est « courant » ne montrerait pas ce que R313 calcule.
+
+### Le défaut de la campagne, reproduit dans mon propre chapitre — puis converti en garde
+
+La route GED renvoie **`documentId`**, pas `id`. Mon premier jet lisait `piece.body?.id` →
+`undefined` → les deux objets sautaient **en silence** (le `if` protégeait le saut). C'est
+exactement la famille de défaut que cette campagne traque depuis V2-M44 — une donnée mal nommée,
+aucun message. Corrigé, et le chapitre consigne désormais un **✗ explicite** si la clé venait à
+changer de nom : plus jamais un saut muet.
+
+### Ce que l'écran tient (R312-R313)
+
+- le registre **sur la GED** — les gardes des actes citent les deux refus mot pour mot ;
+- les échéances sont des **faits calculés** (COURANT / PREAVIS_OUVERT / EN_RETARD /
+  SANS_ECHEANCE), jamais une colonne saisie ; rien n'est jamais bloqué (R39) ;
+- modifier les dates est un **événement motivé** (R7) ;
+- la lecture par référence rend l'objet **et la version de sa pièce en vigueur à date** (R48),
+  avec son empreinte — la référence que la position cross-border cite (R293).
+
+### Mesures
+
+| | |
+|---|---|
+| registre des capacités | 69/10/7 → **70/10/6** |
+| câblage (U2-56) | 5 → **6** écrans |
+| compartiment | 26,6 kB gz sur 120 (10 chunks — `Legal` v2 distinct de `LegalRegistre` v1, le matcher est exact) |
+| cœur | 297,7 sous 302 — aucune relève |
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **243/243** (U2-77/78 cassées avant d'être crues) |
+| `verifier-formes-api.mjs` | **49 lectures · 0 écart non traité** — les 2 lectures Legal conformes |
+| semis, 2ᵉ passage | chapitres legal silencieux (idempotent) — seule la flake veille connue (E-V2-16) rejoue |
+| test:rules · e2e · typecheck · lint | 0 ✗ · **521/521** · 0 · 0 |
+
+**Restent absents : 6** — les deux CPSI, PMS, FX, Mobile, Islamic. Tous sur routes vides ou
+dépendantes d'un port (FX dépend du port core banking ; Mobile/Islamic/PMS/CPSI à semer ou à
+arbitrer). Le filon « le moteur sert déjà » s'épuise : les prochains verticaux demanderont soit un
+semis plus profond, soit un arbitrage de portée.

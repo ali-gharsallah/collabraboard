@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe2, LayoutGrid, ArrowLeftRight, Landmark, ShieldAlert } from "lucide-react";
+import { Globe2, LayoutGrid, ArrowLeftRight, Landmark, ShieldAlert, Scale } from "lucide-react";
 import { CAPACITES } from "./capacites";
 
 /**
@@ -25,6 +25,8 @@ const DEMO: { destination: string; icon: React.ReactNode }[] = [
   { destination: "custody", icon: <Landmark size={16} strokeWidth={1.75} /> },
   // V2-M52 : †OPRISK au jeu de licences de la démonstration — son écran existe désormais.
   { destination: "oprisk", icon: <ShieldAlert size={16} strokeWidth={1.75} /> },
+  // V2-M54 : †LEGAL au jeu de licences de la démonstration — son écran existe désormais.
+  { destination: "legal", icon: <Scale size={16} strokeWidth={1.75} /> },
 ];
 
 const libelleDe = (destination: string) =>

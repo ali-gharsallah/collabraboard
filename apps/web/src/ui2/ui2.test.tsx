@@ -18,6 +18,7 @@ import { ECRANS_MIGRES } from "./cartographie";
 import { Ui2Preview } from "./Ui2Preview";
 import { Custody } from "./Custody";
 import { Oprisk } from "./Oprisk";
+import { Legal } from "./Legal";
 import { CAPACITES, ECRAN_MODULE_LICENCIE, capacitesVisibles, destinationsLicenciees, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
@@ -666,9 +667,9 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
     // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
     // lui manque encore le référentiel de profils, pas l'écran.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(69);   // +swiftlab (M48) +custodyta (M50) +oprisk (M52)
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(70);   // +swiftlab +custodyta +oprisk +legalreg (M54)
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(7);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(6);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -840,13 +841,14 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // 1 → 2 écrans au lot V2-M36 (Cross-Border), → 3 au lot V2-M37 (Rapports : MROS,
     // habilitations, veille, registre). Relever ces nombres atteste un câblage.
     // → 4 au lot V2-M50 (Custody & TA : enregistrer, viser R13, contre-passer R7, rejeu R48),
-    // → 5 au lot V2-M52 (OpRisk : déclarer R321, transitionner, action R323, rejeu heatmap R322).
+    // → 5 au lot V2-M52 (OpRisk : déclarer R321, transitionner, action R323, rejeu heatmap R322),
+    // → 6 au lot V2-M54 (Legal : créer R312, dates R7, lecture par référence à date R48).
     // V2-M48 n'a PAS relevé ce compteur, et c'est le compteur qui me l'a appris : la
     // Surveillance posait déjà des actes depuis V2-M35 ; lui ajouter la barre SWIFT enrichit un
     // écran déjà câblé, ça n'en câble pas un nouveau. Un chiffre qu'on relève « parce qu'on a
     // travaillé » ne mesure plus rien.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(5);
+    expect(ecrans).toBe(6);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -1114,6 +1116,29 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/Chargement du module Cross-Border/)).toBeTruthy();
     // …puis il arrive, et c'est bien l'écran réel (six familles de routes, E-V2-1)
     expect(await screen.findByRole("button", { name: "Dérogations" })).toBeTruthy();
+  });
+
+  it("U2-77 V2-M54 Legal : le registre vit SUR LA GED, et l'écran le dit avec les mots du moteur", () => {
+    render(<Legal active={"legal" as never} onNavigate={() => undefined} />);
+    // les deux objets semés par les vraies routes
+    expect(screen.getByText("LEG-2026-0001")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer un contrat ou un mémo" }));
+    // la garde R312 cite les DEUX refus observés en vrai
+    expect(screen.getByText(/le registre sans PREUVE n'existe pas/)).toBeTruthy();
+    expect(screen.getByText(/un identifiant ne prouve rien/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Modifier les dates" }));
+    expect(screen.getByText(/modifier les dates d'un contrat se MOTIVE/)).toBeTruthy();
+  });
+
+  it("U2-78 V2-M54 Legal : les échéances sont des FAITS calculés — les deux statuts du semis s'affichent", () => {
+    render(<Legal active={"legal" as never} onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: /Échéances/ }));
+    // les DEUX statuts calculés du semis — pas seulement le cas confortable
+    expect(screen.getByText("PREAVIS_OUVERT")).toBeTruthy();
+    expect(screen.getByText("SANS_ECHEANCE")).toBeTruthy();
+    expect(screen.getByText(/jamais une colonne saisie/)).toBeTruthy();
+    // et rien n'est bloqué : le texte le dit (R39)
+    expect(screen.getByText(/rien n'est jamais bloqué/)).toBeTruthy();
   });
 
   it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {

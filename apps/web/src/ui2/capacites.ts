@@ -131,8 +131,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
   { id: "legalreg", libelle: "Legal — Contrats", groupeV1: "Compliance & Risque",
     destination: "legal", onglet: undefined, licence: "†LEGAL",
-    roles: ["CO", "MLRO", "ADMIN"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M54 : écran vertical, chunk paresseux
   { id: "oprisk", libelle: "Octopulse OpRisk", groupeV1: "Compliance & Risque",
     destination: "oprisk", onglet: undefined, licence: "†OPRISK",
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M52 : écran vertical, chunk paresseux
@@ -340,7 +339,7 @@ export const CAPACITES: Capacite[] = [
  * dans son chunk — c'est précisément ce que ce lot rend possible sans relever le budget.
  */
 export const ECRAN_MODULE_LICENCIE: Record<string, string> = {
-  crossborder: "CrossBorder", custody: "Custody", oprisk: "Oprisk",
+  crossborder: "CrossBorder", custody: "Custody", oprisk: "Oprisk", legal: "Legal",
 };
 
 /**
