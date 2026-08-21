@@ -443,6 +443,23 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
       }
     } catch (e) { console.log("SEED GWB — chapitre legal toléré :", (e as any)?.message ?? e); }
 
+    // 8j. PMS (R105-R108, V2-M56) — un mandat compliance et la PREUVE que le pre-trade bloque.
+    // Idempotent par NOM (le mandat n'a pas de champ référence). Le pre-trade bloqué n'écrit
+    // rien (c'est un verdict, pas un événement) — il est posé pour la forme de la réponse.
+    try {
+      const mandats = (await request(http).get("/v1/pms/mandats").set(co())).body;
+      const dejaPms = (Array.isArray(mandats) ? mandats : []).some((m: any) => m.nom === "Mandat équilibré Nordwind");
+      if (!dejaPms) {
+        const clientsPms = (await request(http).get("/v1/clients").set(co())).body;
+        const nordwind = ((clientsPms?.data ?? clientsPms) as any[]).find((c: any) => /Nordwind/.test(c.name ?? ""));
+        if (!nordwind) { journalChapitres.push("✗ mandat PMS SAUTÉ — client Nordwind introuvable"); }
+        else await poser("mandat PMS (profil MEDIUM, exclusion ARMEMENT)",
+          request(http).post("/v1/pms/mandats").set(co()).send({
+            clientId: nordwind.id, nom: "Mandat équilibré Nordwind", profilRequis: "MEDIUM",
+            strategie: { exclusions: ["ARMEMENT"], plafondConcentrationPct: 20 } }));
+      }
+    } catch (e) { console.log("SEED GWB — chapitre PMS toléré :", (e as any)?.message ?? e); }
+
     console.log("SEED GWB — chapitres V2-M45 :\n  " + (journalChapitres.join("\n  ") || "(aucun — tout était déjà semé)"));
 
     // ── La PREUVE — comptée ; l'idempotence se vérifie en relançant (DM-02, cf. run 2) ──

@@ -981,3 +981,61 @@ interdit — la garde l'aurait d'ailleurs refusé.
 et les trois † : FX (bloqué port core banking), Mobile (activation d'un parcours client),
 Islamic (contenu métier à faire valider). PMS est le prochain candidat mécanique ; les deux
 derniers † attendent un arbitrage de contenu.
+
+---
+
+## V2-M56 — PMS : la couche compliance sur les positions, pas un moteur de portefeuille
+
+**Demande PO** : « next » — le candidat mécanique annoncé.
+
+### Les refus observés avant l'écran
+
+```
+POST /v1/pms/mandats  (profilRequis HIGH sur client MEDIUM)
+  → 403 « inadéquation LSFin : profil client MEDIUM < profil requis HIGH »   (R107)
+POST /v1/pms/mandats/:id/pre-trade  (secteur ARMEMENT, exclu par le mandat)
+  → 200 { verdict: "BLOQUE", motif: "exclusion mandat : ARMEMENT" }          (R106)
+```
+
+Semis 8j : un mandat compliance réel (profil MEDIUM, exclusion ARMEMENT, plafond 20 %) —
+idempotent **par nom** (le mandat n'a pas de champ référence), avec le ✗ explicite si le client
+d'ancrage venait à manquer (leçon du chapitre legal).
+
+### Ce que l'écran tient (R105-R108, « intégrer, pas refaire »)
+
+- le **drift est constaté, jamais rééquilibré** (R105/R44) — aucune action de rééquilibrage
+  n'existe, ni au moteur ni à l'écran ;
+- le pre-trade rend un **verdict motivé** (R106), et un blocage **n'écrit rien** — c'est un refus
+  qui protège, pas un événement ;
+- l'adéquation **LSFin borne le mandat par le profil client** (R107) — la garde de l'acte cite le
+  403 observé ;
+- le registre de breaches est **append-only** et l'échéance **escalade sans liquider** (R108/R39).
+
+**Le registre vide dit pourquoi** : un breach naît du drift constaté à la valorisation, et les
+positions sont des données d'import core (R167) — sans port, rien à valoriser
+(`{totalChf: 0, drifts: []}` mesuré). Même famille d'honnêteté que Settlement (V2-M48) : le vide
+est l'état réel, expliqué, pas un écran en panne.
+
+PMS est du **socle** (licence « PMS », sans †) : import statique, budget du cœur — 301,1 sous
+302. La marge est à 0,9 kB : le prochain écran du socle motivera sa relève, et c'est voulu.
+
+### Mesures
+
+| | |
+|---|---|
+| registre des capacités | 72/10/4 → **73/10/3** |
+| câblage (U2-56) | 7 → **8** écrans |
+| cœur | 301,1 sous 302 — sans relève |
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **247/247** (U2-81/82 cassées avant d'être crues) |
+| `verifier-formes-api.mjs` | **54 lectures · 0 écart non traité** |
+| semis, 2ᵉ passage | chapitre PMS silencieux (idempotent par nom) |
+| e2e (base `olive_e2e` recréée après le recyclage) | **521/521** |
+| cliquet i18n | 0 |
+
+**Restent absents : 3, tous bloqués sur un arbitrage** — FX (port core banking, décision
+d'intégration), Mobile (parcours client de démonstration à autoriser), Islamic (contenu métier à
+faire valider). Il n'y a plus de « prochain candidat mécanique » : la campagne des verticaux
+s'arrête ici proprement, ou continue sur votre mot.

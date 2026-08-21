@@ -290,8 +290,7 @@ export const CAPACITES: Capacite[] = [
     motif: "écran vertical non construit" },
   { id: "pms", libelle: "PMS", groupeV1: "Transactions & Marchés",
     destination: "pms", onglet: undefined, licence: "PMS",
-    roles: ["RM", "CO"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["RM", "CO"], statut: "livre" },   // V2-M56 : écran socle (licence sans † — import statique)
   { id: "settlement", libelle: "Settlement", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
     roles: ["CO", "MLRO"], statut: "partiel",
