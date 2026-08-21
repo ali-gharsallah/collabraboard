@@ -926,3 +926,58 @@ changer de nom : plus jamais un saut muet.
 dépendantes d'un port (FX dépend du port core banking ; Mobile/Islamic/PMS/CPSI à semer ou à
 arbitrer). Le filon « le moteur sert déjà » s'épuise : les prochains verticaux demanderont soit un
 semis plus profond, soit un arbitrage de portée.
+
+---
+
+## V2-M55 — Profilage CPSI : l'écran du socle que je disais impossible
+
+**Demande PO** : « next ». Ce lot commence par une **rétractation** : au lot V2-M54 j'ai écrit
+« les deux CPSI sur routes vides ». La mesure dit le contraire — `/v1/cpsi/segmentation` sert un
+client réel (`M-INTENSE`), le score sert ses **drivers décomposés** (statique + comportemental,
+datés, pondérés), le référentiel sert les règles R-Q. Le registre ne doit jamais prétendre mieux
+que l'état du code ; il ne doit pas non plus prétendre **pire**.
+
+*(Ce lot a aussi survécu à un recyclage complet du conteneur : dépôt recloné sur un vieux commit,
+node_modules et les DEUX clusters Postgres disparus. La branche distante était intacte —
+`git reset --hard origin/...`, réinstallation, cluster `16/main` recréé avec rôle et migrations,
+`packages/shared` recompilé sur place — le lien `@olive/shared` pointe sur du TS source, un
+`.js` voisin doit exister —, secrets `.env` reposés, démonstration re-semée : 16 chapitres ✓.
+Au passage, un `tsc` lancé du mauvais répertoire a compilé 186 `.js` dans l'arbre source —
+nettoyés par `git clean` avant tout commit.)*
+
+### CPSI est du SOCLE, et c'est une décision
+
+Les deux capacités (`cpsiSeg`, `cpsiCases`) portent `licence: null` — le profilage CPSI n'est
+**pas vendu à part**. L'écran est donc importé **statiquement** et compte dans le budget du cœur
+(299,3 sous 302, sans relève). L'entrer au compartiment aurait été le « tiroir » que U2-70
+interdit — la garde l'aurait d'ailleurs refusé.
+
+### Ce que l'écran tient (PC-01..06, R250)
+
+- la **provenance du rejeu s'affiche** : `evenements_rejoues` et le chemin (replay_complet /
+  incrémental) viennent du `meta` du moteur — l'architecture n'est pas un détail technique ;
+- le score se lit **décomposé** (l'acte GET porte la garde : « un chiffre sans sa décomposition
+  ne se discute pas ») ;
+- un cas proposé reste une **proposition** (R44) — l'adoption vit dans la file de Surveillance,
+  jamais ici ; les barèmes se règlent au Paramétrage, jamais ici ;
+- les **SLA gouvernés** de la chaîne signal → cas s'affichent avec leurs seuils réels
+  (hit 30 j, MROS 5 j), mesurés par le tick, jamais bloquants (R281).
+
+### Mesures
+
+| | |
+|---|---|
+| registre des capacités | 70/10/6 → **72/10/4** |
+| câblage (U2-56) | 6 → **7** écrans |
+| cœur | 299,3 sous 302 — écran du socle assumé, aucune relève |
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **245/245** (U2-79/80 cassées avant d'être crues) |
+| `verifier-formes-api.mjs` | **52 lectures · 0 écart non traité** |
+| budget · cliquet i18n | 0 · 0 |
+
+**Restent absents : 4** — PMS (socle, routes vides mais semables par `POST /v1/pms/mandats`),
+et les trois † : FX (bloqué port core banking), Mobile (activation d'un parcours client),
+Islamic (contenu métier à faire valider). PMS est le prochain candidat mécanique ; les deux
+derniers † attendent un arbitrage de contenu.

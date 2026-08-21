@@ -266,12 +266,10 @@ export const CAPACITES: Capacite[] = [
     roles: ["RM", "CO", "MLRO"], statut: "livre" },
   { id: "cpsiCases", libelle: "CPSI · Risk cases", groupeV1: "Profilage CPSI",
     destination: "cpsi", onglet: "Risk cases", licence: null,
-    roles: ["CO", "MLRO"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M55 : écran socle (import statique — licence null)
   { id: "cpsiSeg", libelle: "CPSI · Segmentation", groupeV1: "Profilage CPSI",
     destination: "cpsi", onglet: "Segmentation", licence: null,
-    roles: ["CO", "MLRO", "ADMIN"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M55 : écran socle
   { id: "swiftlab", libelle: "Analyseur SWIFT/SEPA", groupeV1: "Transactions & Marchés",
     destination: "surveillance", onglet: "Transactions", licence: null,
     roles: ["CO", "MLRO"], statut: "livre" },   // V2-M48 : onglet « SWIFT/SEPA » — analyse (R300), messages, quarantaine

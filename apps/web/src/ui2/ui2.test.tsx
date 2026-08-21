@@ -19,6 +19,7 @@ import { Ui2Preview } from "./Ui2Preview";
 import { Custody } from "./Custody";
 import { Oprisk } from "./Oprisk";
 import { Legal } from "./Legal";
+import { Cpsi } from "./Cpsi";
 import { CAPACITES, ECRAN_MODULE_LICENCIE, capacitesVisibles, destinationsLicenciees, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
@@ -667,9 +668,9 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
     // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
     // lui manque encore le référentiel de profils, pas l'écran.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(70);   // +swiftlab +custodyta +oprisk +legalreg (M54)
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(72);   // … +legalreg (M54) +cpsiSeg +cpsiCases (M55)
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(6);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(4);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -842,13 +843,14 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // habilitations, veille, registre). Relever ces nombres atteste un câblage.
     // → 4 au lot V2-M50 (Custody & TA : enregistrer, viser R13, contre-passer R7, rejeu R48),
     // → 5 au lot V2-M52 (OpRisk : déclarer R321, transitionner, action R323, rejeu heatmap R322),
-    // → 6 au lot V2-M54 (Legal : créer R312, dates R7, lecture par référence à date R48).
+    // → 6 au lot V2-M54 (Legal : créer R312, dates R7, lecture par référence à date R48),
+    // → 7 au lot V2-M55 (CPSI : score décomposé à date, proposition de cas R44, tick SLA R281).
     // V2-M48 n'a PAS relevé ce compteur, et c'est le compteur qui me l'a appris : la
     // Surveillance posait déjà des actes depuis V2-M35 ; lui ajouter la barre SWIFT enrichit un
     // écran déjà câblé, ça n'en câble pas un nouveau. Un chiffre qu'on relève « parce qu'on a
     // travaillé » ne mesure plus rien.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(6);
+    expect(ecrans).toBe(7);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -1139,6 +1141,29 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/jamais une colonne saisie/)).toBeTruthy();
     // et rien n'est bloqué : le texte le dit (R39)
     expect(screen.getByText(/rien n'est jamais bloqué/)).toBeTruthy();
+  });
+
+  it("U2-79 V2-M55 CPSI : la provenance du REJEU s'affiche, et le score arrive DÉCOMPOSÉ", () => {
+    render(<Cpsi active={"cpsi" as never} onNavigate={() => undefined} />);
+    // le client réel du semis, avec son segment calculé
+    expect(screen.getByText("M-INTENSE")).toBeTruthy();
+    // le segment DÉCOULE du score — pas une saisie, et les barèmes ne se règlent pas ici
+    expect(screen.getByText(/il n'est la saisie de personne/)).toBeTruthy();
+    expect(screen.getByText(/jamais ici/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Lire un score décomposé, à date" }));
+    expect(screen.getByText(/DRIVERS/)).toBeTruthy();
+    expect(screen.getByText(/Un chiffre sans sa décomposition ne se discute pas/)).toBeTruthy();
+  });
+
+  it("U2-80 V2-M55 CPSI : un cas proposé reste une PROPOSITION — l'adoption vit ailleurs (R44)", () => {
+    render(<Cpsi active={"cpsi" as never} onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: /Risk cases proposés/ }));
+    // la liste vide n'est pas un écran mort : elle dit QUI propose et OÙ l'on décide
+    expect(screen.getByText(/l'humain décide \(R44\)/)).toBeTruthy();
+    expect(screen.getByText(/jamais ici/)).toBeTruthy();
+    // les SLA gouvernés de la chaîne, avec leurs seuils réels du moteur
+    expect(screen.getByText(/escalade d'un hit 30 j/)).toBeTruthy();
+    expect(screen.getByText(/jamais bloquants \(R281\)/)).toBeTruthy();
   });
 
   it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {

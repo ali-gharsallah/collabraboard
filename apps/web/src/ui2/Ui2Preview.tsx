@@ -36,6 +36,9 @@ const Oprisk = lazy(() => import("./Oprisk").then((m) => ({ default: m.Oprisk })
 const Legal = lazy(() => import("./Legal").then((m) => ({ default: m.Legal })));
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
+// V2-M55 : CPSI est un écran du SOCLE (licence null — pas un module vendu à part) : import
+// STATIQUE, délibérément. L'entrer au compartiment aurait été le « tiroir » que U2-70 interdit.
+import { Cpsi } from "./Cpsi";
 
 /**
  * UI v2 — APERÇU de l'étape 1 (tokens + shell), à VALIDER par le PO avant l'étape 2
@@ -94,6 +97,7 @@ export function Ui2Preview() {
   if (active === "clients") return <MesClients active={active} onNavigate={setActive} />;
   // V2-M29 : Cross-Border devient un écran de plein droit — il n'était atteignable que par un
   // onglet du dossier KYC alors que le moteur porte dix-sept routes (E-V2-1 soldé).
+  if (active === "cpsi") return <Cpsi active={active} onNavigate={setActive} />;
   if (active === "legal") return (
     <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
       {t("Chargement du module Legal…")}</div>}>
