@@ -26,7 +26,12 @@ for (const f of fichiers.filter((x) => x.endsWith(".woff2"))) {
 }
 const script = readFileSync(join(assets, js[0]), "utf8");
 
+// L'IDENTITÉ de l'onglet et l'ÉCRAN D'OUVERTURE — le premier fichier livré s'ouvrait sur la
+// couche v1 et le PO a cru à une régression. La démo ouvre sur l'UI v2, l'onglet porte l'olive.
+const FAVICON = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🫒</text></svg>');
 html = html
+  .replace("</head>", `<link rel="icon" href="${FAVICON}">\n<script>window.OLIVE_ECRAN_INITIAL="ui2";<\/script>\n</head>`)
   .replace(/<script type="module"[^>]*src="\/assets\/[^"]+"><\/script>/, "")
   .replace(/<link rel="stylesheet"[^>]*href="\/assets\/[^"]+">/, "")
   .replace("</head>", `<style>${feuille}</style>\n</head>`)
@@ -37,6 +42,9 @@ html = html
 // des requêtes est pire qu'un échec de build.
 const restes = [...html.matchAll(/\/assets\/[A-Za-z0-9._-]+/g)].map((m) => m[0]);
 if (restes.length) { console.error("références non inlinées :", [...new Set(restes)].join(", ")); process.exit(1); }
+// et le bundle doit HONORER l'écran d'ouverture : si le routeur perdait OLIVE_ECRAN_INITIAL,
+// la démo rouvrirait silencieusement sur la v1 — précisément la régression signalée par le PO.
+if (!script.includes("OLIVE_ECRAN_INITIAL")) { console.error("le bundle ne lit plus OLIVE_ECRAN_INITIAL — la démo rouvrirait sur la v1"); process.exit(1); }
 
 const sortie = join(process.cwd(), "..", "..", "demo", "olive-demo-v2.html");
 writeFileSync(sortie, html);
