@@ -40,3 +40,4 @@ apps/api/dist-rules/
 
 # artefact de compilation locale (runtime dev : @olive/shared résout src/contracts — le .ts est la source)
 packages/shared/src/*.js
+apps/web/dist-demo/
