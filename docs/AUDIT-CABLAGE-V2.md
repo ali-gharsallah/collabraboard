@@ -1039,3 +1039,36 @@ PMS est du **socle** (licence « PMS », sans †) : import statique, budget du 
 d'intégration), Mobile (parcours client de démonstration à autoriser), Islamic (contenu métier à
 faire valider). Il n'y a plus de « prochain candidat mécanique » : la campagne des verticaux
 s'arrête ici proprement, ou continue sur votre mot.
+
+---
+
+## V2-M59 — l'arbitrage PO exécuté : plus aucune capacité absente (76/10/0)
+
+**Demande PO** : « qui a décidé ainsi, c'est moi le product owner […] je veux débloquer ça. »
+L'arbitrage attendu est rendu — le lot l'exécute, moteur d'abord, écran ensuite.
+
+| déblocage | ce qui a été fait, en vrai |
+|---|---|
+| **Checklist exigences** | profil `pp-defaut` publié (miroir STRICT des REQ- ratifiées P-L7-4, aucune base légale nouvelle). Vérifié vivant : le dossier (PP, CH) sert un ledger réel — 3 exigences satisfaites par des faits moteur, 1 gap franc (passeport absent). **(SA, ·) reste à ratifier** — Q-INF-1 mis à jour |
+| **Mobile Banking** | clé gouvernée `mobile_actif` posée **avec motif**, identité cliente réelle activée (Famille Keller, code hors bande remis une fois). Écran : messagerie + 4 actes (MB-01, R318, R317, MB-05) |
+| **Finance Islamique** | signal **R207 réel** émis par le moteur (profil islamique + virement CASINO, paramètre tenant) et zakat R211 calculée (détail complet). Écran : signaux + zakat + 4 actes |
+| **FX** | vue livrée qui affiche **le message R167 du moteur mot pour mot** (« jamais un taux inventé ») — reste « partiel », le port FX est nommé comme blocage. Le jour où le port existe, l'écran se remplit sans une ligne de code |
+
+**Registre : 73/10/3 → 76/10/0 — plus aucune capacité absente.** Chaque « partiel » restant nomme
+son blocage : un port, un référentiel, ou une reprise v1 fine.
+
+**La garde de contrat m'a encore corrigé** : AC-03 a rougi sur mes actes Islamic — `ratioInvestisseur`,
+`valeurNominale`, `valeurMarche` n'existent pas au moteur (il lit `bankSharePct`/`clientSharePct` et
+`joursAvantMaturite`). Corrigé côté déclaration : le moteur nomme, l'écran suit.
+
+**Note vérificateur** : `/v1/mobile/messages` classé « en erreur » avec le jeton CO — c'est R316
+(seul le RM du client lit son canal), un refus légitime, pas un défaut ; l'écran est un écran RM.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **250/250** (U2-83/84/85 cassées avant d'être crues) |
+| `verifier-formes-api.mjs` | 58 lectures · **0 écart non traité** |
+| test:rules · e2e · typecheck · lint | 0 ✗ · **521/521** · 0 · 0 |
+| semis, 2ᵉ passage | chapitres mobile + islamique silencieux (idempotents) |
+| budget | cœur 301,6 sous 302 · compartiment 32,8 sur 120 (13 chunks) |
+| démo mono-fichier | régénérée (1,27 Mo), vérifiée : les 3 nouveaux verticaux au menu, signal R207 affiché |

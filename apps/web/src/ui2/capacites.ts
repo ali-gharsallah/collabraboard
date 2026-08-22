@@ -108,11 +108,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO"], statut: "livre" },
   { id: "inference", libelle: "Checklist exigences", groupeV1: "Compliance & Risque",
     destination: "kyc", onglet: "Exigences", licence: "KYC",
-    roles: ["CO", "MLRO"], statut: "partiel",
-    // V2-M47 : l'onglet EXISTE et lit le ledger réel (/v1/inference/:kycId/ledger). Ce qui
-    // manque n'est pas de l'écran mais du RÉFÉRENTIEL : sans CompletionProfile publié pour la
-    // paire (type d'entité, juridiction), le moteur refuse — et l'écran affiche son refus.
-    motif: "onglet livré sur le ledger réel ; aucun CompletionProfile publié au référentiel — le moteur refuse, l'écran affiche le refus mot pour mot" },
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M59 : profil pp-defaut publié (arbitrage PO, miroir P-L7-4) — ledger réel servi ; (SA,·) reste à ratifier (Q-INF-1)
   { id: "compliance", libelle: "Compliance Center", groupeV1: "Compliance & Risque",
     destination: "surveillance", onglet: undefined, licence: null,
     roles: ["CO", "MLRO"], statut: "livre" },
@@ -278,16 +274,16 @@ export const CAPACITES: Capacite[] = [
     roles: ["RM", "CO", "MLRO"], statut: "livre" },   // V2-M50 : écran vertical, chunk paresseux
   { id: "islamic", libelle: "Finance Islamique", groupeV1: "Transactions & Marchés",
     destination: "islamic", onglet: undefined, licence: "†ISLAMIC",
-    roles: ["RM", "CO", "MLRO"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },   // V2-M59 : signal R207 réel + zakat R211 semés (arbitrage PO)
   { id: "mobileadmin", libelle: "Mobile Banking", groupeV1: "Transactions & Marchés",
     destination: "mobile", onglet: undefined, licence: "†MOBILE",
-    roles: ["ADMIN"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["ADMIN"], statut: "livre" },   // V2-M59 : mobile_actif posé (motivé) + identité Keller activée (arbitrage PO)
   { id: "fx", libelle: "Multi-devise & FX", groupeV1: "Transactions & Marchés",
     destination: "fx", onglet: undefined, licence: "†FX",
-    roles: ["RM", "CO"], statut: "absent",
-    motif: "écran vertical non construit" },
+    roles: ["RM", "CO"], statut: "partiel",
+    // V2-M59 : la vue EXISTE et affiche le message R167 du moteur mot pour mot. Ce qui manque
+    // reste le PORT FX (taux) — même dépendance que Settlement/txrisk, jamais un taux inventé.
+    motif: "vue livrée sur /v1/fx/exposition ; aucun port FX (taux) configuré — montants en devise d'origine, le message R167 du moteur s'affiche tel quel" },
   { id: "pms", libelle: "PMS", groupeV1: "Transactions & Marchés",
     destination: "pms", onglet: undefined, licence: "PMS",
     roles: ["RM", "CO"], statut: "livre" },   // V2-M56 : écran socle (licence sans † — import statique)
@@ -337,6 +333,7 @@ export const CAPACITES: Capacite[] = [
  */
 export const ECRAN_MODULE_LICENCIE: Record<string, string> = {
   crossborder: "CrossBorder", custody: "Custody", oprisk: "Oprisk", legal: "Legal",
+  mobile: "Mobile", islamic: "Islamic", fx: "Fx",
 };
 
 /**

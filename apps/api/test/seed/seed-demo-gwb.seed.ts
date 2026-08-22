@@ -460,6 +460,43 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
       }
     } catch (e) { console.log("SEED GWB — chapitre PMS toléré :", (e as any)?.message ?? e); }
 
+    // 8k. MOBILE BANKING (R316-R318, V2-M59 — arbitrage PO : « je veux débloquer ça »).
+    // La clé `mobile_actif` est OFF par défaut (surface 404, existence cachée) : on la pose avec
+    // motif, puis on active UNE identité cliente (Famille Keller). L'activation est un upsert
+    // qui RÉGÉNÈRE le code hors bande — la garde d'idempotence passe donc par la table, pas par
+    // un re-POST qui changerait l'état à chaque semis.
+    try {
+      const dejaMobile = await prisma.mobileIdentite.findFirst({ where: { tenantId: TENANT_GWB } });
+      if (!dejaMobile) {
+        await poser("clé mobile_actif (R-Q, motivée)", request(http).post("/v1/parametres/valeur/mobile_actif")
+          .set(boss).send({ valeur: true, motif: "arbitrage PO (V2-M59) : parcours client mobile de démonstration" }));
+        const clientsMob = (await request(http).get("/v1/clients").set(rm())).body;
+        const keller = ((clientsMob?.data ?? clientsMob) as any[]).find((c: any) => /Keller/.test(c.name ?? ""));
+        if (!keller) journalChapitres.push("✗ identité mobile SAUTÉE — client Keller introuvable");
+        else await poser("identité mobile (Famille Keller, code hors bande)",
+          request(http).post("/v1/mobile/activer").set(rm()).send({ clientId: keller.id }));
+      }
+    } catch (e) { console.log("SEED GWB — chapitre mobile toléré :", (e as any)?.message ?? e); }
+
+    // 8l. FINANCE ISLAMIQUE (R207-R221, V2-M59 — même arbitrage PO). Un signal R207 RÉEL :
+    // client au profil islamique + virement vers un secteur haram du paramètre tenant — le
+    // moteur évalue, persiste et journalise. Et un calcul de zakat (R211). Idempotent par la
+    // présence d'un signal du client.
+    try {
+      const clientsIsl = (await request(http).get("/v1/clients").set(co())).body;
+      const keller2 = ((clientsIsl?.data ?? clientsIsl) as any[]).find((c: any) => /Keller/.test(c.name ?? ""));
+      if (keller2) {
+        const dejaSignaux = (await request(http).get(`/v1/islamic/clients/${keller2.id}/signaux`).set(co())).body;
+        if (!(Array.isArray(dejaSignaux) ? dejaSignaux : []).length) {
+          await poser("évaluation Shariah (signal R207 réel)", request(http).post("/v1/islamic/evaluer").set(co()).send({
+            clientId: keller2.id, clientIslamic: true,
+            transactions: [{ beneficiaire: "Casino de Montreux", secteurBeneficiaire: "CASINO", montantChf: 12000 }] }));
+          await poser("calcul de zakat (R211)", request(http).post("/v1/islamic/zakat").set(co())
+            .send({ clientId: keller2.id, patrimoineChf: 1000000 }));
+        }
+      } else journalChapitres.push("✗ chapitre islamique SAUTÉ — client Keller introuvable");
+    } catch (e) { console.log("SEED GWB — chapitre islamique toléré :", (e as any)?.message ?? e); }
+
     console.log("SEED GWB — chapitres V2-M45 :\n  " + (journalChapitres.join("\n  ") || "(aucun — tout était déjà semé)"));
 
     // ── La PREUVE — comptée ; l'idempotence se vérifie en relançant (DM-02, cf. run 2) ──

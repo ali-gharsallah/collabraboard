@@ -21,6 +21,9 @@ import { Oprisk } from "./Oprisk";
 import { Legal } from "./Legal";
 import { Cpsi } from "./Cpsi";
 import { Pms } from "./Pms";
+import { Mobile } from "./Mobile";
+import { Islamic } from "./Islamic";
+import { Fx } from "./Fx";
 import { CAPACITES, ECRAN_MODULE_LICENCIE, capacitesVisibles, destinationsLicenciees, destinationsVisibles, licenceActive } from "./capacites";
 import { EntreeRelation } from "./EntreeRelation";
 import { EntityList, MesClients } from "./Listes";
@@ -669,9 +672,11 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // V2-M47 : 63/10/13 → 66/11/9. Les quatre capacités dont l'onglet de destination n'existait
     // pas ont été construites — `inference` passe à « partiel » et non à « livré », parce qu'il
     // lui manque encore le référentiel de profils, pas l'écran.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(73);   // … +cpsiSeg +cpsiCases (M55) +pms (M56)
+    // V2-M59 (arbitrage PO) : PLUS AUCUNE capacité absente. 76 livrées, 10 amputées — et
+    // chaque « partiel » nomme son blocage : un port, un référentiel, ou une reprise v1 fine.
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(76);
     expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
-    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(3);
+    expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(0);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
   });
@@ -846,13 +851,15 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // → 5 au lot V2-M52 (OpRisk : déclarer R321, transitionner, action R323, rejeu heatmap R322),
     // → 6 au lot V2-M54 (Legal : créer R312, dates R7, lecture par référence à date R48),
     // → 7 au lot V2-M55 (CPSI : score décomposé à date, proposition de cas R44, tick SLA R281),
-    // → 8 au lot V2-M56 (PMS : attacher R107, pre-trade R106, valoriser R105, clore R7/R108).
+    // → 8 au lot V2-M56 (PMS : attacher R107, pre-trade R106, valoriser R105, clore R7/R108),
+    // → 10 au lot V2-M59 (Mobile : activer MB-01, partager R318, CoC MB-05 · Islamic : évaluer
+    //   R207+, zakat R211, mudaraba R215, sukuk R220). Fx ne pose aucun acte : lecture seule.
     // V2-M48 n'a PAS relevé ce compteur, et c'est le compteur qui me l'a appris : la
     // Surveillance posait déjà des actes depuis V2-M35 ; lui ajouter la barre SWIFT enrichit un
     // écran déjà câblé, ça n'en câble pas un nouveau. Un chiffre qu'on relève « parce qu'on a
     // travaillé » ne mesure plus rien.
     expect(ecritures).toBe(1);
-    expect(ecrans).toBe(8);
+    expect(ecrans).toBe(10);
   });
 
   it("U2-57 V2-M35 : l'acte PART vraiment, et le refus du moteur s'AFFICHE au lieu de disparaître", async () => {
@@ -1191,6 +1198,41 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText(/les positions sont des données d'import core \(R167\)/)).toBeTruthy();
     expect(screen.getByText(/pas un écran en panne/)).toBeTruthy();
     expect(screen.getByText(/elle ne liquide jamais une position \(R39\)/)).toBeTruthy();
+  });
+
+  it("U2-83 V2-M59 Mobile : population distincte, 404 structurel, et le CoC comme seule voie de modification", () => {
+    render(<Mobile active={"mobile" as never} onNavigate={() => undefined} />);
+    // la messagerie vide d'une activation fraîche DIT pourquoi elle est vide (R318 : rien par défaut)
+    expect(screen.getByText(/le partage est explicite, pièce par pièce \(R318\)/)).toBeTruthy();
+    expect(screen.getByText(/pas un écran en panne/)).toBeTruthy();
+    // 404 neutre structurel — l'existence cachée, jamais avouée
+    expect(screen.getByText(/404 neutre/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir un CoC depuis un message" }));
+    expect(screen.getByText(/la voie R276 réelle, avec sa matérialité/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Activer un client" }));
+    expect(screen.getByText(/jamais stocké ni journalisé en clair/)).toBeTruthy();
+  });
+
+  it("U2-84 V2-M59 Islamic : le signal R207 est RÉEL et la revue reste humaine (R44)", () => {
+    render(<Islamic active={"islamic" as never} onNavigate={() => undefined} />);
+    // le signal du semis — émis par le moteur, pas peint
+    expect(screen.getByText("R207")).toBeTruthy();
+    expect(screen.getByText(/Casino de Montreux/)).toBeTruthy();
+    expect(screen.getByText(/il ne se ferme pas tout seul/)).toBeTruthy();
+    // la zakat rend son détail, jamais un montant nu
+    fireEvent.click(screen.getByRole("button", { name: /Zakat/ }));
+    // le séparateur de milliers fr-CH varie selon l'ICU du runtime (25'000 / 25 000) — on
+    // assertit le NOMBRE, pas la ponctuation locale
+    expect(screen.getByText(/25.000/)).toBeTruthy();
+    expect(screen.getByText(/jamais un montant nu \(R211\)/)).toBeTruthy();
+  });
+
+  it("U2-85 V2-M59 FX : le message R167 du moteur s'affiche MOT POUR MOT — jamais un taux inventé", () => {
+    render(<Fx active={"fx" as never} onNavigate={() => undefined} />);
+    expect(screen.getByText("AUCUN PORT FX")).toBeTruthy();
+    // le message du MOTEUR, tel quel (FE-04) — pas une paraphrase d'écran
+    expect(screen.getByText(/aucun port FX configuré — montants en devise d'origine, jamais un taux inventé \(R167\)/)).toBeTruthy();
+    expect(screen.getByText(/cet écran se remplit sans une ligne de code/)).toBeTruthy();
   });
 
   it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {

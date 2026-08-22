@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe2, LayoutGrid, ArrowLeftRight, Landmark, ShieldAlert, Scale } from "lucide-react";
+import { Globe2, LayoutGrid, ArrowLeftRight, Landmark, ShieldAlert, Scale, Smartphone, Moon } from "lucide-react";
 import { CAPACITES } from "./capacites";
 
 /**
@@ -27,6 +27,9 @@ const DEMO: { destination: string; icon: React.ReactNode }[] = [
   { destination: "oprisk", icon: <ShieldAlert size={16} strokeWidth={1.75} /> },
   // V2-M54 : †LEGAL au jeu de licences de la démonstration — son écran existe désormais.
   { destination: "legal", icon: <Scale size={16} strokeWidth={1.75} /> },
+  // V2-M59 : les trois derniers † entrent au jeu de licences de la démonstration (arbitrage PO).
+  { destination: "mobile", icon: <Smartphone size={16} strokeWidth={1.75} /> },
+  { destination: "islamic", icon: <Moon size={16} strokeWidth={1.75} /> },
 ];
 
 const libelleDe = (destination: string) =>

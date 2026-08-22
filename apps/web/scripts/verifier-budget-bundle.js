@@ -114,6 +114,7 @@ const EST_GLOBE = (f) => /^GlobeFond[-.]/.test(f);   // renommé en V2-M22 (le c
 //     vendu à part au registre des capacités). E-V2-18 le listait à tort — corrigé là-bas.
 const MODULES_LICENCIES = [
   "CrossBorder", "Custody", "Oprisk", "Legal",                 // couche v2 (Ui2Preview, lazy)
+  "Mobile", "Islamic", "Fx",                                   // couche v2, V2-M59 (arbitrage PO)
   "CustodyTa", "LegalRegistre", "OpRisk", "MobileAdmin",       // couche v1 (router.tsx, lazy)
   "FxExposition", "FinanceIslamique",
 ];

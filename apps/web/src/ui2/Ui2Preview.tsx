@@ -34,6 +34,10 @@ const Custody = lazy(() => import("./Custody").then((m) => ({ default: m.Custody
 const Oprisk = lazy(() => import("./Oprisk").then((m) => ({ default: m.Oprisk })));
 // V2-M54 : †LEGAL — troisième vertical du compartiment, son propre chunk.
 const Legal = lazy(() => import("./Legal").then((m) => ({ default: m.Legal })));
+// V2-M59 (arbitrage PO « je veux débloquer ça ») : les trois derniers verticaux † du registre.
+const Mobile = lazy(() => import("./Mobile").then((m) => ({ default: m.Mobile })));
+const Islamic = lazy(() => import("./Islamic").then((m) => ({ default: m.Islamic })));
+const Fx = lazy(() => import("./Fx").then((m) => ({ default: m.Fx })));
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 // V2-M55 : CPSI est un écran du SOCLE (licence null — pas un module vendu à part) : import
@@ -101,6 +105,18 @@ export function Ui2Preview() {
   // onglet du dossier KYC alors que le moteur porte dix-sept routes (E-V2-1 soldé).
   if (active === "cpsi") return <Cpsi active={active} onNavigate={setActive} />;
   if (active === "pms") return <Pms active={active} onNavigate={setActive} />;
+  if (active === "mobile") return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
+      {t("Chargement du module Mobile Banking…")}</div>}>
+      <Mobile active={active} onNavigate={setActive} /></Suspense>);
+  if (active === "islamic") return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
+      {t("Chargement du module Finance Islamique…")}</div>}>
+      <Islamic active={active} onNavigate={setActive} /></Suspense>);
+  if (active === "fx") return (
+    <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
+      {t("Chargement du module FX…")}</div>}>
+      <Fx active={active} onNavigate={setActive} /></Suspense>);
   if (active === "legal") return (
     <Suspense fallback={<div style={{ padding: 24, fontSize: 12, color: "var(--text-muted)" }}>
       {t("Chargement du module Legal…")}</div>}>

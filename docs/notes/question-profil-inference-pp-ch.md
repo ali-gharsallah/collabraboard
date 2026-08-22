@@ -1,4 +1,15 @@
-# Q-INF-1 — Publier un CompletionProfile (PP, CH) : contenu réglementaire à faire valider
+# Q-INF-1 — Publier un CompletionProfile (PP, CH) — **ARBITRÉ PO** (V2-M59), reliquat (SA, ·)
+
+**Arbitrage** : le PO a tranché dans la conversation de campagne (« je veux débloquer ça »).
+Le profil `pp-defaut` (PP, « * ») est publié dans le YAML par défaut, en MIROIR STRICT des REQ-
+déjà ratifiées du profil TRUST (P-L7-4) — aucune base légale nouvelle. Vérifié vivant : le
+dossier (PP, CH) sert un ledger réel (3 exigences satisfaites par des faits moteur, 1 gap franc).
+
+**RELIQUAT OUVERT** : le dossier (SA, DE) reste refusé — un profil SA exigerait des exigences
+que le miroir ne couvre pas (registre du commerce, ayants droit…) : à faire valider avant
+publication. Le refus s'affiche mot pour mot à l'écran, comportement voulu.
+
+## Question d'origine (historique)
 
 **Contexte** (V2-M57). L'onglet « Exigences » du dossier KYC (V2-M47) lit le ledger d'inférence.
 Le résolveur refuse — à raison, P-L7-1 — pour les dossiers de démonstration : le YAML gouverné
