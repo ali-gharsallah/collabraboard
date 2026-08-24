@@ -337,7 +337,10 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     expect(screen.getByText("RC-2026-0102")).toBeTruthy();
     expect(screen.getByText("Alerte AML-2026-0447")).toBeTruthy();      // l'origine est LIÉE, pas dupliquée
     expect(screen.getByText(/jamais un double pilotage/).textContent).toContain("R280");
-    expect(screen.getByText("CLOS — MROS")).toBeTruthy();               // clôture cohérente avec le MROS
+    // V2-M60 : « CLOS — MROS » était un statut de MAQUETTE — le moteur n'a que sa liste fermée
+    // (TRANSITIONS) et CLOTUREE en est le terminal, gardé par R136 (cohérence MROS au moteur,
+    // pas dans un libellé d'écran). L'assertion suit le moteur.
+    expect(screen.getByText("CLOTUREE")).toBeTruthy();
     unmount();
     const onNavigate = vi.fn();
     render(<MesClients active="clients" onNavigate={onNavigate} />);
@@ -674,8 +677,8 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // lui manque encore le référentiel de profils, pas l'écran.
     // V2-M59 (arbitrage PO) : PLUS AUCUNE capacité absente. 76 livrées, 10 amputées — et
     // chaque « partiel » nomme son blocage : un port, un référentiel, ou une reprise v1 fine.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(76);
-    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(10);
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(77);   // +alertes (M60 : la file trie et filtre)
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(9);
     expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(0);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
@@ -1233,6 +1236,25 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // le message du MOTEUR, tel quel (FE-04) — pas une paraphrase d'écran
     expect(screen.getByText(/aucun port FX configuré — montants en devise d'origine, jamais un taux inventé \(R167\)/)).toBeTruthy();
     expect(screen.getByText(/cet écran se remplit sans une ligne de code/)).toBeTruthy();
+  });
+
+  it("U2-86 V2-M60 : la file de cas TRIE et FILTRE — sur les données du moteur, par la barre mutualisée", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText(/Cas de risque/));
+    // tri par défaut : état le plus ANCIEN d'abord — la file de travail, pas un fil d'actualité
+    const refs = () => screen.getAllByText(/^RC-2026-/).map((e) => e.textContent);
+    expect(refs()[0]).toBe("RC-2026-0071");                        // juin avant juillet avant août
+    // le SLA signalé par le moteur (R136) est VISIBLE…
+    expect(screen.getByText("DÉPASSÉ")).toBeTruthy();
+    // …et FILTRABLE : ouvrir la barre (composant R404 mutualisé — pas une copie)
+    fireEvent.click(screen.getByRole("button", { name: /Filtres/ }));
+    fireEvent.change(screen.getByLabelText("SLA signalé (R136)"), { target: { value: "OUI" } });
+    expect(refs()).toEqual(["RC-2026-0102"]);                      // seul le dépassement reste
+    expect(screen.getByText(/1 \/ 3 résultat/)).toBeTruthy();      // le compteur dit ce qui est caché
+    // le filtre statut n'offre QUE la liste fermée du moteur — aucun statut inventé
+    const sel = screen.getByLabelText("Statut (liste fermée du moteur)") as HTMLSelectElement;
+    const options = [...sel.options].map((o) => o.value);
+    expect(options).toEqual(["ALL", "NOUVELLE", "EN_ANALYSE", "CLARIFICATION", "ESCALADEE", "CLOTUREE"]);
   });
 
   it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {

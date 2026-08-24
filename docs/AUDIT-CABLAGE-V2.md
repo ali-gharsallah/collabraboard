@@ -1072,3 +1072,36 @@ son blocage : un port, un référentiel, ou une reprise v1 fine.
 | semis, 2ᵉ passage | chapitres mobile + islamique silencieux (idempotents) |
 | budget | cœur 301,6 sous 302 · compartiment 32,8 sur 120 (13 chunks) |
 | démo mono-fichier | régénérée (1,27 Mo), vérifiée : les 3 nouveaux verticaux au menu, signal R207 affiché |
+
+---
+
+## V2-M60 — la file d'alertes trie et filtre : première des reprises fines v1
+
+**Demande PO** : « next ». La capacité `alertes` disait : « la file est rendue, le tri et les
+filtres avancés v1 non repris ». Fermée par la **FilterBar R404 mutualisée** (R-FB.1 — pas une
+copie) sur la file de cas : tri par **âge d'état** (les anciens d'abord — une file de travail,
+pas un fil d'actualité), filtre **statut** limité à la **liste fermée du moteur** (TRANSITIONS :
+NOUVELLE, EN_ANALYSE, CLARIFICATION, ESCALADEE, CLOTUREE), filtre **SLA signalé** (R136 — un fait
+du moteur, pas un calcul d'écran), recherche libre, compteur `visibles / total`.
+
+### Deux défauts trouvés en chemin, dans MON code v2
+
+1. **L'adaptateur perdait la donnée de priorisation** : `listeCasRisque` ne passait ni
+   `etatDepuis` ni `slaSignale` — la file ne POUVAIT ni trier ni filtrer comme la v1, quelle que
+   soit la barre posée dessus. Champs ajoutés (additifs).
+2. **Le seed portait des statuts inventés** (« OUVERT », « EN_INVESTIGATION », « CLOS_MROS ») —
+   une survivance de maquette, même famille que U2-43. La puce et le filtre suivent désormais la
+   liste fermée du moteur, et U2-22 a été corrigée dans le même sens (elle assertait le statut
+   inventé).
+
+Relève de budget **motivée** 302 → 305 (+0,7 kB gz mesurés) — c'est la conversation que la marge
+courte laissée au lot PMS devait forcer, et la nouvelle marge reste courte (≈ 2,7 kB).
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **251/251** (U2-86 cassée dans les deux sens avant d'être crue) |
+| e2e | **521/521** (un premier run à 74 échecs : grappe retombée — signature n°2, vérifiée puis redémarrée) |
+| budget | 302,3 sous 305 (relève motivée) · compartiment 32,9 sur 120 |
+| cliquet i18n | 0 texte en dur |
+
+Registre : **77 livrées / 9 partielles / 0 absente.**

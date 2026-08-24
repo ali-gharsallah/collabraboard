@@ -80,7 +80,12 @@ const zlib = require("zlib");
 // BAISSE 310 → 302 (V2-M53) : verser la couche v1 des modules † rend ~7,7 kB au cœur
 // (305,3 → 297,6 mesurés). Même doctrine qu'à la baisse précédente : une marge gagnée par
 // l'architecture ne reste pas dormante — le budget suit la mesure, dans les deux sens.
-const BUDGET_TOTAL_KB = 302;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 302 → 305 (V2-M60, commit motivé) : la FILE D'ALERTES trie et filtre — FilterBar R404
+// (mutualisée, pas une copie) sur la file de cas : tri par âge d'état, filtres statut (liste
+// FERMÉE du moteur) et SLA signalé (R136). Mesure 301,6 → 302,3 : +0,7 kB gz pour fermer la
+// capacité `alertes`. La marge de 0,9 kB laissée au lot PMS était volontaire — cette relève est
+// la conversation qu'elle devait forcer, et elle reste courte (≈ 2,7 kB) pour la prochaine.
+const BUDGET_TOTAL_KB = 305;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux

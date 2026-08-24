@@ -345,7 +345,7 @@ export function listeSignauxAml(v: unknown): SignalEcran[] {
 // ── Cas de risque (/v1/riskcases, R133-R136) ────────────────────────────────────────────────
 
 export type CasRisqueEcran = { id: string; reference?: string; clientId?: string; origine?: string;
-  statut?: string; createdAt?: string };
+  statut?: string; createdAt?: string; etatDepuis?: string; slaSignale?: boolean };
 
 /**
  * Moteur : `{ id, clientId, statut, etatDepuis, signalIds[], ouvertPar, motifTerminal, … }`.
@@ -364,6 +364,10 @@ export function listeCasRisque(v: unknown): CasRisqueEcran[] {
         ?? (nb !== undefined ? `${nb} ${nb > 1 ? "signaux" : "signal"} (R280)` : undefined),
       statut: x.statut as string | undefined,
       createdAt: jour(x.createdAt),
+      // V2-M60 : la donnée de PRIORISATION de la file v1 — l'âge de l'état et le SLA signalé
+      // par le moteur (R136). L'adaptateur les perdait : la file ne pouvait ni trier ni filtrer.
+      etatDepuis: x.etatDepuis as string | undefined,
+      slaSignale: x.slaSignale as boolean | undefined,
     };
   });
 }

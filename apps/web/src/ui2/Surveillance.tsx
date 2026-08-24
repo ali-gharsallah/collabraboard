@@ -16,6 +16,9 @@ import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
 import { useActeMoteur, RetourActe, BarreActes, ActeMoteur } from "./acte-moteur";
+// V2-M60 : LA FilterBar mutualisée (R404/R-FB.1) — une seconde copie serait la dérive que le
+// composant existe pour empêcher.
+import { FilterBar } from "../components/FilterBar";
 
 /**
  * UI v2 — étape 6 : Surveillance — écrans 03 « AML Investigation » et 05 « Screening ».
@@ -86,11 +89,20 @@ const SEED_REGLES: Regle[] = [
 // Cas de risque (/v1/riskcases, R133–R136) — RÉCONCILIÉS avec les alertes/hits (R280 : un cas
 // né d'une alerte reste lié à elle, jamais un double pilotage) ; transitions fermées, terminaux
 // motivés, clôture cohérente avec le MROS.
-type Rc = { id: string; reference?: string; clientId?: string; origine?: string; statut?: string; createdAt?: string };
+type Rc = { id: string; reference?: string; clientId?: string; origine?: string; statut?: string;
+  createdAt?: string; etatDepuis?: string; slaSignale?: boolean };
+// V2-M60 : statuts = la liste FERMÉE du moteur (TRANSITIONS de risk-case.service — NOUVELLE,
+// EN_ANALYSE, CLARIFICATION, CLOTUREE, ESCALADEE). Le seed précédent portait des statuts
+// INVENTÉS (« OUVERT », « EN_INVESTIGATION », « CLOS_MROS ») — une survivance de maquette,
+// même famille que U2-43. Et un cas en SLA SIGNALÉ, pour que le filtre ait quelque chose à
+// filtrer (leçon U2-73 : un seed sans état limite laisse la garde tourner à vide).
 const SEED_RC: Rc[] = [
-  { id: "rc-1", reference: "RC-2026-0102", clientId: "Cèdre Maritime SARL", origine: "Alerte AML-2026-0447", statut: "EN_INVESTIGATION", createdAt: "10.08.2026" },
-  { id: "rc-2", reference: "RC-2026-0098", clientId: "Meridian Trust Ltd", origine: "Hit screening — UBO listé", statut: "OUVERT", createdAt: "10.08.2026" },
-  { id: "rc-3", reference: "RC-2026-0071", clientId: "Atlas Commodities Ltd", origine: "Signalement gestionnaire", statut: "CLOS_MROS", createdAt: "12.06.2026" },
+  { id: "rc-1", reference: "RC-2026-0102", clientId: "Cèdre Maritime SARL", origine: "Alerte AML-2026-0447",
+    statut: "EN_ANALYSE", createdAt: "10.08.2026", etatDepuis: "2026-07-20T09:00:00Z", slaSignale: true },
+  { id: "rc-2", reference: "RC-2026-0098", clientId: "Meridian Trust Ltd", origine: "Hit screening — UBO listé",
+    statut: "NOUVELLE", createdAt: "10.08.2026", etatDepuis: "2026-08-10T09:00:00Z", slaSignale: false },
+  { id: "rc-3", reference: "RC-2026-0071", clientId: "Atlas Commodities Ltd", origine: "Signalement gestionnaire",
+    statut: "CLOTUREE", createdAt: "12.06.2026", etatDepuis: "2026-06-12T09:00:00Z", slaSignale: false },
 ];
 type Tx = { id: string; date?: string; contrepartie?: string; montant?: string; canal?: string; statut?: string };
 const SEED_TX: Tx[] = [
@@ -176,6 +188,11 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   // DEUX décisions distinctes (l'alerte AML et le hit screening) — l'état est par écran, et le
   // DecisionPanel porte key={ecran} pour que le motif saisi sur l'un ne fuie jamais sur l'autre.
   const [decisions, setDecisions] = useState<Partial<Record<"alerte" | "hit", { option: string; motif: string }>>>({});
+  // V2-M60 — l'état des filtres de la FILE (R-FB.2 : l'état vit dans l'hôte, la barre relaie).
+  const [fRecherche, setFRecherche] = useState("");
+  const [fStatut, setFStatut] = useState("ALL");
+  const [fSla, setFSla] = useState("ALL");
+  const [fTri, setFTri] = useState("ETAT_ANCIEN");
   const decision = decisions[ecran] ?? null;
   // V2-M35 — LE PREMIER ACTE QUI PART. La décision n'est plus un état local : elle est POSÉE
   // au moteur, et son issue — succès comme refus — est rendue à l'écran. Deux routes réelles :
@@ -439,22 +456,53 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
             {t("Ce tableau ne duplique aucune règle : il dit quel moteur porte quoi et où cela se lit. La bibliothèque CPSI (31 scénarios, 84 seuils) n'existe qu'en front v1 et n'a AUCUN moteur en v2 — l'écart E-AML-2 est ouvert, il n'est pas comblé par cet écran. La codification par famille (CIB-SEN01, ISLAMIC-SEN02…) est générée et figée par des ancres de stabilité en CI.")}</div>
         </>)}
-        {ecran === "cas" && (<>
-          <EntityList grid="140px 1.2fr 1.3fr 150px 110px" onOpen={() => setEcran("alerte")}
-            entetes={[t("Référence"), t("Client"), t("Origine"), t("Statut"), t("Ouvert le")]}
-            lignes={(Array.isArray(cas.data) ? cas.data : []).slice(0, 30).map((c) => ({
+        {ecran === "cas" && (() => {
+          // V2-M60 — la file TRIE et FILTRE, comme la v1, sur les données du MOTEUR : statuts
+          // de la liste fermée (TRANSITIONS), SLA signalé (R136), âge de l'état (etatDepuis).
+          const tous = Array.isArray(cas.data) ? cas.data : [];
+          const visibles = tous
+            .filter((c) => fStatut === "ALL" || c.statut === fStatut)
+            .filter((c) => fSla === "ALL" || (fSla === "OUI") === !!c.slaSignale)
+            .filter((c) => !fRecherche.trim()
+              || `${c.reference ?? ""} ${c.clientId ?? ""} ${c.origine ?? ""}`.toLowerCase().includes(fRecherche.toLowerCase()))
+            .sort((a, b) => {
+              if (fTri === "ETAT_RECENT" || fTri === "ETAT_ANCIEN") {
+                const ta = Date.parse(a.etatDepuis ?? "") || 0, tb = Date.parse(b.etatDepuis ?? "") || 0;
+                return fTri === "ETAT_ANCIEN" ? ta - tb : tb - ta;   // anciens d'abord = la file de travail
+              }
+              return (b.slaSignale ? 1 : 0) - (a.slaSignale ? 1 : 0);          // SLA d'abord
+            });
+          return (<>
+          <FilterBar
+            search={{ value: fRecherche, onChange: setFRecherche, placeholder: t("Rechercher (référence, client, origine)…") }}
+            filters={[
+              { id: "statut", label: t("Statut (liste fermée du moteur)"), value: fStatut, onChange: setFStatut,
+                options: [["ALL", t("Tous")], ["NOUVELLE", "NOUVELLE"], ["EN_ANALYSE", "EN_ANALYSE"],
+                  ["CLARIFICATION", "CLARIFICATION"], ["ESCALADEE", "ESCALADEE"], ["CLOTUREE", "CLOTUREE"]] },
+              { id: "sla", label: t("SLA signalé (R136)"), value: fSla, onChange: setFSla,
+                options: [["ALL", t("Indifférent")], ["OUI", t("En dépassement")], ["NON", t("Dans les délais")]] },
+              { id: "tri", label: t("Tri"), value: fTri, onChange: setFTri, allValue: "ETAT_ANCIEN",
+                options: [["ETAT_ANCIEN", t("État le plus ancien d'abord")],
+                  ["ETAT_RECENT", t("État le plus récent d'abord")], ["SLA", t("SLA signalés d'abord")]] },
+            ]}
+            shown={visibles.length} total={tous.length}
+            onReset={() => { setFRecherche(""); setFStatut("ALL"); setFSla("ALL"); setFTri("ETAT_ANCIEN"); }} />
+          <EntityList grid="140px 1.2fr 1.3fr 140px 90px 110px" onOpen={() => setEcran("alerte")}
+            entetes={[t("Référence"), t("Client"), t("Origine"), t("Statut"), t("SLA"), t("Ouvert le")]}
+            lignes={visibles.slice(0, 30).map((c) => ({
               id: c.id, cells: [
-                <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{c.reference ?? c.id}</span>,
+                <span key="r" className="mono" style={{ fontWeight: 600, color: "var(--text)" }}>{(c.reference ?? c.id).slice(0, 14)}</span>,
                 <span key="c" style={{ fontWeight: 600, color: "var(--text)" }}>{c.clientId ?? "—"}</span>,
                 t(c.origine ?? "—"),
-                <StatusChip key="s" mode={c.statut === "EN_INVESTIGATION" ? "warn"
-                  : c.statut === "OUVERT" ? "alert" : "ok"}>
-                  {t(c.statut === "EN_INVESTIGATION" ? "EN INVESTIGATION"
-                    : c.statut === "OUVERT" ? "OUVERT" : "CLOS — MROS")}</StatusChip>,
+                <StatusChip key="s" mode={c.statut === "CLOTUREE" ? "ok"
+                  : c.statut === "ESCALADEE" ? "alert"
+                  : c.statut === "NOUVELLE" ? "neutral" : "warn"}>{c.statut ?? "—"}</StatusChip>,
+                c.slaSignale ? <StatusChip key="x" mode="alert">{t("DÉPASSÉ")}</StatusChip>
+                  : <span key="x" className="mono" style={{ color: "var(--text-muted)" }}>—</span>,
                 <span key="d" className="mono">{c.createdAt ?? "—"}</span>] }))} />
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-            {t("Un cas de risque reste RÉCONCILIÉ avec l'alerte ou le hit qui l'a fait naître (R280) — jamais un double pilotage ; ses transitions sont fermées et ses terminaux motivés, la clôture est cohérente avec le MROS (R133–R136). Une ligne s'ouvre sur l'origine.")}</div>
-        </>)}
+            {t("Un cas de risque reste RÉCONCILIÉ avec l'alerte ou le hit qui l'a fait naître (R280) — jamais un double pilotage ; ses transitions sont fermées et ses terminaux motivés, la clôture est cohérente avec le MROS (R133–R136). Les statuts du filtre sont la liste FERMÉE du moteur ; le SLA est un fait signalé (R136), pas un calcul d'écran. Une ligne s'ouvre sur l'origine.")}</div>
+        </>); })()}
       </Ui2Shell>);
   }
 

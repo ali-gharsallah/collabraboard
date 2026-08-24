@@ -120,8 +120,7 @@ export const CAPACITES: Capacite[] = [
     roles: ["CO", "MLRO"], statut: "livre" },
   { id: "alertes", libelle: "File d'alertes", groupeV1: "Compliance & Risque",
     destination: "surveillance", onglet: "Alertes", licence: "AML",
-    roles: ["CO", "MLRO"], statut: "partiel",
-    motif: "la file d'alertes est rendue, le tri et les filtres avancés v1 non repris" },
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M60 : FilterBar R404 sur la file — tri par âge d'état, filtres statut (liste fermée) et SLA (R136)
   { id: "formations", libelle: "Formations", groupeV1: "Compliance & Risque",
     destination: "rapports", onglet: "Habilitations", licence: null,
     roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
