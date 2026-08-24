@@ -1105,3 +1105,56 @@ courte laissée au lot PMS devait forcer, et la nouvelle marge reste courte (≈
 | cliquet i18n | 0 texte en dur |
 
 Registre : **77 livrées / 9 partielles / 0 absente.**
+
+## V2-M61 — le screening avancé : les paramètres de rapprochement, exposés
+
+**Demande PO** : « next ». La capacité `screeningadv` disait : « le screening avancé (paramètres
+de rapprochement) n'est pas exposé ». Le moteur les gouverne pourtant ENTIÈREMENT — la sonde
+vivante avant construction a inventorié :
+
+- **seuil de revue** : clé tenant gouvernée `screeningSeuil` (R100, registre R-Q, défaut 85),
+  repli de tout run sans `seuil` d'appel (V2-M45) — éditée au Paramétrage, pas un knob de version ;
+- **config versionnée `SC-SCREENING`** : `GET/POST /v1/screening/config` (R415 — publier exige
+  un motif R7, auteur = jeton, effet daté R29 ; `enVigueur` résolu par le moteur). Vivant AVANT le
+  lot : `{enVigueur: null, versions: []}` — les défauts s'appliquaient sans que rien ne le dise ;
+- **knobs du score** (R413, littéraux figés) : échelle, pénalité type PP↔entité, bonus/pénalités
+  DOB, **canal phonétique R416** (metaphone | Double Metaphone, poids), **discriminant
+  nationalité R417** (bonus seulement) ; **pré-filtre trigramme** (R409 : maxTrigrammes,
+  minPartages, plafond) ;
+- **provenance par run** (R414) : chaque run persiste la config exacte qui l'a produit
+  (`config.source` = scénario v N, ou défauts) — la v1 la résumait par hit (« seuil 85 ·
+  phon:off »), la v2 la perdait entièrement ;
+- **override d'appel GOUVERNÉ** (C7) : opt-in tenant `allowCallOverride` + justification R7
+  tracée, sinon refus typé ; **rejeu** `POST /v1/screening/runs/:id/replay` (R48/R49 — config
+  persistée, jamais la courante, ne persiste rien).
+
+### Ce qui a été construit
+
+Vue **« Rapprochement »** sous Surveillance (socle — licence SCREENING sans †) : carte config en
+vigueur (version, effet, **motif R7 tel quel**), table des 12 knobs R413 + 3 knobs R409 avec
+**valeur et provenance** (« GOUVERNÉ v1 » vs « défaut moteur » — l'écran n'importe PAS le moteur,
+sincérité P-L6-3 : sa table de défauts est une copie DÉCLARÉE, assertée à l'identique contre
+`DEFAUTS_MOTEUR`/`DEFAUTS_BLOCKING` du vrai moteur par U2-88, mutation vérifiée dans les deux
+sens), table des runs avec la provenance de leur config, deux actes réels en barre (publier
+R415/R7, rejouer R48/R49). Adaptateurs `configScreening` + `listeRunsScreening` au registre
+`ROUTES_ADAPTEES`. **Semis 8a étendu** : une v1 de `SC-SCREENING` publiée PAR LA VRAIE ROUTE
+(phonétique double R416 + nationalité R417, motif daté), idempotente par le compte de versions —
+et qui ne change AUCUN run existant (seule la voie `run(scenarioCode)` la résout, R414 ; le
+semis n'en passe pas).
+
+Découverte hors périmètre consignée (pas corrigée) : `docs/notes/actes-500-objets-inventes.md`
+— islamic/pms/cpsi répondent 500 (Prisma nu) sur objet inventé là où un refus typé est dû.
+
+Relève de budget **motivée** 305 → 306 (+3,2 kB gz mesurés : 302,3 → 305,5) — Surveillance est du
+socle, pas du compartiment. La marge repart courte (0,5 kB), c'est le réglage voulu.
+
+| Vérification | Résultat |
+|---|---|
+| front `npx vitest run` | **253/253** (U2-88 cassée dans les deux sens avant d'être crue) |
+| verifier-actes-api | publier → refus typé R7 sans motif ; replay → 404 objet absent (au contrat) |
+| verifier-formes-api | `/v1/screening/config` conforme (+24 clés moteur ignorées) ; `/v1/screening/runs` partiellement invérifiable (objets vides côté vivant — dit, pas caché) |
+| gate screening | 4/4 (R405-R407 · R410) |
+| budget | 305,5 sous 306 (relève motivée) · compartiment 33,0 sur 120 |
+| cliquet i18n | 0 texte en dur |
+
+Registre : **78 livrées / 8 partielles / 0 absente.**

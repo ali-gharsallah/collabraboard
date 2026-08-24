@@ -11,7 +11,8 @@ import { FluxPanneau } from "./globe/FluxPanneau";
 import { DiffTable } from "./DiffRow";
 import { EntityList } from "./Listes";
 import { useApiOrSeed } from "../lib/useApiOrSeed";
-import { listeReglesAml, listeHitsScreening, listeSignauxAml, listeCasRisque } from "./moteur-formes";
+import { listeReglesAml, listeHitsScreening, listeSignauxAml, listeCasRisque,
+  configScreening, listeRunsScreening, DEFAUTS_R413, DEFAUTS_R409 } from "./moteur-formes";
 import { exporterCsv, jourFichier } from "./actions";
 import { traduire, langue } from "../lib/i18n";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
@@ -166,10 +167,50 @@ const ACTES_SWIFT: ActeMoteur[] = [
     garde: "R300 : un message hors bibliothèque déclarée (swift_types_actifs) ou non parsable part en QUARANTAINE MOTIVÉE — jamais un rejet muet, jamais une extraction devinée. L'analyse ne crée aucune transaction : elle se rattache par référence à une transaction existante, ou reste orpheline et le dit." },
 ];
 
+/**
+ * V2-M61 — SCREENING AVANCÉ : les paramètres de rapprochement, exposés. La v1 résumait la
+ * config par hit (« seuil 85 · phon:off ») ; la v2 ne montrait RIEN des réglages alors que le
+ * moteur les gouverne entièrement : seuil de revue (clé tenant `screeningSeuil`, R100), config
+ * versionnée SC-SCREENING (R415, effet daté R29), knobs du score (R413), canal phonétique
+ * (R416), discriminant nationalité (R417), pré-filtre trigramme (R409). Deux ACTES réels :
+ */
+const ACTES_RAPPROCHEMENT: ActeMoteur[] = [
+  { cle: "screening.config.publier", libelle: "Publier une version de la config",
+    route: "POST /v1/screening/config", methode: "POST",
+    champs: [{ cle: "moteur", libelle: "Knobs du score (R413/R416/R417)", exemple: '{"phonetique":true,"phonetiqueMethode":"double"}' },
+      { cle: "prefiltre", libelle: "Pré-filtre trigramme (R409)", exemple: '{"plafond":400}' },
+      { cle: "effectiveFrom", libelle: "Date d'effet (R29)", exemple: "2026-09-01" },
+      { cle: "motif", libelle: "Motif (R7, obligatoire)" }],
+    garde: "R415/R7 — la config du rapprochement ne se règle pas à l'appel : elle se PUBLIE en version datée (motif obligatoire, auteur = jeton, effet R29), et chaque run référence la version qui l'a produit (R414). Un override d'appel reste possible mais GOUVERNÉ (C7) : opt-in tenant allowCallOverride + justification tracée sur le run — jamais un écrasement silencieux." },
+  { cle: "screening.replay", libelle: "Rejouer un run à l'identique",
+    route: "POST /v1/screening/runs/:id/replay", methode: "POST",
+    champs: [{ cle: ":id", libelle: "Run à rejouer" },
+      { cle: "entries", libelle: "Entrées de la liste (mêmes que l'origine)" }],
+    garde: "R415/R48/R49 — le rejeu re-score le périmètre EXACT du run avec la config PERSISTÉE dessus (jamais la config courante) et rend « identique » ou « DIVERGENT ». Il ne persiste RIEN : c'est une preuve de reproductibilité, pas un nouveau run." },
+];
+
+// Seeds au format EXACT du moteur — relevés sur l'API vivante après la publication (semis 8a).
+const SEED_CONFIG_SCREENING = {
+  code: "SC-SCREENING",
+  enVigueur: { code: "SC-SCREENING", ruleRef: "R415", version: 1,
+    effectiveFrom: "2026-08-24T00:00:00.000Z",
+    params: { motif: "Activation du canal phonétique Double Metaphone (R416) et du discriminant nationalité (R417) pour le screening des listes de sanctions — recall sur translittérations, décision compliance du 24.08.2026",
+      moteur: { phonetique: true, nationalite: true, nationaliteBonus: 8, phonetiqueMethode: "double" },
+      prefiltre: { plafond: 400, minPartages: 2, maxTrigrammes: 12 } },
+    active: true },
+  versions: [{ version: 1 }],
+};
+const SEED_RUNS = [
+  { id: "d2fee3f2-0bb2-436e-a206-0a244605c5ee", liste: "SECO-DEMO", listeVersion: "2026-08-01",
+    seuil: 85, prefiltre: {}, perimetre: 3, nbHits: 1, sujetType: "client",
+    config: { moteur: {}, source: null, override: null, prefiltre: {} },
+    at: "2026-08-21T12:52:28.472Z" },
+];
+
 export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavigate: (id: Ui2NavId) => void }) {
   const t = traduire(langue());
   const [ecran, setEcran] = useState<"alerte" | "hit" | "screening" | "regles" | "transactions"
-    | "cas" | "amlgap" | "referentiel" | "swift" | "settlement">("alerte");
+    | "cas" | "amlgap" | "referentiel" | "swift" | "settlement" | "rapprochement">("alerte");
   const hitsBruts = useApiOrSeed<unknown>("/v1/screening/hits", SEED_HITS);
   const hits = { ...hitsBruts, data: listeHitsScreening(hitsBruts.data) };
   // V2-M32 : les deux capacités Compliance de la v1 qui manquaient encore sous Surveillance.
@@ -183,6 +224,11 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
   // V2-M48 : les quatre lectures des deux vues neuves.
   const swift = useApiOrSeed<SwiftMsg[]>("/v1/swift/messages", SEED_SWIFT);
   const swiftQ = useApiOrSeed<SwiftQuar[]>("/v1/swift/quarantaine", SEED_SWIFT_Q);
+  // V2-M61 : les deux lectures du screening avancé (gouvernance R415 + runs R103/R414).
+  const cfg0 = useApiOrSeed<unknown>("/v1/screening/config", SEED_CONFIG_SCREENING);
+  const cfgScreening = configScreening(cfg0.data);
+  const runs0 = useApiOrSeed<unknown>("/v1/screening/runs", SEED_RUNS);
+  const runsScreening = listeRunsScreening(runs0.data);
   const core = useApiOrSeed<EtatCore>("/v1/corebanking/etat", { lots: 0, enQuarantaine: 0 });
   const fluxEtat = useApiOrSeed<EtatFlux>("/v1/txflux/etat", { portConfigure: false, transactions: 0 });
   // DEUX décisions distinctes (l'alerte AML et le hit screening) — l'état est par écran, et le
@@ -242,6 +288,7 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
     <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
       {pilule("alerte", t("Alerte AML"))}
       {pilule("screening", `${t("File screening")} · ${Array.isArray(hits.data) ? hits.data.length : 0}`)}
+      {pilule("rapprochement", t("Rapprochement"))}
       {pilule("regles", t("Règles AML"))}
       {pilule("transactions", t("Transactions"))}
       {pilule("swift", t("SWIFT/SEPA"))}
@@ -253,7 +300,8 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
 
   // ── V2-M2/M3 : les vues « liste » du bloc Surveillance ──
   if (ecran === "screening" || ecran === "regles" || ecran === "transactions" || ecran === "cas"
-    || ecran === "amlgap" || ecran === "referentiel" || ecran === "swift" || ecran === "settlement") {
+    || ecran === "amlgap" || ecran === "referentiel" || ecran === "swift" || ecran === "settlement"
+    || ecran === "rapprochement") {
     const sousTitres = {
       screening: hits.isDemo ? t("données maquette") : t("source : /v1/screening/hits (R411 — sujet × temps, config du run référencée)"),
       regles: regles.isDemo ? t("données maquette") : t("source : /v1/aml/referentiel"),
@@ -266,6 +314,8 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
       swift: swift.isDemo ? t("données maquette") : t("source : /v1/swift/messages + /v1/swift/quarantaine (R300)"),
       settlement: core.isDemo ? t("données maquette")
         : t("source : /v1/corebanking/etat + /v1/txflux/etat (R167-R169 — le core est un PORT)"),
+      rapprochement: cfg0.isDemo ? t("données maquette")
+        : t("source : /v1/screening/config + /v1/screening/runs (R415 — config versionnée, R414 — référencée par run)"),
     } as const;
     return (
       <Ui2Shell nav={nav}
@@ -287,8 +337,76 @@ export function Surveillance({ active, onNavigate }: { active: Ui2NavId; onNavig
                   {t(h.statut === "OPEN" ? "À QUALIFIER" : h.statut ?? "QUALIFIÉ")}</StatusChip>,
                 <span key="d" className="mono">{h.at ?? "—"}</span>] }))} />
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
-            {t("Scoring : le moteur de screening du produit (Jaro-Winkler + IDF + blocking trigramme + Double Metaphone), golden set 127 cas asserté en CI. Une ligne s'ouvre sur la qualification (écran hit) — motif obligatoire.")}</div>
+            {t("Scoring : le moteur de screening du produit (Jaro-Winkler + IDF + blocking trigramme + Double Metaphone), golden set 127 cas asserté en CI. Une ligne s'ouvre sur la qualification (écran hit) — motif obligatoire. Les réglages se lisent sous Rapprochement.")}</div>
         </>)}
+        {ecran === "rapprochement" && (() => {
+          // V2-M61 — les paramètres de rapprochement. L'écran AFFICHE ce que le moteur gouverne
+          // (sincérité P-L6-3) : il n'importe pas le moteur, ne recalcule rien, et la table des
+          // défauts R413/R409 est une copie assertée à l'identique en CI (U2-88).
+          const ev = cfgScreening.enVigueur;
+          const regle = (cle: string): unknown => ev?.moteur?.[cle];
+          const reglePre = (cle: string): unknown => ev?.prefiltre?.[cle];
+          const montre = (v: unknown) => v === true ? "on" : v === false ? "off" : String(v);
+          return (<>
+            <BarreActes actes={ACTES_RAPPROCHEMENT} t={t} />
+            <section style={{ background: "var(--bg-surface)", border: "1px solid var(--border)",
+              borderRadius: "var(--r-card)", padding: "13px 16px", margin: "12px 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6, flexWrap: "wrap" }}>
+                {ev ? <StatusChip mode="ok">{`SC-SCREENING v${ev.version ?? "?"}`}</StatusChip>
+                  : <StatusChip mode="warn">{t("AUCUNE VERSION PUBLIÉE")}</StatusChip>}
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>
+                  {ev ? `${t("Config en vigueur depuis le")} ${ev.effectiveFrom ?? "—"} (R415, ${t("effet daté")} R29)`
+                    : t("les défauts figés du moteur s'appliquent (R413)")}</span>
+              </div>
+              {ev?.motif && (
+                // R7 : le motif de la publication, TEL QUEL — c'est lui la trace de gouvernance.
+                <div style={{ fontSize: 11.5, color: "var(--text-body)", lineHeight: 1.6,
+                  borderLeft: "3px solid var(--border)", paddingLeft: 10 }}>{ev.motif}</div>)}
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
+                {t("Une config publiée gouverne les runs qui la RÉFÉRENCENT (scenarioCode, R414) — chaque run persiste la config exacte qui l'a produit, c'est elle que le rejeu utilise (R48/R49).")}
+                {cfgScreening.nbVersions > 1 ? ` ${cfgScreening.nbVersions} ${t("versions publiées.")}` : ""}</div>
+            </section>
+            <div style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px" }}>{t("Knobs du score (R413) et du pré-filtre (R409)")}</div>
+            <EntityList grid="190px 1.7fr 90px 150px" onOpen={() => setEcran("screening")}
+              entetes={[t("Paramètre"), t("Ce que le bouton fait"), t("Valeur"), t("Source")]}
+              lignes={[
+                ...DEFAUTS_R413.map((k) => ({ id: k.cle, cells: [
+                  <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)", fontSize: 11.5 }}>{k.cle}</span>,
+                  <span key="l" style={{ fontSize: 11.5 }}>{t(k.libelle)}</span>,
+                  <span key="v" className="mono" style={{ fontWeight: 600 }}>{montre(regle(k.cle) ?? k.defaut)}</span>,
+                  regle(k.cle) !== undefined
+                    ? <StatusChip key="s" mode="ok">{`${t("GOUVERNÉ")} v${ev?.version}`}</StatusChip>
+                    : <span key="s" style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("défaut moteur (R413)")}</span>] })),
+                ...DEFAUTS_R409.map((k) => ({ id: k.cle, cells: [
+                  <span key="c" className="mono" style={{ fontWeight: 600, color: "var(--text)", fontSize: 11.5 }}>{k.cle}</span>,
+                  <span key="l" style={{ fontSize: 11.5 }}>{t(k.libelle)}</span>,
+                  <span key="v" className="mono" style={{ fontWeight: 600 }}>{montre(reglePre(k.cle) ?? k.defaut)}</span>,
+                  reglePre(k.cle) !== undefined
+                    ? <StatusChip key="s" mode="ok">{`${t("GOUVERNÉ")} v${ev?.version}`}</StatusChip>
+                    : <span key="s" style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("défaut moteur (R409)")}</span>] })),
+              ]} />
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", margin: "9px 0 14px", lineHeight: 1.5 }}>
+              {t("Le SEUIL DE REVUE n'est pas un knob de version : c'est le paramètre gouverné screeningSeuil (R100, registre R-Q, défaut 85), repli de tout run qui n'en donne pas — il s'édite au Paramétrage. L'IDF n'est pas un réglage non plus : il se construit des entrées de la liste À CHAQUE run (C8, aucun état partagé) — il n'y a rien à publier.")}</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "0 0 8px" }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{t("Runs — la preuve de fraîcheur (R103)")}</span>
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("chaque run porte la config qui l'a produit (R414)")}</span>
+            </div>
+            <EntityList grid="1.2fr 90px 90px 70px 70px 140px 100px" onOpen={() => setEcran("screening")}
+              entetes={[t("Liste · version"), t("Sujet"), t("Seuil"), t("Périm."), t("Hits"), t("Config"), t("Le")]}
+              lignes={runsScreening.slice(0, 20).map((r) => ({ id: r.id, cells: [
+                <span key="l" className="mono" style={{ fontWeight: 600, color: "var(--text)", fontSize: 11.5 }}>{`${r.liste ?? "—"} · ${r.version ?? "—"}`}</span>,
+                <span key="t" style={{ fontSize: 11.5 }}>{r.sujetType ?? "—"}</span>,
+                <span key="s" className="mono" style={{ fontWeight: 600 }}>{r.seuil ?? "—"}</span>,
+                <span key="p" className="mono">{r.perimetre ?? "—"}</span>,
+                <span key="h" className="mono" style={{ fontWeight: 600 }}>{r.nbHits ?? "—"}</span>,
+                r.scenario === "défauts R413"
+                  ? <span key="c" style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("défauts R413")}</span>
+                  : <StatusChip key="c" mode="ok">{r.scenario ?? "—"}</StatusChip>,
+                <span key="a" className="mono" style={{ fontSize: 11 }}>{r.at ?? "—"}</span>] }))} />
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+              {t("Un override d'appel (moteurConfig) est GOUVERNÉ (C7) : refus typé sans opt-in tenant allowCallOverride, et une justification (R7) est exigée puis tracée sur le run. La trace de passage s'écrit TOUJOURS, hits ou pas (R103) — un run à zéro hit est une preuve, pas un silence.")}</div>
+          </>);
+        })()}
         {ecran === "regles" && (<>
           <EntityList grid="110px 1.4fr 1fr 150px 110px" onOpen={() => onNavigate("param")}
             entetes={[t("Règle"), t("Scénario"), t("Seuils effectifs"), t("Version"), t("Alertes 12 m")]}

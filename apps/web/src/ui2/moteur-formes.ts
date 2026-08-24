@@ -39,6 +39,9 @@ export const ROUTES_ADAPTEES: Record<string, string> = {
   "/v1/screening/hits": "listeHitsScreening",
   "/v1/aml/signals": "listeSignauxAml",
   "/v1/riskcases": "listeCasRisque",
+  // V2-M61 : le screening avancé lit la gouvernance de la config (R415) et les runs (R103/R414).
+  "/v1/screening/config": "configScreening",
+  "/v1/screening/runs": "listeRunsScreening",
 };
 
 // ── Outils communs ──────────────────────────────────────────────────────────────────────────
@@ -368,6 +371,95 @@ export function listeCasRisque(v: unknown): CasRisqueEcran[] {
       // par le moteur (R136). L'adaptateur les perdait : la file ne pouvait ni trier ni filtrer.
       etatDepuis: x.etatDepuis as string | undefined,
       slaSignale: x.slaSignale as boolean | undefined,
+    };
+  });
+}
+
+// ── V2-M61 : le screening AVANCÉ — les paramètres de rapprochement, exposés ─────────────────
+
+/**
+ * DÉFAUTS FIGÉS du moteur de rapprochement (R413 : « omis → comportement d'origine, défauts =
+ * littéraux figés »). L'écran ne recalcule RIEN et n'importe PAS le moteur (sincérité P-L6-3 :
+ * « il AFFICHE, il ne recalcule pas ») — cette table est une COPIE DÉCLARÉE des littéraux, et
+ * un test (U2-88) l'asserte À L'IDENTIQUE contre `DEFAUTS_MOTEUR`/`DEFAUTS_BLOCKING` importés
+ * du vrai moteur : toute dérive rougit en CI. Le libellé dit ce que chaque bouton FAIT — c'est
+ * le vocabulaire du moteur (baseline-engine.js), pas une paraphrase.
+ */
+export const DEFAUTS_R413: { cle: string; defaut: string | number | boolean; libelle: string }[] = [
+  { cle: "echelle", defaut: 100, libelle: "amplitude du score (nameScore = similarité × échelle)" },
+  { cle: "penaliteTypeIncompatible", defaut: 40, libelle: "pénalité PP interrogée vs entité listée (et l'inverse)" },
+  { cle: "bonusDobExact", defaut: 6, libelle: "date de naissance identique au jour" },
+  { cle: "bonusDobMemeAnnee", defaut: 2, libelle: "même année, jour différent" },
+  { cle: "ecartAnneesProche", defaut: 2, libelle: "seuil (années) sous lequel un écart de DOB est « proche »" },
+  { cle: "penaliteDobProche", defaut: 12, libelle: "écart d'années ≤ seuil : doute, on pénalise" },
+  { cle: "penaliteDobIncompatible", defaut: 45, libelle: "écart d'années > seuil : incompatible (écarte l'homonyme)" },
+  { cle: "phonetique", defaut: false, libelle: "canal phonétique R416 (OFF = Jaro-Winkler seul)" },
+  { cle: "phonetiqueMethode", defaut: "metaphone", libelle: "clé unique (metaphone) ou Double Metaphone (2 codes)" },
+  { cle: "phonetiquePoids", defaut: 0.9, libelle: "similarité créditée quand les clés phonétiques coïncident" },
+  { cle: "nationalite", defaut: false, libelle: "discriminant nationalité R417 (bonus seulement — l'absence ne pénalise pas)" },
+  { cle: "nationaliteBonus", defaut: 8, libelle: "bonus sur nationalité commune" },
+];
+/** Défauts du PRÉ-FILTRE trigramme (R409, blocking.js) — même contrat de copie assertée (U2-88). */
+export const DEFAUTS_R409: { cle: string; defaut: number; libelle: string }[] = [
+  { cle: "maxTrigrammes", defaut: 12, libelle: "trigrammes du nom retenus pour la recherche" },
+  { cle: "minPartages", defaut: 2, libelle: "trigrammes partagés minimum pour devenir candidat" },
+  { cle: "plafond", defaut: 400, libelle: "candidats maximum passés au score fin" },
+];
+
+export type ConfigScreeningEcran = {
+  code?: string;
+  enVigueur: { version?: number; effectiveFrom?: string; motif?: string;
+    moteur: Record<string, unknown>; prefiltre: Record<string, unknown> } | null;
+  nbVersions: number;
+};
+/**
+ * Moteur : `GET /v1/screening/config` → `{ code, enVigueur: AmlScenario|null, versions: [...] }`
+ * (R415). La config vit dans `params` (`{ moteur, prefiltre, motif }`) — l'écran lit la version
+ * EN VIGUEUR à la date (R29, résolue par le moteur, jamais recalculée ici). `enVigueur: null`
+ * est un état HONNÊTE : aucune version publiée → les défauts figés R413 s'appliquent, et
+ * l'écran le dit au lieu de peindre une config qui n'existe pas.
+ */
+export function configScreening(v: unknown): ConfigScreeningEcran {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return { enVigueur: null, nbVersions: 0 };
+  const x = v as Record<string, unknown>;
+  const ev = x.enVigueur && typeof x.enVigueur === "object" ? x.enVigueur as Record<string, unknown> : null;
+  const params = ev?.params && typeof ev.params === "object" ? ev.params as Record<string, unknown> : {};
+  return {
+    code: x.code as string | undefined,
+    enVigueur: ev ? {
+      version: ev.version as number | undefined,
+      effectiveFrom: jour(ev.effectiveFrom),
+      motif: params.motif as string | undefined,
+      moteur: (params.moteur && typeof params.moteur === "object" ? params.moteur : {}) as Record<string, unknown>,
+      prefiltre: (params.prefiltre && typeof params.prefiltre === "object" ? params.prefiltre : {}) as Record<string, unknown>,
+    } : null,
+    nbVersions: Array.isArray(x.versions) ? x.versions.length : 0,
+  };
+}
+
+export type RunScreeningEcran = { id: string; liste?: string; version?: string; seuil?: number;
+  perimetre?: number; nbHits?: number; sujetType?: string; at?: string; scenario?: string };
+/**
+ * Moteur : `GET /v1/screening/runs` → `[{ id, liste, listeVersion, seuil, perimetre, nbHits,
+ * sujetType, at, config: { source: { scenarioCode, scenarioVersion } | null, … } }]` (R103/R414).
+ * `scenario` rend la PROVENANCE de la config du run : « SC-SCREENING v1 » si le run a référencé
+ * un scénario gouverné, « défauts R413 » sinon — c'est la donnée que la v1 résumait par hit
+ * (« seuil 85 · phon:off ») et que la v2 perdait entièrement.
+ */
+export function listeRunsScreening(v: unknown): RunScreeningEcran[] {
+  return tableau<Record<string, unknown>>(v).map((x) => {
+    const cfg = x.config && typeof x.config === "object" ? x.config as Record<string, unknown> : {};
+    const src = cfg.source && typeof cfg.source === "object" ? cfg.source as Record<string, unknown> : null;
+    return {
+      id: String(x.id ?? ""),
+      liste: x.liste as string | undefined,
+      version: x.listeVersion as string | undefined,
+      seuil: x.seuil as number | undefined,
+      perimetre: x.perimetre as number | undefined,
+      nbHits: x.nbHits as number | undefined,
+      sujetType: x.sujetType as string | undefined,
+      at: jour(x.at),
+      scenario: src ? `${src.scenarioCode} v${src.scenarioVersion}` : "défauts R413",
     };
   });
 }

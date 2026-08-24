@@ -152,9 +152,8 @@ export const CAPACITES: Capacite[] = [
     destination: "surveillance", onglet: "Screening", licence: "SCREENING",
     roles: ["CO", "MLRO"], statut: "livre" },
   { id: "screeningadv", libelle: "Screening avancé", groupeV1: "Compliance & Risque",
-    destination: "surveillance", onglet: "Screening", licence: "SCREENING",
-    roles: ["CO", "MLRO"], statut: "partiel",
-    motif: "le screening avancé (paramètres de rapprochement) n'est pas exposé" },
+    destination: "surveillance", onglet: "Rapprochement", licence: "SCREENING",
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M61 : config R415 + knobs R413/R416/R417 + runs R414 exposés
   { id: "veille", libelle: "Veille réglementaire", groupeV1: "Compliance & Risque",
     destination: "rapports", onglet: "Veille", licence: "†REGWATCH",
     roles: ["CO", "MLRO"], statut: "livre" },

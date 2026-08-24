@@ -305,6 +305,18 @@ describe("SEED DÉMO GWB (R329) — l'histoire complète par les vraies APIs, id
             { id: "SD-1", name: "Nordwind Handel SA", est_entite: true },
             { id: "SD-2", name: "Andrei Volkov", est_entite: false },
           ] }));
+      // V2-M61 — une version PUBLIÉE de la config du rapprochement (SC-SCREENING, R415), pour que
+      // l'écran « Rapprochement » lise une gouvernance réelle : motif R7, effet daté R29, knobs
+      // R416/R417. Idempotent par le NOMBRE DE VERSIONS (publier est append-only : rejouer le
+      // semis ne doit pas empiler v2, v3…). NB : cette publication ne change AUCUN run existant —
+      // seule la voie run(scenarioCode) la résout (R414), et le semis ci-dessus n'en passe pas.
+      const cfgVue = (await request(http).get("/v1/screening/config").set(co())).body;
+      if (!(Array.isArray(cfgVue?.versions) ? cfgVue.versions : []).length)
+        await poser("config de rapprochement", request(http).post("/v1/screening/config").set(co()).send({
+          moteur: { phonetique: true, phonetiqueMethode: "double", nationalite: true, nationaliteBonus: 8 },
+          prefiltre: { maxTrigrammes: 12, minPartages: 2, plafond: 400 },
+          motif: "Activation du canal phonétique Double Metaphone (R416) et du discriminant nationalité (R417) pour le screening des listes de sanctions — recall sur translittérations, décision compliance du 24.08.2026",
+          effectiveFrom: "2026-08-24T00:00:00.000Z" }));
     } catch (e) { console.log("SEED GWB — chapitre screening toléré :", (e as any)?.message ?? e); }
 
     // 8b. SIGNAL AML puis CAS DE RISQUE — dans cet ordre, parce que « R133 : un risk case naît

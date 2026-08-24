@@ -85,7 +85,13 @@ const zlib = require("zlib");
 // FERMÉE du moteur) et SLA signalé (R136). Mesure 301,6 → 302,3 : +0,7 kB gz pour fermer la
 // capacité `alertes`. La marge de 0,9 kB laissée au lot PMS était volontaire — cette relève est
 // la conversation qu'elle devait forcer, et elle reste courte (≈ 2,7 kB) pour la prochaine.
-const BUDGET_TOTAL_KB = 305;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
+// Relève 305 → 306 (V2-M61, commit motivé) : le SCREENING AVANCÉ — la vue Rapprochement expose
+// la config versionnée SC-SCREENING (R415, motif R7, effet R29), les knobs R413/R416/R417 avec
+// leur provenance (gouverné vs défaut figé, table assertée contre le moteur en U2-88), le
+// pré-filtre R409 et les runs avec la config qui les a produits (R414). Mesure 302,3 → 305,5 :
+// +3,2 kB gz — Surveillance est du SOCLE (licence SCREENING sans †), pas du compartiment.
+// La marge repart courte (0,5 kB) : c'est le réglage voulu, chaque ajout au cœur se motive ici.
+const BUDGET_TOTAL_KB = 306;   // somme gzip du bundle de BASE (hors packs de langue paresseux)
 const BUDGET_CHUNK_KB = 80;
 const BUDGET_GLOBE_KB = 60;    // le globe paresseux reste borné (mesure 51,9 — marge 8 kB)    // aucun chunk gzip au-delà (l'index inclus — le shell reste mince)
 const EST_PACK_LANGUE = (f) => /^i18n-ar[-.]/.test(f);  // packs de langue à chargement paresseux

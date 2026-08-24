@@ -33,6 +33,10 @@ import { AuditRejeu } from "./AuditRejeu";
 import { ParamSandbox } from "./ParamSandbox";
 import { CrossBorder } from "./CrossBorder";
 import { MODULES_METIERS_DEMO } from "./modules-metiers";
+import { DEFAUTS_R413, DEFAUTS_R409 } from "./moteur-formes";
+// U2-88 — le VRAI moteur, importé PAR LE TEST SEULEMENT (l'écran, lui, ne l'importe pas :
+// sincérité P-L6-3, « il AFFICHE, il ne recalcule pas »).
+import { DEFAUTS_MOTEUR, DEFAUTS_BLOCKING } from "@olive/screening-engine";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -677,8 +681,8 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     // lui manque encore le référentiel de profils, pas l'écran.
     // V2-M59 (arbitrage PO) : PLUS AUCUNE capacité absente. 76 livrées, 10 amputées — et
     // chaque « partiel » nomme son blocage : un port, un référentiel, ou une reprise v1 fine.
-    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(77);   // +alertes (M60 : la file trie et filtre)
-    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(9);
+    expect(CAPACITES.filter((c) => c.statut === "livre").length).toBe(78);   // +screeningadv (M61 : le rapprochement s'expose)
+    expect(CAPACITES.filter((c) => c.statut === "partiel").length).toBe(8);
     expect(CAPACITES.filter((c) => c.statut === "absent").length).toBe(0);
     // les identifiants sont uniques : le deep-link ⌘K est sans ambiguïté.
     expect(new Set(CAPACITES.map((c) => c.id)).size).toBe(CAPACITES.length);
@@ -1255,6 +1259,44 @@ describe("UI v2 — composants transverses (handoff, plan validé PO 10.08.2026)
     const sel = screen.getByLabelText("Statut (liste fermée du moteur)") as HTMLSelectElement;
     const options = [...sel.options].map((o) => o.value);
     expect(options).toEqual(["ALL", "NOUVELLE", "EN_ANALYSE", "CLARIFICATION", "ESCALADEE", "CLOTUREE"]);
+  });
+
+  it("U2-87 V2-M61 : le Rapprochement expose les paramètres — gouverné et défaut, chacun nommé", () => {
+    render(<Surveillance active="surveillance" onNavigate={() => undefined} />);
+    fireEvent.click(screen.getByText("Rapprochement"));
+    // La config EN VIGUEUR (R415) : version, effet daté, et le motif R7 TEL QUEL.
+    expect(screen.getByText("SC-SCREENING v1")).toBeTruthy();
+    expect(screen.getByText(/Activation du canal phonétique Double Metaphone \(R416\)/)).toBeTruthy();
+    // Les knobs RÉGLÉS par la version portent leur provenance… (phonetique, methode, nationalite,
+    // nationaliteBonus + les 3 du pré-filtre = 7 chips « GOUVERNÉ v1 » — pas un de plus)
+    expect(screen.getAllByText("GOUVERNÉ v1").length).toBe(7);
+    // …et les knobs NON réglés retombent sur le défaut FIGÉ du moteur, en le disant.
+    expect(screen.getAllByText("défaut moteur (R413)").length).toBe(8);   // 12 knobs − 4 gouvernés
+    expect(screen.getByText("penaliteDobIncompatible")).toBeTruthy();
+    expect(screen.getByText("45")).toBeTruthy();                          // la valeur du défaut, affichée
+    // Le run réel est là (R103), avec la provenance de sa config (R414) : celui-ci = défauts.
+    expect(screen.getByText("SECO-DEMO · 2026-08-01")).toBeTruthy();
+    expect(screen.getByText("défauts R413")).toBeTruthy();
+    // Le seuil de revue est nommé comme ce qu'il est : la clé gouvernée, pas un knob de version.
+    expect(screen.getByText(/screeningSeuil \(R100, registre R-Q, défaut 85\)/)).toBeTruthy();
+    // Les deux actes réels, gardes à l'écran : publier (R415/R7) et rejouer (R48/R49).
+    expect(screen.getByText("Publier une version de la config")).toBeTruthy();
+    expect(screen.getByText("Rejouer un run à l'identique")).toBeTruthy();
+  });
+
+  it("U2-88 V2-M61 : la table des défauts affichée EST celle du moteur — copie assertée, dérive rougie", () => {
+    // L'écran n'importe pas le moteur (P-L6-3) ; sa table de défauts est une copie DÉCLARÉE.
+    // Ce test la compare clé par clé aux littéraux figés du VRAI moteur (R413/R409) : si un
+    // défaut change côté moteur sans que la table suive, c'est ici que ça rougit — jamais en démo.
+    const table413 = Object.fromEntries(DEFAUTS_R413.map((k) => [k.cle, k.defaut]));
+    expect(table413).toEqual({ ...DEFAUTS_MOTEUR });
+    const table409 = Object.fromEntries(DEFAUTS_R409.map((k) => [k.cle, k.defaut]));
+    expect(table409).toEqual({ ...DEFAUTS_BLOCKING });
+    // Et l'écran ne triche pas en important le moteur pour s'éviter la copie (le test, lui, a le droit).
+    const src = readFileSync(join(process.cwd(), "src/ui2/Surveillance.tsx"), "utf8");
+    expect(src).not.toContain("@olive/screening-engine");
+    const formes = readFileSync(join(process.cwd(), "src/ui2/moteur-formes.ts"), "utf8");
+    expect(formes).not.toContain("@olive/screening-engine");
   });
 
   it("U2-76 V2-M53 : chaque chunk versé au compartiment est RÉELLEMENT paresseux — v1 comme v2", () => {
