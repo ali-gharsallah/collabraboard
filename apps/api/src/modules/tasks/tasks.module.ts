@@ -73,6 +73,71 @@ export class TasksService {
     return this.dto(row);
   }
 
+  // ── R38 : routage rôle → personne in-scope (port de creer_tache). ──
+  // Une tâche vise un RÔLE ; elle n'est routée qu'à une personne qui CONNAÎT la relation client
+  // (in-scope). Cible explicite hors périmètre → routage interdit (403 typé). Sans cible, auto-
+  // affectation au premier membre du rôle in-scope (tri déterministe par id). Aucun membre in-scope
+  // ⇒ refus typé (le modèle Task exige un titulaire : divergence assumée vs. l'orphelin domain.py).
+  private async clientDuSujet(ctx: Ctx, subjectType?: string, subjectId?: string): Promise<string | null> {
+    if (!subjectId) return null;
+    if (subjectType === "CLIENT") return subjectId;
+    if (subjectType === "KYC") {
+      const k = await this.prisma.kycFile.findFirst({ where: { OR: [{ id: subjectId }, { code: subjectId }], tenantId: ctx.tenantId } });
+      return k?.clientId ?? null;
+    }
+    return null;
+  }
+  private async estInScope(ctx: Ctx, userId: string, clientId: string | null, voitTout: string[]): Promise<boolean> {
+    const u = await this.prisma.user.findFirst({ where: { id: userId, tenantId: ctx.tenantId } });
+    if (!u) return false;
+    if (voitTout.includes(u.role)) return true;                              // rôle voit-tout : connaît toute relation
+    if (!clientId) return false;
+    const c = await this.prisma.client.findFirst({ where: { id: clientId, tenantId: ctx.tenantId } });
+    return !!c && c.rmUserId === userId;                                     // RM titulaire de la relation
+  }
+  async creerRoutee(ctx: Ctx, dto: { type: string; role: string; subjectType?: string; subjectId?: string; cible?: string; echeance?: string; origine?: string }) {
+    if (!dto?.type || !dto?.role) throw new BadRequestException("R38 : type et rôle requis");
+    const s = await this.settings(ctx);
+    const voitTout: string[] = s.taskVisibiliteRoles ?? ["CO", "CF", "ADMIN"];
+    const clientId = await this.clientDuSujet(ctx, dto.subjectType, dto.subjectId);
+    let titulaire: string;
+    if (dto.cible != null) {
+      if (!(await this.estInScope(ctx, dto.cible, clientId, voitTout)))
+        throw new ForbiddenException(`[R38] ${dto.cible} ne connaît pas la relation ${dto.subjectId ?? ""} : routage interdit`);
+      titulaire = dto.cible;
+    } else {
+      const membres = await this.prisma.user.findMany({ where: { tenantId: ctx.tenantId, role: dto.role as any }, orderBy: { id: "asc" } });
+      let choisi: string | null = null;
+      for (const m of membres) if (await this.estInScope(ctx, m.id, clientId, voitTout)) { choisi = m.id; break; }
+      if (!choisi) throw new BadRequestException(`[R38] Aucun membre du rôle ${dto.role} en périmètre de la relation`);
+      titulaire = choisi;
+    }
+    const row = await this.prisma.$transaction(async (tx: Tx) => {
+      const k = await tx.task.create({ data: {
+        tenantId: ctx.tenantId, assigneeId: titulaire, roleCible: dto.role, type: dto.type, statut: "OUVERTE",
+        createdAt: new Date().toISOString(), dueAt: dto.echeance ?? null,
+        subjectType: dto.subjectType ?? null, subjectId: dto.subjectId ?? null, origine: dto.origine ?? "ROUTAGE" } });
+      await this.emit(tx, ctx.tenantId, "task.routed", k.id, { role: dto.role, titulaire, subjectId: dto.subjectId ?? null });
+      return k;
+    });
+    await this.audit.log(ctx.tenantId, ctx.userId, "TASK_ROUTED", `${dto.type}:${dto.role}:${titulaire}`);
+    return this.dto(row);
+  }
+
+  // ── R38 : délégation native (RM → ARM) — fonctionnement normal, tracée avec son auteur. ──
+  async deleguer(ctx: Ctx, id: string, vers: string) {
+    if (!vers) throw new BadRequestException("R38 : destinataire (vers) requis");
+    return this.prisma.$transaction(async (tx: Tx) => {
+      const k = await tx.task.findFirst({ where: { id, tenantId: ctx.tenantId } });
+      if (!k) throw new NotFoundException("Tâche introuvable");
+      const de = k.assigneeId;
+      const maj = await tx.task.update({ where: { id: k.id }, data: { assigneeId: vers } });
+      await this.emit(tx, ctx.tenantId, "task.delegated", k.id, { de, vers, par: ctx.userId });   // R38 : de → vers
+      await this.audit.log(ctx.tenantId, ctx.userId, "TASK_DELEGATED", `${id}:${de}->${vers}`);
+      return this.dto(maj);
+    });
+  }
+
   // ── R240 : listage SCOPÉ serveur (soi / équipe / tout). asOf = rejeu (R48). ──
   async lister(ctx: Ctx, f: { status?: string; assignee?: string; dueBefore?: string; subjectId?: string; asOf?: string } & PageParams) {
     const s = await this.settings(ctx);
@@ -140,6 +205,8 @@ export class TasksController {
     return this.svc.lister(r.ctx, { status, assignee, dueBefore, subjectId, asOf, limit, cursor }); }   // R240
   @Post()              creer(@Req() r: any, @Body() b: any) { return this.svc.creerManuel(r.ctx, b); }                 // R239 (gated)
   @Post("from-event")  fromEvent(@Req() r: any, @Body() b: any) { return this.svc.creerDepuisEvenement(r.ctx, b); }    // R239 : surface de consommation d'événement
+  @Post("routed")      routee(@Req() r: any, @Body() b: any) { return this.svc.creerRoutee(r.ctx, b); }                 // R38 : routage rôle→personne in-scope
+  @Post(":id/delegate") deleguer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.deleguer(r.ctx, id, b?.vers); } // R38 : délégation native
   @Post(":id/complete") completer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.completer(r.ctx, id, b); } // R241
   @Post(":id/reassign") reassign(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.reassigner(r.ctx, id, b); } // ratifié
   @Post("sla/tick")    sla(@Req() r: any, @Body() b: any) { return this.svc.mesurerSla(r.ctx, b?.now ?? new Date().toISOString()); }    // R242

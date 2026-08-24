@@ -6,7 +6,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyserExpandOnly, tablesAppendOnly, analyserMutationAppendOnly,
-  verifierPlan, backfillIdempotent } from "./lib.mjs";
+  verifierPlan, backfillIdempotent, filtrerExceptions } from "./lib.mjs";
 
 const ici = dirname(fileURLToPath(import.meta.url));
 const racine = join(ici, "..", "..");
@@ -59,7 +59,8 @@ t("MG-05 migrations RÉELLES du dépôt : toutes expand-only, aucune mutation ap
     if (!existsSync(f)) continue;
     total++;
     const sql = readFileSync(f, "utf8");
-    assert.deepEqual(analyserExpandOnly(sql), [], `${d} : ordre destructif en phase N`);
+    // Exceptions DOCUMENTÉES par migration : source unique dans lib.mjs (partagée avec run-analyse).
+    assert.deepEqual(filtrerExceptions(d, analyserExpandOnly(sql)), [], `${d} : ordre destructif en phase N`);
     assert.deepEqual(analyserMutationAppendOnly(sql, tablesAO), [], `${d} : mutation append-only`);
   }
   assert.ok(total >= 1, "au moins une migration analysée (la baseline)");

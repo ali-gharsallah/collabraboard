@@ -1,0 +1,455 @@
+[
+  {
+    "type": "item",
+    "id": "home",
+    "label": "Accueil",
+    "icon": "⌂"
+  },
+  {
+    "type": "item",
+    "id": "command",
+    "label": "Command Center",
+    "icon": "⌁"
+  },
+  {
+    "type": "group",
+    "id": "g_clients",
+    "label": "Clients & Relations",
+    "icon": "👥",
+    "children": [
+      {
+        "id": "prospect_contact",
+        "label": "Prospect à contacter",
+        "icon": "📋"
+      },
+      {
+        "id": "prospect_test",
+        "label": "Prospect en contact",
+        "icon": "⚡"
+      },
+      {
+        "id": "prospect_onboard",
+        "label": "Prospect à onboarder",
+        "icon": "🌱"
+      },
+      {
+        "id": "clients",
+        "label": "Clients",
+        "icon": "◑"
+      },
+      {
+        "id": "persons",
+        "label": "Personnes",
+        "icon": "☺"
+      },
+      {
+        "id": "kyc",
+        "label": "KYC",
+        "icon": "◎"
+      },
+      {
+        "id": "review",
+        "label": "Account Review",
+        "icon": "↻"
+      },
+      {
+        "id": "coc",
+        "label": "Change of Circumstances",
+        "icon": "⇆"
+      },
+      {
+        "id": "offboarding",
+        "label": "Offboarding",
+        "icon": "🚪"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_front",
+    "label": "Front & Croissance",
+    "icon": "✦",
+    "children": [
+      {
+        "id": "prospection",
+        "label": "Pré-prospection",
+        "icon": "🧲"
+      },
+      {
+        "id": "crm",
+        "label": "CRM Banque",
+        "icon": "🗂"
+      },
+      {
+        "id": "contactreports",
+        "label": "Contact Reports",
+        "icon": "📇"
+      },
+      {
+        "id": "nextbestaction",
+        "label": "Prochaines actions",
+        "icon": "✦"
+      },
+      {
+        "id": "tasks",
+        "label": "Tâches",
+        "icon": "✓"
+      },
+      {
+        "id": "trip",
+        "label": "Business Trip",
+        "icon": "✈"
+      },
+      {
+        "id": "crossborder",
+        "label": "Cross-Border",
+        "icon": "🌐"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_compliance",
+    "label": "Compliance & Risque",
+    "icon": "🛡",
+    "children": [
+      {
+        "id": "screening",
+        "label": "Screening",
+        "icon": "⌖"
+      },
+      {
+        "id": "cpsi",
+        "label": "Profilage CPSI",
+        "icon": "◉"
+      },
+      {
+        "id": "compliance",
+        "label": "Compliance Center",
+        "icon": "🛡"
+      },
+      {
+        "id": "aml",
+        "label": "AML Investigation",
+        "icon": "◬"
+      },
+      {
+        "id": "amlcat",
+        "label": "Règles AML",
+        "icon": "▤"
+      },
+      {
+        "id": "invest",
+        "label": "Investigation financière",
+        "icon": "🔎"
+      },
+      {
+        "id": "txrisk",
+        "label": "Transactions Risk Monitoring",
+        "icon": "⇄"
+      },
+      {
+        "id": "transferts",
+        "label": "Transferts & ordres",
+        "icon": "➢"
+      },
+      {
+        "id": "settlement",
+        "label": "Exécution & Settlement",
+        "icon": "⛓"
+      },
+      {
+        "id": "swiftlab",
+        "label": "Analyseur SWIFT/SEPA",
+        "icon": "🔬"
+      },
+      {
+        "id": "registre",
+        "label": "Registre LBA",
+        "icon": "📖"
+      },
+      {
+        "id": "corrob",
+        "label": "Corroboration KYC",
+        "icon": "⚖"
+      },
+      {
+        "id": "legal",
+        "label": "Legal — Contrats",
+        "icon": "§"
+      },
+      {
+        "id": "opprisk",
+        "label": "Octopulse OppRisk",
+        "icon": "🐙"
+      },
+      {
+        "id": "reporting",
+        "label": "Reporting réglementaire",
+        "icon": "▤"
+      },
+      {
+        "id": "formations",
+        "label": "Formations & habilitations",
+        "icon": "🎓"
+      },
+      {
+        "id": "regwatch",
+        "label": "Veille réglementaire",
+        "icon": "📡"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_wealth",
+    "label": "Wealth & Marchés",
+    "icon": "▦",
+    "children": [
+      {
+        "id": "pms",
+        "label": "PMS",
+        "icon": "▦"
+      },
+      {
+        "id": "fx",
+        "label": "Multi-devise & FX",
+        "icon": "💱"
+      },
+      {
+        "id": "mobile",
+        "label": "Mobile Banking",
+        "icon": "📱"
+      },
+      {
+        "id": "custody",
+        "label": "Custody & Transfer Agent",
+        "icon": "📒"
+      },
+      {
+        "id": "oil",
+        "label": "OIL — Islamic Layer",
+        "icon": "☪"
+      },
+      {
+        "id": "execdash",
+        "label": "Dashboard Exécutif",
+        "icon": "▲"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_data",
+    "label": "Data & Intelligence",
+    "icon": "🫒",
+    "children": [
+      {
+        "id": "olivia",
+        "label": "Olivia (AI Core)",
+        "icon": "🫒"
+      },
+      {
+        "id": "bi",
+        "label": "BI — Reporting sur mesure",
+        "icon": "▥"
+      },
+      {
+        "id": "ged",
+        "label": "GED — Documents",
+        "icon": "🗄"
+      },
+      {
+        "id": "apidoc",
+        "label": "API & Intégrations",
+        "icon": "⇌"
+      },
+      {
+        "id": "integrations",
+        "label": "Intégrations",
+        "icon": "⇌"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_workflow",
+    "label": "Workflow",
+    "icon": "⎇",
+    "children": [
+      {
+        "id": "wfdesigner",
+        "label": "Workflow Designer",
+        "icon": "✎"
+      },
+      {
+        "id": "wfengine",
+        "label": "Workflow Rules",
+        "icon": "⚖"
+      },
+      {
+        "id": "wfmanagement",
+        "label": "Instances de workflow",
+        "icon": "▶"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_sandbox",
+    "label": "Bacs à sable",
+    "icon": "🧪",
+    "children": [
+      {
+        "id": "sbaml",
+        "label": "AML — seuils & populations",
+        "icon": "◬"
+      },
+      {
+        "id": "sbkyc",
+        "label": "KYC — sections & questions",
+        "icon": "◎"
+      },
+      {
+        "id": "sbbrm",
+        "label": "BRM — pondérations & bandes",
+        "icon": "▲"
+      },
+      {
+        "id": "sbonb",
+        "label": "Onboarding — aiguillage",
+        "icon": "🌱"
+      },
+      {
+        "id": "sbcf",
+        "label": "Central File — matrice documentaire",
+        "icon": "📄"
+      },
+      {
+        "id": "sbowner",
+        "label": "Comité de paramétrage (owner)",
+        "icon": "⚖"
+      },
+      {
+        "id": "sbwf",
+        "label": "Workflow — visas & goulots",
+        "icon": "⎇"
+      },
+      {
+        "id": "sandbox",
+        "label": "Workflow — moteur R2/R13 (live)",
+        "icon": "▷"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_audit",
+    "label": "Audit",
+    "icon": "🔍",
+    "children": [
+      {
+        "id": "wfaudit",
+        "label": "Audit FINMA — rejeu & preuves",
+        "icon": "⚖"
+      },
+      {
+        "id": "auditit",
+        "label": "Audit IT — intégrité & paramétrage",
+        "icon": "🖥"
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "id": "g_param",
+    "label": "Paramétrage",
+    "icon": "⚙",
+    "children": [
+      {
+        "type": "head",
+        "label": "Sections & questionnaires"
+      },
+      {
+        "id": "sdkyc",
+        "label": "Sections — KYC",
+        "icon": "◎"
+      },
+      {
+        "id": "sdar",
+        "label": "Sections — Account Review",
+        "icon": "↻"
+      },
+      {
+        "id": "sdgar",
+        "label": "Sections — Grouped AR",
+        "icon": "⧉"
+      },
+      {
+        "id": "paramfields",
+        "label": "Champs & droits par section",
+        "icon": "§"
+      },
+      {
+        "type": "head",
+        "label": "Règles & moteur"
+      },
+      {
+        "id": "cpsiguide",
+        "label": "CPSI — Profilage continu (guide)",
+        "icon": "📡"
+      },
+      {
+        "id": "cpsiparam",
+        "label": "CPSI — Règles de calcul",
+        "icon": "◉"
+      },
+      {
+        "id": "cocparam",
+        "label": "CoC — Types & sensibilité",
+        "icon": "⇆"
+      },
+      {
+        "id": "cpsigroupes",
+        "label": "Scénarios AML & groupes",
+        "icon": "⬡"
+      },
+      {
+        "type": "head",
+        "label": "Accès & rôles"
+      },
+      {
+        "id": "paramnav",
+        "label": "Menus par rôle",
+        "icon": "👁"
+      },
+      {
+        "id": "iamguide",
+        "label": "IAM — Sécurité & accès",
+        "icon": "🔐"
+      },
+      {
+        "id": "ssoparam",
+        "label": "SSO — Fédération d'identité",
+        "icon": "🔗"
+      },
+      {
+        "type": "head",
+        "label": "Général"
+      },
+      {
+        "id": "admin",
+        "label": "Administration",
+        "icon": "⚙"
+      },
+      {
+        "id": "editorconsole",
+        "label": "Administration Éditeur",
+        "icon": "🛡",
+        "rolesOnly": [
+          "EDITOR"
+        ]
+      }
+    ]
+  }
+]

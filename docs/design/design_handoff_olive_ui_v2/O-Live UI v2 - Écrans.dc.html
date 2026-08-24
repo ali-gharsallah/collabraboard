@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+body{margin:0;background:#E9EBE5}
+a{color:#4A6B28;text-decoration:none}
+a:hover{color:#5A7D3A}
+</style>
+</helmet>
+
+<div style="padding:56px;display:flex;flex-direction:column;gap:64px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#171C22;width:max-content">
+
+<!-- ══ 1. DOSSIER KYC ══════════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#7C8676">ÉCRAN 02</div>
+    <div style="font-size:22px;font-weight:600">Dossier KYC</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Le dossier s'ouvre sur ce qui manque, pas sur le premier onglet. Chaque réponse montre d'où elle vient. Le visa n'est pas un bouton en fin de parcours : c'est un panneau permanent qui dit qui doit agir ensuite.</div>
+  </div>
+
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <nav style="width:248px;flex:0 0 248px;background:#181D23;color:#C7CED7;display:flex;flex-direction:column;padding:18px 0">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 18px 18px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#4A6B28,#7BA042);display:flex;align-items:center;justify-content:center"><div style="width:9px;height:12px;border-radius:50%;background:#E3C75A"></div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2.5px;color:#FFFFFF">O&#8209;LIVE</div>
+      </div>
+      <div style="margin:0 14px 18px;display:flex;align-items:center;gap:8px;background:#232A32;border:1px solid #2E3741;border-radius:9px;padding:9px 11px">
+        <div style="color:#6E7885;font-size:13px">⌕</div>
+        <div style="flex:1;min-width:0;font-size:13px;color:#8B939D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Client, dossier, personne…</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6E7885;border:1px solid #39424D;border-radius:4px;padding:1px 5px">⌘K</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px;padding:0 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:6px 8px 8px">Mon espace</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◉</span>Ma journée<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">12</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">☰</span>Mes dossiers<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">48</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">☺</span>Mes clients<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">214</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Parcours client</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◔</span>Entrée en relation</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;background:#2C3A20;color:#FFFFFF;font-size:13.5px;font-weight:500"><span style="width:16px;text-align:center;color:#A4C56B">◎</span>Connaissance client<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;background:#4A6B28;color:#EAF2DC;border-radius:20px;padding:1px 8px">3</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">⛨</span>Surveillance<span style="margin-left:auto;font-size:10px;color:#E06B5A">5</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">↻</span>Revue &amp; sortie</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Pilotage</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">▤</span>Rapports</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">⚙</span>Paramétrage</div>
+      </div>
+      <div style="margin:12px 14px 0;padding-top:14px;border-top:1px solid #2A323B;display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#3A4553;color:#DDE3EA;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">CM</div>
+        <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#EDF1F5;font-weight:500">Camille Morel</div><div style="font-size:10.5px;color:#7A838F">Relationship Manager</div></div>
+        <div style="color:#6E7885;font-size:13px">⌄</div>
+      </div>
+    </nav>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div style="width:44px;height:44px;border-radius:11px;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5740">NH</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="font-size:17px;font-weight:600">Nordwind Holding AG</div>
+            <span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">RISQUE ÉLEVÉ</span>
+            <span style="font-size:10.5px;font-weight:600;color:#3F4A38;background:#F0F3EB;border-radius:5px;padding:3px 8px">EDD</span>
+          </div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">CLI-04812 · Personne morale · Zoug · relation depuis 2019</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Chronologie</div>
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Documents</div>
+          <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 15px;font-size:12.5px;font-weight:500">Transmettre pour visa</div>
+        </div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:262px minmax(0,1fr) 320px">
+
+        <div style="border-right:1px solid #E2E6DD;background:#FBFCF9;padding:20px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px 6px"><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase">Sections</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A5740">7 / 11</div></div>
+          <div style="height:5px;border-radius:3px;background:#E7EBE1;margin:0 6px 12px;overflow:hidden"><div style="width:64%;height:100%;background:#7BA042"></div></div>
+
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#4A5740"><span style="color:#3D9970">✓</span>Identification</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#4A5740"><span style="color:#3D9970">✓</span>Structure &amp; ayants droit</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#4A5740"><span style="color:#3D9970">✓</span>Activité économique</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:#FFFFFF;border:1px solid #D6E0C6;box-shadow:0 1px 2px rgba(0,0,0,0.04);font-size:13px;font-weight:600;color:#2E3A24"><span style="color:#D99A2B">◐</span><span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Origine des fonds</span><span style="margin-left:auto;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A6212">2</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#4A5740"><span style="color:#D99A2B">◐</span><span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Origine du patrimoine</span><span style="margin-left:auto;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A6212">1</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#5C6655"><span style="color:#C3CBBA">○</span>Fiscalité</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#5C6655"><span style="color:#C3CBBA">○</span>Cross-border</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#5C6655"><span style="color:#C3CBBA">○</span>Profil de risque</div>
+
+          <div style="margin-top:auto;background:#FFFFFF;border:1px solid #E7EBE1;border-radius:10px;padding:13px">
+            <div style="font-size:11.5px;color:#646E5E;margin-bottom:6px">Prochaine échéance</div>
+            <div style="font-size:13px;font-weight:600;color:#8A6212">Revue périodique — 14.09.2026</div>
+          </div>
+        </div>
+
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:18px">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:12px">
+              <div style="font-size:16px;font-weight:600">Origine des fonds</div>
+              <div style="font-size:12px;color:#646E5E">exigence CDB 20 · art. 27 — corroboration requise en EDD</div>
+            </div>
+            <div style="font-size:12.5px;color:#8A6212;background:#FBF3E2;border-radius:8px;padding:9px 12px;margin-top:11px;display:flex;gap:9px;align-items:center"><span>◐</span>Ouvert directement sur les 2 champs manquants. Les sections déjà visées ne sont pas rouvertes.</div>
+          </div>
+
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:16px 18px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Source principale des apports</div><div style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#3C6B2E;background:#EDF3E4;border-radius:4px;padding:2px 7px">RENSEIGNÉ</div></div>
+              <div style="font-size:13.5px;margin-top:9px">Cession de participation — Nordwind Energie GmbH, 2019</div>
+              <div style="font-size:11.5px;color:#5C6655;margin-top:8px;display:flex;gap:8px;align-items:center"><span style="color:#5A7D3A">⛓</span>Source : acte notarié du 12.03.2019 · empreinte vérifiée · saisi par M. Bregy</div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E3C07A;border-radius:11px;padding:16px 18px;box-shadow:0 2px 8px rgba(217,154,43,0.10)">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Montant et devise de l'apport initial</div><div style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#8A6212;background:#FBF3E2;border-radius:4px;padding:2px 7px">MANQUANT</div></div>
+              <div style="display:flex;gap:10px;margin-top:11px">
+                <div style="flex:1;border:1px solid #DCE1D6;border-radius:8px;padding:10px 12px;font-size:13.5px;color:#B3BBAB">Montant</div>
+                <div style="width:110px;border:1px solid #DCE1D6;border-radius:8px;padding:10px 12px;font-size:13.5px;color:#3F4A38">CHF ⌄</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+                <div style="font-size:11.5px;color:#6C58A8">✦ Olivia lit 14 200 000 CHF dans l'acte notarié — reprendre ?</div>
+                <div style="font-size:11.5px;font-weight:500;color:#6C58A8;border:1px solid #DDD6EC;border-radius:7px;padding:5px 11px">Reprendre</div>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:16px 18px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Flux récurrents attendus</div><div style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#8A6212;background:#FBF3E2;border-radius:4px;padding:2px 7px">MANQUANT</div></div>
+              <div style="border:1px solid #DCE1D6;border-radius:8px;padding:10px 12px;font-size:13.5px;color:#B3BBAB;margin-top:11px">Nature, fréquence et ordre de grandeur des flux</div>
+              <div style="font-size:11.5px;color:#5C6655;margin-top:9px">Sert de référence au monitoring transactionnel : un écart déclenchera une alerte.</div>
+            </div>
+
+            <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:16px 18px;opacity:0.62">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12.5px;font-weight:600;color:#3F4A38">Corroboration documentaire</div><div style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#3C6B2E;background:#EDF3E4;border-radius:4px;padding:2px 7px">3 PIÈCES</div></div>
+              <div style="font-size:12.5px;color:#4A5740;margin-top:9px">Acte notarié · états financiers 2018-2019 · attestation fiduciaire</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;border-top:1px solid #E7EBE1;padding-top:14px">
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:500">Enregistrer et continuer</div>
+            <div style="border:1px solid #DCE1D6;border-radius:8px;padding:9px 14px;font-size:12.5px;color:#3F4A38">Demander au client</div>
+            <div style="flex:1"></div>
+            <div style="font-size:11.5px;color:#5C6655;font-family:'IBM Plex Mono',monospace">Brouillon enregistré · 14:02</div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:22px 20px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase;margin-bottom:12px">Qui doit agir</div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:10px;height:10px;border-radius:50%;background:#3D9970"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:16px"><div style="font-size:12.5px;font-weight:600">Saisie gestionnaire</div><div style="font-size:11px;color:#5C6655;font-family:'IBM Plex Mono',monospace;margin-top:2px">C. Morel · en cours</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:10px;height:10px;border-radius:50%;border:2px solid #D99A2B;background:#FFFFFF;box-sizing:border-box"></div><div style="width:2px;flex:1;background:#E7EBE1"></div></div><div style="padding-bottom:16px"><div style="font-size:12.5px;font-weight:600;color:#8A6212">Visa Compliance</div><div style="font-size:11px;color:#5C6655;font-family:'IBM Plex Mono',monospace;margin-top:2px">en attente · SLA 3 j</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:10px;height:10px;border-radius:50%;background:#DDE2D6"></div></div><div><div style="font-size:12.5px;color:#5C6655">Décision MLRO</div><div style="font-size:11px;color:#646E5E;font-family:'IBM Plex Mono',monospace;margin-top:2px">requis en EDD</div></div></div>
+            </div>
+          </div>
+
+          <div style="background:#FBFCF9;border:1px solid #E7EBE1;border-radius:11px;padding:14px">
+            <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">Ce qui bloque la transmission</div>
+            <div style="display:flex;gap:9px;font-size:12px;color:#8A6212;margin-bottom:6px"><span>◐</span>2 champs obligatoires en origine des fonds</div>
+            <div style="display:flex;gap:9px;font-size:12px;color:#8A6212"><span>◐</span>1 champ en origine du patrimoine</div>
+            <div style="font-size:11px;color:#5C6655;margin-top:10px;line-height:1.5">Le bouton reste actif : il indiquera précisément ce qui manque plutôt que d'être grisé sans explication.</div>
+          </div>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase;margin-bottom:12px">Journal du dossier</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:12px;line-height:1.45">Section « activité économique » visée<div style="font-size:10.5px;color:#5C6655;font-family:'IBM Plex Mono',monospace;margin-top:2px">08.08 · M. Bregy</div></div>
+              <div style="font-size:12px;line-height:1.45">Screening relancé — aucun hit<div style="font-size:10.5px;color:#5C6655;font-family:'IBM Plex Mono',monospace;margin-top:2px">07.08 · système</div></div>
+              <div style="font-size:12px;line-height:1.45">Passage CDD → EDD (pays de l'ayant droit)<div style="font-size:10.5px;color:#5C6655;font-family:'IBM Plex Mono',monospace;margin-top:2px">02.08 · moteur de règles</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 2. AML INVESTIGATION ════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#7C8676">ÉCRAN 03</div>
+    <div style="font-size:22px;font-weight:600">AML Investigation</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">L'écran répond à « pourquoi cette alerte » avant de demander une décision. La règle déclenchée est citée en clair, le comportement attendu est comparé au constaté, et aucune décision ne se prend sans motif.</div>
+  </div>
+
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <nav style="width:248px;flex:0 0 248px;background:#181D23;color:#C7CED7;display:flex;flex-direction:column;padding:18px 0">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 18px 18px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#4A6B28,#7BA042);display:flex;align-items:center;justify-content:center"><div style="width:9px;height:12px;border-radius:50%;background:#E3C75A"></div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2.5px;color:#FFFFFF">O&#8209;LIVE</div>
+      </div>
+      <div style="margin:0 14px 18px;display:flex;align-items:center;gap:8px;background:#232A32;border:1px solid #2E3741;border-radius:9px;padding:9px 11px">
+        <div style="color:#6E7885;font-size:13px">⌕</div>
+        <div style="flex:1;min-width:0;font-size:13px;color:#8B939D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Client, dossier, personne…</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6E7885;border:1px solid #39424D;border-radius:4px;padding:1px 5px">⌘K</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px;padding:0 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:6px 8px 8px">Mon espace</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◉</span>Ma journée<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">9</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">☰</span>Mes enquêtes<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">17</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Parcours client</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◔</span>Entrée en relation</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◎</span>Connaissance client</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;background:#2C3A20;color:#FFFFFF;font-size:13.5px;font-weight:500"><span style="width:16px;text-align:center;color:#A4C56B">⛨</span>Surveillance<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;background:#7A3129;color:#F7DBD6;border-radius:20px;padding:1px 8px">5</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">↻</span>Revue &amp; sortie</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Pilotage</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">▤</span>Rapports</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">⚙</span>Paramétrage</div>
+      </div>
+      <div style="margin:12px 14px 0;padding-top:14px;border-top:1px solid #2A323B;display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#3A4553;color:#DDE3EA;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">SB</div>
+        <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#EDF1F5;font-weight:500">Sofia Berger</div><div style="font-size:10.5px;color:#7A838F">Compliance Officer</div></div>
+        <div style="color:#6E7885;font-size:13px">⌄</div>
+      </div>
+    </nav>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div style="width:44px;height:44px;border-radius:11px;background:#FAE9E6;display:flex;align-items:center;justify-content:center;font-size:17px;color:#A63A2D">◬</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="font-size:17px;font-weight:600">Alerte AML-2026-0447</div>
+            <span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:5px;padding:3px 8px">CRITIQUE</span>
+            <span style="font-size:10.5px;font-weight:600;color:#3F4A38;background:#F0F3EB;border-radius:5px;padding:3px 8px">EN COURS</span>
+          </div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">Cèdre Maritime SARL · corridor Genève → Beyrouth · ouverte il y a 2 h</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Rejouer l'historique</div>
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Escalader au MLRO</div>
+        </div>
+      </header>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 400px">
+
+        <div style="min-width:0;overflow:hidden;padding:22px 26px;display:flex;flex-direction:column;gap:16px">
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-left:3px solid #C44536;border-radius:11px;padding:17px 20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5C6655;text-transform:uppercase;margin-bottom:9px">Règle déclenchée</div>
+            <div style="font-size:14.5px;font-weight:600;margin-bottom:7px">AML-R17 — écart au profil de flux déclaré</div>
+            <div style="font-size:12.5px;line-height:1.6;color:#4A5740;max-width:700px;text-wrap:pretty">Trois virements sortants vers une contrepartie non déclarée, cumulés à 2,4 M CHF sur 9 jours, alors que le dossier annonce des flux commerciaux de 150 à 400 k CHF par trimestre.</div>
+            <div style="display:flex;gap:26px;margin-top:15px">
+              <div><div style="font-size:11px;color:#5C6655">Attendu au dossier</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#3F4A38;margin-top:3px">≤ 400 000 / trim.</div></div>
+              <div><div style="font-size:11px;color:#5C6655">Constaté</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#A63A2D;margin-top:3px">2 400 000 / 9 j</div></div>
+              <div><div style="font-size:11px;color:#5C6655">Écart</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#A63A2D;margin-top:3px">× 6,0</div></div>
+              <div><div style="font-size:11px;color:#5C6655">Pays contrepartie</div><div style="font-size:14px;font-weight:600;color:#8A6212;margin-top:5px">Liban — risque élevé</div></div>
+            </div>
+          </div>
+
+          <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;display:flex;flex-direction:column;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #EDF0E9">
+              <div style="font-size:13px;font-weight:600">Transactions concernées</div>
+              <div style="flex:1"></div>
+              <div style="font-size:11.5px;color:#646E5E">rapprochées automatiquement · 3 sur 128 du mois</div>
+            </div>
+            <div style="display:grid;grid-template-columns:110px 1fr 130px 150px 110px;padding:9px 18px;background:#FBFCF9;border-bottom:1px solid #EDF0E9;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:#5C6655">
+              <div>Date</div><div>Contrepartie</div><div style="text-align:right">Montant</div><div>Canal</div><div style="text-align:right">Écart</div>
+            </div>
+            <div style="display:grid;grid-template-columns:110px 1fr 130px 150px 110px;align-items:center;padding:13px 18px;border-bottom:1px solid #F2F4EE;font-size:12.5px">
+              <div style="font-family:'IBM Plex Mono',monospace;color:#4A5740">31.07.2026</div>
+              <div><b>Levant Shipping Co.</b><div style="font-size:11px;color:#5C6655;margin-top:2px">Beyrouth · non déclarée au dossier</div></div>
+              <div style="font-family:'IBM Plex Mono',monospace;text-align:right;font-weight:600">840 000</div>
+              <div>SWIFT MT103</div>
+              <div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">× 2,1</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:110px 1fr 130px 150px 110px;align-items:center;padding:13px 18px;border-bottom:1px solid #F2F4EE;font-size:12.5px">
+              <div style="font-family:'IBM Plex Mono',monospace;color:#4A5740">04.08.2026</div>
+              <div><b>Levant Shipping Co.</b><div style="font-size:11px;color:#5C6655;margin-top:2px">Beyrouth · non déclarée au dossier</div></div>
+              <div style="font-family:'IBM Plex Mono',monospace;text-align:right;font-weight:600">760 000</div>
+              <div>SWIFT MT103</div>
+              <div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">× 1,9</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:110px 1fr 130px 150px 110px;align-items:center;padding:13px 18px;border-bottom:1px solid #F2F4EE;font-size:12.5px">
+              <div style="font-family:'IBM Plex Mono',monospace;color:#4A5740">08.08.2026</div>
+              <div><b>Levant Shipping Co.</b><div style="font-size:11px;color:#5C6655;margin-top:2px">Beyrouth · non déclarée au dossier</div></div>
+              <div style="font-family:'IBM Plex Mono',monospace;text-align:right;font-weight:600">800 000</div>
+              <div>SWIFT MT103</div>
+              <div style="text-align:right"><span style="font-size:10.5px;font-weight:600;color:#A63A2D;background:#FAE9E6;border-radius:4px;padding:2px 7px">× 2,0</span></div>
+            </div>
+            <div style="padding:13px 18px;font-size:12.5px;color:#4A6B28;font-weight:500">Voir les 125 transactions du mois pour contexte →</div>
+          </div>
+
+          <div style="background:#FAF8FE;border:1px solid #E7E2F2;border-radius:11px;padding:15px 18px;display:flex;gap:14px;align-items:flex-start">
+            <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;color:#6C58A8;background:#F0ECF9;border-radius:5px;padding:3px 7px;flex:0 0 auto">IA</div>
+            <div style="min-width:0">
+              <div style="font-size:12.5px;line-height:1.6;color:#2E2842;text-wrap:pretty">Levant Shipping Co. apparaît dans deux dossiers de la banque comme fournisseur du même groupe. La contrepartie n'est pas sous sanction. Le motif de rejet le plus fréquent sur cette règle est « flux commercial documenté ».</div>
+              <div style="font-size:10.5px;color:#8B84A0;margin-top:8px">Éléments de contexte — aucune décision n'est proposée sur une alerte critique.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:22px 22px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+          <div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">Qualifier l'alerte</div>
+            <div style="font-size:11.5px;color:#646E5E;line-height:1.5">Toute qualification exige un motif. Elle est horodatée, nominative et opposable.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="border:1px solid #DCE1D6;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #C3CBBA"></div><div><div style="font-size:13px;font-weight:500">Faux positif</div><div style="font-size:11px;color:#5C6655;margin-top:2px">Le flux est expliqué par le dossier</div></div></div>
+            <div style="border:1.5px solid #4A6B28;background:#F5F8EF;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:4.5px solid #4A6B28;background:#FFFFFF;box-sizing:border-box"></div><div><div style="font-size:13px;font-weight:600">Investigation approfondie</div><div style="font-size:11px;color:#4A5740;margin-top:2px">Demander des justificatifs au client</div></div></div>
+            <div style="border:1px solid #DCE1D6;border-radius:10px;padding:13px 15px;display:flex;gap:12px;align-items:center"><div style="width:15px;height:15px;border-radius:50%;border:1.5px solid #C3CBBA"></div><div><div style="font-size:13px;font-weight:500">Communication MROS</div><div style="font-size:11px;color:#5C6655;margin-top:2px">Soupçon fondé — escalade MLRO obligatoire</div></div></div>
+          </div>
+
+          <div>
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:7px">Motif <span style="color:#A63A2D">*</span></div>
+            <div style="border:1px solid #DCE1D6;border-radius:9px;padding:12px 13px;font-size:12.5px;color:#3F4A38;line-height:1.55;min-height:76px">Contrepartie absente du profil de flux déclaré en 2019. Demande de contrat commercial et de factures sur les trois virements.</div>
+            <div style="font-size:10.5px;color:#5C6655;margin-top:7px">Ce texte sera repris tel quel dans le registre LBA et dans le rejeu d'audit.</div>
+          </div>
+
+          <div style="background:#FBFCF9;border:1px solid #E7EBE1;border-radius:10px;padding:13px">
+            <div style="font-size:11.5px;font-weight:600;color:#3F4A38;margin-bottom:8px">Effets de cette décision</div>
+            <div style="font-size:11.5px;color:#4A5740;line-height:1.7">Tâche créée pour le gestionnaire<br />Dossier KYC repassé en revue anticipée<br />Compte non bloqué — aucun effet automatique</div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:9px">
+            <div style="background:#4A6B28;color:#FFFFFF;border-radius:9px;padding:12px;text-align:center;font-size:13px;font-weight:600">Enregistrer la qualification</div>
+            <div style="text-align:center;font-size:11px;color:#5C6655">Le second regard MLRO reste requis avant clôture</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 3. ONBOARDING ═══════════════════════════════════════════ -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#7C8676">ÉCRAN 04</div>
+    <div style="font-size:22px;font-weight:600">Entrée en relation</div>
+    <div style="font-size:14px;color:#6E7767;max-width:820px;text-wrap:pretty">Le parcours affiche en permanence la seule question qui compte : que manque-t-il pour ouvrir. La règle d'aiguillage SDD / CDD / EDD est montrée avec sa raison, et la barrière « KYC validé » est annoncée dès le premier écran.</div>
+  </div>
+
+  <div style="width:1440px;height:900px;display:flex;background:#F6F7F3;overflow:hidden;border-radius:14px;box-shadow:0 18px 50px rgba(23,28,34,0.14)">
+    <nav style="width:248px;flex:0 0 248px;background:#181D23;color:#C7CED7;display:flex;flex-direction:column;padding:18px 0">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 18px 18px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#4A6B28,#7BA042);display:flex;align-items:center;justify-content:center"><div style="width:9px;height:12px;border-radius:50%;background:#E3C75A"></div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2.5px;color:#FFFFFF">O&#8209;LIVE</div>
+      </div>
+      <div style="margin:0 14px 18px;display:flex;align-items:center;gap:8px;background:#232A32;border:1px solid #2E3741;border-radius:9px;padding:9px 11px">
+        <div style="color:#6E7885;font-size:13px">⌕</div>
+        <div style="flex:1;min-width:0;font-size:13px;color:#8B939D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Client, dossier, personne…</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6E7885;border:1px solid #39424D;border-radius:4px;padding:1px 5px">⌘K</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px;padding:0 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:6px 8px 8px">Mon espace</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◉</span>Ma journée<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">12</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">☰</span>Mes dossiers<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">48</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">☺</span>Mes clients<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8B939D">214</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Parcours client</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;background:#2C3A20;color:#FFFFFF;font-size:13.5px;font-weight:500"><span style="width:16px;text-align:center;color:#A4C56B">◔</span>Entrée en relation<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;background:#4A6B28;color:#EAF2DC;border-radius:20px;padding:1px 8px">6</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">◎</span>Connaissance client</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">⛨</span>Surveillance</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">↻</span>Revue &amp; sortie</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2px;color:#5E6773;text-transform:uppercase;padding:18px 8px 8px">Pilotage</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">▤</span>Rapports</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;font-size:13.5px"><span style="width:16px;text-align:center;color:#6E7885">⚙</span>Paramétrage</div>
+      </div>
+      <div style="margin:12px 14px 0;padding-top:14px;border-top:1px solid #2A323B;display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#3A4553;color:#DDE3EA;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">CM</div>
+        <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#EDF1F5;font-weight:500">Camille Morel</div><div style="font-size:10.5px;color:#7A838F">Relationship Manager</div></div>
+        <div style="color:#6E7885;font-size:13px">⌄</div>
+      </div>
+    </nav>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="flex:0 0 92px;border-bottom:1px solid #E2E6DD;background:#FFFFFF;display:flex;align-items:center;padding:0 28px;gap:16px">
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="font-size:17px;font-weight:600">Sablier Investments SA</div>
+            <span style="font-size:10.5px;font-weight:600;color:#3F4A38;background:#F0F3EB;border-radius:5px;padding:3px 8px">PROSPECT</span>
+          </div>
+          <div style="font-size:12px;color:#646E5E;margin-top:3px;font-family:'IBM Plex Mono',monospace">PRO-0231 · Personne morale · Luxembourg · apporté par M. Leconte</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Abandonner</div>
+          <div style="border:1px solid #DCE1D6;border-radius:8px;padding:8px 13px;font-size:12.5px;color:#3F4A38">Enregistrer</div>
+          <div style="background:#4A6B28;color:#FFFFFF;border-radius:8px;padding:9px 15px;font-size:12.5px;font-weight:500">Étape suivante</div>
+        </div>
+      </header>
+
+      <div style="flex:0 0 78px;background:#FFFFFF;border-bottom:1px solid #E2E6DD;display:flex;align-items:center;padding:0 28px;gap:0">
+        <div style="flex:1;display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:50%;background:#3D9970;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div><div><div style="font-size:12.5px;font-weight:600">Qualification</div><div style="font-size:10.5px;color:#5C6655">terminée le 04.08</div></div><div style="flex:1;height:2px;background:#D8E2CB;margin:0 8px"></div></div>
+        <div style="flex:1;display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:50%;background:#3D9970;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div><div><div style="font-size:12.5px;font-weight:600">Screening initial</div><div style="font-size:10.5px;color:#5C6655">aucun hit</div></div><div style="flex:1;height:2px;background:#D8E2CB;margin:0 8px"></div></div>
+        <div style="flex:1;display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:50%;background:#4A6B28;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600">3</div><div><div style="font-size:12.5px;font-weight:600">Dossier KYC</div><div style="font-size:10.5px;color:#4A6B28">en cours · 6 / 9 sections</div></div><div style="flex:1;height:2px;background:#E7EBE1;margin:0 8px"></div></div>
+        <div style="flex:1;display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:50%;border:1.5px solid #C3CBBA;color:#5C6655;display:flex;align-items:center;justify-content:center;font-size:11.5px;box-sizing:border-box">4</div><div><div style="font-size:12.5px;color:#5C6655">Décision</div><div style="font-size:10.5px;color:#646E5E">visa Compliance requis</div></div><div style="flex:1;height:2px;background:#E7EBE1;margin:0 8px"></div></div>
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:50%;border:1.5px solid #C3CBBA;color:#5C6655;display:flex;align-items:center;justify-content:center;font-size:11.5px;box-sizing:border-box">5</div><div><div style="font-size:12.5px;color:#5C6655">Ouverture</div><div style="font-size:10.5px;color:#646E5E">bloquée tant que KYC ≠ validé</div></div></div>
+      </div>
+
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px">
+        <div style="min-width:0;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px">
+
+          <div style="background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px">
+              <div style="font-size:14px;font-weight:600">Aiguillage du dossier</div>
+              <span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">DILIGENCE RENFORCÉE — EDD</span>
+            </div>
+            <div style="font-size:12.5px;line-height:1.65;color:#4A5740;max-width:720px;text-wrap:pretty">Décidé par le moteur de règles, pas par une saisie manuelle. Trois critères ont porté le dossier au-delà du seuil CDD :</div>
+            <div style="display:flex;gap:10px;margin-top:13px;flex-wrap:wrap">
+              <div style="border:1px solid #E7DCC2;background:#FDF9EF;border-radius:8px;padding:9px 13px;font-size:12px;color:#6B5220">Ayant droit résidant dans un pays à risque élevé</div>
+              <div style="border:1px solid #E7DCC2;background:#FDF9EF;border-radius:8px;padding:9px 13px;font-size:12px;color:#6B5220">Structure à deux niveaux de détention</div>
+              <div style="border:1px solid #E7DCC2;background:#FDF9EF;border-radius:8px;padding:9px 13px;font-size:12px;color:#6B5220">Apport initial &gt; 5 M CHF</div>
+            </div>
+            <div style="font-size:11.5px;color:#4A6B28;font-weight:500;margin-top:13px">Voir la règle appliquée et sa version →</div>
+          </div>
+
+          <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid #E2E6DD;border-radius:11px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+            <div style="display:flex;align-items:baseline;gap:12px"><div style="font-size:14px;font-weight:600">Structure de détention</div><div style="font-size:11.5px;color:#646E5E">2 ayants droit identifiés · 1 à confirmer</div></div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E7EBE1;border-radius:10px;padding:13px 15px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#4A5740">SI</div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600">Sablier Investments SA</div><div style="font-size:11px;color:#5C6655">Luxembourg · société de participation</div></div>
+                <span style="font-size:10.5px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:5px;padding:3px 8px">TITULAIRE</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E7EBE1;border-radius:10px;padding:13px 15px;margin-left:28px">
+                <div style="width:34px;height:34px;border-radius:50%;background:#EDF0E9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#4A5740">HV</div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600">Henrik Vallon</div><div style="font-size:11px;color:#5C6655">Suède · 62 % · déjà client de la banque</div></div>
+                <span style="font-size:10.5px;font-weight:600;color:#3C6B2E;background:#EDF3E4;border-radius:5px;padding:3px 8px">UBO CONFIRMÉ</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;border:1px solid #E3C07A;background:#FDFAF3;border-radius:10px;padding:13px 15px;margin-left:28px">
+                <div style="width:34px;height:34px;border-radius:50%;background:#F6EEDD;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#8A6212">NF</div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600">Nadia Farah</div><div style="font-size:11px;color:#8A6212">Liban · 38 % · pièce d'identité à recevoir</div></div>
+                <span style="font-size:10.5px;font-weight:600;color:#8A6212;background:#FBF3E2;border-radius:5px;padding:3px 8px">À CONFIRMER</span>
+              </div>
+            </div>
+
+            <div style="font-size:11.5px;color:#5C6655;line-height:1.6;border-top:1px solid #EDF0E9;padding-top:13px;text-wrap:pretty">Henrik Vallon existe déjà comme personne dans le système. Ses documents d'identité et son screening sont réutilisés — pas de nouvelle saisie, et tout changement futur se propagera aux deux dossiers.</div>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid #E2E6DD;background:#FFFFFF;padding:24px 22px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+          <div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">Ce qui manque pour ouvrir</div>
+            <div style="font-size:11.5px;color:#646E5E;line-height:1.5">Visible à chaque étape, jamais découvert à la fin.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:11px;align-items:flex-start"><span style="color:#D99A2B;font-size:13px">◐</span><div><div style="font-size:12.5px;font-weight:500">Pièce d'identité — Nadia Farah</div><div style="font-size:11px;color:#5C6655;margin-top:2px">demandée le 06.08 · relance auto le 13.08</div></div></div>
+            <div style="display:flex;gap:11px;align-items:flex-start"><span style="color:#D99A2B;font-size:13px">◐</span><div><div style="font-size:12.5px;font-weight:500">Origine du patrimoine — 3 champs</div><div style="font-size:11px;color:#5C6655;margin-top:2px">section KYC en cours</div></div></div>
+            <div style="display:flex;gap:11px;align-items:flex-start"><span style="color:#D99A2B;font-size:13px">◐</span><div><div style="font-size:12.5px;font-weight:500">Visa Compliance</div><div style="font-size:11px;color:#5C6655;margin-top:2px">après complétude du dossier</div></div></div>
+            <div style="display:flex;gap:11px;align-items:flex-start"><span style="color:#3D9970;font-size:13px">✓</span><div><div style="font-size:12.5px;color:#4A5740">Screening sanctions et PEP</div><div style="font-size:11px;color:#5C6655;margin-top:2px">aucun hit · 04.08</div></div></div>
+            <div style="display:flex;gap:11px;align-items:flex-start"><span style="color:#3D9970;font-size:13px">✓</span><div><div style="font-size:12.5px;color:#4A5740">Contrôle cross-border Luxembourg</div><div style="font-size:11px;color:#5C6655;margin-top:2px">démarchage conforme</div></div></div>
+          </div>
+
+          <div style="background:#FBFCF9;border:1px solid #E7EBE1;border-radius:11px;padding:14px">
+            <div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Délai estimé jusqu'à l'ouverture</div>
+            <div style="display:flex;align-items:baseline;gap:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#3F4A38">9</div><div style="font-size:12px;color:#646E5E">jours ouvrés</div></div>
+            <div style="font-size:11px;color:#5C6655;margin-top:8px;line-height:1.5">Calculé sur les délais réels des dossiers EDD comparables, pas sur le SLA théorique.</div>
+          </div>
+
+          <div style="margin-top:auto;border-top:1px solid #EDF0E9;padding-top:14px">
+            <div style="font-size:11.5px;color:#5C6655;line-height:1.6;text-wrap:pretty">L'ouverture du compte reste refusée tant que le KYC n'est pas au statut validé. Cette règle n'est pas paramétrable.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

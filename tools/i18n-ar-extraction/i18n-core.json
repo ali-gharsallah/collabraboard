@@ -1,0 +1,862 @@
+{
+ "Mon travail": [
+  "My work",
+  "Meine Arbeit",
+  "عملي"
+ ],
+ "Clients & dossiers": [
+  "Clients & files",
+  "Kunden & Dossiers",
+  "العملاء والملفات"
+ ],
+ "Documents": [
+  "Documents",
+  "Dokumente",
+  "المستندات"
+ ],
+ "Surveillance": [
+  "Monitoring",
+  "Überwachung",
+  "المراقبة"
+ ],
+ "Gouvernance": [
+  "Governance",
+  "Governance",
+  "الحوكمة"
+ ],
+ "Navigation classique": [
+  "Classic navigation",
+  "Klassische Navigation",
+  "التصفح الكلاسيكي"
+ ],
+ "Rechercher… ⌘K": [
+  "Search… ⌘K",
+  "Suchen… ⌘K",
+  "بحث… ⌘K"
+ ],
+ "Se connecter": [
+  "Sign in",
+  "Anmelden",
+  "تسجيل الدخول"
+ ],
+ "Déconnexion": [
+  "Sign out",
+  "Abmelden",
+  "تسجيل الخروج"
+ ],
+ "Accueil": [
+  "Home",
+  "Startseite",
+  "الرئيسية"
+ ],
+ "CLIENTS & RELATIONS": [
+  "CLIENTS & RELATIONSHIPS",
+  "KUNDEN & BEZIEHUNGEN",
+  "العملاء والعلاقات"
+ ],
+ "FRONT & CROISSANCE": [
+  "FRONT & GROWTH",
+  "FRONT & WACHSTUM",
+  "الواجهة والنمو"
+ ],
+ "COMPLIANCE & RISQUE": [
+  "COMPLIANCE & RISK",
+  "COMPLIANCE & RISIKO",
+  "الامتثال والمخاطر"
+ ],
+ "WEALTH & MARCHÉS": [
+  "WEALTH & MARKETS",
+  "WEALTH & MÄRKTE",
+  "الثروة والأسواق"
+ ],
+ "DATA & INTELLIGENCE": [
+  "DATA & INTELLIGENCE",
+  "DATA & INTELLIGENCE",
+  "البيانات والذكاء"
+ ],
+ "WORKFLOW": [
+  "WORKFLOW",
+  "WORKFLOW",
+  "سير العمل"
+ ],
+ "BACS À SABLE": [
+  "SANDBOXES",
+  "SANDBOXEN",
+  "بيئات الاختبار"
+ ],
+ "AUDIT": [
+  "AUDIT",
+  "AUDIT",
+  "التدقيق"
+ ],
+ "PARAMÉTRAGE": [
+  "SETTINGS",
+  "EINSTELLUNGEN",
+  "الإعدادات"
+ ],
+ "Command Center": [
+  "Command Center",
+  "Command Center",
+  "مركز القيادة"
+ ],
+ "Screening": [
+  "Screening",
+  "Screening",
+  "الفحص"
+ ],
+ "Profilage CPSI": [
+  "CPSI profiling",
+  "CPSI-Profiling",
+  "تنميط CPSI"
+ ],
+ "Compliance Center": [
+  "Compliance Center",
+  "Compliance Center",
+  "مركز الامتثال"
+ ],
+ "AML Investigation": [
+  "AML investigation",
+  "AML-Untersuchung",
+  "تحقيقات مكافحة غسل الأموال"
+ ],
+ "Règles AML": [
+  "AML rules",
+  "AML-Regeln",
+  "قواعد مكافحة غسل الأموال"
+ ],
+ "Investigation financière": [
+  "Financial investigation",
+  "Finanzermittlung",
+  "التحقيق المالي"
+ ],
+ "Transactions Risk Monitoring": [
+  "Transactions Risk Monitoring",
+  "Transaktionsrisiko-Monitoring",
+  "مراقبة مخاطر المعاملات"
+ ],
+ "Transferts & ordres": [
+  "Transfers & orders",
+  "Überweisungen & Aufträge",
+  "التحويلات والأوامر"
+ ],
+ "Exécution & Settlement": [
+  "Execution & settlement",
+  "Ausführung & Settlement",
+  "التنفيذ والتسوية"
+ ],
+ "Analyseur SWIFT/SEPA": [
+  "SWIFT/SEPA analyzer",
+  "SWIFT/SEPA-Analyzer",
+  "محلل SWIFT/SEPA"
+ ],
+ "Registre LBA": [
+  "AMLA register",
+  "GwG-Register",
+  "سجل مكافحة غسل الأموال"
+ ],
+ "Corroboration KYC": [
+  "KYC corroboration",
+  "KYC-Korroboration",
+  "توثيق KYC"
+ ],
+ "Legal — Contrats": [
+  "Legal — Contracts",
+  "Legal — Verträge",
+  "القانوني — العقود"
+ ],
+ "Octopulse OppRisk": [
+  "Octopulse OppRisk",
+  "Octopulse OppRisk",
+  "Octopulse OppRisk"
+ ],
+ "Reporting réglementaire": [
+  "Regulatory reporting",
+  "Regulatorisches Reporting",
+  "التقارير التنظيمية"
+ ],
+ "Formations & habilitations": [
+  "Training & authorizations",
+  "Schulungen & Berechtigungen",
+  "التدريب والتأهيل"
+ ],
+ "Veille réglementaire": [
+  "Regulatory watch",
+  "Regulatorische Beobachtung",
+  "الرصد التنظيمي"
+ ],
+ "Tâches": [
+  "Tasks",
+  "Aufgaben",
+  "المهام"
+ ],
+ "Clients": [
+  "Clients",
+  "Kunden",
+  "العملاء"
+ ],
+ "Account Review": [
+  "Account Review",
+  "Account Review",
+  "مراجعة الحسابات"
+ ],
+ "CRM Banque": [
+  "Bank CRM",
+  "Bank-CRM",
+  "إدارة علاقات العملاء"
+ ],
+ "Business Trip": [
+  "Business Trip",
+  "Business Trip",
+  "رحلة عمل"
+ ],
+ "Workflow Builder ⎇": [
+  "Workflow Builder ⎇",
+  "Workflow Builder ⎇",
+  "منشئ سير العمل ⎇"
+ ],
+ "Compliance Center 🛡": [
+  "Compliance Center 🛡",
+  "Compliance Center 🛡",
+  "مركز الامتثال 🛡"
+ ],
+ "AML Investigation Workspace": [
+  "AML Investigation Workspace",
+  "AML-Untersuchungs-Workspace",
+  "مساحة تحقيقات مكافحة غسل الأموال"
+ ],
+ "Filtres": [
+  "Filters",
+  "Filter",
+  "عوامل التصفية"
+ ],
+ "✕ Réinitialiser": [
+  "✕ Reset",
+  "✕ Zurücksetzen",
+  "✕ إعادة تعيين"
+ ],
+ "Thème bancaire": [
+  "Banking theme",
+  "Bankthema",
+  "المحور المصرفي"
+ ],
+ "Statut": [
+  "Status",
+  "Status",
+  "الحالة"
+ ],
+ "Statut alerte": [
+  "Alert status",
+  "Alarmstatus",
+  "حالة التنبيه"
+ ],
+ "Type": [
+  "Type",
+  "Typ",
+  "النوع"
+ ],
+ "Risque": [
+  "Risk",
+  "Risiko",
+  "المخاطر"
+ ],
+ "Priorité": [
+  "Priority",
+  "Priorität",
+  "الأولوية"
+ ],
+ "Workflow": [
+  "Workflow",
+  "Workflow",
+  "سير العمل"
+ ],
+ "Segment": [
+  "Segment",
+  "Segment",
+  "الشريحة"
+ ],
+ "Structure": [
+  "Structure",
+  "Struktur",
+  "الهيكل"
+ ],
+ "Canal": [
+  "Channel",
+  "Kanal",
+  "القناة"
+ ],
+ "Déclencheur": [
+  "Trigger",
+  "Auslöser",
+  "المحفّز"
+ ],
+ "Statut contrat": [
+  "Contract status",
+  "Vertragsstatus",
+  "حالة العقد"
+ ],
+ "Revues en retard": [
+  "Overdue reviews",
+  "Überfällige Reviews",
+  "مراجعات متأخرة"
+ ],
+ "Retirer ce filtre": [
+  "Remove this filter",
+  "Filter entfernen",
+  "إزالة عامل التصفية"
+ ],
+ "Tous": [
+  "All",
+  "Alle",
+  "الكل"
+ ],
+ "Toutes": [
+  "All",
+  "Alle",
+  "الكل"
+ ],
+ "Tous statuts": [
+  "All statuses",
+  "Alle Status",
+  "كل الحالات"
+ ],
+ "Tout statut": [
+  "Any status",
+  "Jeder Status",
+  "أي حالة"
+ ],
+ "Tous risques": [
+  "All risks",
+  "Alle Risiken",
+  "كل المخاطر"
+ ],
+ "Tout risque": [
+  "Any risk",
+  "Jedes Risiko",
+  "أي مخاطر"
+ ],
+ "Tous types": [
+  "All types",
+  "Alle Typen",
+  "كل الأنواع"
+ ],
+ "Tous canaux": [
+  "All channels",
+  "Alle Kanäle",
+  "كل القنوات"
+ ],
+ "Toutes structures": [
+  "All structures",
+  "Alle Strukturen",
+  "كل الهياكل"
+ ],
+ "Tous segments": [
+  "All segments",
+  "Alle Segmente",
+  "كل الشرائح"
+ ],
+ "Tous les RM": [
+  "All RMs",
+  "Alle RMs",
+  "كل مديري العلاقات"
+ ],
+ "Tous les déclencheurs": [
+  "All triggers",
+  "Alle Auslöser",
+  "كل المحفزات"
+ ],
+ "Toute priorité": [
+  "Any priority",
+  "Jede Priorität",
+  "أي أولوية"
+ ],
+ "Indifférent": [
+  "Any",
+  "Egal",
+  "غير محدد"
+ ],
+ "Oui": [
+  "Yes",
+  "Ja",
+  "نعم"
+ ],
+ "Non": [
+  "No",
+  "Nein",
+  "لا"
+ ],
+ "Élevé": [
+  "High",
+  "Hoch",
+  "مرتفع"
+ ],
+ "Moyen": [
+  "Medium",
+  "Mittel",
+  "متوسط"
+ ],
+ "Faible": [
+  "Low",
+  "Niedrig",
+  "منخفض"
+ ],
+ "Critique": [
+  "Critical",
+  "Kritisch",
+  "حرِج"
+ ],
+ "Haute": [
+  "High",
+  "Hoch",
+  "عالية"
+ ],
+ "Moyenne": [
+  "Medium",
+  "Mittel",
+  "متوسطة"
+ ],
+ "Basse": [
+  "Low",
+  "Niedrig",
+  "منخفضة"
+ ],
+ "Ouvertes": [
+  "Open",
+  "Offen",
+  "مفتوحة"
+ ],
+ "Terminées": [
+  "Done",
+  "Erledigt",
+  "منجزة"
+ ],
+ "Nouvelles": [
+  "New",
+  "Neu",
+  "جديدة"
+ ],
+ "Clôturées": [
+  "Cleared",
+  "Abgeschlossen",
+  "مقفلة"
+ ],
+ "Escaladées": [
+  "Escalated",
+  "Eskaliert",
+  "مصعّدة"
+ ],
+ "Approuvé": [
+  "Approved",
+  "Genehmigt",
+  "معتمد"
+ ],
+ "En cours": [
+  "In progress",
+  "In Arbeit",
+  "قيد الإنجاز"
+ ],
+ "En revue": [
+  "Under review",
+  "In Prüfung",
+  "قيد المراجعة"
+ ],
+ "Att. appro.": [
+  "Pending approval",
+  "Zur Genehmigung",
+  "بانتظار الاعتماد"
+ ],
+ "Brouillon": [
+  "Draft",
+  "Entwurf",
+  "مسودة"
+ ],
+ "Rejeté": [
+  "Rejected",
+  "Abgelehnt",
+  "مرفوض"
+ ],
+ "En retard": [
+  "Overdue",
+  "Überfällig",
+  "متأخر"
+ ],
+ "En attente": [
+  "Pending",
+  "Ausstehend",
+  "قيد الانتظار"
+ ],
+ "Complétée": [
+  "Completed",
+  "Abgeschlossen",
+  "مكتملة"
+ ],
+ "Actifs": [
+  "Active",
+  "Aktiv",
+  "نشطة"
+ ],
+ "Expirent bientôt": [
+  "Expiring soon",
+  "Laufen bald ab",
+  "تنتهي قريباً"
+ ],
+ "En négociation": [
+  "In negotiation",
+  "In Verhandlung",
+  "قيد التفاوض"
+ ],
+ "Brouillons": [
+  "Drafts",
+  "Entwürfe",
+  "مسودات"
+ ],
+ "Terminés": [
+  "Terminated",
+  "Beendet",
+  "منتهية"
+ ],
+ "Sanctions": [
+  "Sanctions",
+  "Sanktionen",
+  "العقوبات"
+ ],
+ "Presse": [
+  "Adverse media",
+  "Negativpresse",
+  "الإعلام السلبي"
+ ],
+ "Gouvernance des règles AML — consultation, performance, amélioration continue": [
+  "AML rules governance — review, performance, continuous improvement",
+  "Governance der AML-Regeln — Einsicht, Performance, kontinuierliche Verbesserung",
+  "حوكمة قواعد مكافحة غسل الأموال — الاطلاع والأداء والتحسين المستمر"
+ ],
+ "Principe non négociable : l'IA propose, l'humain déploie. Chaque changement est versionné, justifié, simulé et réversible.": [
+  "Non-negotiable principle: AI proposes, humans deploy. Every change is versioned, justified, simulated and reversible.",
+  "Nicht verhandelbares Prinzip: Die KI schlägt vor, der Mensch entscheidet. Jede Änderung ist versioniert, begründet, simuliert und reversibel.",
+  "مبدأ غير قابل للتفاوض: الذكاء الاصطناعي يقترح والإنسان يقرر. كل تغيير مُوثَّق ومبرَّر ومُحاكى وقابل للتراجع."
+ ],
+ "Tous les scénarios AML de la banque, en langage humain, groupés par thème bancaire. Survolez un nom pour comprendre ce que fait le scénario ; cliquez pour le détail complet. Seuils, poids et activation se règlent ici — chaque modification est tracée.": [
+  "All the bank's AML scenarios, in plain language, grouped by banking theme. Hover a name to understand what the scenario does; click for full detail. Thresholds, weights and activation are managed here — every change is traced.",
+  "Alle AML-Szenarien der Bank, in Klartext, nach Bankthema gruppiert. Fahren Sie über einen Namen, um das Szenario zu verstehen; klicken Sie für Details. Schwellen, Gewichte und Aktivierung werden hier verwaltet — jede Änderung wird protokolliert.",
+  "جميع سيناريوهات مكافحة غسل الأموال في البنك بلغة واضحة، مجمّعة حسب المحور المصرفي. مرّر المؤشر لفهم السيناريو؛ انقر للتفاصيل الكاملة. تُدار العتبات والأوزان والتفعيل هنا — وكل تعديل يُتتبَّع."
+ ],
+ "Rechercher un scénario par son nom ou un mot-clé (structuring, zakat, sanctions…)": [
+  "Search a scenario by name or keyword (structuring, zakat, sanctions…)",
+  "Szenario nach Name oder Stichwort suchen (Structuring, Zakat, Sanktionen…)",
+  "ابحث عن سيناريو بالاسم أو بكلمة مفتاحية (structuring، زكاة، عقوبات…)"
+ ],
+ "⬇ Export Excel/CSV": [
+  "⬇ Export Excel/CSV",
+  "⬇ Export Excel/CSV",
+  "⬇ تصدير Excel/CSV"
+ ],
+ "Dashboard": [
+  "Dashboard",
+  "Dashboard",
+  "لوحة المعلومات"
+ ],
+ "Heat map": [
+  "Heat map",
+  "Heatmap",
+  "الخريطة الحرارية"
+ ],
+ "Intelligence Studio": [
+  "Intelligence Studio",
+  "Intelligence Studio",
+  "استوديو الذكاء"
+ ],
+ "Déclarations MROS": [
+  "MROS filings",
+  "MROS-Meldungen",
+  "بلاغات MROS"
+ ],
+ "Rapport Direction": [
+  "Management report",
+  "GL-Bericht",
+  "تقرير الإدارة"
+ ],
+ "SEUIL": [
+  "THRESHOLD",
+  "SCHWELLE",
+  "العتبة"
+ ],
+ "COMMENT C'EST CALCULÉ": [
+  "HOW IT'S CALCULATED",
+  "BERECHNUNGSLOGIK",
+  "كيفية الاحتساب"
+ ],
+ "HITS · 6 MOIS": [
+  "HITS · 6 MONTHS",
+  "TREFFER · 6 MONATE",
+  "الإصابات · ٦ أشهر"
+ ],
+ "au total": [
+  "in total",
+  "insgesamt",
+  "إجمالاً"
+ ],
+ "qualitatif": [
+  "qualitative",
+  "qualitativ",
+  "نوعي"
+ ],
+ "Situation de départ": [
+  "Starting situation",
+  "Ausgangslage",
+  "الوضع الابتدائي"
+ ],
+ "Ce que le moteur observe": [
+  "What the engine observes",
+  "Was die Engine beobachtet",
+  "ما يرصده المحرك"
+ ],
+ "Ce qui se passe": [
+  "What happens",
+  "Was geschieht",
+  "ما يحدث"
+ ],
+ "Simuler ce scénario": [
+  "Simulate this scenario",
+  "Szenario simulieren",
+  "محاكاة السيناريو"
+ ],
+ "BLOQUE": [
+  "BLOCKS",
+  "BLOCKIERT",
+  "حظر"
+ ],
+ "Détail —": [
+  "Detail —",
+  "Detail —",
+  "التفاصيل —"
+ ],
+ "résultat(s)": [
+  "result(s)",
+  "Ergebnis(se)",
+  "نتيجة (نتائج)"
+ ],
+ "Socle universel (scoring)": [
+  "Universal core (scoring)",
+  "Universeller Sockel (Scoring)",
+  "الأساس الشامل (التقييم)"
+ ],
+ "Private Banking": [
+  "Private Banking",
+  "Private Banking",
+  "الخدمات المصرفية الخاصة"
+ ],
+ "Retail & Universel": [
+  "Retail & Universal",
+  "Retail & Universal",
+  "التجزئة والشامل"
+ ],
+ "Correspondent Banking": [
+  "Correspondent Banking",
+  "Korrespondenzbankgeschäft",
+  "بنوك المراسلة"
+ ],
+ "Capital Investment & Marchés": [
+  "Capital Investment & Markets",
+  "Capital Investment & Märkte",
+  "الاستثمار وأسواق رأس المال"
+ ],
+ "Islamic Finance": [
+  "Islamic Finance",
+  "Islamic Finance",
+  "التمويل الإسلامي"
+ ],
+ "Cash & espèces": [
+  "Cash",
+  "Bargeld",
+  "النقد"
+ ],
+ "Transferts & transfer agent": [
+  "Transfers & transfer agent",
+  "Überweisungen & Transfer Agent",
+  "التحويلات ووكيل التحويل"
+ ],
+ "Activité transactionnelle": [
+  "Transactional activity",
+  "Transaktionsaktivität",
+  "النشاط المعاملاتي"
+ ],
+ "Trading & marchés": [
+  "Trading & markets",
+  "Trading & Märkte",
+  "التداول والأسواق"
+ ],
+ "Capital markets / CIB": [
+  "Capital markets / CIB",
+  "Capital Markets / CIB",
+  "أسواق رأس المال / CIB"
+ ],
+ "Abus de marché": [
+  "Market abuse",
+  "Marktmissbrauch",
+  "إساءة استخدام السوق"
+ ],
+ "Screening en flux": [
+  "In-flow screening",
+  "Screening im Zahlungsfluss",
+  "الفحص أثناء التدفق"
+ ],
+ "Indices OBA-FINMA": [
+  "FINMA-AMLO indicators",
+  "GwV-FINMA-Indizien",
+  "مؤشرات لائحة FINMA"
+ ],
+ "Vision groupe UBO": [
+  "UBO group view",
+  "UBO-Gruppensicht",
+  "رؤية مجموعة المستفيد الفعلي"
+ ],
+ "Instruments PB": [
+  "PB instruments",
+  "PB-Instrumente",
+  "أدوات الخدمات المصرفية الخاصة"
+ ],
+ "Crypto / VASP": [
+  "Crypto / VASP",
+  "Krypto / VASP",
+  "الأصول الرقمية / VASP"
+ ],
+ "CFT": [
+  "CFT",
+  "Terrorismusfinanzierung (CFT)",
+  "مكافحة تمويل الإرهاب"
+ ],
+ "Gouvernance du dispositif": [
+  "Programme governance",
+  "Governance des Dispositivs",
+  "حوكمة المنظومة"
+ ],
+ "TBML": [
+  "TBML",
+  "TBML",
+  "غسل الأموال التجاري (TBML)"
+ ],
+ "Prolifération": [
+  "Proliferation",
+  "Proliferation",
+  "تمويل الانتشار"
+ ],
+ "Immobilier & Art": [
+  "Real estate & art",
+  "Immobilien & Kunst",
+  "العقارات والفن"
+ ],
+ "Analytique 2G": [
+  "2nd-gen analytics",
+  "Analytik 2. Generation",
+  "تحليلات الجيل الثاني"
+ ],
+ "CAS PLANTÉS — DATASET GT :": [
+  "PLANTED CASES — GT DATASET:",
+  "PRÄPARIERTE FÄLLE — GT-DATENSATZ:",
+  "حالات مزروعة — بيانات الحقيقة الأرضية:"
+ ],
+ "dossier(s) — filtrés": [
+  "file(s) — filtered",
+  "Dossier(s) — gefiltert",
+  "ملف(ات) — بعد التصفية"
+ ],
+ "Senior Compliance Officer": [
+  "Senior Compliance Officer",
+  "Senior Compliance Officer",
+  "مسؤول امتثال أول"
+ ],
+ "Relationship Manager": [
+  "Relationship Manager",
+  "Relationship Manager",
+  "مدير علاقات"
+ ],
+ "Chef de projet": [
+  "Project manager",
+  "Projektleiter",
+  "مدير مشروع"
+ ],
+ "Choisissez un profil de démonstration": [
+  "Choose a demo profile",
+  "Demo-Profil wählen",
+  "اختر ملفاً تجريبياً"
+ ],
+ "Plateforme de conformité bancaire": [
+  "Banking compliance platform",
+  "Banken-Compliance-Plattform",
+  "منصة الامتثال المصرفي"
+ ],
+ "Journal": [
+  "Journal",
+  "Journal",
+  "السجل"
+ ],
+ "Relances": [
+  "Follow-ups",
+  "Nachfassaktionen",
+  "المتابعات"
+ ],
+ "Activité": [
+  "Activity",
+  "Aktivität",
+  "النشاط"
+ ],
+ "Vue d'ensemble": [
+  "Overview",
+  "Übersicht",
+  "نظرة عامة"
+ ],
+ "Seuil": [
+  "Threshold",
+  "Schwelle",
+  "العتبة"
+ ],
+ "Hits · 6 mois": [
+  "Hits · 6 months",
+  "Treffer · 6 Monate",
+  "الإصابات · ٦ أشهر"
+ ],
+ "Comment c'est calculé": [
+  "How it's calculated",
+  "Berechnungslogik",
+  "كيفية الاحتساب"
+ ],
+ "Compliance & Risque": [
+  "Compliance & Risk",
+  "Compliance & Risiko",
+  "الامتثال والمخاطر"
+ ],
+ "Front & Croissance": [
+  "Front & Growth",
+  "Front & Wachstum",
+  "الواجهة والنمو"
+ ],
+ "Clients & Relations": [
+  "Clients & Relationships",
+  "Kunden & Beziehungen",
+  "العملاء والعلاقات"
+ ],
+ "Wealth & Marchés": [
+  "Wealth & Markets",
+  "Wealth & Märkte",
+  "الثروة والأسواق"
+ ],
+ "Data & Intelligence": [
+  "Data & Intelligence",
+  "Data & Intelligence",
+  "البيانات والذكاء"
+ ],
+ "Bacs à sable": [
+  "Sandboxes",
+  "Sandboxen",
+  "بيئات الاختبار"
+ ],
+ "Paramétrage": [
+  "Settings",
+  "Einstellungen",
+  "الإعدادات"
+ ],
+ "Audit": [
+  "Audit",
+  "Audit",
+  "التدقيق"
+ ]
+}

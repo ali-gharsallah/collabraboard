@@ -35,10 +35,31 @@ function fakePrisma(sc: Scenario) {
     upsert: async ({ create }: any) => { st.requests.push(create.requester); return {}; },
     deleteMany: async () => ({ count: 0 }),
   };
+  // R336/LK (lot 1) : le service garde désormais les écritures KycFile/KycVisa par la version
+  // (majVersionnee → updateMany WHERE id AND version, puis findUnique). Le fake modélise ce
+  // compare-and-set : version courante, incrément si (where.version absent OU == courante).
+  st.kycVersion = sc.kyc.version ?? 0;
+  const vstore: Record<string, any> = {};
+  for (const v of (sc.kyc.visas ?? [])) vstore[v.id] = { version: 0, ...v };
+  const withVersions = (kyc: any) => ({ ...kyc, version: st.kycVersion,
+    visas: (kyc.visas ?? []).map((v: any) => vstore[v.id] ?? { version: 0, ...v }) });
+  const casKycFile = (where: any, data: any) => {
+    if (where.version === undefined || where.version === st.kycVersion) { Object.assign(sc.kyc, data); st.kycVersion++; return { count: 1 }; }
+    return { count: 0 };
+  };
   const base: any = {
     _state: st,
-    kycFile: { findFirst: async () => sc.kyc, update: async ({ data }: any) => ({ ...sc.kyc, ...data }) },
-    kycVisa: { update: async ({ data }: any) => ({ ...data }) },
+    kycFile: { findFirst: async () => withVersions(sc.kyc), findUnique: async () => ({ ...sc.kyc, version: st.kycVersion }),
+      update: async ({ data }: any) => { Object.assign(sc.kyc, data); return { ...sc.kyc }; },
+      updateMany: async ({ where, data }: any) => casKycFile(where, data) },
+    kycVisa: {
+      findUnique: async ({ where }: any) => vstore[where.id] ?? null,
+      update: async ({ where, data }: any) => { vstore[where.id] = { ...(vstore[where.id] ?? { id: where.id, version: 0 }), ...data }; return vstore[where.id]; },
+      updateMany: async ({ where, data }: any) => {
+        const cur = vstore[where.id] ?? { id: where.id, version: 0 };
+        if (where.version === undefined || where.version === cur.version) { vstore[where.id] = { ...cur, ...data, version: cur.version + 1 }; return { count: 1 }; }
+        return { count: 0 };
+      } },
     kycLock, kycLockRequest,
     kycQuestionHistory: { findMany: async ({ where }: any) => {
       const code = where?.question?.section?.code;
@@ -124,11 +145,18 @@ const baseVisa = (over: any = {}) => ({ id: 'v1', sectionCode: 'IDENT', required
     await rejects(svc(sc).validate({ tenantId: 't1', userId: 'RM_Joe', role: 'RM' }, 'KYC-1'), 'validation finale non autorisée');
   });
 
-  // ── Chemin nominal : CO_SR non-créateur non-contributeur, visas signés → VALIDATED ──
+  // ── R14 : engagement de responsabilité obligatoire à la validation finale ──
+  await it('VAL-R14 validation finale sans engagement → refusée', async () => {
+    const sc: Scenario = { kyc: { id: 'k1', code: 'KYC-1', tenantId: 't1', status: 'UNDER_REVIEW', createdBy: 'X',
+      visas: [baseVisa({ status: 'SIGNED' })] }, contributors: { IDENT: ['U1'] } };
+    await rejects(svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1'), 'R14');   // engagement absent
+  });
+
+  // ── Chemin nominal : CO_SR non-créateur non-contributeur, visas signés, engagement → VALIDATED ──
   await it('VAL nominal → VALIDATED', async () => {
     const sc: Scenario = { kyc: { id: 'k1', code: 'KYC-1', tenantId: 't1', status: 'UNDER_REVIEW', createdBy: 'X',
       visas: [baseVisa({ status: 'SIGNED' })] }, contributors: { IDENT: ['U1'] } };
-    const r = await svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1');
+    const r = await svc(sc).validate({ tenantId: 't1', userId: 'CO_SR_Ann', role: 'CO_SR' }, 'KYC-1', undefined, true);   // R14 : engagement
     ok(r.status === 'VALIDATED' && r.validatedBy === 'CO_SR_Ann');
   });
 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- P-L8-1 — SOUS-ENSEMBLE goAML (module D, v1.1 §9) : la structure du BROUILLON de déclaration
+     que génère GoamlService. Sous-ensemble ASSUMÉ du schéma goAML MROS (le schéma complet est
+     distribué par fedpol) : la spec de CI valide le XML généré contre CETTE structure — éléments
+     requis et ORDRE de séquence. Étendre = étendre ce fichier + le générateur, jamais l'un sans l'autre. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="report">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="rentity_id" type="xs:string"/>
+        <xs:element name="submission_code" type="xs:string"/>
+        <xs:element name="report_code" type="xs:string"/>
+        <xs:element name="submission_date" type="xs:string"/>
+        <xs:element name="currency_code_local" type="xs:string"/>
+        <xs:element name="reporting_person" type="xs:string"/>
+        <xs:element name="transaction" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="transactionnumber" type="xs:string"/>
+              <xs:element name="date_transaction" type="xs:string"/>
+              <xs:element name="transmode_code" type="xs:string"/>
+              <xs:element name="amount_local" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="narrative" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

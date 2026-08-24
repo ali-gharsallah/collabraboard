@@ -1,0 +1,73 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème global O-Live — palette & typographie reprises de la maquette
+   (`demo/olive-demo.html`). Cible le markup SÉMANTIQUE (titres, tableaux, champs)
+   → relève l'ensemble des écrans sans les réécrire un à un. Les styles inline
+   existants restent prioritaires (aucune régression) ; ce fichier habille ce qui
+   n'était pas stylé. Aucune ressource externe (offline / self-contained).
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --cream: #FAFBF7; --surface: #FFFFFF; --line: #E7EBDD; --line-soft: #EEF1E7;
+  --olive-700: #3B5323; --olive-600: #4A6B28; --olive-500: #6B8E4E; --olive-soft: #EEF3E4;
+  --ink: #2B331F; --ink-muted: #6B7560; --ink-faint: #8A9578;
+  --green: #3D9970; --amber: #D99A2B; --red: #C44536; --blue: #3E6B8A;
+  --radius: 12px; --radius-sm: 8px;
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body, #root { margin: 0; min-height: 100%; }
+body { background: var(--cream); color: var(--ink); font-family: var(--font);
+  font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* Titres */
+h1, h2, h3, h4 { color: var(--olive-700); font-weight: 800; line-height: 1.25; margin: 0 0 12px; }
+h1 { font-size: 24px; } h2 { font-size: 20px; } h3 { font-size: 16px; } h4 { font-size: 14px; }
+p { margin: 0 0 10px; }
+a { color: var(--olive-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+small, .muted { color: var(--ink-muted); }
+
+/* Tableaux — les écrans « liste » (clients, dossiers, alertes…) deviennent lisibles */
+table { border-collapse: collapse; width: 100%; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin: 4px 0 16px; }
+thead th { background: var(--olive-soft); color: var(--olive-700); font-size: 11px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; text-align: left;
+  padding: 10px 14px; border-bottom: 1px solid var(--line); }
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #FBFCF8; }
+
+/* Champs & sélecteurs — les écrans « formulaire » (KYC, paramètres…) s'alignent */
+input, select, textarea { font-family: inherit; font-size: 13px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 8px 11px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--olive-500);
+  box-shadow: 0 0 0 3px rgba(107, 142, 78, 0.15); }
+label { font-size: 12px; color: var(--ink-muted); font-weight: 600; }
+
+/* Boutons SANS style inline (les boutons stylés en ligne gardent leur apparence) */
+button { font-family: inherit; cursor: pointer; }
+button:not([style]) { background: var(--olive-600); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 600;
+  transition: filter 0.15s; }
+button:not([style]):hover { filter: brightness(1.08); }
+
+/* Barre de défilement discrète (sidebar + contenu) */
+* { scrollbar-width: thin; scrollbar-color: #CFD8C2 transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #CFD8C2; border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Petit utilitaire carte (adoptable progressivement par les écrans) */
+.olv-card { background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 2px rgba(43, 51, 31, 0.04); }
+
+/* Animations de la branche d'olivier verticale (carte de visite) — port maquette */
+@keyframes branchDraw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes oliveGrow  { from { transform: scale(0); }  to { transform: scale(1); } }
+@keyframes fadeUp     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  [style*="branchDraw"], [style*="oliveGrow"], [style*="fadeUp"] { animation: none !important; }
+}
+
+/* Carte de visite : deux colonnes → une seule en écran étroit */
+@media (max-width: 720px) { .olv-carte-grid { grid-template-columns: 1fr !important; } }

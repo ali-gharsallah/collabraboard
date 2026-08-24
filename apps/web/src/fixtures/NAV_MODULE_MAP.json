@@ -1,0 +1,19 @@
+{
+  "kyc": "KYC",
+  "prospect_onboard": "ONBOARDING",
+  "prospect_test": "ONBOARDING",
+  "prospect_contact": "ONBOARDING",
+  "review": "REVIEW",
+  "offboarding": "REVIEW",
+  "trip": "TRIP",
+  "aml": "AML",
+  "compliance": "AML",
+  "registre": "AML",
+  "formations": "AML",
+  "crossborder": "KYC",
+  "transferts": "AML",
+  "crm": "KYC",
+  "reporting": "REPORTING",
+  "integrations": "API",
+  "execdash": "EXECDASH"
+}

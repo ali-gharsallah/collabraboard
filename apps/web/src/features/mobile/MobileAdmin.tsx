@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiPost, apiGet, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 import { traduire, langue } from "../../lib/i18n";
 
@@ -23,11 +24,13 @@ export function MobileAdmin() {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [reponse, setReponse] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmer les actes gouvernés
 
   const erreur = (e: unknown) => setMsg((e as OliveError).message ?? "Erreur");  // le refus, TEL QUEL
   const petit = { fontSize: 12 } as const;
   const t = traduire(langue());
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>{t("Mobile Banking — face banque (population cliente DISTINCTE, jamais un rôle interne)")}</h3>
     <p style={{ ...petit, color: tokens.color.muted }}>
@@ -35,10 +38,12 @@ export function MobileAdmin() {
     </p>
     <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
       <input placeholder="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)} style={petit}/>
-      <button style={petit} disabled={isDemoMode() || !clientId} onClick={async () => {
-        setMsg("");
-        try { setActivation(await apiPost("/v1/mobile/activer", { clientId })); } catch (e) { erreur(e); }
-      }}>{t("Activer le canal (RM)")}</button>
+      <button style={petit} disabled={isDemoMode() || !clientId} onClick={() => ask({
+        title: t("Activer le canal mobile (RM)"),
+        message: t("Le secret d'activation sera remis UNE seule fois — à transmettre hors canal, jamais stocké."),
+        confirmLabel: t("Confirmer l'activation"),
+        onConfirm: async () => { setMsg(""); try { setActivation(await apiPost("/v1/mobile/activer", { clientId })); } catch (e) { erreur(e); } },
+      })}>{t("Activer le canal (RM)")}</button>
       <button style={petit} disabled={isDemoMode() || !clientId} onClick={async () => {
         setMsg("");
         try { setMessages((await apiGet<{ messages: Message[] }>(`/v1/mobile/messages?clientId=${clientId}`, { messages: [] })).messages); }
@@ -54,11 +59,12 @@ export function MobileAdmin() {
         <option value="document">{t("document")}</option><option value="compte">{t("compte")}</option></select>
       <input placeholder={cible === "document" ? t("documentId (GED)") : t("référence du compte")}
         value={cibleId} onChange={(e) => setCibleId(e.target.value)} style={petit}/>
-      <button style={petit} disabled={isDemoMode() || !cibleId} onClick={async () => {
-        setMsg("");
-        try { await apiPost("/v1/mobile/partager", { cible, id: cibleId, clientId: clientId || undefined, partage: true }); setMsg(t("Marqué « partagé client » — acte tracé.")); }
-        catch (e) { erreur(e); }
-      }}>{t("Marquer partagé")}</button>
+      <button style={petit} disabled={isDemoMode() || !cibleId} onClick={() => ask({
+        title: t("Marquer « partagé client »"),
+        message: t("Le client verra cet élément dans son app — rien n'est partagé par défaut (R318). Acte tracé."),
+        confirmLabel: t("Confirmer le partage"),
+        onConfirm: async () => { setMsg(""); try { await apiPost("/v1/mobile/partager", { cible, id: cibleId, clientId: clientId || undefined, partage: true }); setMsg(t("Marqué « partagé client » — acte tracé.")); } catch (e) { erreur(e); } },
+      })}>{t("Marquer partagé")}</button>
       <span style={{ ...petit, color: tokens.color.muted }}>{t("rien n'est partagé par défaut (R318)")}</span>
     </div>
     {msg && <p style={{ ...petit, color: tokens.color.olive700 }}>{msg}</p>}
@@ -67,22 +73,28 @@ export function MobileAdmin() {
       {messages.length === 0 && <p style={{ ...petit, color: tokens.color.muted }}>{t("Aucun message.")}</p>}
       <ul style={{ paddingLeft: 16 }}>{messages.map((m) => <li key={m.id} style={petit}>
         <strong>{m.de}</strong> — {m.texte}
-        {m.de === "CLIENT" && <button style={{ ...petit, marginLeft: 8 }} disabled={isDemoMode()} onClick={async () => {
-          setMsg("");
-          try {
-            const d = await apiPost<{ id: string }>(`/v1/mobile/messages/${m.id}/ouvrir-coc`,
-              { typeCode: "MOD_DONNEES_PERSO", description: `Demande par message mobile : ${m.texte.slice(0, 80)}` });
-            setMsg(`${t("CoC ouvert")} (${d.id.slice(0, 8)}) — ${t("la demande suit la voie R276, jamais un second circuit.")}`);
-          } catch (e) { erreur(e); }
-        }}>{t("Ouvrir un CoC")}</button>}
+        {m.de === "CLIENT" && <button style={{ ...petit, marginLeft: 8 }} disabled={isDemoMode()} onClick={() => ask({
+          title: t("Ouvrir un CoC depuis ce message"),
+          message: t("La demande suit la voie R276 (jamais un second circuit) — CC-01."),
+          confirmLabel: t("Confirmer l'ouverture"),
+          onConfirm: async () => { setMsg("");
+            try {
+              const d = await apiPost<{ id: string }>(`/v1/mobile/messages/${m.id}/ouvrir-coc`,
+                { typeCode: "MOD_DONNEES_PERSO", description: `Demande par message mobile : ${m.texte.slice(0, 80)}` });
+              setMsg(`${t("CoC ouvert")} (${d.id.slice(0, 8)}) — ${t("la demande suit la voie R276, jamais un second circuit.")}`);
+            } catch (e) { erreur(e); } },
+        })}>{t("Ouvrir un CoC")}</button>}
       </li>)}</ul>
       <div style={{ display: "flex", gap: 8 }}>
         <input placeholder={t("répondre au client")} value={reponse} onChange={(e) => setReponse(e.target.value)} style={{ ...petit, width: 320 }}/>
-        <button style={petit} disabled={isDemoMode() || !reponse || !clientId} onClick={async () => {
-          setMsg("");
-          try { await apiPost(`/v1/mobile/messages/${clientId}/repondre`, { texte: reponse }); setReponse(""); setMsg(t("Réponse envoyée.")); }
-          catch (e) { erreur(e); }
-        }}>{t("Envoyer")}</button>
+        <button style={petit} disabled={isDemoMode() || !reponse || !clientId} onClick={() => ask({
+          title: t("Envoyer la réponse au client"),
+          message: t("La réponse est transmise au fil du client et tracée."),
+          confirmLabel: t("Confirmer l'envoi"),
+          onConfirm: async () => { setMsg("");
+            try { await apiPost(`/v1/mobile/messages/${clientId}/repondre`, { texte: reponse }); setReponse(""); setMsg(t("Réponse envoyée.")); }
+            catch (e) { erreur(e); } },
+        })}>{t("Envoyer")}</button>
       </div>
     </div>}
   </div>;

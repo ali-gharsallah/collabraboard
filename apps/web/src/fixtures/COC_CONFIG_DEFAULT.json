@@ -1,0 +1,207 @@
+{
+  "PHONE": {
+    "materiality": "LOW",
+    "action": "ROLE",
+    "role": "Central File"
+  },
+  "EMAIL": {
+    "materiality": "LOW",
+    "action": "ROLE",
+    "role": "Central File"
+  },
+  "ID_DOCUMENT": {
+    "materiality": "LOW",
+    "action": "ROLE",
+    "role": "Central File"
+  },
+  "RM_CHANGE": {
+    "materiality": "LOW",
+    "action": "ROLE",
+    "role": "RM"
+  },
+  "OTHER": {
+    "materiality": "LOW",
+    "action": "ROLE",
+    "role": "Central File"
+  },
+  "ADDRESS": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Central File"
+  },
+  "LEGAL_NAME": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "CIVIL_STATUS": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "RM"
+  },
+  "TIN": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "DIRECTOR": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "BANKING_PRODUCT": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "ACCOUNT_OPENING": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "ACCOUNT_CLOSURE": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "POWER_OF_ATTORNEY": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "SIGNATORY": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "MANDATE": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "ASSET_VOLUME": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "ESG_PROFILE": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "ESG Officer"
+  },
+  "SHAREHOLDER": {
+    "materiality": "MEDIUM",
+    "action": "ROLE",
+    "role": "Compliance"
+  },
+  "NATIONALITY": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "DOMICILE_COUNTRY": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "DEATH": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "INCAPACITY": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "TAX_RESIDENCE": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "FATCA_STATUS": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "CRS_STATUS": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "US_INDICIA": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "PEP_STATUS": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "SANCTIONS_HIT": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "ADVERSE_MEDIA": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "RISK_RATING": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "SOURCE_OF_WEALTH": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "SOURCE_OF_FUNDS": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "CRIMINAL_RECORD": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "CONTROL_STRUCTURE": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "UBO_CHANGE": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "LEGAL_FORM": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "DOMICILIATION": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "ACTIVITY": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "BENEFICIARY": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  },
+  "CROSS_BORDER": {
+    "materiality": "HIGH",
+    "action": "KYC",
+    "role": "—"
+  }
+}

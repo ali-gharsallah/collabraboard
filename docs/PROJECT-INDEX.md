@@ -1,13 +1,19 @@
 # PROJECT-INDEX — O-Live (index maître de la documentation)
 
-**Mis à jour le 2026-07-22.** Point d'entrée unique. En cas de divergence entre deux documents,
-**cet index désigne la source de vérité**. Un seul certificat, un seul cahier, zéro doublon.
+<!-- CANON-STAMP:START (généré par tools/canon-master — NE PAS éditer) -->
+> **Catalogue faisant foi : [`docs/CANON-MASTER.md`](./CANON-MASTER.md) — R1–R490, 120 artefacts, 112 familles.**
+> Généré depuis le repo + gaté CI (porte 3c). Protocole de synchro claude.ai : [`docs/SYNC-CLAUDE-AI.md`](./SYNC-CLAUDE-AI.md).
+<!-- CANON-STAMP:END -->
+
+Point d'entrée unique. En cas de divergence entre deux documents, **cet index désigne la source de
+vérité**. Un seul certificat, un seul cahier, zéro doublon.
 
 ## Source de vérité (à lire en premier)
 
 | Document | Objet | Date |
 |---|---|---|
-| **`docs/CERTIFICAT-ETAT.md`** | **Certificat d'état unique** : écrans réels, routes, tests, taux de réussite, rejeu à date, régressions | 2026-07-22 |
+| **`docs/CERTIFICAT-ETAT.md`** | **Certificat d'état unique** : écrans réels, routes, tests, taux de réussite, rejeu à date, régressions | 2026-08-07 |
+| `docs/API-SURFACE.md` | Surface d'API GÉNÉRÉE du snapshot RB-07 (`tools/api-contract/generer-doc.mjs`) — la doc vivante reste `GET /v1/apidoc` | 2026-08-07 |
 | `docs/ETAT-REEL-VERIFIE.md` | Diagnostic prouvé par commandes (volume, modules, capacités) + addendum Vague 1 | 2026-07-22 |
 | `docs/DECALAGE-FRONT-BACK.md` | Cartographie frontend ↔ backend + addendum Vague 1 (6 écrans) | 2026-07-22 |
 | `spec/vague2-scenarios/VAGUE2-ECRANS.feature` | Gherkin spec-first Vague 2 (Dossiers · Pièces GED) | 2026-07-22 |
@@ -64,7 +70,8 @@
 
 | Document | Objet |
 |---|---|
-| `docs/CATALOGUE-REGLES-R1-R206.md` | Catalogue (⚠ le **code** va jusqu'à **R221** — cf. en-tête) |
+| `docs/CANON-MASTER.md` | **Catalogue faisant foi — GÉNÉRÉ, R1–R339+** (mapping · inventaire · R-Q · écrans · anomalies). Fichier à exporter vers claude.ai (cf. `docs/SYNC-CLAUDE-AI.md`). |
+| `docs/CATALOGUE-REGLES-R1-R206.md` | ⛔ **PÉRIMÉ & gelé** (s'arrête à R206) — remplacé par `CANON-MASTER.md` |
 | `spec/` | Amendements ratifiés par règle, errata, scénarios (`.feature`) dont `spec/vague1-scenarios/` et `spec/vague2-scenarios/` |
 
 ## Architecture & plan

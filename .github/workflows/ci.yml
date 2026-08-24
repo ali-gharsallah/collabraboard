@@ -67,7 +67,24 @@ jobs:
         run: |
           pnpm exec prisma generate
           pnpm exec prisma migrate deploy
-          pnpm run prisma:post
+
+      # ── Garde NO-DRIFT (migrations ↔ schema.prisma) — BLOQUANT ────────────────
+      # Empêche le retour de la dérive `db push` : si un objet vit dans schema.prisma
+      # sans migration correspondante, `migrate deploy` bâtit une base incomplète et
+      # l'app 500 (colonne/table absente). On compare la base FRAÎCHE (état migrations)
+      # au datamodel : tout écart casse la CI. Réconcilié le 2026-08-05 (20260805000002).
+      - name: "0b · No-drift migrations ↔ schema (BLOQUANT)"
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code && echo "✓ migrations et schema.prisma en phase" \
+            || { echo "✗ DÉRIVE : schema.prisma diverge des migrations (db push non versionné ?)"; exit 1; }
+
+      - name: "0c · Post-deploy (RLS FORCE + immuabilité R48)"
+        working-directory: apps/api
+        run: pnpm run prisma:post
 
       # ── RUNBOOK §2 · 1 — Lint + types (BLOQUANT) ─────────────────────────────
       # Promu bloquant (chantier B) : eslint.config.mjs (racine) + apps/api/tsconfig.json
@@ -176,6 +193,57 @@ jobs:
           out=$(node tools/api-contract/test.mjs); echo "$out"
           echo "$out" | grep -q "### 2/2 tests surface-api verts ###"
 
+      # ── Gate matcher screening (R405-R407) — porte BLOQUANTE, filet de non-régression ──
+      # Le golden set (127 cas, graine 20260715) devient ASSERTÉ, plus print-only. Planchers figés
+      # sur la mesure réelle (ratchet) : rappel ≥ 0.90, précision ≥ 0.95, exact/alias/diacritiques
+      # = 1.0, typo ≥ 0.65 (faiblesse figée, pas améliorée ici). R406 : jauge perf (blocking actif,
+      # ×3 min vs force brute). R407 : le blocking ne perd AUCUN vrai positif. Échoue si le moteur
+      # (services/screening) régresse OU si le blocking est désactivé.
+      - name: "3s · Gate matcher screening (R405-R407, attendu 3/3)"
+        run: |
+          out=$(node services/screening/gate.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 gate matcher verts (R405-R407 · R410) ###"
+
+      # ── Équivalence-aux-défauts du moteur configurable (R413) — porte BLOQUANTE ──
+      # Prouve que les knobs Phase 2 (DEFAUTS_MOTEUR/DEFAUTS_BLOCKING) reproduisent, sans config, le
+      # comportement d'origine (127/127) ET qu'un réglage changé change bien un verdict. Toute dérive
+      # d'un défaut casse la CI avant qu'elle n'atteigne la voie de production.
+      - name: "3t · Config-equivalence screening (R413/R416/R417, attendu 10/10)"
+        run: |
+          out=$(node services/screening/config-equivalence.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 12/12 config-equivalence verts (R413/R416/R417 · Double Metaphone) ###"
+
+      # ── Ingestion des listes (sous R409) — porte BLOQUANTE ──
+      # L'adaptateur ingererListe normalise des formats de liste réels (SECO/synthétique, OFAC, UN)
+      # vers EntreeMoteur, ET reproduit à l'identique le mapping figé sur les 625 entrées du golden
+      # (parité). Casse la CI si un format n'est plus reconnu ou si le mapping dérive du gate qualité.
+      - name: "3u · Ingestion listes screening (sous R409, attendu 5/5)"
+        run: |
+          out=$(node services/screening/ingest.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 ingestion verts (R409) ###"
+
+      # ── Bout en bout sur un feed au FORMAT RÉEL (sous R409) — porte BLOQUANTE ──
+      # Ingère un flux HÉTÉROGÈNE (OFAC-SDN + UN-consolidated mélangés) et le passe TOUT le pipeline :
+      # normalisation → pré-filtre → score fin + discriminants. Prouve que l'adaptateur branche un vrai
+      # format sur le moteur (translit retrouvée, alias UN retrouvé, homonyme DOB écarté).
+      - name: "3v · Liste réelle bout-en-bout screening (sous R409, attendu 5/5)"
+        run: |
+          out=$(node services/screening/liste-reelle.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 5/5 liste-reelle verts (R409) ###"
+
+      # ── Perf : mémoïsation de l'index trigramme (sous R409) — porte BLOQUANTE ──
+      # Le rescreening répété d'un portefeuille contre la même version de liste ne reconstruit plus
+      # l'index. Casse la CI si la réutilisation, l'invalidation ou la purge régressent.
+      - name: "3w · Index-cache screening (perf, sous R409, attendu 4/4)"
+        run: |
+          out=$(node services/screening/index-cache.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 index-cache verts (R409) ###"
+
+      - name: "3x · Blocking phonétique screening (recall + perf à l'échelle, R416, attendu 6/6)"
+        run: |
+          out=$(node services/screening/blocking-phon.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 6/6 blocking-phonétique verts (R416) ###"
+
       # ── Migrations expand/contract (R334/MG) — porte BLOQUANTE ──
       # MG-01 : aucune migration destructive en phase N (contract → N+1). MG-04 : aucune mutation
       # d'une table append-only (liste lue de post-deploy-v2.sql). Le harnais MG-01..05 verrouille
@@ -211,22 +279,81 @@ jobs:
       # + porte no-drift : --check régénère en mémoire et compare (en-tête volatil date+hash
       # normalisé). docs/CANON-MASTER.md édité à la main OU périmé (nouvelle ratification non
       # régénérée) → ROUGE. Régénérer : node tools/canon-master/run.mjs. Le généré fait foi.
-      - name: "3c · CANON-MASTER — doc faisant foi généré + no-drift (attendu 7/7)"
+      - name: "3c · CANON-MASTER — doc faisant foi généré + no-drift (attendu 8/8)"
         run: |
           out=$(node tools/canon-master/test.mjs); echo "$out"
-          echo "$out" | grep -q "### 7/7 tests canon-master verts ###"
+          echo "$out" | grep -q "### 8/8 tests canon-master verts ###"
           node tools/canon-master/run.mjs --check
 
-      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (425 verts) ───────────
-      - name: "3 · Règles moteur + IAM + corpus (attendu 425/425)"
+      # ── AML Gap Wave 1 — générateur source de vérité + parité canon PO + no-drift ──
+      # Invariants du générateur (R340–R377), fraîcheur des artefacts émis (TS backend/front),
+      # parité avec le canon PO (data/aml-gap-dataset-gt.json) et régénération sans dérive du
+      # canon PO runnable in-repo (tools/gen_aml_gap.py). Le générateur fait foi.
+      - name: "3d · AML Gap — générateur + parité canon PO + no-drift (attendu 27/27)"
+        run: |
+          out=$(python3 tools/aml-gap/test_gen_aml_gap.py); echo "$out"
+          echo "$out" | grep -q "### 27/27 invariants AML Gap verts ###"
+
+      # ── Codification métier des règles (V2-M15) — fraîcheur + invariants ──
+      # Le code FAMILLE-SENnn (CIB-SEN01, ISLAMIC-SEN02…) s'AJOUTE au numéro R (canon) et à
+      # l'identifiant moteur (persisté en base). Un code attribué est immuable : le test ancre
+      # onze associations code↔règle et refuse toute dérive silencieuse d'une régénération.
+      - name: "3d-bis · Codification des règles — 128 règles / 20 familles (attendu TOUT VERT)"
+        run: |
+          out=$(python3 tools/codification/test_gen_codification.py); echo "$out"
+          echo "$out" | grep -q "### 128 règles · 20 familles · TOUT VERT ###"
+
+      # ── AML Gap — moteur (blocs 50–60, R340–R398) : les suites Gherkin rouges deviennent vertes.
+      # evaluateScenario (src/aml/engine.ts) MESURE des faits contre les paramètres tenant (R44),
+      # ne décide rien. Le bloc 61 (Analytique 2G) reste EXCLU : détecteurs statistiques exécutés
+      # dans le service CPSI Python — jamais réécrits en Nest (décision 4). Rouge assumé, hors CI.
+      - name: "3e · AML Gap — moteur blocs 50–60 (attendu 11 suites / 179 verts, bloc 61 exclu)"
+        working-directory: apps/api
+        run: pnpm run test:aml-gap
+
+      # ── RUNBOOK §2 · 3 — Règles + IAM + corpus session (538 verts, +3 vague 1 mros/trip/training) ───────────
+      - name: "3 · Règles moteur + IAM + corpus (attendu 538/538)"
         working-directory: apps/api
         run: pnpm run test:rules
 
-      # ── RUNBOOK §2 · 4 — e2e Postgres réel (336/336) ─────────────────────────
-      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky
-      # sous charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake
-      # (vert au 2e) est absorbé — jamais un masquage d'échec persistant.
-      - name: "4 · e2e API réelle + Postgres (336/336, 1 retry anti-flake §8)"
+      # ── L2 · complétude de la vague R222–R238 (BLOQUANT) : chaque identifiant du code a un it() nommé ──
+      - name: "3-L2 · Complétude vague R222–R238 (16/16)"
+        run: |
+          out=$(node apps/api/scripts/verifier-couverture-r222-238.mjs); echo "$out"
+          echo "$out" | grep -q "### 16/16 complétude vague R222–R238 verte (L2) ###"
+
+      # ── L5 · registre central des identifiants R (C5, BLOQUANT) : identifiant hors registre,
+      #    numéro brûlé réattribué, ou doublon de propriétaire = CI rouge. ──
+      - name: "3-L5 · Registre des règles (docs/rules-registry.json, C5)"
+        run: |
+          out=$(node apps/api/scripts/verifier-registre-regles.mjs); echo "$out"
+          echo "$out" | grep -q "### registre des règles vert (L5 · C5) ###"
+
+      # ── C6 · garde d'inventaire du catalogue d'événements (BLOQUANT) : un littéral émis
+      #    au code mais absent de (SCHEMAS ∪ TYPES_EN_ATTENTE) serait REFUSÉ au write à
+      #    l'exécution — la bombe se désamorce ici, pas en prod. ──
+      - name: "3-C6 · Catalogue d'événements — inventaire no-drift (bombe à refus)"
+        run: |
+          out=$(node apps/api/scripts/verifier-catalogue-evenements.mjs); echo "$out"
+          echo "$out" | grep -q "### catalogue d'événements vert (C6) ###"
+
+      # ── L3 · test d'ARCHITECTURE (BLOQUANT) : frontière du contexte Surveillance (ADR-TM-001).
+      #    Import direct d'un interne de screening/aml/riskcases/mros depuis l'extérieur (ou l'inverse)
+      #    = rouge ; seuls les ports (modules/surveillance/ports) et la composition module→module passent. ──
+      - name: "3-L3 · Frontière Surveillance (imports résolus, ADR-TM-001)"
+        run: |
+          out=$(node apps/api/scripts/verifier-frontiere-surveillance.mjs); echo "$out"
+          echo "$out" | grep -q "### frontière Surveillance verte (L3 · ADR-TM-001) ###"
+
+      # ── RUNBOOK §2 · 4 — e2e Postgres réel (62 suites, 411/411) ──────────────
+      # Reproductible depuis la réconciliation de la dérive `db push` (20260805000002) : sans elle
+      # `migrate deploy` bâtissait une base incomplète et la voie e2e était rouge en CI (colonnes/
+      # tables absentes → 500). Quarantaine VIDÉE le 2026-08-05 : les 9 suites autrefois exclues sont
+      # hermétisées et réintégrées (garde R14 `engagement`, signed_by uuid, clés R-Q requises, grep
+      # DM-03 affiné) — cf. test/e2e/QUARANTINE.md. `testPathIgnorePatterns` = /node_modules/ seul.
+      # Un SEUL retry : les suites Olivia v2 (pont Python) + assertions de latence sont flaky sous
+      # charge CI (CERTIFICAT §8). Un vrai échec échoue AUX DEUX passages ; seul un flake est absorbé.
+      - name: "4 · e2e API réelle + Postgres (75 suites 518/518, 0 quarantaine, 1 retry §8)"
         working-directory: apps/api
         run: pnpm run test:e2e || (echo "::warning::e2e 1er passage rouge — 2e passage (flake §8)"; pnpm run test:e2e)
 
@@ -250,10 +377,34 @@ jobs:
           out=$(python3 services/workflow-engine-py/run_tests_sql.py); echo "$out"
           echo "$out" | grep -q "suites vertes ###"
 
-      - name: "5c · cpsi-server-py (attendu 19/19 — garde grep, le runner rend 0 à tort)"
+      - name: "5c · cpsi-server-py (attendu 20/20 — le runner PROPAGE le code de sortie, L1)"
         run: |
-          out=$(python3 services/cpsi-server-py/run_tests.py); echo "$out"
-          echo "$out" | grep -q "### 19/19 suites vertes ###"
+          # L1 : le runner sort ≠ 0 dès qu'un test échoue (pipefail propage le code au travers du tee).
+          python3 services/cpsi-server-py/run_tests.py | tee /tmp/cpsi.out
+          grep -q "### 20/20 suites vertes ###" /tmp/cpsi.out
+
+      - name: "5c-bis · cpsi-server-py canary (méta-vérif faux-vert, L1) — --canary DOIT échouer"
+        run: |
+          # Prouve que le runner sait échouer : `--canary` exécute un test délibérément rouge et
+          # DOIT rendre un code ≠ 0. S'il rend 0, le faux-vert est de retour → CI rouge.
+          if python3 services/cpsi-server-py/run_tests.py --canary; then
+            echo "FAUX-VERT : run_tests.py --canary a rendu 0 — le runner ne propage pas l'échec"; exit 1
+          fi
+          echo "canary OK — le runner propage bien l'échec (code ≠ 0)"
+
+      - name: "5d · Contrat Nest↔Python CPSI (bridge.py vs docs/contracts/cpsi.schema.json, L1, 4/4)"
+        run: |
+          # BLOQUANT : la réponse RÉELLE du pont est validée contre le schéma d'enveloppe committé
+          # (R248), pour 3 payloads représentatifs + une erreur typée. Une dérive du pont = CI rouge.
+          out=$(node services/cpsi-server-py/contract.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 4/4 contrat CPSI verts (L1 · R248) ###"
+
+      - name: "5e · Cohérence PEP↔CPSI (le score lit la fiche, jamais les hits — L4 · ADR-PEP-001, 3/3)"
+        run: |
+          # BLOQUANT : statique.pep=true → driver 15 ; =false → absent ; un hit glissé au journal
+          # CPSI = DEFAULT_DENY. La fiche personne est la SEULE source PEP du score (R44).
+          out=$(node services/cpsi-server-py/pep-coherence.test.mjs); echo "$out"
+          echo "$out" | grep -q "### 3/3 cohérence PEP↔CPSI verts (L4 · ADR-PEP-001) ###"
 
       # ── Dette §4 (canon du dégel, 2026-07-28) — FRONT : tests + build + budget bundle ──
       # La frontière web devient CI (elle n'était que locale) : vitest, build, et le POIDS

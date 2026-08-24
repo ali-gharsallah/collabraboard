@@ -1,6 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
+import { flagActif } from "../../common/feature-flags";
 import { loadSettings } from "../../common/tenant-settings";
 import { GoldenRecordProjector } from "./golden-record.projector";
 import { CaseProposalConsumer } from "./case-proposal.consumer";
@@ -96,7 +98,17 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
       if (!batch.length) return;
       for (const ev of batch) {
         try {
-          await c.handle(ev, this.prisma);
+          // RLS runtime : sous FF_RLS_ENFORCED, pose `app.tenant_id = ev.tenant_id` (SET LOCAL,
+          // scope transaction) AVANT le handler — le worker lit un stream global (privilégié)
+          // puis SCOPE chaque événement à SON tenant (consigne : le tenant porté par l'événement,
+          // jamais un tenant global). Flag OFF = chemin legacy octet-identique.
+          // NB (couverture) : ne profite qu'aux handlers utilisant le `db`/`tx` passé
+          //  → golden-record OUI ; case-proposal délègue à RiskCaseService (prisma propre) → GUC
+          //  non propagé (voir docs/rls-coverage-audit.md §2).
+          if (flagActif("FF_RLS_ENFORCED"))
+            await this.prisma.withTenant(ev.tenant_id, (tx) => c.handle(ev, tx));
+          else
+            await c.handle(ev, this.prisma);
           w = await this.prisma.eventConsumer.update({ where: cleW,
             data: { lastSeq: ev.id, blocageSeq: null, tentatives: 0, prochaineTentativeAt: null } });
         } catch (e: any) {
@@ -113,9 +125,8 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
               const enSouffrance = await tx.eventDeadLetter.count({
                 where: { tenantId: ev.tenant_id, consumer: c.nom, rejoueAt: null } });
               if (enSouffrance >= seuil)
-                await tx.domainEvent.create({ data: { tenantId: ev.tenant_id, type: "transport.deadletter",
-                  aggregateId: String(ev.id), payload: { consumer: c.nom, seq: Number(ev.id), enSouffrance },
-                  at: new Date().toISOString() } });
+                await emitEvent(tx, ev.tenant_id, "transport.deadletter",
+                  String(ev.id), { consumer: c.nom, seq: Number(ev.id), enSouffrance });
               await tx.eventConsumer.update({ where: cleW,
                 data: { lastSeq: ev.id, blocageSeq: null, tentatives: 0, prochaineTentativeAt: null } });
             });

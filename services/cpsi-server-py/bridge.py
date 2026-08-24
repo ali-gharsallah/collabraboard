@@ -21,6 +21,7 @@ Une erreur métier du moteur (`CpsiError`, default-deny) devient `erreur_typee` 
 import sys, json, time
 from datetime import datetime
 from olive_cpsi.engine import OliveCpsiEngine, CpsiError
+from olive_cpsi.analytique_2g import DETECTEURS_2G  # bloc 61 (R399–R403) — jamais en Nest
 
 
 def _dt(iso):
@@ -206,6 +207,23 @@ def _volumetrie(engine, q):
     return {"total_signaux": len(signaux), "par_scenario": par_scenario}
 
 
+def _aml_gap_2g(engine, q):
+    """AML gap bloc 61 — Analytique 2G (R399–R403). Détecteur STATISTIQUE sur l'observation fournie
+    (distribution du groupe de pairs, séries baseline/récente, dimensions, dormance, revenus). Ne
+    dépend PAS de l'état du moteur de screening : la mesure porte sur des agrégats passés en payload.
+    Reste DANS CPSI — jamais réécrit en Nest (décision 4). L'humain qualifie (R44)."""
+    sid = q.get("scenario")
+    det = DETECTEURS_2G.get(sid)
+    if det is None:
+        raise CpsiError(f"scénario Analytique 2G inconnu : {sid} (attendu AN-01..AN-05, default-deny)")
+    obs = q.get("observation") or {}
+    params = q.get("params") or {}
+    try:
+        return det(**{**obs, **params})       # observation = données ; params = seuils tenant (R-Q)
+    except TypeError as e:                     # observation incomplète → erreur métier typée, jamais 500
+        raise CpsiError(f"observation incomplète pour {sid} : {e}")
+
+
 QUERIES = {"score": _score, "segmentation": _segmentation,
            "compliance_catalogue": _compliance_catalogue, "rules": _rules,
            "client_groups": _client_groups, "groups": _groups,
@@ -213,7 +231,7 @@ QUERIES = {"score": _score, "segmentation": _segmentation,
            "sandbox_simulate": _sandbox_simulate, "propose_param": _propose_param,
            "proposition": _proposition, "propositions": _propositions, "insiders": _insiders,
            "open_risk_case": _open_risk_case, "risk_case": _risk_case, "reporting": _reporting,
-           "timeline": _timeline, "volumetrie": _volumetrie}
+           "timeline": _timeline, "volumetrie": _volumetrie, "aml_gap_2g": _aml_gap_2g}
 
 
 # R248 : versions d'enveloppe supportées. Une version inconnue est refusée typée (pas de 500 opaque).
@@ -224,7 +242,7 @@ SUPPORTED_CONTRACTS = {"1", "1.1"}
 # seule commande neuve (jalons t0 par rejeu). Une commande 1.1 dans une enveloppe 1.0 est
 # refusée TYPÉE (PC-17) ; la 1.0 reste servie telle quelle (compatibilité). ──
 ALIAS_1_1 = {"timeline_client": "timeline", "reporting_volumetrie": "volumetrie"}
-COMMANDES_1_1 = {"timeline_client", "reporting_volumetrie", "reporting_sla"}
+COMMANDES_1_1 = {"timeline_client", "reporting_volumetrie", "reporting_sla", "aml_gap_2g"}
 
 
 def _reporting_sla(engine, q):

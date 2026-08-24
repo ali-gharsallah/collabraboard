@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Module, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, Module, Param, Patch, Post, Query, Req } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { OffboardingService, CoreBankingPort } from "./offboarding.service";
+import { OffboardingMoteurService } from "./offboarding-moteur.service";
+import { ReviewsModule } from "../reviews/reviews.module";            // Bloc 65 Volet B (R474)
+import { DecisionUnifieeService } from "../reviews/decision-unifiee.service";
 
 /**
  * Porte HTTP du bloc Offboarding (R267→R271). Délégation pure — l'auteur de chaque acte est
@@ -23,6 +26,21 @@ export class OffboardingController {
   @Post(":id/attestation-avoirs") attester(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.attesterAvoirs(r.ctx, id, b?.motif); } // R269/OF-06
 }
 
+/** Bloc 62 (repo R439–R445) — offboarding AU MOTEUR : l'état est un REJEU du journal,
+ *  la publication des paramètres passe par le pop-up d'engagement R445 (PATCH params). */
+@Controller("offboarding-moteur")
+export class OffboardingMoteurController {
+  constructor(private svc: OffboardingMoteurService) {}
+  @Get("params")                params(@Req() r: any, @Query("date") d?: string) { return this.svc.parametres(r.ctx, d ? new Date(d) : undefined); }
+  @Patch("params")              modifier(@Req() r: any, @Body() b: any) { return this.svc.modifierParametre(r.ctx, b ?? {}); }   // R445
+  @Post("instances")            initier(@Req() r: any, @Body() b: any) { return this.svc.initier(r.ctx, b ?? {}); }              // R442
+  @Get("instances/:id")         etat(@Req() r: any, @Param("id") id: string, @Query("date") d?: string) { return this.svc.etat(r.ctx, id, d ? new Date(d) : undefined); }   // R439/R48
+  @Get("instances/:id/health")  health(@Req() r: any, @Param("id") id: string) { return this.svc.healthCheck(r.ctx, id); }       // R440/OF-12
+  @Post("instances/:id/viser")  viser(@Req() r: any, @Param("id") id: string) { return this.svc.viser(r.ctx, id); }              // R441/R13
+  @Post("instances/:id/checklist") cocher(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.cocherItem(r.ctx, id, b?.label); }   // R443
+  @Get("instances/:id/trail")   trail(@Req() r: any, @Param("id") id: string) { return this.svc.auditTrail(r.ctx, id); }         // R444/R51
+}
+
 function fakeCorePort(): CoreBankingPort | undefined {
   if (process.env.OFFB_FAKE_CORE !== "1") return undefined;   // port de test OF-06 — jamais en prod
   return { systeme: "fake-core", version: "test", perimetre: ["soldes"],
@@ -31,7 +49,8 @@ function fakeCorePort(): CoreBankingPort | undefined {
 }
 
 @Module({
-  controllers: [OffboardingController],
+  imports: [ReviewsModule],                                           // Bloc 65 Volet B : la barre de décision (R474)
+  controllers: [OffboardingController, OffboardingMoteurController],
   providers: [
     {
       provide: OffboardingService,
@@ -39,7 +58,16 @@ function fakeCorePort(): CoreBankingPort | undefined {
         new OffboardingService(prisma, audit, { core: fakeCorePort() }),
       inject: [PrismaService, AuditService],
     },
+    {
+      provide: OffboardingMoteurService,
+      useFactory: (prisma: PrismaService, audit: AuditService, du: DecisionUnifieeService) => {
+        const svc = new OffboardingMoteurService(prisma, audit, { core: fakeCorePort() });
+        du.brancherMoteur(svc);         // R474 : Valider sur OFFBOARDING = moteur.viser — aucun fork
+        return svc;
+      },
+      inject: [PrismaService, AuditService, DecisionUnifieeService],
+    },
   ],
-  exports: [OffboardingService],
+  exports: [OffboardingService, OffboardingMoteurService],
 })
 export class OffboardingModule {}

@@ -13,7 +13,7 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/auth/*.ts src/common/tenant.middleware.ts src/common/tenant.middleware.spec.ts \
   src/common/prisma.service.ts src/common/audit.service.ts src/common/secret-box.ts \
   src/modules/kyc/risk-engine.ts src/modules/kyc/kyc.templates.ts \
-  src/modules/screening/rules/*.ts src/modules/screening/*.spec.ts src/modules/screening/screening.service.ts \
+  src/modules/screening/rules/*.ts src/modules/screening/*.spec.ts src/modules/screening/screening.service.ts src/modules/screening/listes.service.ts \
   src/modules/events/golden-record.projector.ts src/modules/events/golden-record.projector.spec.ts \
   src/modules/personnes/personnes.service.ts src/modules/personnes/personnes.wiring.spec.ts \
   src/modules/pms/pms.service.ts src/modules/pms/pms.wiring.spec.ts \
@@ -23,6 +23,8 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/onboarding/onboarding.service.ts src/modules/onboarding/onboarding.wiring.spec.ts \
   src/modules/ia/prerevue.service.ts src/modules/ia/prerevue.wiring.spec.ts \
   src/modules/parametres/parametres.service.ts src/modules/parametres/parametres.wiring.spec.ts \
+  src/modules/reglementaire/reglementaire.service.ts src/modules/reglementaire/reglementaire.wiring.spec.ts \
+  src/common/identifiant.ts src/common/identifiant.spec.ts \
   src/modules/mros/mros.service.ts src/modules/mros/mros.wiring.spec.ts \
   src/modules/riskcases/risk-case.service.ts src/modules/riskcases/risk-case.wiring.spec.ts \
   src/modules/ged/ged-ingestion.service.ts src/modules/ged/ged-ingestion.wiring.spec.ts \
@@ -46,11 +48,26 @@ $TSC src/modules/kyc/rules/*.ts src/modules/kyc/kyc.service.ts \
   src/modules/workload/workload.service.ts src/modules/workload/workload.wiring.spec.ts \
   src/modules/crm/crm.service.ts src/modules/crm/crm.wiring.spec.ts \
   src/modules/aml/aml-scoring.engine.ts src/modules/aml/aml.service.ts src/modules/aml/aml-scoring.wiring.spec.ts \
+  src/modules/aml/aml-gap.referentiel.gen.ts src/modules/aml/aml-gap.gt.gen.ts src/modules/aml/aml-gap.service.ts src/modules/aml/aml-gap.wiring.spec.ts \
+  src/modules/etl/etl.service.ts src/modules/etl/etl.wiring.spec.ts \
   src/modules/islamic/islamic-screening.engine.ts src/modules/islamic/islamic.service.ts src/modules/islamic/islamic-screening.wiring.spec.ts \
+  src/modules/businesstrip/businesstrip.module.ts src/modules/businesstrip/businesstrip.wiring.spec.ts \
+  src/modules/formations/formations.module.ts src/modules/formations/formations.wiring.spec.ts \
   src/common/feature-flags.ts src/common/feature-flags.spec.ts \
+  src/common/domain-event.ts src/common/events-catalog.spec.ts \
   src/common/optimistic-lock.ts src/common/optimistic-lock.spec.ts \
+  src/modules/kyc/kyc-locking.spec.ts \
+  src/modules/kyc/rules/kyc-lotA.spec.ts \
+  src/modules/kyc/docmatrix.service.ts src/modules/kyc/rules/docmatrix.spec.ts \
+  src/modules/tasks/tasks-r38.spec.ts \
+  src/modules/rapports/rapports.module.ts src/modules/rapports/rapports.wiring.spec.ts \
   src/common/idempotency.ts src/common/idempotency.spec.ts \
   src/modules/events/upcasters.ts src/modules/events/upcasters.spec.ts \
+  src/modules/inference/types.ts src/modules/inference/case-facts.ts src/modules/inference/dsl.ts src/modules/inference/profils.loader.ts src/modules/inference/profils.resolver.ts src/modules/inference/profils.spec.ts src/modules/inference/dsl.spec.ts src/modules/inference/case-facts.reader.ts src/modules/inference/requirement-ledger.ts src/modules/inference/ledger.service.ts src/modules/inference/inference-ledger.wiring.spec.ts src/modules/inference/inference-coherence.spec.ts \
+  src/modules/mros/goaml.service.ts src/modules/mros/goaml.wiring.spec.ts \
+  src/modules/rapports/kpi.service.ts src/modules/rapports/kpi.wiring.spec.ts \
+  src/modules/olivia/gouvernance-o.service.ts src/modules/olivia/gouvernance-o.wiring.spec.ts \
+  src/modules/workflow-designer/wir.schema.ts src/modules/workflow-designer/wir.wiring.spec.ts \
   --target es2020 --module commonjs --moduleResolution node \
   --experimentalDecorators --emitDecoratorMetadata --skipLibCheck \
   --noEmitOnError false --strict false --baseUrl . --outDir "$OUT" 2>/dev/null || true
@@ -70,6 +87,7 @@ echo "── Corpus I-01..I-05 (R89→R92) ──"; run iam-scenarios.spec.js
 echo "── Corpus SC-01..SC-04 (R100→R103) ──"; run screening-scenarios.spec.js
 echo "── Corpus GR-01..GR-04 (R104 golden record) ──"; run golden-record.projector.spec.js
 echo "── Câblage screening persistant (R100→R103) ──"; run screening.wiring.spec.js
+echo "── Câblage Ingestion de listes versionnée (L6-01..08, R409) ──"; run listes.wiring.spec.js
 echo "── Vérif JWKS IdP (JV-01..07) ──"; run jwks-verifier.spec.js
 echo "── Chiffrement mfa_secret (SB-01..06) ──"; run secret-box.spec.js
 echo "── Câblage personnes (P-01..08, R30→R36) ──"; run personnes.wiring.spec.js
@@ -79,8 +97,10 @@ echo "── Câblage Surface consultation GED (GS-01..05, R110/R112/R125/R145) 
 echo "── Câblage GED avancée (GD-07..14, R113→R116) ──"; run ged-avance.wiring.spec.js
 echo "── Câblage Onboarding (OB-01..06, R117→R120) ──"; run onboarding.wiring.spec.js
 echo "── Câblage pré-revue IA (AG-01..06, R121→R124) ──"; run prerevue.wiring.spec.js
-echo "── Câblage paramètres R-Q (RQ-01..06, R125→R128) ──"; run parametres.wiring.spec.js
-echo "── Câblage MROS (MR-01..06, R129→R132) ──"; run mros.wiring.spec.js
+echo "── Câblage paramètres R-Q (RQ-01..07, R125→R128 · R78) ──"; run parametres.wiring.spec.js
+echo "── Câblage calendrier réglementaire (CR-01..10, R490→R492) ──"; run reglementaire.wiring.spec.js
+echo "── Identifiants malformés — refus typé, jamais 500 (ID-01..05) ──"; run identifiant.spec.js
+echo "── Câblage MROS (MR-01..08, R129→R132) ──"; run mros.wiring.spec.js
 echo "── Câblage Risk cases (RK-01..06, R133→R136) ──"; run risk-case.wiring.spec.js
 echo "── Câblage Ingestion GED (IG-01..06, R137→R139) ──"; run ged-ingestion.wiring.spec.js
 echo "── Câblage Portail TX (TX-01..06, R140→R143) ──"; run transaction-gate.wiring.spec.js
@@ -103,8 +123,27 @@ echo "── Câblage KYC↔Workflow (KW-01..05, clause R172) ──"; run kyc-w
 echo "── Câblage OCR typé (OC-01..06, R174→R176) ──"; run ocr-extraction.wiring.spec.js
 echo "── Câblage Licence vendor (LC-01..05, R177→R179) ──"; run vendor-license.wiring.spec.js
 echo "── Câblage Surveillance AML (A-69..A-86, R189→R206) ──"; run aml-scoring.wiring.spec.js
+echo "── Câblage AML Gap Waves 1+2 (blocs 50–61, R340→R403) ──"; run aml-gap.wiring.spec.js
+echo "── Câblage ETL core banking (ET-01..08, R480→R489) ──"; run etl.wiring.spec.js
 echo "── Câblage Couche Shariah (IS-01..IS-15, R207→R221) ──"; run islamic-screening.wiring.spec.js
+echo "── Câblage Business Trip — gardes ⚠ (R223/R224/R228/R237, L2) ──"; run businesstrip.wiring.spec.js
+echo "── Câblage Formations — gardes ⚠ (R232/R234/R235, L2) ──"; run formations.wiring.spec.js
+echo "── Catalogue d'événements au write (C6, L5) ──"; run events-catalog.spec.js
 echo "── FeatureFlags robustesse (RB-01..05, R335) ──"; run feature-flags.spec.js
 echo "── Verrou optimiste (LK-01/LK-03, R336) ──"; run optimistic-lock.spec.js
+echo "── Verrou optimiste KYC lot 1 (LK-KYCFILE/KYCVISA + double-visa, R336) ──"; run kyc-locking.spec.js
+echo "── Moteur lot A (R6/R10, R9, R11, R12, R8, R24 — port domain.py) ──"; run kyc-lotA.spec.js
+echo "── Matrice documentaire versionnée (R26/R27/R29 — port referentiel.py) ──"; run docmatrix.spec.js
+echo "── Routage des tâches (R38 T-02/T-03 — port creer_tache) ──"; run tasks-r38.spec.js
+echo "── Exports réglementaires R50 (RP-01..04 — port domain.py) ──"; run rapports.wiring.spec.js
 echo "── Idempotence commandes (IDM-01..03, R337) ──"; run idempotency.spec.js
 echo "── Upcasting événements (EV-02/03, R339) ──"; run upcasters.spec.js
+echo "── Inférence module A (IN-01..11, P-L7-1 profils Requirements) ──"; run profils.spec.js
+echo "── Inférence module A (DS-01..14, P-L7-2 DSL d'activation sûr) ──"; run dsl.spec.js
+echo "── Inférence module A (LG-01..08, P-L7-3 CaseFactsReader + RequirementLedger) ──"; run inference-ledger.wiring.spec.js
+echo "── Inférence module A (CO-01..05, P-L7-4 cohérence gardes ↔ ledger + miroir no-drift) ──"; run inference-coherence.spec.js
+echo "── MROS goAML + chronomètre (GO-01..09, P-L8-1) ──"; run goaml.wiring.spec.js
+echo "── KPI conformité (KP-01..05, P-L8-2) ──"; run kpi.wiring.spec.js
+echo "── Gouvernance module O (OO-01..05, P-L8-3) ──"; run gouvernance-o.wiring.spec.js
+echo "── Bloc WD — WIR v1 + validateur R434 (WD-01..06/12) ──"; run wir.wiring.spec.js
+node scripts/generer-miroir-regles.mjs --verifier

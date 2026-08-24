@@ -5,12 +5,14 @@ import { AuditService } from "../../common/audit.service";
 import { computeRisk, baremeEnVigueur } from "./risk-engine";
 import { SECTIONS_BY_WORKFLOW, VISAS_BY_WORKFLOW } from "./kyc.templates";
 import { SectionFourEyes } from "./rules/section-four-eyes"; // R13/R52
+import { emitEvent } from "../../common/domain-event";
 import { NamedValidator } from "./rules/named-validator"; // R2/R4
 import { QualifiedVisaService, VisaError, Verdict } from "./rules/qualified-visa.service"; // R86
 import { KycLockService, KycLockError } from "./rules/kyc-lock.service"; // R84
 import { KycHandoff, HandoffError, HandoffStatus } from "./rules/kyc-handoff"; // R85
 import { etatCloture } from "../offboarding/cloture.util"; // R267/OF-10 — lecture seule intégrale
 import { Tx } from "../../common/tx";
+import { majVersionnee } from "../../common/optimistic-lock"; // R336/LK : verrou optimiste (lot 1)
 import { loadSettings } from "../../common/tenant-settings"; // R288 : barème gouverné
 
 type Ctx = { tenantId: string; userId: string; role: string };
@@ -156,9 +158,13 @@ export class KycService {
           .map(v => ({ sectionCode: v.sectionCode, requiredRole: v.role })) },
       }, include: { sections: { include: { questions: true } }, visas: true } });
 
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
-        type: "kyc.created", aggregateId: kyc.id,
-        payload: { code, workflow: risk.workflow, riskTrace: risk.trace } as any } });
+      await emitEvent(tx, ctx.tenantId, "kyc.created", kyc.id,
+        { code, workflow: risk.workflow, riskTrace: risk.trace });
+      // R18 : détection du retour d'un prospect précédemment REFUSÉ (alerte compliance, jamais un blocage).
+      const refusAnterieurs = await this.dossiersRefusesAnterieurs(ctx, dto.clientId, tx);
+      if (refusAnterieurs.length)
+        await emitEvent(tx, ctx.tenantId, "prospect.retour.refuse.detecte", kyc.id,
+          { code, dossiersRefuses: refusAnterieurs.map((r: any) => r.code) });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_CREATED", code);
       return { ...kyc, riskTrace: risk.trace };
     });
@@ -201,9 +207,10 @@ export class KycService {
     const q = await this.prisma.kycQuestion.findFirst({
       where: { code: qCode, section: { kycFile: { code, tenantId: ctx.tenantId } } },
       include: { accessRules: true,
-        section: { include: { kycFile: { select: { id: true, status: true, clientId: true } } } } } });
+        section: { include: { kycFile: { select: { id: true, status: true, clientId: true, lectureSeule: true } } } } } });
     if (!q) throw new NotFoundException("Question introuvable");
     await this.verifierNonCloture(ctx, q.section.kycFile.clientId);   // OF-10
+    this.verifierModifiable(q.section.kycFile);                       // R17/R20 : suspendu/abandonné/lecture seule
     if (q.section.kycFile.status === "VALIDATED")
       throw new ConflictException("Dossier validé — créer une révision (Rn+1)");
 
@@ -220,17 +227,29 @@ export class KycService {
           changedAt.toISOString()].join("|")).digest("hex");
       await tx.kycQuestionHistory.create({ data: { questionId: q.id,
         previousValue: q.answer, newValue: answer, changedBy: ctx.userId, changedAt, hash } });
-      return tx.kycQuestion.update({ where: { id: q.id },
+      const updated = await tx.kycQuestion.update({ where: { id: q.id },
         data: { answer, answeredBy: ctx.userId, answeredAt: changedAt } });
+      // R6/R10 : la modification d'une donnée invalide le visa de CETTE section (ciblé) — il
+      // repasse EN ATTENTE (re-signature requise) ; les visas des AUTRES sections restent intacts.
+      const aInvalider = await tx.kycVisa.findMany({
+        where: { kycFileId: q.section.kycFile.id, sectionCode: q.section.code, status: "SIGNED" } });
+      for (const v of aInvalider)
+        await tx.kycVisa.update({ where: { id: v.id },
+          data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+      if (aInvalider.length)
+        await this.emit(tx, ctx, "kyc.visa.invalide", q.section.kycFile.id,
+          { section: q.section.code, cause: "donnees_modifiees", nb: aInvalider.length });
+      return updated;
     });
   }
 
   // ── Visa de section (rôle requis strict) ──
-  async signVisa(ctx: Ctx, code: string, sectionCode: string, verdict: string = "OK", message: string = "") {
+  async signVisa(ctx: Ctx, code: string, sectionCode: string, verdict: string = "OK", message: string = "", expectedVersion?: number) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
     await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
+    this.verifierModifiable(kyc);                                     // R17/R20 : suspendu/abandonné/lecture seule
     const visa = kyc.visas.find(v => v.sectionCode === sectionCode
       && v.requiredRole === ctx.role && v.status === "PENDING");
     if (!visa) throw new ForbiddenException(
@@ -268,17 +287,246 @@ export class KycService {
     }
     await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VISA_SIGNED",
       `${code}/${sectionCode} — ${qv.verdict}${qv.message ? " : " + qv.message : ""}`);
-    return this.prisma.kycVisa.update({ where: { id: visa.id },
-      data: { status: "SIGNED", signedBy: ctx.userId, signedAt: new Date(),
-              verdict: qv.verdict, message: qv.message } });
+    // R336/LK (lot 1) : signature de visa GARDÉE par la version — deux porteurs du même rôle
+    // signant CETTE section ne s'écrasent jamais. If-Match présent → strict (409 si version
+    // périmée) ; absent → repli sur la version courante (rollout expand, legacy non cassé).
+    // enforce:true = lot 1 STRICT quel que soit le flag global (shadow ailleurs).
+    const attendue = expectedVersion ?? visa.version;
+    await majVersionnee(this.prisma.kycVisa, visa.id, attendue,
+      { status: "SIGNED", signedBy: ctx.userId, signedAt: new Date(), verdict: qv.verdict, message: qv.message },
+      { enforce: true });
+    return this.prisma.kycVisa.findUnique({ where: { id: visa.id } });
+  }
+
+  // ── R9 : la révocation discrétionnaire d'un visa n'existe pas — toute tentative est refusée ET tracée.
+  async tenterRevocation(ctx: Ctx, code: string, sectionCode: string) {
+    await this.findKyc(ctx, code);                                     // existence + périmètre
+    await this.audit.log(ctx.tenantId, ctx.userId, "KYC_REVOCATION_REFUSEE", `${code}/${sectionCode}`);
+    throw new ConflictException(
+      "[R9] La révocation discrétionnaire d'un visa n'existe pas — un visa accordé ne se retire pas « parce qu'on a changé d'avis ». " +
+      "Seules l'invalidation ciblée sur modification (R6/R10) ou l'annulation pour vice de process (R12) sont possibles.");
+  }
+
+  // ── R11 : réassignation d'un validateur nommé — réservée aux rôles habilités (process owner/manager), tracée.
+  async reassignerValidateur(ctx: Ctx, code: string, sectionCode: string, requiredRole: string, nouveau: string) {
+    if (!KycService.ROLES_REASSIGNATION.includes(ctx.role))
+      throw new ForbiddenException(`[R11] Rôle ${ctx.role} non habilité à réassigner un validateur (process owner / manager uniquement).`);
+    const kyc = await this.findKyc(ctx, code);
+    const visa = await this.prisma.kycVisa.findFirst({ where: { kycFileId: kyc.id, sectionCode, requiredRole: requiredRole as any } });
+    if (!visa) throw new NotFoundException(`Visa introuvable pour ${sectionCode}/${requiredRole}`);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycVisa.update({ where: { id: visa.id }, data: { validateur: nouveau, version: { increment: 1 } } });
+      await this.emit(tx, ctx, "kyc.visa.validateur.reassigne", kyc.id,
+        { section: sectionCode, requiredRole, ancien: (visa as any).validateur ?? null, nouveau });
+      return { ok: true, section: sectionCode, requiredRole, validateur: nouveau };
+    });
+  }
+
+  // ── R12 : annulation pour vice de process — décideur habilité + motif ; incident op-risk enregistré.
+  async annulerPourVice(ctx: Ctx, code: string, sectionCode: string, requiredRole: string, motif: string) {
+    if (!KycService.ROLES_REASSIGNATION.includes(ctx.role))
+      throw new ForbiddenException(`[R12] Rôle ${ctx.role} non habilité à annuler pour vice (process owner / manager).`);
+    if (!motif || !motif.trim()) throw new BadRequestException("[R12] Motif obligatoire pour l'annulation pour vice de process.");
+    const kyc = await this.findKyc(ctx, code);
+    const visa = await this.prisma.kycVisa.findFirst({ where: { kycFileId: kyc.id, sectionCode, requiredRole: requiredRole as any } });
+    if (!visa) throw new NotFoundException(`Visa introuvable pour ${sectionCode}/${requiredRole}`);
+    if (visa.status !== "SIGNED") throw new ConflictException("[R12] Seul un visa accordé peut être annulé pour vice de process.");
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycVisa.update({ where: { id: visa.id },
+        data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+      await this.emit(tx, ctx, "kyc.visa.annule.vice", kyc.id, { section: sectionCode, requiredRole, motif });
+      await this.emit(tx, ctx, "risque.operationnel.incident", kyc.id,
+        { origine: "visa_hors_process", section: sectionCode, requiredRole, motif });   // R12 : incident op-risk
+      return { ok: true, section: sectionCode, requiredRole };
+    });
+  }
+
+  // ── R46 : hit pendant la validation — GÈLE les visas en attente le temps de la décision du comité.
+  async gelerPourHit(ctx: Ctx, code: string, hitRef: string, delaiAnalyseJours: number = 5) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      const gel = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, status: "PENDING" }, data: { status: "GELE" } });
+      await this.emit(tx, ctx, "kyc.visas.geles", kyc.id, { hit: hitRef, nb: gel.count, delaiAnalyseJours });   // R46
+      return { ok: true, geles: gel.count };
+    });
+  }
+
+  // ── R46 : le comité Risk & Compliance décide — « poursuite » dégèle les visas ; sinon offboarding.
+  async deciderComite(ctx: Ctx, code: string, hitRef: string, decision: string, membres: string[] = []) {
+    if (!["poursuite", "offboarding"].includes(decision))
+      throw new BadRequestException("[R46] Décision comité invalide : « poursuite » ou « offboarding ».");
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      await this.emit(tx, ctx, "kyc.comite.decision", kyc.id, { hit: hitRef, decision, membres });   // R46
+      if (decision === "poursuite") {
+        const degel = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, status: "GELE" }, data: { status: "PENDING" } });
+        return { ok: true, decision, degeles: degel.count };
+      }
+      await this.emit(tx, ctx, "kyc.offboarding.propose", kyc.id, { hit: hitRef, origine: "comite_risk_compliance" });
+      return { ok: true, decision };
+    });
+  }
+
+  // ── R18 : rejeté ≠ clôture — un client dont un dossier a été REJETÉ alimente la liste des refusés.
+  // Détection du RETOUR : les dossiers refusés antérieurs d'un client (pour alerte à la re-création).
+  async dossiersRefusesAnterieurs(ctx: Ctx, clientId: string, db: any = this.prisma) {
+    return db.kycFile.findMany({
+      where: { tenantId: ctx.tenantId, clientId, status: "REJECTED" },
+      select: { code: true, createdAt: true }, orderBy: { createdAt: "desc" } });
+  }
+
+  // ═══════════ R16-R22 — MACHINE D'ÉTATS DU DOSSIER (port domain.py, expand-only) ═══════════
+  // États actifs (mutables) d'où l'on peut suspendre / abandonner / rouvrir.
+  private static ETATS_ACTIFS = ["IN_PROGRESS", "UNDER_REVIEW", "EN_MAJ"];
+
+  // R20 : un dossier en lecture seule OU suspendu OU abandonné n'accepte plus d'écriture métier.
+  static estFige(kyc: { status: string; lectureSeule?: boolean | null }): boolean {
+    return !!kyc.lectureSeule || kyc.status === "SUSPENDED" || kyc.status === "ABANDONED";
+  }
+  private verifierModifiable(kyc: any) {
+    if (KycService.estFige(kyc)) throw new ConflictException(
+      `[R17/R20] Dossier ${kyc.status === "SUSPENDED" ? "suspendu" : kyc.status === "ABANDONED" ? "abandonné" : "en lecture seule"} — écriture métier refusée.`);
+  }
+
+  // R17 : suspension — restrictions FIGÉES à la date (grandfathering S-09) ; discrétion MROS.
+  async suspendre(ctx: Ctx, code: string, cause: string) {
+    const kyc = await this.findKyc(ctx, code);
+    if (!KycService.ETATS_ACTIFS.includes(kyc.status)) throw new ConflictException(`[R17] Un dossier ${kyc.status} ne se suspend pas.`);
+    const cfg = await loadSettings(this.prisma, ctx.tenantId).catch(() => ({} as any));
+    const restrictions = (cfg.restrictionsSuspendu as any) ?? { entrees: false, sorties: false };   // ⚙ R-Q (défaut : tout gelé)
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "SUSPENDED", restrictions }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.suspendu", kyc.id, { cause, restrictions });
+      return { ok: true, status: "SUSPENDED", restrictions };
+    });
+  }
+
+  // R17 : une opération est-elle permise ? Hors suspension tout est permis ; sinon selon les restrictions figées.
+  async operationAutorisee(ctx: Ctx, code: string, sens: "entree" | "sortie"): Promise<boolean> {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "SUSPENDED") return true;
+    const r = (kyc.restrictions as any) ?? {};
+    return !!r[sens === "entree" ? "entrees" : "sorties"];
+  }
+
+  // R19 : abandon d'un dossier en préparation inactif (réactivable) ; le délai J30/J60/J90 = ⚙ R-Q.
+  async abandonner(ctx: Ctx, code: string, motif: string = "inactivité") {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "IN_PROGRESS") throw new ConflictException(`[R19] Seul un dossier en préparation s'abandonne (état ${kyc.status}).`);
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "ABANDONED" }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.abandonne", kyc.id, { motif });
+      return { ok: true, status: "ABANDONED" };
+    });
+  }
+
+  // R19 : un dossier ABANDONNÉ est réactivable — retour en préparation.
+  async reactiver(ctx: Ctx, code: string) {
+    const kyc = await this.findKyc(ctx, code);
+    if (kyc.status !== "ABANDONED") throw new ConflictException("[R19] Seul un dossier abandonné se réactive.");
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "IN_PROGRESS" }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.dossier.reactive", kyc.id, {});
+      return { ok: true, status: "IN_PROGRESS" };
+    });
+  }
+
+  // R20 : conservation LBA (10 ans) prime l'effacement LPD — la demande est REFUSÉE et tracée, le dossier passe en lecture seule.
+  async demandeEffacementLpd(ctx: Ctx, code: string, demandeur: string) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      await majVersionnee(tx.kycFile, kyc.id, kyc.version, { lectureSeule: true }, { enforce: true });
+      await this.emit(tx, ctx, "kyc.effacement.refuse.lba", kyc.id, { demandeur, baseLegale: "LBA art. 7 (10 ans)" });
+      return { ok: false, efface: false, motif: "Conservation LBA (10 ans) — effacement LPD refusé.", lectureSeule: true };
+    });
+  }
+
+  // R21/R22 : changement de circonstances — réouverture CIBLÉE des sections concernées (visas invalidés) ;
+  // c'est le RISQUE du changement qui décide (risqueMajeur → suspension), pas le changement lui-même.
+  async changementCirconstances(ctx: Ctx, code: string, sections: string[], description: string, risqueMajeur: boolean) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      for (const sc of sections) {
+        const inval = await tx.kycVisa.updateMany({ where: { kycFileId: kyc.id, sectionCode: sc, status: "SIGNED" },
+          data: { status: "PENDING", signedBy: null, signedAt: null, verdict: null, message: null, version: { increment: 1 } } });
+        if (inval.count) await this.emit(tx, ctx, "kyc.visa.invalide", kyc.id, { section: sc, cause: "changement_circonstances" });
+      }
+      if (risqueMajeur) {
+        const cfg = await loadSettings(this.prisma, ctx.tenantId).catch(() => ({} as any));
+        await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "SUSPENDED", restrictions: (cfg.restrictionsSuspendu as any) ?? { entrees: false, sorties: false } }, { enforce: true });
+        await this.emit(tx, ctx, "kyc.dossier.suspendu", kyc.id, { cause: `coc_risque_majeur:${description}` });
+      } else {
+        await majVersionnee(tx.kycFile, kyc.id, kyc.version, { status: "EN_MAJ" }, { enforce: true });
+        await this.emit(tx, ctx, "kyc.dossier.mise_a_jour", kyc.id, { description, sections });
+      }
+      return { ok: true, status: risqueMajeur ? "SUSPENDED" : "EN_MAJ" };
+    });
+  }
+
+  // ═══════════ R23 — PROCESSES CONCURRENTS (pas de fusion ; priorité ; pause/reprise ; absorption) ═══════════
+  async ouvrirProcess(ctx: Ctx, code: string, type: string) {
+    if (!["recertification", "evenement"].includes(type)) throw new BadRequestException("[R23] Type de process invalide (« recertification » | « evenement »).");
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.$transaction(async (tx) => {
+      // R23 : l'événement de risque est PRIORITAIRE — il met la recertification EN COURS en PAUSE.
+      if (type === "evenement") {
+        const pause = await tx.kycProcess.updateMany({
+          where: { tenantId: ctx.tenantId, kycFileId: kyc.id, type: "recertification", etat: "EN_COURS" }, data: { etat: "EN_PAUSE" } });
+        if (pause.count) await this.emit(tx, ctx, "kyc.process.pause", kyc.id, { cause: "priorite_evenement", nb: pause.count });
+      }
+      const p = await tx.kycProcess.create({ data: { tenantId: ctx.tenantId, kycFileId: kyc.id, type } });
+      await this.emit(tx, ctx, "kyc.process.ouvert", kyc.id, { process: p.id, type });
+      return { ok: true, process: p.id, type, etat: "EN_COURS" };
+    });
+  }
+
+  async cloturerProcess(ctx: Ctx, code: string, processId: string, sectionsRevalidees: string[] = []) {
+    const kyc = await this.findKyc(ctx, code);
+    const p = await this.prisma.kycProcess.findFirst({ where: { id: processId, tenantId: ctx.tenantId, kycFileId: kyc.id } });
+    if (!p) throw new NotFoundException("Process introuvable");
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycProcess.update({ where: { id: p.id }, data: { etat: "CLOTURE", sectionsRevalidees } });
+      await this.emit(tx, ctx, "kyc.process.cloture", kyc.id, { process: p.id, sections: sectionsRevalidees });
+      return { ok: true };
+    });
+  }
+
+  // R23 : reprise d'une recertification en pause — ABSORBE les sections déjà revalidées par les
+  // process ÉVÉNEMENT clôturés depuis son ouverture (elle ne les redemande pas).
+  async reprendreRecertification(ctx: Ctx, code: string, recertId: string) {
+    const kyc = await this.findKyc(ctx, code);
+    const recert = await this.prisma.kycProcess.findFirst({
+      where: { id: recertId, tenantId: ctx.tenantId, kycFileId: kyc.id, type: "recertification" } });
+    if (!recert) throw new NotFoundException("Recertification introuvable");
+    const evClotures = await this.prisma.kycProcess.findMany({
+      where: { tenantId: ctx.tenantId, kycFileId: kyc.id, type: "evenement", etat: "CLOTURE" } });
+    const absorbes = new Set<string>((recert.sectionsRevalidees as string[]) ?? []);
+    for (const e of evClotures)
+      if (new Date(e.ouvertLe) >= new Date(recert.ouvertLe))
+        for (const s of ((e.sectionsRevalidees as string[]) ?? [])) absorbes.add(s);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.kycProcess.update({ where: { id: recert.id }, data: { etat: "EN_COURS", sectionsRevalidees: [...absorbes] } });
+      await this.emit(tx, ctx, "kyc.process.repris", kyc.id, { process: recert.id, sectionsAbsorbees: [...absorbes] });
+      return { ok: true, sectionsAbsorbees: [...absorbes] };
+    });
+  }
+
+  async processDuDossier(ctx: Ctx, code: string) {
+    const kyc = await this.findKyc(ctx, code);
+    return this.prisma.kycProcess.findMany({ where: { tenantId: ctx.tenantId, kycFileId: kyc.id }, orderBy: { ouvertLe: "asc" } });
   }
 
   // ── Validation finale : four-eyes strict + visas complets → outbox ──
-  async validate(ctx: Ctx, code: string) {
+  // R11 : réassignation de validateur réservée au process owner / manager (domain.py
+  // ROLES_REASSIGNATION = process_owner, application_manager, coo).
+  private static ROLES_REASSIGNATION = ["CO_SR", "DIR", "ADMIN"];
+
+  async validate(ctx: Ctx, code: string, expectedVersion?: number, engagement: boolean = false) {
     const kyc = await this.prisma.kycFile.findFirst({
       where: { code, tenantId: ctx.tenantId }, include: { visas: true } });
     if (!kyc) throw new NotFoundException("Dossier introuvable");
     await this.verifierNonCloture(ctx, kyc.clientId);                 // OF-10
+    this.verifierModifiable(kyc);                                     // R17/R20 : suspendu/abandonné/lecture seule
     if (kyc.status === "VALIDATED") throw new ConflictException("Déjà validé");
     if (kyc.createdBy === ctx.userId)
       throw new ConflictException("Four-eyes : le validateur doit différer du créateur");
@@ -302,17 +550,26 @@ export class KycService {
       .map((q) => q.code);
     if (requisesManquantes.length) throw new BadRequestException(
       `R282 : contributions REQUISES manquantes (matrice à la création du dossier) : ${requisesManquantes.join(", ")}`);
+    // R14 : engagement de responsabilité obligatoire à la validation finale (pop-up serveur).
+    // Placé APRÈS tous les gardes (R13/R52/rôle/complétude) : la précédence des refus est conservée.
+    if (!engagement) throw new ConflictException(
+      "[R14] Engagement de responsabilité requis : le validateur final confirme le respect des process avant de signer.");
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.kycFile.update({ where: { id: kyc.id },
-        data: { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() } });
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId,
-        type: "kyc.validated", aggregateId: kyc.id,
-        payload: { code, validatedBy: ctx.userId } as any } });
+      // R336/LK (lot 1) : validation finale GARDÉE par la version du dossier (jamais deux
+      // validations concurrentes qui s'écrasent). If-Match présent → strict ; absent → version
+      // courante (expand). enforce:true = strict sur le lot 1.
+      const validatedAt = new Date();
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version,
+        { status: "VALIDATED", validatedBy: ctx.userId, validatedAt }, { enforce: true });
+      // ES-8 (C6) : kyc.validated passe par emitEvent — le catalogue valide le payload au write
+      // (le type est consommé par surveillance-es ; l'ordre des gardes de validate() est INTACT).
+      await this.emit(tx, ctx, "kyc.validated", kyc.id, { code, validatedBy: ctx.userId });
       if (this.reviews) await this.reviews.surApprobation(ctx, tx,            // RV-01/07 : l'échéance naît ICI
-        { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt: updated.validatedAt });
+        { id: kyc.id, clientId: kyc.clientId, workflow: kyc.workflow, validatedAt });
+      await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ENGAGEMENT_RESPONSABILITE", code);   // R14
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_VALIDATED", code);
-      return updated;
+      return tx.kycFile.findUnique({ where: { id: kyc.id } });
     });
   }
 
@@ -334,7 +591,12 @@ export class KycService {
     if (scope) where.clientId = { in: scope };
     if (statut) where.status = statut;
     const rows = await this.prisma.kycFile.findMany({ where, orderBy: { createdAt: "desc" }, take: 500 });
-    return rows.map((k: any) => ({ code: k.code, clientId: k.clientId, status: k.status, riskLevel: k.riskLevel, createdAt: k.createdAt }));
+    // V2-M47 : l'`id` du dossier voyage avec la ligne. Sans lui, un écran qui liste les dossiers
+    // ne peut appeler AUCUNE route qui prend le kycFileId — inférence (checklist d'exigences,
+    // R-INF) et pré-revue IA (R121) étaient inatteignables depuis la liste, faute d'identifiant.
+    // Ajout purement additif (expand, R334) : aucun consommateur existant ne lit moins qu'avant.
+    return rows.map((k: any) => ({ id: k.id, code: k.code, clientId: k.clientId, status: k.status,
+      riskLevel: k.riskLevel, createdAt: k.createdAt }));
   }
 
   // T2/HO-05 : visas PENDING dont requiredRole = MON rôle, sur les dossiers de MON périmètre.
@@ -451,10 +713,9 @@ export class KycService {
         await tx.kycAccessRule.create({ data: { questionId: cible.id, role: dto.role as any,
           right: dto.right as any, effectiveFrom: dateEffet } });
       }
-      await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "kyc.access.modifie",
-        aggregateId: q.section.kycFile.id,
-        payload: { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId,
-          dateEffet: dateEffet.toISOString(), portee, dossiersTouches: cibles.length } as any } });
+      await emitEvent(tx, ctx.tenantId, "kyc.access.modifie", q.section.kycFile.id,
+        { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, par: ctx.userId,
+          dateEffet: dateEffet.toISOString(), portee, dossiersTouches: cibles.length });
       await this.audit.log(ctx.tenantId, ctx.userId, "KYC_ACCESS_MODIFIE", `${code}/${qCode}:${dto.role}=${dto.right}:${portee}`);
     });
     return { question: qCode, role: dto.role, ancienne, nouvelle: dto.right, portee, dateEffet: dateEffet.toISOString() };
@@ -480,8 +741,9 @@ export class KycService {
     return svc;
   }
   // Émet un événement (outbox transactionnel) + audit — invariant : rien ne change sans trace.
+  // P-L5-2 (C6) : passe par emitEvent — le CATALOGUE valide le payload au write (noyau KYC schématisé).
   private async emit(tx: Tx, ctx: Ctx, type: string, aggregateId: string, payload: any) {
-    await tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type, aggregateId, payload } });
+    await emitEvent(tx, ctx.tenantId, type, aggregateId, payload);
     await this.audit.log(ctx.tenantId, ctx.userId, type.toUpperCase().replace(/\./g, "_"), JSON.stringify(payload));
   }
 
@@ -548,51 +810,54 @@ export class KycService {
   }
   private idxOf(phase: string): number { return KycService.HANDOFF_PHASES.indexOf(phase); }
 
-  async handoffNext(ctx: Ctx, code: string, message: string) {
+  // R336/LK (lot 1) : chaque transition de handoff est GARDÉE par la version du dossier
+  // (deux acteurs qui se repassent la main ne clobbent jamais handoff_phase / status).
+  // If-Match présent → strict ; absent → version courante (expand). enforce:true = strict lot 1.
+  async handoffNext(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     let phase: string;
     try { phase = hf.nextStep(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // message obligatoire / dernière étape
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { handoffPhase: this.idxOf(phase) } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { handoffPhase: this.idxOf(phase) }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.next", kyc.id, { code, to: phase, by: ctx.userId, message });
       return { phase, status: hf.status };
     });
   }
 
-  async handoffBack(ctx: Ctx, code: string, message: string) {
+  async handoffBack(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     let phase: string;
     try { phase = hf.revenir(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // message obligatoire / première étape
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { handoffPhase: this.idxOf(phase) } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { handoffPhase: this.idxOf(phase) }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.back", kyc.id, { code, to: phase, by: ctx.userId, message });
       return { phase, status: hf.status };
     });
   }
 
-  async handoffValidate(ctx: Ctx, code: string, message: string) {
+  async handoffValidate(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     try { hf.valider(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // seulement à la section de validation
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { status: "VALIDATED", validatedBy: ctx.userId, validatedAt: new Date() }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.validated", kyc.id, { code, by: ctx.userId, message });
       return { status: "valide" };
     });
   }
 
-  async handoffReject(ctx: Ctx, code: string, message: string) {
+  async handoffReject(ctx: Ctx, code: string, message: string, expectedVersion?: number) {
     const kyc = await this.findKyc(ctx, code);
     const hf = this.handoffOf(kyc);
     try { hf.rejeter(ctx.userId, message, new Date()); }
     catch (e) { throw new BadRequestException((e as HandoffError).message); }   // motif obligatoire (R7)
     return this.prisma.$transaction(async (tx) => {
-      await tx.kycFile.update({ where: { id: kyc.id }, data: { status: "REJECTED" } });
+      await majVersionnee(tx.kycFile, kyc.id, expectedVersion ?? kyc.version, { status: "REJECTED" }, { enforce: true });
       await this.emit(tx, ctx, "kyc.handoff.rejected", kyc.id, { code, by: ctx.userId, message });
       return { status: "rejete" };
     });

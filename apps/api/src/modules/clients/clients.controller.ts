@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query, Req, BadRequestException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { Prisma } from "@prisma/client";
 import { ClientCreate } from "@olive/shared/src/contracts";
 import { PrismaService } from "../../common/prisma.service";
@@ -37,8 +38,7 @@ export class ClientsController {
   async coc(@Req() req: any, @Body() body: any) {
     const { tenantId } = req.ctx;
     const material = ["ADDRESS_CHANGE","UBO_CHANGE","PEP_STATUS"].includes(body?.type);
-    await this.prisma.domainEvent.create({ data: {
-      tenantId, type: "client.coc", aggregateId: req.params.id, payload: body ?? {} } });
+    await emitEvent(this.prisma, tenantId, "client.coc", req.params.id, body ?? {});
     return { received: true, material };
   }
 }

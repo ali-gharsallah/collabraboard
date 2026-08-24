@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiGetSourced } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) {
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
@@ -9,6 +10,7 @@ export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) 
   const [risk, setRisk] = useState<any>(null);
   const [err, setErr] = useState("");
   const [demo, setDemo] = useState(false);
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmer la création du dossier
   useEffect(() => { apiGetSourced<{ data: any[] }>("/v1/clients", { data: [] })
     .then(r => { setClients(r.data.data); setDemo(r.isDemo); }); }, []);
 
@@ -28,6 +30,7 @@ export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) 
   }
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   return <div>
+    {modal}
     {demo && <DemoModeBanner/>}
     <h3>Nouveau dossier KYC — 4 informations, le moteur décide du reste</h3>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -43,7 +46,10 @@ export function KycCreate({ onCreated }: { onCreated: (code: string) => void }) 
       </select>
       <input style={{ ...inp, width: 60 }} maxLength={2} value={form.countryCode}
         onChange={e => setForm({ ...form, countryCode: e.target.value.toUpperCase() })}/>
-      <button onClick={submit} disabled={!form.clientId}
+      <button onClick={() => ask({ title: "Créer le dossier KYC",
+          message: "À la création, le moteur calcule le workflow et le score de risque. La décision est engagée.",
+          confirmLabel: "Confirmer la création", onConfirm: submit })}
+        disabled={!form.clientId}
         style={{ ...inp, background: "#4A6B28", color: "#fff", cursor: "pointer", border: "none" }}>
         Créer le dossier</button>
     </div>

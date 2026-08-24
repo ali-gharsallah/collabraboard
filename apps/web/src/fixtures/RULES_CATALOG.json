@@ -1,0 +1,1692 @@
+[
+  {
+    "num": 1,
+    "id": "R1",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Portée du visa",
+    "expl": "Le visa porte sur une section. Un dossier peut avoir plusieurs visas en parallèle, portés par des validateurs distincts.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 2,
+    "id": "R2",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Validateur nommé",
+    "expl": "Le validateur d 'un visa est une personne nommée, et non un rôle générique.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 3,
+    "id": "R3",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Granularité de l\\'exclusion",
+    "expl": "Il n 'existe pas d 'exclusion granulaire au niveau du champ : l 'exclusion préparateur/validateur s 'applique au niveau de la section entière (cf. R13).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 4,
+    "id": "R4",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Absence du validateur",
+    "expl": "En cas d 'absence du validateur nommé, un relais nommé prend le relais. À défaut de relais, une dérogation tracée est prononcée, adossée à la fiche de poste.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 5,
+    "id": "R5",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Rappels et escalade",
+    "expl": "Un visa en attente déclenche des rappels au validateur. Après le deuxième rappel sans réaction, une escalade est déclenchée. Un document reçu valide au moment de sa réception reste valide même s 'il expire pendant l 'attente du visa.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 6,
+    "id": "R6",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Invalidation sur modification",
+    "expl": "Toute modification des données de la section pendant l 'attente du visa invalide le visa en attente : le visa aurait été accordé sur des données qui ont changé.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 7,
+    "id": "R7",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Refus motivé",
+    "expl": "Le refus d 'un visa exige une motivation obligatoire. La section retourne au préparateur. Après correction, la re-soumission est adressée au même validateur, en sa qualité d 'owner du client.",
+    "param": "tenant",
+    "comment": "Référentiel des motifs de refus — questionnaire R-Q ; longueur minimale via règle tenant motifRefusMin (écran Moteur, WF_ENGINE.regleTenant)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 8,
+    "id": "R8",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Durée de vie du visa accordé",
+    "expl": "Un visa accordé vit jusqu 'au prochain changement de données de sa section. Il n 'a pas d 'expiration calendaire propre ; la recertification périodique est un process distinct qui rouvre le dossier.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 9,
+    "id": "R9",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Pas de révocation discrétionnaire",
+    "expl": "Un visa accordé ne peut pas être révoqué de manière discrétionnaire.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 10,
+    "id": "R10",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Invalidation ciblée",
+    "expl": "La modification d 'une section n 'invalide que le visa de cette section (en attente ou accordé). Les visas des autres sections survivent.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 11,
+    "id": "R11",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Changement de validateur nommé",
+    "expl": "Le remplacement d 'un validateur nommé (départ, réorganisation) relève du process owner / application manager, avec escalade au COO de la banque si nécessaire.",
+    "param": "tenant",
+    "comment": "Matrice `kyc_access_rules` : rôle → droit (RM_EDIT / CO_EDIT / VIEW) par section, gabarits par workflow (TEMPLATES_BY_WORKFLOW). Remplacement d'un validateur nommé : Admin → Utilisateurs (`POST /admin/users/:id/role`) — le visa reste nommé à la personne (R2), jamais transféré silencieusement ; escalade COO si litige. Écran : Admin → Droits.",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 12,
+    "id": "R12",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Visa hors process",
+    "expl": "Un visa accordé hors process (délégation expirée, seuil de risque dépassé) est annulé pour non-respect du process et qualifié en risque opérationnel.",
+    "param": "tenant",
+    "comment": "Clé `settings.visaHorsProcess` (objet) : `delegationExpireeJours` (int, déf. 0 = immédiat) · `qualifRisqueOp` (bool, déf. vrai). Où : Admin → Gouvernance du paramétrage (journalisé PARAM_AUDIT). L'annulation elle-même est un invariant ; seuls les seuils de détection sont tenant.",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 13,
+    "id": "R13",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Exclusion 4-yeux",
+    "expl": "Le préparateur d 'une section ne peut jamais viser cette section, quel que soit le nombre de champs qu 'il a touchés.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 14,
+    "id": "R14",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Annulation pour vice de process",
+    "expl": "L 'annulation pour vice de process existe (cas très particulier) et est distincte de la révocation, qui n 'existe pas. Elle est prononcée conjointement par le process owner et le validateur final du workflow, après vérification. Le validateur final engage sa responsabilité sur le respect des process : un pop-up d 'engagement de responsabi",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 15,
+    "id": "R15",
+    "bloc": "1 · Cycle de vie du visa 4-yeux",
+    "titre": "Validation finale = visa",
+    "expl": "La validation finale globale du dossier est une étape du workflow comme les autres, avec son propre validateur nommé. Elle hérite de l 'intégralité des règles R1 à R14.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 16,
+    "id": "R16",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "États du dossier",
+    "expl": "États nominaux : Brouillon, En préparation, En validation, Actif, Clôturé. États transverses : Suspendu, En mise à jour, Rejeté, Abandonné.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 17,
+    "id": "R17",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "État Suspendu",
+    "expl": "Le dossier Suspendu (investigation, alerte non résolue, décision MLRO) reste visible mais restreint les opérations. Les restrictions sont paramétrables --- typiquement entrées autorisées / sorties gelées en cas de communication MROS (art. 9a LBA), pour ne pas alerter le client.",
+    "param": "tenant",
+    "comment": "Clé `settings.suspension.restrictions` (liste) — déf. `['SORTIES_GELEES']` ; valeurs : ENTREES_AUTORISEES · SORTIES_GELEES · TOUT_GELE. Où : questionnaire R-Q §États + Admin → Gouvernance. Le passage en Suspendu reste une décision humaine motivée (R7).",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 18,
+    "id": "R18",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "État Rejeté",
+    "expl": "Le rejet avant activation est distinct de la clôture : il alimente la liste des prospects refusés et permet la détection du retour du même prospect ultérieurement.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 19,
+    "id": "R19",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "Abandon",
+    "expl": "Un dossier inactif déclenche des rappels au RM (30 et 60 jours), puis une clôture administrative en Abandonné à 90 jours (délais paramétrables), avec possibilité de réactivation.",
+    "param": "tenant",
+    "comment": "Clés `settings.abandon.rappelsJours` (liste d'entiers, déf. [30, 60]) et `settings.abandon.clotureJours` (int, déf. 90). Où : questionnaire R-Q §Cycle de vie. Les rappels sont des tâches tracées ; la clôture est administrative et réversible (réactivation).",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 20,
+    "id": "R20",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "Conservation",
+    "expl": "Les données d 'un dossier abandonné sont conservées, non effacées : l 'obligation de conservation LBA (10 ans dès le début des diligences) prime sur le droit à l 'effacement LPD. Le dossier abandonné reste consultable en lecture seule.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 21,
+    "id": "R21",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "Réouverture ciblée",
+    "expl": "Un changement de circonstances ne rouvre que les sections impactées. Le dossier passe En mise à jour et le client reste opérationnel, sauf si le changement touche un critère de risque majeur, auquel cas le dossier passe en Suspendu.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 22,
+    "id": "R22",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "Le risque décide",
+    "expl": "C 'est le niveau de risque du changement qui détermine les restrictions applicables, pas le changement lui-même.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 23,
+    "id": "R23",
+    "bloc": "2 · Cycle de vie du dossier",
+    "titre": "Collision de process",
+    "expl": "Pas de fusion de process : priorité et absorption. L 'événement de risque (alerte, CoC) est prioritaire sur la recertification planifiée, qui est mise en pause. À la clôture de l 'événement, la recertification reprend en réutilisant les sections déjà revalidées. Chaque process conserve son identité et son audit trail ; le dossier porte la",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 24,
+    "id": "R24",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Sections fixes, contenu variable",
+    "expl": "La structure des sections est identique pour tous les dossiers ; les champs et documents exigés varient selon le type d 'entité (8 types : Operating Company, Domiciliary Company, Individual, Joint Account, Trust, Foundation, Legal Entity, EAM).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 25,
+    "id": "R25",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Visa conditionnel",
+    "expl": "Une section peut être soumise au visa avec un document en statut « en attente de réception », afin de ne pas bloquer le travail des autres intervenants sur les autres sections. Si le document attendu est optionnel : escalade sans invalidation. S 'il est obligatoire : le visa saute sous 30 jours avec escalade. Délais et comportement paramé",
+    "param": "tenant",
+    "comment": "Clé `settings.visaConditionnel.delaiReceptionJours` (int, déf. 30) + liste des types de documents éligibles `settings.visaConditionnel.docsEligibles`. Où : R-Q §Matrice documentaire. À l'échéance sans document : bascule automatique du visa en attente → tâche de relance (S-10/S-10b).",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 26,
+    "id": "R26",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Structure de la matrice",
+    "expl": "La matrice croise les documents (lignes) avec la structure juridique (colonnes), les personnes liées à cette structure et les comptes liés. La complétude d 'un dossier est l 'union des exigences de l 'entité titulaire, de toutes les personnes liées et des comptes.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 27,
+    "id": "R27",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Juridiction d\\'abord",
+    "expl": "La juridiction du cas KYC est fixée en premier ; elle détermine ensuite quel document du groupe d 'équivalence est requis (ex. extrait RC suisse vs certificate of incorporation).",
+    "param": "tenant",
+    "comment": "Grille documentaire par structure/pays : matrice tenant (questionnaire R-Q)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 28,
+    "id": "R28",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Péremption sur dossier actif",
+    "expl": "L 'expiration d 'un document dans un dossier Actif déclenche une simple tâche de collecte, sans toucher au visa. Cohérent avec R5 : un document reçu valide reste valide ; l 'invalidation R6/R10 ne concerne que les modifications de données.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 29,
+    "id": "R29",
+    "bloc": "3 · Matrice documentaire & versioning",
+    "titre": "Versioning par date de vigueur",
+    "expl": "La matrice est versionnée par date de mise en vigueur. Chaque dossier est estampillé avec la version sous laquelle son KYC a été validé. Un dossier validé avant une réforme reste conforme à sa version --- jamais rétroactivement faux ou incomplet. Les nouvelles exigences s 'appliquent aux dossiers initiés ou en cours après la date. À la pr",
+    "param": "tenant",
+    "comment": "Par version de matrice : `effectiveDate` (date ISO, obligatoire à la publication). À la validation, le dossier est estampillé `matrixVersion` — le grandfathering est automatique : un dossier validé sous V(n) reste conforme V(n) jusqu'à son prochain événement déclencheur (R48 : rejeu à date). Écran : Paramétrage matrice → Versions.",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 30,
+    "id": "R30",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Personne unique, propagation par événement",
+    "expl": "Une personne physique est unique dans le système et référencée par N dossiers. Un changement (ex. nouveau passeport) passe par un événement de changement de circonstances (CoC) : tâche de mise à jour du document en GED et dans O-Live, propagation à tous les dossiers où la personne apparaît, alerte aux RM concernés.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 31,
+    "id": "R31",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Cumul de rôles",
+    "expl": "Le cumul de rôles par une même personne dans un même dossier dépend de la politique de la banque (paramétrable). S 'il est autorisé en situation de conflit d 'intérêts (juge et partie), un flag obligatoire (ex. insider) est posé et alimente les scénarios AML correspondants.",
+    "param": "tenant",
+    "comment": "Tenant.settings.cumulRolesAutorise (bool, défaut false) — câblé, prouvé P-02",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 32,
+    "id": "R32",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "PEPisation contagieuse",
+    "expl": "La PEPisation est détectée via CoC, nouveau KYC, account review ou EDD. L 'événement est contagieux : il se propage à tous les dossiers où la personne est présente, matérialisé à la validation du KYC ou par les tâches émanant du CoC / account review. Jamais de bascule silencieuse de niveau de risque.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 33,
+    "id": "R33",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Dé-PEPisation humaine",
+    "expl": "Le déclassement PEP est toujours une décision humaine, sur alerte CoC au Central File ou au RM concerné. Le délai post-mandat avant statut non-PEP est paramétrable selon la politique de la banque.",
+    "param": "tenant",
+    "comment": "Tenant.settings.depepDelaiJours (int, défaut 365) — câblé, prouvé P-05",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 34,
+    "id": "R34",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Bijectivité étendue",
+    "expl": "Toute relation déclarée crée automatiquement sa réciproque, y compris pour les relations non officielles (« Dupont père d 'Ali » crée « Ali fils de Dupont »). Le graphe relationnel couvre les liens familiaux et informels --- essentiel pour les proches de PEP (art. 2a LBA).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 35,
+    "id": "R35",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Archivage",
+    "expl": "Une personne qui n 'a plus aucun rôle dans aucun dossier est archivée, non supprimée (conservation LBA).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 36,
+    "id": "R36",
+    "bloc": "4 · Propagation & relations (personnes, CoC)",
+    "titre": "Divergence d\\'identité",
+    "expl": "Une divergence d 'identité entre dossiers (ex. dates de naissance contradictoires) ouvre un dossier Central File : corroboration auprès des différents RM, établissement de la donnée correcte, validation par corroboration documentaire et intégration du bon document. Arbitrage humain tracé, jamais de merge automatique.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 37,
+    "id": "R37",
+    "bloc": "5 · Central File, assignation, SLA",
+    "titre": "Central File",
+    "expl": "Le Central File est le gardien documentaire transversal : centralisation de tous les documents, contrôle qualité (pièces d 'identité, factures, source of wealth), corroboration avec RM et Compliance. Son périmètre exact est paramétrable selon les process de la banque.",
+    "param": "tenant",
+    "comment": "Règles d'assignation Central File : file/rôle par type de tâche (R-Q)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 38,
+    "id": "R38",
+    "bloc": "5 · Central File, assignation, SLA",
+    "titre": "Assignation rôle puis personne",
+    "expl": "Une tâche est assignée à un rôle, avec ciblage optionnel d 'une personne si le client fait partie de son scope. On ne demande jamais le passeport d 'une personne à un RM pour qui elle est inconnue. La délégation RM vers ARM est native : c 'est le fonctionnement normal.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 39,
+    "id": "R39",
+    "bloc": "5 · Central File, assignation, SLA",
+    "titre": "SLA à deux niveaux",
+    "expl": "Les SLA existent formellement ; leur dépassement ne force rien mécaniquement : le dossier reste bloqué et la hiérarchie est informée. Les mécanismes d 'incitation (bonus, classement, rigidité d 'application) relèvent de la politique de la banque. O-Live fournit la mesure (compteurs, tableaux de dépassement) et la notification, pas la coer",
+    "param": "tenant",
+    "comment": "SLA mesurés, jamais bloquants : seuils par type via curseur SLA (écran Reporting AML)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 40,
+    "id": "R40",
+    "bloc": "5 · Central File, assignation, SLA",
+    "titre": "Réaffectation managériale",
+    "expl": "Le responsable de fonction dispose d 'une vue de charge de son équipe (tâches par personne, retards, bande passante) et réaffecte selon sa stratégie.",
+    "param": "tenant",
+    "comment": "Délais d'escalade & destinataires de notification (R-Q)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 41,
+    "id": "R41",
+    "bloc": "5 · Central File, assignation, SLA",
+    "titre": "Déblocage d\\'urgence et homme-clé",
+    "expl": "Le déblocage d 'une tâche bloquante sur dossier urgent suit une chaîne d 'escalade humaine : application manager, manager de la fonction, COO. Le process prévoit en principe un remplaçant du remplaçant ; si la chaîne est vide, il s 'agit d 'un risque opérationnel homme-clé que le système doit détecter et signaler (rôle sans titulaire ni s",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 42,
+    "id": "R42",
+    "bloc": "6 · Screening, IA, sanctions",
+    "titre": "Déclencheurs du screening",
+    "expl": "Quatre déclencheurs : (1) création de toute personne ou entité ; (2) screening perpétuel en batch --- quotidien pour les positions et transactions, hebdomadaire pour PEP et sanctions (fréquences paramétrables) ; (3) rescreening sur modification des données d 'identité (nom, date de naissance, nationalité) ; (4) déclenchement manuel à la s",
+    "param": "fixe",
+    "comment": "Invariant : rescreening immédiat sur changement d'identité — non paramétrable",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 43,
+    "id": "R43",
+    "bloc": "6 · Screening, IA, sanctions",
+    "titre": "Cycle de vie du hit",
+    "expl": "Un hit est analysé par le Compliance sanctions (LoD1) puis confirmé ou écarté par le MLRO ou le rôle LoD2 alloué par la banque. La clôture en faux positif exige une justification obligatoire, symétrique au refus de visa (R7).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 44,
+    "id": "R44",
+    "bloc": "6 · Screening, IA, sanctions",
+    "titre": "Whitelist des faux positifs récurrents",
+    "expl": "Un couple personne-profil écarté de manière récurrente entre en whitelist, avec justification obligatoire de l 'entrée fondée sur la récurrence. Si les données de la personne (ou du profil source) changent : une analyse IA évalue l 'impact du changement sur le screening, puis le responsable de la whitelist décide humainement du maintien o",
+    "param": "fixe",
+    "comment": "Invariant : l'IA analyse, l'humain décide — non paramétrable",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 45,
+    "id": "R45",
+    "bloc": "6 · Screening, IA, sanctions",
+    "titre": "Hit sanctions confirmé",
+    "expl": "Un hit sanctions confirmé entraîne la suspension du dossier (R17) et un offboarding en distressed asset. La décision est prise par Compliance et les RM concernés, pour ne pas exposer la banque aux amendes et conséquences réglementaires. La sévérité d 'application est paramétrable, la suspension est le comportement par défaut.",
+    "param": "tenant",
+    "comment": "Clé `settings.sanctions.offboardingMode` (enum : DISTRESSED_ASSET | FERMETURE_IMMEDIATE, déf. DISTRESSED_ASSET). Où : R-Q §Sanctions. La suspension (R17) et la décision humaine Compliance+RM sont des invariants ; seul le mode de sortie est tenant.",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 46,
+    "id": "R46",
+    "bloc": "6 · Screening, IA, sanctions",
+    "titre": "Hit pendant la validation",
+    "expl": "Un hit survenant pendant qu 'un dossier est en validation gèle les visas en cours et ouvre un délai d 'analyse. À l 'issue : offboarding (fermeture ou annulation) ou acceptation du risque et poursuite. La décision est prise en comité Risk & Compliance (BRM, COO, Compliance).",
+    "param": "tenant",
+    "comment": "Clé `settings.sanctions.delaiAnalyseJours` (int, déf. 10) — durée du gel des visas pendant l'analyse. Où : R-Q §Sanctions. Le gel des visas en cours est un invariant ; l'issue (offboarding vs acceptation du risque motivée) reste une décision humaine tracée.",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 47,
+    "id": "R47",
+    "bloc": "7 · Audit trail & rejeu à date",
+    "titre": "Journalisation des lectures",
+    "expl": "La confidentialité est élémentaire. La journalisation des accès en consultation (lectures) est disponible nativement et activable selon la demande de la banque --- certaines l 'exigent, d 'autres non (paramétrable).",
+    "param": "tenant",
+    "comment": "Clé `settings.audit.journaliserLectures` (bool, déf. faux) — active la journalisation des accès en consultation. Où : R-Q §Audit + Admin → Gouvernance. Attention volumétrie : prévoir la rétention `settings.audit.retentionLecturesJours` (int, déf. 365).",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 48,
+    "id": "R48",
+    "bloc": "7 · Audit trail & rejeu à date",
+    "titre": "Historisation et rejeu à date",
+    "expl": "Tout changement de matrice et de process est historisé. Le système sait restituer les seuils, matrices et règles en vigueur à toute date antérieure, afin de rejouer un cas aux mêmes conditions --- drill-down dans le temps. C 'est la généralisation du grandfathering R29 à l 'ensemble du référentiel de règles.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — l'historisation et le rejeu à date ne se désactivent pas. Ce qui EST tenant : les règles historisées elles-mêmes (chacune porte sa propre clé).",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 49,
+    "id": "R49",
+    "bloc": "7 · Audit trail & rejeu à date",
+    "titre": "Immutabilité",
+    "expl": "L 'audit trail est append-only : personne ne peut le modifier, y compris l 'application manager. La correction d 'une erreur de saisie s 'ajoute par-dessus l 'écriture erronée ; elle n 'efface jamais.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 50,
+    "id": "R50",
+    "bloc": "7 · Audit trail & rejeu à date",
+    "titre": "Exports réglementaires standard",
+    "expl": "La banque dispose en standard : du registre des dérogations, de la liste des dossiers en retard de recertification, du rapport PEP périodique, et de la liste des hits avec leur traitement.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 51,
+    "id": "R51",
+    "bloc": "7 · Audit trail & rejeu à date",
+    "titre": "Extraction par identifiant KYC",
+    "expl": "Toute demande d 'audit (ex. prouver le respect du 4-yeux sur 50 dossiers) s 'exécute par extraction de l 'audit trail complet des dossiers identifiés par leur ID KYC. Tout étant archivé et historisé par construction, l 'extraction est une requête, pas une reconstruction.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (catalogue v2.1 — cœur moteur certifié 65/65)"
+  },
+  {
+    "num": 52,
+    "id": "R52",
+    "bloc": "8 · Extensions moteur (12.07)",
+    "titre": "Exclusion du contributeur à la validation finale (extension R13/R15)",
+    "expl": "**Règle.** Tout contributeur de données du dossier — quelle que soit la section touchée — est exclu du visa de validation finale. Le 4-yeux de l'étape finale est global au dossier, pas limité à la section finale. > **Scénario V-18 — Contributeur exclu de la validation finale (R52)** > **Étant donné** un dossier dont U1 a modifié au moins ",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 53,
+    "id": "R53",
+    "bloc": "8 · Extensions moteur (12.07)",
+    "titre": "Concurrence optimiste",
+    "expl": "**Règle.** Toute commande utilisateur peut porter la version attendue de son dossier (nombre d'événements effectifs le concernant). Une commande fondée sur une version périmée est rejetée SANS AUCUN EFFET sur le dossier, avec la version courante en retour (« dossier modifié entre-temps, rechargez ») ; la tentative est tracée dans l'audit ",
+    "param": "fixe",
+    "comment": "Concurrence optimiste du moteur — non paramétrable",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 54,
+    "id": "R54",
+    "bloc": "8 · Extensions moteur (12.07)",
+    "titre": "Déclencheur du temps",
+    "expl": "**Règle.** Un point d'entrée unique `tick_global(now)` exécute toutes les échéances du moteur (rappels et escalades R5, abandon R19, visa conditionnel R25, dé-PEPisation R33, SLA R39, screening périodique R42). Il est : (a) **idempotent** — rejouer à la même date n'émet aucun événement métier supplémentaire ; (b) **monotone** — un tick an",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 55,
+    "id": "R55",
+    "bloc": "8 · Extensions moteur (12.07)",
+    "titre": "Snapshots de reprise",
+    "expl": "**Règle.** L'état d'un dossier peut être photographié (snapshot) à sa version R53 courante et restauré à l'identique. (a) **Fidélité** : le dossier restauré est canoniquement identique ET comportementalement vivant — une commande y produit le même résultat que sur l'original. (b) **O(récent)** : la restauration lit le dernier snapshot et ",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 56,
+    "id": "R56",
+    "bloc": "8 · Extensions moteur (12.07)",
+    "titre": "Règles tenant additionnelles (ratifiée bi-moteur 13.07.2026)",
+    "expl": "> **Ratifiée bi-moteur (2026-07-13)** — portée au moteur Python de référence : 5 types (minPreparateurs, sectionsPrealables, quatreYeuxRenforce, engagementSection, motifRefusMin), garde default-deny, événements `regle_tenant_ajoutee/activee/desactivee`, scénarios **RT-01..RT-08** verts — parité JS ⇄ Python (17/17 suites). **Règle.** Une b",
+    "param": "tenant",
+    "comment": "5 types versionnés, chacun avec ses params : `minPreparateurs {n:2}` · `sectionsPrealables {section, avant}` · `quatreYeuxRenforce {}` (signataire étranger à TOUT le dossier) · `engagementSection {section}` (R14 étendu) · `motifRefusMin {n:20}`. Adoption tracée avec justification obligatoire, source manuel ou Olivia (R44 : l'IA propose, l'humain adopte), désactivation réversible et journalisée. Écran : Moteur workflow → « Règles du workflow » (ci-dessous) → + Ajouter.",
+    "statut": "Proposition (types de règles tenant — implémentés au moteur démo)"
+  },
+  {
+    "num": 57,
+    "id": "R57",
+    "bloc": "9 · Bi-moteur & robustesse",
+    "titre": "ratification bi-moteur (2026-07-13)",
+    "expl": "Ratification bi-moteur : le moteur Python de référence fait foi ; tout port doit prouver l'égalité.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 58,
+    "id": "R58",
+    "bloc": "9 · Bi-moteur & robustesse",
+    "titre": "ratification bi-moteur (2026-07-13) — LE CATALOGUE EST INTÉGRALEMENT RATIFIÉ (R1–R62)",
+    "expl": "Bloc R58–R61 : robustesse (H/DV/F/G) — horloge, dérive, panne, garde-fous.",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 12–13.07.2026"
+  },
+  {
+    "num": 63,
+    "id": "R63",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "O-Live CPSI (Client Profiling & Segmentation Intelligence Server)",
+    "expl": "Nouvelle brique : serveur dédié de profilage perpétuel des clients — scoring continu, segmentation en groupes de pairs, consommé par l'AML (seuils par segment), l'aiguillage workflow (SDD/CDD/EDD, alimente R59) et les revues périodiques. - **R63 — Score perpétuel événementiel** : tout signal (alerte qualifiée, hit screening, review défavo",
+    "param": "tenant",
+    "comment": "Paramètres CPSI par tenant : poids de scoring, half-life, bandes de segments — TOUS affichés en clair à côté de leur écran (R68). Où : écran CPSI → Paramétrage (chaque changement versionné, rejouable à date R48/R49). Démo : onglet Référentiel AML.",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 68,
+    "id": "R68",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "Gouvernance des règles de calcul CPSI",
+    "expl": "- **R68 — Paramètres transparents, en clair, versionnés** : poids, half-life, bandes et seuils de segments sont des paramètres tenant AFFICHÉS EN CLAIR à côté de leur écran de paramétrage (formule en français, valeurs courantes) ; toute modification est un événement versionné par date de mise en vigueur — le rejeu à date utilise la config",
+    "param": "tenant",
+    "comment": "C'est LA règle du paramétrage CPSI : `poids` (par attribut), `halfLifeJours` (int), `bandes` (liste de seuils), `seuilsSegments` (par groupe de pairs) — versionnés, en clair, formule affichée. Où : écran CPSI → Paramétrage ; audit PARAM_AUDIT ; rejeu à date garanti.",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 71,
+    "id": "R71",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "Groupes de population (segmentation, barème par groupe, ciblage AML)",
+    "expl": "État de l'art : customer segmentation / peer-group analysis (Actimize, SAS AML, Oracle FCCM, Quantexa) = traduction opérationnelle de l'approche par les risques FATF/FINMA. - **R71 — Groupes de population** : cohortes définies par prédicat déclaratif composable (ET/OU de conditions sur secteur, type, aum_band, pays_risque, pep, score, his",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 75,
+    "id": "R75",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "Marquage insider (liste d'initiés surveillée, MAR)",
+    "expl": "Obligation MAR de tenir une liste d'initiés. Statut sensible porté par le client, analogue au PEP. - **R75** : un client peut être marqué « insider » ; marquage tracé (auteur/date/motif/instrument), append-only (R49), réservé aux rôles habilités (compliance/market surveillance), réversible avec motivation obligatoire. Le statut alimente l",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 76,
+    "id": "R76",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "Cases d'investigation depuis les scénarios + annexe B (2026-07-13)",
+    "expl": "- **R76** : un hit de scénario devient une case tracée (id, scénario, client, groupe, valeur, seuil, sévérité, statut) alimentant le workflow d'investigation — rien par effet de bord (R66), génération idempotente. Décisions : clôture (motif obligatoire), escalade EDD/MROS, révision KYC (alimente le dossier), demande d'info ; tracées, appe",
+    "param": "tenant",
+    "comment": "Clés `settings.riskCases.slaHeures` (par sévérité, déf. {CRITIQUE: 24, HAUTE: 72, MOYENNE: 120}) et `settings.riskCases.assignation` (sévérité → file/rôle). Où : R-Q §AML + écran Risk Cases. La STRUCTURE de la case (id, scénario, valeur, seuil, statut) est invariante — seuls SLA et routage sont tenant.",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 77,
+    "id": "R77",
+    "bloc": "10 · CPSI — profilage & AML",
+    "titre": "Séparation Screening / AML + bac à sable AML (2026-07-13)",
+    "expl": "- **R77** (produit) : le screening (rapprochement de listes — sanctions OFAC/SECO, PEP, médias, via LSEG/Dow Jones/ComplyAdvantage) et la surveillance AML comportementale (scénarios) sont **deux domaines distincts**. Un hit de screening n'est PAS une alerte AML. AML Investigation → par défaut les **alertes AML (scénarios)** ; sanctions/PE",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 13.07.2026 (CPSI)"
+  },
+  {
+    "num": 84,
+    "id": "R84",
+    "bloc": "12 · Édition, passage de main, visa qualifié",
+    "titre": "Édition exclusive du dossier KYC (« la main » / checkout)",
+    "expl": "- Un dossier KYC en édition est détenu par **un seul intervenant à la fois** (comme un dossier physique). Les autres ne peuvent **pas le consulter** tant qu'il n'est pas libéré (release) ; un pop-up leur propose de **demander la main** (requête tracée). Le détenteur peut libérer ou passer la main. Journalisé (R48/R49). - Moteur : `KycLock",
+    "param": "fixe",
+    "comment": "Invariant : une seule main d'édition à la fois — non paramétrable",
+    "statut": "Ratifié — backend + e2e"
+  },
+  {
+    "num": 85,
+    "id": "R85",
+    "bloc": "12 · Édition, passage de main, visa qualifié",
+    "titre": "Passage de main workflow (Next step / Revenir)",
+    "expl": "- Le validateur passe la main à l'étape suivante (« Valider et passer à l'étape suivante ») ou rend au précédent (« Renvoyer à l'étape précédente ») ; **message OBLIGATOIRE à chaque passage** (adressé à l'intervenant concerné, consigné) ; jusqu'à la section validation (valider/rejeter). Tracé (R48/R49). - Moteur de référence : `KycHandoff",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié — backend + e2e"
+  },
+  {
+    "num": 86,
+    "id": "R86",
+    "bloc": "12 · Édition, passage de main, visa qualifié",
+    "titre": "Visa qualifié (verdict + message)",
+    "expl": "- Apposer un visa rend un **verdict** — OK (favorable) / CONDITIONAL (sous condition) / NOK (défavorable) — et un **message**. Un verdict NOK ou CONDITIONAL EXIGE un message justificatif ; OK peut rester sans message. Visa retirable par son seul signataire, tracé (R48/R49). NOK bloquant. - Moteur de référence : `QualifiedVisa` (apposer/re",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié — backend + e2e"
+  },
+  {
+    "num": 87,
+    "id": "R87",
+    "bloc": "12 · Édition, passage de main, visa qualifié",
+    "titre": "Fil d'échange par section/sous-section",
+    "expl": "- Chaque section/sous-section a son **fil d'échange cloisonné** (affiché à droite, en longueur).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "À venir"
+  },
+  {
+    "num": 88,
+    "id": "R88",
+    "bloc": "12 · Édition, passage de main, visa qualifié",
+    "titre": "Appréciation d'intervenant rétractable",
+    "expl": "- Par section, bloc dépliable en bas pour consulter/ajouter une appréciation. - Timeline du KYC (qui a fait quoi + messages) dans la section validation = application R48/R49 (pas de nouvelle règle).",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "À venir"
+  },
+  {
+    "num": 89,
+    "id": "R89",
+    "bloc": "13 · IAM — identité & clés",
+    "titre": "Rôle non falsifiable",
+    "expl": "**Règle.** Le rôle porté par le jeton d'accès provient **exclusivement** du compte utilisateur en base. Aucun paramètre fourni par l'appelant — corps de requête, en-tête, revendication d'un jeton tiers — ne peut déterminer ou élever le rôle. L'échec d'authentification renvoie un message unique, sans révéler l'existence du compte. > **Scén",
+    "param": "fixe",
+    "comment": "Invariant de sécurité — le rôle vient EXCLUSIVEMENT du compte en base, jamais d'un paramètre client. Le rendre paramétrable ouvrirait l'escalade de privilèges. Ce qui EST tenant : le mapping groupes IdP → rôles (R91, OIDC_ROLE_MAPPING).",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 90,
+    "id": "R90",
+    "bloc": "13 · IAM — identité & clés",
+    "titre": "Second facteur & enrôlement prouvé",
+    "expl": "**Règle.** Si la MFA est activée pour un utilisateur, un code TOTP (RFC 6238) valide est exigé **en plus** du mot de passe. L'enrôlement se fait en deux temps : génération du secret, puis **activation seulement après un premier code valide** — un secret posé ne protège rien tant qu'il n'est pas prouvé côté client. La réinitialisation est ",
+    "param": "tenant",
+    "comment": "Par utilisateur : `User.mfaEnabled` (bool). Enrôlement 2 temps : `POST /auth/mfa/enroll` (secret + QR otpauth://) puis `/auth/mfa/confirm` avec un premier code TOTP valide — la MFA ne s'active qu'après preuve. Reset admin : `POST /admin/users/:id/reset-mfa`. Le secret est chiffré au repos (AES-256-GCM, clé env `MFA_ENC_KEY` — SB-01..06, legacy passthrough). Écran : Admin → Utilisateurs.",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 91,
+    "id": "R91",
+    "bloc": "13 · IAM — identité & clés",
+    "titre": "Fédération d'identité : l'IdP est source de vérité",
+    "expl": "**Règle.** En SSO (OIDC ou SAML), l'émetteur et l'audience sont vérifiés, le jeton expiré est rejeté, et le rôle O-Live est **dérivé des groupes de l'IdP à chaque connexion** — jamais figé au provisioning. Le compte est créé à la volée (JIT) s'il n'existe pas. Le **mapping groupes → rôles** et le **rôle par défaut** sont des paramètres te",
+    "param": "tenant",
+    "comment": "OIDC_ISSUER · OIDC_AUDIENCE · OIDC_ROLE_MAPPING · OIDC_JWKS_URI (env) — l'IdP est source de vérité du rôle",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 92,
+    "id": "R92",
+    "bloc": "13 · IAM — identité & clés",
+    "titre": "Rotation des clés sans coupure",
+    "expl": "**Règle.** Les jetons sont signés par la clé **active** du trousseau, identifiée par son `kid`. Le vérificateur résout la clé publique par `kid` : une rotation n'invalide **pas** les sessions en cours pendant la période de grâce. Les clés publiques sont exposées au standard JWKS. Une clé purgée rend ses jetons invalides. > **Scénario I-05",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 93,
+    "id": "R93",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Aucun score implicite",
+    "expl": "**Règle.** Toute valeur d'un référentiel entrant dans un calcul de risque porte un score **explicite**. Une valeur sans score ne vaut pas « neutre » : elle est **signalée** comme non scorée, et le référentiel affiche le décompte des valeurs concernées. Une valeur nouvelle apparue dans les données (activité, structure, pays) est traitée co",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 94,
+    "id": "R94",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Paramétrage instruit : dry-run obligatoire",
+    "expl": "**Règle.** Tout changement de paramètre affectant le risque, la charge ou l'aiguillage doit pouvoir être **simulé sans écriture**, sur les données réelles, avec un **impact nominatif** : non seulement les volumes avant/après, mais l'identité des dossiers ou clients qui entrent et sortent. La simulation ne crée ni tâche, ni alerte, ni case",
+    "param": "fixe",
+    "comment": "Invariant : tout changement de paramétrage passe par un dry-run — non paramétrable",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 95,
+    "id": "R95",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Robustesse du réglage (stress test)",
+    "expl": "**Règle.** Le système présente la **courbe de réponse** autour du réglage simulé (balayage du paramètre) et signale une **discontinuité disproportionnée** — une hausse au moins double du saut médian. Une croissance régulière n'est pas une discontinuité : c'est un coût linéaire assumé. Le système **signale, il ne bloque pas** (R39). > **Sc",
+    "param": "fixe",
+    "comment": "Invariant de gouvernance — la courbe de réponse et la détection de discontinuité s'affichent TOUJOURS lors d'une simulation. Le paramètre balayé est celui que la banque règle ; la mécanique du stress test, elle, ne se désactive pas.",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 96,
+    "id": "R96",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Séparation de la proposition et de l'arbitrage",
+    "expl": "**Règle.** Les bacs à sable **proposent** ; l'owner de l'application **arbitre**. Une recommandation porte son auteur nommé, sa source, sa date de mise en vigueur demandée et son **impact mesuré**. L'acceptation applique le changement et le journalise. Le **refus exige un motif** (R7) ; un refus sans motif est bloqué. Le refus motivé a la",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 97,
+    "id": "R97",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Cumul des changements",
+    "expl": "**Règle.** Le comité présente l'**effet combiné** des recommandations retenues, et non seulement leur effet individuel. Une tension globale est calculée à partir des impacts qui coûtent réellement (dossiers passant en diligence renforcée, réponses à collecter, alertes nouvelles). Au-delà d'un seuil, le système **conseille d'étaler les dat",
+    "param": "fixe",
+    "comment": "Invariant de gouvernance — l'effet combiné des changements retenus est TOUJOURS présenté au comité (jamais seulement l'effet individuel). C'est la protection contre la dérive par petits pas ; elle ne se paramètre pas.",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 98,
+    "id": "R98",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Conflit porteur / contrôleur",
+    "expl": "**Règle.** Un gestionnaire qui porte un portefeuille client **et** détient un rôle de contrôle (validation finale, visa de risque) est signalé comme conflit structurel : il ne pourra pas viser ses propres dossiers (R13/R52). Le référentiel expose ce conflit ; l'arbitrage — réattribuer le portefeuille ou nommer un validateur tiers (R2) — r",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 99,
+    "id": "R99",
+    "bloc": "14 · Gouvernance du paramétrage",
+    "titre": "Relais réel (extension R4)",
+    "expl": "**Règle.** Le suppléant d'un validateur doit **différer** du validateur lui-même. Un suppléant identique au validateur est un **relais fictif** : en cas d'absence, il n'existe aucun relais, et le dossier attend ou passe par une dérogation tracée. Le système signale les relais fictifs ; il ne les interdit pas (R39). > **Scénario B-07 — Un ",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié (IAM / gouvernance)"
+  },
+  {
+    "num": 100,
+    "id": "R100",
+    "bloc": "15 · Screening — hits & preuve",
+    "titre": "Un hit n'est pas une alerte",
+    "expl": "**Règle.** Le rapprochement d'un client avec une entrée de liste produit un **hit brut** : un événement horodaté portant le score, l'entrée rapprochée, et **la version de la liste** contre laquelle il a été produit. Un hit brut n'est ni une alerte, ni un soupçon, ni une décision — c'est de la matière. Il ne devient **alerte** qu'après qua",
+    "param": "tenant",
+    "comment": "Liste, version, seuil de rapprochement, pré-filtre (minPartages/maxTrigrammes/plafond) — POST /v1/screening/run",
+    "statut": "Ratifié 15.07.2026 — backend 4/4 verts"
+  },
+  {
+    "num": 101,
+    "id": "R101",
+    "bloc": "15 · Screening — hits & preuve",
+    "titre": "Qualification motivée",
+    "expl": "**Règle.** Un hit brut se qualifie en **vrai positif** ou **faux positif**, par une **personne nommée**, avec un **motif obligatoire** (R7) choisi dans le référentiel des motifs standardisés. Aucune qualification anonyme, aucune qualification sans motif — y compris pour un faux positif évident. *Pourquoi y compris l'évident :* c'est préci",
+    "param": "fixe",
+    "comment": "Invariant du moteur — non paramétrable (fixe par conception)",
+    "statut": "Ratifié 15.07.2026 — backend 4/4 verts"
+  },
+  {
+    "num": 102,
+    "id": "R102",
+    "bloc": "15 · Screening — hits & preuve",
+    "titre": "Whitelist datée, jamais éternelle",
+    "expl": "**Règle.** Un faux positif qualifié écarte le hit **pour cette entrée et cette version de liste**. Si l'entrée de liste **change** — nouvel alias, nouvelle date de naissance, nouveau programme — la whitelist ne s'applique plus : le hit **réapparaît** et doit être re-qualifié. Une whitelist éternelle est une bombe à retardement : elle tran",
+    "param": "tenant",
+    "comment": "La mécanique (empreinte d'entrée, réapparition si l'entrée change) est invariante. Ce qui est tenant : la durée de validité optionnelle `settings.screening.whitelistTtlJours` (int, déf. 0 = liée à l'empreinte seule) — écran Screening → Qualification ; historique conservé (R48).",
+    "statut": "Ratifié 15.07.2026 — backend 4/4 verts"
+  },
+  {
+    "num": 103,
+    "id": "R103",
+    "bloc": "15 · Screening — hits & preuve",
+    "titre": "Preuve de fraîcheur",
+    "expl": "**Règle.** Chaque passage de screening laisse une trace, **même sans aucun hit** : quel périmètre a été confronté, à quelle version de quelle liste, à quel horodatage, avec quels seuils et quel réglage de pré-filtre. *Pourquoi :* l'attente du régulateur n'est pas « avez-vous un outil », c'est « votre base a-t-elle été confrontée à cette i",
+    "param": "fixe",
+    "comment": "Invariant : trace de passage même à 0 hit — non paramétrable",
+    "statut": "Ratifié 15.07.2026 — backend 4/4 verts"
+  },
+  {
+    "num": 104,
+    "id": "R104",
+    "bloc": "16 · Golden record",
+    "titre": "Propagation contrôlée au golden record",
+    "expl": "Les données d'un KYC ne mettent à jour la fiche client QUE par consommation de l'événement kyc.validated — jamais avant validation, jamais par effet de bord. Mapping fermé, idempotent, tracé (audit CLIENT_UPDATED_FROM_KYC).",
+    "param": "tenant",
+    "comment": "GOLDEN_RECORD_MAPPING : liste fermée des champs propagés (MVP riskLevel) — candidat R-Q",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GR 9/9 verts"
+  },
+  {
+    "num": 105,
+    "id": "R105",
+    "bloc": "17 · PMS — mandats & adéquation",
+    "titre": "Le portefeuille reflète le mandat, l'écart se constate",
+    "expl": "Chaque portefeuille est adossé à un mandat (bornes d'allocation par classe, restrictions, profil requis). L'écart réel/cible est calculé et tracé à chaque valorisation ; un dépassement crée un événement pms.drift.detecte + une tâche de régularisation — jamais un rééquilibrage automatique : l'arbitrage est un acte de gestion humain (doctrine R44).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus PF 9/9 verts",
+    "comment": "`Tenant.settings.pmsDriftToleranceBp` (int, défaut 200 bp) : tolérance avant qu'un écart devienne un drift — prouvé PF-01. Bornes par classe et restrictions : dans la stratégie du mandat (écran PMS → Mandat)."
+  },
+  {
+    "num": 106,
+    "id": "R106",
+    "bloc": "17 · PMS — mandats & adéquation",
+    "titre": "Contrôle pre-trade : les restrictions du mandat bloquent",
+    "expl": "Avant tout ordre : exclusions (ESG, mandat islamique, listes internes), concentration maximale par position, classes hors stratégie. Une violation BLOQUE l'ordre avec motif explicite (contrainte réglementaire, type R13 — pas un SLA R39) et trace pms.pretrade.bloque. Le passage aussi se prouve (pms.pretrade.ok — esprit R103).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus PF 9/9 verts",
+    "comment": "Dans `Mandate.strategie` : `exclusions` (liste de secteurs) et `maxPositionPct` (int, défaut 10) — prouvé PF-02/PF-03. Écran PMS → Mandat → Restrictions."
+  },
+  {
+    "num": 107,
+    "id": "R107",
+    "bloc": "17 · PMS — mandats & adéquation",
+    "titre": "Adéquation LSFin : le profil KYC borne le mandat",
+    "expl": "Le riskLevel du CLIENT (golden record, alimenté par KYC validé — R104) borne le profil du mandat : un client LOW ne porte pas un mandat agressif. Toute inadéquation (à la souscription ou après propagation R104) émet pms.suitability.alerte + tâche de revue — le mandat n'est JAMAIS rétrogradé automatiquement (décision humaine tracée, cohérence R33/R44).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus PF 9/9 verts",
+    "comment": "Invariant : c'est le cœur de la protection LSFin — si l'adéquation était paramétrable, un tenant pourrait la désactiver. Le NIVEAU requis par mandat, lui, se règle (Mandate.profilRequis) — prouvé PF-04/PF-05."
+  },
+  {
+    "num": 108,
+    "id": "R108",
+    "bloc": "17 · PMS — mandats & adéquation",
+    "titre": "Breach post-trade : mesuré, tracé, régularisé sous délai",
+    "expl": "Tout breach passif (drift non résolu, position devenue non conforme, downgrade) vit dans un registre append-only : détection, cause, régularisation attendue sous délai. Le délai échu ALERTE et ESCALADE (une fois) — il ne liquide jamais (R39). La clôture exige un motif (R7) et un auteur nommé (jeton).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus PF 9/9 verts",
+    "comment": "`Tenant.settings.pmsBreachDelaiJours` (int, défaut 30) : délai de régularisation avant escalade — prouvé PF-06. Registre : écran PMS → Breaches ; clôture motivée obligatoire."
+  },
+  {
+    "num": 109,
+    "id": "R109",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Le document est versionné, jamais supprimé",
+    "expl": "Un document est un objet unique rattaché (client / KYC / personne), porteur de versions append-only : un nouveau dépôt crée la version n+1, toutes les versions restent restituables (conservation LBA — cohérence R35). Aucune suppression physique : le retrait est un archivage logique motivé (R7), tracé (auteur = jeton), le document reste restituable pour l'autorité.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD 9/9 verts",
+    "comment": "Invariant : la GED EST la preuve — si la suppression était paramétrable, la conservation LBA (10 ans) ne serait plus démontrable. Registre `document_versions` append-only (trigger R48) — prouvé GD-01/GD-02."
+  },
+  {
+    "num": 110,
+    "id": "R110",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Péremption par type, complétude aux points de passage",
+    "expl": "Chaque type de document du référentiel tenant porte une validité. L'expiration est CONSTATÉE par le tick (événement + tâche de renouvellement, une fois) — elle ne bloque rien en continu (R39). La complétude se vérifie AUX POINTS DE PASSAGE (validation KYC, décision AR) : la GED liste manquants et expirés, c'est le moteur appelant qui bloque.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD 9/9 verts",
+    "comment": "`Tenant.settings.gedDocTypes[]` : { code, validiteMois|null, requisPour[], rolesAutorises[] } — défauts : PASSEPORT 120 mois, REGISTRE 12, FORM_CDB sans péremption, FISCAL restreint CO/CF. Prouvé GD-03/GD-04. Écran : Paramétrage → Champs & droits → GED."
+  },
+  {
+    "num": 111,
+    "id": "R111",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "L'intégrité se prouve à la restitution",
+    "expl": "Chaque version porte l'empreinte SHA-256 calculée au dépôt (métadonnées immuables — R48). Toute restitution recalcule et confronte : une divergence est une altération détectée — événement ged.integrite.alerte et refus de servir le contenu comme authentique.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD 9/9 verts",
+    "comment": "Invariant : une empreinte contournable n'est pas une preuve. Le calcul vit au dépôt et à la restitution, jamais fourni par le client — prouvé GD-05."
+  },
+  {
+    "num": 112,
+    "id": "R112",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "L'accès aux documents est habilité et tracé",
+    "expl": "La consultation est soumise aux rôles autorisés du type (default-deny : type inconnu = refus) et chaque consultation — ET chaque refus — est un événement : qui (jeton), quand, quel document, quelle version. L'inspecteur peut rejouer « qui a vu quoi » (R48/R49).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD 9/9 verts",
+    "comment": "Les rôles autorisés par type : `gedDocTypes[].rolesAutorises` (défaut restrictif ; FISCAL → CO/CF seulement). Le default-deny lui-même est invariant — seule la LISTE se paramètre. Prouvé GD-06."
+  },
+  {
+    "num": 113,
+    "id": "R113",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Ancrage : l'intégrité devient une antériorité opposable",
+    "expl": "Un tick quotidien construit la racine de Merkle des empreintes non ancrées et la fait horodater par un tiers qualifié (RFC 3161 / ZertES — port TSA). Chaque version garde sa preuve d'appartenance : « ce document, dans cet état, existait avant telle date », vérifiable sans faire confiance à O-Live.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD-07..14 9/9 verts",
+    "comment": "Invariant : une preuve d'antériorité optionnelle n'en est pas une. Le PRESTATAIRE TSA est une configuration de déploiement (port), pas un paramètre métier — prouvé GD-07/GD-08 (Merkle recalculé indépendamment par le test)."
+  },
+  {
+    "num": 114,
+    "id": "R114",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Signature qualifiée : la signature est une version",
+    "expl": "La QES (équivalent manuscrit — ZertES) produit une NOUVELLE version (succession R109) : contenu signé, empreinte propre, référence de preuve du prestataire, signataire explicite. La version non signée reste consultable. Sans prestataire configuré : refus explicite — jamais de signature simulée.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD-07..14 9/9 verts",
+    "comment": "Choix du prestataire QES (Swisscom AIS, Skribble…) et types signables : configuration tenant (port + `gedDocTypes`). Le principe « signature = version, jamais simulée » est invariant — prouvé GD-09/GD-10."
+  },
+  {
+    "num": 115,
+    "id": "R115",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Rétention gouvernée : la destruction se décide, le hold gèle tout",
+    "expl": "L'échéance de rétention (LBA) fait PROPOSER la destruction (événement + tâche, une fois) — jamais l'exécuter. La destruction est une décision humaine motivée (R7) : le contenu part, les métadonnées et les empreintes RESTENT (certificat). Un legal hold posé sur un client gèle proposition ET destruction jusqu'à levée motivée.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD-07..14 9/9 verts",
+    "comment": "`Document.retentionUntil` (calculé : fin de relation + 10 ans LBA, ajustable par type). Le trio « proposer / décider / certifier » et le gel par hold sont invariants — prouvé GD-11..GD-13."
+  },
+  {
+    "num": 116,
+    "id": "R116",
+    "bloc": "18 · GED — documents & preuve",
+    "titre": "Classification IA-assistée : l'IA propose, l'humain applique",
+    "expl": "À réception d'un contenu, l'IA (port — R44) peut proposer type et date d'expiration détectée. La proposition est un ÉVÉNEMENT, jamais une application : le type ne change que par confirmation humaine tracée. Sans port IA, la fonction est simplement absente.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus GD-07..14 9/9 verts",
+    "comment": "Activation et modèle du port IA : configuration tenant. La séparation proposition/application (R44) est invariante — prouvé GD-14 (le type reste inchangé entre les deux événements)."
+  },
+  {
+    "num": 117,
+    "id": "R117",
+    "bloc": "19 · Onboarding — l'entrée en relation",
+    "titre": "Le parcours est une machine à états tracée",
+    "expl": "PROSPECT → COLLECTE → KYC_EN_COURS → DECISION → OUVERT | REFUSE | ABANDONNE. Seules les transitions légales existent (pas de saut d'étape) ; chaque transition est un événement (auteur = jeton, horodatage) ; refus et abandon exigent un motif (R7).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus OB 9/9 verts",
+    "comment": "Invariant : des états ouverts ne se mesurent pas et ne s'auditent pas. Prouvé OB-01/OB-02."
+  },
+  {
+    "num": 118,
+    "id": "R118",
+    "bloc": "19 · Onboarding — l'entrée en relation",
+    "titre": "L'entrée en collecte crée le KYC — un seul, par le moteur",
+    "expl": "Le passage en COLLECTE porte le mini-formulaire 4 infos (nom légal, structure, RM, type de compte — Spéc. Produit §3.2) et DÉLÈGUE au moteur KYC existant (risque → workflow SDD/CDD/EDD → sections/visas). Un seul KYC actif par onboarding ; les révisions R2..Rn restent l'affaire du cycle KYC.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus OB 9/9 verts",
+    "comment": "Invariant : « un KYC est créé automatiquement à chaque onboarding » (Spéc. Produit §3.1) — et jamais construit à la main hors moteur. Prouvé OB-03 (le test vérifie l'APPEL au moteur, pas une réimplémentation)."
+  },
+  {
+    "num": 119,
+    "id": "R119",
+    "bloc": "19 · Onboarding — l'entrée en relation",
+    "titre": "L'ouverture n'existe qu'après KYC VALIDATED",
+    "expl": "DECISION → OUVERT est refusée tant que le KYC lié n'est pas VALIDATED (statut terminal favorable de l'enum réelle — erratum du 19.07 : la 1re rédaction disait APPROVED, vocabulaire du doc MOD-01, écart attrapé au premier run réel) (blocage réglementaire type R13, pas un SLA R39). L'ouverture émet onboarding.ouvert ; compte et tâches de bienvenue sont des CONSOMMATEURS de l'événement, jamais des effets de bord de la transition.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus OB 9/9 verts",
+    "comment": "C'est la dépendance MOD-01 → MOD-09 de la roadmap, devenue une règle testée. Prouvé OB-04."
+  },
+  {
+    "num": 120,
+    "id": "R120",
+    "bloc": "19 · Onboarding — l'entrée en relation",
+    "titre": "Le funnel se mesure, il ne coerce pas",
+    "expl": "Chaque étape porte un SLA paramétrable ; le dépassement alerte UNE fois (événement + tâche de relance) et n'abandonne jamais automatiquement (R39/R33 — l'abandon est une décision humaine motivée). Le funnel est rejouable : les transitions horodatées restituent délais par étape et taux de passage (R48/R49).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus OB 9/9 verts",
+    "comment": "`Tenant.settings.onboardingSlaJours` { COLLECTE: 30, KYC_EN_COURS: 45, DECISION: 10 } — prouvé OB-05 (silence sous SLA tenant relevé) / OB-06 (funnel reconstruit des événements)."
+  },
+  {
+    "num": 121,
+    "id": "R121",
+    "bloc": "20 · Agent de pré-revue IA",
+    "titre": "L'agent est un pré-lecteur, jamais un décideur",
+    "expl": "Sur demande, l'agent produit une pré-revue structurée du dossier KYC : points typés (MANQUANT / CONTRADICTION / QUESTION) rattachés aux sections. C'est un ÉVÉNEMENT — aucune écriture sur le dossier, aucun statut modifié, aucun visa touché (R44/R15). Sans port IA : refus explicite, jamais de simulation.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus AG 9/9 verts",
+    "comment": "Invariant : c'est la ligne rouge FINMA — une IA qui écrirait sur le dossier serait dans le circuit de décision. Prouvé AG-01 (dossier strictement intact) / AG-02 (pas de port, pas de trace)."
+  },
+  {
+    "num": 122,
+    "id": "R122",
+    "bloc": "20 · Agent de pré-revue IA",
+    "titre": "La pré-revue est rejouable : qu'a vu l'IA, qu'a-t-elle dit",
+    "expl": "Chaque pré-revue conserve append-only (R48) : empreinte SHA-256 de l'instantané transmis, modèle et version, version du prompt système, sortie intégrale, latence. L'inspecteur rejoue sans reconstruction ni nouvel appel (R49) — la même exigence que pour un screening (R103).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus AG 9/9 verts",
+    "comment": "Invariant : une IA non rejouable est une boîte noire — indéfendable en inspection. Prouvé AG-03 (relire ne rappelle pas le port)."
+  },
+  {
+    "num": 123,
+    "id": "R123",
+    "bloc": "20 · Agent de pré-revue IA",
+    "titre": "L'humain dispose : chaque point se traite ou s'écarte",
+    "expl": "Le réviseur marque chaque point TRAITÉ ou ÉCARTÉ — l'écart exige un motif (R7 : écarter sans dire pourquoi, c'est décider en silence). Par défaut la pré-revue n'est JAMAIS bloquante (R39). La banque qui le souhaite peut exiger le traitement de tous les points avant visa : le service constate, le moteur KYC bloque (mécanique R110).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus AG 9/9 verts",
+    "comment": "`Tenant.settings.iaPrerevueTraitementRequis` (bool, défaut false) — prouvé AG-04/AG-05. Écran : Paramétrage → Champs & droits → IA."
+  },
+  {
+    "num": 124,
+    "id": "R124",
+    "bloc": "20 · Agent de pré-revue IA",
+    "titre": "L'agent ne voit que le nécessaire, le prompt est versionné",
+    "expl": "L'instantané transmis au port est minimisé (le dossier concerné seulement) et pseudonymisé par défaut : le nom réel ne quitte pas O-Live (alias stable). Le prompt système vit dans un registre versionné append-only — tout changement est un événement : un prompt modifié en silence est une règle modifiée en silence.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus AG 9/9 verts",
+    "comment": "`Tenant.settings.iaPseudonymise` (bool, défaut true) — prouvé AG-06 par CAPTURE de ce qui part réellement au port (le test vérifie l'ABSENCE du nom). Registre ia_prompt_versions : append-only (trigger R48)."
+  },
+  {
+    "num": 125,
+    "id": "R125",
+    "bloc": "21 · Gouvernance des paramètres — le R-Q exécutable",
+    "titre": "Le registre des paramètres est le seul chemin d'écriture",
+    "expl": "Chaque paramètre tenant vit dans un registre exécutable : clé, type, défaut, règle Rxx de rattachement, caractère REQUIS. Clé inconnue → refus ; mauvais type → refus. Le questionnaire R-Q n'est plus rédigé : il SE GÉNÈRE du registre — plus aucun paramètre sauvage.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus RQ 7/7 verts",
+    "comment": "Invariant : un paramètre hors registre est une règle hors catalogue. Registre initial : 12 entrées rattachées (R31, R33, R100, R104, R105, R108, R110/R112, R120, R123, R124, R128, R39) — s'enrichit par amendement, comme le catalogue. Prouvé RQ-01/RQ-02."
+  },
+  {
+    "num": 126,
+    "id": "R126",
+    "bloc": "21 · Gouvernance des paramètres — le R-Q exécutable",
+    "titre": "Changer un paramètre est un événement daté et motivé",
+    "expl": "Tout changement porte : avant / après, auteur (jeton), motif (R7 — un paramètre est une règle, une règle ne change pas sans dire pourquoi), date d'effet immédiate ou FUTURE (R29 — l'effet différé est un droit). L'effet rétroactif est REFUSÉ (R48 — on ne réécrit pas le passé). Registre des changements append-only.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus RQ 7/7 verts",
+    "comment": "Même doctrine que le prompt IA (R124) généralisée à TOUS les paramètres : modifié en silence = règle modifiée en silence. Prouvé RQ-03/RQ-04 (la valeur effective ne bouge pas avant l'échéance)."
+  },
+  {
+    "num": 127,
+    "id": "R127",
+    "bloc": "21 · Gouvernance des paramètres — le R-Q exécutable",
+    "titre": "La configuration se rejoue à date",
+    "expl": "« Quelle était la configuration de la banque le 3 mars ? » se répond depuis les événements (R48/R49) : pour toute clé et toute date, la valeur effective se reconstruit — dernier changement dont l'effet est atteint, sinon le défaut du registre. Condition du rejeu global : rejouer un dossier à date sans la config d'alors ne prouve rien.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus RQ 7/7 verts",
+    "comment": "Invariant : c'est la moitié manquante de R49 — le rejeu à date des DONNÉES existait, celui des RÈGLES PARAMÉTRÉES manquait. Prouvé RQ-05 (3 changements datés, valeur d'alors restituée, défaut avant tout)."
+  },
+  {
+    "num": 128,
+    "id": "R128",
+    "bloc": "21 · Gouvernance des paramètres — le R-Q exécutable",
+    "titre": "Un tenant ne s'active qu'avec son R-Q complet et signé",
+    "expl": "Le go-live exige que tous les paramètres REQUIS aient une valeur effective ET que le questionnaire soit signé (répondant bancaire nommé — le prérequis contractuel devient un gate exécutable). Le service constate les manquants ; l'activation bloque (structurel, type R13). L'activation est un événement.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus RQ 7/7 verts",
+    "comment": "Le questionnaire R-Q cesse d'être un document contractuel ET devient aussi un contrat exécutable — les deux, même source. Prouvé RQ-06 (manquants listés, ACTIF signé tracé)."
+  },
+  {
+    "num": 129,
+    "id": "R129",
+    "bloc": "22 · Communication MROS — art. 9 LBA",
+    "titre": "La décision de communiquer est humaine, motivée — l'abstention aussi",
+    "expl": "Seul un rôle habilité (mrosRolesHabilites, défaut MLRO) décide COMMUNIQUER ou NE_PAS_COMMUNIQUER — motif obligatoire (R7) DANS LES DEUX CAS, décision tracée (jeton). La non-communication motivée est une exigence d'audit au même titre que la communication. Le système et l'IA préparent, ne déclenchent jamais (R44).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus MR 8/8 verts",
+    "comment": "C'est l'abstention qu'un inspecteur regarde en premier. Paramètre au REGISTRE (R125) : mrosRolesHabilites. Prouvé MR-01/MR-02."
+  },
+  {
+    "num": 130,
+    "id": "R130",
+    "bloc": "22 · Communication MROS — art. 9 LBA",
+    "titre": "Le dossier : des références figées, opposables byte par byte",
+    "expl": "La communication assemble des RÉFÉRENCES (signaux, transactions, extraits KYC, documents GED : IDs + empreintes SHA-256), jamais des copies libres. Figé à la décision, empreinte d'ensemble, append-only (R48) ; ce qui a été transmis au MROS se relit à l'identique (R49) — et ne se re-décide jamais.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus MR 8/8 verts",
+    "comment": "Prouvé MR-03 (empreintes + relecture identique + re-décision refusée). Limite assumée : riskCaseId opaque tant que R83 n'a pas de backend (candidat R133+)."
+  },
+  {
+    "num": 131,
+    "id": "R131",
+    "bloc": "22 · Communication MROS — art. 9 LBA",
+    "titre": "Le gel d'avoirs (art. 10) : posé par l'humain, appliqué par le moteur, jamais levé seul",
+    "expl": "La notification MROS se saisit ; sur transmission à l'autorité, le gel est posé par décision humaine tracée, échéance surveillée (mrosGelJoursOuvrables, défaut 5 j ouvrables). Pendant le gel, verifierTransaction répond BLOQUANT — le moteur transactions bloque (pattern R110, contrainte type R13). L'échéance alerte UNE fois (R39) ; la levée est explicite et motivée.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 19.07.2026 — corpus MR 8/8 verts",
+    "comment": "Un vrai blocage réglementaire, pas un SLA. Prouvé MR-04 (bloque puis repasse à la levée) / MR-05 (l'échéance n'a JAMAIS levé le gel)."
+  },
+  {
+    "num": 132,
+    "id": "R132",
+    "bloc": "22 · Communication MROS — art. 9 LBA",
+    "titre": "L'interdiction d'informer (art. 10a) : default-deny, accès ET refus tracés",
+    "expl": "La communication n'est visible qu'aux rôles habilités (default-deny, mécanique R112) ; tout accès — accordé OU refusé — est tracé : « qui a tenté de voir quoi » fait partie du dossier. Client, RM et exports client-facing n'en voient jamais l'existence : garde structurelle, pas convention d'écran.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 19.07.2026 — corpus MR 8/8 verts",
+    "comment": "Prouvé MR-06 (RM refusé + tentative tracée, MLRO servi + lecture tracée)."
+  },
+  {
+    "num": 133,
+    "id": "R133",
+    "bloc": "23 · Risk cases — l'instruction AML",
+    "titre": "Le cas est une machine à états instruite, né d'au moins un signal",
+    "expl": "Jamais un cas vide : ouverture sur ≥1 signal rattaché. États fermés NOUVELLE → EN_ANALYSE ⇄ CLARIFICATION → CLOTUREE | ESCALADEE, plus ESCALADEE → CLOTUREE (la clôture post-escalade, gardée par R136). Terminaux motivés (R7), chaque transition = événement (jeton).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RK 7/7 verts",
+    "comment": "Le backend que R83 (UI) attendait. Correction pré-ratification actée : la 1re machine à états faisait d'ESCALADEE un cul-de-sac — le premier run l'a montré. Prouvé RK-01/RK-02."
+  },
+  {
+    "num": 134,
+    "id": "R134",
+    "bloc": "23 · Risk cases — l'instruction AML",
+    "titre": "L'instruction est append-only — structurellement",
+    "expl": "Les notes s'ajoutent (auteur jeton, horodatage), ne s'éditent ni ne s'effacent : AUCUNE API de modification n'existe (R48). Le dossier se relit chronologiquement tel qu'il s'est écrit (R49) — c'est la matière première du dossier MROS (R130).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RK 7/7 verts",
+    "comment": "Une instruction éditable est une instruction indéfendable. Prouvé RK-03 (l'absence d'API est ELLE-MÊME testée)."
+  },
+  {
+    "num": 135,
+    "id": "R135",
+    "bloc": "23 · Risk cases — l'instruction AML",
+    "titre": "Le rattachement groupe sans fusionner, le SLA alerte sans clore",
+    "expl": "Un signal ne vit que dans UN cas actif (déduplication d'instruction) ; le détachement se motive (R7) et rend le signal rattachable. SLA par état au REGISTRE R-Q (riskCaseSlaJours : NOUVELLE 2 j · EN_ANALYSE 15 j · CLARIFICATION 10 j) : dépassement → alerte + tâche UNE fois (R39), jamais d'auto-clôture.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RK 7/7 verts",
+    "comment": "L'instruction est humaine ; le système mesure. Prouvé RK-04/RK-05 (y compris le SLA tenant à 40 j qui ne déclenche pas)."
+  },
+  {
+    "num": 136,
+    "id": "R136",
+    "bloc": "23 · Risk cases — l'instruction AML",
+    "titre": "L'escalade arme la décision MROS — la limite du bloc 22 est fermée",
+    "expl": "ESCALADEE (motivée) expose le cas au circuit MROS ; MrosService.decider exige désormais un cas EXISTANT et ESCALADÉ — le riskCaseId opaque de R130 est levé. Symétriquement, la clôture est refusée tant que la communication est active (gel actif, ou COMMUNIQUER sans notification).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RK 7/7 verts + corpus MR RENFORCÉ 8/8",
+    "comment": "La chaîne signal → cas → escalade → décision → gel est fermée de bout en bout. Prouvé RK-06 ; corpus MR renforcé (les faux sèment un cas ESCALADÉ), jamais affaibli."
+  },
+  {
+    "num": 137,
+    "id": "R137",
+    "bloc": "24 · Capture & ingestion GED",
+    "titre": "Tout document entre par un canal déclaré — l'origine est une pièce du dossier",
+    "expl": "Canal du registre R-Q (gedCanauxIngestion, défaut SCAN/EMAIL/UPLOAD/API) — hors registre = refus. L'ingestion crée le document A_CLASSER + v1 (empreinte SHA-256 réelle, R109) + une FICHE D'ORIGINE : canal, source, opérateur (jeton), horodatage.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus IG 7/7 verts",
+    "comment": "Écart concurrent n° 1 (capture) — comblé façon O-Live : rien n'apparaît de nulle part. Prouvé IG-01/IG-02."
+  },
+  {
+    "num": 138,
+    "id": "R138",
+    "bloc": "24 · Capture & ingestion GED",
+    "titre": "L'OCR est un port ; son résultat un dérivé versionné — jamais l'original",
+    "expl": "Pas de prestataire configuré → refus explicite, jamais de simulacre (pattern R114). Le contenu soumis est re-vérifié contre l'empreinte (R111). Le résultat est un DÉRIVÉ attaché à la version (texte, empreinte du dérivé, moteur, horodatage) ; re-OCR = dérivé AJOUTÉ, le précédent conservé — l'original ne bouge jamais (R109).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus IG 7/7 verts",
+    "comment": "On sait ce que chaque moteur a lu, et quand. Prouvé IG-03 (original intact au bit près) / IG-04."
+  },
+  {
+    "num": 139,
+    "id": "R139",
+    "bloc": "24 · Capture & ingestion GED",
+    "titre": "La boîte d'arrivée est une quarantaine qualifiée — l'humain classe",
+    "expl": "Un document ingéré est A_CLASSER, invisible hors des rôles habilités (gedInboxRoles — accès ET refus tracés, mécanique R112). Le classement (type + client) est un acte humain DOUBLEMENT habilité : rôle d'arrivée + rôle sur le TYPE cible. SLA d'arrivée (gedInboxSlaJours) : alerte UNE fois (R39) — rien ne se classe tout seul.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus IG 7/7 verts",
+    "comment": "On ne classe pas vers ce qu'on n'a pas le droit de voir. Prouvé IG-05/IG-06."
+  },
+  {
+    "num": 140,
+    "id": "R140",
+    "bloc": "25 · Portail transactionnel — prévenir, pas constater",
+    "titre": "Aucune transaction ne s'exécute sans verdict du portail",
+    "expl": "Point de passage UNIQUE pré-exécution (contrainte structurelle, pattern R13). Le portail consulte les gardes enregistrées et rend PASSE | BLOQUE | SUSPEND — tracé GARDE PAR GARDE, append-only (R48/R49 : le verdict se rejoue). FATF 7e Update : blocage et gel AVANT que les avoirs bougent — prévention, pas investigation rétrospective.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus TX 7/7 verts",
+    "comment": "Le gel art. 10 (R131) a ENFIN son appelant : la garde gel-mros branche le VRAI MrosService. Prouvé TX-01."
+  },
+  {
+    "num": 141,
+    "id": "R141",
+    "bloc": "25 · Portail transactionnel — prévenir, pas constater",
+    "titre": "Les gardes sont un registre — et l'inconnu suspend (fail-secure)",
+    "expl": "Chaque garde = module déclaré (code, règle liée) ; sévérité paramétrable TENANT (txGardes : BLOQUANT|SUSPENSIF|INFORMATIF — R-Q). Le pire verdict l'emporte. Une garde en ERREUR → SUSPEND : le portail échoue vers la sécurité, jamais vers le passage.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus TX 7/7 verts",
+    "comment": "Default-deny transactionnel. Prouvé TX-02 (l'erreur elle-même tracée) / TX-03 (le R-Q reclasse)."
+  },
+  {
+    "num": 142,
+    "id": "R142",
+    "bloc": "25 · Portail transactionnel — prévenir, pas constater",
+    "titre": "L'écart de comportement est une garde — le KYC nourrit la transaction",
+    "expl": "Le profil ONBOARDÉ (golden record : riskLevel, volumétrie) confronté au CONSTATÉ : vélocité et montants relatifs AU PROFIL (jamais un seuil fixe — la réponse au constat FINMA 02/2026 : seuils rigides 100-200 kCHF = money mules), motifs crypto (conversions rapides). Déclenchement → SUSPEND + signal AML (chaîne R80-82) + tâche de REQUALIFICATION humaine (R44).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus TX 7/7 verts",
+    "comment": "Le retail « low risk » qui bouge comme un VASP est vu AVANT le mouvement. Prouvé TX-04."
+  },
+  {
+    "num": 143,
+    "id": "R143",
+    "bloc": "25 · Portail transactionnel — prévenir, pas constater",
+    "titre": "La suspension est une décision en attente — jamais un purgatoire, jamais une fuite",
+    "expl": "File de revue habilitée (txRevueRoles, refus tracés — R112), décision humaine motivée (R7) LIBERER|BLOQUER, SLA qui alerte UNE fois (R39) sans JAMAIS libérer seul. La vue CLIENT ne porte AUCUN motif AML — « en traitement », pas « soupçon » (cohérence art. 10a / R132).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus TX 7/7 verts",
+    "comment": "Prouvé TX-05 (la vue client testée SANS fuite) / TX-06 (le SLA n'a jamais libéré)."
+  },
+  {
+    "num": 144,
+    "id": "R144",
+    "bloc": "26 · Le coffre — stockage gouverné",
+    "titre": "Le contenu vit au coffre ; la base n'en garde que l'empreinte et la clé",
+    "expl": "Dépôt via le PORT stockage sous clé déterministe {tenant}/{document}/v{n} — la base ne stocke JAMAIS le contenu (empreinte R109 + clé seulement). Pas de port configuré → refus explicite (pattern R114 : un dépôt « réussi » sans coffre est un mensonge). Région de résidence = registre R-Q (storageRegion, défaut ch-gva-2 — Genève). Adaptateur Exoscale SOS livré (s3-storage.adapter.ts).",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus CV 6/6 verts",
+    "comment": "La dernière promesse sans acte, tenue. Prouvé CV-01/CV-02."
+  },
+  {
+    "num": 145,
+    "id": "R145",
+    "bloc": "26 · Le coffre — stockage gouverné",
+    "titre": "La restitution re-vérifie TOUJOURS — un coffre altéré ne sert rien",
+    "expl": "Toute lecture recalcule l'empreinte AVANT de servir (R111 étendu au stockage réel). Discordance → contenu NON servi, refus explicite, alerte d'intégrité tracée. La confiance dans le coffre n'existe pas : elle se recalcule à chaque lecture.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus CV 6/6 verts",
+    "comment": "Prouvé CV-03 (l'altération au coffre est un refus, pas un incident silencieux)."
+  },
+  {
+    "num": 146,
+    "id": "R146",
+    "bloc": "26 · Le coffre — stockage gouverné",
+    "titre": "Scopé tenant, chiffré — et ne s'efface que par la destruction certifiée",
+    "expl": "La clé porte le tenantId en préfixe VÉRIFIÉ à la lecture (isolation structurelle — pas une politesse d'appelant). Le port reçoit la référence de chiffrement du tenant (storageChiffrement). La suppression n'existe que par R115 : le contenu part, l'empreinte et le certificat SURVIVENT.",
+    "param": "tenant",
+    "statut": "RATIFIÉE 20.07.2026 — corpus CV 6/6 verts",
+    "comment": "Prouvé CV-04 (préfixe structurel + chiffrement transmis) / CV-05 (purge refusée hors R115, empreinte survivante)."
+  },
+  {
+    "num": 147,
+    "id": "R147",
+    "bloc": "26 · Le coffre — stockage gouverné",
+    "titre": "Le coffre se réconcilie — la mesure, jamais la purge automatique",
+    "expl": "Tick d'inventaire base↔coffre : orphelin au coffre → alerte ; version sans contenu → alerte CRITIQUE + tâche — UNE fois (R39). Ni suppression ni recréation automatique : un écart d'inventaire est un FAIT D'AUDIT, pas un ménage.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus CV 6/6 verts",
+    "comment": "Prouvé CV-06 (les deux écarts alertés une fois, rien touché)."
+  },
+  {
+    "num": 148,
+    "id": "R148",
+    "bloc": "27 · La recherche — trouver sans trahir",
+    "titre": "L'index est un DÉRIVÉ rejouable — jamais une vérité",
+    "expl": "Construit depuis les dérivés OCR (R138) + métadonnées ; chaque entrée porte (document, version, EMPREINTE du dérivé source) — la vérité reste l'original au coffre (R144/R109). Rejouable : la reconstruction complète reproduit des empreintes identiques — l'index peut brûler sans perte. La désynchronisation se DÉTECTE (une fois, R39) et ne se répare jamais seule.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RS 6/6 verts",
+    "comment": "Écart concurrent n° 2, comblé. Prouvé RS-01 (reconstruction identique) / RS-02 (désync = fait d'audit)."
+  },
+  {
+    "num": 149,
+    "id": "R149",
+    "bloc": "27 · La recherche — trouver sans trahir",
+    "titre": "L'habilitation s'applique AU RÉSULTAT — l'existence même ne fuite pas",
+    "expl": "Chaque hit filtré par les droits du chercheur AU MOMENT de la recherche : rôle autorisé sur le TYPE (R112), A_CLASSER réservé aux rôles d'arrivée (R139). Hors droits = le document N'EXISTE PAS — ni contenu, ni titre, ni compteur. Le refus n'est pas une erreur : c'est un résultat plus court.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RS 6/6 verts",
+    "comment": "En banque privée, l'existence est une information. Prouvé RS-03 (deux chercheurs, deux mondes)."
+  },
+  {
+    "num": 150,
+    "id": "R150",
+    "bloc": "27 · La recherche — trouver sans trahir",
+    "titre": "Tenant-scopée structurellement — et chaque recherche est tracée",
+    "expl": "L'entrée d'index porte le tenant : la requête d'un tenant ne rencontre STRUCTURELLEMENT que son index (pattern R146). Chaque recherche est tracée : auteur (jeton), requête, nombre de résultats servis — JAMAIS les contenus. Qui cherche quoi fait partie du dossier de la banque.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RS 6/6 verts",
+    "comment": "Prouvé RS-04 (trace sans contenus, cross-tenant structurel). Aucun paramètre tenant nouveau : la recherche ne se paramètre pas, elle s'habilite."
+  },
+  {
+    "num": 151,
+    "id": "R151",
+    "bloc": "27 · La recherche — trouver sans trahir",
+    "titre": "L'index suit la vie du document — jusqu'à l'oubli certifié",
+    "expl": "Le classement (R139) et l'OCR (R138) déclenchent l'indexation ; UNE entrée par document — la recherche sert l'état courant (l'historique se lit sur le document). La destruction certifiée (R115) RETIRE de l'index : un contenu détruit ne se cherche plus, le retrait est un événement, l'empreinte survit en base (R146).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus RS 6/6 verts",
+    "comment": "Prouvé RS-05 (l'état courant) / RS-06 (détruit = introuvable, retrait tracé, empreinte survivante)."
+  },
+  {
+    "num": 152,
+    "id": "R152",
+    "bloc": "28 · Les personnes liées — le lien est un acte",
+    "titre": "Le lien se pose par un geste habilité — paramétrable, tracé",
+    "expl": "Poser/retirer un lien exige un droit du registre R-Q : lienRolesOfficiels (rôles juridiquement opposables — settlor, PoA, signataire…) / lienRolesNonOfficiels (relations RM — père de, époux de…). Default-deny, tentative refusée TRACÉE (mécanique R112), retrait motivé (R7), chaque pose est un événement (auteur jeton).",
+    "param": "lienRolesOfficiels · lienRolesNonOfficiels (registre R125)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus PL 6/6 verts",
+    "comment": "Demande d'Ali : le geste « lier une personne » (KYC, onboarding, fiche) était ambigu. Prouvé PL-01."
+  },
+  {
+    "num": 153,
+    "id": "R153",
+    "bloc": "28 · Les personnes liées — le lien est un acte",
+    "titre": "Les types de liens sont un RÉFÉRENTIEL — extensible tenant, cumulable, sans doublon",
+    "expl": "Les types viennent du registre lienTypes, SEMÉ des défauts spec §6.2/6.3 : officiels (settlor, trustee, protecteur, bénéficiaire, UBO, détenteur du contrôle, titulaire, PoA, power of information, signataire, administrateur, apporteur, conseiller externe…) et non officiels (père/mère de, fils/fille de, époux·se, frère/sœur, associé…). Hors référentiel = refus. Le CUMUL est la règle ; le doublon exact (personne+type+cible) est refusé. Ce référentiel EST les boutons du popup.",
+    "param": "lienTypes (json — null = référentiel semé)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus PL 6/6 verts",
+    "comment": "Prouvé PL-02 (cumul oui, doublon non, GOUROU non)."
+  },
+  {
+    "num": 154,
+    "id": "R154",
+    "bloc": "28 · Les personnes liées — le lien est un acte",
+    "titre": "La relation non officielle est BIJECTIVE — l'inverse est automatique, atomique",
+    "expl": "Poser « X père de Y » pose DANS LA MÊME TRANSACTION « Y fils/fille de X » (table d'inverses au référentiel ; époux/frère-sœur/associé auto-inverses). UN événement pour la paire (paireId). Retirer l'un retire l'autre — motivé (R7). Jamais de demi-lien : le graphe familial est cohérent par construction.",
+    "param": "fixe (les inverses vivent dans lienTypes)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus PL 6/6 verts",
+    "comment": "Spec §6.3 prise au mot. Prouvé PL-03 (le miroir existe dès la pose, disparaît au retrait)."
+  },
+  {
+    "num": 155,
+    "id": "R155",
+    "bloc": "28 · Les personnes liées — le lien est un acte",
+    "titre": "Chercher-ou-créer — jamais de doublon silencieux, jamais de fiche muette",
+    "expl": "LE geste du popup : chercher la personne ; exister = lier. Créer (choix EXPLICITE de l'humain) = fiche minimale (nom, physique/morale, A_COMPLETER) + lien, même transaction + TÂCHE de complétion (une fiche minimale n'est pas une fiche finie) + détection d'HOMONYMIE qui SIGNALE sans empêcher (R39 : le système signale, l'humain décide).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus PL 6/6 verts",
+    "comment": "Prouvé PL-04. UI livrée : bouton → popup → chercher-ou-créer → boutons de rôles cumulables → Attribuer (vrai service derrière)."
+  },
+  {
+    "num": 156,
+    "id": "R156",
+    "bloc": "29 · Annotations & caviardage — le regard sans la plume",
+    "titre": "L'annotation est un CALQUE — jamais une écriture sur l'original",
+    "expl": "Surlignage, note, tampon : l'annotation vit dans une table séparée qui RÉFÉRENCE (document, version, ancre) — l'original et son empreinte (R109/R145) restent intacts au bit près. Signée (auteur jeton, horodatage), typée. Le retrait se motive (R7) et se trace : le calque est un espace de travail, pas une zone de non-droit.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AN 6/6 verts",
+    "comment": "Écart concurrent n° 3 — le dernier. Chez eux annoter écrit dans le document. Prouvé AN-01/AN-02."
+  },
+  {
+    "num": 157,
+    "id": "R157",
+    "bloc": "29 · Annotations & caviardage — le regard sans la plume",
+    "titre": "L'annotation est habilitée — et son cercle de visibilité est déclaré",
+    "expl": "Annoter exige un droit du registre (annotationRoles, default-deny tracé — mécanique R112). Chaque annotation déclare son cercle : PRIVEE (l'auteur seul) ou DOSSIER (quiconque voit le document). Le filtre s'applique AU RÉSULTAT : une annotation ne fuite JAMAIS à qui ne voit pas le document porteur (pattern R149 — l'existence est une information).",
+    "param": "annotationRoles (registre R125)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AN 6/6 verts",
+    "comment": "Prouvé AN-03 (la PRIVEE d'autrui n'existe pas ; document hors droits = annotations invisibles)."
+  },
+  {
+    "num": 158,
+    "id": "R158",
+    "bloc": "29 · Annotations & caviardage — le regard sans la plume",
+    "titre": "Le caviardage produit un NOUVEAU dérivé certifié — l'original demeure",
+    "expl": "Caviarder = déclarer des ZONES, chacune avec son MOTIF (base légale : LPD, secret d'affaires…) — zone muette refusée. Habilitation dédiée (caviardageRoles). Le résultat est un DÉRIVÉ portant sa propre empreinte ET l'empreinte de la version source (chaînage prouvable), statut CAVIARDE. L'original n'est ni modifié, ni déplacé, ni re-signé — il demeure au bit près.",
+    "param": "caviardageRoles (registre R125)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AN 6/6 verts",
+    "comment": "Prouvé AN-04 (le dérivé naît, l'original ne bouge pas) / AN-05 (zone muette refusée, main non habilitée tracée)."
+  },
+  {
+    "num": 159,
+    "id": "R159",
+    "bloc": "29 · Annotations & caviardage — le regard sans la plume",
+    "titre": "La divulgation ne sert QUE le caviardé — l'original ne sort jamais par accident",
+    "expl": "Divulguer à un tiers est un ACTE qui référence un dérivé caviardé — l'événement porte (destinataire, id, empreinte) : on prouve APRÈS COUP ce qui est exactement sorti. Cette voie REFUSE l'original et toute version non caviardée : servir l'original exigerait un autre acte, explicite et distinct. Le défaut protège.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AN 6/6 verts",
+    "comment": "Prouvé AN-06 (divulgation prouvée par empreinte ; l'original refusé par cette voie)."
+  },
+  {
+    "num": 160,
+    "id": "R160",
+    "bloc": "31 · L'IA au service du dossier",
+    "titre": "L'IA n'a pas de droits propres — elle emprunte l'habilitation de qui la convoque",
+    "expl": "Le contexte servi au modèle passe par le MÊME filtre que la recherche (types R112, boîte d'arrivée R139, existence R149) : un CO et un RM qui posent la même question au même dossier n'obtiennent PAS la même réponse — ils ne voient pas le même dossier. Tenant structurel. La trace RÉFÉRENCE (ids, empreintes) — elle ne recopie jamais les contenus.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AI 6/6 verts",
+    "comment": "La règle que personne d'autre n'a. Prouvé AI-02 (deux rôles, deux contextes) / AI-06 (t2 : contexte vide, structurel)."
+  },
+  {
+    "num": 161,
+    "id": "R161",
+    "bloc": "31 · L'IA au service du dossier",
+    "titre": "Toute production IA est un DÉRIVÉ signé — jamais une vérité",
+    "expl": "Chaque sortie porte : modèle, version du modèle, EMPREINTE du contexte servi, EMPREINTE de la sortie, auteur-convocateur (jeton), horodatage. Dérivé (pattern R148) : rejouable, vérifiable — « qu'a dit l'IA, sur la base de quoi, à qui », dix ans après — et ça ne fait jamais foi.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AI 6/6 verts",
+    "comment": "Prouvé AI-03 (les empreintes se recalculent ; même dossier même rôle ⇒ même shaContexte)."
+  },
+  {
+    "num": 162,
+    "id": "R162",
+    "bloc": "31 · L'IA au service du dossier",
+    "titre": "L'IA propose, l'humain dispose — et l'écart se mesure sans coercer",
+    "expl": "Une proposition (classement, extraction, zones de caviardage…) est tracée AVEC sa confiance et n'applique RIEN : le document ne bouge pas. La décision est un acte humain (jeton), ne se rejoue pas ; le rejet se motive (R7) et s'enregistre comme ÉCART MESURÉ (R39 : on apprend de l'IA sans jamais lui obéir). R44 spécialisé au dossier.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AI 6/6 verts",
+    "comment": "Prouvé AI-04 (la proposition ne touche pas le monde) / AI-05 (l'acte est humain, l'écart mesuré une fois)."
+  },
+  {
+    "num": 163,
+    "id": "R163",
+    "bloc": "31 · L'IA au service du dossier",
+    "titre": "Le prestataire IA est un PORT — la résidence des données est un paramètre tenant",
+    "expl": "Pas de port configuré = refus explicite (pattern R114 — jamais de réponse simulée). Le port DÉCLARE sa résidence ; elle doit égaler le paramètre tenant iaResidence (défaut CH) : un document bancaire suisse ne part pas n'importe où. Le refus de résidence est TRACÉ — c'est un fait de conformité, pas une erreur technique, et RIEN n'est servi au modèle.",
+    "param": "iaResidence (CH) · iaProviderRef (registre R125)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus AI 6/6 verts",
+    "comment": "Prouvé AI-01 (sans port : refus ; port US vs CH : refus tracé, zéro donnée servie)."
+  },
+  {
+    "num": 164,
+    "id": "R164",
+    "bloc": "32 · Les dossiers-vues — classer sans copier",
+    "titre": "La vue est une REQUÊTE nommée — jamais une copie, jamais un conteneur",
+    "expl": "Une vue (« Passeports expirant 2026 », « Tout le client X ») est un CRITÈRE enregistré au registre tenant : le document n'existe qu'UNE fois, il APPARAÎT dans N vues. Créer/retirer est habilité (vueRoles) et tracé ; retirer une vue ne détruit RIEN — elle n'a jamais rien contenu (retrait motivé R7).",
+    "param": "vueRoles (registre R125)",
+    "statut": "RATIFIÉE 20.07.2026 — corpus VU 5/5 verts",
+    "comment": "Écart évité : la rétention calendaire envisagée EXISTAIT déjà (GD-11) — vérification avant rédaction. Prouvé VU-01/VU-04."
+  },
+  {
+    "num": 165,
+    "id": "R165",
+    "bloc": "32 · Les dossiers-vues — classer sans copier",
+    "titre": "La vue s'évalue AU RÉSULTAT — même vue, deux rôles, deux contenus",
+    "expl": "L'évaluation applique le filtre du REGARDEUR (types R112, arrivée R139 — pattern R149) : la même vue servie à un CF et à un RM ne montre pas la même chose ; un document hors droits n'y apparaît NI en titre NI en compteur. Chaque évaluation est tracée (qui, quelle vue, combien) — jamais les contenus (pattern R150).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus VU 5/5 verts",
+    "comment": "Prouvé VU-02 (deux regardeurs, deux vues ; trace sans contenus)."
+  },
+  {
+    "num": 166,
+    "id": "R166",
+    "bloc": "32 · Les dossiers-vues — classer sans copier",
+    "titre": "La vue suit la vie — le détruit n'apparaît plus, nulle part",
+    "expl": "Un document DETRUIT (R115) disparaît de TOUTES les vues à l'évaluation — sans action, sans oubli possible : la vue est une requête, l'ÉTAT fait foi. Les critères temporels (expireAvant) travaillent avec la rétention existante (GD-11) sans la dupliquer.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 20.07.2026 — corpus VU 5/5 verts",
+    "comment": "Prouvé VU-03 (l'oubli traverse les vues) / VU-05 (tenant structurel)."
+  },
+  {
+    "num": 167,
+    "id": "R167",
+    "bloc": "33 · Le core banking est un port",
+    "titre": "Le core banking est un PORT déclaré — jamais de données simulées",
+    "expl": "Pas de connecteur configuré = refus explicite (pattern R114). Le port DÉCLARE : système, version, périmètre (comptes, positions, transactions). Le périmètre fait foi — demander ce que le port ne déclare pas est un REFUS TRACÉ, pas un silence. Avaloq, Temenos, Finnova, ERI deviennent des implémentations d'UN contrat que nous définissons.",
+    "param": "coreSystemeRef (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus SY 5/5 verts",
+    "comment": "Le sine qua non suisse, en règle. Prouvé SY-01 (sans port : refus ; hors périmètre : refus tracé)."
+  },
+  {
+    "num": 168,
+    "id": "R168",
+    "bloc": "33 · Le core banking est un port",
+    "titre": "La synchronisation est un DÉRIVÉ tracé — et O-Live ne modifie JAMAIS le core",
+    "expl": "Chaque import est un LOT : source (système+version), horodatage, nombre de lignes, EMPREINTE du lot — rejouable et prouvable (pattern R161). Les données importées sont des dérivés : la vérité reste le core. Phase 1 LECTURE SEULE — ni le port ni le service n'ont de voie d'écriture, PAR CONSTRUCTION. La désynchronisation détectée est un fait d'audit (pattern R147).",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus SY 5/5 verts",
+    "comment": "Prouvé SY-02 (le lot est signé, l'empreinte se recalcule, aucune écriture n'existe)."
+  },
+  {
+    "num": 169,
+    "id": "R169",
+    "bloc": "33 · Le core banking est un port",
+    "titre": "La correspondance est un référentiel tenant VERSIONNÉ — l'inconnu va en QUARANTAINE",
+    "expl": "Le mapping compteCore ↔ client est un paramètre tenant à DATE DE MISE EN VIGUEUR (pattern R29 — le mapping d'hier reste lisible pour rejouer hier). Une ligne inconnue ne se rattache JAMAIS par devinette : quarantaine tracée + tâche de résolution — les lignes connues passent, rien n'est bloqué (R39). Résoudre est un acte humain (jeton) qui ENRICHIT le mapping, daté.",
+    "param": "coreMapping (json versionné, registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus SY 5/5 verts",
+    "comment": "Prouvé SY-03 (l'inconnu isolé, le connu passe) / SY-04 (résolution jeton, mapping daté) / SY-05 (mapping FUTUR inactif — la date fait foi)."
+  },
+  {
+    "num": 170,
+    "id": "R170",
+    "bloc": "R170 · La rétention naît au classement",
+    "titre": "La rétention naît au classement — le type porte sa durée",
+    "expl": "Chaque type du plan de classement (gedDocTypes) peut porter retentionAnnees (R-Q — la clé maîtresse s'enrichit, AUCUNE clé nouvelle). Au classement (R139), si le type porte une durée, l'échéance retentionUntil est POSÉE et portée à l'événement. Sans durée : pas d'échéance — GD-11 ne proposera jamais. L'aval est INCHANGÉ : l'échéance propose (GD-11), la destruction se décide (R7), rien n'est bloqué (R39). Le chaînon entre le classement et l'oubli certifié.",
+    "param": "gedDocTypes[].retentionAnnees (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus RN 4/4 verts",
+    "comment": "Trou trouvé à l'audit du paramétrage. Modifie classer AVEC filet : suites GI/CB re-vertes (288/288). Prouvé RN-01..04. Famille RN (RT était pris — 4e collision évitée)."
+  },
+  {
+    "num": 171,
+    "id": "R171",
+    "bloc": "34 · Le workflow est un paramètre gouverné",
+    "titre": "La définition de workflow est versionnée à date de mise en vigueur — publiée, elle est IMMUABLE",
+    "expl": "Une définition (étapes, sections, visas par rôle) appartient au tenant et se publie avec sa date (depuisLe, pattern R29). Publiée, elle ne se modifie JAMAIS : pour changer, on publie une nouvelle version datée. L'historique complet reste lisible — le rejeu à date (R48) exige de savoir ce qui valait quand.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WF 5/5 verts",
+    "comment": "L'atelier de workflows du marché, mais gouverné. Prouvé WF-02 (publiée = gravée, v1 intacte sous v2)."
+  },
+  {
+    "num": 172,
+    "id": "R172",
+    "bloc": "34 · Le workflow est un paramètre gouverné",
+    "titre": "Le dossier emporte sa version — le grandfathering est STRUCTUREL",
+    "expl": "La version applicable se résout par la DATE D'OUVERTURE du dossier : ouvert sous v1, il continue sous v1 même après publication de v2 — sans copie, sans figement manuel, par résolution datée (R29/R48). Une version à date future ne s'applique à personne avant sa date.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WF 5/5 verts",
+    "comment": "Prouvé WF-03 (deux dossiers, deux mondes, une seule table ; la v3 future n'existe pour personne)."
+  },
+  {
+    "num": 173,
+    "id": "R173",
+    "bloc": "34 · Le workflow est un paramètre gouverné",
+    "titre": "Publier est un ACTE gouverné — le brouillon n'existe jamais pour le moteur",
+    "expl": "L'édition vit en brouillon (modifiable, tracé). La publication est un acte humain (jeton), habilité (workflowRoles R-Q), motivé (R7), qui fige le contenu et pose la date — et ne se rejoue pas. Un brouillon n'est JAMAIS résolu par un dossier : ce qui n'est pas publié n'existe pas (pattern R114).",
+    "param": "workflowRoles (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WF 5/5 verts",
+    "comment": "Prouvé WF-01 (le cycle) / WF-04 (brouillon invisible, refus tracé, R7) / WF-05 (la publication ne se rejoue pas)."
+  },
+  {
+    "num": 174,
+    "id": "R174",
+    "bloc": "36 · L'extraction comprend le document",
+    "titre": "L'extraction est un contrat par type — le gabarit vit au plan de classement",
+    "expl": "Chaque type peut porter son gabarit d'extraction versionné (champs attendus, indices de localisation, formats). L'extraction typée exige un document classé et produit des champs candidats {nom, valeur, confiance} en dérivé signé — l'original intact. Sans gabarit : brut, tracé. Le dérivé garde à vie la version du gabarit qui l'a produit.",
+    "param": "gedDocTypes[].extraction (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus OC 6/6 verts",
+    "comment": "Prouvé OC-01 (champs trouvés là où le gabarit le dit) / OC-02 (non classé = refus, sans gabarit = brut assumé) / OC-05 (gabarit v2 : les anciens dérivés gardent v1)."
+  },
+  {
+    "num": 175,
+    "id": "R175",
+    "bloc": "36 · L'extraction comprend le document",
+    "titre": "L'authenticité est un rapport de contrôles — jamais un verdict",
+    "expl": "Le gabarit déclare ses contrôles (champs obligatoires, expiration, cohérences). Le moteur les exécute et rapporte PASSE/ECHEC/INAPPLICABLE ; un échec crée un signal (tâche d'examen), ne bloque rien et ne qualifie pas : l'humain qualifie. Idempotence stricte : jamais deux fois le même travail pour une même version+gabarit — la voie du scalable.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus OC 6/6 verts",
+    "comment": "Prouvé OC-03 (pièce expirée : ECHEC signalé, extraction servie) / OC-06 (rejouer = refus)."
+  },
+  {
+    "num": 176,
+    "id": "R176",
+    "bloc": "36 · L'extraction comprend le document",
+    "titre": "La digitalisation PROPOSE — le formulaire dispose, par un acte humain",
+    "expl": "Le mapping du gabarit produit des propositions {cible, valeur, confiance} en attente. Rien n'entre dans un formulaire (KYC, fiche GED…) sans acte humain d'acceptation, tracé ; le refus se motive. L'écriture réelle passe par un port de formulaire. Chaque valeur acceptée garde sa provenance complète : document, version, gabarit, confiance — l'audit remonte du formulaire au pixel.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus OC 6/6 verts",
+    "comment": "Prouvé OC-04 (propositions ; accepter écrit par le port avec provenance ; refuser motivé tracé ; rien sans acte)."
+  },
+  {
+    "num": 177,
+    "id": "R177",
+    "bloc": "37 · Le module est une licence",
+    "titre": "Le catalogue des modules est déclaré — la licence d'une instance est SIGNÉE",
+    "expl": "Les modules sont un registre fixe du produit (GED, OCR, KYC, AML, CoC, AccRev, Workflows, Onboarding, Screening, PMS, IA). Une licence est un document signé par l'éditeur : instance, version, modules, date d'effet, échéance — la signature se vérifie à CHAQUE lecture ; une licence altérée est un refus explicite, jamais un module de plus.",
+    "param": "vendor (hors tenant)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus LC 5/5 verts",
+    "comment": "Prouvé LC-01 (émission signée, périmètre lisible) / LC-02 (altération → invalide)."
+  },
+  {
+    "num": 178,
+    "id": "R178",
+    "bloc": "37 · Le module est une licence",
+    "titre": "Défaut-refus par module — pas de fonctionnalité fantôme",
+    "expl": "Sans module licencié pour l'instance : refus explicite uniforme, aux services comme à l'API et aux écrans. La banque VOIT son périmètre (modules, version, échéance) ; elle ne voit jamais un module absent comme s'il était en panne. Module inconnu du registre : refus dans les deux sens.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus LC 5/5 verts",
+    "comment": "Prouvé LC-03 (licencié passe · non licencié refuse · inconnu refuse). Convergence : la garde ModuleLicensed existante branchera assertModule (déploiement)."
+  },
+  {
+    "num": 179,
+    "id": "R179",
+    "bloc": "37 · Le module est une licence",
+    "titre": "Activer ou désactiver est un ACTE de l'éditeur — daté, motivé, jamais rétroactif",
+    "expl": "Changer le périmètre = émettre une NOUVELLE licence signée (jeton vendor, motif, date d'effet jamais passée). L'historique est append-only : chaque licence reste lisible — qui avait quoi, quand. Une licence à date future ne s'applique pas encore ; un profil banque qui tente d'émettre est refusé et tracé.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus LC 5/5 verts",
+    "comment": "Prouvé LC-04 (avenant motivé, historique ×2, rétroactif refusé, motif exigé) / LC-05 (profil banque refusé tracé)."
+  },
+  {
+    "num": 180,
+    "id": "R180",
+    "bloc": "38 · L'hébergeur est un choix, la preuve n'en est pas un",
+    "titre": "L'hébergeur documentaire est un paramètre déclaré — le changer est un acte",
+    "expl": "Coffre interne, stockage objet suisse, ou GED existante de la banque : le choix vit au registre des paramètres (docStorage), se résout par établissement à chaque opération, et se change par un acte motivé, jamais rétroactif. Le défaut est le coffre interne — on ne devine jamais un tiers. Les écritures déjà faites restent où elles sont : la migration du stock est un chantier gouverné, pas un effet de bord.",
+    "param": "docStorage (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus GX 5/5 verts",
+    "comment": "Prouvé GX-01 (registre + défaut interne, comportement vérifié) / GX-02 (bascule motivée : les nouvelles écritures vont chez le tiers, l'acte est au journal)."
+  },
+  {
+    "num": 181,
+    "id": "R181",
+    "bloc": "38 · L'hébergeur est un choix, la preuve n'en est pas un",
+    "titre": "Tout hébergeur passe LES MÊMES preuves que le coffre interne",
+    "expl": "Un hébergeur externe n'allège aucun invariant : l'empreinte est calculée par O-Live avant remise, la relecture est re-vérifiée à chaque lecture (contenu altéré chez le tiers = refus + alerte), l'isolation par périmètre tient, la restitution réglementaire fonctionne à l'identique. Le contrat se prouve contre l'adaptateur, pas contre sa documentation. La confiance ne se délègue pas — elle se vérifie chez le tiers comme chez soi.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus GX 5/5 verts",
+    "comment": "Prouvé GX-03 (le moteur documentaire ratifié tourne TEL QUEL sur l'adaptateur externe : falsification chez le tiers → refus, alerte) / GX-05 (restitution complète identique)."
+  },
+  {
+    "num": 182,
+    "id": "R182",
+    "bloc": "38 · L'hébergeur est un choix, la preuve n'en est pas un",
+    "titre": "L'indisponibilité du tiers est un refus explicite et un signal — jamais une dégradation",
+    "expl": "Tiers en panne : l'opération échoue explicitement (l'erreur dit quoi et chez qui), un événement signale l'exploitation, et rien ne s'écrit ailleurs « en attendant » — pas de file cachée, pas de copie de secours hors du port, pas de lecture non vérifiée. La disponibilité se traite au contrat de service, pas en silence dans le moteur.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus GX 5/5 verts",
+    "comment": "Prouvé GX-04 (panne → erreur explicite + événement, zéro écriture de contournement)."
+  },
+  {
+    "num": 183,
+    "id": "R183",
+    "bloc": "39 · La charge se voit, la reconnaissance se décide",
+    "titre": "La charge dérive des événements — transparente pour celui qui est mesuré",
+    "expl": "Le responsable déclaré (Compliance, chef RM, BRM, Central File) voit la capacité de son équipe : qui fait quoi, pourcentage de charge pondérée, délais de traitement — tout dérive des tâches existantes, aucun pointage, aucune saisie. Transparence structurelle : chaque collaborateur lit ses propres mesures à tout moment ; un tiers est refusé et tracé. Conforme à la mesure licite du travail (transparente, proportionnée, non coercitive).",
+    "param": "workloadResponsables · workloadCapacite (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WK 5/5 verts",
+    "comment": "Prouvé WK-01 (compteurs, %, délai moyen dérivés) / WK-02 (moi = toujours ; responsable déclaré = équipe ; tiers = refus tracé)."
+  },
+  {
+    "num": 184,
+    "id": "R184",
+    "bloc": "39 · La charge se voit, la reconnaissance se décide",
+    "titre": "La répartition est un ACTE du responsable — le système suggère, il ne déplace pas",
+    "expl": "Une surcharge (seuil paramétrable) est un signal — événement et suggestion de rééquilibrage — jamais un déplacement automatique. Réassigner une tâche est l'acte motivé du responsable, tracé : la tâche ne change de main que par l'acte.",
+    "param": "workloadCapacite.seuilSurchargePct",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WK 5/5 verts",
+    "comment": "Prouvé WK-03 (90% > 80 : signalée, rien ne bouge ; réassignation motivée par le responsable → tracée ; sans motif rien ; un non-responsable est refusé)."
+  },
+  {
+    "num": 185,
+    "id": "R185",
+    "bloc": "39 · La charge se voit, la reconnaissance se décide",
+    "titre": "Les points suivent le barème du jour de l'accomplissement — le bonus reste humain",
+    "expl": "Le barème de bonification (points par type de tâche accomplie) est versionné par date d'effet : chaque accomplissement garde à vie les points du barème de son jour — changer le barème n'est jamais rétroactif. Chacun voit ses points en continu. L'export vers le module RH est une photographie (événement) : le moteur fournit la matière du bonus de fin d'année, il ne le calcule jamais — la décision appartient à l'humain.",
+    "param": "workloadBareme (versionné, registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus WK 5/5 verts",
+    "comment": "Prouvé WK-04 (points visibles par l'intéressé, snapshot RH sans bonus) / WK-05 (barème v2 daté : les accomplissements antérieurs gardent v1 — grandfathering)."
+  },
+  {
+    "num": 186,
+    "id": "R186",
+    "bloc": "40 · La relation se lit, le geste se motive, le conseil se trace",
+    "titre": "La relation se lit en TIMELINE — une projection, jamais une copie",
+    "expl": "La chronologie d'un client dérive du journal d'événements de tous les modules (dossier, documents, surveillance, tâches, entretiens) : le CRM ne stocke pas sa propre vérité, il projette celle du moteur — chaque entrée dit sa source et sa date. Lecture filtrée aux droits : le RM lit ses clients, les rôles à visibilité étendue lisent tout, un tiers est refusé et tracé. La timeline commence au premier contact — rien ne se ressaisit du prospect au client.",
+    "param": "rolesVisibiliteEtendue",
+    "statut": "RATIFIÉE 21.07.2026 — corpus CR 5/5 verts",
+    "comment": "Prouvé CR-01 (trois modules, une chronologie, zéro table propre) / CR-02 (droits : RM tiers refusé tracé)."
+  },
+  {
+    "num": 187,
+    "id": "R187",
+    "bloc": "40 · La relation se lit, le geste se motive, le conseil se trace",
+    "titre": "Le prochain geste DÉRIVE d'un signal réel — daté, motivé, jamais exécuté seul",
+    "expl": "Les suggestions (pièce expirante, revue en retard) se recalculent depuis l'état vivant — chaque suggestion nomme son signal source et son échéance ; le signal disparu, la suggestion disparaît. Le moteur propose le geste, le conseiller le fait.",
+    "param": "fixe",
+    "statut": "RATIFIÉE 21.07.2026 — corpus CR 5/5 verts",
+    "comment": "Prouvé CR-03 (suggestions motivées ; tâche accomplie → sa suggestion s'éteint — recalcul pur, rien d'exécuté)."
+  },
+  {
+    "num": 188,
+    "id": "R188",
+    "bloc": "40 · La relation se lit, le geste se motive, le conseil se trace",
+    "titre": "Le contact client est un ACTE tracé — le conseil se documente, l'IA propose, l'humain signe",
+    "expl": "Chaque type d'entretien déclare ses champs obligatoires (paramètre crmEntretiens) — la trace du conseil exigée par la LSFin : un champ manquant est un refus explicite. Le pré-remplissage passe par un port d'assistant déclaré (pas de moteur = pas de brouillon fantôme) et produit une proposition MARQUÉE de son origine — seule la validation humaine crée le compte rendu, append-only, événement à la clé.",
+    "param": "crmEntretiens (registre R125)",
+    "statut": "RATIFIÉE 21.07.2026 — corpus CR 5/5 verts",
+    "comment": "Prouvé CR-04 (risquesExpliques manquant → refus ; créé = append-only + événement) / CR-05 (proposition marquée IA, validée = IA_VALIDEE — l'assistant n'a rien signé)."
+  }
+]

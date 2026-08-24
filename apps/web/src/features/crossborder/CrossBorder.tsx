@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 /**
@@ -39,10 +40,12 @@ export function CrossBorder() {
     setMsg("");
     try { await fn(); } catch (e) { setMsg((e as OliveError).message ?? "Erreur"); } // le refus, TEL QUEL
   };
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
   const td = { fontSize: 12, borderTop: `1px solid ${tokens.color.border}`, padding: "3px 8px" };
   const couleur = (v: string) => v === "AUTORISE" ? tokens.color.olive700 : v === "NON_DETERMINE" ? "#b45309" : "#b91c1c";
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Cross-border — le country manual de la banque, servi (R293) — O-Live structure la position, il ne fournit jamais l&apos;avis</h3>
     <button onClick={charger} disabled={isDemoMode()} style={{ fontSize: 12, marginBottom: 10 }}>Charger</button>
@@ -80,13 +83,17 @@ export function CrossBorder() {
       <input placeholder="voyageId" value={dero.voyageId} onChange={(e) => setDero({ ...dero, voyageId: e.target.value })} style={{ fontSize: 12, width: 120 }}/>
       <input placeholder="juridiction" value={dero.juridiction} onChange={(e) => setDero({ ...dero, juridiction: e.target.value.toUpperCase() })} style={{ fontSize: 12, marginLeft: 4, width: 100 }}/>
       <input placeholder="motif (R7)" value={dero.motif} onChange={(e) => setDero({ ...dero, motif: e.target.value })} style={{ fontSize: 12, marginLeft: 4, width: 180 }}/>
-      <button style={{ fontSize: 12, marginLeft: 4 }} disabled={isDemoMode()} onClick={() => agir(async () => {
-        const r = await apiPost<{ id: string }>("/v1/crossborder/derogations", { voyageId: dero.voyageId, juridiction: dero.juridiction, motif: dero.motif });
-        setDero({ ...dero, id: r.id }); setMsg(`Dérogation ${r.id.slice(0, 8)}… demandée — en attente du visa d'un second.`);
-      })}>Demander</button>
-      {dero.id && <button style={{ fontSize: 12, marginLeft: 4 }} disabled={isDemoMode()} onClick={() => agir(async () => {
-        await apiPost(`/v1/crossborder/derogations/${dero.id}/visa`, {}); setMsg("Dérogation visée.");
-      })}>Viser (second regard)</button>}
+      <button style={{ fontSize: 12, marginLeft: 4 }} disabled={isDemoMode()} onClick={() => ask({ title: "Demander une dérogation cross-border (R7)",
+        message: "Une dérogation motivée est demandée ; elle exige le visa d'un second (four-eyes). Le backend valide.",
+        items: [{ label: dero.juridiction ? `Juridiction : ${dero.juridiction}` : "Juridiction non renseignée (vérifiée serveur)", ok: !!dero.juridiction },
+          { label: dero.motif ? "Motif fourni" : "Motif non renseigné (R7)", ok: !!dero.motif }],
+        confirmLabel: "Confirmer la demande", onConfirm: () => agir(async () => {
+          const r = await apiPost<{ id: string }>("/v1/crossborder/derogations", { voyageId: dero.voyageId, juridiction: dero.juridiction, motif: dero.motif });
+          setDero({ ...dero, id: r.id }); setMsg(`Dérogation ${r.id.slice(0, 8)}… demandée — en attente du visa d'un second.`);
+        }) })}>Demander</button>
+      {dero.id && <button style={{ fontSize: 12, marginLeft: 4 }} disabled={isDemoMode()} onClick={() => ask({ title: "Viser la dérogation (second regard)",
+        message: "Second regard four-eyes : le viseur doit être distinct du demandeur (contrôlé serveur).", confirmLabel: "Viser",
+        onConfirm: () => agir(async () => { await apiPost(`/v1/crossborder/derogations/${dero.id}/visa`, {}); setMsg("Dérogation visée."); }) })}>Viser (second regard)</button>}
       <button style={{ fontSize: 12, marginLeft: 4 }} disabled={isDemoMode()} onClick={() => agir(async () => {
         const r = await apiGetSourced<Conf | null>(`/v1/crossborder/voyages/${dero.voyageId || sim.voyageId}/conformite`, null);
         setConf(r.isDemo ? null : r.data);

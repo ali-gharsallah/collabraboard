@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Module, Post, Req, Injectable } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -65,18 +66,16 @@ export class SwiftService {
       const motif = horsBibliotheque
         ? `type ${p.type} hors bibliothèque déclarée (${actifs.join(", ")}) — swift_types_actifs`
         : p.motif!;
-      await this.prisma.$transaction((tx: Tx) => tx.domainEvent.create({ data: {
-        tenantId: ctx.tenantId, type: "swift.quarantaine", aggregateId: id,
-        payload: { motif, apercu: dto.texte!.slice(0, 120), par: ctx.userId }, at: new Date().toISOString() } }));
+      await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "swift.quarantaine",
+        id, { motif, apercu: dto.texte!.slice(0, 120), par: ctx.userId }));
       await this.audit.log(ctx.tenantId, ctx.userId, "SWIFT_QUARANTAINE", motif.slice(0, 100));
       return { quarantaine: true, motif };
     }
     const txn = await this.prisma.transaction.findFirst({                     // rattachement PAR RÉFÉRENCE
       where: { tenantId: ctx.tenantId, refExterne: p.extraction.reference } });
-    await this.prisma.$transaction((tx: Tx) => tx.domainEvent.create({ data: {
-      tenantId: ctx.tenantId, type: "swift.message.parse", aggregateId: id,
-      payload: { extraction: p.extraction, transactionId: txn?.id ?? null, clientId: txn?.clientId ?? null,
-        par: ctx.userId }, at: new Date().toISOString() } }));
+    await this.prisma.$transaction((tx: Tx) => emitEvent(tx, ctx.tenantId, "swift.message.parse",
+      id, { extraction: p.extraction, transactionId: txn?.id ?? null, clientId: txn?.clientId ?? null,
+        par: ctx.userId }));
     await this.audit.log(ctx.tenantId, ctx.userId, "SWIFT_PARSE", `${p.extraction.type}:${p.extraction.reference}`);
     return { quarantaine: false, extraction: p.extraction, transactionId: txn?.id ?? null };
   }

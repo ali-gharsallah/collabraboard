@@ -1,0 +1,727 @@
+{
+ "registre": "R-Q — paramètres tenant AML gap waves 1+2",
+ "version": "1.0",
+ "count": 80,
+ "params": [
+  {
+   "rule": "R340",
+   "scenarioId": "SF-01",
+   "bloc": "Screening en flux",
+   "key": "seuil_match_pep_flux",
+   "label": "score de similarité minimal",
+   "default": "78",
+   "unit": "%"
+  },
+  {
+   "rule": "R340",
+   "scenarioId": "SF-01",
+   "bloc": "Screening en flux",
+   "key": "listes_pep",
+   "label": "fournisseurs de listes actives",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R341",
+   "scenarioId": "SF-02",
+   "bloc": "Screening en flux",
+   "key": "rang_source_min",
+   "label": "rang minimal de fiabilité de la source",
+   "default": "2",
+   "unit": "-"
+  },
+  {
+   "rule": "R341",
+   "scenarioId": "SF-02",
+   "bloc": "Screening en flux",
+   "key": "categories_am",
+   "label": "catégories retenues (ML, fraude, corruption, TF)",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R342",
+   "scenarioId": "SF-03",
+   "bloc": "Screening en flux",
+   "key": "frequence_rescreen",
+   "label": "fréquence du re-screening du stock",
+   "default": "24",
+   "unit": "heures"
+  },
+  {
+   "rule": "R342",
+   "scenarioId": "SF-03",
+   "bloc": "Screening en flux",
+   "key": "scope_personnes_liees",
+   "label": "inclure les personnes liées",
+   "default": "true",
+   "unit": "-"
+  },
+  {
+   "rule": "R343",
+   "scenarioId": "SF-04",
+   "bloc": "Screening en flux",
+   "key": "liste_bic_interne",
+   "label": "liste interne de banques surveillées",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R344",
+   "scenarioId": "SF-05",
+   "bloc": "Screening en flux",
+   "key": "referentiel_geo_sanctions",
+   "label": "référentiel des zones sanctionnées",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R345",
+   "scenarioId": "SF-06",
+   "bloc": "Screening en flux",
+   "key": "scripts_actifs",
+   "label": "scripts normalisés",
+   "default": "AR,CYR,ZH",
+   "unit": "-"
+  },
+  {
+   "rule": "R346",
+   "scenarioId": "SF-07",
+   "bloc": "Screening en flux",
+   "key": "extraction_imo",
+   "label": "extraction IMO des champs libres",
+   "default": "true",
+   "unit": "-"
+  },
+  {
+   "rule": "R347",
+   "scenarioId": "QO-01",
+   "bloc": "Indices OBA-FINMA",
+   "key": "nb_relances_avant_signal",
+   "label": "relances avant signal",
+   "default": "2",
+   "unit": "-"
+  },
+  {
+   "rule": "R348",
+   "scenarioId": "QO-02",
+   "bloc": "Indices OBA-FINMA",
+   "key": "tiers_distincts_seuil",
+   "label": "tiers distincts / 30j",
+   "default": "6",
+   "unit": "-"
+  },
+  {
+   "rule": "R349",
+   "scenarioId": "QO-03",
+   "bloc": "Indices OBA-FINMA",
+   "key": "delai_reponse_client",
+   "label": "délai de réponse attendu",
+   "default": "10",
+   "unit": "jours"
+  },
+  {
+   "rule": "R350",
+   "scenarioId": "QO-04",
+   "bloc": "Indices OBA-FINMA",
+   "key": "clients_par_adresse_seuil",
+   "label": "clients distincts par adresse",
+   "default": "5",
+   "unit": "-"
+  },
+  {
+   "rule": "R351",
+   "scenarioId": "QO-05",
+   "bloc": "Indices OBA-FINMA",
+   "key": "chgts_gouvernance_seuil",
+   "label": "changements / 6 mois",
+   "default": "3",
+   "unit": "-"
+  },
+  {
+   "rule": "R352",
+   "scenarioId": "GU-01",
+   "bloc": "Vision groupe UBO",
+   "key": "fenetre_agregation_ubo",
+   "label": "fenêtre d'agrégation",
+   "default": "7",
+   "unit": "jours"
+  },
+  {
+   "rule": "R352",
+   "scenarioId": "GU-01",
+   "bloc": "Vision groupe UBO",
+   "key": "seuil_agrege_ubo",
+   "label": "seuil agrégé groupe",
+   "default": "50000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R353",
+   "scenarioId": "GU-02",
+   "bloc": "Vision groupe UBO",
+   "key": "duree_cycle_max",
+   "label": "durée max du cycle détecté",
+   "default": "30",
+   "unit": "jours"
+  },
+  {
+   "rule": "R354",
+   "scenarioId": "GU-03",
+   "bloc": "Vision groupe UBO",
+   "key": "ratio_cash_groupe",
+   "label": "ratio cash consolidé max",
+   "default": "25",
+   "unit": "%"
+  },
+  {
+   "rule": "R355",
+   "scenarioId": "GU-04",
+   "bloc": "Vision groupe UBO",
+   "key": "seuil_cross_produits",
+   "label": "seuil agrégé équivalent",
+   "default": "75000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R356",
+   "scenarioId": "IP-01",
+   "bloc": "Instruments PB",
+   "key": "delai_anticipe_min",
+   "label": "remboursement considéré anticipé si <",
+   "default": "12",
+   "unit": "mois"
+  },
+  {
+   "rule": "R357",
+   "scenarioId": "IP-02",
+   "bloc": "Instruments PB",
+   "key": "perimetre_lien",
+   "label": "liens retenus (UBO, famille, signataires)",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R358",
+   "scenarioId": "IP-03",
+   "bloc": "Instruments PB",
+   "key": "ratio_prime_patrimoine",
+   "label": "ratio prime/patrimoine max",
+   "default": "60",
+   "unit": "%"
+  },
+  {
+   "rule": "R359",
+   "scenarioId": "IP-04",
+   "bloc": "Instruments PB",
+   "key": "delai_rachat_min",
+   "label": "rachat considéré précoce si <",
+   "default": "24",
+   "unit": "mois"
+  },
+  {
+   "rule": "R360",
+   "scenarioId": "IP-05",
+   "bloc": "Instruments PB",
+   "key": "delai_chgt_benef",
+   "label": "fenêtre de surveillance post-souscription",
+   "default": "24",
+   "unit": "mois"
+  },
+  {
+   "rule": "R361",
+   "scenarioId": "IP-06",
+   "bloc": "Instruments PB",
+   "key": "fenetre_correlation",
+   "label": "corrélation accès↔cash",
+   "default": "48",
+   "unit": "heures"
+  },
+  {
+   "rule": "R361",
+   "scenarioId": "IP-06",
+   "bloc": "Instruments PB",
+   "key": "nb_correlations_seuil",
+   "label": "corrélations / 90j",
+   "default": "3",
+   "unit": "-"
+  },
+  {
+   "rule": "R362",
+   "scenarioId": "IP-07",
+   "bloc": "Instruments PB",
+   "key": "seuil_metaux",
+   "label": "équivalent CHF / 90j",
+   "default": "100000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R363",
+   "scenarioId": "CR-01",
+   "bloc": "Crypto / VASP",
+   "key": "vasp_conformes",
+   "label": "registre des VASP conformes travel rule",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R364",
+   "scenarioId": "CR-02",
+   "bloc": "Crypto / VASP",
+   "key": "seuil_exposition_mixer",
+   "label": "exposition directe max",
+   "default": "10",
+   "unit": "%"
+  },
+  {
+   "rule": "R364",
+   "scenarioId": "CR-02",
+   "bloc": "Crypto / VASP",
+   "key": "hops_analyses",
+   "label": "profondeur d'analyse",
+   "default": "2",
+   "unit": "hops"
+  },
+  {
+   "rule": "R365",
+   "scenarioId": "CR-03",
+   "bloc": "Crypto / VASP",
+   "key": "listes_adresses",
+   "label": "listes d'adresses actives",
+   "default": "OFAC,SECO",
+   "unit": "-"
+  },
+  {
+   "rule": "R366",
+   "scenarioId": "CR-04",
+   "bloc": "Crypto / VASP",
+   "key": "seuil_cluster_illicite",
+   "label": "provenance illicite max",
+   "default": "5",
+   "unit": "%"
+  },
+  {
+   "rule": "R367",
+   "scenarioId": "CR-05",
+   "bloc": "Crypto / VASP",
+   "key": "methodes_preuve",
+   "label": "méthodes acceptées",
+   "default": "signature,satoshi_test",
+   "unit": "-"
+  },
+  {
+   "rule": "R367",
+   "scenarioId": "CR-05",
+   "bloc": "Crypto / VASP",
+   "key": "validite_preuve",
+   "label": "validité de la preuve",
+   "default": "12",
+   "unit": "mois"
+  },
+  {
+   "rule": "R368",
+   "scenarioId": "CR-06",
+   "bloc": "Crypto / VASP",
+   "key": "cycles_ramp_seuil",
+   "label": "cycles / 30j",
+   "default": "6",
+   "unit": "-"
+  },
+  {
+   "rule": "R369",
+   "scenarioId": "FT-01",
+   "bloc": "CFT",
+   "key": "corridors_cft",
+   "label": "liste corridors CFT",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R369",
+   "scenarioId": "FT-01",
+   "bloc": "CFT",
+   "key": "freq_micro_seuil",
+   "label": "transferts / 60j",
+   "default": "10",
+   "unit": "-"
+  },
+  {
+   "rule": "R369",
+   "scenarioId": "FT-01",
+   "bloc": "CFT",
+   "key": "montant_micro_max",
+   "label": "montant unitaire max",
+   "default": "500",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R370",
+   "scenarioId": "FT-02",
+   "bloc": "CFT",
+   "key": "registre_npo",
+   "label": "référentiel NPO surveillées",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R371",
+   "scenarioId": "FT-03",
+   "bloc": "CFT",
+   "key": "sources_rechargement_seuil",
+   "label": "sources distinctes / 90j",
+   "default": "3",
+   "unit": "-"
+  },
+  {
+   "rule": "R372",
+   "scenarioId": "FT-04",
+   "bloc": "CFT",
+   "key": "fenetre_voyage",
+   "label": "fenêtre avant/après voyage",
+   "default": "14",
+   "unit": "jours"
+  },
+  {
+   "rule": "R373",
+   "scenarioId": "FT-05",
+   "bloc": "CFT",
+   "key": "listes_cft",
+   "label": "listes CFT actives",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R374",
+   "scenarioId": "GV-01",
+   "bloc": "Gouvernance du dispositif",
+   "key": "taux_echantillon_btl",
+   "label": "taux d'échantillonnage",
+   "default": "2",
+   "unit": "%"
+  },
+  {
+   "rule": "R374",
+   "scenarioId": "GV-01",
+   "bloc": "Gouvernance du dispositif",
+   "key": "bande_btl",
+   "label": "bande sous le seuil",
+   "default": "80-100",
+   "unit": "%"
+  },
+  {
+   "rule": "R374",
+   "scenarioId": "GV-01",
+   "bloc": "Gouvernance du dispositif",
+   "key": "frequence_btl",
+   "label": "fréquence de campagne",
+   "default": "90",
+   "unit": "jours"
+  },
+  {
+   "rule": "R375",
+   "scenarioId": "GV-02",
+   "bloc": "Gouvernance du dispositif",
+   "key": "fenetre_backtest",
+   "label": "fenêtre de rejeu",
+   "default": "90",
+   "unit": "jours"
+  },
+  {
+   "rule": "R375",
+   "scenarioId": "GV-02",
+   "bloc": "Gouvernance du dispositif",
+   "key": "seuil_degradation",
+   "label": "perte de rappel max tolérée",
+   "default": "0",
+   "unit": "TP manqué"
+  },
+  {
+   "rule": "R376",
+   "scenarioId": "GV-03",
+   "bloc": "Gouvernance du dispositif",
+   "key": "completude_min",
+   "label": "complétude minimale des champs critiques",
+   "default": "98",
+   "unit": "%"
+  },
+  {
+   "rule": "R377",
+   "scenarioId": "GV-04",
+   "bloc": "Gouvernance du dispositif",
+   "key": "matrice_couverture",
+   "label": "référentiel de typologies de la matrice",
+   "default": "GAFI+OBA-FINMA",
+   "unit": "-"
+  },
+  {
+   "rule": "R378",
+   "scenarioId": "TB-01",
+   "bloc": "TBML",
+   "key": "ecart_prix_seuil",
+   "label": "écart au prix de référence",
+   "default": "15",
+   "unit": "%"
+  },
+  {
+   "rule": "R378",
+   "scenarioId": "TB-01",
+   "bloc": "TBML",
+   "key": "nb_factures_min",
+   "label": "factures concernées / 90j",
+   "default": "3",
+   "unit": "-"
+  },
+  {
+   "rule": "R379",
+   "scenarioId": "TB-02",
+   "bloc": "TBML",
+   "key": "fenetre_dedup",
+   "label": "fenêtre de déduplication",
+   "default": "180",
+   "unit": "jours"
+  },
+  {
+   "rule": "R380",
+   "scenarioId": "TB-03",
+   "bloc": "TBML",
+   "key": "percentile_bas",
+   "label": "percentile bas",
+   "default": "5",
+   "unit": "%"
+  },
+  {
+   "rule": "R380",
+   "scenarioId": "TB-03",
+   "bloc": "TBML",
+   "key": "percentile_haut",
+   "label": "percentile haut",
+   "default": "95",
+   "unit": "%"
+  },
+  {
+   "rule": "R380",
+   "scenarioId": "TB-03",
+   "bloc": "TBML",
+   "key": "referentiel_hs",
+   "label": "référentiel de prix HS",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R381",
+   "scenarioId": "TB-04",
+   "bloc": "TBML",
+   "key": "listes_controle",
+   "label": "listes de contrôle actives",
+   "default": "SECO,EU",
+   "unit": "-"
+  },
+  {
+   "rule": "R382",
+   "scenarioId": "TB-05",
+   "bloc": "TBML",
+   "key": "hrj_trade",
+   "label": "liste juridictions trade à risque",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R383",
+   "scenarioId": "TB-06",
+   "bloc": "TBML",
+   "key": "seuil_verif_tracking",
+   "label": "seuil de vérification",
+   "default": "100000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R384",
+   "scenarioId": "TB-07",
+   "bloc": "TBML",
+   "key": "transbordements_max",
+   "label": "transbordements tolérés",
+   "default": "1",
+   "unit": "-"
+  },
+  {
+   "rule": "R385",
+   "scenarioId": "TB-08",
+   "bloc": "TBML",
+   "key": "duree_cycle_trade",
+   "label": "fenêtre de détection",
+   "default": "180",
+   "unit": "jours"
+  },
+  {
+   "rule": "R386",
+   "scenarioId": "CB-03",
+   "bloc": "Correspondent Banking",
+   "key": "taux_incomplet_max",
+   "label": "taux d'incomplétude toléré par correspondant",
+   "default": "2",
+   "unit": "%"
+  },
+  {
+   "rule": "R387",
+   "scenarioId": "CB-04",
+   "bloc": "Correspondent Banking",
+   "key": "fenetre_uturn",
+   "label": "fenêtre d'appariement",
+   "default": "30",
+   "unit": "jours"
+  },
+  {
+   "rule": "R388",
+   "scenarioId": "CB-05",
+   "bloc": "Correspondent Banking",
+   "key": "indicateurs_pta",
+   "label": "indicateurs d'usage direct",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R389",
+   "scenarioId": "CB-06",
+   "bloc": "Correspondent Banking",
+   "key": "derive_max",
+   "label": "dérive tolérée vs profil",
+   "default": "20",
+   "unit": "%"
+  },
+  {
+   "rule": "R390",
+   "scenarioId": "CB-07",
+   "bloc": "Correspondent Banking",
+   "key": "registres_supervision",
+   "label": "registres de superviseurs consultés",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R391",
+   "scenarioId": "CB-08",
+   "bloc": "Correspondent Banking",
+   "key": "periode_revue_rma",
+   "label": "période de revue",
+   "default": "12",
+   "unit": "mois"
+  },
+  {
+   "rule": "R392",
+   "scenarioId": "CB-09",
+   "bloc": "Correspondent Banking",
+   "key": "frequence_screen_respondants",
+   "label": "fréquence",
+   "default": "30",
+   "unit": "jours"
+  },
+  {
+   "rule": "R393",
+   "scenarioId": "PF-01",
+   "bloc": "Prolifération",
+   "key": "plafonds_sectoriels",
+   "label": "référentiel plafonds/embargos",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R394",
+   "scenarioId": "PF-02",
+   "bloc": "Prolifération",
+   "key": "age_entite_min",
+   "label": "âge minimal sans surrisque",
+   "default": "24",
+   "unit": "mois"
+  },
+  {
+   "rule": "R395",
+   "scenarioId": "PF-03",
+   "bloc": "Prolifération",
+   "key": "categories_luxe",
+   "label": "catégories surveillées",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R396",
+   "scenarioId": "IA-01",
+   "bloc": "Immobilier & Art",
+   "key": "ecart_marche_max",
+   "label": "écart au marché toléré",
+   "default": "25",
+   "unit": "%"
+  },
+  {
+   "rule": "R397",
+   "scenarioId": "IA-02",
+   "bloc": "Immobilier & Art",
+   "key": "delai_revente_min",
+   "label": "revente considérée rapide si <",
+   "default": "36",
+   "unit": "mois"
+  },
+  {
+   "rule": "R398",
+   "scenarioId": "IA-03",
+   "bloc": "Immobilier & Art",
+   "key": "seuil_biens_valeur",
+   "label": "équivalent CHF / 180j",
+   "default": "200000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R399",
+   "scenarioId": "AN-01",
+   "bloc": "Analytique 2G",
+   "key": "zscore_seuil",
+   "label": "z-score de déclenchement",
+   "default": "3.5",
+   "unit": "σ"
+  },
+  {
+   "rule": "R400",
+   "scenarioId": "AN-02",
+   "bloc": "Analytique 2G",
+   "key": "sensibilite_rupture",
+   "label": "sensibilité du détecteur",
+   "default": "tenant",
+   "unit": "-"
+  },
+  {
+   "rule": "R401",
+   "scenarioId": "AN-03",
+   "bloc": "Analytique 2G",
+   "key": "dimensions_ft",
+   "label": "dimensions surveillées",
+   "default": "international,cash,HRJ,produit_risque",
+   "unit": "-"
+  },
+  {
+   "rule": "R401",
+   "scenarioId": "AN-03",
+   "bloc": "Analytique 2G",
+   "key": "materialite_ft",
+   "label": "matérialité minimale",
+   "default": "25000",
+   "unit": "CHF"
+  },
+  {
+   "rule": "R402",
+   "scenarioId": "AN-04",
+   "bloc": "Analytique 2G",
+   "key": "dormance_segment",
+   "label": "dormance du segment",
+   "default": "24",
+   "unit": "mois"
+  },
+  {
+   "rule": "R403",
+   "scenarioId": "AN-05",
+   "bloc": "Analytique 2G",
+   "key": "ecart_revenu_max",
+   "label": "écart toléré vs déclaré",
+   "default": "50",
+   "unit": "%"
+  }
+ ]
+}

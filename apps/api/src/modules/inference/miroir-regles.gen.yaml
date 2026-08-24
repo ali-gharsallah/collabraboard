@@ -1,0 +1,303 @@
+# GÉNÉRÉ par apps/api/scripts/generer-miroir-regles.mjs — NE PAS ÉDITER À LA MAIN.
+# Source de vérité : docs/audit/RULES_INVENTORY.md (R1–R51 inchangées — le miroir LIT, ne modifie pas).
+regles:
+  - id: REQ-R1
+    regle: R1
+    kind: approval
+    severity: non_bloquant
+    basis: "CDB 20 / OBA-FINMA (dérivé)"
+    enonce: "Un visa porte sur une seule section ; des visas sur sections distinctes sont indépendants."
+  - id: REQ-R2
+    regle: R2
+    kind: approval
+    severity: bloquant
+    basis: "LBA art. 8 / CDB 20 (contrôle nommé)"
+    enonce: "Seul le validateur nommé (ou son relais R4) peut viser, sauf dérogation tracée."
+  - id: REQ-R3
+    regle: R3
+    kind: data
+    severity: non_bloquant
+    basis: "Principe 4-yeux (dérivé)"
+    enonce: "Préparer une section n'exclut du visa que de cette section."
+  - id: REQ-R4
+    regle: R4
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (suppléance)"
+    enonce: "En cas d'absence, le relais nommé vise ; à défaut, dérogation tracée + fiche de poste."
+  - id: REQ-R5
+    regle: R5
+    kind: approval
+    severity: non_bloquant
+    basis: "OBA-FINMA (surveillance) (dérivé)"
+    enonce: "Un visa en attente déclenche rappels puis escalade selon délais tenant."
+  - id: REQ-R6
+    regle: R6
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (intégrité) (dérivé)"
+    enonce: "Toute modification des données invalide le visa de la section touchée."
+  - id: REQ-R7
+    regle: R7
+    kind: approval
+    severity: bloquant
+    basis: "LBA (traçabilité décision)"
+    enonce: "Un refus sans motivation est bloqué."
+  - id: REQ-R8
+    regle: R8
+    kind: approval
+    severity: non_bloquant
+    basis: "Principe event-driven (dérivé)"
+    enonce: "Un visa accordé reste valide jusqu'au prochain événement ; le temps seul ne le change pas."
+  - id: REQ-R9
+    regle: R9
+    kind: approval
+    severity: bloquant
+    basis: "OBA-FINMA (dérivé)"
+    enonce: "Un visa accordé ne se retire pas par simple changement d'avis."
+  - id: REQ-R10
+    regle: R10
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (dérivé)"
+    enonce: "Modifier une section n'invalide que son visa, jamais les autres."
+  - id: REQ-R11
+    regle: R11
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (gouvernance)"
+    enonce: "La réassignation de validateur est réservée aux rôles habilités et tracée."
+  - id: REQ-R12
+    regle: R12
+    kind: approval
+    severity: non_bloquant
+    basis: "OBA-FINMA (risque op.)"
+    enonce: "Un visa hors délégation valide génère un incident de risque opérationnel."
+  - id: REQ-R13
+    regle: R13
+    kind: approval
+    severity: bloquant
+    basis: "CDB 20 / OBA-FINMA (double contrôle)"
+    enonce: "Le préparateur d'une section ne peut pas viser cette section (4-yeux)."
+  - id: REQ-R14
+    regle: R14
+    kind: data
+    severity: bloquant
+    basis: "OBA-FINMA (responsabilité)"
+    enonce: "La validation finale exige un engagement de responsabilité explicite du signataire."
+  - id: REQ-R15
+    regle: R15
+    kind: data
+    severity: non_bloquant
+    basis: "Principe uniforme (dérivé)"
+    enonce: "La validation finale est un visa comme un autre, déclenché quand tout est visé, invalidable en cascade."
+  - id: REQ-R16
+    regle: R16
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (cycle de vie) (dérivé)"
+    enonce: "Le dossier suit une machine à états fermée (Brouillon…Clôturé)."
+  - id: REQ-R17
+    regle: R17
+    kind: data
+    severity: non_bloquant
+    basis: "LBA art. 9a (interdiction d'informer)"
+    enonce: "Un dossier suspendu applique des restrictions paramétrées ; le client n'est jamais notifié (art. 9a LBA)."
+  - id: REQ-R18
+    regle: R18
+    kind: data
+    severity: non_bloquant
+    basis: "LBA (vigilance) (dérivé)"
+    enonce: "Le retour d'un prospect précédemment refusé est détecté et alerté (sans blocage)."
+  - id: REQ-R19
+    regle: R19
+    kind: data
+    severity: non_bloquant
+    basis: "LPD / rétention (dérivé)"
+    enonce: "Un dossier en préparation inactif suit rappels J30/J60 et clôture J90 (délais tenant)."
+  - id: REQ-R20
+    regle: R20
+    kind: data
+    severity: non_bloquant
+    basis: "LPD (conservation)"
+    enonce: "Les données d'un dossier abandonné sont conservées (durées légales) ; pas d'écriture métier."
+  - id: REQ-R21
+    regle: R21
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (CoC) (dérivé)"
+    enonce: "Un changement de circonstances ne rouvre que les sections concernées ; le client reste opérationnel."
+  - id: REQ-R23
+    regle: R23
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (dérivé)"
+    enonce: "Deux process concurrents ne fusionnent pas : priorité, pause/reprise, trails distincts."
+  - id: REQ-R24
+    regle: R24
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (documentation) (dérivé)"
+    enonce: "Sections fixes issues du référentiel ; contenu variable selon le cas."
+  - id: REQ-R25
+    regle: R25
+    kind: approval
+    severity: non_bloquant
+    basis: "CDB 20 (dérivé)"
+    enonce: "Un visa conditionnel expire selon délai tenant → invalidation ou escalade."
+  - id: REQ-R26
+    regle: R26
+    kind: document
+    severity: non_bloquant
+    basis: "CDB 20 (identification)"
+    enonce: "Les documents requis se déduisent du croisement type d'entité × juridiction × rôle."
+  - id: REQ-R27
+    regle: R27
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 / LBA (dérivé)"
+    enonce: "La juridiction, fixée en premier, résout les documents concrets."
+  - id: REQ-R28
+    regle: R28
+    kind: document
+    severity: non_bloquant
+    basis: "CDB 20 (mise à jour) (dérivé)"
+    enonce: "Un document expiré crée une tâche de collecte, sans suspendre le dossier."
+  - id: REQ-R29
+    regle: R29
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (non-rétroactivité)"
+    enonce: "Chaque dossier estampille la version du référentiel en vigueur à sa création (grandfathering)."
+  - id: REQ-R30
+    regle: R30
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (ayant droit) (dérivé)"
+    enonce: "La personne est un objet unique ; ses changements se propagent par événement aux N dossiers."
+  - id: REQ-R31
+    regle: R31
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (dérivé)"
+    enonce: "Le cumul de rôles est autorisé ou non par la banque, contrôlé à la liaison."
+  - id: REQ-R32
+    regle: R32
+    kind: check
+    severity: non_bloquant
+    basis: "LBA art. 6 / OBA-FINMA (PEP)"
+    enonce: "La PEPisation crée une tâche de réévaluation par dossier ; aucune bascule silencieuse."
+  - id: REQ-R33
+    regle: R33
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (PEP)"
+    enonce: "L'écoulement du délai PEP alerte mais ne déclasse jamais : décision humaine (délai tenant)."
+  - id: REQ-R34
+    regle: R34
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (dérivé)"
+    enonce: "Toute relation déclarée crée automatiquement sa réciproque typée."
+  - id: REQ-R35
+    regle: R35
+    kind: data
+    severity: non_bloquant
+    basis: "LPD / rétention (dérivé)"
+    enonce: "Une personne sans rôle est archivée, jamais supprimée."
+  - id: REQ-R36
+    regle: R36
+    kind: data
+    severity: non_bloquant
+    basis: "CDB 20 (identification)"
+    enonce: "Une divergence d'identité se résout avec document probant et décideur nommé."
+  - id: REQ-R37
+    regle: R37
+    kind: document
+    severity: non_bloquant
+    basis: "CDB 20 (dérivé)"
+    enonce: "Le Central File, périmètre paramétré, rend un document réputé valide après contrôle."
+  - id: REQ-R38
+    regle: R38
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (organisation) (dérivé)"
+    enonce: "Une tâche assignée à un rôle est résolue vers une personne ; routage hors périmètre interdit."
+  - id: REQ-R39
+    regle: R39
+    kind: data
+    severity: bloquant
+    basis: "OBA-FINMA (dérivé)"
+    enonce: "Le dépassement de SLA mesure et notifie ; le système ne force jamais."
+  - id: REQ-R40
+    regle: R40
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (organisation) (dérivé)"
+    enonce: "La réaffectation se fait par le responsable via une vue de charge par rôle."
+  - id: REQ-R41
+    regle: R41
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (risque op.)"
+    enonce: "Un rôle sans titulaire actif signale un risque homme-clé ; escalade paramétrée."
+  - id: REQ-R42
+    regle: R42
+    kind: check
+    severity: non_bloquant
+    basis: "LBA / OBA-FINMA (surveillance)"
+    enonce: "Le screening perpétuel a 4 déclencheurs, fréquences par domaine paramétrées."
+  - id: REQ-R43
+    regle: R43
+    kind: check
+    severity: non_bloquant
+    basis: "OBA-FINMA (LoD) (dérivé)"
+    enonce: "Un hit suit analyse LoD1 puis clôture confirmée LoD2 (rôle tenant)."
+  - id: REQ-R44
+    regle: R44
+    kind: check
+    severity: bloquant
+    basis: "OBA-FINMA (décision humaine)"
+    enonce: "L'IA analyse, l'humain décide ; les faux positifs récurrents sont whitelistés avec justification."
+  - id: REQ-R45
+    regle: R45
+    kind: check
+    severity: non_bloquant
+    basis: "Sanctions / LBA (embargo)"
+    enonce: "Un hit sanctions confirmé applique une sévérité paramétrée (suspension/gel/comité)."
+  - id: REQ-R46
+    regle: R46
+    kind: check
+    severity: non_bloquant
+    basis: "OBA-FINMA (dérivé)"
+    enonce: "Un hit pendant la validation gèle le circuit ; le comité décide, tout est tracé."
+  - id: REQ-R47
+    regle: R47
+    kind: data
+    severity: non_bloquant
+    basis: "LPD (dérivé)"
+    enonce: "La journalisation des lectures est activable par la banque."
+  - id: REQ-R48
+    regle: R48
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (auditabilité)"
+    enonce: "L'état à une date passée est une requête sur le journal, pas une reconstruction."
+  - id: REQ-R49
+    regle: R49
+    kind: data
+    severity: bloquant
+    basis: "OBA-FINMA (immutabilité)"
+    enonce: "Le journal est append-only ; personne n'efface, pas même l'admin."
+  - id: REQ-R50
+    regle: R50
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA / LBA (reporting)"
+    enonce: "Les registres réglementaires (dérogations, PEP, hits, retards) s'exportent en un clic."
+  - id: REQ-R51
+    regle: R51
+    kind: data
+    severity: non_bloquant
+    basis: "OBA-FINMA (auditabilité)"
+    enonce: "Toute demande d'audit est une extraction indexée du journal par ID KYC."

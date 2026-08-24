@@ -25,6 +25,9 @@ DO $$ DECLARE t text; BEGIN
     'tenant_param_changes',                               -- R126 (un paramètre est une règle)
     'risk_case_notes',                                    -- R134 (l'instruction append-only)
     'aml_signals',                                        -- R189→R206 (le signal AML est un fait)
+    -- NB : aml_gap_signals N'EST PAS append-only — c'est un agrégat qui TRANSITIONNE (NEW→TP/FP à
+    -- la qualification humaine R44, comme risk_cases/tx_verdicts). La vérité append-only est le
+    -- journal domain_events (aml.signal.raised, aml.signal.qualified), lui immuable.
     'islamic_signals',                                    -- R207→R221 (le signal Shariah est un fait)
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (ledgers Shariah, append-only)
     'certifications', 'training_attestations',            -- R234 (MOD-43 : certifs & attestations append-only)
@@ -109,10 +112,12 @@ DO $$ DECLARE t text; BEGIN
     'clients', 'users', 'kyc_files', 'kyc_sections', 'kyc_questions',
     'kyc_access_rules', 'kyc_question_history', 'kyc_visas', 'kyc_locks',
     'kyc_lock_requests', 'documents', 'domain_events', 'audit_log',
-    'screening_runs', 'screening_hits', 'screening_qualifications',
+    'screening_runs', 'screening_hits', 'screening_qualifications', 'liste_versions',  -- R409 (L6)
     'persons', 'person_roles', 'person_relations',
     'mandates', 'positions', 'pms_breaches', 'document_versions', 'anchor_batches',
     'onboardings',                                        -- R117→R120 (bloc 19, tenantée)
+    'kyc_processes',                                      -- R23 (processes concurrents du dossier, tenantée)
+    'doc_matrix_versions',                                -- R26/R27/R29 (matrice documentaire versionnée, tenantée)
     'ia_prerevues', 'ia_prompt_versions',                 -- R121→R124 (bloc 20, tenantées)
     'tenant_param_changes',                               -- R125→R128 (bloc 21)
     'mros_communications',                                -- R129→R132 (bloc 22)
@@ -130,6 +135,7 @@ DO $$ DECLARE t text; BEGIN
     'tasks',                                              -- R183→R185 (lot 39, capacité équipe)
     'crm_contacts',                                       -- R186→R188 (lot 40, CRM relation)
     'aml_signals',                                        -- R189→R206 (lot 48, surveillance AML)
+    'aml_scenarios', 'aml_gap_signals', 'ground_truth_cases', 'ubo_groups', -- R340→R377 (AML Gap Wave 1, blocs 50–56)
     'islamic_signals',                                    -- R207→R221 (lot 49, couche Shariah)
     'zakat_calculations', 'waqf_distributions', 'mudaraba_distributions', -- R211/R215/R218 (lot 49b, ledgers Shariah)
     'training_assignments', 'certifications', 'training_attestations', -- R231→R238 (lot 50, MOD-43 formations)
@@ -142,6 +148,7 @@ DO $$ DECLARE t text; BEGIN
     'coc_files', 'coc_config_versions',                   -- Cycle de vie CoC (R276→R278)
     'olivia_tools', 'olivia_agents',                      -- Olivia v2 R264/R259 (registres)
     'olivia_runs', 'olivia_run_events',                   -- Olivia v2 R260 (runs + journal)
+    'etl_contrats', 'etl_lots', 'etl_lignes',            -- ETL core banking R480→R489 (spec arbitrée 10.08.2026)
     'transactions',                                       -- R297 (dégel V1, journal transactionnel tenanté)
     'builder_artefacts', 'builder_versions',              -- R304 (dégel V3, Builder tenanté)
     'mobile_identites',                                   -- R316 (dégel V7, population mobile tenantée)
@@ -158,6 +165,58 @@ DO $$ DECLARE t text; BEGIN
       EXECUTE format($p$CREATE POLICY tenant_isolation ON %I
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
         WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid)$p$, t);
+    END IF;
+  END LOOP;
+END $$;
+
+-- ── 2a-bis. Tables filles KYC SANS colonne tenant_id : policy par SOUS-REQUÊTE FK ─────
+-- Les 6 tables enfant du dossier (kyc_sections, kyc_questions, kyc_access_rules,
+-- kyc_question_history, kyc_visas, kyc_lock_requests) n'ont pas de colonne tenant_id (§2).
+-- Sans policy, sous FORCE RLS une lecture DIRECTE (`SELECT * FROM kyc_visas`) fuiterait
+-- cross-tenant : l'isolation transitive par FK n'était qu'APPLICATIVE. On la rend RÉELLE
+-- en base via une policy dont le prédicat remonte au parent tenanté (kyc_files ou kyc_locks).
+-- Aucune colonne nouvelle, aucune migration de données. Idempotent (DROP POLICY IF EXISTS).
+-- Le prédicat sert en USING (lecture/maj/suppression) ET en WITH CHECK (insertion/maj) :
+-- on ne peut rattacher une ligne fille qu'à un parent de SON tenant.
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+    ('kyc_sections',
+       $u$EXISTS (SELECT 1 FROM kyc_files f
+                  WHERE f.id = kyc_sections.kyc_file_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_visas',
+       $u$EXISTS (SELECT 1 FROM kyc_files f
+                  WHERE f.id = kyc_visas.kyc_file_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_questions',
+       $u$EXISTS (SELECT 1 FROM kyc_sections s JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE s.id = kyc_questions.section_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_access_rules',
+       $u$EXISTS (SELECT 1 FROM kyc_questions q JOIN kyc_sections s ON s.id = q.section_id
+                  JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE q.id = kyc_access_rules.question_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_question_history',
+       $u$EXISTS (SELECT 1 FROM kyc_questions q JOIN kyc_sections s ON s.id = q.section_id
+                  JOIN kyc_files f ON f.id = s.kyc_file_id
+                  WHERE q.id = kyc_question_history.question_id
+                    AND f.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$),
+    ('kyc_lock_requests',
+       $u$EXISTS (SELECT 1 FROM kyc_locks l
+                  WHERE l.id = kyc_lock_requests.lock_id
+                    AND l.tenant_id = current_setting('app.tenant_id', true)::uuid)$u$)
+  ) AS v(tbl, predicat)
+  LOOP
+    IF to_regclass(r.tbl) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', r.tbl);
+      EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', r.tbl);
+      EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', r.tbl);
+      EXECUTE format('CREATE POLICY tenant_isolation ON %I USING (%s) WITH CHECK (%s)',
+                     r.tbl, r.predicat, r.predicat);
     END IF;
   END LOOP;
 END $$;
@@ -252,6 +311,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE O
 --     });
 --   }
 --
+-- R481 (ETL) : idempotence par référence externe — défense en profondeur au stockage :
+-- une même référence ne peut être APPLIQUÉE qu'une fois par tenant × famille (le service
+-- fait le no-op AVANT ; cet index attrape toute course résiduelle, jamais un doublon).
+CREATE UNIQUE INDEX IF NOT EXISTS etl_lignes_appliquee_unique
+  ON etl_lignes(tenant_id, famille, external_ref) WHERE statut = 'APPLIQUEE';
+
 -- Déploiement en 2 temps (aucune interruption) :
 --   T1 : exécuter ce SQL — l'appli, encore connectée en propriétaire, bypasse
 --        la RLS → comportement inchangé ; l'isolation applicative continue seule.

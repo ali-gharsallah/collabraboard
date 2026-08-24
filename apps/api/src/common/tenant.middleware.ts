@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware, UnauthorizedException, ForbiddenException }
 import { verify, decode } from "jsonwebtoken";
 import { KeyStore } from "../modules/auth/key-store";
 import { PrismaService } from "./prisma.service";
+import { emitEvent } from "./domain-event";
 import { garderMobile, SURFACE_MOBILE } from "../modules/mobile/mobile.gate";
 
 // ═══ R284 (canon SO + transport async, ratifié 2026-07-28) — la garde STRUCTURELLE du rôle SO.
@@ -50,10 +51,12 @@ export class TenantMiddleware implements NestMiddleware {
     if (!autorise) throw new ForbiddenException(
       "SO_SURFACE_AUDIT : le rôle SO audite les JOURNAUX (lecture seule + STOP de run / export) — aucun accès opérationnel, aucune décision, jamais un regard du four-eyes (R284)");
     if (methode === "GET" && SO_SENSIBLE.some((p) => p.test(chemin)))
-      void this.prisma?.domainEvent.create({ data: { tenantId: req.ctx.tenantId, type: "AUDIT_ACCESS",
-        aggregateId: chemin.slice(0, 190), payload: { par: req.ctx.userId, role: "SO", chemin, methode },
-        at: new Date().toISOString() } })
-        .catch((e: any) => console.error("[audit-access]", e?.message ?? e));   // R286 : jamais silencieux
+      try {   // fire-and-forget : un refus catalogue (levé en SYNCHRONE par emitEvent) ne bloque pas la requête
+        if (this.prisma)
+          void emitEvent(this.prisma, req.ctx.tenantId, "AUDIT_ACCESS", chemin.slice(0, 190),
+            { par: req.ctx.userId, role: "SO", chemin, methode })
+            .catch((e: any) => console.error("[audit-access]", e?.message ?? e));   // R286 : jamais silencieux
+      } catch (e: any) { console.error("[audit-access]", e?.message ?? e); }
   }
 
   use(req: any, _res: any, next: () => void) {

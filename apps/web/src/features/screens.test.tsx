@@ -658,6 +658,7 @@ describe("FE-SD — partie 4 partielle : sdkyc rendu, paramfields annuaire (SD-0
     fireEvent.change(screen.getByPlaceholderText("typeCode"), { target: { value: "X" } });
     fireEvent.change(screen.getByPlaceholderText("libellé"), { target: { value: "Type X" } });
     fireEvent.click(screen.getByRole("button", { name: /Définir/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Enregistrer au registre$/ }));   // contrat UX : modale
     expect(await screen.findByTestId("msg-cocparam")).toHaveTextContent(/SD-06.*contrainte backend/);
   });
 });
@@ -728,6 +729,7 @@ describe("FE-RUNS — écran Runs Olivia v2 (R266, SW-17/18) : interrupteur, tim
     expect(screen.getAllByText(/agent-kyc/).length).toBeGreaterThan(0);
     expect(screen.getByText(/empreinte aaaaaaaaaa/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "STOP" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Arrêter le run$/ }));   // contrat UX : modale
     expect(await screen.findByText("INTERROMPU")).toBeInTheDocument();    // rechargé depuis le serveur, pas simulé
   });
 });
@@ -753,6 +755,7 @@ describe("FE-RW — R283 : sdar/sdgar rendent, ne dupliquent pas (RW-04)", () =>
     expect(screen.getByTestId("grille-matrice")).toBeInTheDocument();            // LE composant commun (sdkyc/sdar/sdgar)
     fireEvent.click(screen.getByLabelText("requise AML-Q1"));                    // sélection : question REQUISE
     fireEvent.click(screen.getByTestId("enregistrer"));
+    fireEvent.click(await screen.findByRole("button", { name: /^Versionner au registre$/ }));   // contrat UX : modale
     await screen.findByTestId("msg-sdar");
     const valeur = (ecrit as unknown as { valeur: { type: string; niveau: string; questionsRequises: string[] }[] }).valeur;
     const profil = valeur.find((p) => p.type === "AR" && p.niveau === "CDD");
@@ -1065,8 +1068,10 @@ describe("FE-XB — R293-R295 : le country manual rendu, le check servi, rien de
     fireEvent.change(screen.getByPlaceholderText("voyageId"), { target: { value: "v1" } });
     fireEvent.change(screen.getByPlaceholderText(/motif \(R7\)/), { target: { value: "réunion existante" } });
     fireEvent.click(screen.getByRole("button", { name: /^Demander$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer la demande$/ }));   // contrat UX : modale
     expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/en attente du visa d'un second/);
     fireEvent.click(screen.getByRole("button", { name: /Viser \(second regard\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Viser$/ }));                  // contrat UX : modale
     expect(await screen.findByTestId("msg-xb")).toHaveTextContent(/R13 : le visa de dérogation exige un SECOND regard/);
   });
 });
@@ -1238,11 +1243,13 @@ describe("FE-MB — R316/R318 : face banque du canal mobile — activation trac�
     render(<MobileAdmin/>);
     fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
     fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'activation$/ }));   // contrat UX : modale
     expect(await screen.findByText(/code hors bande/)).toBeInTheDocument();
     expect(screen.getByText("A1B2C3D4")).toBeInTheDocument();          // remis UNE fois — jamais stocké
     fireEvent.click(screen.getByRole("button", { name: /^Messagerie$/ }));
     expect(await screen.findByText(/Merci de changer mon adresse/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Ouvrir un CoC/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'ouverture$/ }));   // contrat UX : modale
     expect(await screen.findByText(/CoC ouvert \(cccc0000\)/)).toBeInTheDocument();  // la voie R276
   });
 
@@ -1254,6 +1261,7 @@ describe("FE-MB — R316/R318 : face banque du canal mobile — activation trac�
     render(<MobileAdmin/>);
     fireEvent.change(screen.getByPlaceholderText("clientId"), { target: { value: "c-1" } });
     fireEvent.click(screen.getByRole("button", { name: /Activer le canal \(RM\)/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Confirmer l'activation$/ }));   // contrat UX : modale
     expect(await screen.findByText(/Ressource introuvable/)).toBeInTheDocument();
   });
 });
@@ -1280,6 +1288,7 @@ describe("FE-OP — R321/R322 : incidents servis, heatmap RENDUE (jamais peinte)
     expect(screen.getByText(/EN RETARD/)).toBeInTheDocument();               // le fait calculé, rendu
     fireEvent.change(screen.getByPlaceholderText("titre de l'incident"), { target: { value: "Essai" } });
     fireEvent.click(screen.getByRole("button", { name: /^Déclarer$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Déclarer l'incident$/ }));   // contrat UX : modale
     expect(await screen.findByText(/R321 : classification OBLIGATOIRE/)).toBeInTheDocument();  // FE-04
   });
 });
@@ -1292,6 +1301,37 @@ describe("FE-I18N — §10 (ratifié) : dictionnaire maquette VERBATIM, écart p
     expect(traduire("IT")("Legal — Contrats")).toBe("Legal — Contratti");
     expect(traduire("FR")("Accueil")).toBe("Accueil");
     expect(traduire("EN", { dev: false })("Clé hors dictionnaire ξ")).toBe("Clé hors dictionnaire ξ");  // écart par clé — le FR reste (prod : propre, LN-02)
+  });
+
+  it("AML gap : les familles (chrome) sont traduites par le dictionnaire — EN/DE/IT", async () => {
+    const { traduire } = await import("../lib/i18n");
+    expect(traduire("EN")("Screening en flux")).toBe("In-flow screening");
+    expect(traduire("DE")("Correspondent Banking")).toBe("Korrespondenzbankgeschäft");
+    expect(traduire("IT")("Analytique 2G")).toBe("Analitica di seconda generazione");
+    expect(traduire("EN")("Seuil")).toBe("Threshold");                       // libellé UI AML gap
+  });
+
+  it("AR (5e langue « Both », E-FB-4) : PACK PARESSEUX — repli FR avant chargement, servi après chargerAR()", async () => {
+    const i18n = await import("../lib/i18n");
+    expect(i18n.LANGUES).toContain("AR");
+    expect(i18n.estRTL("AR")).toBe(true);
+    expect(i18n.estRTL("FR")).toBe(false);
+    // AVANT chargement du pack (hors bundle de base, « pull ar out ») : l'AR retombe sur le FR.
+    if (!i18n.arEstCharge()) {
+      expect(i18n.traduire("AR", { dev: false })("Accueil")).toBe("Accueil");
+    }
+    // On charge le pack de langue AR (import dynamique) puis on vérifie qu'il est servi.
+    await i18n.chargerAR();
+    expect(i18n.arEstCharge()).toBe(true);
+    // NAV principale + CHROME AML gap (passe MACHINE MSA, SPEC-I18N §2) : désormais servis.
+    expect(i18n.traduire("AR", { dev: false })("Accueil")).toBe("الرئيسية");                       // NAV
+    expect(i18n.traduire("AR", { dev: false })("Compliance & Risque")).toBe("الامتثال والمخاطر");  // NAV
+    expect(i18n.traduire("AR", { dev: false })("Screening en flux")).toBe("الفرز أثناء التدفّق");   // famille AML gap
+    expect(i18n.traduire("AR", { dev: false })("Seuil")).toBe("العتبة");                            // UI AML gap
+    expect(i18n.traduire("AR", { dev: false })("Profilage CPSI")).toBe("تنميط CPSI");               // sous-nav ÉDITEUR (EXT)
+    expect(i18n.traduire("AR", { dev: false })("Se reconnecter")).toBe("إعادة الاتصال");            // contenu d'écran (ECRANS)
+    // Toute clé HORS dictionnaire (ex. contenu de règle, chaîne non couverte) → repli FR PROPRE (jamais un trou).
+    expect(i18n.traduire("AR", { dev: false })("Chaîne hors dictionnaire AR (repli)")).toBe("Chaîne hors dictionnaire AR (repli)");
   });
 
   it("le shell bascule : sélecteur EN → l'onglet « Accueil » devient « Home » — aucune donnée métier traduite", async () => {
@@ -1348,6 +1388,44 @@ describe("FE-LN — R326/R327 (solde 4 écarts, ratifié 2026-07-29) : marqueur 
     expect(deCH).not.toBe(frCH);                                            // la locale gouverne le format…
     expect(deCH).toMatch(/['’]/);                                           // de-CH : apostrophe de groupement (variante ICU)
     expect(frCH).toMatch(/[\s ]/);                                     // fr-CH : espace de groupement (ICU ; le décimal CHF suisse reste le point)
+  });
+
+  it("SPEC-I18N §3 : localeDe mappe la langue d'affichage sur sa locale de formatage (fr-CH/en-GB/de-CH/it-CH/ar)", async () => {
+    const { localeDe } = await import("../lib/i18n");
+    expect(localeDe("FR")).toBe("fr-CH");
+    expect(localeDe("EN")).toBe("en-GB");
+    expect(localeDe("DE")).toBe("de-CH");
+    expect(localeDe("IT")).toBe("it-CH");
+    // AR : chiffres arabes OCCIDENTAUX par défaut (spec) ; ORIENTAUX seulement sur opt-in tenant.
+    expect(localeDe("AR")).toBe("ar-u-nu-latn");
+    expect(localeDe("AR", { chiffresArabesOrientaux: true })).toBe("ar-u-nu-arab");
+  });
+
+  it("SPEC-I18N §3 : le NOMBRE suit la locale d'affichage — séparateurs par langue, AR en chiffres occidentaux", async () => {
+    const { formatNombre } = await import("../lib/i18n");
+    // en-GB : virgule de milliers ; de-CH : apostrophe ; fr-CH : espace (insécable/étroit).
+    expect(formatNombre(1234567, "EN")).toBe("1,234,567");
+    expect(formatNombre(1234567, "DE")).toMatch(/1['’]234['’]567/);
+    expect(formatNombre(1234567, "FR")).toMatch(/1[\s ]234[\s ]567/);
+    // AR par défaut : chiffres OCCIDENTAUX (0-9), jamais arabes-orientaux (٠-٩) — « jamais fabriqué ».
+    const arDefaut = formatNombre(2026, "AR");
+    expect(arDefaut).toMatch(/[0-9]/);                           // des chiffres occidentaux
+    expect(arDefaut).not.toMatch(/[٠-٩]/);                       // aucun chiffre arabe-oriental
+    // Opt-in tenant : chiffres arabes ORIENTAUX (٠١٢…).
+    expect(formatNombre(2026, "AR", { chiffresArabesOrientaux: true })).toMatch(/[٠-٩]/);
+  });
+
+  it("SPEC-I18N §3 : la DATE suit la locale d'affichage (ordre des champs par langue), AR en chiffres occidentaux", async () => {
+    const { formatDate } = await import("../lib/i18n");
+    const iso = "2026-03-09T00:00:00Z";
+    const en = formatDate(iso, "EN", { dateStyle: "short", timeZone: "UTC" });   // en-GB : jour/mois/année, séparateur « / »
+    const de = formatDate(iso, "DE", { dateStyle: "short", timeZone: "UTC" });   // de-CH : jour.mois.année, séparateur « . »
+    // On atteste l'ORDRE (jour, mois) et le SÉPARATEUR par locale — robuste au nombre de chiffres de l'année (ICU).
+    expect(en).toMatch(/^09\/03\/\d{2,4}$/);
+    expect(de).toMatch(/^09\.03\.\d{2,4}$/);
+    expect(en).not.toBe(de);                                               // la locale gouverne l'ordre/les séparateurs
+    // AR par défaut : chiffres occidentaux dans la date aussi.
+    expect(formatDate(iso, "AR", { dateStyle: "short", timeZone: "UTC" })).not.toMatch(/[٠-٩]/);
   });
 });
 
@@ -1416,12 +1494,34 @@ describe("FE-SB-NAV — 4 onglets deep-link vers le hub Bacs à sable (71/72, d�
     window.localStorage.removeItem("OLIVE_LANG");
     const { Router } = await import("../app/router");
     render(<Router/>);
-    fireEvent.click(screen.getByRole("button", { name: "Bac à sable BRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bacs à sable" }));       // ouvre le GROUPE (sidebar)
+    fireEvent.click(screen.getByRole("button", { name: "Bac à sable BRM" }));    // puis l'item deep-link
     // le hub s'affiche, le bac sbbrm est ancré et mis en évidence
     const bac = await screen.findByText("sbbrm");
     expect(bac).toBeInTheDocument();
     expect(document.getElementById("bac-sbbrm")).toBeTruthy();
     // le bac AML reste présent (c'est bien LE hub, pas un écran séparé)
     expect(screen.getByText("sbkyc")).toBeInTheDocument();
+  });
+});
+
+// Contrat UX (docs/UX-VALIDATION-CONTRAT.md) : les dialogues natifs bloquants sont bannis —
+// toute confirmation/saisie de motif passe par la modale ConfirmValidation. Garde anti-régression.
+describe("UX-CONTRAT — aucun dialogue natif bloquant (window.prompt/confirm) dans les écrans", () => {
+  it("features/**/*.tsx ne contient plus aucun window.prompt / window.confirm", async () => {
+    const { readdirSync, readFileSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const racine = join(process.cwd(), "src", "features");
+    const fautifs: string[] = [];
+    const parcourir = (dir: string) => {
+      for (const nom of readdirSync(dir)) {
+        const p = join(dir, nom);
+        if (statSync(p).isDirectory()) { parcourir(p); continue; }
+        if (!/\.tsx?$/.test(nom) || nom.endsWith(".test.tsx")) continue;
+        if (/window\.(prompt|confirm)\s*\(/.test(readFileSync(p, "utf8"))) fautifs.push(p);
+      }
+    };
+    parcourir(racine);
+    expect(fautifs, `écrans avec un dialogue natif bloquant : ${fautifs.join(", ")}`).toHaveLength(0);
   });
 });

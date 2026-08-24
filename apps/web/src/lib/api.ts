@@ -18,7 +18,8 @@ export function isDemoMode(): boolean {
 
 /** Erreur normalisée — le `message` est celui du serveur, affiché TEL QUEL (FE-04, jamais reformulé).
  *  `refus` (optionnel) : les listes de refus backend (R269/R306) voyagent ENTIÈRES — jamais tronquées. */
-export type OliveError = { code: string; status: number; message: string; refus?: string[] };
+export type OliveError = { code: string; status: number; message: string; refus?: string[];
+  popup?: Record<string, unknown> };   // R445 : le 409 CONFIRMATION_REQUISE porte le payload exact du pop-up d'engagement
 
 type OliveSession = { tenantId?: string; userId?: string; role?: string };
 // OLIVE_SESSION reste une PROJECTION d'affichage (rôle courant pour les écrans) — jamais un
@@ -57,14 +58,29 @@ function withAsOf(path: string, asOf?: string): string {
   return `${path}${path.includes("?") ? "&" : "?"}asOf=${encodeURIComponent(eff)}`;
 }
 
-/** Lecture typée qui EXPOSE sa source. isDemo=true ⇒ donnée de démonstration (seed). */
-export async function apiGetSourced<T>(path: string, seed: T, opts?: { asOf?: string }): Promise<{ data: T; isDemo: boolean }> {
+/**
+ * Lecture typée qui EXPOSE sa source. isDemo=true ⇒ donnée de démonstration (seed).
+ *
+ * V2-M47 — `refus` : un REFUS du moteur n'est pas une panne du réseau. En confrontant l'onglet
+ * Exigences à l'API vivante, le moteur a répondu « P-L7-1 : aucun CompletionProfile pour
+ * (PP, CH) — ni profil exact, ni repli « * » » et l'écran n'en a rien montré : le `catch`
+ * effaçait le message et l'écran retombait sur son seed, exactement le silence que ce projet
+ * interdit. Le message part désormais TEL QUEL vers l'appelant (FE-04, jamais reformulé). Champ
+ * ADDITIF : tous les appelants existants l'ignorent et gardent leur comportement au mot près.
+ */
+export async function apiGetSourced<T>(path: string, seed: T, opts?: { asOf?: string }):
+  Promise<{ data: T; isDemo: boolean; refus?: OliveError }> {
   const base = apiBase();
   if (!base) return { data: seed, isDemo: true };
   try {
     const r = await fetch(`${base}${withAsOf(path, opts?.asOf)}`, { headers: sessionHeaders() });
     if (r.status === 401) signalerExpiration();                            // JW-05 — le shell reprend la main
-    if (!r.ok) throw new Error(String(r.status));
+    if (!r.ok) {
+      const corps = await r.json().catch(() => ({} as any));
+      return { data: seed, isDemo: true, refus: {
+        code: typeof corps?.error === "string" ? corps.error : "REFUS", status: r.status,
+        message: typeof corps?.message === "string" ? corps.message : `HTTP ${r.status}` } };
+    }
     return { data: (await r.json()) as T, isDemo: false };
   } catch { return { data: seed, isDemo: true }; }
 }
@@ -88,9 +104,10 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const payload = await r.json().catch(() => ({} as Record<string, unknown>));
   if (r.status === 401) signalerExpiration();                              // JW-05 — le brouillon (état React) survit
   if (!r.ok) {
-    const p = payload as { code?: string; error?: string; message?: string; refus?: string[] };
+    const p = payload as { code?: string; error?: string; message?: string; refus?: string[]; popup?: Record<string, unknown> };
     throw { code: p.code ?? p.error ?? "ERROR", status: r.status, message: p.message ?? `Erreur ${r.status}`,
-      ...(Array.isArray(p.refus) ? { refus: p.refus } : {}) } as OliveError;
+      ...(Array.isArray(p.refus) ? { refus: p.refus } : {}),
+      ...(p.popup ? { popup: p.popup } : {}) } as OliveError;
   }
   return payload as T;
 }

@@ -1,0 +1,5 @@
+[
+  { "code": "KYC-2026-JP-1042-R2", "clientId": "c1", "status": "UNDER_REVIEW", "riskLevel": "HIGH", "createdAt": "2026-07-10" },
+  { "code": "KYC-2026-CH-2210-R1", "clientId": "c2", "status": "APPROVED", "riskLevel": "LOW", "createdAt": "2026-06-20" },
+  { "code": "KYC-2026-AE-3318-R1", "clientId": "c3", "status": "IN_PROGRESS", "riskLevel": "HIGH", "createdAt": "2026-07-05" }
+]

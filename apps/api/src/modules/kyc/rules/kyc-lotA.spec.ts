@@ -1,0 +1,278 @@
+// Lot A — port fidèle de domain.py (moteur de référence Python) vers NestJS. Autonome (node:assert),
+// sans DB. Couvre R6/R10 (invalidation ciblée du visa sur modif), R9 (pas de révocation
+// discrétionnaire), R11 (réassignation validateur = rôles habilités), R12 (annulation pour vice →
+// incident op-risk), R8 (pas d'expiration calendaire — invariant), R24 (sections fixes / contenu
+// variable). Nominal ⊕ violation par règle. R14 (engagement final) : voir kyc-service.spec.
+process.env.AUDIT_HMAC_SECRET = process.env.AUDIT_HMAC_SECRET || "0".repeat(64);
+import * as assert from "node:assert/strict";
+import { KycService } from "../kyc.service";
+import { SECTIONS_BY_WORKFLOW } from "../kyc.templates";
+
+const audit = { log: async () => undefined } as any;
+
+// Fake Prisma minimal du cycle de vie visa. `visas` porte kycFileId = kyc.id (comme en base).
+function fake(opts: { kyc?: any; visas?: any[]; question?: any; refused?: any[]; processes?: any[] } = {}) {
+  const kyc = opts.kyc ?? { id: "K1", code: "KYC-1", tenantId: "t1", status: "IN_PROGRESS", version: 0, clientId: "C1" };
+  const visas: any[] = (opts.visas ?? []).map((v) => ({ version: 0, kycFileId: kyc.id, signedBy: null, verdict: null, message: null, ...v }));
+  const events: any[] = [];
+  const match = (v: any, where: any) => Object.entries(where).every(([k, val]: any) => v[k] === val);
+  // R23 : délégué kycProcess (create/findFirst/findMany/update/updateMany sur un tableau en mémoire).
+  let procSeq = 0;
+  const processes: any[] = (opts.processes ?? []).map((pr) => ({
+    id: pr.id ?? "P" + (++procSeq), tenantId: kyc.tenantId, kycFileId: kyc.id, etat: "EN_COURS",
+    ouvertLe: new Date(0), sectionsRevalidees: [], ...pr }));
+  const kycProcess = {
+    create: async ({ data }: any) => {
+      const row = { id: "P" + (++procSeq), etat: "EN_COURS", ouvertLe: new Date(), sectionsRevalidees: [], ...data };
+      processes.push(row); return row;
+    },
+    findFirst: async ({ where }: any) => processes.find((pr) => match(pr, where)) ?? null,
+    findMany: async ({ where }: any = {}) => processes.filter((pr) => match(pr, where ?? {})),
+    update: async ({ where, data }: any) => { const pr = processes.find((x) => x.id === where.id); Object.assign(pr, data); return pr; },
+    updateMany: async ({ where, data }: any) => {
+      const ms = processes.filter((pr) => match(pr, where)); ms.forEach((pr) => Object.assign(pr, data)); return { count: ms.length };
+    },
+  };
+  const kycVisa = {
+    findFirst: async ({ where }: any) => visas.find((v) => match(v, where)) ?? null,
+    findMany: async ({ where }: any = {}) => visas.filter((v) => match(v, where)),
+    update: async ({ where, data }: any) => {
+      const v = visas.find((x) => x.id === where.id); const nd = { ...data };
+      if (nd.version && typeof nd.version === "object" && "increment" in nd.version) nd.version = v.version + nd.version.increment;
+      Object.assign(v, nd); return v;
+    },
+    updateMany: async ({ where, data }: any) => {
+      const ms = visas.filter((v) => match(v, where));
+      ms.forEach((v) => Object.assign(v, data));
+      return { count: ms.length };
+    },
+  };
+  const p: any = {
+    kycFile: { findFirst: async () => kyc,
+      findMany: async ({ where }: any) => (opts as any).refused ? (opts as any).refused.filter((k: any) => k.status === where.status) : [],
+      updateMany: async ({ where, data }: any) => {
+        if (where.id !== kyc.id) return { count: 0 };
+        if (where.version !== undefined && where.version !== (kyc.version ?? 0)) return { count: 0 };
+        const nd = { ...data };
+        if (nd.version && typeof nd.version === "object" && "increment" in nd.version) nd.version = (kyc.version ?? 0) + nd.version.increment;
+        Object.assign(kyc, nd); return { count: 1 };
+      } },
+    kycVisa,
+    kycQuestion: { findFirst: async () => opts.question ?? null, update: async ({ data }: any) => ({ ...(opts.question ?? {}), ...data }) },
+    kycQuestionHistory: { findFirst: async () => null, create: async () => ({}) },
+    offboardingFile: { findFirst: async () => null },
+    kycProcess,
+    domainEvent: { create: async ({ data }: any) => { events.push(data); return data; } },
+    _events: events, _visas: visas, _processes: processes,
+  };
+  p.$transaction = async (fn: any) => fn(p);
+  return p;
+}
+const svc = (p: any) => new KycService(p, audit);
+const rejects = async (pr: Promise<any>, needle: string) => {
+  try { await pr; assert.fail("attendu un refus contenant « " + needle + " »"); }
+  catch (e: any) { if (e?.code === "ERR_ASSERTION" && String(e.message).startsWith("attendu")) throw e;
+    assert.ok(String(e?.message ?? e).includes(needle), `message « ${e?.message} » doit contenir « ${needle} »`); }
+};
+
+(async () => {
+  let passed = 0;
+  const t = async (nom: string, fn: () => Promise<void>) => { await fn(); passed++; console.log("  ✓ " + nom); };
+  const CO_SR = { tenantId: "t1", userId: "sel", role: "CO_SR" };
+  const CO = { tenantId: "t1", userId: "co", role: "CO" };
+  console.log("KYC lot A/B (R6/R10, R9, R11, R12, R8, R24, R46, R18, R16-R22 états) :");
+
+  await t("R9 : la révocation discrétionnaire est refusée (409 typé, tracée)", async () => {
+    await rejects(svc(fake()).tenterRevocation(CO, "KYC-1", "IDENT"), "[R9]");
+  });
+
+  await t("R11 : réassignation refusée pour un rôle NON habilité", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING", validateur: "old" }] });
+    await rejects(svc(p).reassignerValidateur(CO, "KYC-1", "IDENT", "CO", "new"), "[R11]");
+  });
+  await t("R11 : réassignation par un rôle habilité (CO_SR) met à jour le validateur", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING", validateur: "old" }] });
+    const r: any = await svc(p).reassignerValidateur(CO_SR, "KYC-1", "IDENT", "CO", "new");
+    assert.equal(r.validateur, "new");
+    assert.equal(p._visas[0].validateur, "new");
+  });
+
+  await t("R12 : seul un visa ACCORDÉ peut être annulé pour vice", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING" }] });
+    await rejects(svc(p).annulerPourVice(CO_SR, "KYC-1", "IDENT", "CO", "vice"), "accordé");
+  });
+  await t("R12 : motif obligatoire", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED" }] });
+    await rejects(svc(p).annulerPourVice(CO_SR, "KYC-1", "IDENT", "CO", "  "), "Motif");
+  });
+  await t("R12 : annulation pour vice → visa en attente + incident op-risk émis", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED", signedBy: "co" }] });
+    await svc(p).annulerPourVice(CO_SR, "KYC-1", "IDENT", "CO", "process non respecté");
+    assert.equal(p._visas[0].status, "PENDING");
+    assert.ok(p._events.some((e: any) => e.type === "risque.operationnel.incident"), "incident op-risk émis");
+  });
+
+  await t("R6/R10 : modifier une donnée invalide le visa SIGNÉ de CETTE section, pas les autres", async () => {
+    const question = { id: "q1", answer: null,
+      section: { code: "IDENT", kycFile: { id: "K1", status: "IN_PROGRESS", clientId: "C1" } },
+      accessRules: [{ role: "CO", right: "EDIT", effectiveFrom: new Date(0), effectiveTo: null }] };
+    const p = fake({ question, visas: [
+      { id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED", signedBy: "co" },
+      { id: "v2", sectionCode: "SOF", requiredRole: "CO", status: "SIGNED", signedBy: "co" }] });
+    await svc(p).answer(CO, "KYC-1", "q1", "nouvelle valeur");
+    assert.equal(p._visas.find((v: any) => v.id === "v1").status, "PENDING");   // section touchée (R6)
+    assert.equal(p._visas.find((v: any) => v.id === "v2").status, "SIGNED");    // autre section intacte (R10)
+    assert.ok(p._events.some((e: any) => e.type === "kyc.visa.invalide"));
+  });
+
+  await t("R8 : un visa accordé ne s'expire pas au calendrier (aucune API d'expiration)", async () => {
+    // KycVisa = PENDING|SIGNED : aucune colonne d'échéance, aucune méthode ne dégrade un SIGNÉ
+    // par le temps. Invariant scellé : sans appel d'expiration (il n'en existe pas), le visa tient.
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED", signedBy: "co" }] });
+    const v = await p.kycVisa.findFirst({ where: { id: "v1" } });
+    assert.equal(v.status, "SIGNED");
+    assert.ok(!("expiresAt" in v) && !("expireAt" in v), "aucun champ d'expiration sur le visa");
+  });
+
+  await t("R24 : sections fixes par workflow (structure du référentiel, contenu variable)", async () => {
+    const wfs = Object.keys(SECTIONS_BY_WORKFLOW);
+    assert.ok(wfs.length > 0, "au moins un workflow");
+    for (const wf of wfs) {
+      const secs = SECTIONS_BY_WORKFLOW[wf];
+      assert.ok(Array.isArray(secs) && secs.length > 0, `workflow ${wf} a des sections fixes`);
+      // Deux « instances » du même workflow partagent la MÊME structure (la donnée ≠ la structure).
+      assert.deepEqual(SECTIONS_BY_WORKFLOW[wf].map((s: any) => s.code), secs.map((s: any) => s.code));
+    }
+  });
+
+  await t("R46 : hit pendant validation → gèle les visas EN ATTENTE", async () => {
+    const p = fake({ visas: [
+      { id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING" },
+      { id: "v2", sectionCode: "SOF", requiredRole: "CO", status: "SIGNED" }] });
+    const r: any = await svc(p).gelerPourHit(CO_SR, "KYC-1", "HIT-1", 5);
+    assert.equal(r.geles, 1);
+    assert.equal(p._visas.find((v: any) => v.id === "v1").status, "GELE");   // en attente → gelé
+    assert.equal(p._visas.find((v: any) => v.id === "v2").status, "SIGNED"); // signé intact
+    assert.ok(p._events.some((e: any) => e.type === "kyc.visas.geles"));
+  });
+  await t("R46 : comité « poursuite » → dégèle les visas gelés", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "GELE" }] });
+    const r: any = await svc(p).deciderComite(CO_SR, "KYC-1", "HIT-1", "poursuite", ["BRM", "COO"]);
+    assert.equal(r.degeles, 1);
+    assert.equal(p._visas[0].status, "PENDING");
+    assert.ok(p._events.some((e: any) => e.type === "kyc.comite.decision"));
+  });
+  await t("R46 : comité « offboarding » → propose l'offboarding, visas non dégelés ; décision invalide refusée", async () => {
+    const p = fake({ visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "GELE" }] });
+    await svc(p).deciderComite(CO_SR, "KYC-1", "HIT-1", "offboarding", ["BRM"]);
+    assert.equal(p._visas[0].status, "GELE");
+    assert.ok(p._events.some((e: any) => e.type === "kyc.offboarding.propose"));
+    await rejects(svc(fake()).deciderComite(CO_SR, "KYC-1", "HIT-1", "peut-être", []), "[R46]");
+  });
+
+  await t("R18 : détection du retour d'un prospect REFUSÉ (dossiers rejetés antérieurs remontés)", async () => {
+    const p = fake({ refused: [
+      { code: "KYC-2026-CH-0001-R1", status: "REJECTED", createdAt: "2026-05-01" },
+      { code: "KYC-2026-CH-0002-R1", status: "IN_PROGRESS", createdAt: "2026-06-01" }] });
+    const r = await svc(p).dossiersRefusesAnterieurs(CO, "C1");
+    assert.equal(r.length, 1);                       // seul le REJETÉ remonte (rejeté ≠ clôture ≠ en cours)
+    assert.equal(r[0].code, "KYC-2026-CH-0001-R1");
+    const vide = await svc(fake()).dossiersRefusesAnterieurs(CO, "C9");
+    assert.equal(vide.length, 0);                    // client sans refus → aucun retour détecté
+  });
+
+  // ── R16-R22 : machine d'états du dossier ──
+  const kycEtat = (status: string, extra: any = {}) => ({ id: "K1", code: "KYC-1", tenantId: "t1", status, version: 0, clientId: "C1", ...extra });
+
+  await t("R17 : suspendre un dossier actif → SUSPENDED + restrictions figées", async () => {
+    const p = fake({ kyc: kycEtat("IN_PROGRESS") });
+    const r: any = await svc(p).suspendre(CO_SR, "KYC-1", "alerte:AML");
+    assert.equal(r.status, "SUSPENDED");
+    assert.equal((await p.kycFile.findFirst()).status, "SUSPENDED");
+    assert.ok((await p.kycFile.findFirst()).restrictions);            // snapshot posé
+  });
+  await t("R17 : opérations gelées en suspension (défaut : entrées ET sorties bloquées)", async () => {
+    const p = fake({ kyc: kycEtat("SUSPENDED", { restrictions: { entrees: false, sorties: false } }) });
+    assert.equal(await svc(p).operationAutorisee(CO_SR, "KYC-1", "entree"), false);
+    const q = fake({ kyc: kycEtat("IN_PROGRESS") });
+    assert.equal(await svc(q).operationAutorisee(CO_SR, "KYC-1", "sortie"), true);   // hors suspension : permis
+  });
+  await t("R17/R20 : écriture métier refusée sur un dossier suspendu (signVisa)", async () => {
+    const p = fake({ kyc: kycEtat("SUSPENDED"), visas: [{ id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "PENDING" }] });
+    await rejects(svc(p).signVisa(CO, "KYC-1", "IDENT"), "[R17/R20]");
+  });
+  await t("R19 : abandonner (préparation) puis réactiver — réactivation réservée à l'abandonné", async () => {
+    const p = fake({ kyc: kycEtat("IN_PROGRESS") });
+    await svc(p).abandonner(CO_SR, "KYC-1");
+    assert.equal((await p.kycFile.findFirst()).status, "ABANDONED");
+    await svc(p).reactiver(CO_SR, "KYC-1");
+    assert.equal((await p.kycFile.findFirst()).status, "IN_PROGRESS");
+    await rejects(svc(fake({ kyc: kycEtat("VALIDATED") })).reactiver(CO_SR, "KYC-1"), "[R19]");
+  });
+  await t("R20 : demande d'effacement LPD refusée (conservation LBA) → lecture seule", async () => {
+    const p = fake({ kyc: kycEtat("VALIDATED") });
+    const r: any = await svc(p).demandeEffacementLpd(CO_SR, "KYC-1", "client");
+    assert.equal(r.efface, false);
+    assert.equal((await p.kycFile.findFirst()).lectureSeule, true);
+  });
+  await t("R21/R22 : changement de circonstances — réouverture ciblée ; risque majeur → suspension", async () => {
+    const p = fake({ kyc: kycEtat("VALIDATED"), visas: [
+      { id: "v1", sectionCode: "IDENT", requiredRole: "CO", status: "SIGNED" },
+      { id: "v2", sectionCode: "SOF", requiredRole: "CO", status: "SIGNED" }] });
+    await svc(p).changementCirconstances(CO_SR, "KYC-1", ["IDENT"], "nouvelle adresse", false);
+    assert.equal(p._visas.find((v: any) => v.id === "v1").status, "PENDING");   // section ciblée rouverte
+    assert.equal(p._visas.find((v: any) => v.id === "v2").status, "SIGNED");    // autre section intacte
+    assert.equal((await p.kycFile.findFirst()).status, "EN_MAJ");
+    const q = fake({ kyc: kycEtat("VALIDATED"), visas: [{ id: "v1", sectionCode: "UBO", requiredRole: "CO", status: "SIGNED" }] });
+    await svc(q).changementCirconstances(CO_SR, "KYC-1", ["UBO"], "UBO change", true);
+    assert.equal((await q.kycFile.findFirst()).status, "SUSPENDED");            // risque majeur → suspension (R22)
+  });
+
+  // ── R23 : processes concurrents (pas de fusion ; priorité ; pause/reprise ; absorption) ──
+  await t("R23 : type de process invalide refusé", async () => {
+    await rejects(svc(fake()).ouvrirProcess(CO_SR, "KYC-1", "n_importe_quoi"), "[R23]");
+  });
+  await t("R23 : ouvrir un ÉVÉNEMENT met la recertification EN COURS en PAUSE (priorité, pas de fusion)", async () => {
+    const p = fake({ processes: [{ id: "R1", type: "recertification", etat: "EN_COURS" }] });
+    const r: any = await svc(p).ouvrirProcess(CO_SR, "KYC-1", "evenement");
+    assert.equal(p._processes.find((x: any) => x.id === "R1").etat, "EN_PAUSE");   // recert suspendue
+    const ev = p._processes.find((x: any) => x.id === r.process);
+    assert.equal(ev.type, "evenement");
+    assert.equal(ev.etat, "EN_COURS");                                             // deux process distincts coexistent
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.pause"));
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.ouvert"));
+  });
+  await t("R23 : une recertification n'interrompt pas une autre recertification", async () => {
+    const p = fake({ processes: [{ id: "R1", type: "recertification", etat: "EN_COURS" }] });
+    await svc(p).ouvrirProcess(CO_SR, "KYC-1", "recertification");
+    assert.equal(p._processes.find((x: any) => x.id === "R1").etat, "EN_COURS");   // pas de pause hors événement
+  });
+  await t("R23 : reprise d'une recert en pause ABSORBE les sections revalidées par l'événement clôturé", async () => {
+    const p = fake({ processes: [
+      { id: "R1", type: "recertification", etat: "EN_PAUSE", ouvertLe: new Date("2026-06-01"), sectionsRevalidees: ["IDENT"] },
+      { id: "E1", type: "evenement", etat: "CLOTURE", ouvertLe: new Date("2026-06-10"), sectionsRevalidees: ["SOF", "UBO"] }] });
+    const r: any = await svc(p).reprendreRecertification(CO_SR, "KYC-1", "R1");
+    const recert = p._processes.find((x: any) => x.id === "R1");
+    assert.equal(recert.etat, "EN_COURS");
+    assert.deepEqual([...recert.sectionsRevalidees].sort(), ["IDENT", "SOF", "UBO"]);   // fusion des sections revalidées
+    assert.ok(r.sectionsAbsorbees.includes("SOF") && r.sectionsAbsorbees.includes("UBO"));
+    assert.ok(p._events.some((e: any) => e.type === "kyc.process.repris"));
+  });
+  await t("R23 : un événement clôturé AVANT l'ouverture de la recert n'est pas absorbé", async () => {
+    const p = fake({ processes: [
+      { id: "R1", type: "recertification", etat: "EN_PAUSE", ouvertLe: new Date("2026-06-05"), sectionsRevalidees: [] },
+      { id: "E0", type: "evenement", etat: "CLOTURE", ouvertLe: new Date("2026-05-01"), sectionsRevalidees: ["SOF"] }] });
+    const r: any = await svc(p).reprendreRecertification(CO_SR, "KYC-1", "R1");
+    assert.equal(r.sectionsAbsorbees.length, 0);                                   // antérieur → hors périmètre
+  });
+  await t("R23 : clôturer un process fixe son état + ses sections revalidées ; process inconnu → 404", async () => {
+    const p = fake({ processes: [{ id: "E1", type: "evenement", etat: "EN_COURS" }] });
+    await svc(p).cloturerProcess(CO_SR, "KYC-1", "E1", ["SOF"]);
+    const e1 = p._processes.find((x: any) => x.id === "E1");
+    assert.equal(e1.etat, "CLOTURE");
+    assert.deepEqual(e1.sectionsRevalidees, ["SOF"]);
+    await rejects(svc(p).cloturerProcess(CO_SR, "KYC-1", "INEXISTANT", []), "introuvable");
+  });
+
+  console.log(`\n### ${passed}/${passed} tests kyc-lotA verts ###`);
+})().catch((e) => { console.error(e); process.exit(1); });

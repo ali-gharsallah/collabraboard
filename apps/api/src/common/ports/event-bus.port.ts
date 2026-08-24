@@ -10,12 +10,11 @@ export abstract class EventBusPort {
 
 // Adaptateur 1 (MVP) : l'outbox EST le bus — publish = insert, le worker livre.
 import { PrismaService } from "../prisma.service";
+import { emitEvent } from "../domain-event";
 export class OutboxEventBus extends EventBusPort {
   constructor(private prisma: PrismaService) { super(); }
   async publish(ev: DomainEventMsg) {
-    await this.prisma.domainEvent.create({ data: {
-      tenantId: ev.tenantId, type: ev.type, aggregateId: ev.aggregateId,
-      payload: ev.payload as any } });
+    await emitEvent(this.prisma, ev.tenantId, ev.type, ev.aggregateId, ev.payload as any);
   }
   subscribe() { /* la consommation MVP passe par OutboxWorker */ }
 }

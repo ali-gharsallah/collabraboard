@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Account Review » (Vague 3, revue périodique). ORCHESTRATION de primitives RATIFIÉES —
 // AUCUN agrégat « revue » inventé : conduire une revue = re-screener (POST /v1/screening/run,
@@ -15,6 +16,7 @@ export function AccountReview() {
   const [clientId, setClientId] = useState("");
   const [runs, setRuns] = useState<Run[]>([]);
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function conduireRevue() {
     setMsg("");
@@ -34,13 +36,17 @@ export function AccountReview() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Account Review — revue périodique (orchestration, zéro canon inventé)</h3>
     <p style={{ fontSize: 12, color: "#777" }}>Déclencheur → re-screening (trace R103) → décision consignée par les visas
       KYC gouvernés (four-eyes, auteur = jeton). Aucun agrégat « revue » n'est fabriqué : la revue compose des primitives ratifiées.</p>
     <div style={{ display: "flex", gap: 8, margin: "10px 0" }}>
       <input style={inp} placeholder="clientId à revoir" value={clientId} onChange={(e) => setClientId(e.target.value)}/>
-      <button style={btn} onClick={conduireRevue}>Conduire la revue (re-screening)</button>
+      <button style={btn} onClick={() => ask({ title: "Conduire la revue (re-screening)",
+        message: "Déclenche un re-screening tracé (R103). Consignez ensuite la conclusion via les visas KYC (four-eyes).",
+        items: [{ label: clientId ? `Client : ${clientId}` : "Aucun client ciblé (revue globale)", ok: true }],
+        confirmLabel: "Conduire la revue", onConfirm: conduireRevue })}>Conduire la revue (re-screening)</button>
       <button style={{ ...btn, background: "#777" }} onClick={charger}>Historique des revues</button>
     </div>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}

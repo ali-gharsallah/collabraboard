@@ -6,7 +6,7 @@ import { emitEvent } from "../../common/domain-event";
 import { Tx } from "../../common/tx";
 
 /**
- * Communication MROS — R129→R132 (MR-01..06). Écrit APRÈS l'amendement, APRÈS les tests.
+ * Communication MROS — R129→R132 (MR-01..08). Écrit APRÈS l'amendement, APRÈS les tests.
  * Art. 9 LBA : la décision (communiquer OU s'abstenir) est humaine, habilitée (R-Q), motivée
  * (R7), tracée — le système prépare, ne déclenche jamais (R129/R44).
  * Le dossier = références + empreintes, figé à la décision, opposable byte par byte (R130/R48/R49).
@@ -103,7 +103,20 @@ export class MrosService {
       notification: "TRANSMISSION_AUTORITE" | "NON_TRANSMISSION") {
     return this.prisma.$transaction(async (tx: Tx) => {
       await this.habilite(tx, ctx);
+      // V2-M38 — la VALEUR est validée. Le type TypeScript ne garde rien à l'exécution : le
+      // contrôleur passe `b?.notification` tel quel, si bien qu'une chaîne quelconque — ou
+      // `undefined` — s'écrivait dans la colonne. Conséquence silencieuse : le gel R131 exige
+      // `TRANSMISSION_AUTORITE` et refusait ensuite sans que personne ne comprenne pourquoi.
+      if (notification !== "TRANSMISSION_AUTORITE" && notification !== "NON_TRANSMISSION")
+        throw new BadRequestException(
+          "R131 : notification attendue TRANSMISSION_AUTORITE ou NON_TRANSMISSION");
       const c = await this.comm(tx, ctx, communicationId);
+      // Une NON_TRANSMISSION alors qu'un gel art. 10 est actif est une CONTRADICTION : le gel
+      // repose sur la transmission. On refuse plutôt que d'écrire deux vérités opposées ; la
+      // levée est un acte à part entière, motivé et nominatif.
+      if (notification === "NON_TRANSMISSION" && c.gelActif)
+        throw new BadRequestException(
+          "R131 : un gel art. 10 est actif — saisir une NON_TRANSMISSION exige de lever le gel d'abord (acte motivé)");
       await tx.mrosCommunication.update({ where: { id: c.id }, data: { notification } });
       await this.emit(tx, ctx.tenantId, "mros.notification", c.id, { notification, par: ctx.userId });
     });
@@ -138,6 +151,12 @@ export class MrosService {
       await this.habilite(tx, ctx);
       if (!motif || !motif.trim()) throw new BadRequestException("R7 : lever un gel exige un motif");
       const c = await this.comm(tx, ctx, communicationId);
+      // V2-M38 — la symétrie va dans les DEUX sens. On pouvait « lever » un gel jamais posé :
+      // le journal recevait `mros.gel.leve` et l'audit `MROS_FREEZE_LIFTED` pour un gel
+      // inexistant. Un journal qui porte la levée d'un gel qui n'a pas eu lieu est pire qu'un
+      // journal muet — il fait croire à un acte.
+      if (!c.gelActif)
+        throw new BadRequestException("R131 : aucun gel actif sur cette communication — rien à lever");
       await tx.mrosCommunication.update({ where: { id: c.id },
         data: { gelActif: false, gelLevePar: ctx.userId, gelLeveMotif: motif.trim() } });
       await this.emit(tx, ctx.tenantId, "mros.gel.leve", c.id, { motif: motif.trim(), par: ctx.userId });

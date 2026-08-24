@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
-import { MrosService } from "../mros/mros.service";
+import { PortGelMros } from "../surveillance/ports";
 import { Tx as PrismaTx } from "../../common/tx";
 
 /**
@@ -33,8 +34,9 @@ const RANG: Record<string, number> = { OK: 0, INFORMATIF: 1, SUSPENSIF: 2, ERREU
 const COMPORTEMENT_DEFAUT = { fenetreHeures: 48, maxTxFenetre: 3, multiplicateurVolumetrie: 3,
   typesSensibles: ["CONVERSION_CRYPTO"] };
 
-// ── Garde livrée : gel art. 10 — R131 a enfin son appelant ──
-export function gardeGelMros(mros: MrosService): Garde {
+// ── Garde livrée : gel art. 10 — R131 a enfin son appelant. P-L3-2 : dépend du PORT du contexte
+//    Surveillance (PortGelMros), jamais du service concret (frontière ADR-TM-001). ──
+export function gardeGelMros(mros: PortGelMros): Garde {
   return { code: "gel-mros", regle: "R131",
     async run(ctx, tx) {
       const v: any = await mros.verifierTransaction(ctx, tx.clientId);
@@ -75,7 +77,7 @@ export class TransactionGateService {
 
   private emitter(tx: PrismaTx, tenantId: string) {
     return (type: string, aggregateId: string, payload: any) =>
-      tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+      emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async cfg(tx: PrismaTx, tenantId: string) {
     const t = await tx.tenant.findFirst({ where: { id: tenantId } });

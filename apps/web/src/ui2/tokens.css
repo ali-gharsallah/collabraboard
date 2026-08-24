@@ -1,0 +1,192 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   UI v2 — DESIGN TOKENS (handoff docs/design/design_handoff_olive_ui_v2/README.md,
+   plan validé PO 10.08.2026). SOURCE UNIQUE : aucune couleur, taille ou espacement
+   en dur dans un composant ui2 — tout passe par ces variables.
+   Portée : la classe .ui2 (le shell v2) — zéro collision avec theme.css (:root v1),
+   les écrans existants ne bougent pas (boy-scout).
+   Polices : IBM Plex Sans / IBM Plex Mono — VENDORISÉES (V2-M12) : woff2 latin
+   dans ./fonts/ (licence OFL jointe), servies par le bundle, AUCUN appel sortant
+   (on-premise). Les piles de repli système restent en second rang.
+   Accessibilité : tous les couples texte/fond du handoff sont AA ≥ 4,5:1 — ne pas
+   réintroduire #79837A ni #8A937F sur blanc, ni #5E6773 sur nav sombre.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Polices vendorisées (graisses réellement utilisées par la v2 : Sans
+      400/400i/500/600/700, Mono 400/500 ; sous-ensemble latin, œ/é/è inclus).
+      font-display: swap — le repli système s'affiche sans blocage. ── */
+@font-face {
+  font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("./fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans"; font-style: italic; font-weight: 400;
+  font-display: swap; src: url("./fonts/ibm-plex-sans-latin-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500;
+  font-display: swap; src: url("./fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600;
+  font-display: swap; src: url("./fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700;
+  font-display: swap; src: url("./fonts/ibm-plex-sans-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("./fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500;
+  font-display: swap; src: url("./fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+}
+
+.ui2 {
+  /* ── Structure (neutres ardoise) ── */
+  --bg-app: #F6F7F3;            /* fond de la zone de contenu */
+  --bg-surface: #FFFFFF;        /* cartes, panneaux, tableaux */
+  --bg-subtle: #FBFCF9;         /* colonnes secondaires, en-têtes de tableau */
+  --bg-muted: #F0F3EB;          /* puces neutres, onglet actif discret */
+  --border: #E2E6DD;
+  --border-soft: #EDF0E9;
+  --border-row: #F2F4EE;
+  --border-input: #DCE1D6;
+  --text: #171C22;
+  --text-secondary: #3F4A38;
+  --text-body: #4A5740;
+  --text-muted: #646E5E;        /* AA vérifié */
+  --text-label: #5C6655;        /* micro-libellés capitales 9,5px */
+
+  /* ── Navigation (sombre) ── */
+  --nav-bg: #181D23;
+  --nav-field: #232A32;
+  --nav-field-border: #2E3741;
+  --nav-text: #C7CED7;
+  --nav-text-strong: #FFFFFF;
+  --nav-icon: #6E7885;
+  --nav-label: #8A939E;         /* minimum AA sur nav sombre */
+  --nav-active-bg: #2C3A20;
+  --nav-active-icon: #A4C56B;
+  --nav-divider: #2A323B;
+  --nav-hover: #232A32;
+  --nav-badge-alert-bg: #7A3129;
+  --nav-badge-alert-text: #F7DBD6;
+
+  /* ── Marque ── */
+  --brand: #4A6B28;
+  --brand-hover: #5A7D3A;
+  --brand-light: #7BA042;
+  --brand-pale: #A4C56B;
+  --brand-surface: #F5F8EF;
+  --brand-border: #D6E0C6;
+  --gold: #E3C75A;              /* l'olive du logo, UNIQUEMENT */
+
+  /* ── Sémantique réglementaire (risque, échéance, statut de contrôle — JAMAIS décoratif) ── */
+  --ok-line: #7BA042; --ok-alt: #3D9970; --ok-text: #3C6B2E; --ok-chip: #EDF3E4;
+  --warn-line: #D99A2B; --warn-text: #8A6212; --warn-chip: #FBF3E2; --warn-card: #FDFAF3; --warn-card-border: #E3C07A;
+  --alert-line: #C44536; --alert-text: #A63A2D; --alert-chip: #FAE9E6; --alert-card: #FDF7F5;
+  --info-line: #3E6B8A; --info-text: #2E5A80; --info-chip: #E7F0F7;
+  --ai-line: #6C58A8; --ai-text: #2E2842; --ai-chip: #F0ECF9; --ai-card: #FAF8FE; --ai-card-border: #E7E2F2;
+
+  /* ── Typographie ── */
+  --font-ui: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* ── Rayons ── */
+  --r-chip: 5px; --r-input: 9px; --r-card: 12px; --r-window: 14px; --r-pill: 20px;
+
+  /* ── Ombres ── */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-tile-hover: 0 2px 8px rgba(23,28,34,0.06);
+  --shadow-ai: 0 2px 8px rgba(217,154,43,0.10);
+
+  /* ── Grille du shell ── */
+  --nav-w: 248px;
+  --header-liste-h: 60px;
+  --header-dossier-h: 92px;
+  --stepper-h: 78px;
+
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg-app);
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Règle du handoff : tout nombre, identifiant, date ou pourcentage est en Mono. */
+.ui2 .mono { font-family: var(--font-mono); }
+/* Micro-libellé capitales (9,5–10px, Mono, letter-spacing 1,5–2px). */
+.ui2 .microlabel { font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-label); line-height: 1.2; }
+/* Transitions : 120ms ease-out sur background/border uniquement — aucune animation de layout. */
+.ui2 button, .ui2 a, .ui2 [role="button"] { transition: background 120ms ease-out, border-color 120ms ease-out; }
+.ui2 :focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+/* SandboxSlider (composant 11) — rail 4px, poignée 16px bordure 3px. Le remplissage et le
+   repère de production sont dessinés par le conteneur ; le range natif ne fournit que la
+   poignée et le clavier. --slider-fill : brand (valeur humaine) ou ai-line (proposition IA). */
+.ui2 input[type="range"].ui2-slider { -webkit-appearance: none; appearance: none; width: 100%;
+  height: 16px; margin: 0; background: transparent; cursor: pointer; }
+.ui2 input[type="range"].ui2-slider::-webkit-slider-thumb { -webkit-appearance: none;
+  appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid var(--slider-fill, var(--brand)); background: var(--bg-surface);
+  box-shadow: 0 1px 3px rgba(24, 29, 35, 0.2); }
+.ui2 input[type="range"].ui2-slider::-moz-range-thumb { width: 10px; height: 10px;
+  border-radius: 50%; border: 3px solid var(--slider-fill, var(--brand));
+  background: var(--bg-surface); box-shadow: 0 1px 3px rgba(24, 29, 35, 0.2); }
+
+/* ── Responsive (tiroir + empilement) ─────────────────────────────────────────────────────
+   La barre haute mobile n'existe qu'en dessous du seuil ; au-dessus, le shell desktop du
+   handoff est inchangé. Les règles marquées !important gagnent volontairement sur les styles
+   en ligne des composants (c'est la SEULE couche autorisée à le faire). */
+.ui2 .ui2-topbar { display: none; }
+.ui2 .ui2-voile { display: none; }
+
+@media (max-width: 900px) {
+  /* la page redevient défilante : le « shell qui ne défile jamais » est un contrat desktop */
+  .ui2 { height: auto !important; min-height: 100vh; overflow: visible !important; }
+  .ui2 .ui2-corps { display: block !important; }
+  .ui2 .ui2-corps > main { overflow-y: visible !important; padding: 14px !important; }
+  .ui2 .ui2-corps > aside { width: auto !important; overflow-y: visible !important;
+    border-left: none !important; border-right: none !important;
+    border-top: 1px solid var(--border); padding: 14px !important; }
+
+  /* barre haute + nav en tiroir (voile de fermeture) */
+  .ui2 .ui2-topbar { display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    height: 52px; padding: 0 10px; background: var(--nav-bg); }
+  .ui2 .ui2-nav-conteneur { position: fixed; top: 0; bottom: 0; left: 0; z-index: 70;
+    transform: translateX(-105%); transition: transform 160ms ease-out;
+    box-shadow: 0 0 32px rgba(23, 28, 34, 0.4); }
+  .ui2[data-menu="ouvert"] .ui2-nav-conteneur { transform: none; }
+  .ui2 .ui2-nav-conteneur > nav { height: 100% !important; overflow-y: auto; }
+  .ui2 .ui2-voile { display: block; position: fixed; inset: 0; z-index: 60; border: none;
+    cursor: pointer; background: rgba(23, 28, 34, 0.45); }
+
+  /* headers et stepper : hauteur libre, retours à la ligne, défilement du stepper */
+  .ui2 .ui2-entete > * { height: auto !important; min-height: 0 !important;
+    flex-wrap: wrap !important; row-gap: 8px; padding: 10px 14px !important; }
+  /* le bloc d'actions du header (flexShrink 0 sur desktop) doit pouvoir replier ses boutons */
+  .ui2 .ui2-entete header > span { flex-shrink: 1 !important; flex-wrap: wrap !important;
+    row-gap: 6px; min-width: 0; }
+  .ui2 .ui2-stepper { height: auto !important; padding: 10px 14px !important;
+    overflow-x: auto; }
+  .ui2 .ui2-stepper > * { min-width: 640px; }
+
+  /* les grilles de page s'empilent ; les TABLEAUX à grille défilent DANS leur carte —
+     le corps de page, lui, ne défile jamais latéralement */
+  .ui2 main div:not([role="row"]) { grid-template-columns: 1fr !important; }
+  /* les rangées flex de premier niveau du contenu s'empilent : chaque colonne prend 100 % */
+  .ui2 main > div > * { flex-basis: 100% !important; }
+  .ui2 main section { overflow-x: auto; }
+  .ui2 [role="row"] { min-width: 600px; }
+  /* toute rangée flex du contenu et des colonnes peut replier ses enfants (boutons de pied
+     de carte, méta « Brouillon enregistré »…) — sans effet sur les grilles ni le desktop */
+  .ui2 main div, .ui2 main span, .ui2 .ui2-corps > aside div { flex-wrap: wrap; row-gap: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui2 .ui2-nav-conteneur { transition: none; }
+  }
+}

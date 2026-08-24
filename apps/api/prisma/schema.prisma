@@ -59,6 +59,7 @@ model Client {
   externalRef String?  @map("external_ref")
   name        String
   structure   String
+  dateNaissance String? @map("date_naissance")            // R263 : DOB du client — discriminant d'homonymie du screening
   country     String   @db.Char(2)
   riskLevel   String   @default("MEDIUM") @map("risk_level")
   rmUserId    String?  @map("rm_user_id") @db.Uuid
@@ -97,6 +98,8 @@ model KycFile {
   lock          KycLock?
   handoffPhase  Int          @default(0) @map("handoff_phase")   // R85 : index de phase du passage de main
   version       Int          @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (UPDATE … WHERE version)
+  restrictions  Json?                       // R17 : restrictions figées à la suspension (grandfathering S-09)
+  lectureSeule  Boolean      @default(false) @map("lecture_seule")   // R20 : conservation LBA prime l'effacement LPD
   @@unique([tenantId, code])
   @@index([tenantId, clientId])
   @@map("kyc_files")
@@ -107,6 +110,9 @@ enum KycStatus {
   UNDER_REVIEW
   VALIDATED
   REJECTED
+  SUSPENDED    // R17 : Suspendu (restrictions paramétrées ; discrétion MROS)
+  ABANDONED    // R19 : Abandonné (dossier en préparation inactif ; réactivable)
+  EN_MAJ       // R21 : En mise à jour (réouverture ciblée ; client reste opérationnel)
 }
 
 model KycSection {
@@ -183,6 +189,7 @@ model KycVisa {
   signedAt     DateTime?  @map("signed_at")
   verdict      String?    @map("verdict")                // R86 : OK | CONDITIONAL | NOK
   message      String?    @map("message")                // R86 : justificatif (obligatoire si NOK/CONDITIONAL)
+  version      Int        @default(0)   // Bloc A robustesse (R336/LK) : jeton de verrou optimiste (signature de visa)
   @@unique([kycFileId, sectionCode, requiredRole])
   @@map("kyc_visas")
 }
@@ -190,6 +197,7 @@ model KycVisa {
 enum VisaStatus {
   PENDING
   SIGNED
+  GELE       // R46 : hit pendant la validation — visa gelé le temps de la décision du comité
 }
 
 model Document {
@@ -253,6 +261,40 @@ model KycLockRequest {
   @@map("kyc_lock_requests")
 }
 
+// R23 : processes CONCURRENTS d'un dossier — pas de fusion ; priorité (l'événement met la
+// recertification EN PAUSE) ; pause/reprise ; audit trail propre ; absorption des sections
+// déjà revalidées à la reprise.
+model KycProcess {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  kycFileId          String   @map("kyc_file_id") @db.Uuid
+  type               String                                   // "recertification" | "evenement"
+  etat               String   @default("EN_COURS")            // EN_COURS | EN_PAUSE | CLOTURE
+  ouvertLe           DateTime @default(now()) @map("ouvert_le")
+  sectionsRevalidees Json     @default("[]") @map("sections_revalidees")
+  @@index([tenantId, kycFileId])
+  @@map("kyc_processes")
+}
+
+// R26/R27/R29 — matrice documentaire versionnée (documents × entité × juridiction).
+// Référentiel append-only estampillé par date de mise en vigueur (port de referentiel.py :
+// VersionArtefact « matrice_documentaire »). Le CONTENU (quels documents par type d'entité)
+// relève de l'arbitrage banque (voie ⚙ R-Q) : le mécanisme est porté, jamais des seuils.
+// contenu = { exigences: { <typeEntite>: { entite:[exig], personne_liee:[exig], compte:[exig] } } }
+// où exig = code (string) OU groupe d'équivalence { groupe, parJuridiction:{ CH:.., "*":.. } } (R27).
+model DocMatrixVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  version     Int
+  enVigueurLe DateTime @map("en_vigueur_le")
+  contenu     Json
+  publiePar   String   @map("publie_par")
+  publieLe    DateTime @default(now()) @map("publie_le")
+  @@unique([tenantId, version])
+  @@index([tenantId, enVigueurLe])
+  @@map("doc_matrix_versions")
+}
+
 model DomainEvent {
   id          BigInt    @id @default(autoincrement())
   tenantId    String    @map("tenant_id") @db.Uuid
@@ -296,6 +338,25 @@ model ProcessedCommand {
 
 // ═══ v2 (19.07.2026) — R100→R116 ═══
 
+// R409 (L6 · P-L6-1) — VERSIONS IMMUABLES des listes ingérées (OpenSanctions, secours SECO/OFAC).
+// (tenant, source, version) unique ; hash d'intégrité ; delta vs version précédente calculé à l'IMPORT
+// (entité par entité) ; conservation ≥ 90 j (purge gardée côté service). Les entrées stockées sont
+// NORMALISÉES (ingererListe — adaptateur multi-format R409).
+model ListeVersion {
+  id        String @id @default(uuid()) @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+  source    String                                    // 'OPENSANCTIONS' | 'SECO' | 'OFAC'…
+  version   String                                    // étiquette IMMUABLE (timestamp du dump)
+  hash      String                                    // sha256 des entrées normalisées (intégrité)
+  entries   Json                                      // entrées normalisées
+  nEntrees  Int    @map("n_entrees")
+  delta     Json?                                     // { ajoutees[], modifiees[], retirees[] } vs précédente
+  importeLe String @map("importe_le")                 // ISO — l'ÂGE de la liste s'expose (bandeau + API)
+  @@unique([tenantId, source, version])
+  @@index([tenantId, source, importeLe])
+  @@map("liste_versions")
+}
+
 model ScreeningRun {
   id           String   @id @default(uuid()) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid
@@ -305,6 +366,8 @@ model ScreeningRun {
   prefiltre    Json                                       // R103 : le réglage fait partie de la trace
   perimetre    Int                                        // combien de clients confrontés
   nbHits       Int      @map("nb_hits")
+  config       Json?                                      // R269 : config moteur EFFECTIVE + scénario/version en vigueur (replay R48/R49)
+  sujetType    String   @default("client") @map("sujet_type") // R100 — sujet screené : client | personne | prospect
   at           DateTime @default(now())
   hits         ScreeningHit[]
   @@index([tenantId, at])
@@ -315,16 +378,21 @@ model ScreeningHit {
   tenantId      String   @map("tenant_id") @db.Uuid
   runId         String?  @map("run_id") @db.Uuid
   run           ScreeningRun? @relation(fields: [runId], references: [id])
-  clientId      String   @map("client_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid       // R100 — id du SUJET (client | personne | prospect selon sujetType)
+  sujetType     String   @default("client") @map("sujet_type") // R100 — type de sujet screené
   entreeUid     String   @map("entree_uid")               // uid de l'entrée de liste
   entreeHash    String   @map("entree_hash")              // R102 : l'empreinte, pas l'uid seul
   score         Int
   listeVersion  String   @map("liste_version")            // R100 : produit CONTRE cette version
   statut        String   @default("BRUT")                 // BRUT | QUALIFIE
+  channel       String?                                    // AML Gap bloc 50 : ONBOARDING|FLOW|PERPETUAL|CFT
+  matchScript   String?  @map("match_script")             // AML Gap R345 : script normalisé du match (multi-scripts)
+  detail        Json?                                      // R266 : décomposition explicable {via, nameScore, typePenalty, dobContribution}
   at            DateTime @default(now())
   qualification ScreeningQualification?
   @@index([tenantId, statut])
   @@index([tenantId, clientId, entreeUid])
+  @@index([tenantId, clientId, at])                       // R411 — historique audité d'un sujet dans le temps
   @@map("screening_hits")
 }
 model ScreeningQualification {
@@ -805,6 +873,9 @@ model Task {
   origine         String? @map("origine")                  // R239 : type d'événement d'origine (jamais par effet de bord)
   completedBy     String? @map("completed_by") @db.Uuid    // R241 : acteur de la complétion (distinct de l'assignee, tracé)
   completeComment String? @map("complete_comment")         // R241 : commentaire de complétion
+  // R38 (port creer_tache) : routage rôle → personne in-scope. Le rôle ciblé est enregistré ; la
+  // résolution stocke le titulaire in-scope dans assigneeId. Additif nullable — aucune donnée impactée.
+  roleCible       String? @map("role_cible")
   @@index([tenantId, assigneeId])
   @@map("tasks")
 }
@@ -839,6 +910,82 @@ model AmlSignal {
   at       DateTime @default(now())
   @@index([tenantId, clientId])
   @@map("aml_signals")
+}
+
+// ── AML Gap Wave 1 (R340–R377, blocs 50–56) — step-0 2026-08-04 ──
+// Définition VERSIONNÉE par date de vigueur (R29, grandfathering) — même idiome que
+// DocMatrixVersion. L'AmlSignal existant (R189–R206) reste intact ; la vague gap a ses propres
+// tables (écart consigné : deux familles de signaux coexistent, jamais fusionnées à chaud).
+model AmlScenario {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  code          String                                    // "SF-01"
+  ruleRef       String   @map("rule_ref")                 // "R340"
+  fam           String                                    // bloc fonctionnel (SF/QO/GU/IP/CR/FT/GV)
+  version       Int
+  effectiveFrom DateTime @map("effective_from")           // date de mise en vigueur (R29)
+  params        Json     @default("{}")                   // paramètres tenant (registre R-Q)
+  i18n          Json?                                      // traductions nom/desc {en,de,it} versionnées (R29, SPEC-I18N §3)
+  niveau        Int?                                       // 1|2 ; null pour campagnes/ops
+  blocking      Boolean  @default(false)                  // émet aml.block.requested (jamais d'exécution)
+  active        Boolean  @default(true)
+  @@unique([tenantId, code, version])
+  @@index([tenantId, code, effectiveFrom])
+  @@map("aml_scenarios")
+}
+
+// Signal append-only (immutabilité par trigger post-deploy, comme aml_signals). Écrit UNIQUEMENT
+// via le service ; le statut évolue par événement (aml.signal.qualified), la ligne en est la projection.
+model AmlGapSignal {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  scenarioCode String   @map("scenario_code")             // "SF-01"
+  scenarioVer  Int      @map("scenario_ver")              // version en vigueur au déclenchement
+  ruleRef      String   @map("rule_ref")                  // R340..R377
+  clientId     String?  @map("client_id") @db.Uuid        // null pour la gouvernance (bloc 56)
+  uboGroupId   String?  @map("ubo_group_id") @db.Uuid     // bloc 52 — périmètre consolidé
+  payload      Json     @default("{}")                    // faits déclencheurs
+  niveau       Int?
+  blocking     Boolean  @default(false)
+  status       String   @default("NEW")                   // NEW | UNDER_REVIEW | TP | FP | ESCALATED
+  outcome      String?                                     // TP | FP (qualification humaine)
+  motif        String?                                     // motif obligatoire à la qualification (R7)
+  idemKey      String   @map("idem_key")                  // (scenario,client,hash faits) — dédoublonnage
+  emisPar      String   @map("emis_par")                  // jeton — jamais le corps
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, idemKey])
+  @@index([tenantId, status])
+  @@index([tenantId, clientId])
+  @@map("aml_gap_signals")
+}
+
+// Corpus Ground Truth (78 cas) — seedé depuis tools/aml-gap/aml-gap-dataset-gt.json (générateur).
+model GroundTruthCase {
+  id           String  @id @default(uuid()) @db.Uuid
+  tenantId     String  @map("tenant_id") @db.Uuid
+  caseId       String  @map("case_id")                    // "GT-SF-01-TP-1"
+  scenarioCode String  @map("scenario_code")
+  ruleRef      String  @map("rule_ref")
+  fam          String
+  label        String                                      // TP | FP
+  clientId     String? @map("client_id") @db.Uuid          // null pour la gouvernance
+  narrative    String
+  ecartement   String?                                     // cause d'écartement documentée (FP)
+  payload      Json?
+  @@unique([tenantId, caseId])
+  @@index([tenantId, scenarioCode])
+  @@map("ground_truth_cases")
+}
+
+// Bloc 52 — matérialisation du périmètre UBO (recalculé sur événement du graphe personnes liées).
+model UboGroup {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  uboPersonId     String   @map("ubo_person_id") @db.Uuid
+  memberClientIds String[] @map("member_client_ids") @db.Uuid
+  updatedAt       DateTime @default(now()) @map("updated_at")
+  @@index([tenantId, uboPersonId])
+  @@map("ubo_groups")
 }
 
 // Couche de conformité Shariah — R207→R221 (Bloc 49, IS-01..IS-15). Un signal est un FAIT
@@ -975,6 +1122,8 @@ model Trip {
   clients       Json     @default("[]")                        // string[] (clientId visités)
   advisories    Json     @default("[]")                        // [{ jurisdiction, activite, verdict, referentielVersion }] (R223)
   signals       Json     @default("[]")                        // [{ type, severite, detail }] (R224/R228)
+  activites     Json     @default("[]")                        // string[] — activités prévues (Bloc 63 R446/R448, expand R334)
+  budget        Float?                                         // CHF — chaîne risque × budget (Bloc 63 R446)
   revision      Int      @default(1)                           // R230
   previousTripId String? @map("previous_trip_id") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at")
@@ -1393,4 +1542,56 @@ model MobileIdentite {
   activeAt   DateTime? @map("active_at")
   @@unique([tenantId, clientId])
   @@map("mobile_identites")
+}
+
+// ── ETL core banking (R480→R489, spec ARBITRÉE PO 10.08.2026) — contrat versionné par date
+// d'effet (R480/R29), lots + staging append-only (R482), idempotence par référence externe
+// (R481, index partiel unique posé par post-deploy-v2.sql). RLS ENABLE+FORCE (invariant §5). ──
+model EtlContrat {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  connecteur  String                                     // GENERIQUE (Q1) · avaloq · finnova · temenos
+  famille     String                                     // CLIENTS | COMPTES | TRANSACTIONS (Q2)
+  version     Int
+  mapping     Json                                       // R487 : déclaratif { champs, requis } — jamais du code
+  mode        String   @default("TOUT_OU_RIEN")          // Q4 (paramètre gouverné)
+  enVigueurLe DateTime @map("en_vigueur_le")             // R29 : résolution à date, jamais « courante »
+  dryRunFait  Boolean  @default(false) @map("dry_run_fait") // R484 : la VERSION doit être simulée
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@unique([tenantId, connecteur, famille, version])
+  @@map("etl_contrats")
+}
+
+model EtlLot {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  connecteur     String
+  famille        String
+  recuLe         DateTime @map("recu_le")
+  contratId      String   @map("contrat_id") @db.Uuid
+  contratVersion Int      @map("contrat_version")
+  statut         String   @default("RECU")               // RECU | VALIDE | APPLIQUE | RECONCILIE | INCIDENT (R485)
+  nbSource       Int      @default(0) @map("nb_source")
+  nbValides      Int      @default(0) @map("nb_valides")
+  nbRejets       Int      @default(0) @map("nb_rejets")
+  nbAppliques    Int      @default(0) @map("nb_appliques")
+  nbNoop         Int      @default(0) @map("nb_noop")
+  createdAt      DateTime @default(now()) @map("created_at")
+  @@index([tenantId, connecteur, famille, recuLe])
+  @@map("etl_lots")
+}
+
+model EtlLigne {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  lotId       String   @map("lot_id") @db.Uuid
+  famille     String
+  externalRef String   @map("external_ref")              // R481 : l'identité d'import
+  data        Json     @default("{}")
+  statut      String   @default("STAGED")                // STAGED | VALIDE | REJETEE | APPLIQUEE | NOOP
+  motif       String?                                    // R483 : rejet motivé, jamais silencieux
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@index([tenantId, famille, externalRef, statut])
+  @@index([tenantId, lotId])
+  @@map("etl_lignes")
 }

@@ -7,6 +7,15 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["<rootDir>/test/e2e/**/*.e2e-spec.ts"],
   moduleFileExtensions: ["ts", "js", "json"],
+  // QUARANTAINE e2e (voir test/e2e/QUARANTINE.md). Les 9 suites autrefois exclues ont été
+  // HERMÉTISÉES le 2026-08-05 et RÉINTÉGRÉES : 8 échouaient sur la garde R14 (engagement de
+  // responsabilité désormais requis à la validation finale — le test ne l'envoyait pas), sur un
+  // signed_by devenu uuid, ou sur les nouvelles clés requises R-Q (AML-gap) du go-live ; la 9e
+  // (cloture-demo) avait un grep de source trop large (il confondait l'onglet d'AFFICHAGE
+  // « demo » avec une branche de logique métier). Aucune suite ne reste en quarantaine.
+  testPathIgnorePatterns: [
+    "/node_modules/",
+  ],
   setupFiles: ["<rootDir>/test/e2e/env.ts"],
   transform: {
     "^.+\\.ts$": ["ts-jest", {

@@ -202,6 +202,30 @@ async function personneDans5Dossiers(settings: any = {}) {
     await rejects(s.flagsAml({ ...CTX, tenantId: 't2' }, 'P-1'), 'introuvable');
   });
 
+  // ── ADR-PEP-001 (P-L4-1) — la décision humaine répond à la proposition, avec TRACE LIANTE ──
+  await it('ADR-PEP-001 acceptation : declarerPep(sourceHitId) → statutPep=true + trace liante hit↔décision', async () => {
+    const { p, s, dupont } = await personneDans5Dossiers();
+    await s.declarerPep(CTX, dupont.id, 'liste PEP (proposition)', 'HIT-42');
+    ok(p._db.persons[0].statutPep === true, 'PEPisation décidée par l\'humain');
+    const ev = evts(p, 'personne.pep.declare')[0];
+    ok(ev && ev.payload.sourceHitId === 'HIT-42' && ev.payload.source === 'liste PEP (proposition)',
+      'trace liante sourceHitId portée par l\'événement');
+  });
+  await it('ADR-PEP-001 rejet : sans motif → refus R7 (jamais un rejet silencieux)', async () => {
+    const { s } = await personneDans5Dossiers();
+    await rejects(s.rejeterPropositionPep(CTX, 'pep:per1:SAN-1:2026-07-14', ''), 'R7');
+  });
+  await it('ADR-PEP-001 rejet motivé : événement pep.proposition.rejetee (cle, motif, auteur = jeton), statutPep intact', async () => {
+    const { p, s } = await personneDans5Dossiers();
+    const cle = 'pep:per1:SAN-1:2026-07-14';
+    const r: any = await s.rejeterPropositionPep(CTX, cle, 'Homonymie établie sur pièce d\'identité');
+    ok(r.rejetee === true, 'rejet rendu');
+    const ev = evts(p, 'pep.proposition.rejetee')[0];
+    ok(ev && ev.payload.cle === cle && ev.payload.par === CTX.userId && ev.payload.motif.includes('Homonymie'),
+      'rejet motivé, auteur = jeton');
+    ok(p._db.persons[0].statutPep === false, 'le rejet ne PEPise pas');
+  });
+
   console.log(`\nCâblage personnes (P-01..08, R30→R36) — ${passed}/${passed + failed} tests verts`);
   if (failed) { fails.forEach((f) => console.log(f)); process.exit(1); }
 })();

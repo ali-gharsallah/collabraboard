@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Reporting réglementaire (MROS) » (Vague 4). Le registre des communications
 // (GET /v1/mros) est habilité (art. 10a, R132). La relecture (GET /v1/mros/:id) est OPPOSABLE :
@@ -10,14 +11,16 @@ import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
 
 type Comm = { id: string; riskCaseId: string; decision: string; notification?: string; gelActif?: boolean; dossierSha256: string; decideAt: string };
 type Relu = { decision: string; motif: string; dossierSha256: string } | null;
+type Goaml = { communicationId: string; xml: string; nTransactions: number; dossierSha256: string } | null;
 const apiBase = (): string | undefined => (window as unknown as { OLIVE_API_URL?: string }).OLIVE_API_URL;
 const auth = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("olive_jwt")}` });
 
 export function ReportingMros() {
   const [comms, setComms] = useState<Comm[]>([]);
   const [detail, setDetail] = useState<Relu>(null);
+  const [goaml, setGoaml] = useState<Goaml>(null);
   const [msg, setMsg] = useState("");
-  const [motif, setMotif] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() { setComms((await apiGetSourced<Comm[]>("/v1/mros", [])).data); }
   async function relire(id: string) {
@@ -25,7 +28,7 @@ export function ReportingMros() {
     setDetail(d.data);
     setMsg(d.data ? `Relecture opposable — empreinte ${String(d.data.dossierSha256 ?? "").slice(0, 16)}…` : "");
   }
-  async function poserGel(id: string) {
+  async function poserGel(id: string, motif: string) {
     setMsg("");
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
@@ -41,13 +44,46 @@ export function ReportingMros() {
     setMsg(r.ok ? `Notification saisie : ${notification}.` : "Erreur");
     if (r.ok) charger();
   }
+  // P-L8-1 goAML : le brouillon XML est GÉNÉRÉ par l'API (validé contre le XSD-subset committé) ;
+  // la soumission est MANUELLE et tracée (référence portail obligatoire) — jamais d'envoi auto.
+  async function genererGoaml(id: string) {
+    const g = await apiGetSourced<Goaml>(`/v1/mros/${id}/goaml`, null);
+    setGoaml(g.data);
+    setMsg(g.data ? `Brouillon goAML généré — ${g.data.nTransactions} transaction(s), XSD-subset validé.` : DEMO_MESSAGE);
+  }
+  function telechargerGoaml() {
+    if (!goaml) return;
+    const url = URL.createObjectURL(new Blob([goaml.xml], { type: "application/xml" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `goaml-${goaml.communicationId}.xml`; a.click();
+    URL.revokeObjectURL(url);
+  }
+  async function soumettreGoaml(id: string, reference: string) {
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/mros/${id}/goaml/soumettre`, { method: "POST", headers: auth(), body: JSON.stringify({ reference }) });
+    const b = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Soumission goAML tracée — référence ${reference}.` : (b.message ?? "Erreur (référence portail requise)"));
+    if (r.ok) charger();
+  }
+  async function tickChrono() {
+    const base = apiBase();
+    if (!base) { setMsg(DEMO_MESSAGE); return; }
+    const r = await fetch(`${base}/v1/mros/chrono/tick`, { method: "POST", headers: auth(), body: JSON.stringify({}) });
+    const b = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Chrono J+5 ouvrés : ${b.examinees ?? 0} examinée(s), ${(b.alertes ?? []).length} alerte(s).` : "Erreur");
+  }
 
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Reporting réglementaire (MROS) — registre opposable & figé (R129→R132)</h3>
-    <button style={btn} onClick={charger}>Charger le registre</button>
+    <button style={btn} onClick={charger}>Charger le registre</button>{" "}
+    <button style={{ ...btn, background: "#8a6d1a" }} onClick={tickChrono}
+      title="Chronomètre J+5 OUVRÉS depuis la décision DECLARER sans soumission goAML (P-L8-1) — idempotent">
+      Chrono J+5 (tick)</button>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 10 }}>
       <thead><tr style={{ textAlign: "left", borderBottom: "2px solid #4A6B28" }}>
@@ -59,18 +95,31 @@ export function ReportingMros() {
           <td style={{ fontFamily: "monospace", fontSize: 11 }}>{c.dossierSha256?.slice(0, 12)}…</td>
           <td>{c.decideAt ? new Date(c.decideAt).toLocaleDateString() : "—"}</td>
           <td><button style={{ ...btn, background: "#777" }} onClick={() => relire(c.id)}>Relire</button>{" "}
-            <button style={btn} onClick={() => notifier(c.id, "TRANSMISSION_AUTORITE")}>Transmis</button>{" "}
-            <button style={{ ...btn, background: "#c33" }} onClick={() => poserGel(c.id)}>Geler</button></td>
+            <button style={{ ...btn, background: "#4a5d68" }} onClick={() => genererGoaml(c.id)}>goAML</button>{" "}
+            <button style={{ ...btn, background: "#2f4b66" }} onClick={() => ask({ title: "Soumettre au portail goAML — acte MANUEL tracé",
+              message: "La soumission n'est JAMAIS automatique : elle trace la référence remise par le portail MROS (P-L8-1).",
+              input: { label: "Référence portail", placeholder: "obligatoire", required: true },
+              confirmLabel: "Tracer la soumission", onConfirm: (ref) => soumettreGoaml(c.id, ref ?? "") })}>Soumis</button>{" "}
+            <button style={btn} onClick={() => ask({ title: "Notifier — transmission à l'autorité",
+              message: "Acte opposable et tracé (art. 10a). Le dossier reste figé (R130).", confirmLabel: "Transmettre",
+              onConfirm: () => notifier(c.id, "TRANSMISSION_AUTORITE") })}>Transmis</button>{" "}
+            <button style={{ ...btn, background: "#c33" }} onClick={() => ask({ title: "Poser un gel (art. 10 LBA)", danger: true,
+              message: "Le gel est motivé (R7) et opposable.", input: { label: "Motif du gel", placeholder: "obligatoire", required: true },
+              confirmLabel: "Geler", onConfirm: (motif) => poserGel(c.id, motif ?? "") })}>Geler</button></td>
         </tr>)}
         {comms.length === 0 && <tr><td colSpan={6} style={{ padding: 6, color: "#666" }}>Registre vide (rôle habilité requis — art. 10a).</td></tr>}
       </tbody>
     </table>
-    <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-      <input style={{ ...inp, flex: 1 }} placeholder="motif du gel (R7)" value={motif} onChange={(e) => setMotif(e.target.value)}/>
-    </div>
     {detail && <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: "#f3f0e8", fontSize: 13 }}>
       <strong>Relecture opposable</strong> — décision {detail.decision}, motif « {detail.motif} »,
       empreinte <span style={{ fontFamily: "monospace" }}>{detail.dossierSha256}</span> (identique au dépôt, R130).
+    </div>}
+    {goaml && <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: "#f3f0e8", fontSize: 13 }}>
+      <strong>Brouillon goAML (P-L8-1)</strong> — {goaml.nTransactions} transaction(s), empreinte dossier{" "}
+      <span style={{ fontFamily: "monospace" }}>{goaml.dossierSha256?.slice(0, 16)}…</span>{" "}
+      <button style={{ ...btn, background: "#4a5d68" }} onClick={telechargerGoaml}>Télécharger le XML</button>
+      <pre style={{ marginTop: 8, fontSize: 11, maxHeight: 260, overflow: "auto", background: "#fff",
+        padding: 10, borderRadius: 6 }}>{goaml.xml}</pre>
     </div>}
   </div>;
 }

@@ -1,0 +1,377 @@
+/**
+ * UI v2 — REGISTRE DES CAPACITÉS (V2-M14, arbitrage PO du 11.08.2026).
+ *
+ * Décision : on garde la colonne vertébrale « parcours client » de la v2 ET on y reverse
+ * TOUTES les fonctionnalités de la v1 ; chaque module est activable par LICENCE (R320) et par
+ * PROFIL (matrice de droits R282). Ce fichier est la source unique : la navigation, la
+ * cartographie ⌘K et les gardes d'exhaustivité en découlent — plus aucune fusion décidée au
+ * jugé dans un composant (leçon des écarts E-V2-1/2/3).
+ *
+ * `licence` : identifiant de MODULES_PRODUIT (canon R320) ; `null` = socle, toujours actif.
+ *   Un préfixe « † » marque un module NON ENCORE RATIFIÉ à MODULES_PRODUIT (écart E-V2-4,
+ *   docs/ECARTS-FRONT.md) : la capacité est traitée comme licenciée, mais la ratification du
+ *   catalogue reste à faire — on ne modifie pas le canon depuis le front.
+ * `roles` : profils autorisés, dérivés de la matrice R282. Un écran non autorisé N'APPARAÎT PAS
+ *   (doctrine déjà affichée dans Paramétrage → Accès) — jamais un écran grisé.
+ * `statut` : VÉRIFIÉ écran par écran contre le code v2 (audit V2-M17) — « livre » = l'objet
+ *   métier et ses actes sont rendus · « partiel » = l'objet est rendu mais amputé (consultation
+ *   là où la v1 agissait, ou fraction du périmètre) · « absent » = ni écran ni onglet ne le
+ *   porte. Le champ `motif` dit ce qui manque, en toutes lettres. Le registre dit la vérité sur
+ *   l'état, il ne la maquille pas — c'est sa seule raison d'exister.
+ */
+import type { Ui2NavId } from "./Nav";
+
+export type RoleV2 = "RM" | "CO" | "MLRO" | "AUDIT" | "ADMIN";
+export type StatutCapacite = "livre" | "partiel" | "absent";
+
+export type Capacite = {
+  id: string;                 // identifiant d'écran v1 — clé stable, sert au deep-link
+  libelle: string;            // nom v1, cherchable en ⌘K sous son ANCIEN nom
+  groupeV1: string;           // groupe de la navigation v1 (traçabilité de la migration)
+  destination: Ui2NavId;      // écran v2 d'accueil
+  onglet?: string;            // onglet dans cet écran, si la capacité y est un onglet
+  licence: string | null;     // module requis (R320) ; null = socle
+  roles: RoleV2[];            // profils autorisés (R282)
+  statut: StatutCapacite;
+  motif?: string;             // ce qui manque — renseigné dès que le statut n'est pas « livre »
+};
+
+export const CAPACITES: Capacite[] = [
+  { id: "home", libelle: "Accueil", groupeV1: "(sans entrée de menu)",
+    destination: "journee", onglet: undefined, licence: null,
+    roles: ["RM", "CO", "MLRO", "AUDIT", "ADMIN"], statut: "livre" },
+  { id: "builder", libelle: "Builder", groupeV1: "(sans entrée de menu)",
+    destination: "param", onglet: "Workflow", licence: "WORKFLOWS",
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "command", libelle: "Command Center", groupeV1: "(sans entrée de menu)",
+    destination: "journee", onglet: undefined, licence: null,
+    roles: ["RM", "CO", "MLRO", "AUDIT", "ADMIN"], statut: "livre" },
+  { id: "dashboard", libelle: "Dashboard central", groupeV1: "(sans entrée de menu)",
+    destination: "journee", onglet: undefined, licence: null,
+    roles: ["RM", "CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "audit", libelle: "Audit & transport", groupeV1: "Audit",
+    destination: "rapports", onglet: "Audit", licence: null,
+    roles: ["AUDIT", "MLRO"], statut: "livre" },
+  { id: "auditit", libelle: "Audit IT", groupeV1: "Audit",
+    destination: "rapports", onglet: "Intégrité", licence: null,
+    roles: ["AUDIT", "ADMIN"], statut: "livre" },
+  { id: "surveillancees", libelle: "Surveillance ES", groupeV1: "Audit",
+    destination: "rapports", onglet: "Supervision", licence: null,
+    roles: ["AUDIT", "ADMIN"], statut: "livre" },
+  { id: "sbaml", libelle: "Bac à sable AML", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: "AML",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sbbrm", libelle: "Bac à sable BRM", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sbcf", libelle: "Bac à sable Central File", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sbkyc", libelle: "Bac à sable KYC", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: "KYC",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sbonb", libelle: "Bac à sable Onboarding", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: "ONBOARDING",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sbwf", libelle: "Bac à sable Workflow", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: "WORKFLOWS",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sandboxes", libelle: "Bacs à sable", groupeV1: "Bacs à sable",
+    destination: "param", onglet: "Simulation", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "review", libelle: "Account Review", groupeV1: "Clients & Relations",
+    destination: "revue", onglet: undefined, licence: "ACCREV",
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },
+  { id: "coc", libelle: "Chgt circonstances", groupeV1: "Clients & Relations",
+    destination: "kyc", onglet: undefined, licence: "COC",
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },
+  { id: "clients", libelle: "Clients", groupeV1: "Clients & Relations",
+    destination: "clients", onglet: undefined, licence: null,
+    roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "kyc", libelle: "KYC", groupeV1: "Clients & Relations",
+    destination: "kyc", onglet: undefined, licence: "KYC",
+    roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "offboarding", libelle: "Offboarding", groupeV1: "Clients & Relations",
+    destination: "revue", onglet: "Sorties", licence: null,
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },
+  { id: "onboarding", libelle: "Onboarding", groupeV1: "Clients & Relations",
+    destination: "entree", onglet: undefined, licence: "ONBOARDING",
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "ubo", libelle: "Personnes / UBO", groupeV1: "Clients & Relations",
+    destination: "clients", onglet: "Personnes", licence: null,
+    roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "amlgap", libelle: "AML Gap", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "AML Gap", licence: "AML",
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "amlws", libelle: "AML Investigation", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "Investigation", licence: "AML",
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "inference", libelle: "Checklist exigences", groupeV1: "Compliance & Risque",
+    destination: "kyc", onglet: "Exigences", licence: "KYC",
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M59 : profil pp-defaut publié (arbitrage PO, miroir P-L7-4) — ledger réel servi ; (SA,·) reste à ratifier (Q-INF-1)
+  { id: "compliance", libelle: "Compliance Center", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: undefined, licence: null,
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "corroboration", libelle: "Corroboration KYC", groupeV1: "Compliance & Risque",
+    destination: "kyc", onglet: "Corroboration", licence: "KYC",
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "dossiers", libelle: "Dossiers de risque", groupeV1: "Compliance & Risque",
+    destination: "dossiers", onglet: undefined, licence: "AML",
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "alertes", libelle: "File d'alertes", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "Alertes", licence: "AML",
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M60 : FilterBar R404 sur la file — tri par âge d'état, filtres statut (liste fermée) et SLA (R136)
+  { id: "formations", libelle: "Formations", groupeV1: "Compliance & Risque",
+    destination: "rapports", onglet: "Habilitations", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "legalreg", libelle: "Legal — Contrats", groupeV1: "Compliance & Risque",
+    destination: "legal", onglet: undefined, licence: "†LEGAL",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M54 : écran vertical, chunk paresseux
+  { id: "oprisk", libelle: "Octopulse OpRisk", groupeV1: "Compliance & Risque",
+    destination: "oprisk", onglet: undefined, licence: "†OPRISK",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M52 : écran vertical, chunk paresseux
+  { id: "prerevue", libelle: "Pré-revue IA", groupeV1: "Compliance & Risque",
+    destination: "kyc", onglet: "Pré-revue IA", licence: "IA",
+    roles: ["CO", "MLRO"], statut: "livre" },     // V2-M47 : /v1/ia/prerevue/kyc/:id/traitement
+  { id: "rapportsconf", libelle: "Rapports conformité", groupeV1: "Compliance & Risque",
+    destination: "rapports", onglet: "Conformité", licence: null,
+    roles: ["CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "registrelba", libelle: "Registre LBA", groupeV1: "Compliance & Risque",
+    destination: "rapports", onglet: "Registre", licence: null,
+    roles: ["CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "mros", libelle: "Reporting MROS", groupeV1: "Compliance & Risque",
+    destination: "rapports", onglet: "MROS", licence: "AML",
+    roles: ["MLRO"], statut: "livre" },
+  { id: "aml", libelle: "Règles AML", groupeV1: "Compliance & Risque",
+    destination: "param", onglet: "Règles", licence: "AML",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "amlref", libelle: "Référentiel AML", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "Référentiel", licence: "AML",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "screening", libelle: "Screening", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "Screening", licence: "SCREENING",
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "screeningadv", libelle: "Screening avancé", groupeV1: "Compliance & Risque",
+    destination: "surveillance", onglet: "Rapprochement", licence: "SCREENING",
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M61 : config R415 + knobs R413/R416/R417 + runs R414 exposés
+  { id: "veille", libelle: "Veille réglementaire", groupeV1: "Compliance & Risque",
+    destination: "rapports", onglet: "Veille", licence: "†REGWATCH",
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "bi", libelle: "BI — Reporting sur mesure", groupeV1: "Data & Intelligence",
+    destination: "rapports", onglet: "Sur mesure (BI)", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "gedcoffre", libelle: "GED / coffre", groupeV1: "Data & Intelligence",
+    destination: "kyc", onglet: "Coffre", licence: "GED",
+    roles: ["CO", "MLRO", "AUDIT"], statut: "partiel",
+    motif: "onglet Pièces sert la GED ; le coffre n'a pas de surface" },
+  { id: "gouvernanceo", libelle: "Gouvernance O", groupeV1: "Data & Intelligence",
+    destination: "param", onglet: "IA", licence: "IA",
+    roles: ["MLRO", "ADMIN"], statut: "livre" },
+  { id: "integrations", libelle: "Intégrations", groupeV1: "Data & Intelligence",
+    destination: "param", onglet: "Général", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "olivia", libelle: "Olivia", groupeV1: "Data & Intelligence",
+    destination: "param", onglet: "IA", licence: "IA",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "oliviaruns", libelle: "Olivia · Runs", groupeV1: "Data & Intelligence",
+    destination: "param", onglet: "IA", licence: "IA",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M47 : sous-onglet « Runs Olivia » (/v1/olivia/runs)
+  { id: "ged", libelle: "Pièces (GED)", groupeV1: "Data & Intelligence",
+    destination: "kyc", onglet: "Pièces", licence: "GED",
+    roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "ports", libelle: "Ports", groupeV1: "Data & Intelligence",
+    destination: "param", onglet: "Général", licence: null,
+    roles: ["ADMIN"], statut: "partiel",
+    motif: "ports visibles dans Général ; la console de ports n'est pas reprise" },
+  { id: "trips", libelle: "Business Trip", groupeV1: "Front & Croissance",
+    destination: "entree", onglet: "Déplacements", licence: null,
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "crm", libelle: "CRM Banque", groupeV1: "Front & Croissance",
+    destination: "clients", onglet: "Chronologie", licence: null,
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "workload", libelle: "Capacité équipe", groupeV1: "Front & Croissance",
+    destination: "rapports", onglet: "Capacité", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "contactreports", libelle: "Contact Reports", groupeV1: "Front & Croissance",
+    destination: "clients", onglet: "Chronologie", licence: null,
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "crossborder", libelle: "Cross-Border", groupeV1: "Front & Croissance",
+    destination: "crossborder", onglet: undefined, licence: "†CROSSBORDER",
+    roles: ["RM", "CO", "MLRO", "AUDIT"], statut: "livre" },
+  { id: "nba", libelle: "Prochaines actions", groupeV1: "Front & Croissance",
+    destination: "journee", onglet: "Prochaines actions", licence: null,
+    roles: ["RM", "CO"], statut: "livre" },
+  { id: "prospection", libelle: "Pré-prospection", groupeV1: "Front & Croissance",
+    destination: "entree", onglet: "Sourcing", licence: null,
+    roles: ["RM"], statut: "livre" },
+  { id: "tasks", libelle: "Tâches", groupeV1: "Front & Croissance",
+    destination: "journee", onglet: "Tâches", licence: null,
+    roles: ["RM", "CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "golive", libelle: "Config & Go-live", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Banque", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "iamguide", libelle: "Guide IAM", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Accès", licence: null,
+    roles: ["ADMIN"], statut: "partiel",
+    motif: "le guide IAM est replié en doctrine, pas en écran" },
+  { id: "matricedoc", libelle: "Matrice documentaire", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Questionnaires", licence: "KYC",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "parametrage", libelle: "Paramétrage", groupeV1: "Paramétrage",
+    destination: "param", onglet: undefined, licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "sdar", libelle: "Profils AR", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Questionnaires", licence: "ACCREV",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "sdgar", libelle: "Profils GAR", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Questionnaires", licence: "ACCREV",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "bat", libelle: "Recette client (BAT)", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Banque", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "paramfields", libelle: "Registre paramètres", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Registre", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "rejeu", libelle: "Rejeu KYC à date", groupeV1: "Paramétrage",
+    destination: "rapports", onglet: "Audit", licence: null,
+    roles: ["AUDIT", "MLRO"], statut: "livre" },
+  { id: "ssoparam", libelle: "SSO / Fédération", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Accès", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "sdkyc", libelle: "Sections & droits", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Questionnaires", licence: "KYC",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "cocparam", libelle: "Types de CoC", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Règles", licence: "COC",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "paramnav", libelle: "Utilisateurs & rôles", groupeV1: "Paramétrage",
+    destination: "param", onglet: "Accès", licence: null,
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "cpsiParam", libelle: "CPSI · Barèmes", groupeV1: "Profilage CPSI",
+    destination: "param", onglet: "Règles", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "partiel",
+    motif: "barèmes visibles en clé gouvernée ; l'éditeur de barème CPSI n'est pas repris" },
+  { id: "cpsiGuide", libelle: "CPSI · Guide", groupeV1: "Profilage CPSI",
+    destination: "param", onglet: "Règles", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "partiel",
+    motif: "le guide CPSI est replié en doctrine, pas en écran" },
+  { id: "cpsiProfil", libelle: "CPSI · Profil", groupeV1: "Profilage CPSI",
+    destination: "clients", onglet: "Profil CPSI", licence: null,
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },
+  { id: "cpsiCases", libelle: "CPSI · Risk cases", groupeV1: "Profilage CPSI",
+    destination: "cpsi", onglet: "Risk cases", licence: null,
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M55 : écran socle (import statique — licence null)
+  { id: "cpsiSeg", libelle: "CPSI · Segmentation", groupeV1: "Profilage CPSI",
+    destination: "cpsi", onglet: "Segmentation", licence: null,
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M55 : écran socle
+  { id: "swiftlab", libelle: "Analyseur SWIFT/SEPA", groupeV1: "Transactions & Marchés",
+    destination: "surveillance", onglet: "Transactions", licence: null,
+    roles: ["CO", "MLRO"], statut: "livre" },   // V2-M48 : onglet « SWIFT/SEPA » — analyse (R300), messages, quarantaine
+  { id: "custodyta", libelle: "Custody & TA", groupeV1: "Transactions & Marchés",
+    destination: "custody", onglet: undefined, licence: "†CUSTODY",
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },   // V2-M50 : écran vertical, chunk paresseux
+  { id: "islamic", libelle: "Finance Islamique", groupeV1: "Transactions & Marchés",
+    destination: "islamic", onglet: undefined, licence: "†ISLAMIC",
+    roles: ["RM", "CO", "MLRO"], statut: "livre" },   // V2-M59 : signal R207 réel + zakat R211 semés (arbitrage PO)
+  { id: "mobileadmin", libelle: "Mobile Banking", groupeV1: "Transactions & Marchés",
+    destination: "mobile", onglet: undefined, licence: "†MOBILE",
+    roles: ["ADMIN"], statut: "livre" },   // V2-M59 : mobile_actif posé (motivé) + identité Keller activée (arbitrage PO)
+  { id: "fx", libelle: "Multi-devise & FX", groupeV1: "Transactions & Marchés",
+    destination: "fx", onglet: undefined, licence: "†FX",
+    roles: ["RM", "CO"], statut: "partiel",
+    // V2-M59 : la vue EXISTE et affiche le message R167 du moteur mot pour mot. Ce qui manque
+    // reste le PORT FX (taux) — même dépendance que Settlement/txrisk, jamais un taux inventé.
+    motif: "vue livrée sur /v1/fx/exposition ; aucun port FX (taux) configuré — montants en devise d'origine, le message R167 du moteur s'affiche tel quel" },
+  { id: "pms", libelle: "PMS", groupeV1: "Transactions & Marchés",
+    destination: "pms", onglet: undefined, licence: "PMS",
+    roles: ["RM", "CO"], statut: "livre" },   // V2-M56 : écran socle (licence sans † — import statique)
+  { id: "settlement", libelle: "Settlement", groupeV1: "Transactions & Marchés",
+    destination: "surveillance", onglet: "Transactions", licence: null,
+    roles: ["CO", "MLRO"], statut: "partiel",
+    // V2-M48 : la vue EXISTE (onglet « Settlement ») et rend l'état réel du core banking.
+    // Ce qui manque n'est pas l'écran mais le PORT : phase 1 lecture seule, port injecté vide,
+    // l'import refuse par construction (R114/R167). Vérifié sur l'API vivante : lots 0.
+    motif: "vue livrée sur /v1/corebanking/etat ; aucun port core banking configuré (phase 1 lecture seule, R114/R167) — l'écran dit l'absence, il ne simule aucun lot" },
+  { id: "txrisk", libelle: "Transactions Risk Monitoring", groupeV1: "Transactions & Marchés",
+    destination: "surveillance", onglet: "Transactions", licence: null,
+    roles: ["CO", "MLRO"], statut: "partiel",
+    // V2-M48 : le blocage est NOMMÉ au lieu d'être vague. R298 agrège le flux transactionnel,
+    // lui-même alimenté par le port core banking (R297) — vérifié sur l'API vivante :
+    // /v1/txrisk/tendances répond {parMois:{}} parce que /v1/txflux est vide, faute de port.
+    motif: "dépend du port core banking (R297) : sans flux transactionnel, R298 n'a rien à agréger — /v1/txrisk/tendances répond {parMois:{}} sur moteur vivant. Manque un port, pas un écran" },
+  { id: "transactions", libelle: "Transferts & ordres", groupeV1: "Transactions & Marchés",
+    destination: "surveillance", onglet: "Transactions", licence: null,
+    roles: ["CO", "MLRO"], statut: "livre" },
+  { id: "workflow", libelle: "Workflow", groupeV1: "Workflow",
+    destination: "param", onglet: "Workflow", licence: "WORKFLOWS",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },
+  { id: "wfdesigner", libelle: "Workflow Designer", groupeV1: "Workflow",
+    destination: "param", onglet: "Workflow", licence: "WORKFLOWS",
+    roles: ["ADMIN"], statut: "livre" },
+  { id: "wfi", libelle: "Workflow Instances", groupeV1: "Workflow",
+    destination: "param", onglet: "Workflow", licence: "WORKFLOWS",
+    roles: ["CO", "MLRO", "ADMIN"], statut: "livre" },   // V2-M47 : sous-onglet « Instances en cours » (/v1/workflow-instances)
+];
+
+/**
+ * V2-M49 — LES ÉCRANS DE MODULE LICENCIÉ, ET LEUR CHUNK.
+ *
+ * Une licence préfixée `†` désigne un module VENDU À PART : un tenant qui ne l'achète pas ne
+ * doit ni le voir (R320, déjà tenu par `capacitesVisibles`) ni le TÉLÉCHARGER. La seconde
+ * moitié n'était pas tenue : tous les écrans v2 vivaient dans un seul paquet. Cette table dit,
+ * pour chaque destination de module †, le composant qui la sert — et sert de source unique à
+ * DEUX endroits qui devaient sinon être tenus à la main :
+ *   · `Ui2Preview.tsx`, qui doit l'importer PARESSEUSEMENT (jamais en import statique) ;
+ *   · `scripts/verifier-budget-bundle.js`, dont le compartiment borné le mesure hors socle.
+ * La garde U2-70 les compare : si les trois divergent, le front rougit.
+ *
+ * N'entrent ici que les écrans BÂTIS. Les neuf verticaux encore absents (PMS, Custody & TA, FX,
+ * Mobile, Finance Islamique, Legal, OpRisk, les deux CPSI) s'y ajouteront un par un, chacun
+ * dans son chunk — c'est précisément ce que ce lot rend possible sans relever le budget.
+ */
+export const ECRAN_MODULE_LICENCIE: Record<string, string> = {
+  crossborder: "CrossBorder", custody: "Custody", oprisk: "Oprisk", legal: "Legal",
+  mobile: "Mobile", islamic: "Islamic", fx: "Fx",
+};
+
+/**
+ * Destinations qui sont ENTIÈREMENT vendues à part — toutes leurs capacités portent un †.
+ *
+ * « Au moins une capacité † » serait faux, et la garde U2-70 l'a montré du premier coup :
+ * `rapports` héberge †REGWATCH à côté de capacités du socle. L'écran Rapports n'est pas un
+ * module vendu à part ; seul l'onglet Veille l'est, et sa visibilité relève déjà de R320. Un
+ * écran mixte doit rester dans le socle — l'en sortir priverait de leur écran des utilisateurs
+ * qui y ont droit.
+ */
+export function destinationsLicenciees(): string[] {
+  const par: Record<string, Capacite[]> = {};
+  for (const c of CAPACITES) (par[c.destination] ??= []).push(c);
+  return Object.entries(par)
+    .filter(([, cs]) => cs.every((c) => (c.licence ?? "").startsWith("†")))
+    .map(([d]) => d);
+}
+
+/** Le module est-il servi par la licence du tenant ? `null` (socle) = toujours oui. */
+export function licenceActive(licence: string | null, modulesActifs: string[]): boolean {
+  if (licence === null) return true;
+  return modulesActifs.includes(licence.replace(/^†/, ""));
+}
+
+/**
+ * Capacités visibles pour un porteur donné : licence ET profil. Les deux gardes sont ET —
+ * un module licencié qu'un rôle ne peut pas voir reste invisible, et inversement.
+ */
+export function capacitesVisibles(
+  role: RoleV2, modulesActifs: string[], caps: Capacite[] = CAPACITES,
+): Capacite[] {
+  return caps.filter((c) => c.roles.includes(role) && licenceActive(c.licence, modulesActifs));
+}
+
+/** Destinations d'écran distinctes ouvertes à ce porteur — sert à bâtir la navigation. */
+export function destinationsVisibles(
+  role: RoleV2, modulesActifs: string[], caps: Capacite[] = CAPACITES,
+): Ui2NavId[] {
+  const vues = new Set<Ui2NavId>();
+  for (const c of capacitesVisibles(role, modulesActifs, caps)) vues.add(c.destination);
+  return [...vues];
+}

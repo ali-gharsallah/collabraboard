@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiPost, apiGetSourced, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // Écran OLIVIA v1 (étape 8, spec B.8) — panneau ANCRÉ : la conversation naît sur un objet
@@ -42,6 +43,7 @@ export function Olivia() {
   const { data: props, reload: reloadProps } = useApiOrSeed<Proposition[]>("/v1/olivia/proposals?statut=PENDING", []);
   const capDef = CAPACITES.find((c) => c.id === cap)!;
 
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
   const agir = async <T,>(fn: () => Promise<T>): Promise<T | null> => {
     setMsg("");
     try { return await fn(); }
@@ -68,9 +70,8 @@ export function Olivia() {
       cibleId: cible, justification: justif });
     setJustif(""); reloadProps();
   });
-  const decider = (id: string, adopt: boolean) => agir(async () => {
-    const motif = adopt ? undefined : (window.prompt("Motif du rejet (obligatoire, R7)") ?? "");
-    await apiPost(`/v1/olivia/proposals/${id}/${adopt ? "adopt" : "reject"}`, motif !== undefined ? { motif } : {});
+  const decider = (id: string, adopt: boolean, motif?: string) => agir(async () => {
+    await apiPost(`/v1/olivia/proposals/${id}/${adopt ? "adopt" : "reject"}`, adopt ? {} : { motif: motif ?? "" });
     reloadProps();
   });
   const rejouer = () => agir(async () => {
@@ -85,6 +86,7 @@ export function Olivia() {
       Le reste de la plateforme fonctionne normalement.</p></div>;
 
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Olivia — elle propose, vous décidez (R44)</h3>
     {msg && <p style={{ color: tokens.color.danger, fontSize: 13 }}>{msg}</p>}
@@ -144,8 +146,12 @@ export function Olivia() {
       : props.map((p) => <div key={p.id} style={{ padding: 10, marginBottom: 6, borderRadius: 8,
         background: tokens.color.surface, border: `1px solid ${tokens.color.border}`, fontSize: 13 }}>
         <strong>{p.type}</strong> → {p.cibleType} {String(p.cibleId).slice(0, 24)} · <em>{p.justification}</em>
-        <button onClick={() => decider(p.id, true)} style={{ marginLeft: 10, fontSize: 11 }}>Adopter</button>
-        <button onClick={() => decider(p.id, false)} style={{ marginLeft: 4, fontSize: 11 }}>Rejeter (motivé)</button>
+        <button onClick={() => ask({ title: "Adopter la proposition (R44)",
+          message: "Décision humaine tracée. Olivia propose, vous décidez.", confirmLabel: "Adopter",
+          onConfirm: () => decider(p.id, true) })} style={{ marginLeft: 10, fontSize: 11 }}>Adopter</button>
+        <button onClick={() => ask({ title: "Rejeter la proposition (R7)", danger: true,
+          input: { label: "Motif du rejet", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Rejeter",
+          onConfirm: (m) => decider(p.id, false, m) })} style={{ marginLeft: 4, fontSize: 11 }}>Rejeter (motivé)</button>
       </div>)}
 
     {convId && <div style={{ marginTop: 18 }}>

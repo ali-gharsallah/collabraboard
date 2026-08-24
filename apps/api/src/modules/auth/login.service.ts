@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { ParametresService } from "../parametres/parametres.service";
@@ -92,9 +93,8 @@ export class LoginService {
         }
         const session = await this.auth.issueToken({ tenantId, email, password: dto.password, totp: dto.totp });
         await this.audit.log(tenantId, u.id, "BREAK_GLASS_LOGIN", email);  // l'usage du secours est AUDITÉ…
-        await this.prisma.domainEvent.create({ data: { tenantId, type: "auth.breakglass.utilise",
-          aggregateId: u.id, payload: { email, par: u.id, notifie: ["SO", "DIR"] },  // …et NOTIFIÉ SO/DIR
-          at: new Date().toISOString() } });
+        await emitEvent(this.prisma, tenantId, "auth.breakglass.utilise",
+          u.id, { email, par: u.id, notifie: ["SO", "DIR"] });  // …et NOTIFIÉ SO/DIR
         return session;
       }
       if (!fallback)                                                        // LG-04 : refus TYPÉ, jamais un repli silencieux

@@ -237,7 +237,7 @@ export function assembler({ dateISO, commit, artefacts, liens, rq, seed, anomali
   }
   p(`> Cette table ne capte que la présence NUMÉRIQUE. Les divergences **structurelles/sémantiques**`);
   p(`> (ex. On-premise session R332–R334 absent du repo — créneau R335–R339 pris par la robustesse,`);
-  p(`> PK réservé **R340+** par décision Ali) sont énumérées dans \`spec/mapping-session-repo.md\` §2/§3.`);
+  p(`> PK réservé **R340+** par décision Ali) sont dans \`spec/mapping-session-repo.md\` §3 (§2 résolu : Olivia = identité, Home sans numéro).`);
   p("");
 
   // ── (a) TABLE DE MAPPING session → repo (depuis le seed ratifié) ──
@@ -314,4 +314,23 @@ function nettoyerCell(s) { return String(s).replace(/\|/g, "\\|").replace(/\s+/g
 // ── Normalise pour la comparaison CI (--check) : retire l'en-tête volatil (date + hash).
 export function normaliserPourCheck(md) {
   return md.replace(/^> \*\*Généré le .*?\n/m, "").replace(/commit `[^`]*`/g, "commit `…`");
+}
+
+// ── STAMP de fraîcheur injecté dans les docs en PROSE (README, PROJECT-INDEX) : un bloc borné,
+//    STABLE (dérivé du plafond + compteurs, PAS de date/hash → pas de churn par commit), gaté par
+//    --check. La prose reste écrite à la main ; seul ce bloc est généré. `lien` = chemin relatif
+//    du fichier vers docs/CANON-MASTER.md (diffère entre la racine et docs/).
+export const STAMP_RX = /<!-- CANON-STAMP:START[\s\S]*?CANON-STAMP:END -->/;
+export function blocStamp({ maxR, nArtefacts, nFamilles, lien }) {
+  return [
+    "<!-- CANON-STAMP:START (généré par tools/canon-master — NE PAS éditer) -->",
+    `> **Catalogue faisant foi : [\`docs/CANON-MASTER.md\`](${lien}) — R1–R${maxR}, ${nArtefacts} artefacts, ${nFamilles} familles.**`,
+    "> Généré depuis le repo + gaté CI (porte 3c). Protocole de synchro claude.ai : [`docs/SYNC-CLAUDE-AI.md`](" + lien.replace(/CANON-MASTER\.md$/, "SYNC-CLAUDE-AI.md") + ").",
+    "<!-- CANON-STAMP:END -->",
+  ].join("\n");
+}
+export function stampCourant(contenu) { return contenu.match(STAMP_RX)?.[0] ?? null; }
+// Remplace le bloc stamp existant ; rend null si les marqueurs sont absents (fichier non stampé).
+export function injecterStamp(contenu, bloc) {
+  return STAMP_RX.test(contenu) ? contenu.replace(STAMP_RX, bloc) : null;
 }

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
@@ -36,7 +37,7 @@ export class CocService {
     private reviews?: { anticiper(ctx: Ctx, id: string, dto: any): Promise<any> }) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });

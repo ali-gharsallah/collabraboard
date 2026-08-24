@@ -1200,3 +1200,716 @@ Qualité §4-8 et produit §9-11 : hors périmètre de ce point d'étape, inchan
   décoratif en dur — la palette passe par tokens.ts.
 - **Cliquet tranche 3** : Regwatch converti (10 clés × 3 langues) — 5 fichiers au cliquet,
   0 texte en dur, rapport nav 0 écart.
+
+## Écarts — FilterBar (R404, 2026-08-04, drop PO SESSION-2026-08-04)
+
+Ratification FilterBar (`spec/SPEC-FILTERBAR.md`, R-FB → **R404** au step-0 révisé). Le système
+**notifie, il ne masque pas** (esprit R39) : un écart consigné reste ouvert tant que la **source**
+n'est pas corrigée, même avec un garde-fou défensif en place.
+
+| Écart | Nature | Statut repo |
+|---|---|---|
+| **E-FB-1** | Collision de codes de scénario (`AML-10/11/12` en double : série CBK/White-collar vs série Retail dans la démo) → clés React dupliquées → cartes orphelines au filtrage (18 rendues pour un compteur de 15). | Vérifié + durci côté React (lot FilterBar) — voir R-FB.4. |
+| **E-FB-2** | `AmlCatalogueScreen` (démo) : `return;` orphelin dans le `.map()` des KPI → les 3 cartes KPI ne se rendent jamais. | Vérifié côté React (lot FilterBar) — état consigné au commit. |
+| **E-FB-3** | Barres « Déclenchements par catégorie » (Dashboard Compliance Center) non cliquables. | **Décision PO ouverte** : drill-down → FilterBar pré-remplie, ou affichage seul. Non bloquant. |
+
+**R-FB.4 — invariant clés uniques (non-régression du bug corrigé).** Dans toute liste rendue, la
+clé React de chaque item est **unique**. Tout référentiel affiché déduplique **défensivement**
+(suffixe déterministe `#n` + `console.warn` pointant la source). La source doit être corrigée ; le
+`warn` est l'écart à consigner, pas le correctif. Utilitaire repo : `apps/web/src/lib/dedupeKeys.ts`.
+Garde de non-régression : test corpus d'unicité des codes de scénario du référentiel AML React
+(aucun `console.warn` en parcours nominal = source saine). **E-FB-1 backend** : la collision peut
+exister aussi dans le seed GWB — vérification tracée pour le lot backend AML (test corpus d'unicité
+à ajouter côté API).
+
+## Écart — remplacement de l'oracle de parité par la démo PO (2026-08-04)
+
+**Décision Ali (ratifiée) : `docs/reference/olive-demo.html` remplacé par la démo canonique PO**
+(journal `docs/SESSION-2026-08-04.md` décision 7 — « remplace l'ancienne » : FilterBar sur 10 écrans,
+64 règles gap au référentiel unifié, cas GT rendus TP/FP). Le contenu fonctionnel (règles gap +
+FilterBar) est **déjà implémenté** au repo (waves 1+2 + composant FilterBar R404).
+
+**Conséquences consignées (aucune n'est gatée CI — vérifié : `ci.yml` n'exécute ni `test:demo`,
+ni `test:smoke`, ni `extract_demo_data`) :**
+- Les **84 clones de parité** (`apps/web/src/parity/*.tsx`) citent des numéros de ligne de l'ancien
+  oracle en commentaire (« porté verbatim de olive-demo.html L… »). Ces citations sont désormais
+  **périmées** (dérive documentaire, pas une rupture de build — les clones sont des `.tsx`
+  autonomes qui compilent/tournent). **Re-port de parité = lot ultérieur.**
+- Les outils démo (`tests/demo/*.mjs`, `scripts/extract_demo_data.mjs`) importent Playwright depuis
+  un chemin de l'env PO (`/home/claude/.npm-global/…`) et ciblent la structure de l'ancien oracle —
+  à repointer (chemin Playwright repo + sélecteurs de la nouvelle démo) lors du re-port. Non gatés CI.
+- Suites gatées **inchangées et vertes** après le remplacement : web 99/99, build, canon-master 8/8.
+
+
+---
+
+## 7. Bloc 62 — Offboarding au moteur (session 2026-08-08)
+
+### E-OFF-1 — Module offboarding démo hors moteur
+- **Constat** : l'offboarding existe en démo (écran, checklists, chaînes d'approbation) mais
+  hors moteur certifié : progression par `approvalIdx++`, `OFF_APPROVAL_CHAINS` en constantes
+  non tenant, pas de visa R15, pas d'exclusion R13, pas d'événements.
+- **Résolution : Bloc 62 ratifié 08.08.2026** (`spec/BLOC-62-OFFBOARDING-R432-R438.md`,
+  règles repo R439–R445) — migration de l'écran démo APRÈS 14/14 verts (A5).
+- **EXÉCUTÉ (08.08.2026, A5)** : écran migré sur la projection (`offProjection`/`offEmettre`,
+  plus d'`approvalIdx`), registre tenant `OFF_TENANT_PARAMS` (sévérités jamais codées en dur),
+  masquage MROS→COMPLIANCE par rôle, onglet Paramétrage + pop-up R445. Parcours navigateur
+  6/6, smoke 80/80. CLOS.
+
+### E-OFF-2 — Port core banking absent : guard CORE en stub explicite
+- **Constat** : la spec Bloc 62 exige un guard « soldes/positions core » sur la clôture, mais
+  aucun connecteur core banking n'est configuré dans ce dépôt (R167 — port vide en prod).
+- **Décision (A3)** : le guard CORE existe dans le registre des paramètres avec sa sévérité,
+  et le service l'évalue UNIQUEMENT si un port est injecté (`OFFB_FAKE_CORE=1` en test, jamais
+  en prod). Sans port, le guard n'est PAS évalué — stub explicite consigné en commentaire dans
+  `offboarding-moteur.service.ts` (jamais évalué à tort, jamais un faux vert calculé). Limite
+  assumée : l'absence du port n'apparaît pas encore dans la réponse du health check — à traiter
+  au branchement d'un vrai connecteur (même modèle que `CorebankingModule`).
+
+### E-OFF-3 — Collisions de numérotation et d'identifiants (découvertes au versement du Bloc 62)
+- **Constat 1 — numéros de règles** : le drop de session numérote R432–R438, créneau déjà
+  attribué (bloc WD, registre C5). Résolu par le mécanisme ratifié de mapping-session-repo.md :
+  Bloc 62 = **R439–R445** au repo, réservation PK glisse à R446+, table §1 mise à jour.
+- **Constat 2 — IDs de scénarios** : OF-01..12 existent déjà (bloc offboarding R267–R271,
+  `fat-offboarding.e2e-spec.ts`, contenu différent). Les scénarios du Bloc 62 gardent leurs
+  IDs OF-01..14 (le document fait foi) dans la suite distincte `offboarding-moteur.spec.ts`
+  avec référence repo [R439–R445] dans chaque titre.
+- **Constat 3 — deux machines à états** : la machine RATIFIÉE R267–R271
+  (CLOTURE_DEMANDEE → EN_CLOTURE → CLOTUREE, OffboardingService) et celle du Bloc 62
+  (Création → Collecte → Review → Validation → Clôturé, instance moteur) décrivent la même
+  sortie de relation à deux granularités. R267–R271 restent actives et inchangées pendant la
+  construction ; la réconciliation (mapping d'états, quelle machine porte quoi) est une
+  DÉCISION PO à acter — consignée ici, jamais absorbée en silence.
+
+### E-6364-0 — Blocs 63/64 : collision de numérotation ET de périmètre (A0, 2026-08-08 — STOP, arbitrage PO)
+- **Contexte** : drop de session « Blocs 63 & 64 · Business Trip + Cross-Border » (specs v2
+  post-audit, numérotation session R439–R458). L'action A0 exigeait la vérification canon
+  avant tout code — la voici, verdict : STOP.
+- **Collision 1 — numérotation (certaine)** : R439–R445 sont RATIFIÉES au repo (Bloc 62
+  Offboarding, session R432–R438, canon 08.08.2026) ; R446+ est la réservation PK.
+  Mécanisme ratifié applicable (mapping-session-repo.md §3, décision Ali 2026-07-29,
+  appliqué 4 fois) : l'implémenté prend le créneau contigu → Blocs 63/64 = repo
+  **R446–R465** (63 : R439→R446 … R445→R452, R458→R465 ; 64 : R446→R453 … R457→R464,
+  R456/R457 gelées → R463/R464), PK glisse à R466+.
+- **Collision 2 — périmètre (majeure)** : l'audit joint (AUDIT-BLOCS-63-64-EXISTANT.md) n'a
+  audité QUE la démo HTML (réserve explicite §Réserve) ; or le repo implémente déjà :
+  · **MOD-75 Business Trip R222–R230** (lot 51, ratifié « OK pour R222..R238 ») — cycle
+    événementiel (R222), avis cross-border versionné + grandfathering (R223/R229 ≈ session
+    R441/BT-14), signaux KYC (R224), visa R15 + exclusion R13 (R225 ≈ BT-03), contact
+    reports mesurés (R226), certification à la DATE DU VOYAGE via MOD-43 (R228/R237 ≈
+    BT-04), révision chaînée (R230 ≈ BT-07) ; `tripCertificationRequise` est DÉJÀ filtré
+    par juridiction (≈ session R451 — « aucune granularité pays » n'est vrai qu'en démo).
+  · **Cross-Border R293–R295** (canon triage final, 28.07) — R293 : country manual = clé
+    EXISTANTE `tripCrossBorderReferentiel` ENRICHIE, « JAMAIS un second référentiel »
+    (l'unification E-XB-3 est déjà doctrinale au repo) ; R294 : moteur pur `evaluerXb`,
+    DEUX surfaces (pré-voyage / à la relation), dérogation motivée + visa ; R295 : ordres
+    pays restreint + qualification « initiative du client » + preuve GED (≈ R448-ORDER /
+    R449 partiels).
+  · **MOD-43 Formations R231–R238** — attestations append-only, visa R15, catalogue tenant
+    (socle de session R451, la spec le référence d'ailleurs).
+  · Événements `trip.*` déjà schématisés au catalogue C6 (vague 1).
+- **Réconciliation préliminaire (session → existant)** : DÉJÀ COUVERTES en substance :
+  R444 (=MOD-43), cœur de R441 (=R223/R229/R230) ; PARTIELLES (extension de l'existant,
+  pas de nouveau module) : R439 (chaîne dynamique risque×budget sur MOD-75), R440 (guards
+  de transition sur signaux R224/R228, pattern Bloc 62), R446 (port fournisseur = extension
+  de R293, jamais un remplacement), R447 (2e surface R294 à étendre), R448 (R295 couvre
+  ORDER), R449 (registre-objet sur la qualification R295), R451 (codes XB-<pays> sur
+  MOD-43) ; NOUVELLES : R442 (quotas+overrides), R443 (certificat de trip), R450, R452,
+  R453 (brique : reporting R295), R454, R458 ; GELÉES : R456/R457.
+- **Règle du drop appliquée** : « si collision de numéro ou de périmètre avec R439–R458,
+  STOP et consigner l'écart pour arbitrage PO. Ne jamais dupliquer une règle existante. »
+  → implémentation NON commencée, arbitrage demandé.
+- **ARBITRÉ (PO, 2026-08-08)** : « Delta sur l'existant » — renumérotation mécanique
+  (Bloc 63 = R446–R452 + R465, Bloc 64 = R453–R464, PK → R466+) ET implémentation en
+  EXTENSION des modules existants (MOD-75, R293–R295, MOD-43) ; quand l'existant couvre,
+  la règle repo le référence, aucune duplication. Specs versées avec en-tête d'édition.
+
+### E-BT-1 — Module Business Trip démo hors moteur (Blocs 63/64, A1)
+- **Constat** : la démo mute `approvals[].state` à la main, chaîne fixe RM→MGR→XB→HPB pour
+  tous les voyages, `DEST_QUOTAS_SEED`/`ROLE_GATE`/`INDIGITA_DB` en constantes non tenant,
+  aucun certificat de retour. NB : le repo, lui, a déjà MOD-75 (R222–R230) événementiel —
+  l'écart est DÉMO-seulement pour le cycle, réel pour chaîne dynamique/guards/certificat.
+- **Résolution** : Bloc 63 (repo R446–R452 + R465), migration démo en A7 après 30/30.
+
+### E-BT-2 — Compte-rendu de voyage libre, sans validation ni cycle
+- **Constat** : la démo porte `report`/`reportDate` en texte libre — sans cycle de vie,
+  sans visa, sans liens contact reports, sans SLA, sans écarts déclarés.
+- **Résolution** : R450 (repo) FORMALISE l'existant — le texte libre devient le corps
+  narratif du certificat ; migration des comptes rendus existants en certificats Brouillon.
+
+### E-BT-3 — Prospect né en voyage : fonctionnalité démo orpheline de règle
+- **Constat** : « Nouvelle demande de voyage » sait déclarer un nouveau contact rencontré
+  → prospect complet (`source: "Business Trip"`, docs CDB pré-listés) via `onNewProspect` ;
+  aucune règle ne couvrait cette capacité (la migration A7 l'aurait supprimée — interdit).
+- **Résolution** : règle R465 (repo ; session R458, ajout d'audit) — origine tracée, liens
+  voyage + contact report, circuit d'onboarding standard, zéro raccourci de diligence.
+
+### E-XB-1 — Matrice cross-border démo en constante
+- **Constat** : `CB_RULES` en dur dans l'écran Cross-Border — aucune source, aucune
+  version, aucun traitement des actes distants.
+- **Résolution** : Bloc 64 (repo R453–R464) — port fournisseur versionné en EXTENSION de
+  R293 (le country manual repo `tripCrossBorderReferentiel` reste LA clé), migration A7.
+
+### E-XB-2 — Intégration réseau Indigita/Apiax : HORS SESSION
+- **Décision (drop)** : adaptateurs `INDIGITA_API`/`APIAX_API` livrés en CONTRAT + MOCK
+  uniquement ; l'intégration réseau réelle est un lot commercial séparé. Toute tentative
+  d'implémentation réseau dans cette session serait un écart — consigné ici par avance.
+
+### E-XB-3 — Deux référentiels cross-border parallèles en démo
+- **Constat** : `CB_RULES` (matrice 6 activités) et `INDIGITA_DB` (statut/sollicitation/
+  licence/produits) coexistent sans synchronisation — un pays peut être BLOQUÉ dans l'un
+  et permissif dans l'autre. Le repo interdit déjà cette situation (R293 : « JAMAIS un
+  second référentiel »).
+- **Résolution** : R453 (repo) — la version de matrice est UN objet par juridiction
+  (verdicts d'activités + champs de synthèse) ; CB_RULES et INDIGITA_DB deviennent deux
+  projections de lecture de la même version.
+
+### E-6364-A7 — Fonctionnalités démo conservées HORS périmètre R446–R465 (audit A7)
+- **Constat (audit ligne à ligne avant transcription)** : l'écran Business Trip démo porte
+  des capacités sans règle R des Blocs 63/64 : bouton « Lancer Indigita » (consultation
+  ponctuelle de synthèse), création de prospect avec pré-liste de documents CDB, KPIs
+  (pending/high/actifs), onglet « Paramétrage quotas » in-écran (doublon partiel du panneau
+  admin). L'écran Cross-Border porte un simulateur de check à la relation.
+- **Décision (A7, conforme au prompt)** : conservées TELLES QUELLES — ni supprimées, ni
+  transcrites. La création de prospect est désormais couverte par R465 (E-BT-3 résolu) ;
+  le reste attend une règle si le PO le norme. Migré au moteur : projection des événements
+  (plus d'`approvals[].state` muté), chaîne résolue risque×budget figée dans
+  WORKFLOW_STARTED, certificat de trip (cycle + validateur résolu + écart → XB, E-BT-2 :
+  les comptes rendus libres deviennent des certificats Brouillon au semis), matrice UNE
+  version datée (bandeau, E-XB-3), verdict distant consigné aux contact reports (badge),
+  pop-up R445 sur toutes les éditions du panneau admin.
+
+### E-OFF-4 — Fonctionnalités démo conservées HORS périmètre R439–R445 (audit A5)
+- **Constat** : l'audit ligne à ligne de l'écran démo avant migration a recensé des
+  fonctionnalités absentes de la spec Bloc 62 : onglet Dashboard (motifs de sortie, répartition
+  par statut, insights générés), narrative du health check, pourcentage d'avancement checklist,
+  bannières de statut client.
+- **Décision (A5, conforme au prompt)** : conservées TELLES QUELLES — ni supprimées (pas de
+  régression démo silencieuse), ni transcrites au moteur (elles n'ont pas de règle R associée).
+  Si elles doivent devenir normatives, c'est un bloc de spec à part — décision PO.
+
+
+## 6. Écarts de NAVIGATION (audit 2026-08-08 — préalable bloc WD, R432–R438)
+
+Source : `docs/AUDIT-NAV-2026-08-08.md` (matrice complète, méthode, lignes). Constat
+uniquement — **E-WD-4 (wfbuilder/RoleDashboard) est DÉJÀ ARBITRÉ : FUSION** et n'est pas
+re-soumis ici.
+
+### E-NAV-1 — Routes `accounts` et `signatories` orphelines (maquette)
+- **Constat** : cases L44828/L44829 (AccountsScreen, SignatoriesScreen — écrans du portage
+  « parité 100 % » du 02.08) sans AUCUNE entrée UI : absents du NAV, de la nav v2, et aucun
+  `go()` vivant ne les cible. Injoignables à la souris.
+- **Options** : (a) entrées NAV dédiées (g_clients) ; (b) liens depuis la fiche client
+  (`ClientFileScreen`) ; (c) supprimer les routes (perte d'accès aux écrans portés).
+- **ARBITRÉ (2026-08-08, PO)** : option (b) — liens « Comptes → » / « Signataires → » depuis la fiche client (`ClientFileScreen`, via `OLIVE_NAVIGATE`). Appliqué.
+
+### E-NAV-2 — Route alias `aml48` orpheline (maquette)
+- **Constat** : case L44867 rend `AmlEncyclopediaScreen`, déjà servi par `amlcat` (NAV
+  « Règles AML »). Alias historique sans entrée.
+- **Options** : (a) supprimer l'alias au bloc WD ; (b) conserver si des liens externes/démos
+  scriptées l'utilisent (aucun trouvé dans le fichier).
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — alias `aml48` supprimé du switch. Appliqué.
+
+### E-NAV-3 — Route `formbuilder` : doublon d'accès de l'onglet « quest »
+- **Constat** : case L44874 (`QuestionnaireBuilderScreen`) sans entrée UI ; le MÊME composant
+  est vivant comme onglet « quest » du Section Designer (L24757/L24866, via sdkyc/sdar/sdgar).
+- **Options** : (a) retirer la route doublon ; (b) donner une entrée NAV propre au
+  Questionnaire Builder (comme la maquette PO d'origine, item « Questionnaire Builder »).
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — route doublon `formbuilder` retirée ; le Questionnaire Builder reste l'onglet « quest » du Section Designer (sdkyc/sdar/sdgar). Appliqué.
+
+### E-NAV-4 — Composants morts maquette : LoginScreen, BuilderScreen, AmlCatalogueScreen, Compliance48Screen
+- **Constat** : définis (L41574, L41654, L27255, L26976), montés par personne. Le login réel
+  est inline dans `App` ; BuilderScreen est l'ancêtre de WorkflowBuilderScreen ;
+  AmlCatalogueScreen/Compliance48Screen sont supplantés par AmlEncyclopediaScreen/
+  ComplianceCenterScreen.
+- **Options** : (a) purge au bloc WD (avec E-WD-4) ; (b) conserver comme référence commentée.
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — `AmlCatalogueScreen` et `Compliance48Screen` purgés (mêmes geste que RoleDashboard/LoginScreen/BuilderScreen au bloc WD). Appliqué.
+
+### E-NAV-5 — `dashboard`, `capacite`, `crm2` joignables par la SEULE nav v2
+- **Constat** : atteignables uniquement via `OLIVE_NAV_INDEX`/`OliveNavV2` (panneau flottant),
+  absents du menu latéral principal. Un utilisateur qui ignore la nav v2 ne les trouve pas.
+- **Options** : (a) les ajouter au NAV principal ; (b) statu quo assumé (la nav v2 est le
+  chemin voulu « Mon travail ») ; (c) fusionner capacite↔workload (React) au bloc WD.
+- **ARBITRÉ (2026-08-08, PO)** : option (a) — `capacite` (« Capacité de l'équipe (live) ») et `crm2` (« Relation — timeline & entretiens ») ajoutés au menu latéral (groupe Front & Croissance) ; `dashboard` = alias de `home`, rien à faire. Appliqué.
+
+### E-NAV-6 — 43 exports morts au front React (dont un composant)
+- **Constat** : jamais référencés hors de leur fichier ni des tests — 40 résidus de portage
+  dans `parity/*-support.ts`, `WfRulesCatalogPanel` (parity/WfEngineScreen.tsx),
+  `currentAsOf`/`oliveSession` (lib/api.ts). Liste complète : AUDIT-NAV §2.
+- **Options** : (a) purge groupée (lot dédié, tree-shaking déjà neutralise le poids) ;
+  (b) statu quo (les clones parité sont des références de portage) ; (c) purge sélective
+  (le composant seulement).
+- **ARBITRÉ (2026-08-08, PO)** : option (c) — purge sélective : l'export mort `WfRulesCatalogPanel` devient interne à `parity/WfEngineScreen.tsx` (le composant reste monté L97) ; les `parity/*-support.ts` et `currentAsOf`/`oliveSession` restent (références de portage / API d'avenir). Appliqué.
+
+### E-NAV-7 — Résidus de parité maquette ↔ React
+- **Constat** : hors renommages mappés (COMPARAISON-FRONT-HTML.md), le React a 16 écrans
+  sans équivalent maquette (amlgap, bat, inference, rejeu, ports, oliviaruns, audit,…) et la
+  maquette 10 sans équivalent React tenant (execdash, invest, apidoc-nav, admin, crm2,
+  sbowner, wfaudit, sandbox-live, prospects dédiés). Détail : AUDIT-NAV §3.
+- **Options** : (a) faire suivre la maquette écran par écran (comme fait le 07-08.08) ;
+  (b) assumer l'écart documenté (la maquette = vitrine, le React = produit) ; (c) trancher
+  écran par écran au bloc WD.
+- **ARBITRÉ (2026-08-08, PO)** : option (b) — écart ASSUMÉ et documenté : la maquette = vitrine, le React = produit ; `docs/COMPARAISON-FRONT-HTML.md` reste la table de vérité, mise à jour à chaque bloc. Aucun portage systématique.
+
+### E-WD-7 — Nomenclature des gabarits du Designer : niveaux de diligence ≠ workflows nommés
+- **Constat (2026-08-08, signalé par le PO)** : les gabarits du canvas (WF_TEMPLATES) étaient
+  nommés SDD/CDD/EDD — le NIVEAU DE DILIGENCE (calculé par le moteur de risque,
+  `risk-engine.ts`) — alors que le catalogue produit compte 6 workflows NOMMÉS
+  (WF_MGMT_TEMPLATES, écran Gestion & versions) : SOW/HOW/POW (onboarding) ·
+  SKW/HKW/PKW (perpétuel), dérivation `wfNomenclature` déjà codée et liste KYC déjà
+  filtrée par ces 6 codes (maquette + React).
+- **ARBITRÉ (2026-08-08, PO) — EXÉCUTÉ (même jour)** : les gabarits du Designer SONT le
+  catalogue gouverné — WF_TEMPLATES est GÉNÉRÉ depuis WF_MGMT_TEMPLATES (source unique,
+  étapes/rôles/SLA/approbation), 6 gabarits nommés, la diligence (SDD/CDD/EDD) reste un
+  ATTRIBUT affiché (LOW→SDD, HIGH/PEP→EDD). Générateur local remappé (EDD→HOW/POW,
+  SDD/CDD→SOW). ROLES_TENANT (+MLRO, +SYSTEM — rôles des gabarits, doctrine E-WD-5) côté
+  démo ET défaut Q-WD-5 backend. Le backend reste TIER-BASED (le moteur calcule le niveau,
+  jamais un nom de workflow) — conforme à l'option retenue.
+- **Complément (même jour) — côté Paramétrage** : passe terminologique — la grille de
+  risque Admin dit désormais « le score aiguille le NIVEAU DE DILIGENCE via WR0 ; le
+  workflow nommé s'en dérive » ; le bac à sable Onboarding affiche la table de dérivation
+  (LOW→SOW·SKW · HIGH→HOW·HKW · PEP→POW·PKW) ; libellés « aiguillage de diligence »
+  partout. Les usages LÉGITIMES du niveau (matrice documentaire, profils de review,
+  questionnaires AR, grille BRM, clé backend `workflows` des sections) sont INCHANGÉS.
+
+### E-WD-5 — Référentiel « rôles tenant » de la démo : assumé = rôles des gabarits livrés
+- **Constat (bloc WD, 2026-08-08)** : R434 exige des rôles mappés sur les rôles tenant. La démo
+  n'a pas de référentiel de rôles séparé ; ses gabarits livrés (WF_TEMPLATES) utilisent
+  AML, BRM, ESG, LEGAL, ESG/LEGAL, HPB/CEO en plus des rôles IAM. ROLES_TENANT (wir-core.mjs)
+  a été aligné sur cet ensemble — un rôle inventé (ex. SORCIER) reste NON_MAPPÉ bloquant (WD-06).
+- **Option d'arbitrage** : si le canon veut un référentiel de rôles plus strict (IAM seul),
+  les gabarits EDD/ONBOARDING de la démo devront être re-rôlés — décision PO.
+- **ARBITRÉ (2026-08-08, PO)** : les rôles des GABARITS LIVRÉS font canon — le référentiel démo reste l'union rôles IAM + rôles gabarits (AML, BRM, ESG, LEGAL, ESG/LEGAL, HPB/CEO) ; aucun re-rôlage. Côté produit, chaque tenant paramètre son référentiel (Q-WD-5). Écart CLOS.
+
+### E-WD-6 — OcrSketchImport appelle `/api/v1/ai/workflow/*` (préfixe `/api` mort)
+- **Constat** : le capteur d'import (réutilisé verbatim) tente d'abord un backend
+  `/api/v1/ai/workflow/from-text|from-image` — or l'écart d'invariant §1 a acté que le backend
+  réel sert `/v1/...` SANS `/api`. Le repli local silencieux masque l'échec : le chemin
+  backend ne fonctionnera jamais tel quel. NON corrigé dans le bloc WD (hors périmètre —
+  le pipeline WIR intercepte la sortie, quel que soit le chemin qui l'a produite).
+- **Options** : (a) aligner sur `/v1/ai/workflow/*` et créer la route côté API ; (b) supprimer
+  la tentative backend (démo = générateur local assumé) ; (c) statu quo documenté.
+- **ARBITRÉ (2026-08-08, PO) — EXÉCUTÉ (même jour)** : générateur local ASSUMÉ — la tentative backend `/api/v1/ai/workflow/*` est SUPPRIMÉE d'OcrSketchImport (`requestWorkflow` = générateur local seul, commentaire d'arbitrage en place). La vraie API vision attend l'arbitrage licence E-WD-2 (interface VisionExtractor côté produit). Écart CLOS.
+
+
+
+## E-HR-1 — AR = table plate hors moteur (Bloc 65, constaté 09.08.2026)
+- **Constat** (audit PO 08.08 + A0 repo 09.08) : en démo, `ACCOUNT_REVIEWS_DATA` est une table
+  plate (`status` muté à la main, `outcome` en texte libre, `nextReviewDate` posée à la main).
+  Au repo, le module reviews (R283) fait DÉJÀ de l'AR une révision du dossier KYC
+  (`review.lancee` porte revision/previousKycId/profil figé R29) — le delta R467 (diff
+  REPRISE/MODIFIÉE) s'y greffe, il ne crée pas de moteur neuf.
+- **Cible** : R466/R467/R468 (Bloc 65 Volet A). Statut : OUVERT — en cours d'exécution.
+
+## E-HR-2 — Critère de groupe codé en dur, config mutée sans pop-up (Bloc 65)
+- **Constat** : démo `AR_GROUP_CONFIG` muté en direct (PARAM_CHANGED sans pop-up ni versioning),
+  cascade par appels directs, critère UBO commun en dur.
+- **Cible** : R469 (référentiel paramétrable + projection) + R471 (cascades événements) +
+  pop-up R445. Statut : OUVERT.
+
+## E-HR-3 — GAR = configuration sans objet moteur (Bloc 65)
+- **Constat** : sections GAR et template GAW existent en config (Section Designer, WF_MGMT),
+  aucun dossier de groupe n'existe (ni démo moteur, ni repo) — la consolidation et la décision
+  de groupe n'ont aucun objet porteur. Deux couches de définition (WF_MGMT_TEMPLATES / WF_DEFS)
+  sans lien de compilation.
+- **Cible** : R470 (dossier parent) + R472 (compilation templates→WF_DEF). Statut : OUVERT.
+
+## E-HR-4 — Boutons de décision hétérogènes entre écrans (Bloc 65)
+- **Constat** : Approuver/Refuser ad hoc selon les écrans ; AUCUN renvoi ciblé ; aucune corbeille
+  unifiée. La carte « Circulation du dossier R85 » livrée en démo v2026-08-09.16 (session du
+  09.08) est le précurseur ad hoc le plus récent — elle sera ABSORBÉE par la barre unifiée R474
+  (Volet B), écart re-consigné si divergence de comportement.
+- **Volet B API livré (2026-08-09, HR-15..22 verts)** : le moteur existe — `decision-unifiee.service.ts`
+  + routes `/v1/decisions` (barre, decider, annuler, corbeille, params R445), branché sans fork
+  sur KYC·AR·GAR + Business Trip + Offboarding.
+- **Étape 9 (démo v2026-08-09.17) — E-HR-4 ABSORBÉ côté KYC** : la carte « Circulation R85 »
+  est devenue la barre de décision unifiée (✓ Valider · ✕ Refuser · ↩ Renvoyer · ⇄ Déléguer,
+  même ordre, raccourcis V/R/B/D, motif structuré code+texte, renvoi CIBLÉ avec chute tracée,
+  compteur de boucles + signal au seuil 3, refus à issue par étape — 1re étape/finale=TERMINAL,
+  intermédiaires=RENVOI) ; corbeille « À décider » (R478) en tête du cockpit « Ma journée »
+  (tri SLA, ÉCHU en tête badge rouge, types KYC·AR·GAR·BT, deep-link). Recette 15/15.
+- **Étape 9 (2/2, démo v2026-08-09.18) — E-HR-1/E-HR-2 LEVÉS côté écrans, E-HR-3 réduit** :
+  · l'écran AR porte le **delta en tête** (déclencheur MODIFIÉ · reste REPRISE du KYC lié ·
+    points à reprendre — R460/R467) et le **verdict normalisé** CONFORME/RÉSERVES/NON CONFORME
+    avec conséquences PROPOSÉES (R44) ; les outcomes libres historiques s'affichent MIGRÉS
+    (« CONFORME (migré de “Risk unchanged”) », mapping arbitré) ; `nextReviewDate` est
+    CALCULÉE (périodicité EDD 12 · CDD 36 · SDD 60) partout — plus aucune saisie (E-HR-1) ;
+  · l'onglet Groupe porte la **décision de groupe** : visa référençant les verdicts membres,
+    guard « membres non clôturés » ANNONCÉ sur le bouton, clic → GUARD_BLOCKED détaillé sans
+    écriture (R463/R477) — la consolidation a un porteur à l'écran (E-HR-3 réduit ; le dossier
+    parent GAR complet vit au moteur, `/v1/revues`) ;
+  · le panneau admin AR est devenu **Paramétrage → Revues (KYC · AR · GAR)** : toggles
+    `review.groupe.*` gouvernés par le pop-up d'engagement R445 (annuler = aucune écriture),
+    registre §Review/§Decision affiché (E-HR-2 levé).
+  Recettes Playwright : 15/15 (barre/corbeille) + 20/20 (AR/GAR/paramétrage), smoke 81/81.
+  RESTE : réutilisation de la barre R474 sur les écrans BT/Offboarding démo (boutons ad hoc
+  Approuver/Refuser) — le handoff UI v2 (`DecisionPanel`) fournit le gabarit cible.
+- **Cible** : R474–R479 (Bloc 65 Volet B). Statut : OUVERT.
+
+### E-V2-1 — Cross-Border replié en un onglet de lecture (V2-M13)
+- **Constat** : le module `crossborder` porte **17 routes** (check pré-voyage et pré-acte,
+  dérogations + visa R13, conformité voyage, ordres, reporting, matrice + sync R453, actes
+  distants R454, reverse solicitation + visa R456, localisations R457, exposition R460, rejeu
+  R48, registre de paramètres R462). La v1 lui donne un écran dédié (3 onglets). La v2 n'en
+  expose **qu'une route** (`GET /crossborder/matrice`) en lecture seule, comme onglet du dossier
+  KYC — décision inscrite dans `apps/web/src/ui2/cartographie.ts:44` comme une fusion acquise,
+  jamais consignée comme un écart, donc invisible aux revues.
+- **Analyse** : la fusion se défend pour la matrice des juridictions d'un dossier ; elle ne tient
+  pas pour les actes (check avant un acte, preuve de reverse solicitation, séjour temporaire) qui
+  sont portés par un ACTE et un COLLABORATEUR, pas par un dossier client.
+- **Cible** : arbitrage PO — écran de plein droit dans « Parcours client » (recommandé) ou
+  répartition par acte.
+- **SOLDÉ au lot V2-M29 (11.08.2026)** — l'option recommandée a été retenue et construite :
+  `apps/web/src/ui2/CrossBorder.tsx`, écran de plein droit atteignable par le bloc « Métiers »
+  (module licencié †CROSSBORDER), six onglets qui recouvrent les six familles de routes du
+  moteur — Exposition (R460), Matrice pays (R453), Dérogations (XB-03/R294/R13), Actes &
+  pré-acte (R454/R455/R48), Sollicitation inversée & localisations (R456/R457), Ordres &
+  reporting (XB-04/R39). L'onglet Cross-Border du dossier KYC est CONSERVÉ : la matrice d'un
+  dossier se lit là où le dossier se lit. Gardes U2-48 à U2-51. Statut : **FERMÉ**.
+
+### E-V2-2 — R84 (la main sur un dossier) sans aucune surface écran (V2-M13)
+- **Constat** : R84 est ratifié et livré au moteur (`kyc/rules/kyc-lock.service.ts`, 4 routes :
+  `lock`, `release`, `request-hand`, `pass-hand` ; tables `kycLock`/`kycLockRequest` ; 4
+  événements ; séries CK/LK). **Aucun fichier de `apps/web` n'appelle ces routes** : ni bandeau
+  « détenu par X », ni bouton, ni distinction visuelle entre mode consultation et mode édition.
+- **Question de sémantique à trancher (ne pas décider dans l'écran)** : `peutConsulter()` renvoie
+  FAUX quand un autre détient le dossier — R84 tel qu'écrit interdit la *consultation*, pas
+  seulement l'édition. La demande PO exprimée le 11.08 dit l'inverse (consultation ouverte,
+  édition sous prise de main). La fonction n'est appelée nulle part hors tests : la lecture n'est
+  donc pas effectivement bloquée. Amender R84 au catalogue, ou l'appliquer — pas contourner.
+- **Ouvert aussi** : expiration du verrou (aucune libération automatique aujourd'hui) et reprise
+  forcée par un rôle habilité. Statut : OUVERT.
+
+### E-V2-3 — Modules verticaux absents de la v2, y compris de la cartographie ⌘K (V2-M13)
+- **Constat** : la cartographie v2 compte 60 entrées contre 82 entrées de navigation en v1.
+  N'y figurent **ni écran ni destination de recherche** : Finance Islamique, PMS, Multi-devise &
+  FX, Mobile Banking, Custody & TA, GED/coffre, Reporting MROS, Octopulse OpRisk, Legal —
+  Contrats, AML Gap, Référentiel AML, Olivia · Runs, Checklist exigences, Pré-revue IA. Les
+  quatre écrans CPSI opérationnels ne sont couverts que par un encart de la fiche client.
+- **Aggravant** : « PMS » et « Multi-devise & FX » sont AFFICHÉS dans le bloc « Métiers » de la
+  navigation (`Ui2Preview.tsx:90`) mais `Ui2Preview` n'a aucune branche pour ces identifiants —
+  ce sont des entrées mortes.
+- **Cadrage** : au sens R320, `MODULES_PRODUIT` = GED, OCR, KYC, AML, COC, ACCREV, WORKFLOWS,
+  ONBOARDING, SCREENING, **PMS**, IA. Les autres verticaux (Islamique, Mobile, Custody, FX,
+  Cross-Border) ne sont pas facturables : leur place relève d'un arbitrage de navigation.
+- **Cible** : inventaire de couverture capacité par capacité, puis (a) onglets dans la colonne
+  existante pour ce qui suit le parcours, (b) écrans propres sous « Métiers » conditionnés par la
+  licence. Statut : OUVERT.
+
+### E-V2-4 — Modules verticaux non ratifiés à MODULES_PRODUIT (V2-M14)
+- **Constat** : l'arbitrage PO du 11.08 veut « chaque module activable par profil et licence ».
+  Or `MODULES_PRODUIT` (canon R320, `license/vendor-license.service.ts`) ne liste que GED, OCR,
+  KYC, AML, COC, ACCREV, WORKFLOWS, ONBOARDING, SCREENING, PMS, IA. Huit verticaux réels du
+  moteur n'y figurent pas : **CROSSBORDER, CUSTODY, FX, MOBILE, ISLAMIC, LEGAL, OPRISK,
+  REGWATCH**.
+- **Traitement retenu** : le registre `apps/web/src/ui2/capacites.ts` les porte avec un préfixe
+  « † », traité comme une licence à part entière par `licenceActive()`. Le front N'A PAS modifié
+  le canon — la ratification de ces 8 modules à `MODULES_PRODUIT` est un acte de catalogue qui
+  reste à faire, et conditionne la facturation.
+- **Cible** : amendement du catalogue R320 (8 modules), puis retrait des marqueurs « † ».
+  Statut : OUVERT — arbitrage PO/éditeur requis.
+
+### E-V2-5 — Cross-Border : trois familles d'objets sans route de LECTURE (V2-M29)
+- **Constat** : le moteur `crossborder` écrit les dérogations (`POST /derogations`, `/visa`), les
+  actes distants et pré-actes (`POST /actes-distants`, `POST /pre-acte`) et les preuves de
+  sollicitation inversée et localisations (`POST /reverse-solicitation`, `/visa`,
+  `POST /localisations`) — mais **n'expose aucune route qui les relise en liste**. Seules
+  quatre lectures existent : exposition (R460), matrice (R453), reporting (XB-04) et conformité
+  d'un voyage (XB-03), toutes branchées à l'écran.
+- **Conséquence assumée** : les trois onglets concernés tournent sur des données de maquette et
+  **le déclarent à l'écran**, avec le renvoi à cet écart. On ne fabrique pas une liste depuis le
+  journal côté front : ce serait une seconde vérité, exactement ce que R453 interdit pour la
+  matrice.
+- **Cible** : trois routes de lecture au moteur (`GET /derogations`, `GET /actes`,
+  `GET /reverse-solicitation`), projetées des événements comme l'est déjà l'exposition (R460).
+  Aucune table nouvelle.
+- **SOLDÉ au lot V2-M30 (11.08.2026)** — les trois routes existent et l'écran est branché dessus.
+  Ce sont des projections pures : l'état d'une dérogation se DÉDUIT de la présence de l'événement
+  de visa, l'expiration d'une localisation se CALCULE à la lecture (R48), chaque acte porte la
+  version de matrice qui l'a jugé. Aucune table, aucun dénormalisé. Un constat au passage : le
+  moteur n'émet **pas** d'événement de refus de dérogation — la projection ne connaît donc que
+  deux états, et l'écran a cessé d'en afficher un troisième qu'il avait inventé en maquette.
+  Gardes XB-15 à XB-17 (base réelle) + U2-49. Statut : **FERMÉ**.
+
+### E-V2-6 — Aucune route ne liste les revues PRÉ-REMPLIES (R467) — trouvé sur API vivante (V2-M41)
+- **Constat** : l'écran « Revue & sortie » lisait `/v1/revues/kyc/KYC-2026-00447/delta` — une
+  référence de MAQUETTE écrite en dur, qui n'existe dans aucune base. Sur une instance réelle
+  la route répondait 404 et l'écran retombait éternellement sur son seed. Corrigé au lot : la
+  référence est désormais RÉSOLUE depuis `/v1/kyc`.
+- **Ce qui reste ouvert** : le delta n'existe que pour un dossier porteur d'un événement
+  `review.prerempli` (ouverture d'une revue harmonisée, `POST /v1/revues/deadlines/:id/ouvrir`).
+  Ce marqueur **n'est exposé par aucune lecture** : ni `/v1/kyc` ni `/v1/revues/deadlines` ne
+  disent quels dossiers ont un delta. L'écran ne peut donc pas choisir un dossier valide — il
+  essaie le premier et retombe sur le seed en le disant.
+- **Cible** : soit un `GET /v1/revues/ouvertes` (projection des événements `review.prerempli`,
+  aucune table nouvelle — même patron que les trois lectures de E-V2-5), soit un champ
+  `revueOuverte` sur la liste KYC. Statut : **OUVERT** — arbitrage moteur requis.
+
+### E-V2-7 — Le calendrier des obligations réglementaires n'a PAS de moteur (V2-M41)
+- **Constat** : l'onglet « Réglementaire » du Pilotage lisait `/v1/rapports/kpi`. Cette route
+  répond 400 sans période, et **avec** période elle rend des INDICATEURS de conformité
+  (screening, risk cases, MROS, charge par analyste) — pas un calendrier d'obligations. L'écran
+  retombait donc toujours sur son seed ; il aurait affiché « source : /v1/rapports/kpi » le jour
+  où la route aurait répondu 200, en donnant à voir des chiffres qui ne sont pas des obligations.
+- **Traitement retenu** : l'écran **cesse de prétendre** être branché. Il porte la mention
+  « maquette — aucun moteur ne porte ce calendrier ». Une fausse source est pire qu'une source
+  absente : elle survit aux relectures.
+- **Cible** : le calendrier des échéances réglementaires (LBA art. 9, OBA-FINMA, AEOI/CRS,
+  FATCA) est une **config gouvernée par la banque** (R29, registre R-Q), pas un calcul. Il lui
+  faut une entrée de paramétrage versionnée par date d'effet, puis une lecture.
+- **SOLDÉ au lot V2-M43 (12.08.2026)** — R490→R492, `spec/CALENDRIER-REGLEMENTAIRE-R490-R492.md`.
+  Le calendrier est une clé du registre R-Q (`calendrierReglementaire`) : motivée, datée,
+  append-only, rejouable — donc **aucune table nouvelle et aucune seconde vérité**. Le statut de
+  chaque obligation est CALCULÉ à la lecture (R491) ; le dépôt est un acte humain motivé et
+  référencé (R492/R7), refusé deux fois pour de bonnes raisons (obligation non déclarée ;
+  second dépôt, dont le refus nomme la première référence). Le moteur SIGNALE les retards
+  (R39/R44), il ne dépose ni ne régularise rien.
+  **Ce qu'il ne fait pas, et c'est délibéré** : une obligation sans échéance (« sans délai »,
+  LBA art. 9) n'est JAMAIS déclarée en retard. Fabriquer une date pour pouvoir colorer une
+  pastille aurait été un jugement juridique que personne n'a demandé au moteur.
+  **Le CONTENU reste à valider** : les quatre obligations du tenant de démonstration viennent de
+  la maquette v1 et n'ont pas été vérifiées juridiquement (question Q-CR-1, consignée dans la
+  spec pour revue humaine). Statut : **FERMÉ** côté mécanisme, contenu en attente de juriste.
+
+### E-V2-8 — Le tenant de démonstration ne peuple pas sept lectures (V2-M41)
+- **Constat, mesuré** : sur les 34 lectures des écrans v2 interrogées contre l'API vivante,
+  **14** rendent un conteneur vide — `screening/hits`, `aml/signals`, `txflux`, `riskcases`,
+  `trips`, `regwatch/items`, `formations/assignments`, `ged/documents`, et les quatre
+  projections Cross-Border. La forme de leurs ÉLÉMENTS reste donc **invérifiée** : le
+  vérificateur le dit au lieu de compter un succès.
+- **Deux causes distinctes, à ne pas confondre** : le seed GWB (R329) ne raconte pas ces
+  chapitres (hits, alertes, déplacements, veille, formations) ; et `/v1/crossborder/matrice`
+  répond 404 « synchronisez le port » — la démo ne synchronise jamais le port XB (R453).
+- **Cible** : étendre le seed de démonstration à ces chapitres, PAR LES VRAIES ROUTES comme le
+  reste (jamais d'INSERT direct). Tant que ce n'est pas fait, aucune de ces sept familles n'est
+  démontrable sur données réelles. Statut : **OUVERT**.
+
+### E-V2-9 — Matrice documentaire : l'axe RÔLE manquait au moteur — **ARBITRÉ ET SOLDÉ** (V2-M42)
+- **La question posée** (V2-M41, confirmée sur API vivante) : l'écran affichait la matrice plate
+  de la v1 (une exigence, un état) ; le moteur détenait `exigences[typeEntite][porteur]`, sans
+  rôle. Un **bénéficiaire effectif** et un **simple signataire** exigeaient donc exactement les
+  mêmes pièces — alors que la CDB 20 n'exige le formulaire A que du premier (art. 27) et le
+  formulaire K que du détenteur du contrôle d'une société opérationnelle non cotée (art. 20).
+- **Ce n'était pas un choix de conception, c'était un manque.** R26 énonce déjà, mot pour mot
+  (`docs/audit/RULES_INVENTORY.md`), que « les documents requis se déduisent du croisement type
+  d'entité × juridiction × **rôle** », et le scénario S-03 de la spec nomme les rôles des
+  personnes liées (« BE, signataire »). La v1 le faisait en colonnes
+  (`DOC_STRUCTURES[].roles` × `DOC_LIST`, 7 structures × 23 pièces, `docRuleEval`).
+- **Arbitrage PO du 12.08.2026 : ENRICHIR LE CONTRAT.** Le moteur porte désormais
+  `parRole: { <role>: [exigences] }`, dans le bloc du type d'entité — les rôles sont donc
+  naturellement portés par la structure, exactement comme en v1.
+- **Trois propriétés non négociables, chacune sous garde** :
+  1. `parRole` **AJOUTE** au socle `personne_liee`, il ne le remplace jamais — sinon déclarer un
+     rôle RETIRERAIT des exigences et une matrice se relirait comme une dispense ;
+  2. une version publiée **sans** `parRole` évalue **exactement** comme avant, même si le dossier
+     porte des rôles (grandfathering R29 : un dossier validé ne devient pas rétroactivement
+     incomplet parce que le contrat s'est enrichi) ;
+  3. rien n'est deviné : un rôle absent de la matrice n'ajoute rien, une personne sans rôle
+     déclaré ne reçoit que le socle.
+- **Effet de bord trouvé en chemin** : deux versions à la MÊME date de vigueur (cas réel — le
+  seed de démo en produit une en corrigeant sa matrice le jour de sa prise d'effet) laissaient
+  la base choisir laquelle est « en vigueur ». Un rejeu qui ne rend pas deux fois le même verdict
+  n'est pas un rejeu (R48) : le tri porte désormais sur `(enVigueurLe desc, version desc)`.
+- **Gardes** : 10 tests ajoutés à `docmatrix.spec.ts` (13 → 23), chacun négativement testé en
+  cassant l'implémentation ; FM-07 côté écran, sur une fixture capturée d'une API vivante qui
+  porte réellement l'axe rôle. Statut : **FERMÉ**.
+
+### E-V2-10 — Identifiants non validés : 500 au lieu d'un refus typé — **SOLDÉ** (V2-M44)
+- **Trouvé par l'EXÉCUTION**, pas par la lecture : le balayage des 24 actes déclarés contre une
+  API vivante a rendu cinq `500 Internal server error`. Quatre fois la même cause — un
+  identifiant venu de la requête (`CLI-00001`, `u-004`) atteint un `where` Prisma sur une
+  colonne UUID et le driver lève une erreur brute. La cinquième : `lireCle(obj, undefined)`.
+- **Pourquoi ce n'est pas cosmétique** : l'écran rend le message du moteur verbatim (FE-04).
+  Sur un 500 il affiche « Internal server error », soit le contraire d'un refus opposable — et
+  n'importe quel appelant le déclenche en collant une référence d'écran.
+- **Correction** : `common/identifiant.ts` (`uuidOuRefus`), appelé **au point de lecture** de
+  l'identifiant et jamais en tête d'acte — la précédence des refus est contractuelle et n'a pas
+  bougé (vérifié : « R7 : une dérogation cross-border exige un motif » sort toujours en premier).
+  Gardes ID-01..05, négativement testées. Statut : **FERMÉ**.
+
+### E-V2-11 — Un acte déclaré sans aucun champ — **SOLDÉ** (V2-M44)
+- **Constat** : « Modifier un paramètre §CrossBorder » ne déclarait aucun champ — bouton présent,
+  formulaire vide, refus « cle attendue » côté moteur. Invisible pour AC-03, qui vérifie que les
+  champs déclarés sont LUS, jamais que ce que le moteur EXIGE est DÉCLARÉ.
+- **Correction** : les quatre champs du contrat (`cle`, `valeur`, `enVigueurLe`, `confirmation`)
+  sont déclarés ; l'acte va désormais jusqu'au pop-up d'engagement R445 (`409
+  R445_CONFIRMATION_REQUISE`, ancien et nouveau compris). Garde **AC-05** : un acte POST dont le
+  contrôleur lit un corps doit déclarer au moins un champ. Statut : **FERMÉ**.
+- **Ce qui reste ouvert dans cette famille** : AC-05 ne couvre que le cas extrême (zéro champ).
+  Un acte qui déclare *deux* champs sur les *quatre* exigés reste invisible statiquement — le
+  moteur ne distingue pas, dans son DTO, le requis de l'optionnel. Seule l'exécution le dit.
+
+### E-V2-8 — Sept familles invérifiables faute de données — **LARGEMENT SOLDÉ** (V2-M45)
+- Le seed de démonstration raconte désormais dix chapitres de plus, **par les vraies routes** :
+  liste de sanctions + run de screening, signal AML, cas de risque, déplacement (BT), catalogue
+  et assignation de formation, source et collecte de veille, pièce GED ingérée.
+- **Idempotence prouvée** (DM-02) : deux semis consécutifs sur base neuve → le second n'écrit
+  rien (« aucun — tout était déjà semé »), les compteurs restent à 1.
+- **Une leçon de méthode, payée comptant** : supertest ne LÈVE PAS sur un 4xx. Les chapitres
+  enveloppés dans un `try/catch` « réussissaient » en n'écrivant rien — le silence exact que ce
+  projet refuse partout ailleurs. Un helper `poser()` regarde le statut et le DIT ; c'est lui
+  qui a révélé les quatre contrats mal appelés (`dateStart` et non `depart`, `canal` obligatoire
+  R137, `scenarioCode` = identifiant du référentiel et non numéro de règle, un cas de risque qui
+  exige un signal). **Reste ouvert** : les hits de screening (E-V2-12).
+
+### E-V2-12 — Le screening de démonstration ne produit AUCUN hit, même sur un nom exact (V2-M45)
+- **Mesuré** : liste importée avec l'entrée « Nordwind Handel SA », client du tenant nommé
+  « Nordwind Handel SA », périmètre = 3 clients, run persisté (R103), `nbHits = 0`. Abaisser le
+  seuil à 50 ne change rien. Le pré-filtre applique pourtant ses défauts documentés
+  (`minPartages: 2, maxTrigrammes: 12, plafond: 400`, fusionnés dans `blocking.js`).
+- **Pourquoi c'est sérieux** : pour un moteur de screening, « 0 hit » est le résultat le plus
+  dangereux qui soit — il ressemble à un dossier propre. La cause n'est PAS identifiée ici et ne
+  doit pas être devinée : piste à instruire en priorité, le type de sujet (`est_entite` du client
+  déduit de sa structure) face au type de l'entrée de liste, et la pénalité de type associée.
+- **Ce qui a été corrigé en chemin, et qui n'était pas ça** : un run sans `seuil` faisait
+  `score >= undefined` (toujours faux, donc zéro hit EN SILENCE) puis tombait en 500 sur
+  `screeningRun.create`. Le seuil effectif retombe désormais sur le paramètre gouverné
+  `screeningSeuil` (R100, défaut 85). Garde SC-00.
+
+- **CAUSE TROUVÉE ET CORRIGÉE au lot V2-M46.** Ce n'était ni le seuil, ni le pré-filtre, ni le
+  type de sujet — c'était un **désaccord de format entre deux routes du même module** :
+  - `POST /v1/screening/listes/importer` NORMALISE les entrées (`ingererListe` : `name` →
+    `nom_complet`, `id` → `uid`) ;
+  - `POST /v1/screening/run` indexait `dto.entries` **BRUTES**.
+  Une entrée au format DOCUMENTÉ de l'import (`{id, name}`) produisait donc un index trigramme
+  **sans aucun trigramme** — `nom_complet` étant `undefined`. Zéro candidat, zéro hit, et un run
+  persisté « 0 hit » : pour un moteur de screening, un dossier propre qui ne l'est pas.
+  Mesuré en isolant le moteur : index sur entrées brutes → **0 candidat** ; sur entrées
+  normalisées → **1 candidat, score 100**.
+  Pourquoi aucun test ne le voyait : les suites parlaient déjà le format INTERNE
+  (`{uid, nom_complet}`). Personne n'avait jamais fait tourner ENSEMBLE la route d'import et la
+  route de run — c'est le semis de la démonstration par les vraies routes qui les a confrontées.
+  **Correction** : `run()` normalise par `ingererListe`, exactement comme l'import. La fonction
+  est idempotente, donc le format interne traverse inchangé. Garde **SC-0B** (les deux formats),
+  écrite ROUGE avant la correction. Démonstration : hit score 100 sur « Nordwind Handel SA ».
+  Gate golden du matcher inchangé (R405–R407, R410). Statut : **FERMÉ**.
+
+### E-V2-13 — Un refus du moteur en LECTURE n'atteignait jamais l'écran — **SOLDÉ** (V2-M47)
+
+`apiGetSourced` (couche transverse, traversée par TOUS les écrans) attrapait toute réponse
+non-2xx dans un `catch` muet et retombait sur le seed. Un 404 **motivé** du moteur devenait donc
+un écran silencieux.
+
+Trouvé en confrontant le nouvel onglet Exigences à l'API vivante :
+
+```
+GET /v1/inference/<kycId>/ledger
+  → 404  P-L7-1 : aucun CompletionProfile pour (PP, CH) — ni profil exact, ni repli « * »
+  écran → seed vide, aucun message
+```
+
+Le message perdu était **la seule information exploitable** : il nomme la paire
+(type d'entité, juridiction) qu'il faut publier au référentiel. Sans lui, l'utilisateur voit un
+onglet vide et n'a aucun moyen de savoir quoi faire.
+
+**Soldé** : `apiGetSourced` remonte `refus: { code, status, message }` (champ ADDITIF — aucun
+appelant existant modifié), `useApiOrSeed` le propage, l'onglet l'affiche mot pour mot (FE-04).
+Gardes **FE-04b** (le message arrive) et **FE-04c** (une panne réseau n'invente pas de refus).
+
+**Portée** : la correction est dans la couche transverse — tout écran qui veut afficher un refus
+de lecture peut désormais le faire. Les écrans existants ne changent pas de comportement tant
+qu'ils ne lisent pas `refus`. Les recâbler un par un est un travail à part, non fait ici.
+
+### E-V2-14 — `missionsActives` : l'interrupteur exigé par SW-18 n'a aucune clé gouvernée (V2-M47)
+
+**OUVERT** — consigné, non corrigé (hors périmètre du lot).
+
+`swarm.module.ts:248` lit `settings.missionsActives` directement dans les settings du tenant.
+Le défaut `[]` est juste (SW-18/B.5 : la v2 est ÉTEINTE tant qu'on ne l'allume pas). Ce qui
+manque est l'**interrupteur** : `POST /v1/parametres/valeur/missionsActives` répond
+« R125 : clé inconnue du registre », et le registre gouverné compte 251 clés dont **aucune** ne
+concerne les missions, les runs ou Olivia. Le seul chemin d'activation aujourd'hui est un
+`UPDATE` direct sur `tenants.settings` — précisément ce que R125-R128 existent pour empêcher.
+
+**Conséquence mesurée** : `/v1/olivia/runs` répond `[]` et le restera ; la forme des lignes n'a
+donc pas pu être relevée sur l'API vivante en V2-M47.
+
+**Piste (à arbitrer, pas décidée)** : déclarer `olivia.missionsActives` au registre R125 et faire
+lire le moteur **à date** (R29), comme la résolution d'agent (SW-01/SW-02) le fait déjà — pour
+qu'une désactivation ne réécrive pas le contexte des runs passés. Détail :
+`docs/notes/missions-olivia-sans-cle-gouvernee.md`.
+
+### E-V2-15 — Trois capacités « Transactions & Marchés » : une seule manquait d'écran (V2-M48)
+
+**PARTIELLEMENT SOLDÉ.** Le registre portait trois fois le même motif — « onglet Transactions
+commun » — qui décrivait l'écran sans diagnostiquer la cause. Mesure sur API vivante :
+
+| capacité | ce qui manquait RÉELLEMENT | issue |
+|---|---|---|
+| `swiftlab` | rien d'autre que l'écran — `/v1/swift/*` n'exige aucun port | **soldé** : onglet SWIFT/SEPA (acte + messages + quarantaine) |
+| `settlement` | le **port core banking** — phase 1 lecture seule, port injecté vide (R114/R167) | vue livrée, **reste partiel** : elle dit l'absence de port |
+| `txrisk` | le même port — R298 agrège le flux (R297), qui est vide sans port | **reste partiel**, blocage nommé |
+
+`/v1/txrisk/tendances` répond `{parMois:{}}` non par défaut d'implémentation mais parce que
+`/v1/txflux` est vide, faute de port. Un écran de tendances aurait affiché un graphe vide en
+laissant croire à une absence de risque.
+
+**Arbitrage dû au PO** : configurer un port core banking (Avaloq / Temenos / Finnova / ERI) est une
+décision d'intégration, pas une tâche d'écran. Tant qu'elle n'est pas prise, ces deux capacités
+restent honnêtement amputées — et la doctrine R167 interdit de combler le vide par une fixture en
+production.
+
+### E-V2-16 — Le chapitre « veille » du semis n'est pas idempotent (V2-M48)
+
+**OUVERT** — observé, non corrigé (hors périmètre).
+
+Au second passage du semis sur une base déjà semée, tous les chapitres se taisent SAUF « source de
+veille » et « collecte de veille », qui se re-posent à chaque exécution. Cause : la garde
+d'idempotence teste `/v1/regwatch/items`, or le flux de test est env-gaté (`REGWATCH_FAKE_FEED`) —
+sans lui la collecte ne produit aucun item, la garde reste donc toujours vraie et le chapitre
+rejoue. Conséquence pratique nulle aujourd'hui (la source est un upsert de paramètre), mais c'est
+une idempotence apparente et non réelle : elle mérite d'être corrigée par une garde qui teste ce
+que le chapitre écrit VRAIMENT, pas ce qu'il espère produire.
+
+### E-V2-17 — Cinq écrans liront `undefined` : les seeds nomment ce que le moteur ne sert pas (V2-M50) — **SOLDÉ** (V2-M51)
+
+**SOLDÉ** par cinq adaptateurs (`moteur-formes.ts`, FM-08..12 contre fixtures capturées sur API
+vivante) : `nom ← detail.via`, `liste ← listeVersion`, `formation ← formationCode`,
+`statut ← outcome ?? status`, `origine ← compte des signaux (R280)`, `pays ← destinations[]`.
+Les champs que le moteur ne détient pas (`visaChain`, `reference` des cas/voyages) restent VIDES,
+et les commentaires disent pourquoi. Vérificateur : 5 écarts → 0. Historique du constat :
+
+Le vérificateur de formes annonçait « 0 écart non traité » tant que ces routes répondaient `[]`.
+Il l'avait écrit lui-même : *une réponse vide ne prouve rien sur la forme des éléments*. Les semis
+des lots V2-M45 et V2-M48 les ont peuplées, et la comparaison devient possible :
+
+| écran | route | champs que l'écran attend et que le moteur NE SERT PAS |
+|---|---|---|
+| `EntreeRelation` | `/v1/trips` | `reference`, `pays`, `depart`, `visaChain` |
+| `Pilotage` | `/v1/formations/assignments` | `collaborateur`, `formation` |
+| `Surveillance` | `/v1/screening/hits` | `nom`, `liste` |
+| `Surveillance` | `/v1/aml/signals` | `statut`, `at` |
+| `Surveillance` | `/v1/riskcases` | `reference`, `origine` |
+
+Le moteur sert autre chose sous d'autres noms — par exemple, pour les hits de screening :
+`entreeUid`, `listeVersion`, `matchScript`, `detail.nameScore`. **La file de screening afficherait
+donc des colonnes vides en production**, ce qui est plus grave que les autres : c'est l'écran de
+qualification des hits.
+
+**Conduite** : appliquer la règle déjà posée en V2-M41 — *le moteur nomme, l'écran suit*. Soit un
+adaptateur dans `moteur-formes.ts` (avec fixture capturée en vrai, jamais écrite à la main), soit
+un renommage côté écran. Jamais un ajout de champ au moteur pour faire plaisir à un écran.
+
+### E-V2-18 — Le compartiment paresseux ignore la couche v1 des mêmes modules (V2-M50) — **SOLDÉ** (V2-M53)
+
+**SOLDÉ** sur arbitrage PO (« verse la couche v1 au compartiment ») : les six chunks v1 des
+modules † (`CustodyTa`, `LegalRegistre`, `OpRisk`, `MobileAdmin`, `FxExposition`,
+`FinanceIslamique`) rejoignent le compartiment — ils étaient déjà paresseux dans le routeur v1,
+il ne leur manquait que l'entrée. Cœur : 305,3 → **297,6 kB gz** ; budget baissé 310 → **302**
+(la marge gagnée ne dort pas). Garde **U2-76** : chaque nom de la liste doit être réellement
+chargé par `lazy()` et jamais importé statiquement — un nom fantôme ou un retour à l'import
+statique rougit.
+
+**Correction du constat initial** : `PmsMandats` y était listé à tort — la licence de PMS ne
+porte pas de `†` au registre des capacités (ce n'est pas un module vendu à part), il reste donc
+au socle. Et le chunk v1 `CrossBorder` était déjà capté par accident de préfixe de nom ;
+l'accident est désormais une décision écrite dans la garde de budget. Constat d'origine :
+
+La doctrine posée en V2-M49 dit qu'un module vendu à part ne doit pas peser sur le socle. Elle
+n'est appliquée qu'aux écrans v2. Les écrans v1 des mêmes modules licenciés sont pourtant comptés
+dans le cœur : `CustodyTa` 1,26 · `LegalRegistre` 1,22 · `OpRisk` 1,59 · `PmsMandats` 1,87 ·
+`MobileAdmin` 1,69 kB gz — **7,6 kB**.
+
+Ils sont déjà chargés paresseusement par le routeur v1 : il ne manque que leur entrée au
+compartiment. Mais les y verser revient à statuer sur le sort de la couche v1 (destinée à
+disparaître avec la migration v2 ?), ce qui est un arbitrage PO et non un geste technique.

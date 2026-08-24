@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Patch, Query, Req, BadRequestException } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Param, Post, Patch, Query, Req, BadRequestException } from "@nestjs/common";
 import { KycCreate, QuestionAnswer } from "@olive/shared/src/contracts";
 import { KycService } from "./kyc.service";
+
+// R336/LK (lot 1) : le contrôle de concurrence optimiste passe par l'en-tête If-Match (version
+// attendue). Présent → verrou strict (409 concurrent_modification si périmée) ; absent → repli
+// sur la version courante côté service (rollout expand). Accepte "5" ou la forme ETag W/"5".
+function versionSiPresente(ifMatch?: string): number | undefined {
+  if (!ifMatch) return undefined;
+  const m = ifMatch.match(/\d+/);
+  return m ? parseInt(m[0], 10) : undefined;
+}
 
 // PATCH 2026-07-19 (pré-vol e2e) :
 // Le guard RBAC était retiré de `validate`. Un guard s'exécute AVANT le handler ;
@@ -54,13 +63,72 @@ export class KycController {
     return this.svc.answer(req.ctx, code, qcode, p.data.answer);
   }
   @Post(":code/visas/:section")
-  visa(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
-    return this.svc.signVisa(req.ctx, code, section, body?.verdict ?? "OK", body?.message ?? "");
+  visa(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any, @Headers("if-match") ifMatch?: string) {
+    return this.svc.signVisa(req.ctx, code, section, body?.verdict ?? "OK", body?.message ?? "", versionSiPresente(ifMatch));
   }
 
   // RBAC appliqué DANS le service (après four-eyes R13/R52) — voir note d'en-tête.
   @Post(":code/validate")
-  validate(@Req() req: any, @Param("code") code: string) { return this.svc.validate(req.ctx, code); }
+  validate(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) {
+    return this.svc.validate(req.ctx, code, versionSiPresente(ifMatch), body?.engagement === true);   // R14 : engagement obligatoire
+  }
+
+  // R9 — la révocation discrétionnaire n'existe pas (toujours 409 typé).
+  @Post(":code/visas/:section/revoke")
+  revoke(@Req() req: any, @Param("code") code: string, @Param("section") section: string) { return this.svc.tenterRevocation(req.ctx, code, section); }
+  // R11 — réassignation d'un validateur (rôles habilités).
+  @Post(":code/visas/:section/reassign")
+  reassign(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
+    return this.svc.reassignerValidateur(req.ctx, code, section, body?.requiredRole, body?.nouveau);
+  }
+  // R12 — annulation pour vice de process (incident op-risk).
+  @Post(":code/visas/:section/annuler-vice")
+  annulerVice(@Req() req: any, @Param("code") code: string, @Param("section") section: string, @Body() body: any) {
+    return this.svc.annulerPourVice(req.ctx, code, section, body?.requiredRole, body?.motif ?? "");
+  }
+
+  // R46 — hit pendant la validation : gel des visas en cours + décision du comité.
+  @Post(":code/geler-hit")
+  gelerHit(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.gelerPourHit(req.ctx, code, body?.hit ?? "", body?.delaiAnalyseJours ?? 5);
+  }
+  @Post(":code/comite")
+  comite(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.deciderComite(req.ctx, code, body?.hit ?? "", body?.decision, body?.membres ?? []);
+  }
+
+  // R16-R22 — machine d'états du dossier.
+  @Post(":code/suspendre")
+  suspendre(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.suspendre(req.ctx, code, body?.cause ?? ""); }
+  @Post(":code/abandonner")
+  abandonner(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.abandonner(req.ctx, code, body?.motif ?? "inactivité"); }
+  @Post(":code/reactiver")
+  reactiver(@Req() req: any, @Param("code") code: string) { return this.svc.reactiver(req.ctx, code); }
+  @Post(":code/effacement-lpd")
+  effacementLpd(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.demandeEffacementLpd(req.ctx, code, body?.demandeur ?? req.ctx.userId); }
+  @Post(":code/changement-circonstances")
+  changementCirc(@Req() req: any, @Param("code") code: string, @Body() body: any) {
+    return this.svc.changementCirconstances(req.ctx, code, body?.sections ?? [], body?.description ?? "", body?.risqueMajeur === true);
+  }
+  @Get(":code/operation-autorisee")
+  operationAutorisee(@Req() req: any, @Param("code") code: string, @Query("sens") sens?: string) {
+    return this.svc.operationAutorisee(req.ctx, code, (sens === "entree" ? "entree" : "sortie"));
+  }
+
+  // R23 — processes concurrents (pas de fusion ; l'événement met la recertification en pause ;
+  // à la reprise la recert absorbe les sections déjà revalidées par l'événement clôturé).
+  @Get(":code/processes")
+  processes(@Req() req: any, @Param("code") code: string) { return this.svc.processDuDossier(req.ctx, code); }
+  @Post(":code/processes")
+  ouvrirProcess(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.ouvrirProcess(req.ctx, code, body?.type); }
+  @Post(":code/processes/:processId/cloturer")
+  cloturerProcess(@Req() req: any, @Param("code") code: string, @Param("processId") processId: string, @Body() body: any) {
+    return this.svc.cloturerProcess(req.ctx, code, processId, body?.sectionsRevalidees ?? []);
+  }
+  @Post(":code/processes/:processId/reprendre")
+  reprendreRecert(@Req() req: any, @Param("code") code: string, @Param("processId") processId: string) {
+    return this.svc.reprendreRecertification(req.ctx, code, processId);
+  }
 
   // R84 — édition exclusive (« la main » / checkout)
   @Post(":code/lock")
@@ -74,11 +142,11 @@ export class KycController {
 
   // R85 — passage de main section par section (message obligatoire)
   @Post(":code/handoff/next")
-  hNext(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffNext(req.ctx, code, body?.message ?? ""); }
+  hNext(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffNext(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/back")
-  hBack(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffBack(req.ctx, code, body?.message ?? ""); }
+  hBack(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffBack(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/validate")
-  hValidate(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffValidate(req.ctx, code, body?.message ?? ""); }
+  hValidate(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffValidate(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
   @Post(":code/handoff/reject")
-  hReject(@Req() req: any, @Param("code") code: string, @Body() body: any) { return this.svc.handoffReject(req.ctx, code, body?.message ?? ""); }
+  hReject(@Req() req: any, @Param("code") code: string, @Body() body: any, @Headers("if-match") ifMatch?: string) { return this.svc.handoffReject(req.ctx, code, body?.message ?? "", versionSiPresente(ifMatch)); }
 }

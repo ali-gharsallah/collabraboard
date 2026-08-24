@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Dossiers de risque » (Vague 2 — instruction). Relit la file des dossiers
 // (GET /v1/riskcases), instruit un dossier en APPEND-ONLY (POST/GET /v1/riskcases/:id/notes, R134)
@@ -20,10 +21,9 @@ export function DossiersRisque() {
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
   const [sel, setSel] = useState<Dossier | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [texte, setTexte] = useState("");
   const [vers, setVers] = useState("");
-  const [motif, setMotif] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function charger() {
     setMsg("");
@@ -31,19 +31,19 @@ export function DossiersRisque() {
     setDossiers(d.data);
   }
   async function ouvrir(d: Dossier) {
-    setSel(d); setVers(""); setMotif(""); setMsg("");
+    setSel(d); setVers(""); setMsg("");
     const n = await apiGetSourced<Note[]>(`/v1/riskcases/${d.id}/notes`, []);
     setNotes(n.data);
   }
-  async function ajouterNote() {
+  async function ajouterNote(texte: string) {
     if (!sel) return;
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
     const r = await fetch(`${base}/v1/riskcases/${sel.id}/notes`, { method: "POST", headers: auth(),
       body: JSON.stringify({ texte }) });
-    if (r.ok) { setTexte(""); ouvrir(sel); } else { setMsg((await r.json().catch(() => ({}))).message ?? "Erreur"); }
+    if (r.ok) { ouvrir(sel); } else { setMsg((await r.json().catch(() => ({}))).message ?? "Erreur"); }
   }
-  async function transitionner() {
+  async function transitionner(motif?: string) {
     if (!sel || !vers) return;
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
@@ -58,6 +58,7 @@ export function DossiersRisque() {
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   const cibles = sel ? (TRANSITIONS[sel.statut] ?? []) : [];
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Dossiers de risque — instruction (notes append-only R134 · transitions R133/R7)</h3>
     <button style={btn} onClick={charger}>Charger les dossiers</button>
@@ -85,8 +86,11 @@ export function DossiersRisque() {
             {notes.length === 0 && <li style={{ color: "#666" }}>Aucune note.</li>}
           </ul>
           <div style={{ display: "flex", gap: 8 }}>
-            <input style={{ ...inp, flex: 1 }} placeholder="Nouvelle note…" value={texte} onChange={(e) => setTexte(e.target.value)}/>
-            <button style={btn} onClick={ajouterNote} disabled={!texte}>Ajouter</button>
+            <button style={btn} onClick={() => ask({
+              title: "Ajouter une note d'instruction (R134)",
+              message: "Les notes sont append-only : chronologiques et non modifiables.",
+              input: { label: "Note d'instruction", placeholder: "Nouvelle note…", required: true },
+              confirmLabel: "Ajouter la note", onConfirm: (texte) => ajouterNote(texte ?? "") })}>Ajouter</button>
           </div>
         </div>
 
@@ -98,8 +102,11 @@ export function DossiersRisque() {
               <option value="">— vers —</option>
               {cibles.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <input style={{ ...inp, flex: 1 }} placeholder="Motif (requis pour clôture/escalade)" value={motif} onChange={(e) => setMotif(e.target.value)}/>
-            <button style={btn} onClick={transitionner} disabled={!vers}>Transition</button>
+            <button style={btn} disabled={!vers} onClick={() => ask({
+              title: "Faire avancer le dossier (R133)",
+              message: `Transition ${sel.statut} → ${vers}. Un état terminal (clôture/escalade) exige un motif (R7) ; le service tranche.`,
+              input: { label: "Motif de la transition", placeholder: "requis pour clôture/escalade", required: vers === "CLOTUREE" || vers === "ESCALADEE" },
+              confirmLabel: "Confirmer la transition", onConfirm: (motif) => transitionner(motif) })}>Transition</button>
           </div>}
         </div>
       </div>}

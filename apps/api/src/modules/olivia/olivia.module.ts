@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException, ServiceUnavailableException, BadGatewayException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHash, createHmac } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
+import { GouvernanceOService } from "./gouvernance-o.service";
 import { AuditService } from "../../common/audit.service";
 import { KycModule } from "../kyc/kyc.module";
 import { CpsiModule, CpsiService } from "../cpsi/cpsi.module";
@@ -102,7 +104,7 @@ export class OliviaService {
     private cpsi?: { score(ctx: Ctx, clientId: string, asOf?: string): Promise<any>; regles(ctx: Ctx, asOf?: string): Promise<any>; proposer(ctx: Ctx, dto: { chemin: string; valeur: any; justification?: string }): Promise<any> }) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async settings(tenantId: string) {
     const t = await this.prisma.tenant.findFirst({ where: { id: tenantId } });
@@ -626,7 +628,7 @@ export class OliviaService {
 
 @Controller("olivia")
 export class OliviaController {
-  constructor(private svc: OliviaService) {}
+  constructor(private svc: OliviaService, private gouv: GouvernanceOService) {}
   @Post("conversations")                    creer(@Req() r: any, @Body() b: any) { return this.svc.creerConversation(r.ctx, b); }
   @Post("conversations/:id/messages")       envoyer(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.envoyerMessage(r.ctx, id, b); }
   @Get("conversations/:id/replay")          replay(@Req() r: any, @Param("id") id: string, @Query("as_of") asOf?: string) { return this.svc.replay(r.ctx, id, asOf); }
@@ -637,12 +639,16 @@ export class OliviaController {
   @Post("proposals/:id/adopt")              adopter(@Req() r: any, @Param("id") id: string) { return this.svc.deciderProposition(r.ctx, id, "adopt"); } // OL-16
   @Post("proposals/:id/reject")             rejeter(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.svc.deciderProposition(r.ctx, id, "reject", b?.motif); } // OL-17
   @Get("health")                            health(@Req() r: any) { return this.svc.health(r.ctx); }
+  @Get("gouvernance/curseur")               curseur(@Req() r: any) { return this.gouv.curseur(r.ctx); }                                          // P-L8-3 (O1/O2/O3)
+  @Post("gouvernance/curseur")              changerCurseur(@Req() r: any, @Body() b: any) { return this.gouv.changerCurseur(r.ctx, b ?? {}); }   // événement catalogué
+  @Get("gouvernance/rapport-valeur")        rapportValeur(@Req() r: any, @Query("annee") a: string, @Query("mois") m: string) { return this.gouv.rapportValeur(r.ctx, Number(a), Number(m)); }
 }
 
 @Module({
   imports: [KycModule, CpsiModule],                                        // R255 : l'ancrage se résout VIA les services existants (C3/C4 : porte CPSI)
   controllers: [OliviaController],
   providers: [
+    GouvernanceOService,
     { provide: OliviaService, useFactory: (p: PrismaService, a: AuditService, k: KycService, c: CpsiService) => new OliviaService(p, a, k, c), inject: [PrismaService, AuditService, KycService, CpsiService] }],
   exports: [OliviaService],
 })

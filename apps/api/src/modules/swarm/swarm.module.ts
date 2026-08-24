@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Module, Param, Post, Query, Req, Injectable, ForbiddenException, BadRequestException, ConflictException, NotFoundException, UnprocessableEntityException, ServiceUnavailableException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHash } from "crypto";
 import { readFileSync } from "fs";
 import { PrismaService } from "../../common/prisma.service";
@@ -28,7 +29,7 @@ const LB = listeBlanche as unknown as { lecture: string[]; proposition: string[]
 export class SwarmToolsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── R264 : déclarer un outil — la liste blanche décide, pas le déclarant ──
@@ -77,7 +78,7 @@ export class SwarmToolsService {
 export class SwarmAgentsService {
   constructor(private prisma: PrismaService, private audit: AuditService) {}
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── R259 : déclarer = version n+1 (ADMIN) — les outils doivent EXISTER (R264) ──
@@ -205,7 +206,7 @@ export class SwarmRunsService {
   constructor(private prisma: PrismaService, private audit: AuditService,
     private agents: SwarmAgentsService, private olivia: OliviaService) {}
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   private async settings(tenantId: string) {

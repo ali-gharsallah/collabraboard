@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://olive/contracts/cpsi.schema.json",
+  "title": "Enveloppe de réponse du pont CPSI (bridge.py, protocole R248)",
+  "description": "Contrat Nest↔Python : toute réponse du pont est SOIT un résultat (resultat + meta), SOIT une erreur typée (erreur_typee) — jamais les deux, jamais aucun. contract_version toujours présent.",
+  "type": "object",
+  "required": ["contract_version"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "type": "string" },
+    "resultat": {},
+    "meta": {
+      "type": "object",
+      "required": ["evenements_rejoues"],
+      "properties": {
+        "evenements_rejoues": { "type": "integer" },
+        "duree_ms": { "type": "number" },
+        "chemin": { "type": "string" }
+      }
+    },
+    "erreur_typee": {
+      "type": "object",
+      "required": ["type", "code", "message"],
+      "properties": {
+        "type": { "type": "string" },
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["resultat", "meta"], "not": { "required": ["erreur_typee"] } },
+    { "required": ["erreur_typee"], "not": { "required": ["resultat"] } }
+  ]
+}

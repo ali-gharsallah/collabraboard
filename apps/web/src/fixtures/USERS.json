@@ -1,0 +1,542 @@
+[
+  {
+    "id": "USR-EDT",
+    "name": "Camille Reber",
+    "email": "c.reber@olive-software.ch",
+    "password": "olive2026",
+    "role": "EDITOR",
+    "roleLabel": "Éditeur du logiciel (Olive)",
+    "dept": "Product & Support",
+    "avatar": "CR",
+    "color": "#7E57C2",
+    "permissions": [
+      "license_manage",
+      "etl_manage"
+    ],
+    "visibility": "none"
+  },
+  {
+    "id": "USR-030",
+    "name": "Nadine Keller",
+    "email": "n.keller@banque-olive.ch",
+    "password": "olive2026",
+    "role": "MLRO",
+    "roleLabel": "MLRO — Money Laundering Reporting Officer",
+    "dept": "Compliance",
+    "avatar": "NK",
+    "color": "#C44536",
+    "permissions": [
+      "kyc_read",
+      "aml_read",
+      "aml_decide",
+      "sar_file",
+      "mros_report",
+      "case_close",
+      "depep"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-031",
+    "name": "Karim Haddad",
+    "email": "k.haddad@banque-olive.ch",
+    "password": "olive2026",
+    "role": "CO",
+    "roleLabel": "Compliance Analyst",
+    "dept": "Compliance",
+    "avatar": "KH",
+    "color": "#D99A2B",
+    "permissions": [
+      "kyc_read",
+      "kyc_review",
+      "screening_run",
+      "aml_read"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-032",
+    "name": "Elena Fontana",
+    "email": "e.fontana@banque-olive.ch",
+    "password": "olive2026",
+    "role": "ARM",
+    "roleLabel": "Assistant RM",
+    "dept": "Front Office",
+    "avatar": "EF",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-140",
+    "name": "Ming Chen",
+    "email": "m.chen@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "MC",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-141",
+    "name": "Lucie Morel",
+    "email": "l.morel@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "LM",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-142",
+    "name": "Sophie Berger",
+    "email": "s.berger@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "SB",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-143",
+    "name": "Jean-Paul Favre",
+    "email": "j.favre@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "JF",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-144",
+    "name": "Sixtine Marchand",
+    "email": "s.marchand@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "SX",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-145",
+    "name": "Ali Gharsallah",
+    "email": "a.gharsallah@banque-olive.ch",
+    "password": "olive2026",
+    "role": "RM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "AG",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_edit_own",
+      "client_read",
+      "tasks_create"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-001",
+    "name": "Sophie Marchand",
+    "email": "s.marchand@banque-olive.ch",
+    "password": "olive2026",
+    "role": "ARM",
+    "roleLabel": "Relationship Manager",
+    "dept": "Front Office",
+    "avatar": "SM",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_create",
+      "kyc_edit_own",
+      "client_read",
+      "client_create",
+      "persons_read",
+      "tasks_create",
+      "onboarding_create",
+      "message_send"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-002",
+    "name": "Ralf Kessler",
+    "email": "r.kessler@banque-olive.ch",
+    "password": "olive2026",
+    "role": "ARM",
+    "roleLabel": "Senior RM",
+    "dept": "Front Office",
+    "avatar": "RK",
+    "color": "#5A7D3A",
+    "permissions": [
+      "kyc_read",
+      "kyc_create",
+      "kyc_edit_own",
+      "client_read",
+      "client_create",
+      "persons_read",
+      "tasks_create",
+      "onboarding_create",
+      "message_send"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-003",
+    "name": "Valentina Rossi",
+    "email": "v.rossi@banque-olive.ch",
+    "password": "olive2026",
+    "role": "BRM",
+    "roleLabel": "Business Risk Manager",
+    "dept": "Front Office",
+    "avatar": "VR",
+    "color": "#4A6B28",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_risk",
+      "client_read",
+      "risk_score_view",
+      "risk_score_validate",
+      "tasks_manage"
+    ],
+    "visibility": "own_clients"
+  },
+  {
+    "id": "USR-004",
+    "name": "Marc Dubois",
+    "email": "m.dubois@banque-olive.ch",
+    "password": "olive2026",
+    "role": "CO",
+    "roleLabel": "Compliance Officer",
+    "dept": "Compliance",
+    "avatar": "MD",
+    "color": "#D99A2B",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_compliance",
+      "kyc_edit_compliance",
+      "client_read",
+      "aml_read",
+      "screening_read",
+      "screening_validate",
+      "persons_read",
+      "tasks_manage",
+      "message_send",
+      "report_read"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-005",
+    "name": "Isabelle Vernet",
+    "email": "i.vernet@banque-olive.ch",
+    "password": "olive2026",
+    "role": "CO_SR",
+    "roleLabel": "Senior Compliance Officer",
+    "dept": "Compliance",
+    "avatar": "IV",
+    "color": "#D99A2B",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_compliance",
+      "kyc_edit_compliance",
+      "kyc_approve_edd",
+      "client_read",
+      "aml_read",
+      "aml_manage",
+      "screening_read",
+      "screening_validate",
+      "persons_read",
+      "tasks_manage",
+      "report_read",
+      "pep_validate"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-006",
+    "name": "Jean Blanc",
+    "email": "j.blanc@banque-olive.ch",
+    "password": "olive2026",
+    "role": "AML",
+    "roleLabel": "AML Officer",
+    "dept": "Compliance",
+    "avatar": "JB",
+    "color": "#C44536",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_aml",
+      "aml_read",
+      "aml_manage",
+      "aml_report",
+      "screening_read",
+      "screening_validate",
+      "screening_manage",
+      "persons_read",
+      "report_aml",
+      "tasks_manage"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-007",
+    "name": "Hana Müller",
+    "email": "h.muller@banque-olive.ch",
+    "password": "olive2026",
+    "role": "AML",
+    "roleLabel": "AML Analyst",
+    "dept": "Compliance",
+    "avatar": "HM",
+    "color": "#C44536",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_aml",
+      "aml_read",
+      "screening_read",
+      "screening_validate",
+      "report_aml"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-008",
+    "name": "Sarah Fischer",
+    "email": "s.fischer@banque-olive.ch",
+    "password": "olive2026",
+    "role": "ESG",
+    "roleLabel": "ESG Officer",
+    "dept": "Compliance",
+    "avatar": "SF",
+    "color": "#3D9970",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_esg",
+      "esg_read",
+      "esg_validate",
+      "client_read",
+      "report_esg"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-009",
+    "name": "Pierre Legal",
+    "email": "p.legal@banque-olive.ch",
+    "password": "olive2026",
+    "role": "LEGAL",
+    "roleLabel": "Legal Counsel",
+    "dept": "Legal",
+    "avatar": "PL",
+    "color": "#3E6B8A",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_crossborder",
+      "legal_read",
+      "crossborder_validate",
+      "persons_read",
+      "tasks_read"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-010",
+    "name": "Claire Dupont",
+    "email": "c.dupont@banque-olive.ch",
+    "password": "olive2026",
+    "role": "CF",
+    "roleLabel": "Central File Officer",
+    "dept": "Central File",
+    "avatar": "CD",
+    "color": "#7E57C2",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_docs",
+      "kyc_visa_identity",
+      "documents_manage",
+      "client_read",
+      "persons_read",
+      "tasks_manage"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-011",
+    "name": "Patrick Durand",
+    "email": "p.durand@banque-olive.ch",
+    "password": "olive2026",
+    "role": "HPB",
+    "roleLabel": "Head of Private Banking",
+    "dept": "Direction",
+    "avatar": "PD",
+    "color": "#C9A227",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_final",
+      "kyc_approve",
+      "client_read",
+      "dashboard_exec",
+      "report_read",
+      "team_view",
+      "workflow_admin"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-012",
+    "name": "Lena Hofmann",
+    "email": "l.hofmann@banque-olive.ch",
+    "password": "olive2026",
+    "role": "CEO",
+    "roleLabel": "Chief Executive Officer",
+    "dept": "Direction",
+    "avatar": "LH",
+    "color": "#C9A227",
+    "permissions": [
+      "kyc_read",
+      "kyc_visa_ceo",
+      "kyc_approve",
+      "client_read",
+      "dashboard_exec",
+      "report_read",
+      "admin_all",
+      "workflow_admin"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-013",
+    "name": "Bruno Martini",
+    "email": "b.martini@banque-olive.ch",
+    "password": "olive2026",
+    "role": "DIR",
+    "roleLabel": "Directeur Général",
+    "dept": "Direction",
+    "avatar": "BM",
+    "color": "#C9A227",
+    "permissions": [
+      "kyc_read",
+      "client_read",
+      "dashboard_exec",
+      "report_read"
+    ],
+    "visibility": "all_clients"
+  },
+  {
+    "id": "USR-014",
+    "name": "Kurt Weber",
+    "email": "k.weber@banque-olive.ch",
+    "password": "olive2026",
+    "role": "ADMIN",
+    "roleLabel": "Administrateur Système",
+    "dept": "IT",
+    "avatar": "KW",
+    "color": "#8A9578",
+    "permissions": [
+      "admin_all",
+      "user_manage",
+      "workflow_admin",
+      "audit_read",
+      "system_config"
+    ],
+    "visibility": "admin"
+  },
+  {
+    "id": "USR-015",
+    "name": "Nina Steiner",
+    "email": "n.steiner@banque-olive.ch",
+    "password": "olive2026",
+    "role": "SECU",
+    "roleLabel": "Security Officer (CISO)",
+    "dept": "IT Security",
+    "avatar": "NS",
+    "color": "#8A9578",
+    "permissions": [
+      "audit_read",
+      "security_manage",
+      "user_audit",
+      "system_monitor"
+    ],
+    "visibility": "audit"
+  },
+  {
+    "id": "USR-016",
+    "name": "Thomas Berger",
+    "email": "t.berger@banque-olive.ch",
+    "password": "olive2026",
+    "role": "AUDIT",
+    "roleLabel": "Auditeur Interne",
+    "dept": "Audit",
+    "avatar": "TB",
+    "color": "#4A5740",
+    "permissions": [
+      "audit_read",
+      "kyc_read",
+      "report_read",
+      "dashboard_exec"
+    ],
+    "visibility": "read_only"
+  },
+  {
+    "id": "USR-017",
+    "name": "Camille Noir",
+    "email": "c.noir@regulateur.ch",
+    "password": "olive2026",
+    "role": "FINMA",
+    "roleLabel": "Inspecteur FINMA",
+    "dept": "Autorité de tutelle",
+    "avatar": "CN",
+    "color": "#C44536",
+    "permissions": [
+      "kyc_read",
+      "audit_read",
+      "report_read",
+      "sampling_read"
+    ],
+    "visibility": "supervised"
+  }
+]

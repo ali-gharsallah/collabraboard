@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# Claude Code — worktrees d'agents en arrière-plan (espaces de travail transitoires, jamais versionnés)
+.claude/worktrees/
+
 # Env & secrets
 .env
 .env.*
@@ -25,3 +28,16 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# AML Gap — artefacts générés par tools/gen_aml_gap.py, non encore consommés (démo/sections).
+# Le dataset data/aml-gap-dataset-gt.json, lui, est versé et gardé no-drift (CI 3d).
+data/c50gap.gen.js
+data/aml-gap-sections/
+
+# Compilation locale hors CI (V2-M41) : sortie de `tsc --outDir` pour démarrer l'API à la main.
+apps/api/dist-run/
+apps/api/dist-rules/
+
+# artefact de compilation locale (runtime dev : @olive/shared résout src/contracts — le .ts est la source)
+packages/shared/src/*.js
+apps/web/dist-demo/

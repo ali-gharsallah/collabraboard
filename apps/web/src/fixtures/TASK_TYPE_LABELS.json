@@ -1,0 +1,11 @@
+{
+  "KYC_COMPLETE": "Compléter KYC",
+  "VISA": "Apposer visa",
+  "DOC_MISSING": "Document manquant",
+  "CLIENT_FOLLOWUP": "Relance client",
+  "PERIODIC_REVIEW": "Revue périodique",
+  "AML_CLARIF": "Clarification AML",
+  "SCREENING_HIT": "Qualifier hit screening",
+  "COC_HANDLE": "Traiter COC",
+  "MEETING": "RDV / Appel"
+}

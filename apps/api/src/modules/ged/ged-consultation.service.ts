@@ -1,4 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { Tx } from "../../common/tx";
@@ -45,9 +46,8 @@ export class GedConsultationService {
     const lisibles = await this.typesLisibles(ctx);
     if (!d.typeCode || !lisibles.has(d.typeCode)) {
       await this.prisma.$transaction(async (tx: Tx) =>
-        tx.domainEvent.create({ data: { tenantId: ctx.tenantId, type: "ged.consultation.refusee",
-          aggregateId: documentId, payload: { par: ctx.userId, role: ctx.role, typeCode: d.typeCode },
-          at: new Date().toISOString() } }));
+        emitEvent(tx, ctx.tenantId, "ged.consultation.refusee",
+          documentId, { par: ctx.userId, role: ctx.role, typeCode: d.typeCode }));
       throw new ForbiddenException(`R110 : le rôle ${ctx.role} n'a pas la lecture du type ${d.typeCode}`);
     }
     const versions = (await this.prisma.documentVersion.findMany({ where: { documentId } }))

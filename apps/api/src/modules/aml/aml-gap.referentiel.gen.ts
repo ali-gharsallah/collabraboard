@@ -1,0 +1,3171 @@
+// GÉNÉRÉ par tools/aml-gap/gen_aml_gap.py — NE PAS ÉDITER À LA MAIN.
+// Source de vérité de la vague AML Gap Wave 1 (R340–R377, blocs 50–56). Toute évolution
+// d'une règle passe par le générateur ; le test de fraîcheur (test_gen_aml_gap.py) rougit
+// si ce fichier dérive. Consommé par aml-gap.service.ts et aml-gap.wiring.spec.ts.
+
+export interface AmlGapParam { key: string; label: string; default: string | number | boolean; }
+export interface AmlGapI18nEntry { nom: string; desc: string; }
+export interface AmlGapI18n { en?: AmlGapI18nEntry; de?: AmlGapI18nEntry; it?: AmlGapI18nEntry; ar?: AmlGapI18nEntry; }
+export interface AmlGapRule {
+  id: string; ruleRef: string; bloc: number; blocTitre: string; plage: string; famille: string;
+  titre: string; desc: string; niveau: number | null; kind: 'detection' | 'ops' | 'campagne';
+  blocking: boolean; signal: string;
+  gherkin: { given: string; when: string; then: string };
+  params: AmlGapParam[]; gtCount: { tp: number; fp: number };
+  i18n?: AmlGapI18n;  // traductions PO (nom/desc EN/DE/IT) — servi par l'API (SPEC-I18N §3)
+}
+
+export const AML_GAP_REFERENTIEL: AmlGapRule[] = [
+  {
+    "id": "SF-01",
+    "ruleRef": "R340",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Contrepartie PEP en flux",
+    "desc": "Screening PEP de la contrepartie de chaque transaction entrante/sortante, pas seulement du client à l'onboarding.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PEP_COUNTERPARTY",
+    "gherkin": {
+      "given": "Un virement entrant de CHF 180k provient d'une contrepartie non cliente matchant une liste PEP (ministre en fonction, pays tiers).",
+      "when": "Le screening en flux (nom + pays + date de naissance si dispo) matche la contrepartie avec un score >= seuil tenant.",
+      "then": "Signal PEP_COUNTERPARTY (Niveau 2) — alerte CO avec fiche de match, aucune contamination du statut client sans revue humaine (R44)."
+    },
+    "params": [
+      {
+        "key": "seuil_match_pep_flux",
+        "label": "Score de similarité minimal",
+        "default": 78
+      },
+      {
+        "key": "listes_pep",
+        "label": "Fournisseurs de listes PEP actives",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 2,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "PEP counterparty (in-flow)",
+        "desc": "PEP screening of each transaction counterparty, inbound and outbound — not only the client at onboarding."
+      },
+      "de": {
+        "nom": "PEP-Gegenpartei im Zahlungsfluss",
+        "desc": "PEP-Screening der Gegenpartei jeder ein- und ausgehenden Transaktion – nicht nur des Kunden bei Aufnahme der Geschäftsbeziehung."
+      },
+      "it": {
+        "nom": "Controparte PEP nei flussi",
+        "desc": "Screening PEP della controparte di ogni transazione in entrata e in uscita — non solo del cliente all'apertura della relazione."
+      },
+      "ar": {
+        "nom": "الطرف المقابل من فئة الأشخاص المعرّضين سياسيًا (في التدفق)",
+        "desc": "فرز الأشخاص المعرّضين سياسيًا للطرف المقابل في كل معاملة واردة/صادرة، وليس فقط للعميل عند بدء العلاقة."
+      }
+    }
+  },
+  {
+    "id": "SF-02",
+    "ruleRef": "R341",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Adverse media sur contrepartie",
+    "desc": "Presse négative (blanchiment, fraude, corruption) sur la contrepartie d'une transaction au moment du flux.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ADVERSE_COUNTERPARTY",
+    "gherkin": {
+      "given": "Une sortie de CHF 60k vise une société citée la veille dans une enquête pour corruption (source de rang 1).",
+      "when": "Le screening adverse media en flux matche la contrepartie avec une catégorie AML-pertinente et une source pondérée >= seuil.",
+      "then": "Signal ADVERSE_COUNTERPARTY (Niveau 2) — alerte avec extrait sourcé et daté ; l'humain qualifie."
+    },
+    "params": [
+      {
+        "key": "rang_source_min",
+        "label": "Rang minimal de fiabilité de la source",
+        "default": 2
+      },
+      {
+        "key": "categories_am",
+        "label": "Catégories retenues (ML, fraude, corruption, TF)",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Adverse media on counterparty",
+        "desc": "Negative news (money laundering, fraud, corruption) on the transaction counterparty at the time of the flow."
+      },
+      "de": {
+        "nom": "Adverse Media zur Gegenpartei",
+        "desc": "Negative Medienberichte (Geldwäscherei, Betrug, Korruption) über die Gegenpartei zum Zeitpunkt der Transaktion."
+      },
+      "it": {
+        "nom": "Adverse media sulla controparte",
+        "desc": "Notizie negative (riciclaggio, frode, corruzione) sulla controparte al momento del flusso."
+      },
+      "ar": {
+        "nom": "أخبار سلبية عن الطرف المقابل",
+        "desc": "تغطية إعلامية سلبية (غسل أموال، احتيال، فساد) عن الطرف المقابل لمعاملة وقت حدوث التدفق."
+      }
+    }
+  },
+  {
+    "id": "SF-03",
+    "ruleRef": "R342",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Re-screening périodique (perpetual)",
+    "desc": "Re-screening automatique périodique de tout le stock clients + personnes liées (sanctions/PEP/adverse), différentiel uniquement.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "SCREENING_DELTA",
+    "gherkin": {
+      "given": "Le batch nocturne re-screene 5'000 clients ; un client existant apparaît nouvellement sur une liste PEP suite à une nomination.",
+      "when": "Le différentiel (nouveau hit vs dernier run) est détecté et rattaché au dossier.",
+      "then": "Événement screening.delta → ouverture automatique d'un Change of Circumstances typé SCREENING_DELTA, routé au rôle Compliance (registre CoC)."
+    },
+    "params": [
+      {
+        "key": "frequence_rescreen",
+        "label": "Fréquence du re-screening du stock (heures)",
+        "default": 24
+      },
+      {
+        "key": "scope_personnes_liees",
+        "label": "Inclure les personnes liées",
+        "default": true
+      }
+    ],
+    "gtCount": {
+      "tp": 2,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Periodic re-screening (perpetual)",
+        "desc": "Automatic periodic re-screening of the entire client base and related parties (sanctions/PEP/adverse media), delta-only."
+      },
+      "de": {
+        "nom": "Periodisches Re-Screening (perpetual)",
+        "desc": "Automatisches periodisches Re-Screening des gesamten Kundenbestands inkl. verbundener Personen (Sanktionen/PEP/Adverse Media), nur Deltas."
+      },
+      "it": {
+        "nom": "Re-screening periodico (perpetuo)",
+        "desc": "Re-screening automatico periodico dell'intero portafoglio clienti e delle persone collegate (sanzioni/PEP/adverse media), solo differenziale."
+      },
+      "ar": {
+        "nom": "إعادة الفرز الدورية (مستمرة)",
+        "desc": "إعادة فرز آلية دورية لكامل قاعدة العملاء والأشخاص المرتبطين (عقوبات/أشخاص معرّضون سياسيًا/أخبار سلبية)، بالفروقات فقط."
+      }
+    }
+  },
+  {
+    "id": "SF-04",
+    "ruleRef": "R343",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Banques intermédiaires (BIC)",
+    "desc": "Screening des BIC de la chaîne de paiement (champ 56/57), pas seulement des parties finales.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "INTERMEDIARY_HIT",
+    "gherkin": {
+      "given": "Un MT103 transite par une banque intermédiaire dont la maison mère est sous sanctions sectorielles.",
+      "when": "Chaque BIC de la chaîne est screené contre les listes sanctions + liste interne banques à risque.",
+      "then": "Signal INTERMEDIARY_HIT (Niveau 2) — routage alternatif proposé, décision humaine avant exécution."
+    },
+    "params": [
+      {
+        "key": "liste_bic_interne",
+        "label": "Liste interne de banques surveillées",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Intermediary banks (BIC)",
+        "desc": "Screening of every BIC in the payment chain (fields 56/57), not only the end parties."
+      },
+      "de": {
+        "nom": "Zwischengeschaltete Banken (BIC)",
+        "desc": "Screening aller BIC der Zahlungskette (Felder 56/57), nicht nur der Endparteien."
+      },
+      "it": {
+        "nom": "Banche intermediarie (BIC)",
+        "desc": "Screening di tutti i BIC della catena di pagamento (campi 56/57), non solo delle parti finali."
+      },
+      "ar": {
+        "nom": "البنوك الوسيطة (BIC)",
+        "desc": "فرز رموز BIC في سلسلة الدفع (الحقل 56/57)، وليس فقط الأطراف النهائية."
+      }
+    }
+  },
+  {
+    "id": "SF-05",
+    "ruleRef": "R344",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Adresse / localisation sanctionnée",
+    "desc": "Sanctions par localisation : adresses et villes de régions sous embargo (Crimée, régions occupées), au-delà du seul nom.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "GEO_SANCTION",
+    "gherkin": {
+      "given": "Un virement sortant indique une adresse bénéficiaire à Sébastopol.",
+      "when": "Le parsing d'adresse (ville, région, code postal) matche le référentiel géographique sanctionné.",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — motif géographique explicite, dossier MROS préparé, décision humaine requise (R44)."
+    },
+    "params": [
+      {
+        "key": "referentiel_geo_sanctions",
+        "label": "Référentiel des zones sanctionnées",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sanctioned address / location",
+        "desc": "Location-based sanctions: addresses and cities in embargoed regions (Crimea, occupied territories), beyond name screening."
+      },
+      "de": {
+        "nom": "Sanktionierte Adresse / Ortschaft",
+        "desc": "Ortsbezogene Sanktionen: Adressen und Städte in embargobelegten Regionen (Krim, besetzte Gebiete), über das reine Namens-Screening hinaus."
+      },
+      "it": {
+        "nom": "Indirizzo / località sanzionati",
+        "desc": "Sanzioni per localizzazione: indirizzi e città di regioni sotto embargo (Crimea, territori occupati), oltre il solo screening dei nomi."
+      },
+      "ar": {
+        "nom": "عنوان / موقع خاضع للعقوبات",
+        "desc": "عقوبات حسب الموقع: عناوين ومدن في مناطق خاضعة للحظر (القرم، المناطق المحتلة)، إلى ما هو أبعد من الاسم وحده."
+      }
+    }
+  },
+  {
+    "id": "SF-06",
+    "ruleRef": "R345",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Translittération multi-scripts",
+    "desc": "Matching étendu arabe/cyrillique/chinois : variantes de translittération normalisées avant screening (le moteur IDF+trigram est latin-centrique).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "MULTISCRIPT_HIT",
+    "gherkin": {
+      "given": "Un ordonnateur « Мухаммад Аль-Рашид » (cyrillique) correspond à un profil sanctionné translittéré « Muhammad Al-Rashid ».",
+      "when": "La normalisation multi-scripts (ICU + tables de translittération) produit les variantes avant le matching baseline.",
+      "then": "Le hit est détecté malgré l'écart de script — signal standard du canal concerné, variante gagnante tracée."
+    },
+    "params": [
+      {
+        "key": "scripts_actifs",
+        "label": "Scripts normalisés",
+        "default": "AR,CYR,ZH"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Multi-script transliteration",
+        "desc": "Extended Arabic/Cyrillic/Chinese matching: transliteration variants normalised before screening (the baseline engine is Latin-centric)."
+      },
+      "de": {
+        "nom": "Transliteration über mehrere Schriftsysteme",
+        "desc": "Erweitertes Matching für Arabisch/Kyrillisch/Chinesisch: Transliterationsvarianten werden vor dem Screening normalisiert (Basis-Engine ist lateinzentriert)."
+      },
+      "it": {
+        "nom": "Traslitterazione multi-alfabeto",
+        "desc": "Matching esteso arabo/cirillico/cinese: varianti di traslitterazione normalizzate prima dello screening (il motore di base è latino-centrico)."
+      },
+      "ar": {
+        "nom": "الكتابة الصوتية متعدّدة الأنظمة",
+        "desc": "مطابقة موسّعة للعربية/السيريلية/الصينية: تُوحَّد صيغ الكتابة الصوتية قبل الفرز (محرّك IDF+trigram متمحور حول اللاتينية)."
+      }
+    }
+  },
+  {
+    "id": "SF-07",
+    "ruleRef": "R346",
+    "bloc": 50,
+    "blocTitre": "Screening en flux",
+    "plage": "R340–R346",
+    "famille": "SF",
+    "titre": "Navires & IMO",
+    "desc": "Screening des navires (nom, numéro IMO, pavillon) sur les paiements liés au négoce et au shipping.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "VESSEL_HIT",
+    "gherkin": {
+      "given": "Un crédit documentaire référence un navire dont l'IMO figure sur la liste OFAC (shadow fleet).",
+      "when": "Extraction du nom/IMO depuis les champs libres et les documents, screening dédié navires.",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — gel, escalade sanctions, décision humaine requise."
+    },
+    "params": [
+      {
+        "key": "extraction_imo",
+        "label": "Extraction IMO des champs libres",
+        "default": true
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Vessels & IMO",
+        "desc": "Vessel screening (name, IMO number, flag) on trade- and shipping-related payments."
+      },
+      "de": {
+        "nom": "Schiffe & IMO",
+        "desc": "Screening von Schiffen (Name, IMO-Nummer, Flagge) bei handels- und schifffahrtsbezogenen Zahlungen."
+      },
+      "it": {
+        "nom": "Navi & IMO",
+        "desc": "Screening delle navi (nome, numero IMO, bandiera) sui pagamenti legati a commercio e shipping."
+      },
+      "ar": {
+        "nom": "السفن وأرقام IMO",
+        "desc": "فرز السفن (الاسم، رقم IMO، العلم) على المدفوعات المرتبطة بالتجارة والشحن."
+      }
+    }
+  },
+  {
+    "id": "QO-01",
+    "ruleRef": "R347",
+    "bloc": 51,
+    "blocTitre": "Indices OBA-FINMA",
+    "plage": "R347–R351",
+    "famille": "QO",
+    "titre": "Refus de fournir des informations",
+    "desc": "Le refus du client de fournir les informations usuelles (origine des fonds, justificatifs) devient un signal structuré, pas une note libre.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "INFO_REFUSAL",
+    "gherkin": {
+      "given": "Le RM demande un justificatif d'origine pour un apport de CHF 500k ; le client refuse explicitement à deux reprises.",
+      "when": "Le RM déclare le refus via le workflow dédié (motif, pièces demandées, dates) — événement kyc.refus_information.",
+      "then": "Signal INFO_REFUSAL (Niveau 2) — tâche CO, blocage possible de l'apport après décision humaine, trace au registre art. 7."
+    },
+    "params": [
+      {
+        "key": "nb_relances_avant_signal",
+        "label": "Relances avant signal",
+        "default": 2
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Refusal to provide information",
+        "desc": "A client's refusal to provide customary information (source of funds, supporting documents) becomes a structured signal, not a free-text note."
+      },
+      "de": {
+        "nom": "Verweigerung von Auskünften",
+        "desc": "Die Weigerung des Kunden, übliche Angaben zu machen (Herkunft der Gelder, Belege), wird zum strukturierten Signal statt zur Freitextnotiz."
+      },
+      "it": {
+        "nom": "Rifiuto di fornire informazioni",
+        "desc": "Il rifiuto del cliente di fornire le informazioni usuali (origine dei fondi, giustificativi) diventa un segnale strutturato, non una nota libera."
+      },
+      "ar": {
+        "nom": "رفض تقديم المعلومات",
+        "desc": "يصبح رفض العميل تقديم المعلومات المعتادة (مصدر الأموال، المستندات) إشارة مهيكلة، لا ملاحظة حرة."
+      }
+    }
+  },
+  {
+    "id": "QO-02",
+    "ruleRef": "R348",
+    "bloc": 51,
+    "blocTitre": "Indices OBA-FINMA",
+    "plage": "R347–R351",
+    "famille": "QO",
+    "titre": "Compte de passage multi-titulaires",
+    "desc": "Compte utilisé comme compte de passage par de nombreuses personnes distinctes (indice annexe OBA-FINMA), au-delà du seul critère temporel.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "TRANSIT_ACCOUNT",
+    "gherkin": {
+      "given": "Un compte reçoit des fonds de 9 ordonnateurs distincts sans lien documenté en 30 jours, ressortis vers 6 bénéficiaires.",
+      "when": "Comptage des tiers distincts entrée + sortie / fenêtre glissante, croisé avec les personnes liées du KYC.",
+      "then": "Signal TRANSIT_ACCOUNT (Niveau 2) — cartographie des tiers jointe, revue du but de la relation."
+    },
+    "params": [
+      {
+        "key": "tiers_distincts_seuil",
+        "label": "Tiers distincts / 30j",
+        "default": 6
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Transit account, multiple third parties",
+        "desc": "Account used as a pass-through by numerous unrelated persons (AMLO-FINMA annex indicator), beyond the purely temporal criterion."
+      },
+      "de": {
+        "nom": "Durchlaufkonto mit vielen Dritten",
+        "desc": "Konto wird von zahlreichen nicht verbundenen Personen als Durchlaufkonto genutzt (Anhaltspunkt gemäss Anhang GwV-FINMA), über das rein zeitliche Kriterium hinaus."
+      },
+      "it": {
+        "nom": "Conto di passaggio multi-terzi",
+        "desc": "Conto usato come conto di passaggio da numerose persone senza legami (indizio dell'allegato ORD-FINMA), oltre il solo criterio temporale."
+      },
+      "ar": {
+        "nom": "حساب عبور متعدّد الأصحاب",
+        "desc": "حساب يُستخدَم كحساب عبور من قِبل عدد كبير من الأشخاص المختلفين (مؤشّر ملحق OBA-FINMA)، إلى ما هو أبعد من المعيار الزمني وحده."
+      }
+    }
+  },
+  {
+    "id": "QO-03",
+    "ruleRef": "R349",
+    "bloc": 51,
+    "blocTitre": "Indices OBA-FINMA",
+    "plage": "R347–R351",
+    "famille": "QO",
+    "titre": "Opération sans justification économique",
+    "desc": "Red flag déclaratif du conseiller : opération constatée sans justification économique apparente, tracée et routée (jamais silencieuse).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "NO_ECON_RATIONALE",
+    "gherkin": {
+      "given": "Le RM constate un achat-revente de titres à perte immédiate entre comptes du même client, sans logique d'investissement.",
+      "when": "Le RM soulève le red flag via le formulaire structuré (opération, constat, échange client) — événement rm.redflag.",
+      "then": "Signal NO_ECON_RATIONALE (Niveau 2) — investigation CO, réponse du client consignée."
+    },
+    "params": [
+      {
+        "key": "delai_reponse_client",
+        "label": "Délai de réponse attendu (jours)",
+        "default": 10
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "No apparent economic rationale",
+        "desc": "Advisor-declared red flag: transaction observed without apparent economic justification, logged and routed (never silent)."
+      },
+      "de": {
+        "nom": "Fehlende wirtschaftliche Begründung",
+        "desc": "Deklaratives Warnsignal des Beraters: Transaktion ohne erkennbaren wirtschaftlichen Zweck, erfasst und weitergeleitet (nie stillschweigend)."
+      },
+      "it": {
+        "nom": "Operazione senza giustificazione economica",
+        "desc": "Red flag dichiarativo del consulente: operazione senza giustificazione economica apparente, tracciata e instradata (mai silenziosa)."
+      },
+      "ar": {
+        "nom": "عملية دون مبرّر اقتصادي",
+        "desc": "علَم أحمر تصريحي من المستشار: عملية مرصودة دون مبرّر اقتصادي ظاهر، متتبَّعة وموجَّهة (لا تُترَك صامتة أبدًا)."
+      }
+    }
+  },
+  {
+    "id": "QO-04",
+    "ruleRef": "R350",
+    "bloc": 51,
+    "blocTitre": "Indices OBA-FINMA",
+    "plage": "R347–R351",
+    "famille": "QO",
+    "titre": "Adresse partagée multi-clients",
+    "desc": "Domiciliation c/o ou adresse identique partagée par de nombreux clients sans lien déclaré.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "SHARED_ADDRESS",
+    "gherkin": {
+      "given": "8 clients sans lien familial ni sociétal déclaré partagent la même adresse de domiciliation c/o une fiduciaire.",
+      "when": "Normalisation d'adresse + comptage des clients distincts par adresse, seuil tenant.",
+      "then": "Signal SHARED_ADDRESS (Niveau 1) — revue du caractère de société de domicile (CDB 20, form. K)."
+    },
+    "params": [
+      {
+        "key": "clients_par_adresse_seuil",
+        "label": "Clients distincts par adresse",
+        "default": 5
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shared address across clients",
+        "desc": "c/o domiciliation or identical address shared by numerous clients with no declared link."
+      },
+      "de": {
+        "nom": "Geteilte Adresse mehrerer Kunden",
+        "desc": "c/o-Domizilierung oder identische Adresse bei zahlreichen Kunden ohne deklarierten Zusammenhang."
+      },
+      "it": {
+        "nom": "Indirizzo condiviso tra più clienti",
+        "desc": "Domiciliazione c/o o indirizzo identico condiviso da numerosi clienti senza legame dichiarato."
+      },
+      "ar": {
+        "nom": "عنوان مشترك بين عدة عملاء",
+        "desc": "توطين عناية (c/o) أو عنوان مطابق يتقاسمه عدد كبير من العملاء دون علاقة معلنة."
+      }
+    }
+  },
+  {
+    "id": "QO-05",
+    "ruleRef": "R351",
+    "bloc": 51,
+    "blocTitre": "Indices OBA-FINMA",
+    "plage": "R347–R351",
+    "famille": "QO",
+    "titre": "Rotation des procurations / instructions",
+    "desc": "Changements fréquents de procurations, signataires ou instructions permanentes sans justification.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "GOVERNANCE_CHURN",
+    "gherkin": {
+      "given": "3 changements de fondé de pouvoir en 6 mois, dont un révoqué 2 semaines après nomination.",
+      "when": "Comptage des événements de gouvernance du compte / fenêtre, croisé avec l'activité transactionnelle.",
+      "then": "Signal GOVERNANCE_CHURN (Niveau 2) — revue de la maîtrise réelle du compte (ADE effectif)."
+    },
+    "params": [
+      {
+        "key": "chgts_gouvernance_seuil",
+        "label": "Changements / 6 mois",
+        "default": 3
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Churn of powers of attorney / instructions",
+        "desc": "Frequent changes of powers of attorney, signatories or standing instructions without justification."
+      },
+      "de": {
+        "nom": "Häufige Wechsel von Vollmachten / Instruktionen",
+        "desc": "Häufige Änderungen von Vollmachten, Zeichnungsberechtigten oder Daueraufträgen ohne Begründung."
+      },
+      "it": {
+        "nom": "Rotazione di procure / istruzioni",
+        "desc": "Cambi frequenti di procure, firmatari o istruzioni permanenti senza giustificazione."
+      },
+      "ar": {
+        "nom": "تبدّل الوكالات / التعليمات",
+        "desc": "تغييرات متكرّرة في الوكالات أو المفوَّضين بالتوقيع أو التعليمات الدائمة دون مبرّر."
+      }
+    }
+  },
+  {
+    "id": "GU-01",
+    "ruleRef": "R352",
+    "bloc": 52,
+    "blocTitre": "Vision groupe UBO",
+    "plage": "R352–R355",
+    "famille": "GU",
+    "titre": "Structuring cross-comptes du groupe",
+    "desc": "Agrégation des flux sur le périmètre consolidé de l'UBO (tous comptes, toutes entités) : le fractionnement réparti sur plusieurs entités devient visible.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "GROUP_STRUCTURING",
+    "gherkin": {
+      "given": "Un UBO contrôle 4 entités ; chacune dépose CHF 18k la même semaine (72k agrégés, unitaire sous le seuil de 20k).",
+      "when": "Le moteur agrège par ubo_group_id (graphe des personnes liées) sur la fenêtre glissante.",
+      "then": "Signal GROUP_STRUCTURING (Niveau 2) — vue consolidée jointe, chaque entité référencée."
+    },
+    "params": [
+      {
+        "key": "fenetre_agregation_ubo",
+        "label": "Fenêtre d'agrégation (jours)",
+        "default": 7
+      },
+      {
+        "key": "seuil_agrege_ubo",
+        "label": "Seuil agrégé groupe (CHF)",
+        "default": 50000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Group-wide structuring across accounts",
+        "desc": "Flow aggregation over the beneficial owner's consolidated perimeter (all accounts, all entities): smurfing spread across entities becomes visible."
+      },
+      "de": {
+        "nom": "Strukturierung über Konten der Gruppe",
+        "desc": "Aggregation der Flüsse über den konsolidierten Perimeter der wirtschaftlich berechtigten Person (alle Konten, alle Einheiten): auf mehrere Einheiten verteiltes Smurfing wird sichtbar."
+      },
+      "it": {
+        "nom": "Structuring tra conti del gruppo",
+        "desc": "Aggregazione dei flussi sul perimetro consolidato dell'avente economicamente diritto (tutti i conti, tutte le entità): il frazionamento distribuito tra entità diventa visibile."
+      },
+      "ar": {
+        "nom": "تجزئة عبر حسابات المجموعة",
+        "desc": "تجميع التدفقات على النطاق الموحَّد للمستفيد الحقيقي (كل الحسابات، كل الكيانات): يصبح التجزيء الموزَّع على عدة كيانات مرئيًا."
+      }
+    }
+  },
+  {
+    "id": "GU-02",
+    "ruleRef": "R353",
+    "bloc": 52,
+    "blocTitre": "Vision groupe UBO",
+    "plage": "R352–R355",
+    "famille": "GU",
+    "titre": "Flux circulaires intra-groupe",
+    "desc": "Fonds circulant entre entités du même UBO sans substance (A→B→C→A intra-périmètre).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "GROUP_CIRCULAR",
+    "gherkin": {
+      "given": "CHF 300k font le tour de 3 entités du même UBO en 12 jours et reviennent au point de départ.",
+      "when": "Détection de cycle sur le graphe restreint au périmètre UBO.",
+      "then": "Signal GROUP_CIRCULAR (Niveau 2) — demande de justification économique consolidée."
+    },
+    "params": [
+      {
+        "key": "duree_cycle_max",
+        "label": "Durée max du cycle détecté (jours)",
+        "default": 30
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Intra-group circular flows",
+        "desc": "Funds circulating between entities of the same beneficial owner without substance (A→B→C→A within the perimeter)."
+      },
+      "de": {
+        "nom": "Zirkuläre Flüsse innerhalb der Gruppe",
+        "desc": "Gelder zirkulieren ohne Substanz zwischen Einheiten derselben wirtschaftlich berechtigten Person (A→B→C→A innerhalb des Perimeters)."
+      },
+      "it": {
+        "nom": "Flussi circolari intra-gruppo",
+        "desc": "Fondi che circolano senza sostanza tra entità dello stesso avente economicamente diritto (A→B→C→A entro il perimetro)."
+      },
+      "ar": {
+        "nom": "تدفقات دائرية داخل المجموعة",
+        "desc": "أموال تدور بين كيانات المستفيد الحقيقي نفسه دون جوهر (A→B→C→A داخل النطاق)."
+      }
+    }
+  },
+  {
+    "id": "GU-03",
+    "ruleRef": "R354",
+    "bloc": 52,
+    "blocTitre": "Vision groupe UBO",
+    "plage": "R352–R355",
+    "famille": "GU",
+    "titre": "Cash consolidé du périmètre",
+    "desc": "Intensité cash mesurée au niveau du périmètre UBO : chaque entité reste sous les radars, le groupe non.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "GROUP_CASH_INTENSITY",
+    "gherkin": {
+      "given": "5 entités du même UBO déposent chacune ~CHF 9k d'espèces par mois (45k/mois consolidés).",
+      "when": "Ratio cash consolidé / volume consolidé du groupe, seuils par groupe CPSI.",
+      "then": "Signal GROUP_CASH_INTENSITY (Niveau 2) — ventilation par entité jointe."
+    },
+    "params": [
+      {
+        "key": "ratio_cash_groupe",
+        "label": "Ratio cash consolidé max (%)",
+        "default": 25
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Consolidated cash intensity",
+        "desc": "Cash intensity measured at the level of the beneficial owner's perimeter: each entity stays under the radar, the group does not."
+      },
+      "de": {
+        "nom": "Konsolidierte Bargeldintensität",
+        "desc": "Bargeldintensität auf Ebene des Perimeters der wirtschaftlich berechtigten Person: jede Einheit bleibt unter dem Radar, die Gruppe nicht."
+      },
+      "it": {
+        "nom": "Contante consolidato del perimetro",
+        "desc": "Intensità di contante misurata a livello del perimetro dell'ADE: ogni entità resta sotto i radar, il gruppo no."
+      },
+      "ar": {
+        "nom": "النقد الموحَّد للنطاق",
+        "desc": "كثافة نقدية مقاسة على مستوى نطاق المستفيد الحقيقي: يبقى كل كيان تحت الرادار، أما المجموعة فلا."
+      }
+    }
+  },
+  {
+    "id": "GU-04",
+    "ruleRef": "R355",
+    "bloc": 52,
+    "blocTitre": "Vision groupe UBO",
+    "plage": "R352–R355",
+    "famille": "GU",
+    "titre": "Seuils agrégés cross-produits",
+    "desc": "Agrégation cash + titres + FX + crédit : un pattern réparti entre produits (dépôt cash, achat titres FOP, tirage lombard) est détecté globalement.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "CROSS_PRODUCT_AGGREGATE",
+    "gherkin": {
+      "given": "Dépôt cash 15k + transfert in-specie 40k + tirage lombard 30k la même semaine, aucun produit ne franchit seul son seuil.",
+      "when": "Normalisation en équivalent CHF et agrégation cross-produits par client et par groupe UBO.",
+      "then": "Signal CROSS_PRODUCT_AGGREGATE (Niveau 2) — décomposition par produit jointe."
+    },
+    "params": [
+      {
+        "key": "seuil_cross_produits",
+        "label": "Seuil agrégé équivalent (CHF)",
+        "default": 75000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Cross-product aggregated thresholds",
+        "desc": "Aggregation across cash, securities, FX and credit: a pattern split across products (cash deposit, FOP transfer, Lombard drawdown) is detected globally."
+      },
+      "de": {
+        "nom": "Produktübergreifende aggregierte Schwellenwerte",
+        "desc": "Aggregation über Bargeld, Wertschriften, FX und Kredit: ein über Produkte verteiltes Muster (Bareinzahlung, FOP-Übertrag, Lombardbezug) wird gesamthaft erkannt."
+      },
+      "it": {
+        "nom": "Soglie aggregate cross-prodotto",
+        "desc": "Aggregazione tra contante, titoli, FX e credito: uno schema ripartito tra prodotti (deposito contante, trasferimento FOP, utilizzo lombard) viene rilevato globalmente."
+      },
+      "ar": {
+        "nom": "عتبات مجمَّعة عبر المنتجات",
+        "desc": "تجميع النقد + الأوراق المالية + الصرف الأجنبي + الائتمان: نمط موزَّع بين المنتجات (إيداع نقدي، شراء أوراق FOP، سحب لومبارد) يُكتشَف إجماليًا."
+      }
+    }
+  },
+  {
+    "id": "IP-01",
+    "ruleRef": "R356",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Lombard — remboursement par tiers",
+    "desc": "Crédit lombard remboursé par anticipation par un tiers sans lien documenté avec l'emprunteur.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "LOMBARD_THIRD_PARTY",
+    "gherkin": {
+      "given": "Un lombard de CHF 800k est soldé 4 mois après tirage par un virement d'une société tierce inconnue du dossier.",
+      "when": "Croisement remboursement anticipé × identité de l'ordonnateur × personnes liées du KYC.",
+      "then": "Signal LOMBARD_THIRD_PARTY (Niveau 2) — fonds en attente de documentation SOF avant mainlevée du nantissement."
+    },
+    "params": [
+      {
+        "key": "delai_anticipe_min",
+        "label": "Remboursement considéré anticipé si < (mois)",
+        "default": 12
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Lombard loan repaid by a third party",
+        "desc": "Lombard loan repaid early by a third party with no documented link to the borrower."
+      },
+      "de": {
+        "nom": "Lombardkredit – Rückzahlung durch Dritte",
+        "desc": "Vorzeitige Rückzahlung eines Lombardkredits durch einen Dritten ohne dokumentierte Verbindung zum Kreditnehmer."
+      },
+      "it": {
+        "nom": "Lombard — rimborso da terzi",
+        "desc": "Credito lombard rimborsato anticipatamente da un terzo senza legame documentato con il mutuatario."
+      },
+      "ar": {
+        "nom": "قرض لومبارد — سداد من طرف ثالث",
+        "desc": "قرض لومبارد يُسدَّد مسبقًا من طرف ثالث دون علاقة موثَّقة بالمقترض."
+      }
+    }
+  },
+  {
+    "id": "IP-02",
+    "ruleRef": "R357",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Back-to-back loan",
+    "desc": "Dépôt (souvent offshore) nantissant un prêt accordé à une entité liée : séparation artificielle de l'origine des fonds.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BACK_TO_BACK",
+    "gherkin": {
+      "given": "Un dépôt de CHF 2M d'une entité des Caïmans garantit un prêt de 1.8M à une société suisse du même UBO.",
+      "when": "Détection nantissement × prêt dont déposant et emprunteur partagent le périmètre UBO ou des liens déclarés/détectés.",
+      "then": "Signal BACK_TO_BACK (Niveau 1) — origine du dépôt à corroborer avant tout tirage, escalade EDD."
+    },
+    "params": [
+      {
+        "key": "perimetre_lien",
+        "label": "Liens retenus (UBO, famille, signataires)",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Back-to-back loan",
+        "desc": "A (often offshore) deposit pledged against a loan to a related entity: artificial separation from the origin of funds."
+      },
+      "de": {
+        "nom": "Back-to-back-Kredit",
+        "desc": "Ein (oft Offshore-)Depot als Pfand für einen Kredit an eine verbundene Einheit: künstliche Trennung von der Herkunft der Gelder."
+      },
+      "it": {
+        "nom": "Back-to-back loan",
+        "desc": "Deposito (spesso offshore) costituito in pegno a garanzia di un prestito a un'entità collegata: separazione artificiale dall'origine dei fondi."
+      },
+      "ar": {
+        "nom": "قرض ظهر لظهر (back-to-back)",
+        "desc": "وديعة (غالبًا خارجية) ترهن قرضًا مُنِح لكيان مرتبط: فصل مصطنع لمصدر الأموال."
+      }
+    }
+  },
+  {
+    "id": "IP-03",
+    "ruleRef": "R358",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Wrapper assurance — prime hors profil",
+    "desc": "Souscription d'assurance-vie à prime unique élevée, incohérente avec le patrimoine et les revenus déclarés.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "WRAPPER_PREMIUM",
+    "gherkin": {
+      "given": "Prime unique de CHF 1.5M pour un client au patrimoine déclaré de 900k.",
+      "when": "Ratio prime / patrimoine déclaré + origine de la prime (compte tiers ?).",
+      "then": "Signal WRAPPER_PREMIUM (Niveau 2) — corroboration SOW avant acceptation du contrat."
+    },
+    "params": [
+      {
+        "key": "ratio_prime_patrimoine",
+        "label": "Ratio prime/patrimoine max (%)",
+        "default": 60
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Insurance wrapper — premium out of profile",
+        "desc": "Single-premium life-insurance subscription inconsistent with declared wealth and income."
+      },
+      "de": {
+        "nom": "Versicherungsmantel – Prämie ausserhalb des Profils",
+        "desc": "Zeichnung einer Lebensversicherung mit hoher Einmalprämie, unvereinbar mit deklariertem Vermögen und Einkommen."
+      },
+      "it": {
+        "nom": "Polizza wrapper — premio fuori profilo",
+        "desc": "Sottoscrizione di assicurazione vita a premio unico elevato, incoerente con patrimonio e redditi dichiarati."
+      },
+      "ar": {
+        "nom": "غلاف تأميني — قسط خارج الملف",
+        "desc": "اكتتاب تأمين على الحياة بقسط وحيد مرتفع، غير متسق مع الثروة والدخل المصرَّح بهما."
+      }
+    }
+  },
+  {
+    "id": "IP-04",
+    "ruleRef": "R359",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Wrapper assurance — rachat précoce",
+    "desc": "Rachat de la police peu après souscription, pénalités acceptées sans discussion (le coût du blanchiment est assumé).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "EARLY_SURRENDER",
+    "gherkin": {
+      "given": "Rachat total à 7 mois d'une police à prime unique, pénalité de 4% acceptée sans négociation.",
+      "when": "Délai souscription→rachat < seuil + acceptation de pénalité + bénéficiaire du rachat ≠ souscripteur.",
+      "then": "Signal EARLY_SURRENDER (Niveau 2) — investigation sur la finalité réelle du produit."
+    },
+    "params": [
+      {
+        "key": "delai_rachat_min",
+        "label": "Rachat considéré précoce si < (mois)",
+        "default": 24
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Insurance wrapper — early surrender",
+        "desc": "Policy surrendered shortly after subscription, penalties accepted without discussion (the cost of laundering is priced in)."
+      },
+      "de": {
+        "nom": "Versicherungsmantel – vorzeitiger Rückkauf",
+        "desc": "Rückkauf der Police kurz nach Abschluss; Strafgebühren werden diskussionslos akzeptiert (die Kosten der Geldwäscherei werden in Kauf genommen)."
+      },
+      "it": {
+        "nom": "Polizza wrapper — riscatto precoce",
+        "desc": "Riscatto della polizza poco dopo la sottoscrizione, penali accettate senza discussione (il costo del riciclaggio è messo in conto)."
+      },
+      "ar": {
+        "nom": "غلاف تأميني — استرداد مبكّر",
+        "desc": "استرداد الوثيقة بُعيد الاكتتاب، مع قبول الغرامات دون نقاش (تُتحمَّل كلفة غسل الأموال)."
+      }
+    }
+  },
+  {
+    "id": "IP-05",
+    "ruleRef": "R360",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Changement de bénéficiaire post-souscription",
+    "desc": "Modification du bénéficiaire de la police peu après souscription, vers un tiers sans lien.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BENEFICIARY_SWITCH",
+    "gherkin": {
+      "given": "Le bénéficiaire passe du conjoint à une société étrangère 3 mois après souscription.",
+      "when": "Événement de changement de bénéficiaire × délai × nature du nouveau bénéficiaire.",
+      "then": "Signal BENEFICIARY_SWITCH (Niveau 2) — justification requise, CoC ouvert."
+    },
+    "params": [
+      {
+        "key": "delai_chgt_benef",
+        "label": "Fenêtre de surveillance post-souscription (mois)",
+        "default": 24
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Beneficiary change after subscription",
+        "desc": "Change of the policy beneficiary shortly after subscription, to an unrelated third party."
+      },
+      "de": {
+        "nom": "Begünstigtenwechsel nach Abschluss",
+        "desc": "Änderung des Begünstigten der Police kurz nach Abschluss zugunsten eines nicht verbundenen Dritten."
+      },
+      "it": {
+        "nom": "Cambio di beneficiario post-sottoscrizione",
+        "desc": "Modifica del beneficiario della polizza poco dopo la sottoscrizione, a favore di un terzo senza legami."
+      },
+      "ar": {
+        "nom": "تغيير المستفيد بعد الاكتتاب",
+        "desc": "تعديل المستفيد من الوثيقة بُعيد الاكتتاب، نحو طرف ثالث دون علاقة."
+      }
+    }
+  },
+  {
+    "id": "IP-06",
+    "ruleRef": "R361",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Coffres — corrélation cash",
+    "desc": "Accès au coffre-fort corrélés temporellement à des dépôts ou retraits d'espèces.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "VAULT_CASH_PATTERN",
+    "gherkin": {
+      "given": "6 accès au coffre en 2 mois, chacun suivi sous 24h d'un dépôt espèces de 15-19k.",
+      "when": "Corrélation temporelle accès coffre × mouvements cash / fenêtre.",
+      "then": "Signal VAULT_CASH_PATTERN (Niveau 2) — entretien client et corroboration d'origine."
+    },
+    "params": [
+      {
+        "key": "fenetre_correlation",
+        "label": "Corrélation accès↔cash (heures)",
+        "default": 48
+      },
+      {
+        "key": "nb_correlations_seuil",
+        "label": "Corrélations / 90j",
+        "default": 3
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Safe deposit box — cash correlation",
+        "desc": "Safe deposit box visits temporally correlated with cash deposits or withdrawals."
+      },
+      "de": {
+        "nom": "Schrankfach – Korrelation mit Bargeld",
+        "desc": "Schrankfachzugriffe zeitlich korreliert mit Bareinzahlungen oder -bezügen."
+      },
+      "it": {
+        "nom": "Cassette di sicurezza — correlazione contante",
+        "desc": "Accessi alla cassetta di sicurezza correlati temporalmente a depositi o prelievi di contante."
+      },
+      "ar": {
+        "nom": "الخزائن — ارتباط بالنقد",
+        "desc": "دخول إلى الخزنة مرتبط زمنيًا بإيداعات أو سحوبات نقدية."
+      }
+    }
+  },
+  {
+    "id": "IP-07",
+    "ruleRef": "R362",
+    "bloc": 53,
+    "blocTitre": "Instruments PB",
+    "plage": "R356–R362",
+    "famille": "IP",
+    "titre": "Métaux précieux physiques",
+    "desc": "Achats/ventes/livraisons de métaux physiques hors profil déclaré (OBA négoce OR).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PHYSICAL_METALS",
+    "gherkin": {
+      "given": "Achat de 12 kg d'or physique avec livraison hors banque, client sans profil métaux.",
+      "when": "Volume métaux / profil déclaré + mode de livraison (garde vs sortie physique).",
+      "then": "Signal PHYSICAL_METALS (Niveau 2) — sortie physique documentée, destination tracée."
+    },
+    "params": [
+      {
+        "key": "seuil_metaux",
+        "label": "Équivalent CHF / 90j",
+        "default": 100000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Physical precious metals",
+        "desc": "Purchases/sales/deliveries of physical metals outside the declared profile (AMLO rules on precious metals trading)."
+      },
+      "de": {
+        "nom": "Physische Edelmetalle",
+        "desc": "Kauf/Verkauf/Lieferung physischer Edelmetalle ausserhalb des deklarierten Profils (GwV-Bestimmungen zum Edelmetallhandel)."
+      },
+      "it": {
+        "nom": "Metalli preziosi fisici",
+        "desc": "Acquisti/vendite/consegne di metalli fisici fuori dal profilo dichiarato (disposizioni ORD sul commercio di metalli preziosi)."
+      },
+      "ar": {
+        "nom": "المعادن الثمينة المادية",
+        "desc": "شراء/بيع/تسليم معادن مادية خارج الملف المصرَّح (OBA تجارة الذهب)."
+      }
+    }
+  },
+  {
+    "id": "CR-01",
+    "ruleRef": "R363",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "Travel rule DLT",
+    "desc": "Transferts DLT sans informations complètes d'ordonnateur/bénéficiaire (comm. FINMA 02/2019, GAFI R.16).",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "TRAVEL_RULE_GAP",
+    "gherkin": {
+      "given": "Un transfert sortant de 0.8 BTC vise un VASP qui ne transmet pas les informations travel rule.",
+      "when": "Contrôle de complétude des données travel rule avant exécution du transfert.",
+      "then": "TRANSFERT BLOQUÉ (Niveau 1) — jusqu'à réception des informations ou décision humaine documentée."
+    },
+    "params": [
+      {
+        "key": "vasp_conformes",
+        "label": "Registre des VASP conformes travel rule",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "DLT travel rule",
+        "desc": "DLT transfers lacking complete originator/beneficiary information (FINMA Guidance 02/2019, FATF R.16)."
+      },
+      "de": {
+        "nom": "Travel Rule für DLT",
+        "desc": "DLT-Übertragungen ohne vollständige Angaben zu Auftraggeber/Begünstigtem (FINMA-Aufsichtsmitteilung 02/2019, FATF R.16)."
+      },
+      "it": {
+        "nom": "Travel rule DLT",
+        "desc": "Trasferimenti DLT privi di informazioni complete su ordinante/beneficiario (comunicazione FINMA 02/2019, GAFI R.16)."
+      },
+      "ar": {
+        "nom": "قاعدة السفر DLT",
+        "desc": "تحويلات DLT دون معلومات كاملة عن الآمر/المستفيد (بلاغ FINMA 02/2019، توصية GAFI رقم 16)."
+      }
+    }
+  },
+  {
+    "id": "CR-02",
+    "ruleRef": "R364",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "Exposition mixer / tumbler",
+    "desc": "Fonds entrants dont l'analyse on-chain révèle une exposition directe ou à 1 hop à un mixer.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "MIXER_EXPOSURE",
+    "gherkin": {
+      "given": "Un dépôt de 2.1 BTC provient à 64% d'un mixer connu (analyse de provenance).",
+      "when": "Score d'exposition mixer du fournisseur d'analytique on-chain >= seuil (paramètre tenant, intégration Chainalysis/Elliptic).",
+      "then": "Signal MIXER_EXPOSURE (Niveau 1) — fonds gelés en attente d'explication, EDD."
+    },
+    "params": [
+      {
+        "key": "seuil_exposition_mixer",
+        "label": "Exposition directe max (%)",
+        "default": 10
+      },
+      {
+        "key": "hops_analyses",
+        "label": "Profondeur d'analyse (hops)",
+        "default": 2
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Mixer / tumbler exposure",
+        "desc": "Incoming funds whose on-chain analysis shows direct or one-hop exposure to a mixer."
+      },
+      "de": {
+        "nom": "Mixer-/Tumbler-Exposition",
+        "desc": "Eingehende Gelder, deren On-Chain-Analyse eine direkte oder 1-Hop-Exposition gegenüber einem Mixer zeigt."
+      },
+      "it": {
+        "nom": "Esposizione a mixer / tumbler",
+        "desc": "Fondi in entrata la cui analisi on-chain rivela un'esposizione diretta o a 1 hop verso un mixer."
+      },
+      "ar": {
+        "nom": "التعرّض لخالط (mixer/tumbler)",
+        "desc": "أموال واردة يكشف تحليلها على السلسلة تعرّضًا مباشرًا أو على بُعد قفزة واحدة لخالط."
+      }
+    }
+  },
+  {
+    "id": "CR-03",
+    "ruleRef": "R365",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "Adresse sanctionnée on-chain",
+    "desc": "Contrepartie on-chain figurant dans les adresses crypto de la liste SDN OFAC.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "ONCHAIN_SANCTION",
+    "gherkin": {
+      "given": "Une adresse de destination correspond à une adresse SDN (entité de ransomware listée).",
+      "when": "Screening des adresses contre les listes crypto SDN/SECO à l'initiation.",
+      "then": "TRANSFERT BLOQUÉ (Niveau 1) — gel, dossier sanctions, MROS préparé."
+    },
+    "params": [
+      {
+        "key": "listes_adresses",
+        "label": "Listes d'adresses actives",
+        "default": "OFAC,SECO"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sanctioned on-chain address",
+        "desc": "On-chain counterparty appearing among OFAC SDN crypto addresses."
+      },
+      "de": {
+        "nom": "Sanktionierte On-Chain-Adresse",
+        "desc": "On-Chain-Gegenpartei auf der Liste der OFAC-SDN-Kryptoadressen."
+      },
+      "it": {
+        "nom": "Indirizzo on-chain sanzionato",
+        "desc": "Controparte on-chain presente tra gli indirizzi crypto della lista SDN OFAC."
+      },
+      "ar": {
+        "nom": "عنوان خاضع للعقوبات على السلسلة",
+        "desc": "طرف مقابل على السلسلة مدرَج ضمن عناوين العملات المشفّرة في قائمة SDN التابعة لـ OFAC."
+      }
+    }
+  },
+  {
+    "id": "CR-04",
+    "ruleRef": "R366",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "Cluster darknet / ransomware",
+    "desc": "Exposition de provenance à des clusters darknet markets ou ransomware (hors listes formelles).",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ILLICIT_CLUSTER",
+    "gherkin": {
+      "given": "Provenance à 30% d'un cluster étiqueté darknet market par l'analytique on-chain.",
+      "when": "Score de provenance par catégorie de cluster >= seuil.",
+      "then": "Signal ILLICIT_CLUSTER (Niveau 1) — fonds en quarantaine, investigation."
+    },
+    "params": [
+      {
+        "key": "seuil_cluster_illicite",
+        "label": "Provenance illicite max (%)",
+        "default": 5
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Darknet / ransomware cluster",
+        "desc": "Provenance exposure to darknet-market or ransomware clusters (outside formal lists)."
+      },
+      "de": {
+        "nom": "Darknet-/Ransomware-Cluster",
+        "desc": "Herkunftsexposition gegenüber Darknet-Markt- oder Ransomware-Clustern (ausserhalb formeller Listen)."
+      },
+      "it": {
+        "nom": "Cluster darknet / ransomware",
+        "desc": "Esposizione di provenienza a cluster di darknet market o ransomware (fuori dalle liste formali)."
+      },
+      "ar": {
+        "nom": "عنقود دارك نت / برامج فدية",
+        "desc": "تعرّض المصدر لعناقيد أسواق الدارك نت أو برامج الفدية (خارج القوائم الرسمية)."
+      }
+    }
+  },
+  {
+    "id": "CR-05",
+    "ruleRef": "R367",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "Wallet auto-hébergé sans preuve",
+    "desc": "Transferts vers/depuis un wallet auto-hébergé sans preuve de contrôle (satoshi test / signature de message).",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "UNHOSTED_NOPROOF",
+    "gherkin": {
+      "given": "Le client demande une sortie de 50k CHF en ETH vers un wallet non custodial jamais vérifié.",
+      "when": "Contrôle d'existence d'une preuve de contrôle valide pour l'adresse (registre des adresses vérifiées).",
+      "then": "SORTIE BLOQUÉE (Niveau 1) — jusqu'à preuve de contrôle (signature) enregistrée."
+    },
+    "params": [
+      {
+        "key": "methodes_preuve",
+        "label": "Méthodes acceptées",
+        "default": "signature,satoshi_test"
+      },
+      {
+        "key": "validite_preuve",
+        "label": "Validité de la preuve (mois)",
+        "default": 12
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Self-hosted wallet without proof of control",
+        "desc": "Transfers to/from a self-hosted wallet without a valid proof of control (satoshi test / message signature)."
+      },
+      "de": {
+        "nom": "Self-hosted Wallet ohne Kontrollnachweis",
+        "desc": "Übertragungen an/von einer selbstverwahrten Wallet ohne gültigen Kontrollnachweis (Satoshi-Test / Nachrichtensignatur)."
+      },
+      "it": {
+        "nom": "Wallet self-hosted senza prova di controllo",
+        "desc": "Trasferimenti da/verso un wallet self-hosted senza prova di controllo valida (satoshi test / firma di un messaggio)."
+      },
+      "ar": {
+        "nom": "محفظة ذاتية الاستضافة دون إثبات",
+        "desc": "تحويلات من/إلى محفظة ذاتية الاستضافة دون إثبات للتحكّم (اختبار ساتوشي / توقيع رسالة)."
+      }
+    }
+  },
+  {
+    "id": "CR-06",
+    "ruleRef": "R368",
+    "bloc": 54,
+    "blocTitre": "Crypto / VASP",
+    "plage": "R363–R368",
+    "famille": "CR",
+    "titre": "On/off-ramp incohérent au profil",
+    "desc": "Fréquence et volumes de conversion fiat↔crypto incohérents avec le profil d'investisseur déclaré.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RAMP_VELOCITY",
+    "gherkin": {
+      "given": "Un client « investisseur long terme » convertit fiat→crypto→fiat 14 fois en un mois.",
+      "when": "Compteur de cycles on/off-ramp / 30j vs profil déclaré (au-delà du simple seuil CHF de l'ancienne règle AML-11).",
+      "then": "Signal RAMP_VELOCITY (Niveau 2) — revue du profil transactionnel crypto."
+    },
+    "params": [
+      {
+        "key": "cycles_ramp_seuil",
+        "label": "Cycles / 30j",
+        "default": 6
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "On/off-ramp inconsistent with profile",
+        "desc": "Fiat↔crypto conversion frequency and volumes inconsistent with the declared investor profile."
+      },
+      "de": {
+        "nom": "On-/Off-Ramp inkonsistent zum Profil",
+        "desc": "Häufigkeit und Volumen der Fiat↔Krypto-Konversionen unvereinbar mit dem deklarierten Anlegerprofil."
+      },
+      "it": {
+        "nom": "On/off-ramp incoerente col profilo",
+        "desc": "Frequenza e volumi di conversione fiat↔crypto incoerenti con il profilo d'investitore dichiarato."
+      },
+      "ar": {
+        "nom": "دخول/خروج غير متسق مع الملف",
+        "desc": "وتيرة وأحجام التحويل بين العملة النقدية والمشفّرة غير متسقة مع ملف المستثمر المصرَّح."
+      }
+    }
+  },
+  {
+    "id": "FT-01",
+    "ruleRef": "R369",
+    "bloc": 55,
+    "blocTitre": "CFT",
+    "plage": "R369–R373",
+    "famille": "FT",
+    "titre": "Micro-transactions vers corridors sensibles",
+    "desc": "Petits montants à haute fréquence vers des corridors géographiques sensibles (le CFT ne ressemble pas au blanchiment : montants faibles).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "CFT_MICRO_PATTERN",
+    "gherkin": {
+      "given": "23 transferts de CHF 150-400 en 60 jours vers 3 pays limitrophes d'une zone de conflit.",
+      "when": "Fréquence × faible montant unitaire × corridor sensible (liste tenant distincte des HRJ blanchiment).",
+      "then": "Signal CFT_MICRO_PATTERN (Niveau 2) — analyse dédiée CFT, jamais agrégé avec les seuils ML classiques."
+    },
+    "params": [
+      {
+        "key": "corridors_cft",
+        "label": "Liste corridors CFT",
+        "default": "tenant"
+      },
+      {
+        "key": "freq_micro_seuil",
+        "label": "Transferts / 60j",
+        "default": 10
+      },
+      {
+        "key": "montant_micro_max",
+        "label": "Montant unitaire max (CHF)",
+        "default": 500
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Micro-transactions to sensitive corridors",
+        "desc": "Small amounts at high frequency towards sensitive geographic corridors (terrorist financing does not look like laundering: amounts are small)."
+      },
+      "de": {
+        "nom": "Mikrotransaktionen in sensible Korridore",
+        "desc": "Kleine Beträge in hoher Frequenz in sensible geografische Korridore (Terrorismusfinanzierung sieht nicht aus wie Geldwäscherei: die Beträge sind klein)."
+      },
+      "it": {
+        "nom": "Micro-transazioni verso corridoi sensibili",
+        "desc": "Piccoli importi ad alta frequenza verso corridoi geografici sensibili (il finanziamento del terrorismo non assomiglia al riciclaggio: importi ridotti)."
+      },
+      "ar": {
+        "nom": "معاملات صغيرة نحو ممرّات حسّاسة",
+        "desc": "مبالغ صغيرة عالية التكرار نحو ممرّات جغرافية حسّاسة (تمويل الإرهاب لا يشبه غسل الأموال: مبالغ ضئيلة)."
+      }
+    }
+  },
+  {
+    "id": "FT-02",
+    "ruleRef": "R370",
+    "bloc": 55,
+    "blocTitre": "CFT",
+    "plage": "R369–R373",
+    "famille": "FT",
+    "titre": "Collectes / ONG à risque",
+    "desc": "Dons et collectes atypiques vers des organisations à but non lucratif à risque (GAFI R.8), crowdfunding non tracé.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "NPO_RISK",
+    "gherkin": {
+      "given": "Des dons partent vers une association récemment créée, sans agrément, active dans une zone à risque.",
+      "when": "Croisement bénéficiaire ONG × registre des NPO à risque × ancienneté/agrément.",
+      "then": "Signal NPO_RISK (Niveau 2) — vérification de l'organisation et de la chaîne de distribution des fonds."
+    },
+    "params": [
+      {
+        "key": "registre_npo",
+        "label": "Référentiel NPO surveillées",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "At-risk collections / NPOs",
+        "desc": "Atypical donations and collections towards at-risk non-profit organisations (FATF R.8), untraced crowdfunding."
+      },
+      "de": {
+        "nom": "Sammlungen / NPO mit Risiko",
+        "desc": "Atypische Spenden und Sammlungen an risikobehaftete Non-Profit-Organisationen (FATF R.8), nicht nachvollziehbares Crowdfunding."
+      },
+      "it": {
+        "nom": "Raccolte / ONG a rischio",
+        "desc": "Donazioni e raccolte atipiche verso organizzazioni senza scopo di lucro a rischio (GAFI R.8), crowdfunding non tracciato."
+      },
+      "ar": {
+        "nom": "تبرّعات / منظمات غير ربحية عالية الخطر",
+        "desc": "تبرّعات وحملات غير نمطية نحو منظمات غير ربحية عالية الخطر (توصية GAFI رقم 8)، وتمويل جماعي غير متتبَّع."
+      }
+    }
+  },
+  {
+    "id": "FT-03",
+    "ruleRef": "R371",
+    "bloc": 55,
+    "blocTitre": "CFT",
+    "plage": "R369–R373",
+    "famille": "FT",
+    "titre": "Cartes prépayées multi-sources",
+    "desc": "Rechargements de cartes prépayées depuis des sources multiples, retraits en zone frontalière ou à l'étranger.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PREPAID_FUNDING",
+    "gherkin": {
+      "given": "Une carte est rechargée par 5 personnes différentes puis vidée en retraits ATM dans un pays frontalier d'une zone de conflit.",
+      "when": "Nombre de sources de rechargement distinctes + géographie des retraits.",
+      "then": "Signal PREPAID_FUNDING (Niveau 2) — gel du rechargement tiers après décision humaine."
+    },
+    "params": [
+      {
+        "key": "sources_rechargement_seuil",
+        "label": "Sources distinctes / 90j",
+        "default": 3
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Prepaid cards, multiple funders",
+        "desc": "Prepaid card top-ups from multiple sources, withdrawals in border areas or abroad."
+      },
+      "de": {
+        "nom": "Prepaid-Karten mit mehreren Einzahlern",
+        "desc": "Aufladungen von Prepaid-Karten aus mehreren Quellen, Bezüge in Grenzregionen oder im Ausland."
+      },
+      "it": {
+        "nom": "Carte prepagate multi-fonte",
+        "desc": "Ricariche di carte prepagate da fonti multiple, prelievi in zone di frontiera o all'estero."
+      },
+      "ar": {
+        "nom": "بطاقات مسبقة الدفع متعدّدة المموّلين",
+        "desc": "شحن بطاقات مسبقة الدفع من مصادر متعدّدة، وسحوبات في مناطق حدودية أو بالخارج."
+      }
+    }
+  },
+  {
+    "id": "FT-04",
+    "ruleRef": "R372",
+    "bloc": 55,
+    "blocTitre": "CFT",
+    "plage": "R369–R373",
+    "famille": "FT",
+    "titre": "Cohérence voyages ↔ flux",
+    "desc": "Croisement des Business Trips / voyages connus du client avec des flux vers zones de conflit (le module Trip existe côté RM ; le croisement CFT n'existe pas).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "TRAVEL_FLOW_MISMATCH",
+    "gherkin": {
+      "given": "Un client retire du cash inhabituel juste avant un voyage déclaré vers un pays frontalier d'une zone de conflit.",
+      "when": "Corrélation temporelle voyage déclaré/détecté × retraits cash atypiques × destination sensible.",
+      "then": "Signal TRAVEL_FLOW_MISMATCH (Niveau 2) — entretien de clarification, trace CFT dédiée."
+    },
+    "params": [
+      {
+        "key": "fenetre_voyage",
+        "label": "Fenêtre avant/après voyage (jours)",
+        "default": 14
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Travel ↔ flow consistency",
+        "desc": "Cross-checking the client's known trips against cash withdrawals and flows towards conflict zones."
+      },
+      "de": {
+        "nom": "Kohärenz Reisen ↔ Zahlungsflüsse",
+        "desc": "Abgleich bekannter Reisen des Kunden mit atypischen Barbezügen und Flüssen in Konfliktzonen."
+      },
+      "it": {
+        "nom": "Coerenza viaggi ↔ flussi",
+        "desc": "Incrocio dei viaggi noti del cliente con prelievi di contante atipici e flussi verso zone di conflitto."
+      },
+      "ar": {
+        "nom": "اتساق الأسفار ↔ التدفقات",
+        "desc": "تقاطع رحلات العمل/أسفار العميل المعروفة مع تدفقات نحو مناطق نزاع (وحدة الأسفار موجودة لدى مدير العلاقة؛ تقاطع تمويل الإرهاب غير موجود)."
+      }
+    }
+  },
+  {
+    "id": "FT-05",
+    "ruleRef": "R373",
+    "bloc": 55,
+    "blocTitre": "CFT",
+    "plage": "R369–R373",
+    "famille": "FT",
+    "titre": "Listes terroristes dédiées",
+    "desc": "Screening distinct contre les ordonnances/listes terroristes (séparé des sanctions économiques : gouvernance, escalade et déclaration diffèrent).",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "CFT_LIST_HIT",
+    "gherkin": {
+      "given": "Une contrepartie matche une liste d'une ordonnance fédérale anti-terrorisme (hors listes SECO économiques).",
+      "when": "Canal de screening dédié listes CFT, avec circuit d'escalade propre.",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — gel immédiat, MROS, escalade direction, décision humaine tracée."
+    },
+    "params": [
+      {
+        "key": "listes_cft",
+        "label": "Listes CFT actives",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dedicated terrorist lists",
+        "desc": "Separate screening against terrorist ordinances/lists (distinct from economic sanctions: governance, escalation and reporting differ)."
+      },
+      "de": {
+        "nom": "Dedizierte Terrorlisten",
+        "desc": "Separates Screening gegen Terrorismus-Verordnungen/-Listen (getrennt von Wirtschaftssanktionen: Governance, Eskalation und Meldung unterscheiden sich)."
+      },
+      "it": {
+        "nom": "Liste terroristiche dedicate",
+        "desc": "Screening distinto contro ordinanze/liste antiterrorismo (separato dalle sanzioni economiche: governance, escalation e comunicazione differiscono)."
+      },
+      "ar": {
+        "nom": "قوائم إرهابية مخصّصة",
+        "desc": "فرز منفصل مقابل الأوامر/القوائم الإرهابية (منفصل عن العقوبات الاقتصادية: تختلف الحوكمة والتصعيد والإبلاغ)."
+      }
+    }
+  },
+  {
+    "id": "GV-01",
+    "ruleRef": "R374",
+    "bloc": 56,
+    "blocTitre": "Gouvernance du dispositif",
+    "plage": "R374–R377",
+    "famille": "GV",
+    "titre": "Below-the-line sampling",
+    "desc": "Campagne périodique d'échantillonnage sous les seuils : des transactions juste en-dessous des seuils actifs sont revues pour valider le calibrage.",
+    "niveau": null,
+    "kind": "campagne",
+    "blocking": false,
+    "signal": "tuning.btl.campagne",
+    "gherkin": {
+      "given": "Le trimestre écoulé compte 1'240 transactions entre 80% et 100% du seuil du scénario structuring.",
+      "when": "La campagne BTL tire un échantillon stratifié (paramètre tenant) et le route en revue Compliance.",
+      "then": "Événement tuning.btl.campagne — résultats consolidés : si des TP sont trouvés sous le seuil, proposition de baisse via l'Intelligence Studio (validation humaine, versionnée, réversible)."
+    },
+    "params": [
+      {
+        "key": "taux_echantillon_btl",
+        "label": "Taux d'échantillonnage (%)",
+        "default": 2
+      },
+      {
+        "key": "bande_btl",
+        "label": "Bande sous le seuil (%)",
+        "default": "80-100"
+      },
+      {
+        "key": "frequence_btl",
+        "label": "Fréquence de campagne (jours)",
+        "default": 90
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Below-the-line sampling",
+        "desc": "Periodic sampling campaign below the active thresholds: transactions just under the thresholds are reviewed to validate calibration."
+      },
+      "de": {
+        "nom": "Below-the-line-Stichproben",
+        "desc": "Periodische Stichprobenkampagne unterhalb der aktiven Schwellenwerte: Transaktionen knapp unter den Schwellen werden zur Validierung der Kalibrierung geprüft."
+      },
+      "it": {
+        "nom": "Campionamento below-the-line",
+        "desc": "Campagna periodica di campionamento sotto le soglie attive: transazioni appena sotto soglia riesaminate per validare la calibrazione."
+      },
+      "ar": {
+        "nom": "معاينة تحت الخط (below-the-line)",
+        "desc": "حملة معاينة دورية تحت العتبات: تُراجَع معاملات أقل بقليل من العتبات الفعّالة للتحقّق من المعايرة."
+      }
+    }
+  },
+  {
+    "id": "GV-02",
+    "ruleRef": "R375",
+    "bloc": 56,
+    "blocTitre": "Gouvernance du dispositif",
+    "plage": "R374–R377",
+    "famille": "GV",
+    "titre": "Backtesting par version",
+    "desc": "Backtesting formel de chaque version de scénario : TP/FP historisés par version, comparaison avant/après tout changement de seuil.",
+    "niveau": null,
+    "kind": "campagne",
+    "blocking": false,
+    "signal": "tuning.backtest.run",
+    "gherkin": {
+      "given": "Le seuil du scénario velocity est passé de 4× à 5× il y a 90 jours (v1.2).",
+      "when": "Le backtest rejoue la fenêtre sur les deux versions et compare TP, FP, alertes manquées.",
+      "then": "Rapport de backtest versionné attaché à la version du scénario — rollback proposé si dégradation du rappel (décision humaine)."
+    },
+    "params": [
+      {
+        "key": "fenetre_backtest",
+        "label": "Fenêtre de rejeu (jours)",
+        "default": 90
+      },
+      {
+        "key": "seuil_degradation",
+        "label": "Perte de rappel max tolérée (TP manqués)",
+        "default": 0
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Backtesting per version",
+        "desc": "Formal backtesting of each scenario version: TP/FP historised per version, before/after comparison of every threshold change."
+      },
+      "de": {
+        "nom": "Backtesting pro Version",
+        "desc": "Formelles Backtesting jeder Szenario-Version: TP/FP je Version historisiert, Vorher-Nachher-Vergleich bei jeder Schwellenwertänderung."
+      },
+      "it": {
+        "nom": "Backtesting per versione",
+        "desc": "Backtesting formale di ogni versione di scenario: TP/FP storicizzati per versione, confronto prima/dopo ogni modifica di soglia."
+      },
+      "ar": {
+        "nom": "الاختبار الرجعي حسب الإصدار",
+        "desc": "اختبار رجعي رسمي لكل إصدار سيناريو: أرشفة الإيجابيات الصحيحة/الكاذبة حسب الإصدار، ومقارنة قبل/بعد أي تغيير عتبة."
+      }
+    }
+  },
+  {
+    "id": "GV-03",
+    "ruleRef": "R376",
+    "bloc": 56,
+    "blocTitre": "Gouvernance du dispositif",
+    "plage": "R374–R377",
+    "famille": "GV",
+    "titre": "Data quality pré-conditions",
+    "desc": "Contrôles de qualité de données amont comme pré-condition des scénarios : un scénario aveugle (champs SWIFT incomplets, devises manquantes) est un faux négatif silencieux.",
+    "niveau": 1,
+    "kind": "ops",
+    "blocking": false,
+    "signal": "DQ_DEGRADED",
+    "gherkin": {
+      "given": "8% des MT103 du jour arrivent sans champ ordonnateur exploitable.",
+      "when": "Le contrôle DQ mesure la complétude des champs critiques par flux ; sous le seuil, les scénarios dépendants sont marqués « dégradés ».",
+      "then": "Signal DQ_DEGRADED (Niveau 1, ops) — visible au dashboard Compliance, jamais silencieux (esprit dead-letters R39)."
+    },
+    "params": [
+      {
+        "key": "completude_min",
+        "label": "Complétude minimale des champs critiques (%)",
+        "default": 98
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Data-quality preconditions",
+        "desc": "Upstream data-quality controls as scenario preconditions: a blind scenario (incomplete SWIFT fields, missing currencies) is a silent false negative."
+      },
+      "de": {
+        "nom": "Datenqualität als Vorbedingung",
+        "desc": "Vorgelagerte Datenqualitätskontrollen als Vorbedingung der Szenarien: ein blindes Szenario (unvollständige SWIFT-Felder, fehlende Währungen) ist ein stilles False Negative."
+      },
+      "it": {
+        "nom": "Pre-condizioni di data quality",
+        "desc": "Controlli di qualità dei dati a monte come pre-condizione degli scenari: uno scenario cieco (campi SWIFT incompleti, valute mancanti) è un falso negativo silenzioso."
+      },
+      "ar": {
+        "nom": "شروط مسبقة لجودة البيانات",
+        "desc": "ضوابط جودة بيانات أوّلية كشرط مسبق للسيناريوهات: سيناريو أعمى (حقول SWIFT ناقصة، عملات مفقودة) هو سلب كاذب صامت."
+      }
+    }
+  },
+  {
+    "id": "GV-04",
+    "ruleRef": "R377",
+    "bloc": 56,
+    "blocTitre": "Gouvernance du dispositif",
+    "plage": "R374–R377",
+    "famille": "GV",
+    "titre": "Revue annuelle de calibrage",
+    "desc": "Revue annuelle documentée du dispositif : couverture typologique, performance par scénario, décisions de calibrage — annexée au rapport LBA Direction (art. 25a OBA-FINMA).",
+    "niveau": null,
+    "kind": "campagne",
+    "blocking": false,
+    "signal": "tuning.calibrage.annuel",
+    "gherkin": {
+      "given": "L'exercice se clôt ; chaque scénario a un historique TP/FP et des versions.",
+      "when": "La revue consolide couverture (matrice typologies GAFI × scénarios), performance et écarts.",
+      "then": "Rapport de calibrage annuel généré, visé four-eyes, archivé GED — section dédiée du rapport Direction."
+    },
+    "params": [
+      {
+        "key": "matrice_couverture",
+        "label": "Référentiel de typologies de la matrice",
+        "default": "GAFI+OBA-FINMA"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Annual calibration review",
+        "desc": "Documented annual review of the programme: typology coverage, per-scenario performance, calibration decisions — annexed to the AMLA report to executive management."
+      },
+      "de": {
+        "nom": "Jährliche Kalibrierungsüberprüfung",
+        "desc": "Dokumentierte Jahresüberprüfung des Dispositivs: Typologie-Abdeckung, Performance je Szenario, Kalibrierungsentscheide – als Anhang zum GwG-Bericht an die Geschäftsleitung."
+      },
+      "it": {
+        "nom": "Revisione annuale della calibrazione",
+        "desc": "Revisione annuale documentata del dispositivo: copertura tipologica, performance per scenario, decisioni di calibrazione — allegata al rapporto LRD alla Direzione."
+      },
+      "ar": {
+        "nom": "مراجعة سنوية للمعايرة",
+        "desc": "مراجعة سنوية موثَّقة للنظام: التغطية التصنيفية، الأداء حسب السيناريو، قرارات المعايرة — مرفقة بتقرير LBA للإدارة (المادة 25a من OBA-FINMA)."
+      }
+    }
+  },
+  {
+    "id": "TB-01",
+    "ruleRef": "R378",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Surfacturation (over-invoicing)",
+    "desc": "Factures systématiquement payées au-dessus de la valeur de marché des biens — miroir sortant de R201 : la survaleur transfère du blanchiment sous couvert commercial.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "OVER_INVOICING",
+    "gherkin": {
+      "given": "8 paiements de factures d'import présentent un écart constant de +22% vs le prix de référence des biens (code HS).",
+      "when": "Écart récurrent ≥ seuil entre montant payé et valeur de référence, sur ≥ N factures / 90j.",
+      "then": "Signal OVER_INVOICING (Niveau 2) — analyse trade finance, justificatifs contractuels et incoterms demandés."
+    },
+    "params": [
+      {
+        "key": "ecart_prix_seuil",
+        "label": "écart au prix de référence",
+        "default": 15
+      },
+      {
+        "key": "nb_factures_min",
+        "label": "factures concernées / 90j",
+        "default": 3
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Over-invoicing",
+        "desc": "Invoices systematically paid above the market value of the goods — the excess transfers laundering value under commercial cover."
+      },
+      "de": {
+        "nom": "Überfakturierung (Over-Invoicing)",
+        "desc": "Rechnungen werden systematisch über dem Marktwert der Waren bezahlt – der Mehrbetrag transferiert Geldwäschereiwert unter kommerziellem Deckmantel."
+      },
+      "it": {
+        "nom": "Sovrafatturazione (over-invoicing)",
+        "desc": "Fatture pagate sistematicamente sopra il valore di mercato dei beni — il sovrapprezzo trasferisce valore sotto copertura commerciale."
+      },
+      "ar": {
+        "nom": "المبالغة في الفوترة (over-invoicing)",
+        "desc": "فواتير تُدفَع بانتظام فوق القيمة السوقية للبضائع — مرآة صادرة لـ R201: تنقل القيمة الزائدة غسل الأموال تحت غطاء تجاري."
+      }
+    }
+  },
+  {
+    "id": "TB-02",
+    "ruleRef": "R379",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Facturation multiple",
+    "desc": "Le même bien ou la même expédition est facturé et payé plusieurs fois, via un ou plusieurs financeurs.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "MULTIPLE_INVOICING",
+    "gherkin": {
+      "given": "Deux paiements de CHF 140k référencent le même connaissement (B/L) à 3 semaines d'écart.",
+      "when": "Déduplication des références documentaires (B/L, facture, conteneur) sur les paiements trade / 180j.",
+      "then": "Signal MULTIPLE_INVOICING (Niveau 2) — documents originaux exigés, vérification auprès du transporteur."
+    },
+    "params": [
+      {
+        "key": "fenetre_dedup",
+        "label": "fenêtre de déduplication",
+        "default": 180
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Multiple invoicing",
+        "desc": "The same goods or shipment invoiced and paid several times, through one or more financiers."
+      },
+      "de": {
+        "nom": "Mehrfachfakturierung",
+        "desc": "Dieselbe Ware oder Sendung wird mehrfach fakturiert und bezahlt, über einen oder mehrere Finanzierer."
+      },
+      "it": {
+        "nom": "Fatturazione multipla",
+        "desc": "Lo stesso bene o la stessa spedizione fatturati e pagati più volte, tramite uno o più finanziatori."
+      },
+      "ar": {
+        "nom": "الفوترة المتعدّدة",
+        "desc": "تُفوتَر وتُدفَع البضاعة أو الشحنة نفسها عدة مرات، عبر مموّل واحد أو أكثر."
+      }
+    }
+  },
+  {
+    "id": "TB-03",
+    "ruleRef": "R380",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Prix hors benchmark (unit price)",
+    "desc": "Analyse du prix unitaire par code HS contre des référentiels de prix de marché — les écarts extrêmes signent la mis-invoicing.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "UNIT_PRICE_ANOMALY",
+    "gherkin": {
+      "given": "Des « composants électroniques » sont facturés CHF 2 pièce alors que le référentiel HS donne 40-60.",
+      "when": "Prix unitaire vs distribution de référence du code HS ; écart au-delà des percentiles paramétrés.",
+      "then": "Signal UNIT_PRICE_ANOMALY (Niveau 2) — nature réelle des biens à corroborer."
+    },
+    "params": [
+      {
+        "key": "percentile_bas",
+        "label": "percentile bas",
+        "default": 5
+      },
+      {
+        "key": "percentile_haut",
+        "label": "percentile haut",
+        "default": 95
+      },
+      {
+        "key": "referentiel_hs",
+        "label": "référentiel de prix HS",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Unit price vs benchmark",
+        "desc": "Unit-price analysis per HS code against market reference data — extreme deviations signal trade mis-invoicing."
+      },
+      "de": {
+        "nom": "Einheitspreis vs. Benchmark",
+        "desc": "Einheitspreisanalyse je HS-Code gegen Marktreferenzen – extreme Abweichungen deuten auf Mis-Invoicing hin."
+      },
+      "it": {
+        "nom": "Prezzo unitario vs benchmark",
+        "desc": "Analisi del prezzo unitario per codice HS contro riferimenti di mercato — scostamenti estremi segnalano mis-invoicing."
+      },
+      "ar": {
+        "nom": "سعر خارج المرجع (سعر الوحدة)",
+        "desc": "تحليل سعر الوحدة حسب رمز النظام المنسّق (HS) مقابل مراجع أسعار السوق — الفوارق القصوى تشير إلى الفوترة الخاطئة."
+      }
+    }
+  },
+  {
+    "id": "TB-04",
+    "ruleRef": "R381",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Biens à double usage",
+    "desc": "Paiements liés à des biens à double usage (annexes du contrôle des exportations) vers des destinations sensibles.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "DUAL_USE",
+    "gherkin": {
+      "given": "Un paiement finance des machines-outils de précision classées double usage vers un intermédiaire au pays tiers.",
+      "when": "Classification des biens (HS + libellés) croisée avec les listes de contrôle des exportations et la destination finale.",
+      "then": "Signal DUAL_USE (Niveau 1) — licence d'exportation SECO à exiger avant exécution, escalade sanctions."
+    },
+    "params": [
+      {
+        "key": "listes_controle",
+        "label": "listes de contrôle actives",
+        "default": "SECO,EU"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dual-use goods",
+        "desc": "Payments linked to dual-use goods (export-control annexes) towards sensitive destinations."
+      },
+      "de": {
+        "nom": "Dual-Use-Güter",
+        "desc": "Zahlungen im Zusammenhang mit Dual-Use-Gütern (Anhänge der Exportkontrolle) in sensible Destinationen."
+      },
+      "it": {
+        "nom": "Beni a duplice impiego",
+        "desc": "Pagamenti legati a beni a duplice impiego (allegati del controllo delle esportazioni) verso destinazioni sensibili."
+      },
+      "ar": {
+        "nom": "بضائع ثنائية الاستخدام",
+        "desc": "مدفوعات مرتبطة ببضائع ثنائية الاستخدام (ملاحق مراقبة الصادرات) نحو وجهات حسّاسة."
+      }
+    }
+  },
+  {
+    "id": "TB-05",
+    "ruleRef": "R382",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "LC back-to-back / crédits doc HRJ",
+    "desc": "Lettres de crédit adossées (back-to-back) ou crédits documentaires dont la chaîne implique des juridictions à risque sans logique commerciale.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BACK_TO_BACK_LC",
+    "gherkin": {
+      "given": "Une LC est adossée à une seconde LC émise pour un intermédiaire offshore qui ne touche jamais la marchandise.",
+      "when": "Détection de LC adossées × intermédiaires sans rôle logistique × juridictions de la chaîne.",
+      "then": "Signal BACK_TO_BACK_LC (Niveau 2) — substance de l'intermédiaire à démontrer."
+    },
+    "params": [
+      {
+        "key": "hrj_trade",
+        "label": "liste juridictions trade à risque",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Back-to-back LCs / documentary credits via HRJ",
+        "desc": "Back-to-back letters of credit or documentary credits whose chain involves high-risk jurisdictions with no commercial logic."
+      },
+      "de": {
+        "nom": "Back-to-back-Akkreditive / Dokumentenakkreditive über HRJ",
+        "desc": "Back-to-back-Akkreditive oder Dokumentenakkreditive, deren Kette Hochrisikojurisdiktionen ohne kommerzielle Logik einbezieht."
+      },
+      "it": {
+        "nom": "LC back-to-back / crediti documentari via HRJ",
+        "desc": "Lettere di credito back-to-back o crediti documentari la cui catena coinvolge giurisdizioni ad alto rischio senza logica commerciale."
+      },
+      "ar": {
+        "nom": "اعتمادات ظهر لظهر / اعتمادات مستندية عبر ولايات عالية الخطر",
+        "desc": "اعتمادات مستندية مسنَدة (back-to-back) أو اعتمادات تشمل سلسلتها ولايات قضائية عالية الخطر دون منطق تجاري."
+      }
+    }
+  },
+  {
+    "id": "TB-06",
+    "ruleRef": "R383",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Phantom shipping",
+    "desc": "Paiement sans mouvement de marchandise vérifiable : documents absents, navires inexistants, conteneurs fantômes.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PHANTOM_SHIPMENT",
+    "gherkin": {
+      "given": "Un paiement de CHF 380k référence un conteneur dont le tracking ne montre aucun mouvement.",
+      "when": "Vérification d'existence du voyage (API tracking conteneurs/navires) pour les paiements trade ≥ seuil.",
+      "then": "Signal PHANTOM_SHIPMENT (Niveau 1) — fonds gelés en attente de preuve d'expédition, EDD."
+    },
+    "params": [
+      {
+        "key": "seuil_verif_tracking",
+        "label": "seuil de vérification",
+        "default": 100000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Phantom shipping",
+        "desc": "Payment with no verifiable movement of goods: missing documents, non-existent vessels, ghost containers."
+      },
+      "de": {
+        "nom": "Phantom-Shipping",
+        "desc": "Zahlung ohne nachprüfbare Warenbewegung: fehlende Dokumente, nicht existierende Schiffe, Geistercontainer."
+      },
+      "it": {
+        "nom": "Phantom shipping",
+        "desc": "Pagamento senza movimento di merce verificabile: documenti assenti, navi inesistenti, container fantasma."
+      },
+      "ar": {
+        "nom": "الشحن الوهمي",
+        "desc": "دفع دون حركة بضاعة يمكن التحقّق منها: مستندات غائبة، سفن غير موجودة، حاويات وهمية."
+      }
+    }
+  },
+  {
+    "id": "TB-07",
+    "ruleRef": "R384",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Routes & transbordements atypiques",
+    "desc": "Routes maritimes incohérentes avec la géographie commerciale : détours, transbordements multiples, pavillons changés en cours de voyage.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ROUTE_ANOMALY",
+    "gherkin": {
+      "given": "Une cargaison Rotterdam→Genève transite par 3 ports hors route avec 2 transbordements.",
+      "when": "Score d'anomalie de route (détour, transbordements, arrêts en zones sensibles) sur les documents de transport.",
+      "then": "Signal ROUTE_ANOMALY (Niveau 2) — justification logistique demandée."
+    },
+    "params": [
+      {
+        "key": "transbordements_max",
+        "label": "transbordements tolérés",
+        "default": 1
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Atypical routes & transshipments",
+        "desc": "Shipping routes inconsistent with commercial geography: detours, multiple transshipments, flags changed mid-voyage."
+      },
+      "de": {
+        "nom": "Atypische Routen & Umladungen",
+        "desc": "Seerouten ohne Bezug zur kommerziellen Geografie: Umwege, mehrfache Umladungen, Flaggenwechsel während der Reise."
+      },
+      "it": {
+        "nom": "Rotte e trasbordi atipici",
+        "desc": "Rotte marittime incoerenti con la geografia commerciale: deviazioni, trasbordi multipli, cambi di bandiera in viaggio."
+      },
+      "ar": {
+        "nom": "مسارات وإعادات شحن غير نمطية",
+        "desc": "مسارات بحرية غير متسقة مع الجغرافيا التجارية: تحويلات، إعادات شحن متعدّدة، أعلام تُغيَّر أثناء الرحلة."
+      }
+    }
+  },
+  {
+    "id": "TB-08",
+    "ruleRef": "R385",
+    "bloc": 57,
+    "blocTitre": "TBML",
+    "plage": "R378–R385",
+    "famille": "TB",
+    "titre": "Carrousel documentaire",
+    "desc": "Les mêmes contreparties échangent des rôles acheteur/vendeur sur des biens similaires en boucle — chiffre d'affaires artificiel.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "TRADE_CAROUSEL",
+    "gherkin": {
+      "given": "A vend à B, B revend à C, C revend à A des lots similaires à valeur croissante sur 4 mois.",
+      "when": "Détection de cycles sur le graphe des contreparties trade × similarité des biens × inflation des montants.",
+      "then": "Signal TRADE_CAROUSEL (Niveau 2) — logique économique de la chaîne à démontrer."
+    },
+    "params": [
+      {
+        "key": "duree_cycle_trade",
+        "label": "fenêtre de détection",
+        "default": 180
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Documentary carousel",
+        "desc": "The same counterparties swap buyer/seller roles on similar goods in a loop — artificial turnover."
+      },
+      "de": {
+        "nom": "Dokumentenkarussell",
+        "desc": "Dieselben Gegenparteien tauschen in einer Schleife Käufer-/Verkäuferrollen für ähnliche Waren – künstlicher Umsatz."
+      },
+      "it": {
+        "nom": "Carosello documentario",
+        "desc": "Le stesse controparti si scambiano in circolo i ruoli di acquirente/venditore su beni simili — fatturato artificiale."
+      },
+      "ar": {
+        "nom": "دوّامة مستندية",
+        "desc": "تتبادل الأطراف نفسها أدوار المشتري/البائع على بضائع متشابهة في حلقة — رقم أعمال مصطنع."
+      }
+    }
+  },
+  {
+    "id": "CB-03",
+    "ruleRef": "R386",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "Wire stripping / transparence",
+    "desc": "Champs ordonnateur/bénéficiaire (50/59) incomplets, tronqués ou altérés dans la chaîne — GAFI R.16, Wolfsberg Payment Transparency.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "WIRE_STRIPPING",
+    "gherkin": {
+      "given": "Une série de MT103 d'un correspondant arrive avec le champ 50 réduit à des initiales.",
+      "when": "Contrôle de complétude et de cohérence des champs de transparence par message et par correspondant (taux agrégé).",
+      "then": "Signal WIRE_STRIPPING (Niveau 1) — messages retenus, demande de complément au correspondant, taux suivi par répondant."
+    },
+    "params": [
+      {
+        "key": "taux_incomplet_max",
+        "label": "taux d'incomplétude toléré par correspondant",
+        "default": 2
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Wire stripping / payment transparency",
+        "desc": "Originator/beneficiary fields (50/59) incomplete, truncated or altered along the chain — FATF R.16, Wolfsberg Payment Transparency."
+      },
+      "de": {
+        "nom": "Wire Stripping / Zahlungstransparenz",
+        "desc": "Felder Auftraggeber/Begünstigter (50/59) unvollständig, gekürzt oder verändert in der Kette – FATF R.16, Wolfsberg Payment Transparency."
+      },
+      "it": {
+        "nom": "Wire stripping / trasparenza dei pagamenti",
+        "desc": "Campi ordinante/beneficiario (50/59) incompleti, troncati o alterati lungo la catena — GAFI R.16, Wolfsberg Payment Transparency."
+      },
+      "ar": {
+        "nom": "تجريد التحويلات / الشفافية",
+        "desc": "حقول الآمر/المستفيد (50/59) ناقصة أو مبتورة أو مُحرَّفة في السلسلة — توصية GAFI رقم 16، شفافية مدفوعات Wolfsberg."
+      }
+    }
+  },
+  {
+    "id": "CB-04",
+    "ruleRef": "R387",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "U-turn payments",
+    "desc": "Fonds sortant vers un correspondant tiers et revenant à la même partie via une autre chaîne — contournement de restrictions.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "U_TURN",
+    "gherkin": {
+      "given": "CHF 500k partent vers une banque du Golfe et reviennent 9 jours après via un correspondant européen, même bénéficiaire final.",
+      "when": "Appariement sortie/entrée (montant, parties finales, fenêtre) à travers des chaînes de correspondance distinctes.",
+      "then": "Signal U_TURN (Niveau 2) — finalité du détour à justifier, analyse sanctions."
+    },
+    "params": [
+      {
+        "key": "fenetre_uturn",
+        "label": "fenêtre d'appariement",
+        "default": 30
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "U-turn payments",
+        "desc": "Funds leaving via a third correspondent and returning to the same party through another chain — circumvention of restrictions."
+      },
+      "de": {
+        "nom": "U-Turn-Zahlungen",
+        "desc": "Gelder fliessen über einen Drittkorrespondenten ab und kehren über eine andere Kette zur selben Partei zurück – Umgehung von Restriktionen."
+      },
+      "it": {
+        "nom": "Pagamenti U-turn",
+        "desc": "Fondi in uscita verso un corrispondente terzo che ritornano alla stessa parte tramite un'altra catena — elusione di restrizioni."
+      },
+      "ar": {
+        "nom": "مدفوعات المنعطف (U-turn)",
+        "desc": "أموال تخرج نحو مراسل ثالث وتعود إلى الطرف نفسه عبر سلسلة أخرى — التفاف على القيود."
+      }
+    }
+  },
+  {
+    "id": "CB-05",
+    "ruleRef": "R388",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "Payable-through accounts",
+    "desc": "Clients du répondant accédant directement au compte de correspondance (payable-through) — diligence impossible sur l'utilisateur final.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PAYABLE_THROUGH",
+    "gherkin": {
+      "given": "Des ordres au format client final (références retail) transitent par le compte nostro d'un répondant.",
+      "when": "Détection de patterns d'usage direct (volumétrie retail, références client final) sur comptes de correspondance.",
+      "then": "Signal PAYABLE_THROUGH (Niveau 1) — clarification contractuelle avec le répondant, restriction possible après décision."
+    },
+    "params": [
+      {
+        "key": "indicateurs_pta",
+        "label": "indicateurs d'usage direct",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Payable-through accounts",
+        "desc": "The respondent's customers access the correspondent account directly — due diligence on the end user is impossible."
+      },
+      "de": {
+        "nom": "Payable-Through-Konten",
+        "desc": "Kunden der Respondenzbank greifen direkt auf das Korrespondenzkonto zu – Sorgfaltspflichten gegenüber dem Endnutzer sind nicht erfüllbar."
+      },
+      "it": {
+        "nom": "Conti payable-through",
+        "desc": "I clienti della banca rispondente accedono direttamente al conto di corrispondenza — diligenza sull'utente finale impossibile."
+      },
+      "ar": {
+        "nom": "حسابات قابلة للدفع من خلالها",
+        "desc": "عملاء المراسَل يصلون مباشرة إلى حساب المراسلة (payable-through) — العناية الواجبة على المستخدم النهائي مستحيلة."
+      }
+    }
+  },
+  {
+    "id": "CB-06",
+    "ruleRef": "R389",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "Volumétrie répondant vs profil (KYCC)",
+    "desc": "Volumes et corridors d'un répondant incohérents avec son profil déclaré (questionnaire Wolfsberg CBDDQ).",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RESPONDENT_PROFILE_DRIFT",
+    "gherkin": {
+      "given": "Un répondant déclaré « domestique retail » envoie 40% de ses flux vers des corridors HRJ.",
+      "when": "Comparaison flux réels (corridors, volumes, devises) vs profil CBDDQ déclaré, par période.",
+      "then": "Signal RESPONDENT_PROFILE_DRIFT (Niveau 2) — mise à jour du questionnaire exigée, revue de la relation."
+    },
+    "params": [
+      {
+        "key": "derive_max",
+        "label": "dérive tolérée vs profil",
+        "default": 20
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Respondent volume vs profile (KYCC)",
+        "desc": "A respondent bank's volumes and corridors inconsistent with its declared profile (Wolfsberg CBDDQ)."
+      },
+      "de": {
+        "nom": "Volumen der Respondenzbank vs. Profil (KYCC)",
+        "desc": "Volumen und Korridore einer Respondenzbank unvereinbar mit ihrem deklarierten Profil (Wolfsberg CBDDQ)."
+      },
+      "it": {
+        "nom": "Volumetria del rispondente vs profilo (KYCC)",
+        "desc": "Volumi e corridoi di una banca rispondente incoerenti con il profilo dichiarato (Wolfsberg CBDDQ)."
+      },
+      "ar": {
+        "nom": "حجم المراسَل مقابل الملف (KYCC)",
+        "desc": "أحجام وممرّات مراسَل غير متسقة مع ملفه المصرَّح (استبيان Wolfsberg CBDDQ)."
+      }
+    }
+  },
+  {
+    "id": "CB-07",
+    "ruleRef": "R390",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "Shell bank",
+    "desc": "Détection de banques fictives (sans présence physique ni groupe régulé) dans les chaînes — interdiction LBA.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "",
+    "gherkin": {
+      "given": "Un BIC de la chaîne appartient à un établissement sans adresse physique vérifiable ni superviseur identifiable.",
+      "when": "Croisement BIC × registres de supervision × indicateurs de présence physique (référentiel tenant).",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — interdiction légale, aucune dérogation, dossier sanctions/MROS selon le cas."
+    },
+    "params": [
+      {
+        "key": "registres_supervision",
+        "label": "registres de superviseurs consultés",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shell bank",
+        "desc": "Detection of fictitious banks (no physical presence, no regulated group) in the chains — prohibited under the AMLA."
+      },
+      "de": {
+        "nom": "Briefkastenbank (Shell Bank)",
+        "desc": "Erkennung fiktiver Banken (ohne physische Präsenz, ohne reguliertes Gruppenumfeld) in den Ketten – nach GwG verboten."
+      },
+      "it": {
+        "nom": "Banca fittizia (shell bank)",
+        "desc": "Individuazione di banche fittizie (senza presenza fisica né gruppo regolamentato) nelle catene — vietate dalla LRD."
+      },
+      "ar": {
+        "nom": "بنك صوري (shell bank)",
+        "desc": "اكتشاف بنوك صورية (دون حضور مادي أو مجموعة خاضعة للتنظيم) في السلاسل — محظور بموجب LBA."
+      }
+    }
+  },
+  {
+    "id": "CB-08",
+    "ruleRef": "R391",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "RMA sans flux ni justification",
+    "desc": "Autorisations d'échange SWIFT (RMA) actives sans flux ni besoin documenté — surface d'attaque et de contournement inutile.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RMA_DORMANT",
+    "gherkin": {
+      "given": "Un RMA bilatéral est actif depuis 3 ans avec zéro message échangé.",
+      "when": "Revue périodique des RMA : flux sur la période × justification métier enregistrée.",
+      "then": "Signal RMA_DORMANT (Niveau 1, ops) — proposition de résiliation, décision tracée."
+    },
+    "params": [
+      {
+        "key": "periode_revue_rma",
+        "label": "période de revue",
+        "default": 12
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Dormant RMAs",
+        "desc": "Active SWIFT relationship authorisations (RMA) with no flows and no documented business need — unnecessary attack and circumvention surface."
+      },
+      "de": {
+        "nom": "Ruhende RMA",
+        "desc": "Aktive SWIFT-RMA ohne Flüsse und ohne dokumentierten Geschäftsbedarf – unnötige Angriffs- und Umgehungsfläche."
+      },
+      "it": {
+        "nom": "RMA dormienti",
+        "desc": "Autorizzazioni SWIFT (RMA) attive senza flussi né esigenza documentata — inutile superficie di attacco e di elusione."
+      },
+      "ar": {
+        "nom": "اتفاقيات RMA خاملة",
+        "desc": "أذونات تبادل SWIFT (RMA) فعّالة دون تدفق أو حاجة موثَّقة — سطح هجوم والتفاف لا لزوم له."
+      }
+    }
+  },
+  {
+    "id": "CB-09",
+    "ruleRef": "R392",
+    "bloc": 58,
+    "blocTitre": "Correspondent Banking",
+    "plage": "R386–R392",
+    "famille": "CB",
+    "titre": "Screening des répondantes (CBDDQ)",
+    "desc": "Screening périodique des banques répondantes elles-mêmes : sanctions, adverse media, rating pays, actionnariat.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "RESPONDENT_HIT",
+    "gherkin": {
+      "given": "L'actionnaire majoritaire d'un répondant est placé sous sanctions.",
+      "when": "Re-screening périodique du répondant + UBO bancaires + dirigeants ; delta → revue.",
+      "then": "Signal RESPONDENT_HIT (Niveau 2) — comité correspondance, suspension possible après décision humaine."
+    },
+    "params": [
+      {
+        "key": "frequence_screen_respondants",
+        "label": "fréquence",
+        "default": 30
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Respondent screening (CBDDQ)",
+        "desc": "Periodic screening of respondent banks themselves: sanctions, adverse media, country rating, ownership."
+      },
+      "de": {
+        "nom": "Screening der Respondenzbanken (CBDDQ)",
+        "desc": "Periodisches Screening der Respondenzbanken selbst: Sanktionen, Adverse Media, Länderrating, Eigentümerschaft."
+      },
+      "it": {
+        "nom": "Screening delle banche rispondenti (CBDDQ)",
+        "desc": "Screening periodico delle stesse banche rispondenti: sanzioni, adverse media, rating paese, assetto proprietario."
+      },
+      "ar": {
+        "nom": "فرز المراسِلات (CBDDQ)",
+        "desc": "فرز دوري للبنوك المراسِلة نفسها: عقوبات، أخبار سلبية، تصنيف الدولة، هيكل المساهمة."
+      }
+    }
+  },
+  {
+    "id": "PF-01",
+    "ruleRef": "R393",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "plage": "R393–R395",
+    "famille": "PF",
+    "titre": "Sanctions sectorielles & plafonds",
+    "desc": "Contournement des sanctions sectorielles : plafonds de prix (pétrole), embargos or/luxe, services interdits (assurance, shipping) vers RU/BY/IR/KP.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": true,
+    "signal": "",
+    "gherkin": {
+      "given": "Un paiement pétrole affiche un prix au baril supérieur au plafond, assuré par un assureur non autorisé.",
+      "when": "Contrôle sectoriel : produit × origine × prix vs plafond × services associés autorisés.",
+      "then": "TRANSACTION BLOQUÉE (Niveau 1) — violation sectorielle, escalade sanctions, décision humaine tracée."
+    },
+    "params": [
+      {
+        "key": "plafonds_sectoriels",
+        "label": "référentiel plafonds/embargos",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Sectoral sanctions & price caps",
+        "desc": "Circumvention of sectoral sanctions: price caps (oil), gold/luxury embargoes, prohibited services (insurance, shipping) towards RU/BY/IR/KP."
+      },
+      "de": {
+        "nom": "Sektorale Sanktionen & Preisobergrenzen",
+        "desc": "Umgehung sektoraler Sanktionen: Preisobergrenzen (Öl), Gold-/Luxus-Embargos, verbotene Dienstleistungen (Versicherung, Schifffahrt) Richtung RU/BY/IR/KP."
+      },
+      "it": {
+        "nom": "Sanzioni settoriali & price cap",
+        "desc": "Elusione delle sanzioni settoriali: tetti di prezzo (petrolio), embarghi oro/lusso, servizi vietati (assicurazione, shipping) verso RU/BY/IR/KP."
+      },
+      "ar": {
+        "nom": "عقوبات قطاعية وسقوف الأسعار",
+        "desc": "الالتفاف على العقوبات القطاعية: سقوف الأسعار (النفط)، حظر الذهب/الترف، خدمات محظورة (تأمين، شحن) نحو RU/BY/IR/KP."
+      }
+    }
+  },
+  {
+    "id": "PF-02",
+    "ruleRef": "R394",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "plage": "R393–R395",
+    "famille": "PF",
+    "titre": "Chaînes d'écrans corridors KP/IR",
+    "desc": "Patterns d'intermédiation typiques du financement de la prolifération : sociétés jeunes, capital minimal, secteurs génériques, en chaîne vers corridors sensibles.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PROLIF_CHAIN",
+    "gherkin": {
+      "given": "Trois sociétés de trading créées < 12 mois s'intercalent entre un exportateur européen et un acheteur final opaque.",
+      "when": "Score de chaîne : âge des entités × substance × secteur générique × corridor final.",
+      "then": "Signal PROLIF_CHAIN (Niveau 1) — identification du destinataire final exigée, escalade."
+    },
+    "params": [
+      {
+        "key": "age_entite_min",
+        "label": "âge minimal sans surrisque",
+        "default": 24
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Shell chains on KP/IR corridors",
+        "desc": "Intermediation patterns typical of proliferation financing: young companies, minimal capital, generic sectors, chained towards sensitive corridors."
+      },
+      "de": {
+        "nom": "Ketten von Scheinfirmen auf KP/IR-Korridoren",
+        "desc": "Für Proliferationsfinanzierung typische Vermittlungsmuster: junge Gesellschaften, Minimalkapital, generische Sektoren, in Ketten Richtung sensibler Korridore."
+      },
+      "it": {
+        "nom": "Catene di società schermo su corridoi KP/IR",
+        "desc": "Schemi di intermediazione tipici del finanziamento della proliferazione: società giovani, capitale minimo, settori generici, in catena verso corridoi sensibili."
+      },
+      "ar": {
+        "nom": "سلاسل شركات صورية على ممرّات KP/IR",
+        "desc": "أنماط وساطة نمطية لتمويل الانتشار: شركات حديثة، رأس مال أدنى، قطاعات عامة، متسلسلة نحو ممرّات حسّاسة."
+      }
+    }
+  },
+  {
+    "id": "PF-03",
+    "ruleRef": "R395",
+    "bloc": 59,
+    "blocTitre": "Prolifération",
+    "plage": "R393–R395",
+    "famille": "PF",
+    "titre": "Biens de luxe vers zones embargo",
+    "desc": "Exportation de biens de luxe (montres, joaillerie, véhicules) vers des juridictions sous embargo de luxe, souvent via pays relais.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "LUXURY_EMBARGO",
+    "gherkin": {
+      "given": "Des paiements de montres de haute horlogerie partent vers un relais d'Asie centrale, volume ×6 depuis l'embargo.",
+      "when": "Volume par corridor relais × catégorie de biens embargo × croissance anormale post-sanctions.",
+      "then": "Signal LUXURY_EMBARGO (Niveau 2) — destinataire final et usage à corroborer."
+    },
+    "params": [
+      {
+        "key": "categories_luxe",
+        "label": "catégories surveillées",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Luxury goods to embargoed zones",
+        "desc": "Export of luxury goods (watches, jewellery, vehicles) towards luxury-embargoed jurisdictions, often via transit countries."
+      },
+      "de": {
+        "nom": "Luxusgüter in Embargozonen",
+        "desc": "Export von Luxusgütern (Uhren, Schmuck, Fahrzeuge) in Jurisdiktionen mit Luxusgüter-Embargo, oft über Transitländer."
+      },
+      "it": {
+        "nom": "Beni di lusso verso zone sotto embargo",
+        "desc": "Esportazione di beni di lusso (orologi, gioielleria, veicoli) verso giurisdizioni sotto embargo, spesso tramite paesi di transito."
+      },
+      "ar": {
+        "nom": "سلع فاخرة نحو مناطق محظورة",
+        "desc": "تصدير سلع فاخرة (ساعات، مجوهرات، مركبات) نحو ولايات خاضعة لحظر الترف، غالبًا عبر دول عبور."
+      }
+    }
+  },
+  {
+    "id": "IA-01",
+    "ruleRef": "R396",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "plage": "R396–R398",
+    "famille": "IA",
+    "titre": "Immobilier via structure + prix hors marché",
+    "desc": "Acquisition immobilière via structure (SCI, trust, offshore) à un prix significativement hors marché.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "REAL_ESTATE_ANOMALY",
+    "gherkin": {
+      "given": "Un bien estimé CHF 2.1M est acquis 3.4M via une société des BVI financée depuis le compte.",
+      "when": "Écart au prix de référence (m², registre) × acquisition via structure × origine du financement.",
+      "then": "Signal REAL_ESTATE_ANOMALY (Niveau 2) — expertise indépendante et SOW exigées."
+    },
+    "params": [
+      {
+        "key": "ecart_marche_max",
+        "label": "écart au marché toléré",
+        "default": 25
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Real estate via structures, off-market price",
+        "desc": "Real-estate acquisition through a structure (property company, trust, offshore) at a price significantly off market."
+      },
+      "de": {
+        "nom": "Immobilien über Strukturen, marktferner Preis",
+        "desc": "Immobilienerwerb über eine Struktur (Immobiliengesellschaft, Trust, Offshore) zu deutlich marktfernem Preis."
+      },
+      "it": {
+        "nom": "Immobili via strutture, prezzo fuori mercato",
+        "desc": "Acquisizione immobiliare tramite struttura (società immobiliare, trust, offshore) a un prezzo significativamente fuori mercato."
+      },
+      "ar": {
+        "nom": "عقارات عبر هيكل + سعر خارج السوق",
+        "desc": "اقتناء عقاري عبر هيكل (شركة مدنية، صندوق ائتماني، خارجي) بسعر خارج السوق بشكل ملحوظ."
+      }
+    }
+  },
+  {
+    "id": "IA-02",
+    "ruleRef": "R397",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "plage": "R396–R398",
+    "famille": "IA",
+    "titre": "Art & ports francs",
+    "desc": "Achat d'œuvres, dépôt en port franc, revente rapide — valeur mobile, opaque et transfrontalière.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "ART_FREEPORT",
+    "gherkin": {
+      "given": "Une œuvre achetée CHF 900k est déposée en port franc puis revendue 15 mois après à une partie liée, +40%.",
+      "when": "Cycle achat→port franc→revente × délai × lien entre parties × écart de prix.",
+      "then": "Signal ART_FREEPORT (Niveau 2) — provenance de l'œuvre et indépendance de l'acheteur à établir."
+    },
+    "params": [
+      {
+        "key": "delai_revente_min",
+        "label": "revente considérée rapide si <",
+        "default": 36
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Art & freeports",
+        "desc": "Artwork purchase, freeport storage, quick resale — mobile, opaque, cross-border value."
+      },
+      "de": {
+        "nom": "Kunst & Zollfreilager",
+        "desc": "Kauf von Kunstwerken, Einlagerung im Zollfreilager, rasche Weiterveräusserung – mobile, intransparente, grenzüberschreitende Werte."
+      },
+      "it": {
+        "nom": "Arte & porti franchi",
+        "desc": "Acquisto di opere, deposito in porto franco, rivendita rapida — valore mobile, opaco e transfrontaliero."
+      },
+      "ar": {
+        "nom": "الفن والموانئ الحرة",
+        "desc": "شراء أعمال فنية، إيداعها في ميناء حر، إعادة بيعها بسرعة — قيمة متنقّلة وغامضة وعابرة للحدود."
+      }
+    }
+  },
+  {
+    "id": "IA-03",
+    "ruleRef": "R398",
+    "bloc": 60,
+    "blocTitre": "Immobilier & Art",
+    "plage": "R396–R398",
+    "famille": "IA",
+    "titre": "Véhicules de valeur (luxe, NFT)",
+    "desc": "Biens de luxe et actifs numériques de collection utilisés comme véhicules de transfert de valeur.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "VALUE_VEHICLE",
+    "gherkin": {
+      "given": "Trois véhicules de collection achetés et réexpédiés à l'étranger en 4 mois, revendus à des parties inconnues.",
+      "when": "Fréquence d'achat/revente de biens de valeur × export × contreparties.",
+      "then": "Signal VALUE_VEHICLE (Niveau 2) — finalité patrimoniale vs circulation de valeur à clarifier."
+    },
+    "params": [
+      {
+        "key": "seuil_biens_valeur",
+        "label": "équivalent CHF / 180j",
+        "default": 200000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Value vehicles (luxury, NFT)",
+        "desc": "Luxury goods and collectible digital assets used as value-transfer vehicles."
+      },
+      "de": {
+        "nom": "Wertvehikel (Luxus, NFT)",
+        "desc": "Luxusgüter und digitale Sammlerwerte als Vehikel für Werttransfers."
+      },
+      "it": {
+        "nom": "Veicoli di valore (lusso, NFT)",
+        "desc": "Beni di lusso e asset digitali da collezione usati come veicoli di trasferimento di valore."
+      },
+      "ar": {
+        "nom": "أوعية قيمة (ترف، NFT)",
+        "desc": "سلع فاخرة وأصول رقمية قابلة للاقتناء تُستخدَم كأوعية لنقل القيمة."
+      }
+    }
+  },
+  {
+    "id": "AN-01",
+    "ruleRef": "R399",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "plage": "R399–R403",
+    "famille": "AN",
+    "titre": "Déviation au groupe de pairs",
+    "desc": "Écart statistique du client à son groupe de pairs CPSI (z-score sur les attributs surveillés), au-delà des seuils fixes de 1re génération.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "PEER_DEVIATION",
+    "gherkin": {
+      "given": "Un client du groupe « Affluent CH » présente un volume cash à 4.2 écarts-types de la médiane de son groupe.",
+      "when": "Z-score robuste (médiane/MAD) par attribut et par groupe, recalculé au fil de l'eau.",
+      "then": "Signal PEER_DEVIATION (Niveau 2) — explicable par construction : attribut, valeur, distribution du groupe joints (R44 : l'IA éclaire)."
+    },
+    "params": [
+      {
+        "key": "zscore_seuil",
+        "label": "z-score de déclenchement",
+        "default": 3.5
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Peer-group deviation",
+        "desc": "Statistical deviation of the client from its CPSI peer group (z-score on monitored attributes), beyond fixed first-generation thresholds."
+      },
+      "de": {
+        "nom": "Abweichung von der Peer-Group",
+        "desc": "Statistische Abweichung des Kunden von seiner CPSI-Peer-Group (Z-Score auf überwachten Attributen), über die fixen Schwellen der 1. Generation hinaus."
+      },
+      "it": {
+        "nom": "Deviazione dal gruppo di pari",
+        "desc": "Scostamento statistico del cliente dal suo gruppo di pari CPSI (z-score sugli attributi monitorati), oltre le soglie fisse di prima generazione."
+      },
+      "ar": {
+        "nom": "الانحراف عن مجموعة النظراء",
+        "desc": "انحراف إحصائي للعميل عن مجموعة نظرائه في CPSI (درجة z على السمات المراقَبة)، إلى ما هو أبعد من عتبات الجيل الأول الثابتة."
+      }
+    }
+  },
+  {
+    "id": "AN-02",
+    "ruleRef": "R400",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "plage": "R399–R403",
+    "famille": "AN",
+    "titre": "Rupture de comportement (baseline propre)",
+    "desc": "Changement soudain vs la baseline historique du client lui-même (pas du groupe) : régime transactionnel qui bascule.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "BEHAVIOR_SHIFT",
+    "gherkin": {
+      "given": "Un compte stable depuis 4 ans triple sa volumétrie et change de corridors en 3 semaines.",
+      "when": "Détection de rupture (changepoint) sur volume, fréquence, corridors, contreparties vs baseline 12 mois.",
+      "then": "Signal BEHAVIOR_SHIFT (Niveau 2) — comparatif avant/après joint au signal."
+    },
+    "params": [
+      {
+        "key": "sensibilite_rupture",
+        "label": "sensibilité du détecteur",
+        "default": "tenant"
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Behavioural break (own baseline)",
+        "desc": "Sudden change versus the client's own historical baseline (not the group's): the transaction regime shifts."
+      },
+      "de": {
+        "nom": "Verhaltensbruch (eigene Baseline)",
+        "desc": "Plötzliche Veränderung gegenüber der eigenen historischen Baseline des Kunden (nicht der Gruppe): das Transaktionsregime kippt."
+      },
+      "it": {
+        "nom": "Rottura di comportamento (baseline propria)",
+        "desc": "Cambiamento improvviso rispetto alla baseline storica del cliente stesso (non del gruppo): il regime transazionale cambia."
+      },
+      "ar": {
+        "nom": "انقطاع سلوكي (خط الأساس الخاص)",
+        "desc": "تغيّر مفاجئ مقابل خط الأساس التاريخي للعميل نفسه (لا المجموعة): نظام معاملاتي ينقلب."
+      }
+    }
+  },
+  {
+    "id": "AN-03",
+    "ruleRef": "R401",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "plage": "R399–R403",
+    "famille": "AN",
+    "titre": "First-time patterns",
+    "desc": "Premières occurrences sensibles : premier virement international, premier cash, première contrepartie HRJ, premier produit à risque.",
+    "niveau": 1,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "FIRST_TIME",
+    "gherkin": {
+      "given": "Un client 100% domestique depuis 6 ans émet son premier virement vers une juridiction à risque, montant élevé.",
+      "when": "Détection de première occurrence par dimension sensible × matérialité du montant.",
+      "then": "Signal FIRST_TIME (Niveau 1) — friction douce : revue rapide, pas de blocage (R39 : mesurer, pas coercer)."
+    },
+    "params": [
+      {
+        "key": "dimensions_ft",
+        "label": "dimensions surveillées",
+        "default": "international,cash,HRJ,produit_risque"
+      },
+      {
+        "key": "materialite_ft",
+        "label": "matérialité minimale",
+        "default": 25000
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "First-time patterns",
+        "desc": "Sensitive first occurrences: first international wire, first cash, first HRJ counterparty, first higher-risk product."
+      },
+      "de": {
+        "nom": "First-Time-Muster",
+        "desc": "Sensible Erstereignisse: erste Auslandsüberweisung, erstes Bargeld, erste HRJ-Gegenpartei, erstes Produkt mit erhöhtem Risiko."
+      },
+      "it": {
+        "nom": "Pattern first-time",
+        "desc": "Prime occorrenze sensibili: primo bonifico internazionale, primo contante, prima controparte HRJ, primo prodotto a rischio."
+      },
+      "ar": {
+        "nom": "أنماط أولى الحدوث",
+        "desc": "أول حدوث لحالات حسّاسة: أول تحويل دولي، أول نقد، أول طرف مقابل عالي الخطر، أول منتج عالي المخاطر."
+      }
+    }
+  },
+  {
+    "id": "AN-04",
+    "ruleRef": "R402",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "plage": "R399–R403",
+    "famille": "AN",
+    "titre": "Dormance partielle par segment",
+    "desc": "Réactivation d'un segment d'activité dormant (ex. le cash après 3 ans d'inactivité cash) même si le compte global reste actif — complète la règle « compte dormant » existante.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "SEGMENT_REACTIVATION",
+    "gherkin": {
+      "given": "Un compte actif en titres n'a fait aucun cash depuis 3 ans ; 3 dépôts espèces surviennent en 2 semaines.",
+      "when": "Dormance mesurée par segment (cash, international, produit) ; réactivation = première activité du segment après N mois.",
+      "then": "Signal SEGMENT_REACTIVATION (Niveau 2) — contexte de réactivation demandé."
+    },
+    "params": [
+      {
+        "key": "dormance_segment",
+        "label": "dormance du segment",
+        "default": 24
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Partial dormancy by segment",
+        "desc": "Reactivation of a dormant activity segment (e.g. cash after three years of cash inactivity) even if the account overall remains active."
+      },
+      "de": {
+        "nom": "Partielle Inaktivität nach Segment",
+        "desc": "Reaktivierung eines ruhenden Aktivitätssegments (z. B. Bargeld nach drei Jahren Bargeld-Inaktivität), auch wenn das Konto insgesamt aktiv bleibt."
+      },
+      "it": {
+        "nom": "Dormienza parziale per segmento",
+        "desc": "Riattivazione di un segmento di attività dormiente (es. contante dopo tre anni di inattività) anche se il conto nel complesso resta attivo."
+      },
+      "ar": {
+        "nom": "خمول جزئي حسب القطاع",
+        "desc": "إعادة تنشيط قطاع نشاط خامل (مثلًا النقد بعد 3 سنوات من الخمول النقدي) حتى لو بقي الحساب الإجمالي نشطًا — يُكمِّل قاعدة «الحساب الخامل» القائمة."
+      }
+    }
+  },
+  {
+    "id": "AN-05",
+    "ruleRef": "R403",
+    "bloc": 61,
+    "blocTitre": "Analytique 2G",
+    "plage": "R399–R403",
+    "famille": "AN",
+    "titre": "Revenus entrants incohérents (mismatch)",
+    "desc": "Entrées récurrentes libellées « salaire/honoraires » incohérentes avec l'employeur et la rémunération déclarés au KYC — pendant entrant de R201/AML-WC-01.",
+    "niveau": 2,
+    "kind": "detection",
+    "blocking": false,
+    "signal": "INCOME_MISMATCH",
+    "gherkin": {
+      "given": "Un « salaire » mensuel de CHF 45k est crédité alors que le KYC déclare 12k et un autre employeur.",
+      "when": "Croisement libellé/ordonnateur des entrées récurrentes × rémunération et employeur déclarés.",
+      "then": "Signal INCOME_MISMATCH (Niveau 2) — mise à jour KYC ou justification exigée (CoC)."
+    },
+    "params": [
+      {
+        "key": "ecart_revenu_max",
+        "label": "écart toléré vs déclaré",
+        "default": 50
+      }
+    ],
+    "gtCount": {
+      "tp": 1,
+      "fp": 1
+    },
+    "i18n": {
+      "en": {
+        "nom": "Recurring inbound income mismatch",
+        "desc": "Recurring credits labelled 'salary/fees' inconsistent with the employer and remuneration declared in the KYC."
+      },
+      "de": {
+        "nom": "Wiederkehrende Einkommensinkonsistenz (eingehend)",
+        "desc": "Wiederkehrende Gutschriften als 'Lohn/Honorar' deklariert, unvereinbar mit Arbeitgeber und Vergütung gemäss KYC."
+      },
+      "it": {
+        "nom": "Redditi in entrata incoerenti (ricorrenti)",
+        "desc": "Accrediti ricorrenti etichettati 'stipendio/onorari' incoerenti con datore di lavoro e remunerazione dichiarati nel KYC."
+      },
+      "ar": {
+        "nom": "دخل وارد غير متسق (mismatch)",
+        "desc": "مدخلات متكرّرة موسومة «راتب/أتعاب» غير متسقة مع صاحب العمل والأجر المصرَّحين في KYC — مقابل وارد لـ R201/AML-WC-01."
+      }
+    }
+  }
+];

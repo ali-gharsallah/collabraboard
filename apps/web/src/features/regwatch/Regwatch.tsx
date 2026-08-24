@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 import { traduire, langue } from "../../lib/i18n";
 
@@ -25,10 +26,11 @@ export function Regwatch() {
     const r = await apiGetSourced<Item[] | null>("/v1/regwatch/items", null);
     setItems(r.isDemo ? null : r.data);
   };
-  const qualifier = async (empreinte: string, statut: string) => {
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
+  const qualifier = async (empreinte: string, statut: string, saisie?: string) => {
     setMsg("");
-    const motif = statut === "NON_PERTINENT" ? window.prompt("Motif (R7) :") ?? "" : undefined;
-    const regles = statut === "PERTINENT" ? (window.prompt("Règles Rn impactées (virgule) :") ?? "").split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    const motif = statut === "NON_PERTINENT" ? (saisie ?? "") : undefined;
+    const regles = statut === "PERTINENT" ? (saisie ?? "").split(",").map((s) => s.trim()).filter(Boolean) : undefined;
     try { await apiPost(`/v1/regwatch/items/${empreinte}/qualifier`, { statut, motif, regles }); await charger(); }
     catch (e) { setMsg((e as OliveError).message ?? "Erreur"); }             // le refus, TEL QUEL
   };
@@ -36,6 +38,7 @@ export function Regwatch() {
   const couleur = (s: string) => s === "PERTINENT" ? tokens.color.olive700 : s === "NON_PERTINENT" ? tokens.color.muted : tokens.color.warn;
   const t = traduire(langue());        // cliquet i18n : UI par t(), les DONNÉES (titres, règles) verbatim
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>{t("Veille réglementaire — portée par sources, qualifiée par l'humain, rattachée au catalogue")}</h3>
     <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -62,8 +65,13 @@ export function Regwatch() {
         </td>
         <td style={{ ...td, color: couleur(i.statut) }}>{i.statut}</td>
         <td style={td}>{i.statut === "NON_TRAITE" && !isDemoMode() && <>
-          <button style={{ fontSize: 11 }} onClick={() => qualifier(i.empreinte, "PERTINENT")}>{t("Pertinent")}</button>
-          <button style={{ fontSize: 11, marginLeft: 4 }} onClick={() => qualifier(i.empreinte, "NON_PERTINENT")}>{t("Écarter")}</button></>}</td>
+          <button style={{ fontSize: 11 }} onClick={() => ask({ title: t("Qualifier PERTINENT"),
+            message: t("Un item pertinent ouvre la tâche d'analyse — la voie normale fait le reste."),
+            input: { label: t("Règles Rn impactées (séparées par des virgules)"), placeholder: "R68, R125", required: true }, confirmLabel: t("Pertinent"),
+            onConfirm: (v) => qualifier(i.empreinte, "PERTINENT", v) })}>{t("Pertinent")}</button>
+          <button style={{ fontSize: 11, marginLeft: 4 }} onClick={() => ask({ title: t("Écarter (NON PERTINENT)"),
+            input: { label: t("Motif (R7)"), placeholder: t("obligatoire"), required: true }, confirmLabel: t("Écarter"),
+            onConfirm: (v) => qualifier(i.empreinte, "NON_PERTINENT", v) })}>{t("Écarter")}</button></>}</td>
       </tr>)}
     </tbody></table>}
   </div>;

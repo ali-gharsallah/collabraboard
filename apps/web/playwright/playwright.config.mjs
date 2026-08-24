@@ -10,7 +10,7 @@ const PORT = 4173;
 const racineWeb = join(dirname(fileURLToPath(import.meta.url)), "..");   // apps/web (racine vite)
 export default defineConfig({
   testDir: ".",
-  testMatch: /fat-visuel\.spec\.mjs/,
+  testMatch: /(fat-visuel|wd-parcours)\.spec\.mjs/,
   timeout: 30_000,
   retries: 1,
   use: {

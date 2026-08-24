@@ -1,0 +1,165 @@
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
+import { PrismaService } from "../../common/prisma.service";
+import { AuditService } from "../../common/audit.service";
+import { Tx } from "../../common/tx";
+
+/**
+ * R26/R27/R29 — matrice documentaire versionnée. Port fidèle de referentiel.py
+ * (VersionArtefact « matrice_documentaire ») + Moteur.evaluer_completude.
+ *
+ * Mécanisme seulement : la matrice est un référentiel append-only estampillé par date de
+ * mise en vigueur (R29 grandfathering / R48 rejeu à date). Le CONTENU — quels documents pour
+ * quel type d'entité — relève de l'arbitrage banque (voie ⚙ R-Q) et n'est jamais inventé ici :
+ * il est fourni par `publier()` (édition tenant). Absence de matrice publiée ⇒ aucune exigence
+ * (défaut neutre : ne bloque rien, ne fabrique aucun seuil).
+ *
+ * contenu = { exigences: { <typeEntite>: { entite:[exig], personne_liee:[exig], compte:[exig],
+ *                                          parRole: { <role>: [exig] } } } }
+ *   exig = code documentaire (string)
+ *        | groupe d'équivalence { groupe, parJuridiction: { CH:.., "*":.. } }  (R27)
+ *
+ * ── L'AXE RÔLE (enrichissement du contrat, arbitré PO 12.08.2026) ──────────────────────────
+ * R26 énonce que « les documents requis se déduisent du croisement type d'entité × juridiction
+ * × RÔLE », et le scénario S-03 de la spec nomme les rôles des personnes liées (« BE,
+ * signataire »). Le moteur ne connaissait que le PORTEUR — entité titulaire, personne liée,
+ * compte — sans distinguer les rôles : un bénéficiaire effectif et un simple signataire
+ * exigeaient les mêmes pièces, alors que la CDB 20 n'exige le formulaire A que du premier.
+ *
+ * `parRole` porte des exigences **ADDITIONNELLES** : le socle `personne_liee` s'applique à tout
+ * intervenant, le rôle y ajoute. Jamais un remplacement — sinon déclarer un rôle RETIRERAIT des
+ * exigences, et une matrice se relirait comme une dispense.
+ *
+ * Trois défauts neutres, tous voulus : un rôle absent de `parRole` n'ajoute rien ; une personne
+ * sans rôle déclaré ne reçoit que le socle (le rôle n'est JAMAIS deviné) ; une version publiée
+ * sans `parRole` évalue exactement comme avant — c'est le grandfathering R29 qui l'exige, un
+ * dossier validé ne devient pas rétroactivement incomplet parce que le contrat s'est enrichi.
+ */
+
+type Ctx = { tenantId: string; userId: string; role: string };
+
+/**
+ * Une personne liée au dossier. La forme HISTORIQUE (une simple chaîne) reste acceptée : un
+ * appelant qui ne connaît pas encore les rôles n'obtient que le socle, sans rien casser.
+ */
+export type PersonneLiee = string | { id: string; roles?: string[] };
+
+// Descripteur d'évaluation — assemblé par l'appelant (aucun couplage schéma lourd).
+export type DossierMatrice = {
+  typeEntite: string;
+  juridiction: string;
+  titulaire: string;
+  personnesLiees?: PersonneLiee[];
+  comptes?: string[];
+  matriceVersion?: number | null;                    // R29 : estampille du dossier (grandfathering)
+  documentsPresents?: { porteur: string; nom: string }[];
+};
+
+export type Exigence = string | { groupe?: string; parJuridiction: Record<string, string> };
+type ExigencesEntite = { entite?: Exigence[]; personne_liee?: Exigence[]; compte?: Exigence[];
+  parRole?: Record<string, Exigence[]> };
+
+@Injectable()
+export class DocMatrixService {
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
+
+  // R27 : la juridiction du cas résout le document dans un groupe d'équivalence.
+  // exigence string simple → passe telle quelle. Mapping → juridiction, sinon « * ».
+  static resoudreDocument(exigence: Exigence, juridiction: string): string {
+    if (typeof exigence === "string") return exigence;
+    const parJ = exigence.parJuridiction ?? {};
+    const r = parJ[juridiction] ?? parJ["*"];
+    if (r === undefined) throw new BadRequestException(`[R27] Aucun document résolu pour la juridiction ${juridiction}`);
+    return r;
+  }
+
+  /**
+   * R26 — le bloc `parRole` est validé À LA PUBLICATION, pas à l'évaluation. Une matrice
+   * malformée qui passe la publication se découvrirait des mois plus tard, sur un dossier, au
+   * pire moment : le refus doit tomber quand quelqu'un est encore en train de l'éditer.
+   */
+  private static validerParRole(exigences: any) {
+    for (const [typeEntite, bloc] of Object.entries(exigences ?? {})) {
+      const parRole = (bloc as any)?.parRole;
+      if (parRole === undefined) continue;
+      if (typeof parRole !== "object" || parRole === null || Array.isArray(parRole))
+        throw new BadRequestException(`[R26] ${typeEntite}.parRole doit être un objet { <role>: [exigences] }.`);
+      for (const [role, liste] of Object.entries(parRole))
+        if (!Array.isArray(liste))
+          throw new BadRequestException(`[R26] ${typeEntite}.parRole.${role} doit être un tableau d'exigences.`);
+    }
+  }
+
+  // R29 : publication append-only d'une version. Le contenu vient de l'éditeur tenant (banque).
+  async publier(ctx: Ctx, contenu: any, enVigueurLe: Date) {
+    if (!contenu || typeof contenu !== "object" || !contenu.exigences)
+      throw new BadRequestException("[R26] Contenu de matrice invalide (attendu { exigences: {…} }).");
+    DocMatrixService.validerParRole(contenu.exigences);
+    return this.prisma.$transaction(async (tx: Tx) => {
+      const nb = await tx.docMatrixVersion.count({ where: { tenantId: ctx.tenantId } });
+      const v = await tx.docMatrixVersion.create({ data: {
+        tenantId: ctx.tenantId, version: nb + 1, enVigueurLe, contenu, publiePar: ctx.userId } });
+      await emitEvent(tx, ctx.tenantId, "matrice_documentaire.publiee",
+        ctx.tenantId, { version: v.version, enVigueurLe: enVigueurLe.toISOString() });
+      await this.audit.log(ctx.tenantId, ctx.userId, "DOC_MATRIX_PUBLISHED", `v${v.version}`);
+      return { version: v.version, enVigueurLe };
+    });
+  }
+
+  /**
+   * R48/R29 : la version en vigueur à une date donnée (la plus récente dont la vigueur ≤ at).
+   * Le tri porte sur DEUX clés. À date de vigueur ÉGALE — cas réel, pas théorique : corriger une
+   * matrice le jour même de sa prise d'effet produit deux versions à la même date — un tri sur
+   * la seule date laisse la base choisir, et « en vigueur » cesse d'être déterministe. Un rejeu
+   * qui ne rend pas deux fois le même verdict n'est pas un rejeu. À égalité, la plus RÉCEMMENT
+   * publiée gagne : c'est la seule lecture cohérente d'un référentiel append-only.
+   */
+  async enVigueur(ctx: Ctx, at: Date) {
+    return this.prisma.docMatrixVersion.findFirst({
+      where: { tenantId: ctx.tenantId, enVigueurLe: { lte: at } },
+      orderBy: [{ enVigueurLe: "desc" }, { version: "desc" }] });
+  }
+  async versionParNum(ctx: Ctx, version: number) {
+    return this.prisma.docMatrixVersion.findFirst({ where: { tenantId: ctx.tenantId, version } });
+  }
+
+  // R26 : complétude documentaire = UNION des exigences (entité titulaire ⊕ personnes liées,
+  // socle ⊕ rôles ⊕ comptes), chaque exigence résolue par juridiction (R27). Version = celle estampillée sur le
+  // dossier (R29), sinon la version en vigueur à la date d'évaluation. Retourne les manquants.
+  async evaluerCompletude(ctx: Ctx, dossier: DossierMatrice, at: Date): Promise<{ porteur: string; document: string }[]> {
+    const v = dossier.matriceVersion != null
+      ? await this.versionParNum(ctx, dossier.matriceVersion)
+      : await this.enVigueur(ctx, at);
+    if (dossier.matriceVersion != null && !v)
+      throw new NotFoundException(`Matrice v${dossier.matriceVersion} introuvable`);
+    if (!v) return [];                                          // défaut neutre : aucune matrice ⇒ aucune exigence
+
+    const exig: ExigencesEntite = ((v.contenu as any)?.exigences ?? {})[dossier.typeEntite] ?? {};
+    // Une même exigence peut arriver deux fois pour le même porteur (le socle et deux rôles qui
+    // demandent la même pièce). La signaler deux fois se lirait comme deux trous distincts.
+    const vus = new Set<string>();
+    const requis: { porteur: string; document: string }[] = [];
+    const exiger = (porteur: string, e: Exigence) => {
+      const document = DocMatrixService.resoudreDocument(e, dossier.juridiction);
+      const cle = `${porteur} ${document}`;
+      if (vus.has(cle)) return;
+      vus.add(cle);
+      requis.push({ porteur, document });
+    };
+
+    for (const e of exig.entite ?? []) exiger(dossier.titulaire, e);
+    for (const p of dossier.personnesLiees ?? []) {
+      // R26/rôle : le socle d'abord (tout intervenant), puis les exigences de CHAQUE rôle porté.
+      const porteur = typeof p === "string" ? p : p.id;
+      const roles = typeof p === "string" ? [] : p.roles ?? [];
+      for (const e of exig.personne_liee ?? []) exiger(porteur, e);
+      for (const role of roles)
+        for (const e of exig.parRole?.[role] ?? []) exiger(porteur, e);    // rôle inconnu ⇒ rien
+    }
+    for (const c of dossier.comptes ?? [])
+      for (const e of exig.compte ?? []) exiger(c, e);
+
+    const presents = new Set((dossier.documentsPresents ?? []).map((d) => `${d.porteur} ${d.nom}`));
+    return requis.filter((r) => !presents.has(`${r.porteur} ${r.document}`));
+  }
+}

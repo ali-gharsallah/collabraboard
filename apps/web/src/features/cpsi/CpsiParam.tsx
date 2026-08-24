@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // Écran « CPSI — Gouvernance des barèmes » (porte CPSI · R68/R69/R70 · CP-08/09/10). Les règles de
@@ -69,10 +70,8 @@ export function CpsiParam() {
   }
   // PC-15/PA-03 : APPLIQUER = l'acte R68 final, motivé, à date de vigueur (immédiate ou future).
   // MÊME verrou R70 que « Proposer » : rien ne s'applique sans simulation des valeurs saisies.
-  async function appliquer() {
+  async function appliquer(m: string) {
     setMsg("");
-    const m = window.prompt("Motif de l'application (obligatoire, R7) :");
-    if (!m) return;
     try {
       await apiPost("/v1/cpsi/params/apply", { chemin: chemin.trim(), valeur: parseValeur(valeur),
         ...(dateVigueur ? { dateVigueur } : {}), motif: m });
@@ -82,19 +81,20 @@ export function CpsiParam() {
       setSimulee(null); setImpact(null); reloadHisto();
     } catch (e) { setMsg((e as OliveError).message ?? "Erreur"); }
   }
-  async function decider(pid: string, action: "adopt" | "reject") {
+  async function decider(pid: string, action: "adopt" | "reject", motivation?: string) {
     setMsg("");
-    let body: Record<string, unknown> = {};
-    if (action === "reject") { const m = window.prompt("Motivation du rejet (obligatoire, R69) :"); if (!m) return; body = { motivation: m }; }
+    const body: Record<string, unknown> = action === "reject" ? { motivation: motivation ?? "" } : {};
     try { await apiPost(`/v1/cpsi/params/proposals/${pid}/${action}`, body); setMsg(`Proposition ${pid} ${action === "adopt" ? "adoptée (config versionnée R68)" : "rejetée (motivée)"}.`); reloadProps(); }
     catch (e) { setMsg((e as OliveError).message ?? "Erreur"); }
   }
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const btn = (label: string, bg: string, on: () => void, disabled = false) =>
     <button disabled={disabled || isDemoMode()} onClick={on} style={{ padding: "6px 14px", borderRadius: 6, border: "none",
       background: disabled || isDemoMode() ? "#ccc" : bg, color: "#fff", cursor: disabled || isDemoMode() ? "default" : "pointer", fontSize: 12 }}>{label}</button>;
 
   return <div>
+    {modal}
     {isDemo && <DemoModeBanner/>}
     <h3>CPSI — Gouvernance des barèmes (R68 · R69 · R70)</h3>
     <div style={{ display: "flex", gap: 6, fontSize: 11, flexWrap: "wrap", margin: "6px 0" }}>
@@ -122,7 +122,10 @@ export function CpsiParam() {
       {btn("Proposer", tokens.color.olive700, proposer, verrouille)}
       <input value={dateVigueur} onChange={(e) => setDateVigueur(e.target.value)} placeholder="mise en vigueur ISO (vide = immédiate)"
         style={{ padding: 7, borderRadius: tokens.radius.sm, border: `1px solid ${tokens.color.border}`, fontSize: 12, width: 220 }}/>
-      {btn("Appliquer (R68, motivé)", "#8A5A2B", appliquer, verrouille)}
+      {btn("Appliquer (R68, motivé)", "#8A5A2B", () => ask({ title: "Appliquer le paramètre (R68/R7)", danger: true,
+        message: dateVigueur ? `En vigueur au ${dateVigueur.slice(0, 10)} (config courante inchangée jusque-là).` : "Événement versionné au journal, effet immédiat.",
+        input: { label: "Motif de l'application", placeholder: "obligatoire (R7)", required: true }, confirmLabel: "Appliquer",
+        onConfirm: (m) => appliquer(m ?? "") }), verrouille)}
       {verrouille && chemin.trim() && <span style={{ fontSize: 11, color: tokens.color.muted }}>verrouillé : simulez d'abord ces valeurs (R70)</span>}
     </div>
     {impact && <div style={{ marginTop: 8, padding: 10, borderRadius: tokens.radius.md, background: tokens.color.surface, border: `1px solid ${tokens.color.border}`, fontSize: 12 }}>
@@ -141,8 +144,12 @@ export function CpsiParam() {
         background: p.statut === "ADOPTEE" ? tokens.color.ok : p.statut === "REJETEE" ? tokens.color.danger : tokens.color.gold }}>{p.statut}</span>
       <div style={{ color: tokens.color.muted, marginTop: 2 }}>{p.justification || "(sans justification)"} · impact : Δ {p.impact?.delta_moyen} sur {p.impact?.clients_evalues} clients, {p.impact?.franchissements?.length ?? 0} franchissement(s)</div>
       {p.statut === "EN_ATTENTE" && <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-        {btn("Adopter", tokens.color.ok, () => decider(p.id, "adopt"))}
-        {btn("Rejeter", tokens.color.danger, () => decider(p.id, "reject"))}
+        {btn("Adopter", tokens.color.ok, () => ask({ title: "Adopter la proposition (R68)",
+          message: "La config est versionnée au journal (R68). Décision humaine tracée.", confirmLabel: "Adopter",
+          onConfirm: () => decider(p.id, "adopt") }))}
+        {btn("Rejeter", tokens.color.danger, () => ask({ title: "Rejeter la proposition (R69)", danger: true,
+          input: { label: "Motivation du rejet", placeholder: "obligatoire (R69)", required: true }, confirmLabel: "Rejeter",
+          onConfirm: (m) => decider(p.id, "reject", m) }))}
         {btn("Ouvrir dans le bac (à simuler)", tokens.color.olive600, () => {
           setChemin(p.chemin); setValeur(JSON.stringify(p.valeur)); setSimulee(null); setImpact(null);
           setMsg(`Pré-rempli depuis ${p.id} — statut : à simuler (PA-06/OL-20, aucune application sans simulation R70).`);

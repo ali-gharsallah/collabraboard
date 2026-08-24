@@ -1,9 +1,31 @@
-import { Body, Controller, ForbiddenException, Get, Module, NotFoundException, Param, Post, Req, Injectable, BadRequestException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, ForbiddenException, Get, Module, NotFoundException, Param, Post, Query, Req, Injectable, BadRequestException, UnprocessableEntityException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { loadSettings } from "../../common/tenant-settings";
+import { uuidOuRefus } from "../../common/identifiant";
+import { fusionProfonde, modifierParametreGouverne, resoudreParametresGouvernes } from "../../common/param-engagement";
 import { Tx } from "../../common/tx";
+
+// ── Bloc 64 (repo R453–R462) — registre §CrossBorder (R462) : défauts du spec §2. ──
+const AGG_MATRICE = "xb-matrice";
+const AGG_PARAMS_XB = "crossborder-params";
+export const DEFAUTS_CROSSBORDER = {
+  fournisseur: "INTERNE", syncFrequenceHeures: 24, syncAlerteEchecJours: 2,
+  paysDomestique: "CH",
+  acteDistant: { severiteNON: "AVERTISSEMENT",
+    mappingEntretienActivites: { "Conseil en placement": ["ADVICE"], "Conseil": ["ADVICE"],
+      "Envoi documentation": ["MKT"], "Prise d'ordre": ["ORDER"], "Courtoisie": ["MEET"] } as Record<string, string[]> },
+  preActe: { severites: { MKT: "BLOQUANT", ADVICE: "BLOQUANT", ORDER: "BLOQUANT" } as Record<string, string> },
+  reverseSolicitation: { validiteMois: 12, rolesEnregistrement: ["RM", "CO", "CO_SR"] },
+  localisationTemporaire: { dureeMaxJours: 90 },
+  certifications: { juridictionsExigees: [] as string[], severiteAbsence: "BLOQUANT" },
+  entites: {} as Record<string, any>,
+  entiteParClient: {} as Record<string, string>,
+};
+const CANAUX_DISTANTS = ["Visioconférence", "Appel", "Email"];
+const ORDRE_VERDICT: Record<string, number> = { OK: 0, AUTORISEE: 0, COND: 1, NON: 2 };
 
 /**
  * BLOC CROSS-BORDER — R293-R295 (canon triage final, ratifié 2026-07-28, XB-01..05).
@@ -42,12 +64,24 @@ export function evaluerXb(manual: EntreeManual[], juridiction: string, activites
   return { verdict, parActivite };
 }
 
+/** Bloc 64 (R453) — PORT fournisseur de matrice : le savoir vient d'une source déclarée
+ *  par tenant (INDIGITA_API | APIAX_API | IMPORT_BRP | INTERNE), O-Live l'orchestre.
+ *  Contrat + mock UNIQUEMENT pour les adaptateurs réseau (E-XB-2 : intégration réelle hors session). */
+export interface CrossBorderRuleProvider {
+  source: string;                                        // INDIGITA_API | APIAX_API | IMPORT_BRP | INTERNE
+  /** L'état complet du référentiel unifié chez le fournisseur (un objet PAR juridiction :
+   *  verdicts d'activités ET champs de synthèse — E-XB-3, jamais deux vérités). */
+  lire(): Promise<Array<{ jurisdiction: string; activites: Record<string, string>;
+    statut?: string; sollicitation?: string; licence?: string; produits?: string[] }>>;
+}
+
 @Injectable()
 export class XbService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService,
+    private ports: { matrice?: CrossBorderRuleProvider } = {}) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload, at: new Date().toISOString() } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
 
   // ── XB-01/02/05 : le check — même moteur pour les deux surfaces, événement tracé. ──
@@ -121,8 +155,9 @@ export class XbService {
       throw new UnprocessableEntityException(
         "XB_QUALIFICATION_REQUISE : pays restreint — l'ordre n'est enregistrable qu'avec la qualification « à l'initiative du client » tracée (R295)");
     if (restreint) {
-      const kyc = await this.prisma.kycFile.findFirst({
-        where: { tenantId: ctx.tenantId, clientId: dto.clientId }, orderBy: { createdAt: "desc" } });
+      const kyc = await this.prisma.kycFile.findFirst({                       // V2-M44 : idem
+        where: { tenantId: ctx.tenantId, clientId: uuidOuRefus(dto.clientId, "client") },
+        orderBy: { createdAt: "desc" } });
       const exigePreuve = (s.preuve_reverse_solicitation ?? "declaration") === "preuve" || kyc?.workflow === "EDD";
       if (exigePreuve && !dto.preuveRef?.trim())
         throw new UnprocessableEntityException(
@@ -134,6 +169,453 @@ export class XbService {
           qualification: !!dto.qualificationInitiativeClient, preuveRef: dto.preuveRef ?? null, par: ctx.userId }));
     await this.audit.log(ctx.tenantId, ctx.userId, "XB_ORDRE_ENREGISTRE", `${dto.clientId}:${dto.pays}`);
     return { enregistre: true, reverseSolicitation: restreint };
+  }
+
+  // ══ Bloc 64 (repo R453–R462) — delta sur R293–R295 : le country manual reste LA clé,
+  //    le port le VERSIONNE (jamais deux vérités — E-XB-3), les checks s'exécutent AU
+  //    MOMENT de l'acte et chaque verdict est un événement rejouable à date. ══
+
+  /** R462 : le registre §CrossBorder résolu à date (mécanisme commun param-engagement). */
+  private async paramsXB(ctx: Ctx, at?: Date) {
+    const s = await loadSettings(this.prisma, ctx.tenantId, true);
+    const base = fusionProfonde(DEFAUTS_CROSSBORDER, s.crossBorder ?? {});
+    return resoudreParametresGouvernes(this.prisma, ctx.tenantId, AGG_PARAMS_XB, base, at);
+  }
+
+  private async evsMatrice(ctx: Ctx) {
+    return this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, aggregateId: AGG_MATRICE }, orderBy: { id: "asc" } });
+  }
+
+  /** Le référentiel unifié du fournisseur INTERNE : projection du country manual R293. */
+  private entreesInternes(s: any) {
+    const parJ = new Map<string, any>();
+    for (const e of ((s.tripCrossBorderReferentiel ?? []) as any[])) {
+      const o = parJ.get(e.jurisdiction) ?? { jurisdiction: e.jurisdiction, activites: {} };
+      o.activites[e.activite] = e.verdict === "AUTORISEE" ? "OK" : e.verdict;
+      if (e.licence) o.licence = e.licence;
+      if (e.source) o.source = e.source;
+      parJ.set(e.jurisdiction, o);
+    }
+    return [...parJ.values()];
+  }
+
+  /** R453 : synchronisation → version datée IMMUABLE + MATRIX_SYNCED (diff lisible) +
+   *  analyse d'impact R459 (tâches nominatives, notification — JAMAIS une annulation). */
+  async syncMatrice(ctx: Ctx, atIso?: string) {
+    const p = await this.paramsXB(ctx);
+    const s = await loadSettings(this.prisma, ctx.tenantId, true);
+    const source = this.ports.matrice?.source ?? p.fournisseur ?? "INTERNE";
+    let entrees: any[];
+    try {
+      entrees = this.ports.matrice ? await this.ports.matrice.lire() : this.entreesInternes(s);
+    } catch (err: any) {
+      await this.prisma.$transaction(async (tx: Tx) => {
+        await this.emit(tx, ctx.tenantId, "xb.matrice.sync.echec", AGG_MATRICE,
+          { source, erreur: String(err?.message ?? err), at: new Date().toISOString() });
+        await this.emit(tx, ctx.tenantId, "xb.tache.creee", AGG_MATRICE,
+          { type: "verifier-source-cross-border" });                       // tâche Compliance — jamais un échec silencieux
+      });
+      throw new BadRequestException(`R453 : échec de synchronisation ${source} — dernière version connue servie, tâche Compliance créée`);
+    }
+    const evs = await this.evsMatrice(ctx);
+    const derniere: any = evs.filter((e: any) => e.type === "MATRIX_SYNCED").pop();
+    const avant: any[] = (derniere?.payload as any)?.entrees ?? [];
+    const diff: any[] = [];
+    for (const n of entrees) {
+      const a = avant.find((x) => x.jurisdiction === n.jurisdiction);
+      for (const act of Object.keys(n.activites ?? {}))
+        if ((a?.activites?.[act] ?? null) !== n.activites[act])
+          diff.push({ jurisdiction: n.jurisdiction, activite: act, ancien: a?.activites?.[act] ?? null, nouveau: n.activites[act] });
+    }
+    const versionId = randomUUID();
+    const at = atIso ?? new Date().toISOString();
+    await this.prisma.$transaction(async (tx: Tx) =>
+      this.emit(tx, ctx.tenantId, "MATRIX_SYNCED", AGG_MATRICE, { versionId, source, entrees, diff, at }));
+    // ── R459 : impact des DÉGRADATIONS — tâches + notification, aucun voyage annulé (R29/R44) ──
+    const degradations = diff.filter((d) =>
+      (ORDRE_VERDICT[d.nouveau] ?? 0) > (ORDRE_VERDICT[d.ancien ?? "OK"] ?? 0) && d.ancien != null);
+    let impact: any = null;
+    if (degradations.length) {
+      const auj = new Date().toISOString().slice(0, 10);
+      const juridictions = [...new Set(degradations.map((d) => d.jurisdiction))];
+      let voyagesARevoir = 0;
+      for (const d of degradations) {
+        const voyages = await this.prisma.trip.findMany({
+          where: { tenantId: ctx.tenantId, status: "APPROVED" } });
+        for (const v of voyages as any[]) {
+          if (v.dateEnd < auj) continue;
+          if (!((v.destinations ?? []) as string[]).includes(d.jurisdiction)) continue;
+          const acts = ((v.activites ?? []) as string[]);
+          if (acts.length && !acts.includes(d.activite)) continue;
+          voyagesARevoir++;
+          await this.prisma.$transaction(async (tx: Tx) => {
+            await this.emit(tx, ctx.tenantId, "xb.tache.creee", v.id,
+              { type: "revue-voyage", voyageId: v.id, assigneRole: "XB" });
+            await this.emit(tx, ctx.tenantId, "xb.tache.creee", v.id,
+              { type: "information-rm", voyageId: v.id, rm: v.travelerId });
+          });
+        }
+      }
+      const clientsAffectes = await this.prisma.client.count({
+        where: { tenantId: ctx.tenantId, country: { in: juridictions } } });
+      const preuves = (await this.prisma.domainEvent.findMany({
+        where: { tenantId: ctx.tenantId, type: "xb.rs.enregistree" } })) as any[];
+      const clientsJ = new Set(((await this.prisma.client.findMany({
+        where: { tenantId: ctx.tenantId, country: { in: juridictions } }, select: { id: true } })) as any[]).map((c) => c.id));
+      const preuvesInsuffisantes = preuves.filter((e) => clientsJ.has((e.payload as any).clientId)).length;
+      await this.prisma.$transaction(async (tx: Tx) =>
+        this.emit(tx, ctx.tenantId, "xb.impact.notifie", AGG_MATRICE,
+          { versionId, clientsAffectes, voyagesARevoir, preuvesInsuffisantes }));
+      impact = { clientsAffectes, voyagesARevoir, preuvesInsuffisantes };
+    }
+    await this.audit.log(ctx.tenantId, ctx.userId, "XB_MATRIX_SYNCED", versionId);
+    return { versionId, at, source, diff, impact };
+  }
+
+  /** R453 : version courante (ou ≤ asOf) — l'âge d'une sync en échec est PORTÉ, jamais tu. */
+  async matriceCourante(ctx: Ctx, asOf?: string) {
+    const evs = await this.evsMatrice(ctx);
+    const synced = evs.filter((e: any) => e.type === "MATRIX_SYNCED");
+    const visibles = asOf ? synced.filter((e: any) => (e.payload as any).at <= asOf) : synced;
+    const derniere: any = visibles.pop();
+    if (!derniere) throw new NotFoundException("R453 : aucune version de matrice — synchronisez le port");
+    const dernierEchec: any = evs.filter((e: any) => e.type === "xb.matrice.sync.echec").pop();
+    const syncEnEchec = !!dernierEchec && dernierEchec.id > (synced[synced.length - 1] ?? derniere).id;
+    const p = derniere.payload as any;
+    const joursEchec = syncEnEchec
+      ? Math.max(1, Math.round((Date.now() - new Date(p.at).getTime()) / 86_400_000)) : 0;
+    return { versionId: p.versionId, at: p.at, source: p.source, entrees: p.entrees,
+      syncEnEchec, ...(syncEnEchec ? { noteSync: `matrice du ${String(p.at).slice(0, 10)} — synchronisation en échec depuis ${joursEchec} j` } : {}) };
+  }
+
+  /** Juridiction RÉSOLUE d'un client : localisation temporaire (R457) sinon domicile. */
+  private async juridictionClient(ctx: Ctx, clientId: string, atIso: string) {
+    // V2-M44 : validé ICI, au point de lecture — pas en tête d'acte. Une référence d'écran
+    // (« CLI-00001 ») arrivait telle quelle au `where` UUID et faisait tomber le moteur en 500 ;
+    // l'écran affichait « Internal server error » au lieu d'un refus lisible.
+    const client: any = await this.prisma.client.findFirst({
+      where: { id: uuidOuRefus(clientId, "client"), tenantId: ctx.tenantId } });
+    if (!client) throw new NotFoundException("Client introuvable");
+    const locs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, aggregateId: clientId, type: "xb.localisation.declaree" },
+      orderBy: { id: "asc" } })) as any[];
+    const jour = atIso.slice(0, 10);
+    const active = locs.map((e) => e.payload as any).filter((l) => l.du <= jour && jour <= l.au).pop();
+    return { juridiction: active?.juridiction ?? client.country, localisation: !!active, client };
+  }
+
+  /** Preuve de reverse solicitation VALIDE pour (client, périmètre) — visée, dans le périmètre, non expirée. */
+  private async preuveRS(ctx: Ctx, clientId: string, perimetre: string | undefined, validiteMois: number) {
+    const enr = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "xb.rs.enregistree" }, orderBy: { id: "asc" } })) as any[];
+    const visas = new Set(((await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "xb.rs.visee" } })) as any[]).map((e) => e.aggregateId));
+    const duClient = enr.filter((e) => (e.payload as any).clientId === clientId && visas.has(e.aggregateId));
+    const dansPerimetre = duClient.filter((e) => !perimetre || (e.payload as any).perimetre === perimetre);
+    if (!dansPerimetre.length)
+      return { statut: duClient.length ? "HORS_PERIMETRE" : "ABSENTE" as string, preuveId: null as string | null, mois: 0 };
+    const preuve = dansPerimetre[dansPerimetre.length - 1];
+    const jours = (Date.now() - new Date((preuve.payload as any).date).getTime()) / 86_400_000;
+    const mois = Math.round(jours / 30.44);
+    if (jours > validiteMois * 30.44) return { statut: "EXPIREE", preuveId: preuve.aggregateId, mois };
+    return { statut: "VALIDE", preuveId: preuve.aggregateId, mois };
+  }
+
+  /** Le verdict unifié (matrice versionnée + exemption d'entité R461) pour UNE activité. */
+  private async verdictActe(ctx: Ctx, p: any, clientId: string, type: string, atIso: string, perimetre?: string) {
+    const { juridiction, client } = await this.juridictionClient(ctx, clientId, atIso);
+    if (juridiction === (p.paysDomestique ?? "CH"))
+      return { juridiction, verdict: "DOMESTIQUE", passe: true, versionMatrice: "—", client };
+    const m = await this.matriceCourante(ctx);
+    const entree = (m.entrees as any[]).find((e) => e.jurisdiction === juridiction);
+    let verdict = entree?.activites?.[type] ?? "NON_DETERMINE";
+    let mention: string | undefined; let exemptee = false;
+    const entite = p.entiteParClient?.[clientId];
+    const exemption = entite ? p.entites?.[entite]?.exemptions?.[juridiction]?.[type] : undefined;
+    if (exemption) { verdict = exemption.verdict; mention = `via exemption ${exemption.exemption} — entité ${entite}`; exemptee = true; }
+    else if (entite) mention = `entité ${entite} — aucune exemption ${juridiction}`;
+    const res: any = { juridiction, verdict, versionMatrice: m.versionId, client,
+      ...(mention ? { mention } : {}), ...(m.syncEnEchec ? { noteSync: m.noteSync } : {}) };
+    if (verdict === "COND" && !exemptee && /reverse/i.test(entree?.sollicitation ?? "reverse solicitation documentée")) {
+      const preuve = await this.preuveRS(ctx, clientId, perimetre, p.reverseSolicitation?.validiteMois ?? 12);
+      if (preuve.statut === "VALIDE") { res.passe = true; res.preuveId = preuve.preuveId; res.condition = entree?.sollicitation; }
+      else {
+        res.passe = false;
+        res.motif = preuve.statut === "EXPIREE"
+          ? `preuve de reverse solicitation expirée (${preuve.mois} mois > ${p.reverseSolicitation?.validiteMois ?? 12})`
+          : preuve.statut === "HORS_PERIMETRE"
+            ? `la preuve de reverse solicitation ne couvre pas ce périmètre (${perimetre})`
+            : `reverse solicitation documentée requise — aucune preuve valide (${perimetre ?? type}×${juridiction})`;
+        res.preuveStatut = preuve.statut;
+      }
+    } else res.passe = verdict !== "NON" && verdict !== "NON_DETERMINE";
+    if (verdict === "COND") res.condition = res.condition ?? entree?.sollicitation ?? "condition — voir country manual";
+    return res;
+  }
+
+  /** R454 : contact report DISTANT — même check que le voyage, verdict CONSIGNÉ dans l'acte. */
+  async contactReportDistant(ctx: Ctx, dto: { clientId: string; canal: string; typeEntretien: string }, atIso?: string) {
+    if (!dto?.clientId || !dto?.canal || !dto?.typeEntretien)
+      throw new BadRequestException("clientId, canal et typeEntretien requis");
+    if (!CANAUX_DISTANTS.includes(dto.canal))
+      throw new BadRequestException(`R454 : canaux distants = ${CANAUX_DISTANTS.join(", ")}`);
+    const at = atIso ?? new Date().toISOString();
+    const p = await this.paramsXB(ctx);
+    const activites: string[] = p.acteDistant?.mappingEntretienActivites?.[dto.typeEntretien] ?? ["MEET"];
+    const verdicts = [];
+    for (const a of activites) verdicts.push({ activite: a, ...(await this.verdictActe(ctx, p, dto.clientId, a, at)) });
+    const pire = verdicts.reduce((acc, v) => (ORDRE_VERDICT[v.verdict] ?? 0) >= (ORDRE_VERDICT[acc.verdict] ?? 0) ? v : acc, verdicts[0]);
+    const check = { juridiction: pire.juridiction, activites, verdict: pire.verdict,
+      versionMatrice: pire.versionMatrice, passe: !!pire.passe,
+      ...(pire.motif ? { motif: pire.motif } : {}), ...(pire.noteSync ? { noteSync: pire.noteSync } : {}) };
+    const sevNON = p.acteDistant?.severiteNON ?? "AVERTISSEMENT";
+    if (pire.verdict === "NON" && sevNON === "BLOQUANT")
+      throw new UnprocessableEntityException(
+        `R454 : verdict NON (${pire.juridiction}) — la création du compte rendu exige une qualification Compliance préalable`);
+    return this.prisma.$transaction(async (tx: Tx) => {
+      const cr = await tx.crmContact.create({ data: { tenantId: ctx.tenantId, clientId: dto.clientId,
+        type: dto.typeEntretien, contenu: { canal: dto.canal, verdictXb: check }, origine: "MANUEL",
+        par: ctx.userId, ...(atIso ? { at: new Date(atIso) } : {}) } as any });
+      if (pire.verdict === "NON") {
+        await this.emit(tx, ctx.tenantId, "GUARD_WARNING", cr.id,
+          { guard: "verdictNON", reason: `verdict NON — ${activites.join("/")} (${pire.juridiction})`, etape: "acte-distant" });
+        await this.emit(tx, ctx.tenantId, "xb.tache.creee", cr.id,
+          { type: "qualification-compliance", contactReportId: cr.id, clientId: dto.clientId });
+      }
+      await this.audit.log(ctx.tenantId, ctx.userId, "XB_ACTE_DISTANT", cr.id);
+      return { contactReportId: cr.id, check };
+    });
+  }
+
+  /** R455 : check pré-acte embarqué — le verdict (avec version) est ATTACHÉ à l'objet. */
+  async checkPreActe(ctx: Ctx, dto: { type: string; clientId: string; objetId?: string; perimetre?: string }, atIso?: string) {
+    if (!dto?.type || !dto?.clientId) throw new BadRequestException("type et clientId requis");
+    const at = atIso ?? new Date().toISOString();
+    const p = await this.paramsXB(ctx);
+    const v = await this.verdictActe(ctx, p, dto.clientId, dto.type, at, dto.perimetre);
+    const sev = p.preActe?.severites?.[dto.type] ?? "BLOQUANT";
+    const consigner = async (passe: boolean, motif?: string) => {
+      if (!dto.objetId) return;
+      await this.prisma.$transaction(async (tx: Tx) =>
+        this.emit(tx, ctx.tenantId, "xb.preacte.verdict", dto.objetId!, {
+          type: dto.type, clientId: dto.clientId, juridiction: v.juridiction, verdict: v.verdict,
+          passe, versionMatrice: String(v.versionMatrice), at,
+          ...(dto.perimetre ? { perimetre: dto.perimetre } : {}), ...(v.condition ? { condition: v.condition } : {}),
+          ...(v.preuveId ? { preuveId: v.preuveId } : {}), ...(v.mention ? { mention: v.mention } : {}),
+          ...(motif ? { motif } : {}) }));
+    };
+    if (v.verdict === "NON" || v.verdict === "NON_DETERMINE") {
+      const motif = `${dto.type} interdit — ${v.juridiction}, matrice ${String(v.versionMatrice).slice(0, 8)}` +
+        (v.mention ? ` (${v.mention})` : "");
+      await consigner(false, motif);
+      if (sev === "BLOQUANT") throw new UnprocessableEntityException(`R455 : ${motif}`);
+      return { passe: false, refuse: false, avertissement: motif, verdict: v.verdict,
+        versionMatrice: v.versionMatrice, juridiction: v.juridiction, ...(v.noteSync ? { noteSync: v.noteSync } : {}) };
+    }
+    if (v.passe === false) {                                   // COND non satisfaite (preuve RS absente/expirée/hors périmètre)
+      await consigner(false, v.motif);
+      if (v.preuveStatut === "EXPIREE")
+        await this.prisma.$transaction(async (tx: Tx) =>
+          this.emit(tx, ctx.tenantId, "xb.tache.creee", dto.clientId,
+            { type: "renouveler-reverse-solicitation", clientId: dto.clientId, perimetre: dto.perimetre ?? null }));
+      throw new UnprocessableEntityException(`R456 : ${v.motif}`);
+    }
+    await consigner(true);
+    return { passe: true, refuse: false, verdict: v.verdict, versionMatrice: v.versionMatrice,
+      juridiction: v.juridiction, ...(v.preuveId ? { preuveId: v.preuveId } : {}),
+      ...(v.mention ? { mention: v.mention } : {}), ...(v.condition ? { condition: v.condition } : {}),
+      ...(v.noteSync ? { noteSync: v.noteSync } : {}) };
+  }
+
+  /** R456 : la preuve est un OBJET — nature, document GED, date, périmètre, visée (R15). */
+  async enregistrerPreuveRS(ctx: Ctx, dto: { clientId: string; perimetre: string; nature: string; docId: string; date: string }) {
+    if (!dto?.clientId || !dto?.perimetre || !dto?.docId) throw new BadRequestException("clientId, perimetre et docId requis");
+    const p = await this.paramsXB(ctx);
+    if (!(p.reverseSolicitation?.rolesEnregistrement ?? ["RM", "CO", "CO_SR"]).includes(ctx.role))
+      throw new ForbiddenException(`R456 : rôles habilités = ${(p.reverseSolicitation?.rolesEnregistrement ?? []).join(", ")}`);
+    const preuveId = randomUUID();
+    await this.prisma.$transaction(async (tx: Tx) =>
+      this.emit(tx, ctx.tenantId, "xb.rs.enregistree", preuveId, {
+        clientId: dto.clientId, perimetre: dto.perimetre, nature: dto.nature ?? "—",
+        docId: dto.docId, date: dto.date ?? new Date().toISOString().slice(0, 10), par: ctx.userId }));
+    await this.audit.log(ctx.tenantId, ctx.userId, "XB_RS_ENREGISTREE", preuveId);
+    return { preuveId };
+  }
+
+  async viserPreuveRS(ctx: Ctx, preuveId: string) {
+    const enr: any = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, aggregateId: preuveId, type: "xb.rs.enregistree" } })).pop();
+    if (!enr) throw new NotFoundException("Preuve introuvable");
+    if ((enr.payload as any).par === ctx.userId)
+      throw new ForbiddenException("R13 : la preuve est visée par un SECOND regard");
+    await this.prisma.$transaction(async (tx: Tx) =>
+      this.emit(tx, ctx.tenantId, "xb.rs.visee", preuveId, { par: ctx.userId }));
+    return { preuveId, visee: true };
+  }
+
+  /** R457 : localisation temporaire — événement daté, expiration automatique (le rejeu résout). */
+  async declarerLocalisation(ctx: Ctx, dto: { clientId: string; juridiction: string; du: string; au: string }) {
+    if (!dto?.clientId || !dto?.juridiction || !dto?.du || !dto?.au)
+      throw new BadRequestException("clientId, juridiction, du et au requis");
+    const p = await this.paramsXB(ctx);
+    const jours = (new Date(dto.au).getTime() - new Date(dto.du).getTime()) / 86_400_000;
+    if (jours > (p.localisationTemporaire?.dureeMaxJours ?? 90))
+      throw new BadRequestException(`R457 : au-delà de ${p.localisationTemporaire?.dureeMaxJours ?? 90} jours, revue de résidence requise`);
+    await this.prisma.$transaction(async (tx: Tx) =>
+      this.emit(tx, ctx.tenantId, "xb.localisation.declaree", dto.clientId,
+        { juridiction: dto.juridiction, du: dto.du, au: dto.au, par: ctx.userId }));
+    await this.audit.log(ctx.tenantId, ctx.userId, "XB_LOCALISATION", `${dto.clientId}:${dto.juridiction}`);
+    return { clientId: dto.clientId, juridiction: dto.juridiction, du: dto.du, au: dto.au };
+  }
+
+  // ══ LECTURES DE LISTE (R460, écart E-V2-5) — les trois familles d'objets cross-border
+  //    n'avaient que des routes d'ÉCRITURE : rien ne les relisait, et l'écran v2 devait tourner
+  //    sur des données de maquette. Elles se lisent désormais comme l'exposition : par
+  //    PROJECTION des événements, recalculée à chaque appel. Aucune table nouvelle, aucun
+  //    dénormalisé à maintenir — donc aucune seconde vérité à désynchroniser du journal (R49).
+  //
+  //    L'ÉTAT N'EST PAS UNE COLONNE : il se DÉDUIT de la présence des événements. Une dérogation
+  //    est « visée » parce que `xb.derogation.visee` existe, pas parce qu'un champ le dit. Il n'y
+  //    a d'ailleurs PAS d'événement de refus au moteur : la projection ne peut donc pas rendre un
+  //    état « refusée » — l'écran ne doit pas en inventer un.
+
+  /** Nom lisible d'un client, sans jamais faire échouer une liste sur un client disparu. */
+  private async nomsClients(ctx: Ctx): Promise<Map<string, string>> {
+    const clients = (await this.prisma.client.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    return new Map(clients.map((c) => [c.id, c.name ?? c.id]));
+  }
+
+  /** XB-03 : les dérogations — demande + visa éventuel, état DÉRIVÉ (R44 : le visa est humain). */
+  async derogations(ctx: Ctx) {
+    const evs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: { in: ["xb.derogation.demandee", "xb.derogation.visee"] } },
+      orderBy: { id: "asc" } })) as any[];
+    const visas = new Map<string, any>();
+    for (const e of evs) if (e.type === "xb.derogation.visee") visas.set(e.aggregateId, e.payload);
+    const lignes = evs.filter((e) => e.type === "xb.derogation.demandee").map((e) => {
+      const p = e.payload as any; const v = visas.get(e.aggregateId);
+      return { id: e.aggregateId, objet: p.voyageId ?? p.kycCode ?? null,
+        typeObjet: p.voyageId ? "voyage" : p.kycCode ? "dossier" : null,
+        juridiction: p.juridiction ?? null, motif: p.motif ?? null, demandePar: p.par ?? null,
+        at: e.createdAt ?? null,
+        etat: v ? "VISEE" : "EN_ATTENTE_VISA", visePar: v?.visePar ?? null };
+    });
+    return { lignes, calculeLe: new Date().toISOString() };
+  }
+
+  /** R454/R455 : les actes qui ont subi un check — pré-actes CONSIGNÉS et entretiens distants.
+   *  Chaque ligne porte la VERSION de matrice qui l'a jugée : c'est ce qui rend le rejeu
+   *  possible (R48). Sans elle, un verdict d'époque serait relu avec la matrice du jour. */
+  async actes(ctx: Ctx) {
+    const noms = await this.nomsClients(ctx);
+    const preActes = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, type: "xb.preacte.verdict" }, orderBy: { id: "asc" } })) as any[];
+    const reports = (await this.prisma.crmContact.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const lignes = [
+      ...preActes.map((e) => {
+        const p = e.payload as any;
+        return { id: e.aggregateId, famille: "pre-acte", type: p.type ?? null,
+          clientId: p.clientId ?? null, client: noms.get(p.clientId) ?? p.clientId ?? null,
+          juridiction: p.juridiction ?? null, verdict: p.verdict ?? null, passe: !!p.passe,
+          versionMatrice: p.versionMatrice ?? null, at: p.at ?? null,
+          perimetre: p.perimetre ?? null, motif: p.motif ?? null, rejouable: true };
+      }),
+      ...reports.filter((r) => (r.contenu as any)?.verdictXb).map((r) => {
+        const v = (r.contenu as any).verdictXb;
+        return { id: r.id, famille: "acte-distant", type: r.type ?? null,
+          clientId: r.clientId ?? null, client: noms.get(r.clientId) ?? r.clientId ?? null,
+          juridiction: v.juridiction ?? null, verdict: v.verdict ?? null, passe: !!v.passe,
+          versionMatrice: v.versionMatrice ?? null,
+          at: r.at ? new Date(r.at).toISOString() : null,
+          canal: (r.contenu as any).canal ?? null, motif: v.motif ?? null, rejouable: false };
+      }),
+    ].sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
+    return { lignes, calculeLe: new Date().toISOString() };
+  }
+
+  /** R456/R457 : preuves de sollicitation inversée (visa R13) et localisations temporaires.
+   *  Une preuve NON VISÉE ne couvre rien — l'état de visa est donc porté, jamais sous-entendu ;
+   *  une localisation EXPIRE d'elle-même, l'expiration se CALCULE à la lecture (R48). */
+  async reverseSolicitation(ctx: Ctx, atIso?: string) {
+    const noms = await this.nomsClients(ctx);
+    const jour = (atIso ?? new Date().toISOString()).slice(0, 10);
+    const evs = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId,
+        type: { in: ["xb.rs.enregistree", "xb.rs.visee", "xb.localisation.declaree"] } },
+      orderBy: { id: "asc" } })) as any[];
+    const visas = new Set(evs.filter((e) => e.type === "xb.rs.visee").map((e) => e.aggregateId));
+    const preuves = evs.filter((e) => e.type === "xb.rs.enregistree").map((e) => {
+      const p = e.payload as any;
+      return { id: e.aggregateId, clientId: p.clientId ?? null,
+        client: noms.get(p.clientId) ?? p.clientId ?? null, perimetre: p.perimetre ?? null,
+        nature: p.nature ?? null, docId: p.docId ?? null, date: p.date ?? null,
+        enregistreePar: p.par ?? null, visee: visas.has(e.aggregateId) };
+    });
+    const localisations = evs.filter((e) => e.type === "xb.localisation.declaree").map((e) => {
+      const p = e.payload as any;
+      const jours = p.du && p.au
+        ? Math.round((new Date(p.au).getTime() - new Date(p.du).getTime()) / 86_400_000) : null;
+      return { clientId: e.aggregateId, client: noms.get(e.aggregateId) ?? e.aggregateId,
+        juridiction: p.juridiction ?? null, du: p.du ?? null, au: p.au ?? null, jours,
+        active: !!(p.du && p.au && p.du <= jour && jour <= p.au) };
+    });
+    return { preuves, localisations, calculeLe: new Date().toISOString() };
+  }
+
+  /** R460 : exposition consolidée — PROJECTION calculée des événements à chaque appel. */
+  async expositionCrossBorder(ctx: Ctx) {
+    const clients = (await this.prisma.client.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const voyages = (await this.prisma.trip.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const reports = (await this.prisma.crmContact.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const derogs = (await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "xb.derogation.visee" } })) as any[];
+    const preuves = (await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "xb.rs.enregistree" } })) as any[];
+    const visees = new Set(((await this.prisma.domainEvent.findMany({ where: { tenantId: ctx.tenantId, type: "xb.rs.visee" } })) as any[]).map((e) => e.aggregateId));
+    const certifs = (await this.prisma.certification.findMany({ where: { tenantId: ctx.tenantId } })) as any[];
+    const clientPays = new Map(clients.map((c) => [c.id, c.country]));
+    const juridictions = new Set<string>();
+    for (const c of clients) juridictions.add(c.country);
+    for (const v of voyages) for (const d of ((v.destinations ?? []) as string[])) juridictions.add(d);
+    const parJuridiction = [...juridictions].map((j) => ({
+      juridiction: j,
+      clients: clients.filter((c) => c.country === j).length,
+      aum: null,                                              // AUM absent du modèle — consigné, jamais inventé
+      voyages: voyages.filter((v) => ((v.destinations ?? []) as string[]).includes(j)).length,
+      actesDistants: reports.filter((r) => (r.contenu as any)?.verdictXb?.juridiction === j).length,
+      derogations: derogs.filter((e) => (e.payload as any).juridiction === j).length,
+      preuvesActives: preuves.filter((e) => visees.has(e.aggregateId) && clientPays.get((e.payload as any).clientId) === j).length,
+      certifications: certifs.filter((c) => c.code === `XB-${j}`).length,
+    }));
+    return { parJuridiction, calculeLe: new Date().toISOString() };
+  }
+
+  /** R453/R455/R48 : rejeu à date — le verdict CONSIGNÉ d'époque, jamais recalculé. */
+  async rejouerActe(ctx: Ctx, objetId: string, asOf: string) {
+    const actes = (await this.prisma.domainEvent.findMany({
+      where: { tenantId: ctx.tenantId, aggregateId: objetId, type: "xb.preacte.verdict" },
+      orderBy: { id: "asc" } })) as any[];
+    const visibles = actes.filter((e) => ((e.payload as any).at ?? "") <= asOf);
+    const acte: any = (visibles.length ? visibles : actes).pop();
+    if (!acte) throw new NotFoundException("Aucun verdict consigné pour cet objet");
+    return { ...(acte.payload as any), rejoueA: asOf };
+  }
+
+  /** R462 : le registre §CrossBorder résolu à date — lecture publique (écran Paramétrage). */
+  async parametresXB(ctx: Ctx, at?: Date) { return this.paramsXB(ctx, at); }
+
+  /** R462/R445 : pop-up d'engagement — mécanisme COMMUN du Bloc 62, étendu, jamais dupliqué. */
+  async modifierParametreXB(ctx: Ctx, dto: { cle: string; valeur: any; enVigueurLe: string;
+    confirmation?: { engagementTexte: string; auteur: string } }) {
+    const s = await loadSettings(this.prisma, ctx.tenantId, true);
+    return modifierParametreGouverne(this.prisma, ctx, {
+      aggregate: AGG_PARAMS_XB, cle: dto.cle, valeur: dto.valeur, enVigueurLe: dto.enVigueurLe,
+      confirmation: dto.confirmation, base: fusionProfonde(DEFAUTS_CROSSBORDER, s.crossBorder ?? {}),
+      portee: "actes futurs — grandfathering R29 sur les checks déjà consignés",
+      extraPopup: (cle) => (/severite|entites|exemption/i.test(cle)
+        ? { rappelReglementaire: "Rappel : la diffusion transfrontière et les exemptions engagent la banque " +
+            "vis-à-vis des régulateurs étrangers — engagement de responsabilité requis (R462)." } : {}),
+      apresEmission: async () => { await this.audit.log(ctx.tenantId, ctx.userId, "XB_PARAM_CHANGED", dto.cle); },
+    });
   }
 
   async reporting(ctx: Ctx) {
@@ -158,7 +640,27 @@ export class XbController {
   @Get("voyages/:id/conformite")     conf(@Req() r: any, @Param("id") id: string) { return this.svc.conformiteVoyage(r.ctx, id); }      // XB-03
   @Post("ordres")                    ordre(@Req() r: any, @Body() b: any) { return this.svc.enregistrerOrdre(r.ctx, b ?? {}); }         // XB-04
   @Get("reporting")                  reporting(@Req() r: any) { return this.svc.reporting(r.ctx); }                                      // XB-04/R39
+  // ── Bloc 64 (repo R453–R462) — porte HTTP du delta ──
+  @Post("matrice/sync")              sync(@Req() r: any) { return this.svc.syncMatrice(r.ctx); }                                         // R453
+  @Get("matrice")                    matrice(@Req() r: any, @Query("asOf") asOf?: string) { return this.svc.matriceCourante(r.ctx, asOf); }   // R453
+  @Post("actes-distants")            distant(@Req() r: any, @Body() b: any) { return this.svc.contactReportDistant(r.ctx, b ?? {}); }    // R454
+  @Post("pre-acte")                  preActe(@Req() r: any, @Body() b: any) { return this.svc.checkPreActe(r.ctx, b ?? {}); }            // R455
+  @Post("reverse-solicitation")      rs(@Req() r: any, @Body() b: any) { return this.svc.enregistrerPreuveRS(r.ctx, b ?? {}); }          // R456
+  @Post("reverse-solicitation/:id/visa") rsVisa(@Req() r: any, @Param("id") id: string) { return this.svc.viserPreuveRS(r.ctx, id); }    // R456/R13
+  @Post("localisations")             loc(@Req() r: any, @Body() b: any) { return this.svc.declarerLocalisation(r.ctx, b ?? {}); }        // R457
+  @Get("exposition")                 exposition(@Req() r: any) { return this.svc.expositionCrossBorder(r.ctx); }                         // R460
+  // ── Lectures de liste (E-V2-5) : projections des événements, comme l'exposition ──
+  @Get("derogations")                derogations(@Req() r: any) { return this.svc.derogations(r.ctx); }                                   // XB-03/R460
+  @Get("actes")                      actes(@Req() r: any) { return this.svc.actes(r.ctx); }                                              // R454/R455/R460
+  @Get("reverse-solicitation")       rsListe(@Req() r: any, @Query("at") at?: string) { return this.svc.reverseSolicitation(r.ctx, at); } // R456/R457/R460
+  @Get("actes/:id/rejeu")            rejeu(@Req() r: any, @Param("id") id: string, @Query("asOf") asOf: string) { return this.svc.rejouerActe(r.ctx, id, asOf); }   // R48
+  @Get("params/registre")            params(@Req() r: any, @Query("date") d?: string) { return this.svc.parametresXB(r.ctx, d ? new Date(d) : undefined); }   // R462
+  @Post("params/modifier")           modifierParam(@Req() r: any, @Body() b: any) { return this.svc.modifierParametreXB(r.ctx, b ?? {}); }   // R462/R445
 }
 
-@Module({ controllers: [XbController], providers: [XbService], exports: [XbService] })
+@Module({ controllers: [XbController],
+  providers: [{ provide: XbService,
+    useFactory: (p: PrismaService, a: AuditService) => new XbService(p, a, {}),   // port matrice : INTERNE par défaut (R453) — adaptateurs réseau hors session (E-XB-2)
+    inject: [PrismaService, AuditService] }],
+  exports: [XbService] })
 export class XbModule {}

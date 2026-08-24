@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Module, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { uuidOuRefus } from "../../common/identifiant";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
 import { emitEvent } from "../../common/domain-event";
@@ -39,8 +40,11 @@ export class FormationsService {
   // Assignation d'une formation à un collaborateur (support du cycle de vie R232).
   async assigner(ctx: Ctx, dto: { userId: string; formationCode: string; echeance: string }) {
     if (!dto?.userId || !dto?.formationCode) throw new BadRequestException("userId et formationCode requis");
+    // V2-M44 : la garde métier passe D'ABORD (champs requis), la validation d'identifiant
+    // ensuite — la précédence des refus ne bouge pas. Sans elle, « u-marc » atteignait la
+    // colonne UUID et rendait 500 au lieu d'un refus lisible.
     const row = await this.prisma.trainingAssignment.create({ data: {
-      tenantId: ctx.tenantId, userId: dto.userId, formationCode: dto.formationCode,
+      tenantId: ctx.tenantId, userId: uuidOuRefus(dto.userId, "collaborateur"), formationCode: dto.formationCode,
       echeance: dto.echeance ?? new Date().toISOString().slice(0, 10), statut: "ASSIGNED" } });
     await this.audit.log(ctx.tenantId, ctx.userId, "TRAINING_ASSIGNED", `${dto.formationCode}:${dto.userId}`);
     return row;

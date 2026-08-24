@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Onboarding / entrée en relation » (Vague 3). Ouvre une relation (POST /v1/onboarding),
 // entre en collecte (POST /v1/onboarding/:id/transition vers COLLECTE) — LE MOTEUR crée alors le
@@ -12,13 +13,13 @@ const auth = () => ({ "Content-Type": "application/json", Authorization: `Bearer
 type Trace = { rule: string; points: number; detail: string };
 
 export function Onboarding() {
-  const [prospect, setProspect] = useState("");
   const [clientId, setClientId] = useState("");
   const [structure, setStructure] = useState("PP");
   const [compte, setCompte] = useState("CURRENT");
   const [pays, setPays] = useState("CH");
   const [msg, setMsg] = useState("");
   const [aiguillage, setAiguillage] = useState<{ workflow: string; level: string; trace: Trace[] } | null>(null);
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function aiguiller() {
     setMsg(""); setAiguillage(null);
@@ -33,7 +34,7 @@ export function Onboarding() {
     setAiguillage({ workflow: b.workflow, level: b.riskLevel, trace: b.riskTrace ?? [] });
     setMsg(`Dossier KYC ${b.code ?? ""} créé — aiguillé en ${b.workflow}.`);
   }
-  async function ouvrirRelation() {
+  async function ouvrirRelation(prospect: string) {
     setMsg("");
     const base = apiBase();
     if (!base) { setMsg(DEMO_MESSAGE); return; }
@@ -46,11 +47,15 @@ export function Onboarding() {
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   const badge = (w: string) => ({ SDD: "#3a7", CDD: "#c93", EDD: "#c33" } as Record<string, string>)[w] ?? "#666";
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Onboarding — entrée en relation & aiguillage de diligence (R117/R118/R119)</h3>
     <div style={{ display: "flex", gap: 8, margin: "10px 0", flexWrap: "wrap", alignItems: "center" }}>
-      <input style={inp} placeholder="Nom du prospect" value={prospect} onChange={(e) => setProspect(e.target.value)}/>
-      <button style={btn} onClick={ouvrirRelation} disabled={!prospect}>Ouvrir la relation</button>
+      <button style={btn} onClick={() => ask({
+        title: "Ouvrir une relation (R117)",
+        message: "L'entrée en relation ouvre un onboarding ; l'ouverture définitive reste refusée sans KYC VALIDATED (R119).",
+        input: { label: "Nom du prospect", placeholder: "ex. Suzuki Ltd", required: true },
+        confirmLabel: "Ouvrir", onConfirm: (prospect) => ouvrirRelation(prospect ?? "") })}>Ouvrir la relation</button>
     </div>
     <h4 style={{ marginTop: 16 }}>Aiguillage — structure · compte · pays → niveau de diligence</h4>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -62,7 +67,12 @@ export function Onboarding() {
         {["CURRENT", "ADVISORY", "DISCRETIONARY", "LOMBARD"].map((s) => <option key={s}>{s}</option>)}
       </select>
       <input style={{ ...inp, width: 70 }} placeholder="pays" value={pays} onChange={(e) => setPays(e.target.value.toUpperCase())}/>
-      <button style={btn} onClick={aiguiller} disabled={!clientId}>Aiguiller</button>
+      <button style={btn} disabled={!clientId} onClick={() => ask({
+        title: "Créer le dossier KYC & aiguiller (R118)",
+        message: "Le moteur KYC crée le dossier et l'aiguille en SDD/CDD/EDD selon le risque (structure · compte · pays). La trace de risque est auditable.",
+        items: [{ label: `clientId : ${clientId || "—"}`, ok: !!clientId },
+          { label: `Structure ${structure} · compte ${compte} · pays ${pays}`, ok: !!pays }],
+        confirmLabel: "Créer le KYC", onConfirm: aiguiller })}>Aiguiller</button>
     </div>
     {msg && <div style={{ margin: "10px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
     {aiguillage && <div style={{ marginTop: 10 }}>

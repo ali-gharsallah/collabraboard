@@ -1,0 +1,1314 @@
+{
+ "dataset": "aml-gap-gt",
+ "version": "1.0",
+ "generated": "2026-08-04",
+ "note": "Cas plantés déterministes — TP = alerte confirmée en investigation, FP = alerte légitimement déclenchée puis écartée avec motif. Sert de corpus de test (chaque cas DOIT déclencher son scénario) et de base de métriques TP/FP par version.",
+ "stats": {
+  "rules": 64,
+  "cases": 130,
+  "tp": 66,
+  "fp": 64
+ },
+ "cases": [
+  {
+   "caseId": "SF-01-C1",
+   "rule": "R340",
+   "scenarioId": "SF-01",
+   "fam": "Screening en flux",
+   "nom": "Contrepartie PEP en flux",
+   "label": "TP",
+   "clientId": "CLI-00016",
+   "narrative": "Virement de 180k reçu du frère d'un ministre en exercice (liste PEP, match 91%) — investigation confirme l'origine politique des fonds."
+  },
+  {
+   "caseId": "SF-01-C2",
+   "rule": "R340",
+   "scenarioId": "SF-01",
+   "fam": "Screening en flux",
+   "nom": "Contrepartie PEP en flux",
+   "label": "TP",
+   "clientId": "CLI-00039",
+   "narrative": "Sortie de 95k vers une société détenue par un PEP régional sanctionnable — lien confirmé au registre."
+  },
+  {
+   "caseId": "SF-01-C3",
+   "rule": "R340",
+   "scenarioId": "SF-01",
+   "fam": "Screening en flux",
+   "nom": "Contrepartie PEP en flux",
+   "label": "FP",
+   "clientId": "CLI-00003",
+   "narrative": "Homonyme parfait d'un PEP brésilien ; la date de naissance et le pays divergent — clôturé FP après vérification documentaire."
+  },
+  {
+   "caseId": "SF-02-C1",
+   "rule": "R341",
+   "scenarioId": "SF-02",
+   "fam": "Screening en flux",
+   "nom": "Adverse media sur contrepartie",
+   "label": "TP",
+   "clientId": "CLI-00075",
+   "narrative": "Paiement fournisseur vers une société mise en accusation pour corruption d'agents publics (3 sources de rang 1) — TP confirmé."
+  },
+  {
+   "caseId": "SF-02-C2",
+   "rule": "R341",
+   "scenarioId": "SF-02",
+   "fam": "Screening en flux",
+   "nom": "Adverse media sur contrepartie",
+   "label": "FP",
+   "clientId": "CLI-00041",
+   "narrative": "Match sur un article concernant une société homonyme d'un autre canton — secteur et IDE différents, clôturé FP."
+  },
+  {
+   "caseId": "SF-03-C1",
+   "rule": "R342",
+   "scenarioId": "SF-03",
+   "fam": "Screening en flux",
+   "nom": "Re-screening périodique (perpetual)",
+   "label": "TP",
+   "clientId": "CLI-00034",
+   "narrative": "Client nommé au conseil d'administration d'une entreprise publique — delta PEP détecté à J+1, CoC ouvert, EDD déclenchée."
+  },
+  {
+   "caseId": "SF-03-C2",
+   "rule": "R342",
+   "scenarioId": "SF-03",
+   "fam": "Screening en flux",
+   "nom": "Re-screening périodique (perpetual)",
+   "label": "TP",
+   "clientId": "CLI-00070",
+   "narrative": "UBO ajouté à la liste SECO lors d'un train de sanctions — delta détecté, relation gelée après décision humaine."
+  },
+  {
+   "caseId": "SF-03-C3",
+   "rule": "R342",
+   "scenarioId": "SF-03",
+   "fam": "Screening en flux",
+   "nom": "Re-screening périodique (perpetual)",
+   "label": "FP",
+   "clientId": "CLI-00005",
+   "narrative": "Mise à jour de format du fournisseur de listes régénère un hit déjà écarté (même ID de profil) — dédoublonné puis clôturé FP ; correctif de mapping consigné."
+  },
+  {
+   "caseId": "SF-04-C1",
+   "rule": "R343",
+   "scenarioId": "SF-04",
+   "fam": "Screening en flux",
+   "nom": "Banques intermédiaires (BIC)",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Paiement vers Singapour routé via une intermédiaire filiale d'un groupe sous sanctions sectorielles — re-routé après alerte."
+  },
+  {
+   "caseId": "SF-04-C2",
+   "rule": "R343",
+   "scenarioId": "SF-04",
+   "fam": "Screening en flux",
+   "nom": "Banques intermédiaires (BIC)",
+   "label": "FP",
+   "clientId": "CLI-00018",
+   "narrative": "BIC matché sur l'ancien code d'une banque assainie et retirée des listes depuis 2024 — référentiel BIC mis à jour, FP."
+  },
+  {
+   "caseId": "SF-05-C1",
+   "rule": "R344",
+   "scenarioId": "SF-05",
+   "fam": "Screening en flux",
+   "nom": "Adresse / localisation sanctionnée",
+   "label": "TP",
+   "clientId": "CLI-00070",
+   "narrative": "Bénéficiaire domicilié dans une région sous embargo — blocage confirmé, déclaration préparée."
+  },
+  {
+   "caseId": "SF-05-C2",
+   "rule": "R344",
+   "scenarioId": "SF-05",
+   "fam": "Screening en flux",
+   "nom": "Adresse / localisation sanctionnée",
+   "label": "FP",
+   "clientId": "CLI-00035",
+   "narrative": "Rue « Crimée » à Paris 19e matchée par le parseur — règle affinée (ville+pays requis), FP documenté."
+  },
+  {
+   "caseId": "SF-06-C1",
+   "rule": "R345",
+   "scenarioId": "SF-06",
+   "fam": "Screening en flux",
+   "nom": "Translittération multi-scripts",
+   "label": "TP",
+   "clientId": "CLI-00045",
+   "narrative": "Contrepartie en caractères chinois matchant un profil OFAC translittéré — non détectable sans normalisation, TP."
+  },
+  {
+   "caseId": "SF-06-C2",
+   "rule": "R345",
+   "scenarioId": "SF-06",
+   "fam": "Screening en flux",
+   "nom": "Translittération multi-scripts",
+   "label": "FP",
+   "clientId": "CLI-00193",
+   "narrative": "Translittération agressive rapproche deux patronymes arabes courants distincts — seuil par script relevé, FP."
+  },
+  {
+   "caseId": "SF-07-C1",
+   "rule": "R346",
+   "scenarioId": "SF-07",
+   "fam": "Screening en flux",
+   "nom": "Navires & IMO",
+   "label": "TP",
+   "clientId": "CLI-00039",
+   "narrative": "LC référençant un tanker de la flotte fantôme (IMO sanctionné, pavillon changé 3× en 12 mois) — blocage confirmé."
+  },
+  {
+   "caseId": "SF-07-C2",
+   "rule": "R346",
+   "scenarioId": "SF-07",
+   "fam": "Screening en flux",
+   "nom": "Navires & IMO",
+   "label": "FP",
+   "clientId": "CLI-00130",
+   "narrative": "Navire homonyme d'une unité sanctionnée mais IMO distinct et pavillon UE — libéré après vérification IMO, FP."
+  },
+  {
+   "caseId": "QO-01-C1",
+   "rule": "R347",
+   "scenarioId": "QO-01",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Refus de fournir des informations",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Refus réitéré de documenter un apport de 500k malgré 2 relances écrites — relation dénoncée après comité."
+  },
+  {
+   "caseId": "QO-01-C2",
+   "rule": "R347",
+   "scenarioId": "QO-01",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Refus de fournir des informations",
+   "label": "FP",
+   "clientId": "CLI-00053",
+   "narrative": "Retard de 3 semaines dû à une succession en cours chez le notaire — documents fournis, signal clôturé FP."
+  },
+  {
+   "caseId": "QO-02-C1",
+   "rule": "R348",
+   "scenarioId": "QO-02",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Compte de passage multi-titulaires",
+   "label": "TP",
+   "clientId": "CLI-00072",
+   "narrative": "11 ordonnateurs inconnus en 3 semaines, fonds ressortis sous 48h — typologie mule/passage confirmée."
+  },
+  {
+   "caseId": "QO-02-C2",
+   "rule": "R348",
+   "scenarioId": "QO-02",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Compte de passage multi-titulaires",
+   "label": "FP",
+   "clientId": "CLI-00110",
+   "narrative": "Fondation caritative recevant des dons multiples pendant sa campagne annuelle déclarée au KYC — but documenté, FP."
+  },
+  {
+   "caseId": "QO-03-C1",
+   "rule": "R349",
+   "scenarioId": "QO-03",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Opération sans justification économique",
+   "label": "TP",
+   "clientId": "CLI-00080",
+   "narrative": "Aller-retour titres à perte de 4% en 48h répété 3× — habillage de transferts de valeur confirmé."
+  },
+  {
+   "caseId": "QO-03-C2",
+   "rule": "R349",
+   "scenarioId": "QO-03",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Opération sans justification économique",
+   "label": "FP",
+   "clientId": "CLI-00104",
+   "narrative": "Vente à perte fin décembre puis rachat en janvier — tax-loss harvesting documenté par le gérant, FP."
+  },
+  {
+   "caseId": "QO-04-C1",
+   "rule": "R350",
+   "scenarioId": "QO-04",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Adresse partagée multi-clients",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "14 sociétés clientes domiciliées à la même adresse d'un prestataire offshore — requalification en sociétés de domicile."
+  },
+  {
+   "caseId": "QO-04-C2",
+   "rule": "R350",
+   "scenarioId": "QO-04",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Adresse partagée multi-clients",
+   "label": "FP",
+   "clientId": "CLI-00018",
+   "narrative": "Membres d'une même famille (grand-parents, enfants, holding familiale) à l'adresse du family office — liens déclarés, FP."
+  },
+  {
+   "caseId": "QO-05-C1",
+   "rule": "R351",
+   "scenarioId": "QO-05",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Rotation des procurations / instructions",
+   "label": "TP",
+   "clientId": "CLI-00034",
+   "narrative": "Rotation de 4 mandataires en 5 mois masquant l'opérateur réel du compte — ADE requalifié."
+  },
+  {
+   "caseId": "QO-05-C2",
+   "rule": "R351",
+   "scenarioId": "QO-05",
+   "fam": "Indices OBA-FINMA",
+   "nom": "Rotation des procurations / instructions",
+   "label": "FP",
+   "clientId": "CLI-00016",
+   "narrative": "Réorganisation du family office documentée (départ CFO, arrivée de deux successeurs) — actes fournis, FP."
+  },
+  {
+   "caseId": "GU-01-C1",
+   "rule": "R352",
+   "scenarioId": "GU-01",
+   "fam": "Vision groupe UBO",
+   "nom": "Structuring cross-comptes du groupe",
+   "label": "TP",
+   "clientId": "CLI-00005",
+   "narrative": "4 dépôts de 18-19k via holding, SCI et deux comptes personnels du même UBO en 6 jours — structuring de groupe confirmé."
+  },
+  {
+   "caseId": "GU-01-C2",
+   "rule": "R352",
+   "scenarioId": "GU-01",
+   "fam": "Vision groupe UBO",
+   "nom": "Structuring cross-comptes du groupe",
+   "label": "FP",
+   "clientId": "CLI-00152",
+   "narrative": "Distributions de dividendes simultanées des filiales vers la holding, calendrier d'AG documenté — flux légitimes, FP."
+  },
+  {
+   "caseId": "GU-02-C1",
+   "rule": "R353",
+   "scenarioId": "GU-02",
+   "fam": "Vision groupe UBO",
+   "nom": "Flux circulaires intra-groupe",
+   "label": "TP",
+   "clientId": "CLI-00101",
+   "narrative": "Rotation de 300k entre 3 entités pour gonfler artificiellement les bilans avant une demande de crédit — TP."
+  },
+  {
+   "caseId": "GU-02-C2",
+   "rule": "R353",
+   "scenarioId": "GU-02",
+   "fam": "Vision groupe UBO",
+   "nom": "Flux circulaires intra-groupe",
+   "label": "FP",
+   "clientId": "CLI-00016",
+   "narrative": "Cash pooling intra-groupe documenté par convention de trésorerie — mécanique déclarée au KYC, FP."
+  },
+  {
+   "caseId": "GU-03-C1",
+   "rule": "R354",
+   "scenarioId": "GU-03",
+   "fam": "Vision groupe UBO",
+   "nom": "Cash consolidé du périmètre",
+   "label": "TP",
+   "clientId": "CLI-00033",
+   "narrative": "45k/mois d'espèces répartis sur 5 entités d'un même bénéficiaire, activité déclarée sans lien avec le cash — TP."
+  },
+  {
+   "caseId": "GU-03-C2",
+   "rule": "R354",
+   "scenarioId": "GU-03",
+   "fam": "Vision groupe UBO",
+   "nom": "Cash consolidé du périmètre",
+   "label": "FP",
+   "clientId": "CLI-00041",
+   "narrative": "Groupe de restaurants du même propriétaire : intensité cash cohérente avec le secteur déclaré de chaque entité, FP."
+  },
+  {
+   "caseId": "GU-04-C1",
+   "rule": "R355",
+   "scenarioId": "GU-04",
+   "fam": "Vision groupe UBO",
+   "nom": "Seuils agrégés cross-produits",
+   "label": "TP",
+   "clientId": "CLI-00072",
+   "narrative": "Combinaison cash + in-specie + lombard totalisant 85k/semaine en contournement des seuils unitaires — TP."
+  },
+  {
+   "caseId": "GU-04-C2",
+   "rule": "R355",
+   "scenarioId": "GU-04",
+   "fam": "Vision groupe UBO",
+   "nom": "Seuils agrégés cross-produits",
+   "label": "FP",
+   "clientId": "CLI-00164",
+   "narrative": "Rééquilibrage trimestriel de portefeuille documenté par le mandat de gestion (mouvements multi-produits simultanés), FP."
+  },
+  {
+   "caseId": "IP-01-C1",
+   "rule": "R356",
+   "scenarioId": "IP-01",
+   "fam": "Instruments PB",
+   "nom": "Lombard — remboursement par tiers",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Lombard soldé par une société panaméenne étrangère au dossier — le crédit servait à donner une apparence bancaire aux fonds, TP."
+  },
+  {
+   "caseId": "IP-01-C2",
+   "rule": "R356",
+   "scenarioId": "IP-01",
+   "fam": "Instruments PB",
+   "nom": "Lombard — remboursement par tiers",
+   "label": "FP",
+   "clientId": "CLI-00152",
+   "narrative": "Remboursement par la holding mère de l'emprunteur, convention de trésorerie au dossier — lien documenté, FP."
+  },
+  {
+   "caseId": "IP-02-C1",
+   "rule": "R357",
+   "scenarioId": "IP-02",
+   "fam": "Instruments PB",
+   "nom": "Back-to-back loan",
+   "label": "TP",
+   "clientId": "CLI-00033",
+   "narrative": "Dépôt offshore non corroboré garantissant un prêt à l'entité opérationnelle suisse du même bénéficiaire — schéma B2B confirmé."
+  },
+  {
+   "caseId": "IP-02-C2",
+   "rule": "R357",
+   "scenarioId": "IP-02",
+   "fam": "Instruments PB",
+   "nom": "Back-to-back loan",
+   "label": "FP",
+   "clientId": "CLI-00016",
+   "narrative": "Garantie intra-groupe standard d'un family office, origine des fonds corroborée à l'ouverture — structure déclarée, FP."
+  },
+  {
+   "caseId": "IP-03-C1",
+   "rule": "R358",
+   "scenarioId": "IP-03",
+   "fam": "Instruments PB",
+   "nom": "Wrapper assurance — prime hors profil",
+   "label": "TP",
+   "clientId": "CLI-00048",
+   "narrative": "Prime de 1.5M financée par trois virements de sociétés tierces, patrimoine déclaré 900k — support d'intégration, TP."
+  },
+  {
+   "caseId": "IP-03-C2",
+   "rule": "R358",
+   "scenarioId": "IP-03",
+   "fam": "Instruments PB",
+   "nom": "Wrapper assurance — prime hors profil",
+   "label": "FP",
+   "clientId": "CLI-00005",
+   "narrative": "Prime élevée financée par la vente documentée d'un bien immobilier (acte notarié au dossier) — SOW corroborée, FP."
+  },
+  {
+   "caseId": "IP-04-C1",
+   "rule": "R359",
+   "scenarioId": "IP-04",
+   "fam": "Instruments PB",
+   "nom": "Wrapper assurance — rachat précoce",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Rachat à 7 mois versé sur un compte tiers à Dubaï, pénalité assumée — la police n'a servi que de sas, TP."
+  },
+  {
+   "caseId": "IP-04-C2",
+   "rule": "R359",
+   "scenarioId": "IP-04",
+   "fam": "Instruments PB",
+   "nom": "Wrapper assurance — rachat précoce",
+   "label": "FP",
+   "clientId": "CLI-00110",
+   "narrative": "Rachat à 10 mois pour financer une acquisition immobilière urgente (compromis de vente fourni) — besoin réel, FP."
+  },
+  {
+   "caseId": "IP-05-C1",
+   "rule": "R360",
+   "scenarioId": "IP-05",
+   "fam": "Instruments PB",
+   "nom": "Changement de bénéficiaire post-souscription",
+   "label": "TP",
+   "clientId": "CLI-00034",
+   "narrative": "Bénéficiaire basculé vers une fondation panaméenne contrôlée par un tiers — transfert de valeur déguisé, TP."
+  },
+  {
+   "caseId": "IP-05-C2",
+   "rule": "R360",
+   "scenarioId": "IP-05",
+   "fam": "Instruments PB",
+   "nom": "Changement de bénéficiaire post-souscription",
+   "label": "FP",
+   "clientId": "CLI-00053",
+   "narrative": "Changement vers les enfants suite à un divorce (jugement au dossier) — événement de vie documenté, FP."
+  },
+  {
+   "caseId": "IP-06-C1",
+   "rule": "R361",
+   "scenarioId": "IP-06",
+   "fam": "Instruments PB",
+   "nom": "Coffres — corrélation cash",
+   "label": "TP",
+   "clientId": "CLI-00072",
+   "narrative": "6 séquences coffre→dépôt sous 24h totalisant 100k — le coffre alimente les dépôts, TP."
+  },
+  {
+   "caseId": "IP-06-C2",
+   "rule": "R361",
+   "scenarioId": "IP-06",
+   "fam": "Instruments PB",
+   "nom": "Coffres — corrélation cash",
+   "label": "FP",
+   "clientId": "CLI-00063",
+   "narrative": "Numismate déclaré accédant au coffre avant chaque vente aux enchères documentée (bordereaux fournis) — activité déclarée, FP."
+  },
+  {
+   "caseId": "IP-07-C1",
+   "rule": "R362",
+   "scenarioId": "IP-07",
+   "fam": "Instruments PB",
+   "nom": "Métaux précieux physiques",
+   "label": "TP",
+   "clientId": "CLI-00080",
+   "narrative": "Achats répétés d'or livré à un tiers non documenté à l'étranger — conversion de valeur portable, TP."
+  },
+  {
+   "caseId": "IP-07-C2",
+   "rule": "R362",
+   "scenarioId": "IP-07",
+   "fam": "Instruments PB",
+   "nom": "Métaux précieux physiques",
+   "label": "FP",
+   "clientId": "CLI-00164",
+   "narrative": "Allocation or de 5% du portefeuille en garde bancaire, conforme au mandat de gestion — investissement standard, FP."
+  },
+  {
+   "caseId": "CR-01-C1",
+   "rule": "R363",
+   "scenarioId": "CR-01",
+   "fam": "Crypto / VASP",
+   "nom": "Travel rule DLT",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "Sortie vers un exchange non coopératif refusant l'échange travel rule — blocage maintenu, relation revue."
+  },
+  {
+   "caseId": "CR-01-C2",
+   "rule": "R363",
+   "scenarioId": "CR-01",
+   "fam": "Crypto / VASP",
+   "nom": "Travel rule DLT",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Message travel rule retardé par une panne du protocole d'échange du VASP partenaire (reçu à H+6) — libéré, FP."
+  },
+  {
+   "caseId": "CR-02-C1",
+   "rule": "R364",
+   "scenarioId": "CR-02",
+   "fam": "Crypto / VASP",
+   "nom": "Exposition mixer / tumbler",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "64% de provenance mixer sur un dépôt de 2.1 BTC, client incapable d'expliquer la chaîne — fonds refusés, TP."
+  },
+  {
+   "caseId": "CR-02-C2",
+   "rule": "R364",
+   "scenarioId": "CR-02",
+   "fam": "Crypto / VASP",
+   "nom": "Exposition mixer / tumbler",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Exposition indirecte de 3% à 2 hops via un exchange majeur (pollution de cluster) — sous matérialité, FP."
+  },
+  {
+   "caseId": "CR-03-C1",
+   "rule": "R365",
+   "scenarioId": "CR-03",
+   "fam": "Crypto / VASP",
+   "nom": "Adresse sanctionnée on-chain",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "Destination = adresse SDN d'un groupe ransomware — blocage, déclaration effectuée."
+  },
+  {
+   "caseId": "CR-03-C2",
+   "rule": "R365",
+   "scenarioId": "CR-03",
+   "fam": "Crypto / VASP",
+   "nom": "Adresse sanctionnée on-chain",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Adresse retirée de la liste SDN au dernier délisting, cache local obsolète — synchronisation corrigée, FP."
+  },
+  {
+   "caseId": "CR-04-C1",
+   "rule": "R366",
+   "scenarioId": "CR-04",
+   "fam": "Crypto / VASP",
+   "nom": "Cluster darknet / ransomware",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "30% de provenance darknet sur un dépôt, historique d'adresses cohérent avec du peel chaining — TP."
+  },
+  {
+   "caseId": "CR-04-C2",
+   "rule": "R366",
+   "scenarioId": "CR-04",
+   "fam": "Crypto / VASP",
+   "nom": "Cluster darknet / ransomware",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Étiquetage erroné d'un cluster par le fournisseur (corrigé dans sa release suivante) — FP documenté fournisseur."
+  },
+  {
+   "caseId": "CR-05-C1",
+   "rule": "R367",
+   "scenarioId": "CR-05",
+   "fam": "Crypto / VASP",
+   "nom": "Wallet auto-hébergé sans preuve",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "Adresse prétendument personnelle appartenant en réalité à un tiers (échec du test de signature) — TP."
+  },
+  {
+   "caseId": "CR-05-C2",
+   "rule": "R367",
+   "scenarioId": "CR-05",
+   "fam": "Crypto / VASP",
+   "nom": "Wallet auto-hébergé sans preuve",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Preuve expirée de 2 semaines pour une adresse déjà vérifiée 3× — re-signée le jour même, FP."
+  },
+  {
+   "caseId": "CR-06-C1",
+   "rule": "R368",
+   "scenarioId": "CR-06",
+   "fam": "Crypto / VASP",
+   "nom": "On/off-ramp incohérent au profil",
+   "label": "TP",
+   "clientId": "CLI-00022",
+   "narrative": "14 cycles/mois avec marge négative systématique — le coût de conversion est le prix du layering, TP."
+  },
+  {
+   "caseId": "CR-06-C2",
+   "rule": "R368",
+   "scenarioId": "CR-06",
+   "fam": "Crypto / VASP",
+   "nom": "On/off-ramp incohérent au profil",
+   "label": "FP",
+   "clientId": "CLI-00068",
+   "narrative": "Trader actif déclaré avec profil « trading fréquent » validé à l'onboarding — comportement conforme, FP."
+  },
+  {
+   "caseId": "FT-01-C1",
+   "rule": "R369",
+   "scenarioId": "FT-01",
+   "fam": "CFT",
+   "nom": "Micro-transactions vers corridors sensibles",
+   "label": "TP",
+   "clientId": "CLI-00084",
+   "narrative": "23 micro-transferts vers des collecteurs relais identifiés par la suite dans une enquête — TP."
+  },
+  {
+   "caseId": "FT-01-C2",
+   "rule": "R369",
+   "scenarioId": "FT-01",
+   "fam": "CFT",
+   "nom": "Micro-transactions vers corridors sensibles",
+   "label": "FP",
+   "clientId": "CLI-00035",
+   "narrative": "Soutien familial mensuel régulier vers le pays d'origine, bénéficiaire unique documenté (famille au KYC) — remittance légitime, FP."
+  },
+  {
+   "caseId": "FT-02-C1",
+   "rule": "R370",
+   "scenarioId": "FT-02",
+   "fam": "CFT",
+   "nom": "Collectes / ONG à risque",
+   "label": "TP",
+   "clientId": "CLI-00084",
+   "narrative": "Dons répétés vers une association-écran dissoute 8 mois plus tard, dirigeants condamnés — TP."
+  },
+  {
+   "caseId": "FT-02-C2",
+   "rule": "R370",
+   "scenarioId": "FT-02",
+   "fam": "CFT",
+   "nom": "Collectes / ONG à risque",
+   "label": "FP",
+   "clientId": "CLI-00110",
+   "narrative": "Dons vers une ONG certifiée ZEWO opérant en zone à risque avec audit de distribution publié — organisation vérifiée, FP."
+  },
+  {
+   "caseId": "FT-03-C1",
+   "rule": "R371",
+   "scenarioId": "FT-03",
+   "fam": "CFT",
+   "nom": "Cartes prépayées multi-sources",
+   "label": "TP",
+   "clientId": "CLI-00084",
+   "narrative": "Carte financée par 5 tiers et vidée en cash à la frontière turco-syrienne — TP."
+  },
+  {
+   "caseId": "FT-03-C2",
+   "rule": "R371",
+   "scenarioId": "FT-03",
+   "fam": "CFT",
+   "nom": "Cartes prépayées multi-sources",
+   "label": "FP",
+   "clientId": "CLI-00121",
+   "narrative": "Carte d'étudiant rechargée par ses deux parents et un grand-parent (liens familiaux au dossier), retraits sur le lieu d'études — FP."
+  },
+  {
+   "caseId": "FT-04-C1",
+   "rule": "R372",
+   "scenarioId": "FT-04",
+   "fam": "CFT",
+   "nom": "Cohérence voyages ↔ flux",
+   "label": "TP",
+   "clientId": "CLI-00084",
+   "narrative": "Retraits de 18k en 10 jours avant un déplacement vers une zone frontalière, sans explication — TP."
+  },
+  {
+   "caseId": "FT-04-C2",
+   "rule": "R372",
+   "scenarioId": "FT-04",
+   "fam": "CFT",
+   "nom": "Cohérence voyages ↔ flux",
+   "label": "FP",
+   "clientId": "CLI-00007",
+   "narrative": "Retraits avant un pèlerinage documenté avec agence de voyage agréée et itinéraire fourni — motif religieux légitime, FP."
+  },
+  {
+   "caseId": "FT-05-C1",
+   "rule": "R373",
+   "scenarioId": "FT-05",
+   "fam": "CFT",
+   "nom": "Listes terroristes dédiées",
+   "label": "TP",
+   "clientId": "CLI-00084",
+   "narrative": "Match exact (nom + date de naissance) sur une liste d'ordonnance fédérale — gel et déclaration."
+  },
+  {
+   "caseId": "FT-05-C2",
+   "rule": "R373",
+   "scenarioId": "FT-05",
+   "fam": "CFT",
+   "nom": "Listes terroristes dédiées",
+   "label": "FP",
+   "clientId": "CLI-00099",
+   "narrative": "Homonymie sur un nom très courant, date de naissance divergente de 30 ans — levé après vérification, FP."
+  },
+  {
+   "caseId": "GV-01-C1",
+   "rule": "R374",
+   "scenarioId": "GV-01",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Below-the-line sampling",
+   "label": "TP",
+   "clientId": "—",
+   "narrative": "Campagne T2 : 2 cas suspects trouvés à 85% du seuil structuring → seuil abaissé de 20k à 18k (version v1.3, simulée puis déployée)."
+  },
+  {
+   "caseId": "GV-01-C2",
+   "rule": "R374",
+   "scenarioId": "GV-01",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Below-the-line sampling",
+   "label": "FP",
+   "clientId": "—",
+   "narrative": "Campagne T3 : 0 TP sous seuil sur 25 dossiers échantillonnés → calibrage confirmé, rapport archivé."
+  },
+  {
+   "caseId": "GV-02-C1",
+   "rule": "R375",
+   "scenarioId": "GV-02",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Backtesting par version",
+   "label": "TP",
+   "clientId": "—",
+   "narrative": "v1.2 du velocity : -40% de FP, 0 TP manqué sur 90j — changement validé et documenté."
+  },
+  {
+   "caseId": "GV-02-C2",
+   "rule": "R375",
+   "scenarioId": "GV-02",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Backtesting par version",
+   "label": "FP",
+   "clientId": "—",
+   "narrative": "v2.0 du round-amounts aurait manqué 1 TP historique — rollback v1.4 exécuté, écart consigné."
+  },
+  {
+   "caseId": "GV-03-C1",
+   "rule": "R376",
+   "scenarioId": "GV-03",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Data quality pré-conditions",
+   "label": "TP",
+   "clientId": "—",
+   "narrative": "Champ 50 vide sur 8% des messages d'un correspondant pendant 3 jours : le wire-stripping était indétectable — corrigé, période re-screenée."
+  },
+  {
+   "caseId": "GV-03-C2",
+   "rule": "R376",
+   "scenarioId": "GV-03",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Data quality pré-conditions",
+   "label": "FP",
+   "clientId": "—",
+   "narrative": "Chute de complétude due à un nouveau format ISO 20022 mal mappé (données présentes, parsing KO) — mapping corrigé, FP."
+  },
+  {
+   "caseId": "GV-04-C1",
+   "rule": "R377",
+   "scenarioId": "GV-04",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Revue annuelle de calibrage",
+   "label": "TP",
+   "clientId": "—",
+   "narrative": "Revue 2026 : 3 angles morts identifiés (TBML, CBK, prolifération) → wave 2 planifiée et arbitrée en comité."
+  },
+  {
+   "caseId": "GV-04-C2",
+   "rule": "R377",
+   "scenarioId": "GV-04",
+   "fam": "Gouvernance du dispositif",
+   "nom": "Revue annuelle de calibrage",
+   "label": "FP",
+   "clientId": "—",
+   "narrative": "—"
+  },
+  {
+   "caseId": "TB-01-C1",
+   "rule": "R378",
+   "scenarioId": "TB-01",
+   "fam": "TBML",
+   "nom": "Surfacturation (over-invoicing)",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Import de composants payés +22% vs benchmark sur 8 factures du même fournisseur lié — transfert de valeur confirmé."
+  },
+  {
+   "caseId": "TB-01-C2",
+   "rule": "R378",
+   "scenarioId": "TB-01",
+   "fam": "TBML",
+   "nom": "Surfacturation (over-invoicing)",
+   "label": "FP",
+   "clientId": "CLI-00101",
+   "narrative": "Surcoût de +18% documenté par une clause d'urgence logistique (fret aérien vs maritime, contrat fourni) — FP."
+  },
+  {
+   "caseId": "TB-02-C1",
+   "rule": "R379",
+   "scenarioId": "TB-02",
+   "fam": "TBML",
+   "nom": "Facturation multiple",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Même connaissement financé deux fois via deux banques — double financement frauduleux confirmé."
+  },
+  {
+   "caseId": "TB-02-C2",
+   "rule": "R379",
+   "scenarioId": "TB-02",
+   "fam": "TBML",
+   "nom": "Facturation multiple",
+   "label": "FP",
+   "clientId": "CLI-00193",
+   "narrative": "Facture d'acompte puis facture de solde portant la même référence commande (schéma 30/70 contractuel) — FP."
+  },
+  {
+   "caseId": "TB-03-C1",
+   "rule": "R380",
+   "scenarioId": "TB-03",
+   "fam": "TBML",
+   "nom": "Prix hors benchmark (unit price)",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Biens sous-facturés à 5% du prix de marché pour exfiltrer de la valeur au pays d'origine — TP."
+  },
+  {
+   "caseId": "TB-03-C2",
+   "rule": "R380",
+   "scenarioId": "TB-03",
+   "fam": "TBML",
+   "nom": "Prix hors benchmark (unit price)",
+   "label": "FP",
+   "clientId": "CLI-00037",
+   "narrative": "Lot déclassé vendu à prix cassé avec certificat de non-conformité joint — décote documentée, FP."
+  },
+  {
+   "caseId": "TB-04-C1",
+   "rule": "R381",
+   "scenarioId": "TB-04",
+   "fam": "TBML",
+   "nom": "Biens à double usage",
+   "label": "TP",
+   "clientId": "CLI-00039",
+   "narrative": "Machines classées double usage routées via un intermédiaire vers une destination sous embargo — licence absente, TP."
+  },
+  {
+   "caseId": "TB-04-C2",
+   "rule": "R381",
+   "scenarioId": "TB-04",
+   "fam": "TBML",
+   "nom": "Biens à double usage",
+   "label": "FP",
+   "clientId": "CLI-00142",
+   "narrative": "Bien listé mais licence d'exportation SECO valide fournie et destinataire final vérifié — conforme, FP."
+  },
+  {
+   "caseId": "TB-05-C1",
+   "rule": "R382",
+   "scenarioId": "TB-05",
+   "fam": "TBML",
+   "nom": "LC back-to-back / crédits doc HRJ",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Intermédiaire des Caïmans intercalé entre acheteur et vendeur réels, marge de 12% sans fonction — écran, TP."
+  },
+  {
+   "caseId": "TB-05-C2",
+   "rule": "R382",
+   "scenarioId": "TB-05",
+   "fam": "TBML",
+   "nom": "LC back-to-back / crédits doc HRJ",
+   "label": "FP",
+   "clientId": "CLI-00150",
+   "narrative": "Maison de négoce établie jouant un rôle réel de contrepartie centrale (contrats et assurances au dossier) — FP."
+  },
+  {
+   "caseId": "TB-06-C1",
+   "rule": "R383",
+   "scenarioId": "TB-06",
+   "fam": "TBML",
+   "nom": "Phantom shipping",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Trois « expéditions » payées 1.1M au total, aucun conteneur n'a jamais quitté le port déclaré — TP."
+  },
+  {
+   "caseId": "TB-06-C2",
+   "rule": "R383",
+   "scenarioId": "TB-06",
+   "fam": "TBML",
+   "nom": "Phantom shipping",
+   "label": "FP",
+   "clientId": "CLI-00193",
+   "narrative": "Retard de mise à jour du tracking d'un transporteur secondaire (mouvement confirmé à J+4 par le B/L) — FP."
+  },
+  {
+   "caseId": "TB-07-C1",
+   "rule": "R384",
+   "scenarioId": "TB-07",
+   "fam": "TBML",
+   "nom": "Routes & transbordements atypiques",
+   "label": "TP",
+   "clientId": "CLI-00039",
+   "narrative": "Détour par un port connu pour le maquillage d'origine (certificats réémis) — contournement d'embargo, TP."
+  },
+  {
+   "caseId": "TB-07-C2",
+   "rule": "R384",
+   "scenarioId": "TB-07",
+   "fam": "TBML",
+   "nom": "Routes & transbordements atypiques",
+   "label": "FP",
+   "clientId": "CLI-00150",
+   "narrative": "Réacheminement dû à une congestion portuaire majeure documentée par l'armateur (avis publié) — FP."
+  },
+  {
+   "caseId": "TB-08-C1",
+   "rule": "R385",
+   "scenarioId": "TB-08",
+   "fam": "TBML",
+   "nom": "Carrousel documentaire",
+   "label": "TP",
+   "clientId": "CLI-00101",
+   "narrative": "Boucle de revente à valeur +15% par tour entre trois entités liées au même bénéficiaire — carrousel confirmé."
+  },
+  {
+   "caseId": "TB-08-C2",
+   "rule": "R385",
+   "scenarioId": "TB-08",
+   "fam": "TBML",
+   "nom": "Carrousel documentaire",
+   "label": "FP",
+   "clientId": "CLI-00037",
+   "narrative": "Négoce légitime de matières premières où les rôles s'inversent selon les cours (positions documentées) — FP."
+  },
+  {
+   "caseId": "CB-03-C1",
+   "rule": "R386",
+   "scenarioId": "CB-03",
+   "fam": "Correspondent Banking",
+   "nom": "Wire stripping / transparence",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Correspondant supprimant systématiquement le nom d'ordonnateurs iraniens (initiales seules) — stripping confirmé, relation revue."
+  },
+  {
+   "caseId": "CB-03-C2",
+   "rule": "R386",
+   "scenarioId": "CB-03",
+   "fam": "Correspondent Banking",
+   "nom": "Wire stripping / transparence",
+   "label": "FP",
+   "clientId": "CLI-00018",
+   "narrative": "Troncature technique de caractères non-latins par un système legacy (données complètes en pièce jointe MT199) — FP, correctif demandé."
+  },
+  {
+   "caseId": "CB-04-C1",
+   "rule": "R387",
+   "scenarioId": "CB-04",
+   "fam": "Correspondent Banking",
+   "nom": "U-turn payments",
+   "label": "TP",
+   "clientId": "CLI-00070",
+   "narrative": "Détour par deux correspondants pour masquer une contrepartie russe restreinte — contournement confirmé."
+  },
+  {
+   "caseId": "CB-04-C2",
+   "rule": "R387",
+   "scenarioId": "CB-04",
+   "fam": "Correspondent Banking",
+   "nom": "U-turn payments",
+   "label": "FP",
+   "clientId": "CLI-00164",
+   "narrative": "Paiement rejeté par la banque bénéficiaire (IBAN erroné) et retourné par une autre route — retour technique documenté, FP."
+  },
+  {
+   "caseId": "CB-05-C1",
+   "rule": "R388",
+   "scenarioId": "CB-05",
+   "fam": "Correspondent Banking",
+   "nom": "Payable-through accounts",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Répondant offrant à ses clients un accès quasi direct au nostro (milliers de micro-ordres) — PTA confirmé, convention résiliée."
+  },
+  {
+   "caseId": "CB-05-C2",
+   "rule": "R388",
+   "scenarioId": "CB-05",
+   "fam": "Correspondent Banking",
+   "nom": "Payable-through accounts",
+   "label": "FP",
+   "clientId": "CLI-00018",
+   "narrative": "Pic de petits ordres dû à une migration de paie groupée du répondant (préavisée par MT199) — usage propre, FP."
+  },
+  {
+   "caseId": "CB-06-C1",
+   "rule": "R389",
+   "scenarioId": "CB-06",
+   "fam": "Correspondent Banking",
+   "nom": "Volumétrie répondant vs profil (KYCC)",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Répondant « retail domestique » devenu hub régional de flux vers zones grises sans mise à jour CBDDQ — dérive confirmée."
+  },
+  {
+   "caseId": "CB-06-C2",
+   "rule": "R389",
+   "scenarioId": "CB-06",
+   "fam": "Correspondent Banking",
+   "nom": "Volumétrie répondant vs profil (KYCC)",
+   "label": "FP",
+   "clientId": "CLI-00150",
+   "narrative": "Croissance de corridor liée à l'acquisition documentée d'une banque voisine (communiqué + CBDDQ mis à jour) — FP."
+  },
+  {
+   "caseId": "CB-07-C1",
+   "rule": "R390",
+   "scenarioId": "CB-07",
+   "fam": "Correspondent Banking",
+   "nom": "Shell bank",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Établissement caribéen sans licence vérifiable ni locaux (adresse = boîte postale d'un agent) — shell bank, blocage."
+  },
+  {
+   "caseId": "CB-07-C2",
+   "rule": "R390",
+   "scenarioId": "CB-07",
+   "fam": "Correspondent Banking",
+   "nom": "Shell bank",
+   "label": "FP",
+   "clientId": "CLI-00164",
+   "narrative": "Banque digitale licenciée sans agences mais dûment supervisée (registre du régulateur consulté) — présence légale établie, FP."
+  },
+  {
+   "caseId": "CB-08-C1",
+   "rule": "R391",
+   "scenarioId": "CB-08",
+   "fam": "Correspondent Banking",
+   "nom": "RMA sans flux ni justification",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "RMA dormant réactivé soudainement pour une série de MT202 vers une zone grise — le canal oublié servait de porte dérobée."
+  },
+  {
+   "caseId": "CB-08-C2",
+   "rule": "R391",
+   "scenarioId": "CB-08",
+   "fam": "Correspondent Banking",
+   "nom": "RMA sans flux ni justification",
+   "label": "FP",
+   "clientId": "CLI-00018",
+   "narrative": "RMA maintenu par exigence contractuelle d'un schéma de garantie multilatéral (convention au dossier) — justifié, FP."
+  },
+  {
+   "caseId": "CB-09-C1",
+   "rule": "R392",
+   "scenarioId": "CB-09",
+   "fam": "Correspondent Banking",
+   "nom": "Screening des répondantes (CBDDQ)",
+   "label": "TP",
+   "clientId": "CLI-00130",
+   "narrative": "Nouvel actionnaire de contrôle d'un répondant apparu sur liste de sanctions — relation suspendue après comité."
+  },
+  {
+   "caseId": "CB-09-C2",
+   "rule": "R392",
+   "scenarioId": "CB-09",
+   "fam": "Correspondent Banking",
+   "nom": "Screening des répondantes (CBDDQ)",
+   "label": "FP",
+   "clientId": "CLI-00150",
+   "narrative": "Adverse media visant l'homonyme d'une autre banque du même groupe de presse — établissement distinct, FP."
+  },
+  {
+   "caseId": "PF-01-C1",
+   "rule": "R393",
+   "scenarioId": "PF-01",
+   "fam": "Prolifération",
+   "nom": "Sanctions sectorielles & plafonds",
+   "label": "TP",
+   "clientId": "CLI-00039",
+   "narrative": "Cargaison d'origine russe payée au-dessus du price cap via un négociant intermédiaire — violation confirmée, blocage."
+  },
+  {
+   "caseId": "PF-01-C2",
+   "rule": "R393",
+   "scenarioId": "PF-01",
+   "fam": "Prolifération",
+   "nom": "Sanctions sectorielles & plafonds",
+   "label": "FP",
+   "clientId": "CLI-00037",
+   "narrative": "Pétrole d'origine certifiée kazakhe transitant par un port russe (certificat d'origine et pipeline documentés) — hors périmètre du plafond, FP."
+  },
+  {
+   "caseId": "PF-02-C1",
+   "rule": "R394",
+   "scenarioId": "PF-02",
+   "fam": "Prolifération",
+   "nom": "Chaînes d'écrans corridors KP/IR",
+   "label": "TP",
+   "clientId": "CLI-00043",
+   "narrative": "Chaîne de trois écrans hongkongais récents aboutissant à une entité liée à un programme sous sanctions — TP."
+  },
+  {
+   "caseId": "PF-02-C2",
+   "rule": "R394",
+   "scenarioId": "PF-02",
+   "fam": "Prolifération",
+   "nom": "Chaînes d'écrans corridors KP/IR",
+   "label": "FP",
+   "clientId": "CLI-00045",
+   "narrative": "Jeunes filiales de distribution d'un groupe industriel établi (organigramme et comptes consolidés fournis) — substance démontrée, FP."
+  },
+  {
+   "caseId": "PF-03-C1",
+   "rule": "R395",
+   "scenarioId": "PF-03",
+   "fam": "Prolifération",
+   "nom": "Biens de luxe vers zones embargo",
+   "label": "TP",
+   "clientId": "CLI-00080",
+   "narrative": "Négociant horloger multipliant par 6 ses exports vers un relais notoire de réexportation — contournement confirmé."
+  },
+  {
+   "caseId": "PF-03-C2",
+   "rule": "R395",
+   "scenarioId": "PF-03",
+   "fam": "Prolifération",
+   "nom": "Biens de luxe vers zones embargo",
+   "label": "FP",
+   "clientId": "CLI-00063",
+   "narrative": "Croissance liée à l'ouverture documentée d'une boutique franchisée locale (bail et licence fournis) — marché réel, FP."
+  },
+  {
+   "caseId": "IA-01-C1",
+   "rule": "R396",
+   "scenarioId": "IA-01",
+   "fam": "Immobilier & Art",
+   "nom": "Immobilier via structure + prix hors marché",
+   "label": "TP",
+   "clientId": "CLI-00005",
+   "narrative": "Surpaiement de 60% via structure BVI : la survaleur revenait au vendeur complice — intégration confirmée."
+  },
+  {
+   "caseId": "IA-01-C2",
+   "rule": "R396",
+   "scenarioId": "IA-01",
+   "fam": "Immobilier & Art",
+   "nom": "Immobilier via structure + prix hors marché",
+   "label": "FP",
+   "clientId": "CLI-00152",
+   "narrative": "Prime de 30% pour un bien de prestige off-market avec deux expertises concordantes au dossier — marché de niche, FP."
+  },
+  {
+   "caseId": "IA-02-C1",
+   "rule": "R397",
+   "scenarioId": "IA-02",
+   "fam": "Immobilier & Art",
+   "nom": "Art & ports francs",
+   "label": "TP",
+   "clientId": "CLI-00034",
+   "narrative": "Aller-retour d'une œuvre entre deux entités du même bénéficiaire avec +40% — transfert de valeur habillé, TP."
+  },
+  {
+   "caseId": "IA-02-C2",
+   "rule": "R397",
+   "scenarioId": "IA-02",
+   "fam": "Immobilier & Art",
+   "nom": "Art & ports francs",
+   "label": "FP",
+   "clientId": "CLI-00016",
+   "narrative": "Collectionneur établi cédant une pièce via une maison de vente publique (adjudication tierce, catalogue) — vente de marché, FP."
+  },
+  {
+   "caseId": "IA-03-C1",
+   "rule": "R398",
+   "scenarioId": "IA-03",
+   "fam": "Immobilier & Art",
+   "nom": "Véhicules de valeur (luxe, NFT)",
+   "label": "TP",
+   "clientId": "CLI-00080",
+   "narrative": "Rotation de véhicules de collection exportés vers un marchand relais, marges incohérentes — circulation de valeur, TP."
+  },
+  {
+   "caseId": "IA-03-C2",
+   "rule": "R398",
+   "scenarioId": "IA-03",
+   "fam": "Immobilier & Art",
+   "nom": "Véhicules de valeur (luxe, NFT)",
+   "label": "FP",
+   "clientId": "CLI-00063",
+   "narrative": "Passionné documenté (assurances, expertises, participation à des concours d'élégance) constituant sa collection — FP."
+  },
+  {
+   "caseId": "AN-01-C1",
+   "rule": "R399",
+   "scenarioId": "AN-01",
+   "fam": "Analytique 2G",
+   "nom": "Déviation au groupe de pairs",
+   "label": "TP",
+   "clientId": "CLI-00072",
+   "narrative": "Cash à 4.2σ du groupe sans changement déclaré de situation — activité non expliquée, TP."
+  },
+  {
+   "caseId": "AN-01-C2",
+   "rule": "R399",
+   "scenarioId": "AN-01",
+   "fam": "Analytique 2G",
+   "nom": "Déviation au groupe de pairs",
+   "label": "FP",
+   "clientId": "CLI-00104",
+   "narrative": "Pic à 3.8σ expliqué par la vente documentée d'une entreprise (CoC ouvert en amont) — événement de vie, FP."
+  },
+  {
+   "caseId": "AN-02-C1",
+   "rule": "R400",
+   "scenarioId": "AN-02",
+   "fam": "Analytique 2G",
+   "nom": "Rupture de comportement (baseline propre)",
+   "label": "TP",
+   "clientId": "CLI-00099",
+   "narrative": "Bascule complète du profil (nouveaux corridors, volumes ×3) après un changement de mandataire — compte repris en main par un tiers, TP."
+  },
+  {
+   "caseId": "AN-02-C2",
+   "rule": "R400",
+   "scenarioId": "AN-02",
+   "fam": "Analytique 2G",
+   "nom": "Rupture de comportement (baseline propre)",
+   "label": "FP",
+   "clientId": "CLI-00016",
+   "narrative": "Montée en charge annoncée d'un mandat de gestion élargi (avenant signé) — changement contractualisé, FP."
+  },
+  {
+   "caseId": "AN-03-C1",
+   "rule": "R401",
+   "scenarioId": "AN-03",
+   "fam": "Analytique 2G",
+   "nom": "First-time patterns",
+   "label": "TP",
+   "clientId": "CLI-00069",
+   "narrative": "Premier international du compte : 180k vers une fiduciaire offshore inconnue, dossier à 2% de complétude — TP."
+  },
+  {
+   "caseId": "AN-03-C2",
+   "rule": "R401",
+   "scenarioId": "AN-03",
+   "fam": "Analytique 2G",
+   "nom": "First-time patterns",
+   "label": "FP",
+   "clientId": "CLI-00121",
+   "narrative": "Premier virement France→UK pour l'inscription universitaire d'un enfant (attestation jointe) — vie courante, FP."
+  },
+  {
+   "caseId": "AN-04-C1",
+   "rule": "R402",
+   "scenarioId": "AN-04",
+   "fam": "Analytique 2G",
+   "nom": "Dormance partielle par segment",
+   "label": "TP",
+   "clientId": "CLI-00156",
+   "narrative": "Segment cash réactivé par des dépôts fractionnés après 3 ans — le canal oublié sert au placement, TP."
+  },
+  {
+   "caseId": "AN-04-C2",
+   "rule": "R402",
+   "scenarioId": "AN-04",
+   "fam": "Analytique 2G",
+   "nom": "Dormance partielle par segment",
+   "label": "FP",
+   "clientId": "CLI-00053",
+   "narrative": "Retraits cash réactivés pour des travaux payés en espèces à des artisans (devis et factures fournis) — usage ponctuel expliqué, FP."
+  },
+  {
+   "caseId": "AN-05-C1",
+   "rule": "R403",
+   "scenarioId": "AN-05",
+   "fam": "Analytique 2G",
+   "nom": "Revenus entrants incohérents (mismatch)",
+   "label": "TP",
+   "clientId": "CLI-00080",
+   "narrative": "« Salaires » de 45k versés par une société sans lien avec l'employeur déclaré — canal de distribution occulte, TP."
+  },
+  {
+   "caseId": "AN-05-C2",
+   "rule": "R403",
+   "scenarioId": "AN-05",
+   "fam": "Analytique 2G",
+   "nom": "Revenus entrants incohérents (mismatch)",
+   "label": "FP",
+   "clientId": "CLI-00035",
+   "narrative": "Bonus exceptionnel documenté par le certificat de salaire annuel (élément variable déclaré) — rémunération réelle, FP."
+  }
+ ]
+}

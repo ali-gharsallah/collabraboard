@@ -3,7 +3,8 @@
 // que les anomalies sont RAPPORTÉES (jamais corrigées) et que le mapping n'est JAMAIS déduit.
 import assert from "node:assert/strict";
 import { indexerArtefacts, lierFamillesSuites, extraireRQ, lireSeed, lireExceptions, detecterAnomalies,
-  comparerSession, extraireSection, resumerPlages, assembler, normaliserPourCheck } from "./generate.mjs";
+  comparerSession, extraireSection, resumerPlages, assembler, normaliserPourCheck,
+  blocStamp, stampCourant, injecterStamp } from "./generate.mjs";
 
 let passed = 0; const t = (nom, fn) => { fn(); passed++; console.log("  ✓ " + nom); };
 console.log("Générateur CANON-MASTER (GC) :");
@@ -125,6 +126,19 @@ t("GC-07 exceptions DOCUMENTÉES reclassées (jamais masquées) : erratum ≠ co
   assert.ok(!a.numerosAbsents.includes(247));                          // R247 réservé, pas un trou
   assert.ok(!(a.numerosHorsPlage ?? []).includes(999));                // R999 placeholder, pas une coquille
   assert.ok(a.exceptions.reserves.some((r) => r.numero === 247));      // mais TRACÉ dans les cas connus
+});
+
+t("GC-08 stamp de fraîcheur : injecté entre marqueurs, stable, détecté périmé (garde no-drift prose)", () => {
+  const bloc = blocStamp({ maxR: 339, nArtefacts: 96, nFamilles: 101, lien: "docs/CANON-MASTER.md" });
+  assert.ok(bloc.includes("R1–R339") && bloc.includes("96 artefacts") && bloc.includes("101 familles"));
+  assert.ok(!/\d{4}-\d{2}-\d{2}/.test(bloc), "stamp STABLE : pas de date (sinon churn par commit)");
+  const doc = "# Titre\n<!-- CANON-STAMP:START -->\nvieux\n<!-- CANON-STAMP:END -->\ncorps";
+  const out = injecterStamp(doc, bloc);
+  assert.equal(stampCourant(out), bloc);                       // le bloc a remplacé l'ancien
+  assert.ok(out.includes("# Titre") && out.includes("corps")); // la prose autour est intacte
+  assert.equal(injecterStamp("# sans marqueurs", bloc), null); // marqueurs absents → non stampé
+  const perime = blocStamp({ maxR: 206, nArtefacts: 96, nFamilles: 101, lien: "docs/CANON-MASTER.md" });
+  assert.notEqual(stampCourant(out), perime);                  // un plafond périmé (R206) est détecté
 });
 
 console.log(`\n### ${passed}/${passed} tests canon-master verts ###`);

@@ -2,17 +2,18 @@
      Toute édition manuelle rend le build CI ROUGE (le généré fait foi). -->
 # CANON-MASTER — O-Live (document unique faisant foi, GÉNÉRÉ)
 
-> **Généré le 2026-07-29 · commit `32b6ae0`.** Ce document se périme visiblement :
+> **Généré le 2026-08-10 · commit `ff8c4a7`.** Ce document se périme visiblement :
 > régénéré à chaque merge de PR de ratification (registrar). Le REPO FAIT FOI.
 
 ## ⚠️ Rapport d'anomalies (à traiter, jamais absorbé)
 
-**Aucune anomalie à traiter.** Les cas connus sont classés & justifiés ci-dessous.
+**27 anomalie(s) à traiter.**
 
 - **Doublons de numéro à titres divergents** : 0
-- **Familles de scénarios sans suite de test** : 0
-- **Artefacts porteurs de règles sans aucune famille de scénario** : 0
-- **Numéros R absents dans [1..339]** (plafond = sommet de l'amas contigu, hors réserves) : 0
+- **Familles de scénarios sans suite de test** : 1 — TB
+- **Artefacts porteurs de règles sans aucune famille de scénario** : 1
+  - spec/SPEC-I18N.md (R29, R323, R324)
+- **Numéros R absents dans [1..490]** (plafond = sommet de l'amas contigu, hors réserves) : 25 — R405–R408, R410–R430
 - **Numéros cités hors plage ratifiée** (coquilles, hors placeholders déclarés) : 0
 
 ### Cas connus & justifiés (`spec/canon-master-exceptions.md`)
@@ -32,7 +33,7 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 
 > Cette table ne capte que la présence NUMÉRIQUE. Les divergences **structurelles/sémantiques**
 > (ex. On-premise session R332–R334 absent du repo — créneau R335–R339 pris par la robustesse,
-> PK réservé **R340+** par décision Ali) sont énumérées dans `spec/mapping-session-repo.md` §2/§3.
+> PK réservé **R340+** par décision Ali) sont dans `spec/mapping-session-repo.md` §3 (§2 résolu : Olivia = identité, Home sans numéro).
 
 ## a) Mapping session → repo (seed ratifié — `spec/mapping-session-repo.md`)
 
@@ -47,16 +48,59 @@ Comparé : `spec/REFERENTIEL-SESSION-2026-07-29.md` (79 numéros) via seed
 | R331 | R334 | Migrations expand/contract | MG-01..05 |
 | R70 | R95 | Mapping droits (renumérotation étape 0 signalée) | — |
 | R222 | R248 | Porte CPSI (enveloppe versionnée) | PC-01..14 |
+| R432 | R439 | Bloc 62 — offboarding = workflow du moteur | OF-01..03, OF-10 |
+| R433 | R440 | Bloc 62 — health check guards, sévérité tenant | OF-04..05, OF-12..14 |
+| R434 | R441 | Bloc 62 — chaîne d'approbation par niveau + forçage | OF-06..08 |
+| R435 | R442 | Bloc 62 — motifs & initiateurs tenant | OF-01..02 |
+| R436 | R443 | Bloc 62 — checklists tenant versionnées | OF-09 |
+| R437 | R444 | Bloc 62 — clôturé rejouable + rétention | OF-10..11 |
+| R438 | R445 | Bloc 62 — pop-up d'engagement paramétrage | OF-13 |
+| R439 | R446 | Bloc 63 — demande de business trip = workflow du moteur | BT-01..03, BT-09 |
+| R440 | R447 | Bloc 63 — guards pré-départ, sévérités tenant | BT-04..08, BT-12 |
+| R441 | R448 | Bloc 63 — check pré-voyage figé avec version de matrice | BT-06..07, BT-14 |
+| R442 | R449 | Bloc 63 — quotas jours bancables + overrides RM | BT-05, BT-15 |
+| R443 | R450 | Bloc 63 — certificat de trip (clôture du voyage) | BT-10..12 |
+| R444 | R451 | Bloc 63 — croisement formation × activité (MOD-43 fait foi) | BT-04 |
+| R445 | R452 | Bloc 63 — §BusinessTrip R-Q + pop-up généralisé (R445 repo) | BT-13 |
+| R458 | R465 | Bloc 63 — prospect né en voyage (ajout d'audit) | BT-16 |
+| R459 | R466 | Bloc 65 — KYC/AR/GAR trois TYPES du même dossier | HR-01, HR-12 |
+| R460 | R467 | Bloc 65 — l'AR part du dernier KYC approuvé, revue = DIFF visé | HR-02..03 |
+| R461 | R468 | Bloc 65 — verdict normalisé, conséquences proposées (R44) | HR-04..05 |
+| R462 | R469 | Bloc 65 — groupe = référentiel paramétrable, composition projetée | HR-06 |
+| R463 | R470 | Bloc 65 — GAR = dossier PARENT lié aux membres | HR-07..09 |
+| R464 | R471 | Bloc 65 — cascades = ÉVÉNEMENTS du moteur, anti-boucle | HR-10..11 |
+| R465 | R472 | Bloc 65 — une interface, une couche de définition | HR-13..14 |
+| R466 | R473 | Bloc 65 — §Review unifié (R-Q + pop-up R445) | HR-05..06, HR-11 |
+| R467 | R474 | Bloc 65 — décision d'étape uniforme (3 issues + déléguer) | HR-15 |
+| R468 | R475 | Bloc 65 — renvoi ciblé tracé, jamais une gomme | HR-16..18 |
+| R469 | R476 | Bloc 65 — refus motivé, issue paramétrée par étape | HR-17, HR-19 |
+| R470 | R477 | Bloc 65 — fluidité : décider ne coûte qu'un geste (optimiste honnête) | HR-20 |
+| R471 | R478 | Bloc 65 — corbeille unifiée « À décider » | HR-21 |
+| R472 | R479 | Bloc 65 — après la décision : SUIVANT/RESTER, annulation réversible | HR-22 |
+| R446 | R453 | Bloc 64 — matrice cross-border = PORT versionné (extension R293) | XB-01..02, XB-14 |
+| R447 | R454 | Bloc 64 — actes cross-border distants (2e surface R294 étendue) | XB-03..04 |
+| R448 | R455 | Bloc 64 — check pré-acte embarqué (MKT/ADVICE/ORDER, R295) | XB-05 |
+| R449 | R456 | Bloc 64 — registre reverse solicitation (objet de preuve) | XB-06..07 |
+| R450 | R457 | Bloc 64 — localisation temporaire prime le domicile | XB-08 |
+| R451 | R458 | Bloc 64 — certification par juridiction (codes XB-<pays>, MOD-43) | XB-09 |
+| R452 | R459 | Bloc 64 — analyse d'impact sur changement de matrice | XB-10 |
+| R453 | R460 | Bloc 64 — exposition cross-border = projection consolidée | XB-11 |
+| R454 | R461 | Bloc 64 — régime par entité de booking | XB-12 |
+| R455 | R462 | Bloc 64 — §CrossBorder R-Q + pop-up (R445 repo généralisé) | XB-13 |
+| R456 | R463 | Bloc 64 — [OLIVIA GELÉE] briefing pack pré-voyage | — |
+| R457 | R464 | Bloc 64 — [OLIVIA GELÉE] rapprochement certificat de trip | — |
 
 ## b) Inventaire intégral (par artefact ratifié — le repo fait foi)
 
-96 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
+120 artefacts indexés. Colonne « Règles » = numéros POSSÉDÉS (nom de fichier)
 quand ils existent, sinon numéros CITÉS dans le corps (⚠ inclut alors les renvois, ex. « gel
 R1–R51 »). Statut · familles · suites de test dérivés du contenu et des suites réelles.
 
 | Règles (repo) | Domaine / titre | Statut | Familles | Suites de test |
 |---------------|-----------------|--------|----------|----------------|
 | R1–R52 | ADR-14 — Implémentation de référence du moteur de workflow | PROPOSÉ | — | — |
+| R1, R13, R15, R59, R222–R238, R293–R295, R431, R438–R466 | AUDIT 08.08.2026 — Blocs 63 & 64 vs existant (démo + catalogue) | PROPOSÉ | BT | business-trip-moteur.e2e-spec.ts, fat-vague14.e2e-spec.ts, fe-bt-evol.test.tsx |
+| R432–R438 | Bloc 62 · Sortie de relation (Offboarding) | RATIFIÉ | OF | kyc-service.spec.ts, fat-canon-derniers.e2e-spec.ts, fat-offboarding.e2e-spec.ts, fat-solde4-i18n.e2e-spec.ts |
 | R1, R7, R13, R29, R39, R42, R48–R49, R66, R68, R177–R179, R267–R279 | ═══ VERDICT ÉTAPE 0 (Claude Code, 2026-07-27) — canon reçu d'Ali, enregistré tel quel ci-dessous ═══ | PROPOSÉ | CC, HO, LC, LS, OL, RV | fat-canon-anciens.e2e-spec.ts, fat-coc.e2e-spec.ts, fat-degel-v7.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts |
 | R1–R51, R68–R70, R73, R79–R80, R109–R115, R167–R169, R224, R255, R257, R264–R265, R269–R270, R272, R274, R276, R279, R282–R283, R285–R287, R290, R293–R323 | O-Live — CANON DU DÉGEL COMPLET (Vagues 1–9) + état du développement restant | RATIFIÉ | AS, AU, BD, BL, CC, CY, LC, LE, MB, OL, OP, PA, PC, RW, SB, SO, SY, TF, VE, VR, WB | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R1–R51, R334–R339 | CANON — ROBUSTESSE O-Live (adaptation étape 0, PROPOSÉ — en attente de ratification) | PROPOSÉ | MG | test.mjs, test.mjs |
@@ -66,7 +110,7 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1–R77, R80–R81, R83–R103 | Catalogue O-Live — Amendements ratifiés (v2 → v2.1) | PROPOSÉ | AU, BD, BG, CK, DV, EX, GP, HM, IA, IN, KS, MF, OI, PD, PS, PT, RC, RP, RT, SC, SG, SN, ST, TM, TP, VQ | auth.spec.ts, fat-cloture-readiness.e2e-spec.ts, run_tests.py, test_cpsi_bloc1.py |
 | R1, R112, R115, R139, R148–R152, R155 | Catalogue O-Live — Patch v4.10 → v4.11 (RATIFICATION du 20.07.2026) | PROPOSÉ | RS | recherche.wiring.spec.ts |
 | R1, R39, R125, R152–R155 | Catalogue O-Live — Patch v4.11 → v4.12 (RATIFICATION du 20.07.2026) | PROPOSÉ | MO, PL | personne-lien.wiring.spec.ts |
-| R1, R125, R149, R156–R161 | Catalogue O-Live — Patch v4.12 → v4.13 (RATIFICATION du 20.07.2026) | PROPOSÉ | AN | annotation.wiring.spec.ts |
+| R1, R125, R149, R156–R161 | Catalogue O-Live — Patch v4.12 → v4.13 (RATIFICATION du 20.07.2026) | PROPOSÉ | AN | annotation.wiring.spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-gap-2g.e2e-spec.ts, fat-aml-live.e2e-spec.ts |
 | R1, R160–R163 | Catalogue O-Live — Patch v4.13 → v4.14 (RATIFICATION du 20.07.2026) | PROPOSÉ | AI | ia-ged.wiring.spec.ts |
 | R1, R164–R166 | Catalogue O-Live — Patch v4.14 → v4.15 (RATIFICATION du 20.07.2026) | PROPOSÉ | GD, VU | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, vues.wiring.spec.ts |
 | R1, R7, R39, R167–R170 | Catalogue O-Live — Patch v4.15 → v4.16 (RATIFICATION du 21.07.2026) | PROPOSÉ | GD, RN, SY | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, core-sync.wiring.spec.ts |
@@ -75,17 +119,18 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R1, R177–R182 | Catalogue O-Live — Patch v4.18 → v4.19 (RATIFICATION du 21.07.2026) | PROPOSÉ | GX, LC | ged-externe.wiring.spec.ts, vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
 | R1, R183–R185 | Catalogue O-Live — Patch v4.19 → v4.20 (RATIFICATION du 21.07.2026) | PROPOSÉ | WK | workload.wiring.spec.ts |
 | R1, R117–R120 | Catalogue O-Live — Patch v4.2 → v4.3 (RATIFICATION du 19.07.2026, soirée) | PROPOSÉ | OB | onboarding.wiring.spec.ts |
-| R1, R186–R188 | Catalogue O-Live — Patch v4.20 → v4.21 (RATIFICATION du 21.07.2026) | PROPOSÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R1, R186–R188 | Catalogue O-Live — Patch v4.20 → v4.21 (RATIFICATION du 21.07.2026) | PROPOSÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R1, R119, R121–R124 | Catalogue O-Live — Patch v4.3 → v4.4 (RATIFICATION du 19.07.2026, nuit) | PROPOSÉ | AG | prerevue.wiring.spec.ts |
 | R1, R48–R49, R124–R128 | Catalogue O-Live — Patch v4.4 → v4.5 (RATIFICATION du 19.07.2026, nuit — 2e vague) | PROPOSÉ | RQ | parametres.wiring.spec.ts |
 | R1, R83, R125, R129–R133 | Catalogue O-Live — Patch v4.5 → v4.6 (RATIFICATION du 19.07.2026, fin de nuit) | PROPOSÉ | MR | mros.wiring.spec.ts |
 | R1, R125, R133–R136 | Catalogue O-Live — Patch v4.6 → v4.7 (RATIFICATION du 20.07.2026, aube) | PROPOSÉ | RK | risk-case.wiring.spec.ts |
 | R1, R109, R116, R125, R137–R139 | Catalogue O-Live — Patch v4.7 → v4.8 (RATIFICATION du 20.07.2026) | PROPOSÉ | IG | ged-ingestion.wiring.spec.ts |
-| R1, R125, R131, R140–R143 | Catalogue O-Live — Patch v4.8 → v4.9 (RATIFICATION du 20.07.2026, matin) | PROPOSÉ | TX | transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py, test_cpsi_bloc4.py |
+| R1, R125, R131, R140–R143 | Catalogue O-Live — Patch v4.8 → v4.9 (RATIFICATION du 20.07.2026, matin) | PROPOSÉ | TX | etl.wiring.spec.ts, transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py |
 | R1–R56, R109–R113, R115, R125, R137, R144–R147 | Catalogue O-Live — Patch v4.9 → v4.10 (RATIFICATION du 20.07.2026) | PROPOSÉ | CV, DB | coffre.wiring.spec.ts |
 | R1–R52 | Catalogue normatif v2 — inventaire (source : OLive-Specifications-Moteur-Workflow-v2) | PROPOSÉ | — | — |
 | R1–R56 | O-Live — Catalogue des règles R1–R56 (état v2.4, 12.07.2026) & propositions R57–R62 | PROPOSÉ | BD, DV, EX, IA, PS, PT, RC, RT, SC, SG, ST | run_tests.py, test_cpsi_bloc1.py, test_bloc10_r58_r61.py, run_tests.py |
 | R1–R51 | sans-titre | PROPOSÉ | — | — |
+| R466–R479 | Bloc 65 · Harmonisation des revues — KYC · Account Review · Group Account Review | RATIFIÉ | HR | decision-unifiee.e2e-spec.ts, review-harmonisation.e2e-spec.ts |
 | R117–R120 | Catalogue O-Live — Amendement PROPOSÉ (R117 → R120) · Bloc 19 « Onboarding — l'entrée en relation » | RATIFIÉ | OB | onboarding.wiring.spec.ts |
 | R89–R99 | Catalogue O-Live — Amendements RATIFIÉS (R89 → R99) | RATIFIÉ | AU, KS, MF, OI, TM, TP | auth.spec.ts, fat-cloture-readiness.e2e-spec.ts, key-store.spec.ts, mfa.spec.ts |
 | R2, R4, R13, R39, R48–R49, R52, R58–R61, R84–R86, R100–R103 | Catalogue O-Live — Erratum & note de version **v4.0 → v4.1** | PROPOSÉ | CK, FE, HF, HM, LK, NV, SC, VQ | rules.spec.ts, run_tests.py, test_cpsi_bloc16.py, test_cpsi_bloc17.py |
@@ -103,9 +148,9 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R125–R128 | Catalogue O-Live — Amendement PROPOSÉ (R125 → R128) · Bloc 21 « Gouvernance des paramètres tenant — le R-Q exécutable » | RATIFIÉ | RQ | parametres.wiring.spec.ts |
 | R129–R132 | Catalogue O-Live — Amendement PROPOSÉ (R129 → R132) · Bloc 22 « Communication MROS — art. 9 LBA » | RATIFIÉ | MR | mros.wiring.spec.ts |
 | R133–R136 | Catalogue O-Live — Amendement PROPOSÉ (R133 → R136) · Bloc 23 « Risk cases — l'instruction AML » | RATIFIÉ | RK | risk-case.wiring.spec.ts |
-| R140–R143 | Catalogue O-Live — Amendement PROPOSÉ (R140 → R143) · Bloc 25 « Le portail transactionnel — prévenir, pas constater » | RATIFIÉ | TX | transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py, test_cpsi_bloc4.py |
+| R140–R143 | Catalogue O-Live — Amendement PROPOSÉ (R140 → R143) · Bloc 25 « Le portail transactionnel — prévenir, pas constater » | RATIFIÉ | TX | etl.wiring.spec.ts, transaction-gate.wiring.spec.ts, fat-vague4.e2e-spec.ts, run_tests.py |
 | R152–R155 | Catalogue O-Live — Amendement PROPOSÉ (R152 → R155) · Bloc 28 « Les personnes liées — le lien est un acte » | RATIFIÉ | PL | personne-lien.wiring.spec.ts |
-| R156–R159 | Catalogue O-Live — Amendement PROPOSÉ (R156 → R159) · Bloc 29 « Annotations & caviardage — le regard sans la plume » | RATIFIÉ | AN | annotation.wiring.spec.ts |
+| R156–R159 | Catalogue O-Live — Amendement PROPOSÉ (R156 → R159) · Bloc 29 « Annotations & caviardage — le regard sans la plume » | RATIFIÉ | AN | annotation.wiring.spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-gap-2g.e2e-spec.ts, fat-aml-live.e2e-spec.ts |
 | R160–R163 | Catalogue O-Live — Amendement PROPOSÉ (R160 → R163) · Bloc 31 « L'IA au service du dossier » | RATIFIÉ | AI | ia-ged.wiring.spec.ts |
 | R164–R166 | Catalogue O-Live — Amendement PROPOSÉ (R164 → R166) · Bloc 32 « Les dossiers-vues — classer sans copier » | RATIFIÉ | GD, VU | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, vues.wiring.spec.ts |
 | R170 | Catalogue O-Live — Amendement PROPOSÉ (R170) · « La rétention naît au classement » | RATIFIÉ | GD, RN | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts |
@@ -120,38 +165,59 @@ R1–R51 »). Statut · familles · suites de test dérivés du contenu et des s
 | R7, R36, R138, R171–R173, R186–R188 | language: fr | PROPOSÉ | — | — |
 | R7, R93, R99, R125–R128 | language: fr | PROPOSÉ | — | — |
 | R7, R44, R105–R108 | language: fr | PROPOSÉ | — | — |
+| R446–R452, R465 | Bloc 63 · Business Trip (Déplacements RM & certificat de voyage) | RATIFIÉ | BT | business-trip-moteur.e2e-spec.ts, fat-vague14.e2e-spec.ts, fe-bt-evol.test.tsx |
+| R13, R15, R29, R39, R44, R48–R49, R328, R340–R377 | SPEC — AML Gap Wave 1 : blocs 50–56 (R340–R377 provisoires) | RATIFIÉ | CR, FT, GU, GV, IP, QO, SF | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts, fat-aml-btl.e2e-spec.ts |
+| R13, R39, R44, R201, R340–R403 | SPEC — AML Gap Wave 2 : blocs 57–61 (R378–R403 provisoires) | RATIFIÉ | AN, CB, IA, PF, TB, WC | annotation.wiring.spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-gap-2g.e2e-spec.ts, fat-aml-live.e2e-spec.ts |
 | R13, R15, R48–R49, R76, R89–R90, R104, R255, R266–R267, R270, R284–R287 | O-Live — Canon des DEUX DERNIERS ÉCARTS | RATIFIÉ | AS, AU, HO, OF, OL, PC, SO, UC | fat-canon-derniers.e2e-spec.ts, fat-degel-v1.e2e-spec.ts, screens.test.tsx, auth.spec.ts |
 | R13, R15, R39, R48, R222, R230–R238 | language: fr | RATIFIÉ | FO | fat-vague13.e2e-spec.ts |
-| R13, R15, R29, R39, R48, R221–R230, R238 | language: fr | PROPOSÉ | BT | fat-vague14.e2e-spec.ts |
-| R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, test.mjs, test.mjs, test.mjs |
+| R13, R15, R29, R39, R48, R221–R230, R238 | language: fr | PROPOSÉ | BT | business-trip-moteur.e2e-spec.ts, fat-vague14.e2e-spec.ts, fe-bt-evol.test.tsx |
+| R13, R435 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R453–R464 | Bloc 64 · Cross-Border étendu (MOD-33 normatif) | RATIFIÉ | SW, XB | fat-swarm.e2e-spec.ts, util.ts, screens.test.tsx, cross-border-moteur.e2e-spec.ts |
+| R331–R334 | CANON — INDUSTRIALISATION (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DP, FB, IX, MG | test.mjs, FilterBar.test.tsx, test.mjs, test.mjs |
+| R480–R489 | ETL & intégration core banking — spec V2-M7 | PROPOSÉ | ET | etl.wiring.spec.ts |
+| R29, R323–R324 | SPEC — I18N quadrilingue FR/EN/DE/AR (R323–R324, périmètre révisé) | RATIFIÉ | — | — |
 | R167–R169 | Catalogue O-Live — Amendement PROPOSÉ (R167 → R169) · Bloc 33 « Le core banking est un port » | RATIFIÉ | SY | core-sync.wiring.spec.ts |
 | R288 | O-Live — PROPOSITION R288 : les barèmes de scoring KYC sont des RÈGLES gouvernées | RATIFIÉ | BS, PA | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-cpsi.e2e-spec.ts |
 | R29, R70, R94, R126, R189, R206 | language: fr | PROPOSÉ | — | — |
+| R39, R404 | SPEC — FilterBar uniforme (filtres rétractables + combobox) | RATIFIÉ | CB, FB, WC | aml-gap.wiring.spec.ts, chaines.wiring.spec.ts, fat-aml-dq.e2e-spec.ts, FilterBar.test.tsx |
 | R137–R139 | Catalogue O-Live — Amendement PROPOSÉ (R137 → R139) · Bloc 24 « Capture & ingestion GED » | RATIFIÉ | IG | ged-ingestion.wiring.spec.ts |
 | R148–R151 | Catalogue O-Live — Amendement PROPOSÉ (R148 → R151) · Bloc 27 « La recherche — trouver sans trahir » | RATIFIÉ | RS | recherche.wiring.spec.ts |
 | R174–R176 | Catalogue O-Live — Amendement PROPOSÉ (R174 → R176) · Bloc 36 « L'extraction comprend le document » | RATIFIÉ | OC | ocr-extraction.wiring.spec.ts |
-| R186–R188 | Catalogue O-Live — Amendement PROPOSÉ (R186 → R188) · Bloc 40 « La relation se lit, le geste se motive, le conseil se tr | RATIFIÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R186–R188 | Catalogue O-Live — Amendement PROPOSÉ (R186 → R188) · Bloc 40 « La relation se lit, le geste se motive, le conseil se tr | RATIFIÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R248–R252 | Catalogue O-Live — Amendement (R248 → R252) · Bloc « La porte CPSI est un rejeu » | PROPOSÉ | AW, CP, PA, PC, RC | fat-cpsi.e2e-spec.ts, screens.test.tsx, fat-charge-cpsi.e2e-spec.ts, fat-canon-anciens.e2e-spec.ts |
 | R39, R239–R242, R246 | language: fr | RATIFIÉ | TA | fat-vague16.e2e-spec.ts, fat-vague17.e2e-spec.ts |
+| R44, R102, R250 | Audit — Name screening & matching dans O-Live | PROPOSÉ | SF | aml-gap.wiring.spec.ts, fat-aml-async.e2e-spec.ts, fat-aml-btl.e2e-spec.ts, fat-aml-calibrage.e2e-spec.ts |
+| R44, R48, R189–R221 | GAP ANALYSIS — Règles AML absentes d'O-Live (tous contextes) | PROPOSÉ | CB, WC | aml-gap.wiring.spec.ts, chaines.wiring.spec.ts, fat-aml-dq.e2e-spec.ts, FilterBar.test.tsx |
 | R44, R56, R104–R116 | Catalogue O-Live — Patch v4.1 → v4.2 (RATIFICATION du 19.07.2026) | PROPOSÉ | GD, GR, PF | ged-avance.wiring.spec.ts, ged.wiring.spec.ts, retention.wiring.spec.ts, golden-record.projector.spec.ts |
 | R44, R48, R239, R243–R246 | language: fr | RATIFIÉ | NB, TA | fat-vague17.e2e-spec.ts, fat-vague16.e2e-spec.ts |
 | R177–R179 | Catalogue O-Live — Amendement PROPOSÉ (R177 → R179) · Bloc 37 « Le module est une licence » | RATIFIÉ | LC | vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
+| R48–R49, R436 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
 | R70, R94–R95, R316–R317, R319–R320 | CANON — DÉCISIONS PO : BACS À SABLE + CONSOLE ÉDITEUR (enregistré 2026-07-29, RATIFIÉ) | PROPOSÉ | BS, VE | fat-bs.e2e-spec.ts, fat-canon-derniers.e2e-spec.ts, screens.test.tsx, fat-degel-v8.e2e-spec.ts |
-| R115, R138–R139, R144, R146, R148–R151, R156–R159 | Note de câblage — Les chaînes (CB-01..06) · Lot 30 | PROPOSÉ | CB | chaines.wiring.spec.ts |
+| R115, R138–R139, R144, R146, R148–R151, R156–R159 | Note de câblage — Les chaînes (CB-01..06) · Lot 30 | PROPOSÉ | CB | aml-gap.wiring.spec.ts, chaines.wiring.spec.ts, fat-aml-dq.e2e-spec.ts, FilterBar.test.tsx |
 | R119 | Erratum R119 — `APPROVED` → `VALIDATED` (19.07.2026, soir) | PROPOSÉ | OB | onboarding.wiring.spec.ts |
 | R125–R127, R189, R206 | language: fr | PROPOSÉ | — | — |
 | R127, R133 | language: fr | PROPOSÉ | — | — |
 | R180–R182 | Catalogue O-Live — Amendement PROPOSÉ (R180 → R182) · Bloc 38 « L'hébergeur est un choix, la preuve n'en est pas un » | RATIFIÉ | CV, GX | coffre.wiring.spec.ts, ged-externe.wiring.spec.ts |
 | R172 | Note de câblage — KYC ↔ Workflow gouverné (KW-01..05) · Lot 35 | PROPOSÉ | KW | kyc-workflow.chaine.wiring.spec.ts |
 | R177, R179 | Erratum E3 — 22.07.2026 · Dates relatives dans le spec Licence vendor (R177→R179) | PROPOSÉ | LC | vendor-license.wiring.spec.ts, fat-degel-v8.e2e-spec.ts, screens.test.tsx |
-| R186–R187 | Erratum E1 — 21.07.2026 · Nommage du RM dans le module CRM (R186) | PROPOSÉ | CR | crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
+| R186–R187 | Erratum E1 — 21.07.2026 · Nommage du RM dans le module CRM (R186) | PROPOSÉ | CR | aml-gap.wiring.spec.ts, crm.wiring.spec.ts, fat-vague5.e2e-spec.ts |
 | R189–R206 | language: fr | PROPOSÉ | — | — |
 | R207–R221 | language: fr | PROPOSÉ | IS | islamic-screening.wiring.spec.ts |
-| R221–R222, R230–R231, R238 | Règles PROPOSÉES R222..R238 — GELÉES (attente validation Ali) | RATIFIÉ | BT, FO | fat-vague14.e2e-spec.ts, fat-vague13.e2e-spec.ts |
+| R221–R222, R230–R231, R238 | Règles PROPOSÉES R222..R238 — GELÉES (attente validation Ali) | RATIFIÉ | BT, FO | business-trip-moteur.e2e-spec.ts, fat-vague14.e2e-spec.ts, fe-bt-evol.test.tsx, fat-vague13.e2e-spec.ts |
 | R324–R327 | CANON — SOLDE DES 4 DERNIERS ÉCARTS (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | LN, OF, PC | fat-solde4-i18n.e2e-spec.ts, screens.test.tsx, kyc-service.spec.ts, fat-canon-derniers.e2e-spec.ts |
 | R328–R330 | CANON — VAGUE DE CLÔTURE PRÉ-PILOTE (enregistré 2026-07-29, statut RATIFIÉ) | RATIFIÉ | DM, JW, RZ, SW | fat-cloture-demo.e2e-spec.ts, seed-demo-gwb.seed.ts, test.mjs, fat-cloture-jwt.e2e-spec.ts |
+| R432 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R432, R436 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R433 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R434 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R437 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
+| R438 | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
 | — | O-Live GED — Référence technique | PROPOSÉ | — | — |
 | — | Note E2 — 21.07.2026 · `Document.nom` est le champ canonique | PROPOSÉ | — | — |
+| — | language: fr | PROPOSÉ | WD | webdav-storage.wiring.spec.ts, wir.wiring.spec.ts, workflow-designer.e2e-spec.ts, fe-wd-designer.test.tsx |
 
 ## c) Paramètres tenant R-Q (`spec/questionnaire-R-Q.md`)
 

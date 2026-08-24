@@ -1,5 +1,6 @@
 import React from "react";
 import { tokens } from "../theme/tokens";
+import { langue, formatDate } from "../lib/i18n";
 
 // Composant UNIQUE de visa (SPEC-FRONT-CÂBLAGE v2 §1.1, invariant R15) : rôle requis, statut,
 // signataire, horodatage. Le contrôle réel (exclusion 4-yeux R13, rôle) reste côté serveur ;
@@ -17,6 +18,6 @@ export function VisaBadge({ visa }: { visa: Visa }) {
     <div><strong>{visa.section}</strong> <span style={{ color: tokens.color.muted }}>· rôle requis {visa.roleRequis}</span></div>
     <div style={{ color: couleur, fontWeight: 700 }}>{visa.statut}{visa.verdict ? ` · ${visa.verdict}` : ""}</div>
     {signe && <div style={{ color: tokens.color.muted, fontSize: 11 }}>
-      signé par {visa.signePar}{visa.signeAt ? ` le ${new Date(visa.signeAt).toLocaleString()}` : ""}</div>}
+      signé par {visa.signePar}{visa.signeAt ? ` le ${formatDate(visa.signeAt, langue(), { dateStyle: "short", timeStyle: "short" })}` : ""}</div>}
   </div>;
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { isDemoMode } from "../../lib/api";
 import { DemoModeBanner, DEMO_MESSAGE } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 
 // Écran « Corroboration KYC » (Vague 5). Quand un champ d'identité DIVERGE entre dossiers,
 // le CO le signale (POST /v1/personnes/:id/corroboration, R36) : O-Live ouvre un dossier
@@ -16,6 +17,7 @@ export function CorroborationKyc() {
   const [dossierId, setDossierId] = useState("");
   const [constat, setConstat] = useState("");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   async function signaler() {
     setMsg("");
@@ -32,6 +34,7 @@ export function CorroborationKyc() {
   const inp = { padding: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 13 };
   const btn = { ...inp, cursor: "pointer", background: "#4A6B28", color: "#fff", border: "none" };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>Corroboration KYC — divergence d'identité → Central File (R36)</h3>
     <p style={{ fontSize: 12, color: "#777" }}>Le signalement ouvre un dossier et une tâche ; il ne modifie AUCUNE donnée
@@ -43,7 +46,10 @@ export function CorroborationKyc() {
       </select>
       <input style={inp} placeholder="kycFileId (dossier concerné)" value={dossierId} onChange={(e) => setDossierId(e.target.value)}/>
       <input style={{ ...inp, flex: 1 }} placeholder="constat (ex. « Nom A vs Nom B »)" value={constat} onChange={(e) => setConstat(e.target.value)}/>
-      <button style={btn} onClick={signaler} disabled={!personId}>Signaler la divergence</button>
+      <button style={btn} disabled={!personId} onClick={() => ask({ title: "Signaler une divergence d'identité (R36)",
+        message: "Ouvre un dossier Central File + une tâche de corroboration. Aucune donnée n'est modifiée avant décision humaine.",
+        items: [{ label: `Champ : ${champ}`, ok: true }, { label: dossierId ? `Dossier ${dossierId} : ${constat || "(sans constat)"}` : "Aucun dossier ciblé", ok: !!dossierId }],
+        confirmLabel: "Signaler", onConfirm: signaler })}>Signaler la divergence</button>
     </div>
     {msg && <div style={{ margin: "8px 0", padding: 8, borderRadius: 6, background: "#f3f0e8", fontSize: 13 }}>{msg}</div>}
   </div>;

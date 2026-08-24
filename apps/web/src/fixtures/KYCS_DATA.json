@@ -1,0 +1,4252 @@
+[
+  {
+    "id": "KYC-KYC-2026-CH-3693-R1",
+    "code": "KYC-2026-CH-3693-R1",
+    "clientId": "CLI-00001",
+    "clientName": "Suzuki Ltd",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 22,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "AML",
+    "rm": "Patrick Durand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "DOM",
+    "cdbForm": "A",
+    "uboName": "Hana Inoue",
+    "uboShare": "73%",
+    "aum": "CHF 3.7M",
+    "sector": "Santé",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2025-02-10",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 43,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-03-01",
+        "actor": "Isabelle Vernet (CO Senior)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-GB-6782-R1",
+    "code": "KYC-2026-GB-6782-R1",
+    "clientId": "CLI-00002",
+    "clientName": "Bruno Foundation",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 37,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Lucie Morel",
+    "co": "Paul Meier (CO)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "FOND",
+    "cdbForm": "S",
+    "uboName": "Esposito Investments",
+    "uboShare": "85%",
+    "aum": "CHF 725k",
+    "sector": "Retail / Distribution",
+    "segment": "Mass Affluent",
+    "tags": [
+      "Fondation",
+      "CRS-GB"
+    ],
+    "createdAt": "2025-01-10",
+    "nextReview": "2027-03-29",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-03-06",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-1321-R1",
+    "code": "KYC-2026-FR-1321-R1",
+    "clientId": "CLI-00003",
+    "clientName": "Anne Greco",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 12,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Paul Meier (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Morin Trust",
+    "uboShare": "97%",
+    "aum": "CHF 280k",
+    "sector": "Industrie",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2026-01-29",
+    "nextReview": "2027-02-17",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-02-02",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-5189-R1",
+    "code": "KYC-2024-CH-5189-R1",
+    "clientId": "CLI-00004",
+    "clientName": "Tanaka SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 9,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Nils Larsen",
+    "uboShare": "59%",
+    "aum": "CHF 3.4M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-IT"
+    ],
+    "createdAt": "2023-03-06",
+    "nextReview": "2027-03-03",
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-07-19",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-7122-R2",
+    "code": "KYC-2026-CH-7122-R2",
+    "clientId": "CLI-00004",
+    "clientName": "Tanaka SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-5189-R1",
+    "workflow": "SDD",
+    "riskScore": 9,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Jean-Paul Favre",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Nils Larsen",
+    "uboShare": "59%",
+    "aum": "CHF 3.4M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-IT"
+    ],
+    "createdAt": "2025-07-25",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 50,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-11-03",
+        "actor": "Isabelle Vernet (CO Senior)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2025-FR-2281-R1",
+    "code": "KYC-2025-FR-2281-R1",
+    "clientId": "CLI-00005",
+    "clientName": "Fortin Holding",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Olga Simon",
+    "uboShare": "81%",
+    "aum": "CHF 29.9M",
+    "sector": "Immobilier",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2025-04-19",
+    "nextReview": "2027-11-20",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-02-11",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-9644-R2",
+    "code": "KYC-2026-FR-9644-R2",
+    "clientId": "CLI-00005",
+    "clientName": "Fortin Holding",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2025-FR-2281-R1",
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Olga Simon",
+    "uboShare": "81%",
+    "aum": "CHF 29.9M",
+    "sector": "Immobilier",
+    "segment": "HNWI",
+    "tags": [
+      "R2",
+      "CRS-FR"
+    ],
+    "createdAt": "2025-04-10",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2026-02-21",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-GB-3066-R1",
+    "code": "KYC-2026-GB-3066-R1",
+    "clientId": "CLI-00007",
+    "clientName": "Mohamed Demir",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 22,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "COMITE",
+    "rm": "Jean-Paul Favre",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Laura Tremblay",
+    "uboShare": "47%",
+    "aum": "CHF 4.7M",
+    "sector": "Private equity",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-GB"
+    ],
+    "createdAt": "2026-03-02",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 87,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-08-15",
+        "actor": "Resp. AML — Hana Müller",
+        "action": "Screening AML — résultats reçus",
+        "phase": "AML"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-8451-R1",
+    "code": "KYC-2026-CH-8451-R1",
+    "clientId": "CLI-00011",
+    "clientName": "Bianchi Fund",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 26,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sophie Berger",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Grace Larsen",
+    "uboShare": "34%",
+    "aum": "CHF 2.7M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-MC"
+    ],
+    "createdAt": "2026-03-06",
+    "nextReview": "2027-08-16",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-01-12",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-DE-5871-R1",
+    "code": "KYC-2026-DE-5871-R1",
+    "clientId": "CLI-00012",
+    "clientName": "Svensson GmbH",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 19,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ming Chen",
+    "co": "Marc Dubois (CO)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "SARL",
+    "cdbForm": "K",
+    "uboName": "Anne Morin",
+    "uboShare": "82%",
+    "aum": "CHF 2.2M",
+    "sector": "Private equity",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-DE"
+    ],
+    "createdAt": "2025-09-13",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 61,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-02-09",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-DE-7553-R1",
+    "code": "KYC-2026-DE-7553-R1",
+    "clientId": "CLI-00013",
+    "clientName": "Galliano Trust",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Marc Dubois (CO)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "TRUST",
+    "cdbForm": "T",
+    "uboName": "Ahmed Romano",
+    "uboShare": "36%",
+    "aum": "CHF 402k",
+    "sector": "Media",
+    "segment": "Mass Affluent",
+    "tags": [
+      "Trust",
+      "CRS-DE"
+    ],
+    "createdAt": "2026-02-02",
+    "nextReview": "2027-04-25",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-08-12",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6205-R1",
+    "code": "KYC-2026-CH-6205-R1",
+    "clientId": "CLI-00015",
+    "clientName": "Wilhelm Robert",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 81,
+    "risk": "HIGH",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "COMITE",
+    "rm": "Sixtine Marchand",
+    "co": "Paul Meier (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Julia Moreau",
+    "uboShare": "78%",
+    "aum": "CHF 201k",
+    "sector": "Immobilier",
+    "segment": "Mass Affluent",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "createdAt": "2025-09-25",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 87,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-06-25",
+        "actor": "Resp. AML — Hana Müller",
+        "action": "Screening AML — résultats reçus",
+        "phase": "AML"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-5912-R1",
+    "code": "KYC-2026-CH-5912-R1",
+    "clientId": "CLI-00016",
+    "clientName": "Roy Family Office",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 47,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Paul Meier (CO)",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Quentin Roux",
+    "uboShare": "75%",
+    "aum": "CHF 14.5M",
+    "sector": "Technologie",
+    "segment": "HNWI",
+    "tags": [
+      "FATCA",
+      "CRS-US"
+    ],
+    "createdAt": "2026-02-28",
+    "nextReview": "2027-10-05",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-05-20",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-2423-R1",
+    "code": "KYC-2026-CH-2423-R1",
+    "clientId": "CLI-00017",
+    "clientName": "Kılıç Holding",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 15,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Xu Nakamura",
+    "uboShare": "41%",
+    "aum": "CHF 377k",
+    "sector": "Private equity",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-BE"
+    ],
+    "createdAt": "2025-12-19",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 47,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-08-06",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2025-CH-6672-R1",
+    "code": "KYC-2025-CH-6672-R1",
+    "clientId": "CLI-00018",
+    "clientName": "Roux Family Office",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 11,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ming Chen",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Hans Martin",
+    "uboShare": "36%",
+    "aum": "CHF 28.8M",
+    "sector": "Industrie",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2024-12-18",
+    "nextReview": "2027-03-01",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-03-07",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-4238-R2",
+    "code": "KYC-2026-CH-4238-R2",
+    "clientId": "CLI-00018",
+    "clientName": "Roux Family Office",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2025-CH-6672-R1",
+    "workflow": "SDD",
+    "riskScore": 11,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ming Chen",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Hans Martin",
+    "uboShare": "36%",
+    "aum": "CHF 28.8M",
+    "sector": "Industrie",
+    "segment": "HNWI",
+    "tags": [
+      "R2",
+      "CRS-CH"
+    ],
+    "createdAt": "2026-06-08",
+    "nextReview": "2027-11-12",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-10-19",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-GB-2786-R1",
+    "code": "KYC-2026-GB-2786-R1",
+    "clientId": "CLI-00019",
+    "clientName": "Colombo SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 34,
+    "risk": "LOW",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ali Gharsallah",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Weber & Associates",
+    "uboShare": "85%",
+    "aum": "CHF 943k",
+    "sector": "Juridique / Conseil",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-GB"
+    ],
+    "createdAt": "2025-12-06",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-12-29",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-3403-R1",
+    "code": "KYC-2026-CH-3403-R1",
+    "clientId": "CLI-00022",
+    "clientName": "Zayd Svensson",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 31,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "SAISIE",
+    "rm": "Sixtine Marchand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Yasmine Nguyen",
+    "uboShare": "62%",
+    "aum": "CHF 3.9M",
+    "sector": "Technologie",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-CN"
+    ],
+    "createdAt": "2025-10-25",
+    "nextReview": null,
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 24,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-06-28",
+        "actor": "Sixtine Marchand",
+        "action": "Sections RM complétées",
+        "phase": "SAISIE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-4307-R1",
+    "code": "KYC-2026-CH-4307-R1",
+    "clientId": "CLI-00033",
+    "clientName": "Bouchard SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 71,
+    "risk": "HIGH",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Sven Inoue",
+    "uboShare": "71%",
+    "aum": "CHF 2.7M",
+    "sector": "Agriculture",
+    "segment": "Affluent",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "createdAt": "2025-06-03",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 31,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-01-31",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-4223-R1",
+    "code": "KYC-2024-CH-4223-R1",
+    "clientId": "CLI-00034",
+    "clientName": "Françoise Lindqvist",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 90,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Viktor Roy",
+    "uboShare": "71%",
+    "aum": "CHF 1.8M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "PEP-Hit",
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "createdAt": "2024-04-06",
+    "nextReview": "2027-07-07",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-09-24",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-CH-2742-R2",
+    "code": "KYC-2023-CH-2742-R2",
+    "clientId": "CLI-00034",
+    "clientName": "Françoise Lindqvist",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-4223-R1",
+    "workflow": "EDD",
+    "riskScore": 90,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Viktor Roy",
+    "uboShare": "71%",
+    "aum": "CHF 1.8M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "R2",
+      "CRS-KY"
+    ],
+    "createdAt": "2023-04-01",
+    "nextReview": "2027-02-15",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-07-28",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-8836-R3",
+    "code": "KYC-2026-CH-8836-R3",
+    "clientId": "CLI-00034",
+    "clientName": "Françoise Lindqvist",
+    "revision": 3,
+    "previousKycId": "KYC-KYC-2023-CH-2742-R2",
+    "workflow": "EDD",
+    "riskScore": 90,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Viktor Roy",
+    "uboShare": "71%",
+    "aum": "CHF 1.8M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "R3",
+      "CRS-KY"
+    ],
+    "createdAt": "2026-02-09",
+    "nextReview": "2027-04-14",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-02-10",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-8765-R1",
+    "code": "KYC-2026-FR-8765-R1",
+    "clientId": "CLI-00035",
+    "clientName": "Odile Kumar",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 15,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Paul Meier (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Klaus Johansson",
+    "uboShare": "49%",
+    "aum": "CHF 663k",
+    "sector": "Finance & Asset management",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2025-07-23",
+    "nextReview": "2027-07-31",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-10-18",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-4163-R1",
+    "code": "KYC-2024-CH-4163-R1",
+    "clientId": "CLI-00037",
+    "clientName": "Yılmaz SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 42,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Paul Meier (CO)",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Grace Kobayashi",
+    "uboShare": "94%",
+    "aum": "CHF 4.6M",
+    "sector": "Agriculture",
+    "segment": "Affluent",
+    "tags": [
+      "FATCA",
+      "CRS-US"
+    ],
+    "createdAt": "2023-06-27",
+    "nextReview": "2027-08-14",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-12-02",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9441-R2",
+    "code": "KYC-2026-CH-9441-R2",
+    "clientId": "CLI-00037",
+    "clientName": "Yılmaz SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-4163-R1",
+    "workflow": "CDD",
+    "riskScore": 42,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Paul Meier (CO)",
+    "country": "États-Unis",
+    "countryCode": "US",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Grace Kobayashi",
+    "uboShare": "94%",
+    "aum": "CHF 4.6M",
+    "sector": "Agriculture",
+    "segment": "Affluent",
+    "tags": [
+      "FATCA",
+      "R2",
+      "CRS-US"
+    ],
+    "createdAt": "2026-02-13",
+    "nextReview": "2027-04-21",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-04-22",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6333-R1",
+    "code": "KYC-2026-CH-6333-R1",
+    "clientId": "CLI-00039",
+    "clientName": "Arslan Family Office",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 33,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Lucie Morel",
+    "co": "Marc Dubois (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Grace Larsen",
+    "uboShare": "71%",
+    "aum": "CHF 25.1M",
+    "sector": "Négoce matières premières",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-AE"
+    ],
+    "createdAt": "2025-12-27",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 50,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-02-11",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-2331-R1",
+    "code": "KYC-2024-CH-2331-R1",
+    "clientId": "CLI-00041",
+    "clientName": "Leroy Assoc.",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ali Gharsallah",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "ASSO",
+    "cdbForm": "A",
+    "uboName": "Delphine Lindgren",
+    "uboShare": "46%",
+    "aum": "CHF 4.7M",
+    "sector": "Finance & Asset management",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-AE"
+    ],
+    "createdAt": "2023-06-16",
+    "nextReview": "2027-02-20",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-07-07",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-2931-R2",
+    "code": "KYC-2026-CH-2931-R2",
+    "clientId": "CLI-00041",
+    "clientName": "Leroy Assoc.",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-2331-R1",
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ali Gharsallah",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "ASSO",
+    "cdbForm": "A",
+    "uboName": "Delphine Lindgren",
+    "uboShare": "46%",
+    "aum": "CHF 4.7M",
+    "sector": "Finance & Asset management",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-AE"
+    ],
+    "createdAt": "2025-11-02",
+    "nextReview": "2027-05-26",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-11-07",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-7547-R1",
+    "code": "KYC-2026-CH-7547-R1",
+    "clientId": "CLI-00043",
+    "clientName": "Larsen SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 85,
+    "risk": "HIGH",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ali Gharsallah",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Panama",
+    "countryCode": "PA",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Uwe Al-Hamdan",
+    "uboShare": "18%",
+    "aum": "CHF 15.6M",
+    "sector": "Media",
+    "segment": "HNWI",
+    "tags": [
+      "EDD",
+      "Offshore",
+      "CRS-PA"
+    ],
+    "createdAt": "2025-12-06",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-12-03",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-3667-R1",
+    "code": "KYC-2026-CH-3667-R1",
+    "clientId": "CLI-00045",
+    "clientName": "Petrov SCS",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 62,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "SCS",
+    "cdbForm": "K",
+    "uboName": "Groupe Al-Harbi",
+    "uboShare": "64%",
+    "aum": "CHF 915k",
+    "sector": "Retail / Distribution",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-CN"
+    ],
+    "createdAt": "2026-03-18",
+    "nextReview": "2027-07-18",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-09-30",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-1280-R1",
+    "code": "KYC-2026-CH-1280-R1",
+    "clientId": "CLI-00048",
+    "clientName": "Fatima Kumar",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 21,
+    "risk": "LOW",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Paul Meier (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Boris Moreau",
+    "uboShare": "35%",
+    "aum": "CHF 9.9M",
+    "sector": "Finance & Asset management",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2025-11-08",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-05-11",
+        "actor": "Paul Meier (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9749-R1",
+    "code": "KYC-2026-CH-9749-R1",
+    "clientId": "CLI-00052",
+    "clientName": "Nielsen Family Office",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 7,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Nadia Çelik",
+    "uboShare": "100%",
+    "aum": "CHF 1.5M",
+    "sector": "Négoce matières premières",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-MC"
+    ],
+    "createdAt": "2025-06-18",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 67,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2026-02-20",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0617-R1",
+    "code": "KYC-2026-CH-0617-R1",
+    "clientId": "CLI-00053",
+    "clientName": "Isabelle Gauthier",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 18,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Lucie Morel",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Hans Kowalski",
+    "uboShare": "82%",
+    "aum": "CHF 11.3M",
+    "sector": "Media",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2025-06-30",
+    "nextReview": "2027-02-26",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-11-26",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-1579-R1",
+    "code": "KYC-2026-CH-1579-R1",
+    "clientId": "CLI-00063",
+    "clientName": "Carlos Dubois",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 17,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Kenji Bernard",
+    "uboShare": "47%",
+    "aum": "CHF 1.1M",
+    "sector": "Négoce matières premières",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-LU"
+    ],
+    "createdAt": "2026-06-03",
+    "nextReview": "2027-01-05",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-12-20",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-7028-R1",
+    "code": "KYC-2026-CH-7028-R1",
+    "clientId": "CLI-00068",
+    "clientName": "Luca Dupont",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 27,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Sophie Berger",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Joëlle Tanaka",
+    "uboShare": "58%",
+    "aum": "CHF 25.4M",
+    "sector": "Négoce matières premières",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-IT"
+    ],
+    "createdAt": "2025-07-13",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 58,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-08-05",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-3848-R1",
+    "code": "KYC-2026-CH-3848-R1",
+    "clientId": "CLI-00069",
+    "clientName": "Nadia Gauthier",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 8,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "SAISIE",
+    "rm": "Jean-Paul Favre",
+    "co": "Paul Meier (CO)",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Kristina Martin",
+    "uboShare": "34%",
+    "aum": "CHF 27.7M",
+    "sector": "Juridique / Conseil",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-LU"
+    ],
+    "createdAt": "2026-04-25",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 2,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-06-03",
+        "actor": "Jean-Paul Favre",
+        "action": "Sections RM complétées",
+        "phase": "SAISIE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-7209-R1",
+    "code": "KYC-2026-CH-7209-R1",
+    "clientId": "CLI-00070",
+    "clientName": "Odile Lefebvre",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 64,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Russie",
+    "countryCode": "RU",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Anne Morin",
+    "uboShare": "65%",
+    "aum": "CHF 3.9M",
+    "sector": "Industrie",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-RU"
+    ],
+    "createdAt": "2025-05-05",
+    "nextReview": "2027-06-27",
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-03-25",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9314-R1",
+    "code": "KYC-2026-CH-9314-R1",
+    "clientId": "CLI-00072",
+    "clientName": "Tina Kato",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 97,
+    "risk": "HIGH",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Lucie Morel",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Cayman Islands",
+    "countryCode": "KY",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Katarina Al-Harbi",
+    "uboShare": "38%",
+    "aum": "CHF 1.9M",
+    "sector": "Négoce matières premières",
+    "segment": "Affluent",
+    "tags": [
+      "PEP-Hit",
+      "EDD",
+      "Offshore",
+      "CRS-KY"
+    ],
+    "createdAt": "2025-09-23",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 23,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-08-09",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-CH-1818-R1",
+    "code": "KYC-2023-CH-1818-R1",
+    "clientId": "CLI-00075",
+    "clientName": "Al-Qassimi SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 60,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois (CO)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Tanaka Wealth Management",
+    "uboShare": "31%",
+    "aum": "CHF 3.3M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-CN"
+    ],
+    "createdAt": "2023-01-05",
+    "nextReview": "2027-10-26",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-06-02",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-4022-R2",
+    "code": "KYC-2026-CH-4022-R2",
+    "clientId": "CLI-00075",
+    "clientName": "Al-Qassimi SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2023-CH-1818-R1",
+    "workflow": "CDD",
+    "riskScore": 60,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois (CO)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Tanaka Wealth Management",
+    "uboShare": "31%",
+    "aum": "CHF 3.3M",
+    "sector": "Juridique / Conseil",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-CN"
+    ],
+    "createdAt": "2025-07-30",
+    "nextReview": "2027-09-12",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-03-17",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9930-R1",
+    "code": "KYC-2026-CH-9930-R1",
+    "clientId": "CLI-00080",
+    "clientName": "Maria Fortin",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 57,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Ali Gharsallah",
+    "co": "Paul Meier (CO)",
+    "country": "Russie",
+    "countryCode": "RU",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Anne Svensson",
+    "uboShare": "88%",
+    "aum": "CHF 7.5M",
+    "sector": "Juridique / Conseil",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-RU"
+    ],
+    "createdAt": "2025-09-16",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 56,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-07-25",
+        "actor": "Paul Meier (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6126-R1",
+    "code": "KYC-2026-CH-6126-R1",
+    "clientId": "CLI-00083",
+    "clientName": "Eriksson Fund",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Fabio Weber",
+    "uboShare": "72%",
+    "aum": "CHF 720k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2026-03-12",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-09-23",
+        "actor": "Marc Dubois (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-1169-R1",
+    "code": "KYC-2026-CH-1169-R1",
+    "clientId": "CLI-00084",
+    "clientName": "Youssef Gagnon",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 30,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Ming Chen",
+    "co": "Paul Meier (CO)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Nora Al-Rashid",
+    "uboShare": "35%",
+    "aum": "CHF 1.5M",
+    "sector": "Energie",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-IT"
+    ],
+    "createdAt": "2025-11-03",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 87,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-08-01",
+        "actor": "Resp. AML — Hana Müller",
+        "action": "Screening AML — résultats reçus",
+        "phase": "AML"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-GB-6730-R1",
+    "code": "KYC-2023-GB-6730-R1",
+    "clientId": "CLI-00099",
+    "clientName": "Boris Mancini",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 7,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Marc Dubois (CO)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Klaus Johansson",
+    "uboShare": "50%",
+    "aum": "CHF 16.1M",
+    "sector": "Négoce matières premières",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-GB"
+    ],
+    "createdAt": "2023-05-23",
+    "nextReview": "2027-11-22",
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-03-04",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-GB-2088-R2",
+    "code": "KYC-2026-GB-2088-R2",
+    "clientId": "CLI-00099",
+    "clientName": "Boris Mancini",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2023-GB-6730-R1",
+    "workflow": "SDD",
+    "riskScore": 7,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "COMITE",
+    "rm": "Sixtine Marchand",
+    "co": "Marc Dubois (CO)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Klaus Johansson",
+    "uboShare": "50%",
+    "aum": "CHF 16.1M",
+    "sector": "Négoce matières premières",
+    "segment": "HNWI",
+    "tags": [
+      "R2",
+      "CRS-GB"
+    ],
+    "createdAt": "2025-08-31",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 87,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-02-06",
+        "actor": "Resp. AML — Karl Sutter",
+        "action": "Screening AML — résultats reçus",
+        "phase": "AML"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-3092-R1",
+    "code": "KYC-2026-CH-3092-R1",
+    "clientId": "CLI-00100",
+    "clientName": "Bernard Trust",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 33,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "TRUST",
+    "cdbForm": "T",
+    "uboName": "Maria Hassan",
+    "uboShare": "50%",
+    "aum": "CHF 3.2M",
+    "sector": "Finance & Asset management",
+    "segment": "Affluent",
+    "tags": [
+      "Trust",
+      "CRS-CH"
+    ],
+    "createdAt": "2025-08-06",
+    "nextReview": "2027-05-03",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-04-01",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2025-CH-2138-R1",
+    "code": "KYC-2025-CH-2138-R1",
+    "clientId": "CLI-00101",
+    "clientName": "Bruno Holding",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 52,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Jean-Paul Favre",
+    "co": "Paul Meier (CO)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Youssef Tanaka",
+    "uboShare": "60%",
+    "aum": "CHF 3.9M",
+    "sector": "Agriculture",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-CN"
+    ],
+    "createdAt": "2024-02-16",
+    "nextReview": "2027-09-23",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-04-11",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0997-R2",
+    "code": "KYC-2026-CH-0997-R2",
+    "clientId": "CLI-00101",
+    "clientName": "Bruno Holding",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2025-CH-2138-R1",
+    "workflow": "CDD",
+    "riskScore": 52,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "AML",
+    "rm": "Jean-Paul Favre",
+    "co": "Paul Meier (CO)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Youssef Tanaka",
+    "uboShare": "60%",
+    "aum": "CHF 3.9M",
+    "sector": "Agriculture",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-CN"
+    ],
+    "createdAt": "2025-09-23",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 28,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-06-18",
+        "actor": "Paul Meier (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-1390-R1",
+    "code": "KYC-2026-CH-1390-R1",
+    "clientId": "CLI-00104",
+    "clientName": "Eriksson Family Office",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 40,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Brésil",
+    "countryCode": "BR",
+    "structCode": "FO",
+    "cdbForm": "K",
+    "uboName": "Erik Silva",
+    "uboShare": "34%",
+    "aum": "CHF 1.4M",
+    "sector": "Négoce matières premières",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-BR"
+    ],
+    "createdAt": "2026-01-30",
+    "nextReview": "2027-06-06",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-04-07",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9453-R1",
+    "code": "KYC-2026-CH-9453-R1",
+    "clientId": "CLI-00110",
+    "clientName": "Moreau Foundation",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "PENDING_APPROVAL",
+    "wfPhase": "COMITE",
+    "rm": "Ali Gharsallah",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "FOND",
+    "cdbForm": "S",
+    "uboName": "Boris Moreau",
+    "uboShare": "45%",
+    "aum": "CHF 4.3M",
+    "sector": "Santé",
+    "segment": "Affluent",
+    "tags": [
+      "Fondation",
+      "CRS-IT"
+    ],
+    "createdAt": "2026-01-27",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 44,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-05-03",
+        "actor": "Luca Romano (BRM)",
+        "action": "Score risque validé — comité SDD",
+        "phase": "COMITE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-3400-R1",
+    "code": "KYC-2026-CH-3400-R1",
+    "clientId": "CLI-00120",
+    "clientName": "Ahmed Ferrari",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 35,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "SAISIE",
+    "rm": "Sixtine Marchand",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Nora Al-Rashid",
+    "uboShare": "34%",
+    "aum": "CHF 568k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-AE"
+    ],
+    "createdAt": "2025-10-24",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 22,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-12-05",
+        "actor": "Sixtine Marchand",
+        "action": "Sections RM complétées",
+        "phase": "SAISIE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-9035-R1",
+    "code": "KYC-2026-FR-9035-R1",
+    "clientId": "CLI-00121",
+    "clientName": "Raj Roy",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 7,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "SAISIE",
+    "rm": "Valentina Rossi",
+    "co": "Paul Meier (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Mireille Şahin",
+    "uboShare": "69%",
+    "aum": "CHF 705k",
+    "sector": "Négoce matières premières",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2026-01-22",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 13,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-05-09",
+        "actor": "Valentina Rossi",
+        "action": "Sections RM complétées",
+        "phase": "SAISIE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-1909-R1",
+    "code": "KYC-2024-CH-1909-R1",
+    "clientId": "CLI-00127",
+    "clientName": "Aslan Fund",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Jean Demir",
+    "uboShare": "80%",
+    "aum": "CHF 502k",
+    "sector": "Négoce matières premières",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-IT"
+    ],
+    "createdAt": "2024-05-17",
+    "nextReview": "2027-09-19",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-08-10",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2025-CH-3417-R2",
+    "code": "KYC-2025-CH-3417-R2",
+    "clientId": "CLI-00127",
+    "clientName": "Aslan Fund",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-1909-R1",
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Jean Demir",
+    "uboShare": "80%",
+    "aum": "CHF 502k",
+    "sector": "Négoce matières premières",
+    "segment": "Mass Affluent",
+    "tags": [
+      "R2",
+      "CRS-IT"
+    ],
+    "createdAt": "2025-02-25",
+    "nextReview": "2027-11-24",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-07-29",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0475-R3",
+    "code": "KYC-2026-CH-0475-R3",
+    "clientId": "CLI-00127",
+    "clientName": "Aslan Fund",
+    "revision": 3,
+    "previousKycId": "KYC-KYC-2025-CH-3417-R2",
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Valentina Rossi",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Jean Demir",
+    "uboShare": "80%",
+    "aum": "CHF 502k",
+    "sector": "Négoce matières premières",
+    "segment": "Mass Affluent",
+    "tags": [
+      "R3",
+      "CRS-IT"
+    ],
+    "createdAt": "2025-06-20",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 37,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-11-19",
+        "actor": "Sarah Zimmermann (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6983-R1",
+    "code": "KYC-2026-CH-6983-R1",
+    "clientId": "CLI-00130",
+    "clientName": "Mancini GmbH",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 36,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Jean-Paul Favre",
+    "co": "Marc Dubois (CO)",
+    "country": "Singapour",
+    "countryCode": "SG",
+    "structCode": "SARL",
+    "cdbForm": "K",
+    "uboName": "Roux Investments",
+    "uboShare": "26%",
+    "aum": "CHF 355M",
+    "sector": "Energie",
+    "segment": "UHNWI",
+    "tags": [
+      "CRS-SG"
+    ],
+    "createdAt": "2025-06-22",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 57,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2026-02-03",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-CH-3172-R1",
+    "code": "KYC-2023-CH-3172-R1",
+    "clientId": "CLI-00142",
+    "clientName": "Johansson SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 15,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Kristina Roy",
+    "uboShare": "81%",
+    "aum": "CHF 2.2M",
+    "sector": "Santé",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-BE"
+    ],
+    "createdAt": "2023-02-07",
+    "nextReview": "2027-07-09",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-12-09",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0093-R2",
+    "code": "KYC-2026-CH-0093-R2",
+    "clientId": "CLI-00142",
+    "clientName": "Johansson SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2023-CH-3172-R1",
+    "workflow": "SDD",
+    "riskScore": 15,
+    "risk": "LOW",
+    "status": "PENDING_APPROVAL",
+    "wfPhase": "COMITE",
+    "rm": "Ralf Kessler",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Belgique",
+    "countryCode": "BE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Kristina Roy",
+    "uboShare": "81%",
+    "aum": "CHF 2.2M",
+    "sector": "Santé",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-BE"
+    ],
+    "createdAt": "2025-11-30",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-02-12",
+        "actor": "Pierre Martin (BRM)",
+        "action": "Score risque validé — comité SDD",
+        "phase": "COMITE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-9183-R1",
+    "code": "KYC-2024-CH-9183-R1",
+    "clientId": "CLI-00150",
+    "clientName": "Johansson SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Paul Meier (CO)",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Kenji Lindqvist",
+    "uboShare": "49%",
+    "aum": "CHF 372k",
+    "sector": "Industrie",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-HK"
+    ],
+    "createdAt": "2023-09-07",
+    "nextReview": "2026-05-18",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-06-21",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-7918-R2",
+    "code": "KYC-2026-CH-7918-R2",
+    "clientId": "CLI-00150",
+    "clientName": "Johansson SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-9183-R1",
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "DRAFT",
+    "wfPhase": "SAISIE",
+    "rm": "Ralf Kessler",
+    "co": "Paul Meier (CO)",
+    "country": "Hong Kong",
+    "countryCode": "HK",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Kenji Lindqvist",
+    "uboShare": "49%",
+    "aum": "CHF 372k",
+    "sector": "Industrie",
+    "segment": "Mass Affluent",
+    "tags": [
+      "R2",
+      "CRS-HK"
+    ],
+    "createdAt": "2025-09-10",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 23,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-12-12",
+        "actor": "Ralf Kessler",
+        "action": "Sections RM complétées",
+        "phase": "SAISIE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-0498-R1",
+    "code": "KYC-2026-FR-0498-R1",
+    "clientId": "CLI-00152",
+    "clientName": "Fortin Holding",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 15,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Marco Tanaka",
+    "uboShare": "98%",
+    "aum": "CHF 497M",
+    "sector": "Private equity",
+    "segment": "UHNWI",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2025-07-25",
+    "nextReview": "2027-05-01",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-02-03",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-7747-R1",
+    "code": "KYC-2024-CH-7747-R1",
+    "clientId": "CLI-00156",
+    "clientName": "Sofia Johansson",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 29,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Jean Demir",
+    "uboShare": "37%",
+    "aum": "CHF 2.2M",
+    "sector": "Media",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-IT"
+    ],
+    "createdAt": "2023-11-23",
+    "nextReview": "2027-03-03",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-10-30",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0853-R2",
+    "code": "KYC-2026-CH-0853-R2",
+    "clientId": "CLI-00156",
+    "clientName": "Sofia Johansson",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-7747-R1",
+    "workflow": "SDD",
+    "riskScore": 29,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "AML",
+    "rm": "Sixtine Marchand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Italie",
+    "countryCode": "IT",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Jean Demir",
+    "uboShare": "37%",
+    "aum": "CHF 2.2M",
+    "sector": "Media",
+    "segment": "Affluent",
+    "tags": [
+      "R2",
+      "CRS-IT"
+    ],
+    "createdAt": "2026-01-11",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 56,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-02-16",
+        "actor": "Isabelle Vernet (CO Senior)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-4266-R1",
+    "code": "KYC-2026-CH-4266-R1",
+    "clientId": "CLI-00163",
+    "clientName": "Al-Qassimi Trust",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 81,
+    "risk": "HIGH",
+    "status": "PENDING_APPROVAL",
+    "wfPhase": "COMITE",
+    "rm": "Lucie Morel",
+    "co": "Paul Meier (CO)",
+    "country": "Russie",
+    "countryCode": "RU",
+    "structCode": "TRUST",
+    "cdbForm": "T",
+    "uboName": "Chiara Çelik",
+    "uboShare": "50%",
+    "aum": "CHF 583k",
+    "sector": "Energie",
+    "segment": "Mass Affluent",
+    "tags": [
+      "EDD",
+      "Trust",
+      "CRS-RU"
+    ],
+    "createdAt": "2025-07-24",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "HIT",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2026-03-17",
+        "actor": "Anna Fischer (BRM)",
+        "action": "Score risque validé — comité EDD",
+        "phase": "COMITE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-CH-0820-R1",
+    "code": "KYC-2023-CH-0820-R1",
+    "clientId": "CLI-00164",
+    "clientName": "Watanabe SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 24,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sophie Berger",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Laura Bin Laden",
+    "uboShare": "34%",
+    "aum": "CHF 20.9M",
+    "sector": "Agriculture",
+    "segment": "HNWI",
+    "tags": [
+      "CRS-LU"
+    ],
+    "createdAt": "2022-08-09",
+    "nextReview": "2027-01-10",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-02-16",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6514-R2",
+    "code": "KYC-2026-CH-6514-R2",
+    "clientId": "CLI-00164",
+    "clientName": "Watanabe SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2023-CH-0820-R1",
+    "workflow": "SDD",
+    "riskScore": 24,
+    "risk": "LOW",
+    "status": "PENDING_APPROVAL",
+    "wfPhase": "COMITE",
+    "rm": "Sophie Berger",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Luxembourg",
+    "countryCode": "LU",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Laura Bin Laden",
+    "uboShare": "34%",
+    "aum": "CHF 20.9M",
+    "sector": "Agriculture",
+    "segment": "HNWI",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-LU"
+    ],
+    "createdAt": "2025-10-06",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-03-11",
+        "actor": "Pierre Martin (BRM)",
+        "action": "Score risque validé — comité SDD",
+        "phase": "COMITE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-DE-7282-R1",
+    "code": "KYC-2023-DE-7282-R1",
+    "clientId": "CLI-00167",
+    "clientName": "Lindqvist SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 23,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Ulrich Şahin",
+    "uboShare": "41%",
+    "aum": "CHF 828k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-DE"
+    ],
+    "createdAt": "2022-08-23",
+    "nextReview": "2027-07-23",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-03-06",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2023-DE-1903-R2",
+    "code": "KYC-2023-DE-1903-R2",
+    "clientId": "CLI-00167",
+    "clientName": "Lindqvist SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2023-DE-7282-R1",
+    "workflow": "SDD",
+    "riskScore": 23,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Ulrich Şahin",
+    "uboShare": "41%",
+    "aum": "CHF 828k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "R2",
+      "CRS-DE"
+    ],
+    "createdAt": "2022-03-10",
+    "nextReview": "2027-11-09",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-07-17",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-DE-3040-R3",
+    "code": "KYC-2026-DE-3040-R3",
+    "clientId": "CLI-00167",
+    "clientName": "Lindqvist SA",
+    "revision": 3,
+    "previousKycId": "KYC-KYC-2023-DE-1903-R2",
+    "workflow": "SDD",
+    "riskScore": 23,
+    "risk": "LOW",
+    "status": "PENDING_APPROVAL",
+    "wfPhase": "COMITE",
+    "rm": "Valentina Rossi",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Ulrich Şahin",
+    "uboShare": "41%",
+    "aum": "CHF 828k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "R3",
+      "CRS-DE"
+    ],
+    "createdAt": "2025-11-07",
+    "nextReview": null,
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-01-31",
+        "actor": "Luca Romano (BRM)",
+        "action": "Score risque validé — comité SDD",
+        "phase": "COMITE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-GB-6620-R1",
+    "code": "KYC-2026-GB-6620-R1",
+    "clientId": "CLI-00172",
+    "clientName": "Ito Holding",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois (CO)",
+    "country": "Royaume-Uni",
+    "countryCode": "GB",
+    "structCode": "HOLD",
+    "cdbForm": "K",
+    "uboName": "Niels Bianchi",
+    "uboShare": "51%",
+    "aum": "CHF 289M",
+    "sector": "Agriculture",
+    "segment": "UHNWI",
+    "tags": [
+      "CRS-GB"
+    ],
+    "createdAt": "2025-09-19",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 30,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2026-01-19",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-DE-6097-R1",
+    "code": "KYC-2024-DE-6097-R1",
+    "clientId": "CLI-00176",
+    "clientName": "Katarina Bergström",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 54,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois (CO)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Claire Yılmaz",
+    "uboShare": "83%",
+    "aum": "CHF 888k",
+    "sector": "Retail / Distribution",
+    "segment": "Mass Affluent",
+    "tags": [
+      "PEP-Hit",
+      "CRS-DE"
+    ],
+    "createdAt": "2024-03-05",
+    "nextReview": "2027-09-24",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-09-14",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-DE-5427-R2",
+    "code": "KYC-2026-DE-5427-R2",
+    "clientId": "CLI-00176",
+    "clientName": "Katarina Bergström",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-DE-6097-R1",
+    "workflow": "CDD",
+    "riskScore": 54,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois (CO)",
+    "country": "Allemagne",
+    "countryCode": "DE",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Claire Yılmaz",
+    "uboShare": "83%",
+    "aum": "CHF 888k",
+    "sector": "Retail / Distribution",
+    "segment": "Mass Affluent",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-DE"
+    ],
+    "createdAt": "2025-08-08",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 59,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-09-06",
+        "actor": "Marc Dubois (CO)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2024-CH-6961-R1",
+    "code": "KYC-2024-CH-6961-R1",
+    "clientId": "CLI-00184",
+    "clientName": "Al-Maktoum SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 53,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Inès Watanabe",
+    "uboShare": "48%",
+    "aum": "CHF 549k",
+    "sector": "Immobilier",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-CN"
+    ],
+    "createdAt": "2023-08-08",
+    "nextReview": "2027-03-29",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-03-20",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-6077-R2",
+    "code": "KYC-2026-CH-6077-R2",
+    "clientId": "CLI-00184",
+    "clientName": "Al-Maktoum SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2024-CH-6961-R1",
+    "workflow": "CDD",
+    "riskScore": 53,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Chine",
+    "countryCode": "CN",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Inès Watanabe",
+    "uboShare": "48%",
+    "aum": "CHF 549k",
+    "sector": "Immobilier",
+    "segment": "Mass Affluent",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-CN"
+    ],
+    "createdAt": "2026-04-09",
+    "nextReview": "2027-09-18",
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2024-05-16",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-1037-R1",
+    "code": "KYC-2026-CH-1037-R1",
+    "clientId": "CLI-00185",
+    "clientName": "David Al-Harbi",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 31,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ralf Kessler",
+    "co": "Sarah Zimmermann (CO)",
+    "country": "Monaco",
+    "countryCode": "MC",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Xu Petrov",
+    "uboShare": "63%",
+    "aum": "CHF 320k",
+    "sector": "Juridique / Conseil",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-MC"
+    ],
+    "createdAt": "2025-05-10",
+    "nextReview": "2027-01-04",
+    "screening": {
+      "ofac": "HIT",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-04-05",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-FR-3364-R1",
+    "code": "KYC-2026-FR-3364-R1",
+    "clientId": "CLI-00186",
+    "clientName": "Xavier Martin",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 31,
+    "risk": "LOW",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois (CO)",
+    "country": "France",
+    "countryCode": "FR",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Rita Roy",
+    "uboShare": "42%",
+    "aum": "CHF 1.5M",
+    "sector": "Finance & Asset management",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-FR"
+    ],
+    "createdAt": "2025-06-03",
+    "nextReview": "2027-06-06",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2026-01-07",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-0279-R1",
+    "code": "KYC-2026-CH-0279-R1",
+    "clientId": "CLI-00188",
+    "clientName": "Dubois Fund",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 34,
+    "risk": "LOW",
+    "status": "REJECTED",
+    "wfPhase": "APPROBATION",
+    "rm": "Valentina Rossi",
+    "co": "Marc Dubois (CO)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "FUND",
+    "cdbForm": "A",
+    "uboName": "Grace Çelik",
+    "uboShare": "77%",
+    "aum": "CHF 4.1M",
+    "sector": "Santé",
+    "segment": "Affluent",
+    "tags": [
+      "CRS-CH"
+    ],
+    "createdAt": "2025-07-01",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "HIT"
+    },
+    "totalPct": 96,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2024-10-17",
+        "actor": "Marc Dubois (CO)",
+        "action": "❌ Dossier rejeté — motif documenté",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-8149-R1",
+    "code": "KYC-2026-CH-8149-R1",
+    "clientId": "CLI-00191",
+    "clientName": "Kumar Trust",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 39,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "AML",
+    "rm": "Patrick Durand",
+    "co": "Isabelle Vernet (CO Senior)",
+    "country": "Suisse",
+    "countryCode": "CH",
+    "structCode": "TRUST",
+    "cdbForm": "T",
+    "uboName": "Younes Colombo",
+    "uboShare": "56%",
+    "aum": "CHF 22.3M",
+    "sector": "Agriculture",
+    "segment": "HNWI",
+    "tags": [
+      "Trust",
+      "CRS-CH"
+    ],
+    "createdAt": "2026-05-04",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 49,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-07-12",
+        "actor": "Isabelle Vernet (CO Senior)",
+        "action": "Revue compliance initiée",
+        "phase": "COMPLIANCE"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2025-CH-4682-R1",
+    "code": "KYC-2025-CH-4682-R1",
+    "clientId": "CLI-00193",
+    "clientName": "Nguyen SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 64,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Marc Dubois (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Amira Richard",
+    "uboShare": "89%",
+    "aum": "CHF 26.6M",
+    "sector": "Retail / Distribution",
+    "segment": "HNWI",
+    "tags": [
+      "PEP-Hit",
+      "CRS-AE"
+    ],
+    "createdAt": "2025-02-17",
+    "nextReview": "2027-09-22",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "HIT",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-10-27",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9173-R2",
+    "code": "KYC-2026-CH-9173-R2",
+    "clientId": "CLI-00193",
+    "clientName": "Nguyen SA",
+    "revision": 2,
+    "previousKycId": "KYC-KYC-2025-CH-4682-R1",
+    "workflow": "CDD",
+    "riskScore": 64,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "APPROBATION",
+    "rm": "Sixtine Marchand",
+    "co": "Marc Dubois (CO)",
+    "country": "EAU",
+    "countryCode": "AE",
+    "structCode": "SA",
+    "cdbForm": "K",
+    "uboName": "Amira Richard",
+    "uboShare": "89%",
+    "aum": "CHF 26.6M",
+    "sector": "Retail / Distribution",
+    "segment": "HNWI",
+    "tags": [
+      "PEP-Hit",
+      "R2",
+      "CRS-AE"
+    ],
+    "createdAt": "2025-05-31",
+    "nextReview": "2027-07-18",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 100,
+    "signedCount": 13,
+    "trail": [
+      {
+        "date": "2025-03-23",
+        "actor": "P. Durand + CEO",
+        "action": "✅ Approbation finale — four-eyes OK",
+        "phase": "APPROBATION"
+      }
+    ]
+  },
+  {
+    "id": "KYC-KYC-2026-CH-9923-R1",
+    "code": "KYC-2026-CH-9923-R1",
+    "clientId": "CLI-00198",
+    "clientName": "Sven Al-Farsi",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 50,
+    "risk": "MEDIUM",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois (CO)",
+    "country": "Mexique",
+    "countryCode": "MX",
+    "structCode": "PP",
+    "cdbForm": "A",
+    "uboName": "Henri Bianchi",
+    "uboShare": "89%",
+    "aum": "CHF 755k",
+    "sector": "Santé",
+    "segment": "Mass Affluent",
+    "tags": [
+      "CRS-MX"
+    ],
+    "createdAt": "2026-02-16",
+    "nextReview": null,
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "totalPct": 87,
+    "signedCount": 0,
+    "trail": [
+      {
+        "date": "2025-12-27",
+        "actor": "Responsable AML — Jean Blanc",
+        "action": "Screening AML — résultats reçus",
+        "phase": "AML"
+      }
+    ]
+  },
+  {
+    "id": "KYCF-90",
+    "code": "KYC-2026-CH-7000-R2",
+    "clientId": "CLI-9100",
+    "clientName": "Anna Keller",
+    "structCode": "PP",
+    "revision": 2,
+    "previousKycId": "KYC-2024-CH-1000-R1",
+    "workflow": "SDD",
+    "riskScore": 11,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Sophie Marchand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "HIT",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-01-10"
+  },
+  {
+    "id": "KYCF-91",
+    "code": "KYC-2026-FR-7001-R1",
+    "clientId": "CLI-9101",
+    "clientName": "Nguyen SA",
+    "structCode": "SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 48,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-02-10"
+  },
+  {
+    "id": "KYCF-92",
+    "code": "KYC-2026-DE-7002-R1",
+    "clientId": "CLI-9102",
+    "clientName": "Rossi Trust",
+    "structCode": "TRUST",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 85,
+    "risk": "HIGH",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Valentina Rossi",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-03-10"
+  },
+  {
+    "id": "KYCF-93",
+    "code": "KYC-2026-AE-7003-R2",
+    "clientId": "CLI-9103",
+    "clientName": "Al-Sabah Holding",
+    "structCode": "HOLD",
+    "revision": 2,
+    "previousKycId": "KYC-2024-AE-1003-R1",
+    "workflow": "SDD",
+    "riskScore": 22,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-04-10"
+  },
+  {
+    "id": "KYCF-94",
+    "code": "KYC-2026-SG-7004-R1",
+    "clientId": "CLI-9104",
+    "clientName": "Meunier Foundation",
+    "structCode": "FOND",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 59,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-05-10"
+  },
+  {
+    "id": "KYCF-95",
+    "code": "KYC-2026-GB-7005-R1",
+    "clientId": "CLI-9105",
+    "clientName": "Okafor Family Office",
+    "structCode": "FO",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 96,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Lucie Morel",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-06-10"
+  },
+  {
+    "id": "KYCF-96",
+    "code": "KYC-2026-CH-7006-R2",
+    "clientId": "CLI-9106",
+    "clientName": "Lena Lindberg",
+    "structCode": "PP",
+    "revision": 2,
+    "previousKycId": "KYC-2024-CH-1006-R1",
+    "workflow": "SDD",
+    "riskScore": 33,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Sophie Marchand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-01-10"
+  },
+  {
+    "id": "KYCF-97",
+    "code": "KYC-2026-FR-7007-R1",
+    "clientId": "CLI-9107",
+    "clientName": "Costa SA",
+    "structCode": "SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 70,
+    "risk": "HIGH",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-02-10"
+  },
+  {
+    "id": "KYCF-98",
+    "code": "KYC-2026-DE-7008-R1",
+    "clientId": "CLI-9108",
+    "clientName": "Haddad Trust",
+    "structCode": "TRUST",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 7,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Valentina Rossi",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-03-10"
+  },
+  {
+    "id": "KYCF-99",
+    "code": "KYC-2026-AE-7009-R2",
+    "clientId": "CLI-9109",
+    "clientName": "Brunner Holding",
+    "structCode": "HOLD",
+    "revision": 2,
+    "previousKycId": "KYC-2024-AE-1009-R1",
+    "workflow": "CDD",
+    "riskScore": 44,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-04-10"
+  },
+  {
+    "id": "KYCF-910",
+    "code": "KYC-2026-SG-7010-R1",
+    "clientId": "CLI-9110",
+    "clientName": "Sato Foundation",
+    "structCode": "FOND",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 81,
+    "risk": "HIGH",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-05-10"
+  },
+  {
+    "id": "KYCF-911",
+    "code": "KYC-2026-GB-7011-R1",
+    "clientId": "CLI-9111",
+    "clientName": "Van Dijk Family Office",
+    "structCode": "FO",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 18,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Lucie Morel",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "HIT",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-06-10"
+  },
+  {
+    "id": "KYCF-912",
+    "code": "KYC-2026-CH-7012-R2",
+    "clientId": "CLI-9112",
+    "clientName": "Anna Keller",
+    "structCode": "PP",
+    "revision": 2,
+    "previousKycId": "KYC-2024-CH-1012-R1",
+    "workflow": "CDD",
+    "riskScore": 55,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Sophie Marchand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-01-10"
+  },
+  {
+    "id": "KYCF-913",
+    "code": "KYC-2026-FR-7013-R1",
+    "clientId": "CLI-9113",
+    "clientName": "Nguyen SA",
+    "structCode": "SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "EDD",
+    "riskScore": 92,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-02-10"
+  },
+  {
+    "id": "KYCF-914",
+    "code": "KYC-2026-DE-7014-R1",
+    "clientId": "CLI-9114",
+    "clientName": "Rossi Trust",
+    "structCode": "TRUST",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 29,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Valentina Rossi",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-03-10"
+  },
+  {
+    "id": "KYCF-915",
+    "code": "KYC-2026-AE-7015-R2",
+    "clientId": "CLI-9115",
+    "clientName": "Al-Sabah Holding",
+    "structCode": "HOLD",
+    "revision": 2,
+    "previousKycId": "KYC-2024-AE-1015-R1",
+    "workflow": "CDD",
+    "riskScore": 66,
+    "risk": "MEDIUM",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-04-10"
+  },
+  {
+    "id": "KYCF-916",
+    "code": "KYC-2026-SG-7016-R1",
+    "clientId": "CLI-9116",
+    "clientName": "Meunier Foundation",
+    "structCode": "FOND",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 3,
+    "risk": "LOW",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-05-10"
+  },
+  {
+    "id": "KYCF-917",
+    "code": "KYC-2026-GB-7017-R1",
+    "clientId": "CLI-9117",
+    "clientName": "Okafor Family Office",
+    "structCode": "FO",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 40,
+    "risk": "MEDIUM",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Lucie Morel",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-06-10"
+  },
+  {
+    "id": "KYCF-918",
+    "code": "KYC-2026-CH-7018-R2",
+    "clientId": "CLI-9118",
+    "clientName": "Lena Lindberg",
+    "structCode": "PP",
+    "revision": 2,
+    "previousKycId": "KYC-2024-CH-1018-R1",
+    "workflow": "EDD",
+    "riskScore": 77,
+    "risk": "HIGH",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Sophie Marchand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-01-10"
+  },
+  {
+    "id": "KYCF-919",
+    "code": "KYC-2026-FR-7019-R1",
+    "clientId": "CLI-9119",
+    "clientName": "Costa SA",
+    "structCode": "SA",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 14,
+    "risk": "LOW",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Ralf Kessler",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-02-10"
+  },
+  {
+    "id": "KYCF-920",
+    "code": "KYC-2026-DE-7020-R1",
+    "clientId": "CLI-9120",
+    "clientName": "Haddad Trust",
+    "structCode": "TRUST",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 51,
+    "risk": "MEDIUM",
+    "status": "IN_PROGRESS",
+    "wfPhase": "SAISIE",
+    "rm": "Valentina Rossi",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-03-10"
+  },
+  {
+    "id": "KYCF-921",
+    "code": "KYC-2026-AE-7021-R2",
+    "clientId": "CLI-9121",
+    "clientName": "Brunner Holding",
+    "structCode": "HOLD",
+    "revision": 2,
+    "previousKycId": "KYC-2024-AE-1021-R1",
+    "workflow": "EDD",
+    "riskScore": 88,
+    "risk": "HIGH",
+    "status": "APPROVED",
+    "wfPhase": "COMPLIANCE",
+    "rm": "Ali Gharsallah",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "HIT",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-04-10"
+  },
+  {
+    "id": "KYCF-922",
+    "code": "KYC-2026-SG-7022-R1",
+    "clientId": "CLI-9122",
+    "clientName": "Sato Foundation",
+    "structCode": "FOND",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "SDD",
+    "riskScore": 25,
+    "risk": "LOW",
+    "status": "UNDER_REVIEW",
+    "wfPhase": "AML",
+    "rm": "Patrick Durand",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "HIT",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-05-10"
+  },
+  {
+    "id": "KYCF-923",
+    "code": "KYC-2026-GB-7023-R1",
+    "clientId": "CLI-9123",
+    "clientName": "Van Dijk Family Office",
+    "structCode": "FO",
+    "revision": 1,
+    "previousKycId": null,
+    "workflow": "CDD",
+    "riskScore": 62,
+    "risk": "MEDIUM",
+    "status": "DRAFT",
+    "wfPhase": "COMITE",
+    "rm": "Lucie Morel",
+    "co": "Marc Dubois",
+    "screening": {
+      "ofac": "CLEAR",
+      "seco": "CLEAR",
+      "pep": "CLEAR",
+      "adverse": "CLEAR"
+    },
+    "createdAt": "2026-06-10"
+  }
+]

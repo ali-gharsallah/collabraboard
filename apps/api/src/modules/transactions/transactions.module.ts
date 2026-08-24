@@ -11,7 +11,8 @@ import { TransactionGateService, gardeComportement } from "./transaction-gate.se
  * (R143) ; la décision est motivée (R7) ; la **vue client** ne porte JAMAIS de motif AML
  * (art. 10a, R132) — seulement un statut. Auteur = jeton (r.ctx).
  * Gardes câblées : `gardeComportement` (R142, le KYC nourrit la transaction). La garde gel-MROS
- * (R131) exige `MrosService` et sera ajoutée quand le portail devra confronter les gels actifs.
+ * (R131) exige le PORT `PortGelMros` (frontière Surveillance, P-L3-2 — fourni par MrosModule sous
+ * PORT_GEL_MROS) et sera ajoutée quand le portail devra confronter les gels actifs.
  */
 @Controller("transactions")
 export class TransactionsController {

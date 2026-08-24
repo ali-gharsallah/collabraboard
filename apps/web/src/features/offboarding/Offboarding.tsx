@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApiOrSeed } from "../../lib/useApiOrSeed";
 import { apiGetSourced, apiPost, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 
 // Écran `offboarding` (canon vague écrans pilote §5.3, R267→R271, OF-01..12). La fin de
@@ -28,6 +29,7 @@ export function Offboarding() {
   const [msg, setMsg] = useState("");
   const [clientId, setClientId] = useState(""); const [type, setType] = useState(TYPES[0]);
   const [motif, setMotif] = useState(""); const [mrosRef, setMrosRef] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const agir = async (fn: () => Promise<unknown>) => {
     setMsg("");
@@ -40,6 +42,7 @@ export function Offboarding() {
   };
 
   return <div>
+    {modal}
     {isDemo && <DemoModeBanner/>}
     <h3>Offboarding — la fin de relation est un workflow, jamais une suppression (R267)</h3>
     {msg && <p style={{ color: tokens.color.danger, fontSize: 13 }}>{msg}</p>}
@@ -102,12 +105,20 @@ export function Offboarding() {
           { motif: "Soldes vérifiés manuellement" }))}>Attester les avoirs (port core absent)</button>}
       <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
         {detail.statut === "CLOTURE_DEMANDEE" &&
-          <button onClick={() => agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "EN_CLOTURE" }))}>Passer EN_CLOTURE</button>}
+          <button onClick={() => ask({ title: "Passer EN_CLOTURE",
+            message: "La clôture ne peut avancer que si les obstacles R269 sont levés (vérifié serveur).",
+            items: [{ label: detail.obstacles.length ? `${detail.obstacles.length} obstacle(s) à lever` : "Aucun obstacle", ok: detail.obstacles.length === 0 }],
+            confirmLabel: "Passer EN_CLOTURE", onConfirm: () => agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "EN_CLOTURE" })) })}>Passer EN_CLOTURE</button>}
         {detail.statut === "EN_CLOTURE" &&
-          <button onClick={() => agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "CLOTUREE" }))}>Clôturer</button>}
+          <button onClick={() => ask({ title: "Clôturer le dossier", danger: true,
+            message: "La clôture est définitive : le dossier passe en lecture seule (rétention LBA).",
+            items: [{ label: "Tous les visas requis signés", ok: detail.visas.every((v) => v.statut === "SIGNED") },
+              { label: detail.obstacles.length ? `${detail.obstacles.length} obstacle(s) restant(s)` : "Aucun obstacle", ok: detail.obstacles.length === 0 }],
+            blockIfIncomplete: true, confirmLabel: "Clôturer définitivement", onConfirm: () => agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "CLOTUREE" })) })}>Clôturer</button>}
         {["CLOTURE_DEMANDEE", "EN_CLOTURE"].includes(detail.statut) &&
-          <button onClick={() => { const m = window.prompt("Motif d'annulation (obligatoire, R7)");
-            if (m) agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "CLOTURE_ANNULEE", motif: m })); }}>
+          <button onClick={() => ask({ title: "Annuler l'offboarding", danger: true,
+            input: { label: "Motif d'annulation (obligatoire, R7)", required: true }, confirmLabel: "Annuler l'offboarding",
+            onConfirm: (m) => agir(() => apiPost(`/v1/offboarding/${detail.id}/transition`, { vers: "CLOTURE_ANNULEE", motif: m })) })}>
             Annuler (motivé)</button>}
       </div>
       {detail.statut === "CLOTUREE" && <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8,

@@ -1,0 +1,84 @@
+// Source : docs/reference/olive-demo.html — enrichissements globaux exécutés au démarrage de la
+// maquette (IIFE top-level), AVANT tout rendu d'écran. Rejoués une seule fois ici (garde idempotente)
+// pour rester iso-fonctionnel : la maquette mute CLIENTS en place au chargement, tous les écrans en
+// héritent. `aumMOf` (30008) est aussi exposé ici (parseur AUM partagé).
+import CLIENTS from "../fixtures/CLIENTS.json";
+import { amlHash } from "./preonboarding-support";
+
+export function aumMOf(c: any) {
+  const str = String(c.aum || "0");
+  const m = str.match(/([\d.]+)\s*(k|K|Md|MD|B|b)?/);
+  if (!m) return 0;
+  const v = parseFloat(m[1]);
+  if (m[2] && /k/i.test(m[2])) return v / 1000;
+  if (m[2] && /(md|b)/i.test(m[2])) return v * 1000;
+  return v; // défaut : millions CHF
+}
+
+// Parseur / formateur AUM partagés (source 20641–20661).
+export function parseAumValue(s: any) {
+  if (!s) return 0;
+  const m = String(s).match(/([\d.]+)\s*([kKmM])?/);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  const unit = (m[2] || "").toLowerCase();
+  if (unit === "m") return n * 1000000;
+  if (unit === "k") return n * 1000;
+  return n;
+}
+export function formatAumTotal(chf: number) {
+  if (chf >= 1e9) return "CHF " + (chf / 1e9).toFixed(2) + "Md";
+  if (chf >= 1e6) return "CHF " + (chf / 1e6).toFixed(0) + "M";
+  return "CHF " + Math.round(chf / 1000) + "k";
+}
+
+// -- exoticOverlay (21358) : ~12% des clients reçoivent un secteur exotique (art, crypto, casinos…),
+//    passent LOW→MEDIUM et sont tagués SECTEUR-EXOTIQUE. Verbatim, idempotent. --
+let __exoticDone = false;
+export function runExoticOverlay() {
+  if (__exoticDone) return;
+  __exoticDone = true;
+  const EXOTICS = [["Négoce d'art & galeries", "🎨"], ["Crypto-actifs & exchanges", "₿"], ["Casinos & gaming", "🎰"], ["Courtage de yachts", "⛵"], ["Aviation privée", "🛩"], ["Négoce de matières premières", "🛢"], ["Pierres précieuses & diamants", "💎"], ["Football professionnel & transferts", "⚽"], ["Vins fins & spiritueux de collection", "🍷"], ["Antiquités & archéologie", "🏺"]];
+  let n = 0;
+  (CLIENTS as any[]).forEach(function (c) {
+    if (n >= EXOTICS.length) return;
+    if (amlHash(c.id + "EXO", 100) < 12) {
+      const ex = EXOTICS[n++];
+      c.sector = ex[0];
+      c.exotic = true;
+      c.exoticIcon = ex[1];
+      if (c.risk === "LOW") c.risk = "MEDIUM";
+      c.tags = (c.tags || []).concat(["SECTEUR-EXOTIQUE"]);
+    }
+  });
+}
+
+// Source : docs/reference/olive-demo.html 14685–14712 — enrichissement screening.
+// Les dossiers MEDIUM/HIGH entièrement CLEAR reçoivent (~45%) un hit réaliste (SECO/adverse/PEP/OFAC
+// pondérés). Comme AML_ALERTS dérive du screening, les alertes se multiplient — cascade voulue.
+// Doit muter KYCS_DATA AVANT la construction de AML_ALERTS (aml-workspace-support, lazy).
+import KYCS_DATA from "../fixtures/KYCS_DATA.json";
+let __enrichDone = false;
+export function enrichScreening() {
+  if (__enrichDone) return;
+  __enrichDone = true;
+  (KYCS_DATA as any[]).forEach(function (k) {
+    if (k.risk === "LOW") return;
+    const sc = k.screening || (k.screening = {});
+    if (sc.ofac === "HIT" || sc.seco === "HIT" || sc.pep === "HIT" || sc.adverse === "HIT") return;
+    const h = amlHash(k.code + "ENR", 100);
+    if (h >= 45) return;
+    if (h < 14) sc.adverse = "HIT";
+    else if (h < 26) sc.seco = "HIT";
+    else if (h < 36) sc.pep = "HIT";
+    else sc.ofac = "HIT";
+    if (amlHash(k.code + "ENR2", 10) < 2) {
+      if (sc.adverse !== "HIT") sc.adverse = "HIT";
+      else sc.seco = "HIT";
+    }
+  });
+}
+
+// Exécuté à l'import (comme les IIFE de la maquette).
+runExoticOverlay();
+enrichScreening();

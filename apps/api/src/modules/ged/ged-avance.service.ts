@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { createHash } from "crypto";
 import { PrismaService } from "../../common/prisma.service";
 import { AuditService } from "../../common/audit.service";
@@ -24,7 +25,7 @@ export class GedAvanceService {
   constructor(private prisma: PrismaService, private audit: AuditService, private ports: Ports = {}) {}
 
   private emit(tx: Tx, tenantId: string, type: string, aggregateId: string, payload: any) {
-    return tx.domainEvent.create({ data: { tenantId, type, aggregateId, payload } });
+    return emitEvent(tx, tenantId, type, aggregateId, payload);
   }
   private async doc(tx: Tx, ctx: Ctx, id: string) {
     const d = await tx.document.findFirst({ where: { id, tenantId: ctx.tenantId } });

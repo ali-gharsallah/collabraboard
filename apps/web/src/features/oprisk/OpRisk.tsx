@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiPost, apiGet, isDemoMode, OliveError } from "../../lib/api";
 import { DemoModeBanner } from "../../components/DemoModeBanner";
+import { useConfirmGate } from "../../components/ConfirmValidation";  // contrat UX
 import { tokens } from "../../theme/tokens";
 import { traduire, langue } from "../../lib/i18n";
 
@@ -23,6 +24,7 @@ export function OpRisk() {
   const [actions, setActions] = useState<Action[] | null>(null);
   const [titre, setTitre] = useState(""); const [categorie, setCategorie] = useState("EXECUTION_PROCESSUS");
   const [msg, setMsg] = useState("");
+  const { ask, modal } = useConfirmGate();               // contrat UX : confirmation + pré-vol
 
   const erreur = (e: unknown) => setMsg((e as OliveError).message ?? "Erreur");   // le refus, TEL QUEL
   const petit = { fontSize: 12 } as const;
@@ -37,17 +39,24 @@ export function OpRisk() {
     } catch (e) { erreur(e); }
   };
   return <div>
+    {modal}
     {isDemoMode() && <DemoModeBanner/>}
     <h3>{t("Octopulse OpRisk — incidents opérationnels (dossiers tracés, taxonomie Bâle du tenant)")}</h3>
     <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
       <button style={petit} onClick={charger} disabled={isDemoMode()}>{t("Charger")}</button>
       <input placeholder={t("titre de l'incident")} value={titre} onChange={(e) => setTitre(e.target.value)} style={petit}/>
       <input placeholder={t("catégorie Bâle")} value={categorie} onChange={(e) => setCategorie(e.target.value)} style={petit}/>
-      <button style={petit} disabled={isDemoMode() || !titre} onClick={async () => {
-        setMsg("");
-        try { await apiPost("/v1/oprisk/incidents", { titre, categorie, severite: 3 }); setTitre(""); await charger(); }
-        catch (e) { erreur(e); }                                              // classification obligatoire — refus R321 tel quel
-      }}>{t("Déclarer")}</button>
+      <button style={petit} disabled={isDemoMode() || !titre} onClick={() => ask({
+        title: t("Déclarer un incident opérationnel (R321)"),
+        message: t("La classification dans la taxonomie Bâle du tenant est obligatoire ; le serveur refuse une catégorie hors taxonomie."),
+        items: [{ label: `${t("titre")} : ${titre || "—"}`, ok: !!titre },
+          { label: `${t("catégorie")} : ${categorie || "—"}`, ok: !!categorie }],
+        confirmLabel: t("Déclarer l'incident"),
+        onConfirm: async () => {
+          setMsg("");
+          try { await apiPost("/v1/oprisk/incidents", { titre, categorie, severite: 3 }); setTitre(""); await charger(); }
+          catch (e) { erreur(e); }                                            // classification obligatoire — refus R321 tel quel
+        } })}>{t("Déclarer")}</button>
     </div>
     {msg && <p style={{ ...petit, color: tokens.color.olive700 }}>{msg}</p>}
     {cellules && <div>
@@ -65,14 +74,18 @@ export function OpRisk() {
       <h4 style={{ fontSize: 13 }}>{t("Incidents")} ({incidents.length})</h4>
       <ul style={{ paddingLeft: 16 }}>{incidents.map((i) => <li key={i.id} style={petit}>
         <strong>{i.titre}</strong> — {i.categorie} · {t("sévérité")} {i.severite} · {i.statut}
-        {i.statut !== "CLOS" && <button style={{ ...petit, marginLeft: 8 }} disabled={isDemoMode()} onClick={async () => {
-          setMsg("");
-          try {
-            await apiPost(`/v1/oprisk/incidents/${i.id}/transition`,
-              i.statut === "DECLARE" ? { vers: "EN_ANALYSE" } : { vers: "CLOS", motif: "Analyse terminée, mesures en plan d'action" });
-            await charger();
-          } catch (e) { erreur(e); }
-        }}>{i.statut === "DECLARE" ? t("Analyser") : t("Clore (motivé)")}</button>}
+        {i.statut !== "CLOS" && <button style={{ ...petit, marginLeft: 8 }} disabled={isDemoMode()} onClick={() => ask({
+          title: i.statut === "DECLARE" ? t("Passer l'incident en analyse") : t("Clore l'incident (motivé)"),
+          message: i.statut === "DECLARE" ? t("L'incident passe en analyse.") : t("La clôture est motivée ; le serveur porte l'invariant."),
+          confirmLabel: i.statut === "DECLARE" ? t("Passer en analyse") : t("Clore l'incident"),
+          onConfirm: async () => {
+            setMsg("");
+            try {
+              await apiPost(`/v1/oprisk/incidents/${i.id}/transition`,
+                i.statut === "DECLARE" ? { vers: "EN_ANALYSE" } : { vers: "CLOS", motif: "Analyse terminée, mesures en plan d'action" });
+              await charger();
+            } catch (e) { erreur(e); }
+          } })}>{i.statut === "DECLARE" ? t("Analyser") : t("Clore (motivé)")}</button>}
       </li>)}</ul>
     </div>}
     {actions && actions.length > 0 && <div>

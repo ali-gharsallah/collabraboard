@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
+import { emitEvent } from "../../common/domain-event";
 import { PrismaService } from "../../common/prisma.service";
 import { StoragePort } from "./coffre.service";
 import { TiersIndisponibleError } from "./ged-externe.adapter";
@@ -33,8 +34,8 @@ export class StorageResolverService {
         // INEXISTANT au schéma ratifié (la colonne d'horodatage est `createdAt @default(now())`).
         // Toléré ailleurs car les services écrivent via `tx: any` (non typé) ; ici l'accès
         // `this.prisma.domainEvent` EST typé → `at` retiré, createdAt fait foi. Cf. rapport lot 38.
-        await this.prisma.domainEvent.create({ data: { tenantId, type: "ged.externe.indisponible",
-          aggregateId: choix, payload: { operation, message } } });
+        await emitEvent(this.prisma, tenantId, "ged.externe.indisponible",
+          choix, { operation, message });
       } catch { /* le signal n'étouffe jamais le refus d'origine */ }
     };
     const garde = <A extends any[], R>(operation: string, fn: (...a: A) => Promise<R>) =>

@@ -68,3 +68,20 @@ export function backfillIdempotent(filigrane, ids) {
   const nouveauFiligrane = aTraiter.length ? aTraiter[aTraiter.length - 1] : filigrane;
   return { aTraiter, nouveauFiligrane };
 }
+
+// ── Exceptions DOCUMENTÉES par migration (partagées harnais MG-05 + runner CI run-analyse) :
+// clé = dossier de migration, valeur = motifs MG-01 tolérés DANS CETTE MIGRATION SEULE. Toute
+// nouvelle entrée exige une justification ici — le contrôle reste intact pour toutes les autres.
+// · 20260805000002_reconcile_db_push_drift : `ALTER COLUMN "id" DROP DEFAULT` (kyc_processes).
+//   Résidu d'un `db push` historique — le client Prisma fournit TOUJOURS l'id (aucun writer ne
+//   dépend du DEFAULT côté base), et la gate no-drift (`prisma migrate diff --exit-code`) EXIGE
+//   cette ligne : la retirer recréerait la dérive que cette migration réconcilie.
+export const EXCEPTIONS_MIGRATIONS = new Map([
+  ["20260805000002_reconcile_db_push_drift", new Set(["DROP NOT NULL absent"])],
+]);
+
+/** Filtre les violations MG-01 couvertes par une exception documentée pour ce dossier. */
+export function filtrerExceptions(dossier, violations) {
+  const toleres = EXCEPTIONS_MIGRATIONS.get(dossier);
+  return toleres ? violations.filter((v) => !toleres.has(v.motif)) : violations;
+}
